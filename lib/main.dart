@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:confetti/confetti.dart';
 
 import 'firebase_options.dart';
 
@@ -237,7 +236,7 @@ class _SplashScreenState extends State<SplashScreen>
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
-                    onPressed: () => _navigateTo(const JeConsultePage()),
+                    onPressed: () => _navigateTo(const ConsultOffersPage()),
                     child: const Text(
                       "Je consulte les offres",
                       style:
@@ -312,190 +311,1090 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  int _selectedIndex = 0;
+  final PageController _carouselController = PageController();
+  int _currentSlide = 0;
 
-  late ConfettiController _confetti;
+  late final AnimationController _categoryController;
+
+  bool _isSeeding = false;
+
+  /// Slogans animés (fade) pour Prestō
+  final List<String> _firstSlideSlogans = const [
+    "Disponible en quelques secondes…",
+    "Trouvez un prestataire autour de vous",
+    "Publiez… ils arrivent !",
+  ];
+  int _sloganIndex = 0;
+  Timer? _sloganTimer;
+
+  /// Base mots-clés (moteur de recherche)
+  final List<String> _searchKeywords = const [
+    "jardinage",
+    "jardinage aujourd’hui",
+    "jardinage Petit-Bourg demain",
+    "serveur",
+    "serveur ce soir",
+    "serveur Jarry ce soir",
+    "peinture",
+    "peinture urgent",
+    "débroussaillage",
+    "déménagement",
+    "aide aux devoirs",
+    "nettoyage",
+    "ménage",
+    "garde d’enfants",
+    "DJ",
+    "sono",
+  ];
+
+  /// Suggestions “smart” par défaut
+  final List<String> _trendingSuggestions = const [
+    "Jardinage aujourd’hui",
+    "Serveur ce soir",
+    "Peinture urgent",
+    "Jardinage Petit-Bourg demain",
+  ];
+
+  /// Mots-clés dynamiques issus des annonces publiées
+  List<String> _offerKeywords = [];
+
+  final List<_HomeSlide> _slides = const [
+    _HomeSlide(
+      title: "Slogans Prestō animés",
+      subtitle:
+          "Contact instantané avec des personnes disponibles autour de vous.",
+      badge: "Nouveau",
+      icon: Icons.flash_on_outlined,
+    ),
+    _HomeSlide(
+      title: "Besoin d’un extra pour ce soir ?",
+      subtitle: "Serveur, plonge, barman… publiez votre offre.",
+      badge: "Restauration",
+      icon: Icons.restaurant_outlined,
+    ),
+    _HomeSlide(
+      title: "Jardin, peinture, déménagement",
+      subtitle: "Des dizaines de prestataires prêts à accepter.",
+      badge: "Maison",
+      icon: Icons.handyman_outlined,
+    ),
+    _HomeSlide(
+      title: "Boîte à outils de l’entrepreneur",
+      subtitle: "Liens utiles CCI, Région, aides et infos clés.",
+      badge: "Pro",
+      icon: Icons.business_center_outlined,
+    ),
+    _HomeSlide(
+      title: "Prestō 100% gratuit",
+      subtitle: "Publiez vos offres, recevez des réponses.",
+      badge: "Gratuit",
+      icon: Icons.favorite_border,
+    ),
+  ];
 
   @override
   void initState() {
     super.initState();
-    _confetti = ConfettiController(duration: const Duration(milliseconds: 900));
 
-    /// Déclenche les confettis 1 seconde après l'ouverture de la page
-    Future.delayed(const Duration(milliseconds: 1000), () {
-      _confetti.play();
-    });
+    _categoryController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat();
+
+    if (_firstSlideSlogans.length > 1) {
+      _sloganTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+        setState(() {
+          _sloganIndex = (_sloganIndex + 1) % _firstSlideSlogans.length;
+        });
+      });
+    }
+
+    _loadOfferKeywords();
+  }
+
+  Future<void> _loadOfferKeywords() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('offers')
+          .orderBy('createdAt', descending: true)
+          .limit(30)
+          .get();
+
+      final set = <String>{};
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final title = (data['title'] ?? '').toString().trim();
+        final location = (data['location'] ?? '').toString().trim();
+        if (title.isNotEmpty) set.add(title);
+        if (location.isNotEmpty) set.add(location);
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _offerKeywords = set.toList();
+      });
+    } catch (_) {
+      // en cas d'erreur : on garde les mots-clés statiques
+    }
   }
 
   @override
   void dispose() {
-    _confetti.dispose();
+    _carouselController.dispose();
+    _categoryController.dispose();
+    _sloganTimer?.cancel();
     super.dispose();
   }
 
-  final List<Map<String, dynamic>> dernieresOffres = List.generate(6, (i) {
-    return {
-      "titre": "Offre ${i + 1} – Besoin urgent",
-      "description":
-          "Description ultra rapide de l'offre numéro ${i + 1}. Prestataire demandé immédiatement.",
-      "prix": "${50 + i * 5}",
-      "ville": "Baie-Mahault"
-    };
-  });
+  double _categoryScaleForIndex(int index) {
+    const count = 4;
+    final t = _categoryController.value * count;
+    final active = t.floor() % count;
+    final localT = t - t.floor();
+    if (index == active) {
+      return 1.0 + 0.25 * (1 - (localT - 0.5) * (localT - 0.5) * 4);
+    }
+    return 1.0;
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFDF4EC),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+  void _onBottomTap(int index) {
+    setState(() => _selectedIndex = index);
 
-                  /// 🔍 Barre de recherche sans encadrement
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const TextField(
-                      decoration: InputDecoration(
-                        hintText: "Rechercher un service…",
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
+    if (index == 1) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const PublishOfferPage()),
+      );
+      return;
+    }
+    if (index == 0) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const ConsultOffersPage()),
+      );
+      return;
+    }
+    if (index == 2) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const MessagesPage()),
+      );
+      return;
+    }
+    if (index == 3) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const AccountPage()),
+      );
+      return;
+    }
+  }
 
-                  const SizedBox(height: 10),
-
-                  /// 🟧 Slide "Publiez… ils arrivent !" corrigé
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF6600),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        "Publiez… ils arrivent !",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  /// 🔥 TITRE DERNIÈRES ANNONCES
-                  const Text(
-                    "Dernières annonces publiées",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  /// 🟠 LISTE DES OFFRES
-                  Column(
-                    children: dernieresOffres
-                        .map((offre) => _cardAnnonce(offre))
-                        .toList(),
-                  ),
-
-                  const SizedBox(height: 30),
-                ],
-              ),
-            ),
-            
-            /// 🎉 CONFETTIS ORANGE (positioned at center)
-            Align(
-              alignment: Alignment.topCenter,
-              child: IgnorePointer(
-                child: ConfettiWidget(
-                  confettiController: _confetti,
-                  blastDirectionality: BlastDirectionality.explosive,
-                  maxBlastForce: 20,
-                  minBlastForce: 8,
-                  gravity: 0.25,
-                  particleDrag: 0.05,
-                  emissionFrequency: 0.02,
-                  numberOfParticles: 25,
-                  colors: [
-                    Colors.orange.shade300,
-                    Colors.orange.shade500,
-                    Colors.orange.shade700,
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+  void _goToSearch(String query) {
+    final q = query.trim();
+    if (q.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ConsultOffersPage(searchQuery: q),
       ),
     );
   }
 
-  /// ------- CARTE D'UNE ANNONCE (PRIX EN GRAS) -------
-  Widget _cardAnnonce(Map<String, dynamic> offre) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          /// Infos
-          Expanded(
+  /// Moteur de suggestions “smart” pour la barre de recherche
+  Iterable<String> _buildSearchSuggestions(TextEditingValue value) {
+    final text = value.text.trim().toLowerCase();
+
+    // Si rien tapé : on propose des tendances “smart”
+    if (text.isEmpty) {
+      return _trendingSuggestions;
+    }
+
+    final all = <String>{
+      ..._searchKeywords,
+      ..._trendingSuggestions,
+      ..._offerKeywords,
+    };
+
+    return all.where((s) => s.toLowerCase().contains(text));
+  }
+
+  /// Texte “quand ?” pour les dernières offres (ce soir / urgent / demain / bientôt)
+  String _labelWhenFromTitle(String title) {
+    final lower = title.toLowerCase();
+    if (lower.contains('urgent')) return 'urgent';
+    if (lower.contains('ce soir')) return 'ce soir';
+    if (lower.contains('demain')) return 'demain';
+    return 'bientôt';
+  }
+
+  Future<void> _seedSampleOffers() async {
+    if (_isSeeding) return;
+    setState(() => _isSeeding = true);
+
+    final col = FirebaseFirestore.instance.collection('offers');
+
+    Future<void> addOffer({
+      required String title,
+      required String description,
+      required String location,
+      required String postalCode,
+      required String category,
+      required num budget,
+      String? phone,
+    }) async {
+      await col.add({
+        'title': title,
+        'description': description,
+        'location': location,
+        'postalCode': postalCode,
+        'category': category,
+        'budget': budget,
+        'phone': phone,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    try {
+      await addOffer(
+        title: "Serveur Jarry",
+        description:
+            "Restaurant à Baie-Mahault (Jarry) recherche un serveur pour le service de ce soir.",
+        location: "Baie-Mahault (Jarry)",
+        postalCode: "97122",
+        category: "Restauration / Extra",
+        budget: 60,
+        phone: "0690 00 00 01",
+      );
+      await addOffer(
+        title: "Peintre Saint-François",
+        description:
+            "Maison à repeindre, intervention rapide, mission marquée URGENT.",
+        location: "Saint-François",
+        postalCode: "97118",
+        category: "Bricolage / Travaux",
+        budget: 150,
+        phone: "0690 00 00 03",
+      );
+      await addOffer(
+        title: "Jardinage Petit-Bourg",
+        description:
+            "Entretien jardin et petite taille de haie, idéal demain matin.",
+        location: "Petit-Bourg",
+        postalCode: "97170",
+        category: "Jardinage",
+        budget: 80,
+        phone: "0690 00 00 05",
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Offres de démonstration ajoutées ✅")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Erreur lors de l’ajout des offres de démo : $e"),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSeeding = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9F2EA),
+      body: SafeArea(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.white, Color(0xFFFDF4EC)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  offre["titre"],
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
+                // Ligne du haut : logo + cloche
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onLongPress: _seedSampleOffers,
+                        child: const Center(
+                          child: Text(
+                            "Prestō",
+                            style: TextStyle(
+                              fontSize: 27,
+                              fontWeight: FontWeight.w900,
+                              color: kPrestoOrange,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    _TapScale(
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content:
+                                Text("Notifications : bientôt disponibles"),
+                          ),
+                        );
+                      },
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(999),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.notifications_none_outlined,
+                              size: 22,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Positioned(
+                            right: -2,
+                            top: -2,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: const BoxDecoration(
+                                color: kPrestoOrange,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Text(
+                                "2",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Barre de recherche (halo + auto-complétion smart)
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    boxShadow: [
+                      // Ombre standard
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                      // Halo léger vers la gauche pour faire ressortir
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(-3, 0),
+                      ),
+                    ],
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  child: RawAutocomplete<String>(
+                    optionsBuilder: _buildSearchSuggestions,
+                    onSelected: (String selected) {
+                      _goToSearch(selected);
+                    },
+                    fieldViewBuilder:
+                        (context, controller, focusNode, onFieldSubmitted) {
+                      return Row(
+                        children: [
+                          const Icon(Icons.search, color: Colors.black38),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: controller,
+                              focusNode: focusNode,
+                              decoration: const InputDecoration(
+                                hintText:
+                                    "Ex : Jardinage aujourd’hui, Serveur ce soir…",
+                                border: InputBorder.none,
+                              ),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textInputAction: TextInputAction.search,
+                              onSubmitted: _goToSearch,
+                              enableSuggestions: true,
+                              autocorrect: true,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                    optionsViewBuilder: (context, onSelected, options) {
+                      return Align(
+                        alignment: Alignment.topLeft,
+                        child: Material(
+                          elevation: 4,
+                          borderRadius: BorderRadius.circular(12),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxHeight: 220,
+                              minWidth: 260,
+                            ),
+                            child: ListView.builder(
+                              padding: EdgeInsets.zero,
+                              itemCount: options.length,
+                              itemBuilder: (context, index) {
+                                final option = options.elementAt(index);
+                                return ListTile(
+                                  title: Text(
+                                    option,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  onTap: () => onSelected(option),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  offre["ville"],
-                  style: const TextStyle(
+
+                const SizedBox(height: 16),
+
+                // Carrousel
+                SizedBox(
+                  height: 200,
+                  width: double.infinity,
+                  child: Stack(
+                    children: [
+                      PageView.builder(
+                        controller: _carouselController,
+                        itemCount: _slides.length,
+                        onPageChanged: (index) {
+                          setState(() => _currentSlide = index);
+                        },
+                        itemBuilder: (context, index) {
+                          final slide = _slides[index];
+                          final String animatedText =
+                              _firstSlideSlogans[_sloganIndex];
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 2, vertical: 4),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFFF8A50),
+                                    kPrestoOrange,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(22),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.12),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            slide.badge.toUpperCase(),
+                                            style: const TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          // Titre : pour la 1ère slide on affiche le slogan animé (fade)
+                                          if (index == 0)
+                                            AnimatedSwitcher(
+                                              duration: const Duration(
+                                                  milliseconds: 450),
+                                              transitionBuilder:
+                                                  (child, animation) {
+                                                return FadeTransition(
+                                                  opacity: animation,
+                                                  child: child,
+                                                );
+                                              },
+                                              child: Text(
+                                                animatedText,
+                                                key: ValueKey(animatedText),
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 17,
+                                                  fontWeight: FontWeight.w800,
+                                                  height: 1.3,
+                                                ),
+                                              ),
+                                            )
+                                          else
+                                            Text(
+                                              slide.title,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.w800,
+                                                height: 1.3,
+                                              ),
+                                            ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            slide.subtitle,
+                                            style: const TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Container(
+                                      width: 60,
+                                      height: 60,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white, // rond blanc
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.18),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        slide.icon,
+                                        color: kPrestoBlue,
+                                        size: 32,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      Positioned(
+                        bottom: 10,
+                        left: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            _slides.length,
+                            (index) => AnimatedContainer(
+                              duration: const Duration(milliseconds: 250),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                              width: _currentSlide == index ? 18 : 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: _currentSlide == index
+                                    ? Colors.white
+                                    : Colors.white.withOpacity(0.4),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // Catégories
+                AnimatedBuilder(
+                  animation: _categoryController,
+                  builder: (context, child) {
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _CategoryChip(
+                            icon: Icons.eco_outlined,
+                            label: "Jardinage",
+                            iconScale: _categoryScaleForIndex(0),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ConsultOffersPage(
+                                    categoryFilter: "Jardinage",
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          _CategoryChip(
+                            icon: Icons.format_paint_outlined,
+                            label: "Peinture",
+                            iconScale: _categoryScaleForIndex(1),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ConsultOffersPage(
+                                    categoryFilter: "Peinture",
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          _CategoryChip(
+                            icon: Icons.handyman_outlined,
+                            label: "Main-d’œuvre",
+                            iconScale: _categoryScaleForIndex(2),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ConsultOffersPage(
+                                    categoryFilter: "Main-d’œuvre",
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          _CategoryChip(
+                            icon: Icons.other_houses_outlined,
+                            label: "Autres",
+                            iconScale: _categoryScaleForIndex(3),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ConsultOffersPage(
+                                    categoryFilter: "Autre",
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          _CategoryChip(
+                            icon: Icons.child_care_outlined,
+                            label: "Garde enfants",
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ConsultOffersPage(
+                                    categoryFilter: "Garde d’enfants",
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          _CategoryChip(
+                            icon: Icons.music_note_outlined,
+                            label: "DJ / Sono",
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ConsultOffersPage(
+                                    categoryFilter: "Événementiel / DJ",
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                // BLOC COMMENT ÇA MARCHE ? ///////////////////////////
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE3F2FD),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Comment ça marche ?",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: kPrestoBlue,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      _HowItWorksStep(
+                        stepNumber: 1,
+                        title: "Je publie une offre",
+                        description:
+                            "En quelques lignes, vous décrivez votre besoin et votre lieu.",
+                      ),
+                      SizedBox(height: 8),
+                      _HowItWorksStep(
+                        stepNumber: 2,
+                        title: "Ils la reçoivent en direct",
+                        description:
+                            "Les prestataires proches sont notifiés et voient immédiatement votre offre.",
+                      ),
+                      SizedBox(height: 8),
+                      _HowItWorksStep(
+                        stepNumber: 3,
+                        title: "Ils me contactent aussitôt",
+                        description:
+                            "Vous échangez et choisissez la personne idéale pour le job.",
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // SECTION GÉOLOCALISÉE DYNAMIQUE (DOM JSON statique) /////////
+                const Text(
+                  "Autour de vous",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  "Prestataires proches :",
+                  style: TextStyle(
                     fontSize: 13,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    _GeoChip(label: "Baie-Mahault"),
+                    _GeoChip(label: "Les Abymes"),
+                    _GeoChip(label: "Le Gosier"),
+                    _GeoChip(label: "Petit-Bourg"),
+                    _GeoChip(label: "Pointe-à-Pitre"),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // PRÉVISUALISATION DES DERNIÈRES OFFRES //////////////////////
+                Row(
+                  children: [
+                    const Text(
+                      "Dernières offres",
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () => _onBottomTap(0),
+                      child: const Text(
+                        "Voir tout",
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: kPrestoBlue,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('offers')
+                      .orderBy('createdAt', descending: true)
+                      .limit(3)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                          ),
+                        ),
+                      );
+                    }
+                    if (snapshot.hasError) {
+                      return const SizedBox.shrink();
+                    }
+
+                    final docs = snapshot.data?.docs ?? [];
+                    if (docs.isEmpty) {
+                      return const Text(
+                        "Aucune offre publiée pour le moment.",
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      children: docs.map((d) {
+                        final data = d.data();
+                        final title =
+                            (data['title'] ?? 'Sans titre') as String;
+                        final location =
+                            (data['location'] ?? 'Lieu non précisé') as String;
+                        final whenLabel = _labelWhenFromTitle(title);
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _TapScale(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => OfferDetailPage(
+                                    title: title,
+                                    location: location,
+                                    category: (data['category'] ??
+                                        'Catégorie non précisée') as String,
+                                    budget: data['budget'] is num
+                                        ? data['budget'] as num
+                                        : null,
+                                    description:
+                                        (data['description'] ?? '') as String?,
+                                    phone: data['phone'] as String?,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(22),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.06),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 38,
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFF3E0),
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: const Icon(
+                                      Icons.flash_on_outlined,
+                                      color: kPrestoOrange,
+                                      size: 22,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          title,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          "$location — $whenLabel",
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black54,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Icon(
+                                    Icons.chevron_right,
+                                    size: 20,
+                                    color: Colors.black38,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                // SECTION EXISTANTE : D’après vos dernières recherches ///////
+                const Text(
+                  "D’après vos dernières recherches",
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Row(
+                  children: [
+                    Text(
+                      "Services à la personne",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Spacer(),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 20,
+                      color: Colors.black45,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 150,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: const [
+                      _ServiceCard(
+                        label: "Nettoyage",
+                        icon: Icons.cleaning_services_outlined,
+                        badge: "Populaire",
+                      ),
+                      _ServiceCard(
+                        label: "Tonte",
+                        icon: Icons.grass_outlined,
+                        badge: "Saison",
+                      ),
+                      _ServiceCard(
+                        label: "Serveur",
+                        icon: Icons.restaurant_outlined,
+                        badge: "Week-end",
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-
-          /// Prix gras
-          Text(
-            "${offre["prix"]} €",
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 17,
-            ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: kPrestoOrange,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+        child: SafeArea(
+          top: false,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _BottomNavItem(
+                icon: Icons.search,
+                label: "Je consulte\nles offres",
+                selected: _selectedIndex == 0,
+                onTap: () => _onBottomTap(0),
+              ),
+              _BottomNavItem(
+                icon: Icons.add_circle_outline,
+                label: "Publier\nune offre",
+                isBig: true,
+                onTap: () => _onBottomTap(1),
+              ),
+              _BottomNavItem(
+                icon: Icons.chat_bubble_outline,
+                label: "Messages",
+                selected: _selectedIndex == 2,
+                onTap: () => _onBottomTap(2),
+              ),
+              _BottomNavItem(
+                icon: Icons.person_outline,
+                label: "Compte",
+                selected: _selectedIndex == 3,
+                onTap: () => _onBottomTap(3),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
-
 
 /// CHIPS / CARDS ///////////////////////////////////////////////////////////
 
@@ -846,234 +1745,506 @@ class _HowItWorksStep extends StatelessWidget {
   }
 }
 
-class JeConsultePage extends StatefulWidget {
-  const JeConsultePage({super.key});
+/// PAGE "JE CONSULTE LES OFFRES" ///////////////////////////////////////////
 
-  @override
-  State<JeConsultePage> createState() => _JeConsultePageState();
-}
+class ConsultOffersPage extends StatefulWidget {
+  final String? categoryFilter;
+  final String? searchQuery;
 
-class _JeConsultePageState extends State<JeConsultePage>
-    with SingleTickerProviderStateMixin {
-  final TextEditingController _searchCtrl = TextEditingController();
-  final List<String> _filters = [
-    "Jardinage",
-    "Peinture",
-    "Bricolage",
-    "Nettoyage",
-    "Déménagement",
-    "Plomberie"
-  ];
-
-  String selectedFilter = "";
-  List<Map<String, dynamic>> annonces = List.generate(30, (i) {
-    return {
-      "titre": "Offre n°${i + 1} – Intervention rapide",
-      "description":
-          "Description détaillée de l’offre numéro ${i + 1}. Travail sérieux, rapide et disponible immédiatement.",
-      "prix": (50 + i * 2).toString(),
-      "ville": "Baie-Mahault"
-    };
+  const ConsultOffersPage({
+    super.key,
+    this.categoryFilter,
+    this.searchQuery,
   });
 
   @override
+  State<ConsultOffersPage> createState() => _ConsultOffersPageState();
+}
+
+class _ConsultOffersPageState extends State<ConsultOffersPage> {
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _subCategoryController = TextEditingController();
+  final TextEditingController _postalCodeController = TextEditingController();
+
+  String? _selectedCategory;
+
+  bool _showLocationSuggestions = false;
+  bool _showFilters = true;
+
+  final List<String> _categories = const [
+    'Toutes catégories',
+    'Restauration / Extra',
+    'Bricolage / Travaux',
+    'Aide à domicile',
+    'Garde d’enfants',
+    'Événementiel / DJ',
+    'Cours & soutien',
+    'Jardinage',
+    'Peinture',
+    'Main-d’œuvre',
+    'Autre',
+  ];
+
+  List<String> get _citySuggestions {
+    final text = _locationController.text.trim().toLowerCase();
+    if (!_showLocationSuggestions) return [];
+    if (text.length < 2) return [];
+    return kCityNames
+        .where((c) => c.toLowerCase().contains(text))
+        .take(5)
+        .toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.categoryFilter != null && widget.categoryFilter!.isNotEmpty) {
+      _selectedCategory = widget.categoryFilter;
+    }
+  }
+
+  @override
+  void dispose() {
+    _locationController.dispose();
+    _subCategoryController.dispose();
+    _postalCodeController.dispose();
+    super.dispose();
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _selectedCategory = 'Toutes catégories';
+      _locationController.clear();
+      _subCategoryController.clear();
+      _postalCodeController.clear();
+      _showLocationSuggestions = false;
+    });
+  }
+
+  Query<Map<String, dynamic>> _buildQuery() {
+    Query<Map<String, dynamic>> query =
+        FirebaseFirestore.instance.collection('offers');
+
+    bool hasFilter = false;
+
+    final loc = _locationController.text.trim();
+    final subcat = _subCategoryController.text.trim();
+    final cat = _selectedCategory;
+    final cp = _postalCodeController.text.trim();
+
+    if (loc.isNotEmpty) {
+      hasFilter = true;
+      query = query.where('location', isEqualTo: loc);
+    }
+
+    if (cp.isNotEmpty) {
+      hasFilter = true;
+      query = query.where('postalCode', isEqualTo: cp);
+    }
+
+    if (cat != null && cat.isNotEmpty && cat != 'Toutes catégories') {
+      hasFilter = true;
+      query = query.where('category', isEqualTo: cat);
+    }
+
+    if (subcat.isNotEmpty) {
+      hasFilter = true;
+      query = query.where('subcategory', isEqualTo: subcat);
+    }
+
+    if (!hasFilter) {
+      query = query.orderBy('createdAt', descending: true);
+    }
+
+    return query;
+  }
+
+  void _onLocationChanged(String value) {
+    setState(() {
+      _showLocationSuggestions = true;
+    });
+    final lower = value.trim().toLowerCase();
+    for (final entry in kCityPostalMap.entries) {
+      if (entry.key.toLowerCase() == lower) {
+        _postalCodeController.text = entry.value;
+        break;
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final baseTitle = widget.categoryFilter == null
+        ? "Je consulte les offres"
+        : "Offres : ${widget.categoryFilter!}";
+
+    final suggestions = _citySuggestions;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF4EC),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// 🔍 Barre de recherche SANS encadrement
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(
+          baseTitle,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        backgroundColor: kPrestoOrange,
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () {
+            setState(() {
+              _showFilters = !_showFilters;
+            });
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home_outlined),
+            onPressed: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const HomePage()),
+                (route) => false,
+              );
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          if (_showFilters)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: TextField(
-                controller: _searchCtrl,
-                decoration: const InputDecoration(
-                  hintText: "Rechercher une offre...",
-                  border: InputBorder.none,
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                ),
-                onChanged: (_) => setState(() {}),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      // Menu déroulant (catégorie) à gauche avec bords arrondis
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          initialValue: _selectedCategory ?? 'Toutes catégories',
+                          isDense: false,
+                          decoration: const InputDecoration(
+                            labelText: "Catégorie",
+                            isDense: false,
+                          ),
+                          items: _categories
+                              .map(
+                                (c) => DropdownMenuItem(
+                                  value: c,
+                                  child: Text(
+                                    c,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedCategory = value;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _locationController,
+                          decoration: const InputDecoration(
+                            labelText: "Lieu / Ville",
+                            hintText: "Ex : Baie-Mahault",
+                            isDense: false,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          enableSuggestions: true,
+                          autocorrect: true,
+                          textCapitalization: TextCapitalization.words,
+                          keyboardType: TextInputType.streetAddress,
+                          autofillHints: const [
+                            AutofillHints.addressCity,
+                            AutofillHints.addressCityAndState,
+                          ],
+                          onChanged: _onLocationChanged,
+                          onSubmitted: (_) {
+                            setState(() {
+                              _showLocationSuggestions = false;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (suggestions.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      constraints: const BoxConstraints(maxHeight: 160),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: suggestions.length,
+                        itemBuilder: (context, index) {
+                          final city = suggestions[index];
+                          return ListTile(
+                            dense: true,
+                            title: Text(city),
+                            onTap: () {
+                              setState(() {
+                                _locationController.text = city;
+                                final cp = kCityPostalMap[city];
+                                if (cp != null) {
+                                  _postalCodeController.text = cp;
+                                }
+                                _showLocationSuggestions = false;
+                              });
+                              FocusScope.of(context).unfocus();
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _subCategoryController,
+                          decoration: const InputDecoration(
+                            labelText: "Sous-catégorie",
+                            hintText: "Ex : terrasse, peinture chambre…",
+                            isDense: false,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          enableSuggestions: true,
+                          autocorrect: true,
+                          textCapitalization: TextCapitalization.sentences,
+                          onSubmitted: (_) => setState(() {}),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 110,
+                        child: TextField(
+                          controller: _postalCodeController,
+                          decoration: const InputDecoration(
+                            labelText: "C/P",
+                            hintText: "97122",
+                            isDense: false,
+                          ),
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          enableSuggestions: true,
+                          autocorrect: false,
+                          autofillHints: const [AutofillHints.postalCode],
+                          onSubmitted: (_) => setState(() {}),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: _resetFilters,
+                      icon: const Icon(
+                        Icons.refresh,
+                        size: 18,
+                      ),
+                      label: const Text(
+                        "Réinitialiser",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+          const Divider(height: 1),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: _buildQuery().snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                    ),
+                  );
+                }
 
-            /// 🟦 Filtres uniformisés + wrap compact
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: Wrap(
-                spacing: 6,
-                runSpacing: -8,
-                children: _filters.map((f) {
-                  final bool act = selectedFilter == f;
-                  return GestureDetector(
-                    onTap: () => setState(() => selectedFilter = f),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: act ? Colors.orange : Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.black26, width: 1),
-                      ),
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
                       child: Text(
-                        f,
-                        style: TextStyle(
+                        "Erreur lors du chargement des offres.\n${snapshot.error}",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.red,
                           fontWeight: FontWeight.w600,
-                          color: act ? Colors.white : Colors.black,
                         ),
                       ),
                     ),
                   );
-                }).toList(),
-              ),
-            ),
+                }
 
-            const SizedBox(height: 6),
+                List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
+                    snapshot.data?.docs ?? [];
 
-            /// 📄 Liste des annonces + bandeaux slogans
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                itemCount: annonces.length,
-                itemBuilder: (context, index) {
-                  /// ➤ Tous les 5 annonces : BANNIÈRE MOTIVATION
-                  if (index % 5 == 0 && index != 0) {
-                    return Column(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            "🔥 Plus vous publiez, plus vous trouvez vite !",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
+                if (widget.searchQuery != null &&
+                    widget.searchQuery!.trim().isNotEmpty) {
+                  final q = widget.searchQuery!.trim().toLowerCase();
+                  docs = docs.where((d) {
+                    final data = d.data();
+                    final title =
+                        (data['title'] ?? '').toString().toLowerCase();
+                    final desc =
+                        (data['description'] ?? '').toString().toLowerCase();
+                    return title.contains(q) || desc.contains(q);
+                  }).toList();
+                }
+
+                if (docs.isEmpty) {
+                  return const _EmptyOffers();
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: docs.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final data = docs[index].data();
+
+                    final title = (data['title'] ?? 'Sans titre') as String;
+                    final location =
+                        (data['location'] ?? 'Lieu non précisé') as String;
+                    final category =
+                        (data['category'] ?? 'Catégorie non précisée')
+                            as String;
+                    final budget = data['budget'];
+                    final description = (data['description'] ?? '') as String;
+                    final phone =
+                        data['phone'] == null ? null : data['phone'] as String;
+
+                    String subtitle = "$location · $category";
+                    if (budget != null) {
+                      subtitle += " · ${budget.toString()} €";
+                    }
+
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      child: ListTile(
+                        leading: const CircleAvatar(
+                          backgroundColor: Color(0xFFFFF3E0),
+                          child: Icon(
+                            Icons.work_outline,
+                            color: kPrestoOrange,
                           ),
                         ),
-                        _annonceCard(index),
-                      ],
+                        title: Text(
+                          title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        subtitle: Text(
+                          subtitle,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => OfferDetailPage(
+                                title: title,
+                                location: location,
+                                category: category,
+                                budget: budget is num ? budget : null,
+                                description:
+                                    description.isEmpty ? null : description,
+                                phone: phone,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     );
-                  }
-
-                  return _annonceCard(index);
-                },
-              ),
+                  },
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+}
 
-  /// ------- CARTE D'ANNONCE (PRIX EN GRAS) --------
-  Widget _annonceCard(int index) {
-    final annonce = annonces[index];
-    return GestureDetector(
-      onTap: () => _openAnnonce(annonce),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              annonce["titre"],
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              annonce["description"],
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 13.5),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "${annonce["prix"]} €",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold, // PRIX EN GRAS
-                    fontSize: 16,
-                  ),
-                ),
-                Text(
-                  annonce["ville"],
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+class _EmptyOffers extends StatelessWidget {
+  const _EmptyOffers();
 
-  /// ------- PAGE DÉTAIL D'UNE ANNONCE --------
-  void _openAnnonce(Map<String, dynamic> annonce) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(18),
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding
+
+        (
+        padding: EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Icon(
+              Icons.search_off_outlined,
+              size: 56,
+              color: Colors.black26,
+            ),
+            SizedBox(height: 16),
             Text(
-              annonce["titre"],
-              style: const TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.bold,
+              "Aucune offre publiée pour le moment",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
               ),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 8),
             Text(
-              annonce["description"],
-              style: const TextStyle(
-                fontSize: 16.5, // ✔️ Description légèrement agrandie
+              "Clique sur « Publier une offre » pour créer ta première annonce Prestō.",
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
               ),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue, // bouton bleu
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: const Text(
-                "J’accepte l’offre",
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 20),
           ],
         ),
       ),
