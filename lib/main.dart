@@ -1926,9 +1926,20 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                         child: DropdownButtonFormField<String>(
                           initialValue: _selectedCategory ?? 'Toutes catégories',
                           isDense: false,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: "Catégorie",
                             isDense: false,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.black26),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: kPrestoOrange, width: 2),
+                            ),
                           ),
                           items: _categories
                               .map(
@@ -1952,10 +1963,21 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       Expanded(
                         child: TextField(
                           controller: _locationController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: "Lieu / Ville",
                             hintText: "Ex : Baie-Mahault",
                             isDense: false,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.black26),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: kPrestoOrange, width: 2),
+                            ),
                           ),
                           style: const TextStyle(
                             fontSize: 14,
@@ -2024,10 +2046,21 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       Expanded(
                         child: TextField(
                           controller: _subCategoryController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: "Sous-catégorie",
                             hintText: "Ex : terrasse, peinture chambre…",
                             isDense: false,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.black26),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: kPrestoOrange, width: 2),
+                            ),
                           ),
                           style: const TextStyle(
                             fontSize: 14,
@@ -2044,10 +2077,21 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                         width: 110,
                         child: TextField(
                           controller: _postalCodeController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: "C/P",
                             hintText: "97122",
                             isDense: false,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Colors.black26),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: kPrestoOrange, width: 2),
+                            ),
                           ),
                           keyboardType: TextInputType.number,
                           style: const TextStyle(
@@ -2254,7 +2298,7 @@ class _EmptyOffers extends StatelessWidget {
 
 /// PAGE DÉTAIL /////////////////////////////////////////////////////////////
 
-class OfferDetailPage extends StatelessWidget {
+class OfferDetailPage extends StatefulWidget {
   final String title;
   final String location;
   final String category;
@@ -2271,6 +2315,13 @@ class OfferDetailPage extends StatelessWidget {
     this.description,
     this.phone,
   });
+
+  @override
+  State<OfferDetailPage> createState() => _OfferDetailPageState();
+}
+
+class _OfferDetailPageState extends State<OfferDetailPage> {
+  bool _showPhone = false;
 
   Future<void> _callPhone(BuildContext context, String phoneNumber) async {
     final uri = Uri(scheme: 'tel', path: phoneNumber);
@@ -2302,7 +2353,7 @@ class OfferDetailPage extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        final hasPhone = phone != null && phone!.trim().isNotEmpty;
+        final hasPhone = widget.phone != null && widget.phone!.trim().isNotEmpty;
         final hasAccount = SessionState.userId != null;
 
         return Padding(
@@ -2332,7 +2383,7 @@ class OfferDetailPage extends StatelessWidget {
                     const Icon(Icons.call_outlined, color: kPrestoOrange),
                 title: Text(
                   hasPhone
-                      ? "Appeler le numéro : $phone"
+                      ? "Appeler le numéro : ${widget.phone}"
                       : "Numéro non renseigné",
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
@@ -2341,7 +2392,7 @@ class OfferDetailPage extends StatelessWidget {
                 onTap: hasPhone
                     ? () {
                         Navigator.of(context).pop();
-                        _callPhone(context, phone!.trim());
+                        _callPhone(context, widget.phone!.trim());
                       }
                     : null,
               ),
@@ -2389,7 +2440,7 @@ class OfferDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final budgetText =
-        budget == null ? "À définir" : "${budget!.toStringAsFixed(2)} €";
+        widget.budget == null ? "À définir" : "${widget.budget!.toStringAsFixed(2)} €";
 
     return Scaffold(
       appBar: AppBar(
@@ -2406,7 +2457,7 @@ class OfferDetailPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              title,
+              widget.title,
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
@@ -2418,7 +2469,7 @@ class OfferDetailPage extends StatelessWidget {
                 const Icon(Icons.place_outlined, size: 18),
                 const SizedBox(width: 4),
                 Text(
-                  location,
+                  widget.location,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
@@ -2429,7 +2480,7 @@ class OfferDetailPage extends StatelessWidget {
                 const Icon(Icons.category_outlined, size: 18),
                 const SizedBox(width: 4),
                 Text(
-                  category,
+                  widget.category,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
@@ -2445,18 +2496,45 @@ class OfferDetailPage extends StatelessWidget {
                 ),
               ],
             ),
-            if (phone != null && phone!.trim().isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  const Icon(Icons.phone_android_outlined, size: 18),
-                  const SizedBox(width: 4),
-                  Text(
-                    phone!,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+            if (widget.phone != null && widget.phone!.trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
+              if (!_showPhone)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _showPhone = true;
+                    });
+                  },
+                  icon: const Icon(Icons.visibility_outlined),
+                  label: const Text(
+                    "Voir le vitro",
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
-                ],
-              ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: kPrestoBlue,
+                    side: const BorderSide(color: kPrestoBlue, width: 2),
+                  ),
+                )
+              else
+                InkWell(
+                  onTap: () => _callPhone(context, widget.phone!.trim()),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.phone_android_outlined, size: 18, color: kPrestoBlue),
+                      const SizedBox(width: 4),
+                      Text(
+                        widget.phone!,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: kPrestoBlue,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
             const SizedBox(height: 20),
             const Text(
@@ -2470,9 +2548,9 @@ class OfferDetailPage extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 child: Text(
-                  (description == null || description!.trim().isEmpty)
+                  (widget.description == null || widget.description!.trim().isEmpty)
                       ? "Aucune description détaillée fournie."
-                      : description!,
+                      : widget.description!,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -2485,7 +2563,7 @@ class OfferDetailPage extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrestoOrange,
+                  backgroundColor: kPrestoBlue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
