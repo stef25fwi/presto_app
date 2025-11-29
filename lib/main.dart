@@ -193,8 +193,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 28),
                 const Text(
-                  "Trouvez un prestataire
-illico presto",
+                  "Trouvez un prestataire\nillico presto",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 25,
@@ -1063,9 +1062,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  child: Column(
+                  child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
                         "Comment ça marche ?",
                         style: TextStyle(
@@ -1119,10 +1118,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Wrap(
+                const Wrap(
                   spacing: 8,
                   runSpacing: 6,
-                  children: const [
+                  children: [
                     _GeoChip(label: "Baie-Mahault"),
                     _GeoChip(label: "Les Abymes"),
                     _GeoChip(label: "Le Gosier"),
@@ -1307,8 +1306,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Row(
-                  children: const [
+                const Row(
+                  children: [
                     Text(
                       "Services à la personne",
                       style: TextStyle(
@@ -1367,15 +1366,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             children: [
               _BottomNavItem(
                 icon: Icons.search,
-                label: "Je consulte
-les offres",
+                label: "Je consulte\nles offres",
                 selected: _selectedIndex == 0,
                 onTap: () => _onBottomTap(0),
               ),
               _BottomNavItem(
                 icon: Icons.add_circle_outline,
-                label: "Publier
-une offre",
+                label: "Publier\nune offre",
                 isBig: true,
                 onTap: () => _onBottomTap(1),
               ),
@@ -1583,7 +1580,7 @@ class _BottomNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Colors.white;
+    const color = Colors.white;
     final fontWeight = selected ? FontWeight.w700 : FontWeight.w600;
 
     return _TapScale(
@@ -1927,7 +1924,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       // Menu déroulant (catégorie) à gauche avec bords arrondis
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: _selectedCategory ?? 'Toutes catégories',
+                          initialValue: _selectedCategory ?? 'Toutes catégories',
                           isDense: false,
                           decoration: const InputDecoration(
                             labelText: "Catégorie",
@@ -2103,8 +2100,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Text(
-                        "Erreur lors du chargement des offres.
-${snapshot.error}",
+                        "Erreur lors du chargement des offres.\n${snapshot.error}",
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Colors.red,
@@ -2217,14 +2213,14 @@ class _EmptyOffers extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return const Center(
       child: Padding
 
         (
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
+          children: [
             Icon(
               Icons.search_off_outlined,
               size: 56,
@@ -3090,7 +3086,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: _category,
+                        initialValue: _category,
                         decoration: const InputDecoration(
                           labelText: "Catégorie",
                         ),
