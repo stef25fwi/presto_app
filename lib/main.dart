@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -24,7 +23,7 @@ const Map<String, String> kCityPostalMap = {
   'Capesterre-Belle-Eau': '97130',
   'Basse-Terre': '97100',
   'Goyave': '97128',
-  'Morne-à-l'Eau': '97111',
+  'Morne-à-l\'Eau': '97111',
   'Sainte-Rose': '97115',
   'Le Moule': '97160',
   'Saint-Claude': '97120',
@@ -59,7 +58,7 @@ const Map<String, String> kCityPostalMap = {
 
 final List<String> kCityNames = kCityPostalMap.keys.toList();
 
-/// Petit état de session
+/// Petit état de session (user connecté ou non)
 class SessionState {
   static String? userId;
 }
@@ -78,7 +77,7 @@ class PrestoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "Prestō",
+      title: 'Prestō',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -98,6 +97,16 @@ class PrestoApp extends StatelessWidget {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: const BorderSide(color: kPrestoBlue, width: 1.4),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          labelStyle: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+          hintStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
@@ -168,9 +177,9 @@ class _SplashScreenState extends State<SplashScreen>
                 ScaleTransition(
                   scale: _scaleAnimation,
                   child: const Text(
-                    "Prestō",
+                    'Prestō',
                     style: TextStyle(
-                      fontSize: 56,
+                      fontSize: 54,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
                       letterSpacing: 1.3,
@@ -179,11 +188,10 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 28),
                 const Text(
-                  "Trouvez un prestataire
-illico presto",
+                  'Trouvez un prestataire\nillico presto',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 25,
+                    fontSize: 24,
                     height: 1.25,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -206,7 +214,7 @@ illico presto",
                     child: const Text(
                       "J’offre un job",
                       style:
-                          TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -227,7 +235,7 @@ illico presto",
                     child: const Text(
                       "Je consulte les offres",
                       style:
-                          TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -316,16 +324,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int _sloganIndex = 0;
   Timer? _sloganTimer;
 
-  /// Base mots-clés (moteur de recherche)
-  final List<String> _searchKeywords = const [
+  /// Mots-clés statiques
+  final List<String> _baseSearchKeywords = const [
     "jardinage",
     "jardinage aujourd’hui",
-    "jardinage Petit-Bourg demain",
     "serveur",
     "serveur ce soir",
-    "serveur Jarry ce soir",
     "peinture",
-    "peinture urgent",
     "débroussaillage",
     "déménagement",
     "aide aux devoirs",
@@ -335,6 +340,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     "DJ",
     "sono",
   ];
+
+  /// Mots-clés dynamiques basés sur les offres Firestore
+  List<String> _dynamicKeywords = [];
 
   /// Suggestions “smart” par défaut
   final List<String> _trendingSuggestions = const [
@@ -389,11 +397,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     if (_firstSlideSlogans.length > 1) {
       _sloganTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+        if (!mounted) return;
         setState(() {
           _sloganIndex = (_sloganIndex + 1) % _firstSlideSlogans.length;
         });
       });
     }
+
+    _listenDynamicKeywords();
+  }
+
+  void _listenDynamicKeywords() {
+    FirebaseFirestore.instance
+        .collection('offers')
+        .snapshots()
+        .listen((snapshot) {
+      final words = <String>{};
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final title = (data['title'] ?? '').toString().toLowerCase();
+        final description =
+            (data['description'] ?? '').toString().toLowerCase();
+        final combined = '$title $description';
+        for (final word in combined.split(RegExp(r'\\s+'))) {
+          if (word.length > 3 &&
+              !RegExp(r'[0-9]').hasMatch(word) &&
+              !word.startsWith('0')) {
+            words.add(word);
+          }
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _dynamicKeywords = words.toList()..sort();
+        });
+      }
+    });
   }
 
   @override
@@ -416,8 +455,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _onBottomTap(int index) {
-    setState(() => _selectedIndex = index);
-
     if (index == 1) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const PublishOfferPage()),
@@ -425,6 +462,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return;
     }
     if (index == 0) {
+      setState(() => _selectedIndex = 0);
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const ConsultOffersPage()),
       );
@@ -458,26 +496,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Iterable<String> _buildSearchSuggestions(TextEditingValue value) {
     final text = value.text.trim().toLowerCase();
 
-    // Si rien tapé : on propose des tendances “smart”
-    if (text.isEmpty) {
-      return _trendingSuggestions;
-    }
-
     final all = <String>{
-      ..._searchKeywords,
+      ..._baseSearchKeywords,
       ..._trendingSuggestions,
+      ..._dynamicKeywords,
     };
 
-    return all.where((s) => s.toLowerCase().contains(text));
-  }
+    if (text.isEmpty) {
+      return all.take(8);
+    }
 
-  /// Texte “quand ?” pour les dernières offres (ce soir / urgent / demain / bientôt)
-  String _labelWhenFromTitle(String title) {
-    final lower = title.toLowerCase();
-    if (lower.contains('urgent')) return 'urgent';
-    if (lower.contains('ce soir')) return 'ce soir';
-    if (lower.contains('demain')) return 'demain';
-    return 'bientôt';
+    return all.where((s) => s.toLowerCase().contains(text)).take(8);
   }
 
   Future<void> _seedSampleOffers() async {
@@ -509,7 +538,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     try {
       await addOffer(
-        title: "Serveur Jarry — ce soir",
+        title: "Serveur Jarry ce soir",
         description:
             "Restaurant à Baie-Mahault (Jarry) recherche un serveur pour le service de ce soir.",
         location: "Baie-Mahault (Jarry)",
@@ -519,17 +548,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         phone: "0690 00 00 01",
       );
       await addOffer(
-        title: "Peintre Saint-François — urgent",
-        description:
-            "Maison à repeindre, intervention rapide, mission marquée URGENT.",
+        title: "Peintre chambre 30 m²",
+        description: "Peinture chambre à Saint-François, mission URGENTE.",
         location: "Saint-François",
         postalCode: "97118",
-        category: "Bricolage / Travaux",
+        category: "Peinture",
         budget: 150,
         phone: "0690 00 00 03",
       );
       await addOffer(
-        title: "Jardinage Petit-Bourg — demain",
+        title: "Jardinage Petit-Bourg demain",
         description:
             "Entretien jardin et petite taille de haie, idéal demain matin.",
         location: "Petit-Bourg",
@@ -554,6 +582,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     } finally {
       if (mounted) setState(() => _isSeeding = false);
     }
+  }
+
+  /// Texte “quand ?” pour les dernières offres (ce soir / urgent / demain / bientôt)
+  String _labelWhenFromTitle(String title) {
+    final lower = title.toLowerCase();
+    if (lower.contains('urgent')) return 'urgent';
+    if (lower.contains('ce soir')) return 'ce soir';
+    if (lower.contains('demain')) return 'demain';
+    return 'bientôt';
   }
 
   @override
@@ -584,7 +621,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           child: Text(
                             "Prestō",
                             style: TextStyle(
-                              fontSize: 27,
+                              fontSize: 26,
                               fontWeight: FontWeight.w900,
                               color: kPrestoOrange,
                               letterSpacing: 0.5,
@@ -656,17 +693,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(999),
                     boxShadow: [
-                      // Ombre standard
                       BoxShadow(
                         color: Colors.black.withOpacity(0.06),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
-                      ),
-                      // Halo léger vers la gauche pour faire ressortir
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 12,
-                        offset: const Offset(-3, 0),
                       ),
                     ],
                   ),
@@ -689,7 +719,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               focusNode: focusNode,
                               decoration: const InputDecoration(
                                 hintText:
-                                    "Ex : Jardinage aujourd’hui, Serveur ce soir…",
+                                    "Ex : jardinage aujourd’hui, serveur ce soir…",
                                 border: InputBorder.none,
                               ),
                               style: const TextStyle(
@@ -722,7 +752,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               itemBuilder: (context, index) {
                                 final option = options.elementAt(index);
                                 return ListTile(
-                                  title: Text(option),
+                                  title: Text(
+                                    option,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
                                   onTap: () => onSelected(option),
                                 );
                               },
@@ -791,11 +828,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                             style: const TextStyle(
                                               color: Colors.white70,
                                               fontSize: 11,
-                                              fontWeight: FontWeight.w700,
+                                              fontWeight: FontWeight.w600,
                                             ),
                                           ),
                                           const SizedBox(height: 4),
-                                          // Titre : pour la 1ère slide on affiche le slogan animé (fade)
                                           if (index == 0)
                                             AnimatedSwitcher(
                                               duration: const Duration(
@@ -812,7 +848,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                 key: ValueKey(animatedText),
                                                 style: const TextStyle(
                                                   color: Colors.white,
-                                                  fontSize: 17,
+                                                  fontSize: 16,
                                                   fontWeight: FontWeight.w800,
                                                   height: 1.3,
                                                 ),
@@ -823,7 +859,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                               slide.title,
                                               style: const TextStyle(
                                                 color: Colors.white,
-                                                fontSize: 17,
+                                                fontSize: 16,
                                                 fontWeight: FontWeight.w800,
                                                 height: 1.3,
                                               ),
@@ -845,7 +881,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       width: 60,
                                       height: 60,
                                       decoration: BoxDecoration(
-                                        color: Colors.white, // rond blanc
+                                        color: Colors.white,
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
@@ -1003,42 +1039,53 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 const SizedBox(height: 24),
 
                 // BLOC COMMENT ÇA MARCHE ? ///////////////////////////
-                const Text(
-                  "Comment ça marche ?",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE3F2FD),
+                    borderRadius: BorderRadius.circular(18),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Column(
-                  children: const [
-                    _HowItWorksStep(
-                      stepNumber: 1,
-                      title: "Je publie une offre",
-                      description:
-                          "En quelques lignes, vous décrivez votre besoin et votre lieu.",
-                    ),
-                    SizedBox(height: 8),
-                    _HowItWorksStep(
-                      stepNumber: 2,
-                      title: "Ils la reçoivent en direct",
-                      description:
-                          "Les prestataires proches sont notifiés et voient immédiatement votre offre.",
-                    ),
-                    SizedBox(height: 8),
-                    _HowItWorksStep(
-                      stepNumber: 3,
-                      title: "Ils me contactent aussitôt",
-                      description:
-                          "Vous échangez et choisissez la personne idéale pour le job.",
-                    ),
-                  ],
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        "Comment ça marche ?",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: kPrestoBlue,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      _HowItWorksStep(
+                        stepNumber: 1,
+                        title: "Je publie une offre",
+                        description:
+                            "En quelques lignes, vous décrivez votre besoin et votre lieu.",
+                      ),
+                      SizedBox(height: 8),
+                      _HowItWorksStep(
+                        stepNumber: 2,
+                        title: "Ils la reçoivent en direct",
+                        description:
+                            "Les prestataires proches sont notifiés et voient immédiatement votre offre.",
+                      ),
+                      SizedBox(height: 8),
+                      _HowItWorksStep(
+                        stepNumber: 3,
+                        title: "Ils me contactent aussitôt",
+                        description:
+                            "Vous échangez et choisissez la personne idéale pour le job.",
+                      ),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 24),
 
-                // SECTION GÉOLOCALISÉE DYNAMIQUE (DOM JSON statique) /////////
+                // SECTION GÉOLOCALISÉE DYNAMIQUE /////////////////////////////
                 const Text(
                   "Autour de vous",
                   style: TextStyle(
@@ -1052,7 +1099,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.black54,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -1304,15 +1351,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             children: [
               _BottomNavItem(
                 icon: Icons.search,
-                label: "Je consulte
-les offres",
+                label: "Je consulte\nles offres",
                 selected: _selectedIndex == 0,
                 onTap: () => _onBottomTap(0),
               ),
               _BottomNavItem(
                 icon: Icons.add_circle_outline,
-                label: "Publier
-une offre",
+                label: "Publier\nune offre",
                 isBig: true,
                 onTap: () => _onBottomTap(1),
               ),
@@ -1405,7 +1450,7 @@ class _CategoryChip extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 12,
                 color: Colors.black87,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -1493,7 +1538,7 @@ class _ServiceCard extends StatelessWidget {
               label,
               style: const TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -1521,7 +1566,7 @@ class _BottomNavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Colors.white;
-    final fontWeight = selected ? FontWeight.w700 : FontWeight.w600;
+    final fontWeight = selected ? FontWeight.w700 : FontWeight.w500;
 
     return _TapScale(
       onTap: onTap,
@@ -1604,7 +1649,7 @@ class _GeoChip extends StatelessWidget {
             label,
             style: const TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -1673,7 +1718,6 @@ class _HowItWorksStep extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 12,
                     color: Colors.black54,
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -1722,8 +1766,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     'Autre',
   ];
 
+  bool _showLocationSuggestions = false;
+
   List<String> get _citySuggestions {
-    if (!_showCitySuggestions) return [];
     final text = _locationController.text.trim().toLowerCase();
     if (!_showLocationSuggestions) return [];
     if (text.length < 2) return [];
@@ -1747,16 +1792,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     _subCategoryController.dispose();
     _postalCodeController.dispose();
     super.dispose();
-  }
-
-  void _resetFilters() {
-    setState(() {
-      _selectedCategory = 'Toutes catégories';
-      _locationController.clear();
-      _subCategoryController.clear();
-      _postalCodeController.clear();
-      _showLocationSuggestions = false;
-    });
   }
 
   Query<Map<String, dynamic>> _buildQuery() {
@@ -1798,17 +1833,26 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }
 
   void _onLocationChanged(String value) {
-    setState(() {});
-    final lower = value.trim().toLowerCase();
     setState(() {
-      _showCitySuggestions = lower.length >= 2;
+      _showLocationSuggestions = true;
     });
+    final lower = value.trim().toLowerCase();
     for (final entry in kCityPostalMap.entries) {
       if (entry.key.toLowerCase() == lower) {
         _postalCodeController.text = entry.value;
         break;
       }
     }
+  }
+
+  void _resetFilters() {
+    _locationController.clear();
+    _subCategoryController.clear();
+    _postalCodeController.clear();
+    setState(() {
+      _selectedCategory = 'Toutes catégories';
+      _showLocationSuggestions = false;
+    });
   }
 
   @override
@@ -1824,21 +1868,16 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       appBar: AppBar(
         title: Text(
           baseTitle,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {
-            setState(() {
-              _showFilters = !_showFilters;
-            });
-          },
-        ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: "Réinitialiser les filtres",
+            onPressed: _resetFilters,
+          ),
           IconButton(
             icon: const Icon(Icons.home_outlined),
             onPressed: () {
@@ -1859,7 +1898,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
               children: [
                 Row(
                   children: [
-                    // Menu déroulant (catégorie) à gauche avec bords arrondis
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         value: _selectedCategory ?? 'Toutes catégories',
@@ -1895,6 +1933,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                           hintText: "Ex : Baie-Mahault",
                           isDense: true,
                         ),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                         enableSuggestions: true,
                         autocorrect: true,
                         textCapitalization: TextCapitalization.words,
@@ -1904,7 +1946,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                           AutofillHints.addressCityAndState,
                         ],
                         onChanged: _onLocationChanged,
-                        onSubmitted: (_) => setState(() {}),
+                        onSubmitted: (_) {
+                          setState(() {
+                            _showLocationSuggestions = false;
+                          });
+                        },
                       ),
                     ),
                   ],
@@ -1939,7 +1985,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                               if (cp != null) {
                                 _postalCodeController.text = cp;
                               }
+                              _showLocationSuggestions = false;
                             });
+                            FocusScope.of(context).unfocus();
                           },
                         );
                       },
@@ -1957,6 +2005,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                           hintText: "Ex : terrasse, peinture chambre…",
                           isDense: true,
                         ),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                         enableSuggestions: true,
                         autocorrect: true,
                         textCapitalization: TextCapitalization.sentences,
@@ -1969,11 +2021,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       child: TextField(
                         controller: _postalCodeController,
                         decoration: const InputDecoration(
-                          labelText: "Code postal",
+                          labelText: "C/P",
                           hintText: "97122",
                           isDense: true,
                         ),
                         keyboardType: TextInputType.number,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                         enableSuggestions: true,
                         autocorrect: false,
                         autofillHints: const [AutofillHints.postalCode],
@@ -2003,13 +2059,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Text(
-                        "Erreur lors du chargement des offres.
-${snapshot.error}",
+                        "Erreur lors du chargement des offres.\n${snapshot.error}",
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.w600,
-                        ),
+                            color: Colors.red, fontWeight: FontWeight.w600),
                       ),
                     ),
                   );
@@ -2074,15 +2127,12 @@ ${snapshot.error}",
                         title: Text(
                           title,
                           style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                          ),
+                              fontWeight: FontWeight.w600, fontSize: 14),
                         ),
                         subtitle: Text(
                           subtitle,
                           style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
+                              fontSize: 12, fontWeight: FontWeight.w500),
                         ),
                         onTap: () {
                           Navigator.of(context).push(
@@ -2177,9 +2227,11 @@ class OfferDetailPage extends StatelessWidget {
   Future<void> _callPhone(BuildContext context, String phoneNumber) async {
     final uri = Uri(scheme: 'tel', path: phoneNumber);
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -2231,18 +2283,25 @@ class OfferDetailPage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               ListTile(
-                leading: const Icon(
-                  Icons.call_outlined,
-                  color: kPrestoOrange,
-                ),
+                leading:
+                    const Icon(Icons.call_outlined, color: kPrestoOrange),
                 title: Text(
                   hasPhone
-                      ? "Appeler le numéro : $phone"
+                      ? "Appeler le numéro : "
                       : "Numéro non renseigné",
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+                subtitle: hasPhone
+                    ? Text(
+                        phone!,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      )
+                    : null,
                 onTap: hasPhone
                     ? () {
                         Navigator.of(context).pop();
@@ -2252,10 +2311,8 @@ class OfferDetailPage extends StatelessWidget {
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(
-                  Icons.chat_bubble_outline,
-                  color: kPrestoOrange,
-                ),
+                leading: const Icon(Icons.chat_bubble_outline,
+                    color: kPrestoOrange),
                 title: Text(
                   hasAccount
                       ? "Contacter par message (bientôt disponible)"
@@ -2482,7 +2539,8 @@ class _AccountPageState extends State<AccountPage> {
 
     setState(() => _isSaving = true);
     try {
-      final doc = await FirebaseFirestore.instance.collection('users').add({
+      final doc =
+          await FirebaseFirestore.instance.collection('users').add({
         'name': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
         'email': _emailController.text.trim(),
@@ -2634,8 +2692,7 @@ class _AccountPageState extends State<AccountPage> {
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
+                                        Colors.white),
                                   ),
                                 )
                               : const Icon(Icons.person_add_alt_1_outlined),
@@ -2682,7 +2739,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final _postalCodeController = TextEditingController();
 
   String? _category;
-
   bool _showLocationSuggestions = false;
 
   final List<String> _categories = const [
@@ -2699,8 +2755,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   ];
 
   List<String> get _citySuggestions {
-    if (!_showLocationSuggestions) return [];
     final text = _locationController.text.trim().toLowerCase();
+    if (!_showLocationSuggestions) return [];
     if (text.length < 2) return [];
     return kCityNames
         .where((c) => c.toLowerCase().contains(text))
@@ -2720,11 +2776,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   void _onLocationChanged(String value) {
-    final lower = value.trim().toLowerCase();
     setState(() {
-      _showLocationSuggestions = lower.length >= 2;
+      _showLocationSuggestions = true;
     });
-
+    final lower = value.trim().toLowerCase();
     for (final entry in kCityPostalMap.entries) {
       if (entry.key.toLowerCase() == lower) {
         _postalCodeController.text = entry.value;
@@ -2806,7 +2861,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 child: Text(
                   "Récapitulatif de votre offre",
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 19,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -2841,7 +2896,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -2873,8 +2928,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   label: const Text(
                     "Confirmer la publication",
                     style: TextStyle(
-                      fontSize: 15,
                       fontWeight: FontWeight.w800,
+                      fontSize: 15,
                     ),
                   ),
                 ),
@@ -2931,18 +2986,55 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Décrivez votre besoin",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                        ),
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              "Décrivez votre besoin à notre IA",
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.10),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Saisie vocale / IA : fonctionnalité bientôt disponible.",
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.mic,
+                                color: kPrestoBlue,
+                              ),
+                              tooltip: "Décrire mon besoin à l’IA",
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       const Text(
                         "Plus votre demande est claire, plus vous aurez de réponses adaptées.",
                         style: TextStyle(
-                          fontSize: 13.5,
+                          fontSize: 13,
                           color: Colors.black54,
                           fontWeight: FontWeight.w500,
                         ),
@@ -3070,9 +3162,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               ),
                               enableSuggestions: true,
                               autocorrect: false,
-                              autofillHints: const [
-                                AutofillHints.postalCode,
-                              ],
+                              autofillHints: const [AutofillHints.postalCode],
                             ),
                           ),
                         ],
@@ -3135,8 +3225,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       TextFormField(
                         controller: _budgetController,
                         keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
+                            decimal: true),
                         decoration: const InputDecoration(
                           labelText: "Budget proposé (€)",
                           hintText: "Ex : 80",
@@ -3148,16 +3237,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         enableSuggestions: false,
                         autocorrect: false,
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return null;
-                          }
-                          final txt = value.trim().replaceAll(',', '.');
-                          final num? val = num.tryParse(txt);
-                          if (val == null) {
-                            return "Veuillez saisir un montant valide";
-                          }
-                          if (val <= 0) {
-                            return "Le montant doit être positif";
+                          if (value == null || value.trim().isNotEmpty) {
+                            final txt =
+                                (value ?? '').trim().replaceAll(',', '.');
+                            if (txt.isEmpty) {
+                              return null;
+                            }
+                            final num? val = num.tryParse(txt);
+                            if (val == null) {
+                              return "Veuillez saisir un montant valide";
+                            }
+                            if (val <= 0) {
+                              return "Le montant doit être positif";
+                            }
                           }
                           return null;
                         },
@@ -3221,12 +3313,12 @@ class _RecapRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 110,
+            width: 90,
             child: Text(
               "$label :",
               style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
               ),
             ),
           ),
@@ -3235,8 +3327,8 @@ class _RecapRow extends StatelessWidget {
             child: Text(
               value,
               style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
