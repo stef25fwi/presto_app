@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
 
@@ -2206,6 +2207,8 @@ class _EmptyOffers extends StatelessWidget {
 
 /// PAGE DÉTAIL /////////////////////////////////////////////////////////////
 
+/// PAGE DÉTAIL /////////////////////////////////////////////////////////////
+
 class OfferDetailPage extends StatelessWidget {
   final String title;
   final String location;
@@ -2219,128 +2222,163 @@ class OfferDetailPage extends StatelessWidget {
     required this.title,
     required this.location,
     required this.category,
-    this.budget,
-    this.description,
-    this.phone,
+    required this.budget,
+    required this.description,
+    required this.phone,
   });
 
-  Future<void> _callPhone(BuildContext context, String phoneNumber) async {
-    final uri = Uri(scheme: 'tel', path: phoneNumber);
-    try {
-      final launched = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
+  /// Lance l'appel téléphone
+  Future<void> _callPhone(BuildContext context) async {
+    final rawPhone = phone?.trim() ?? '';
+    if (rawPhone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Aucun numéro de téléphone indiqué dans cette offre."),
+        ),
       );
-      if (!launched) {
+      return;
+    }
+
+    final Uri uri = Uri(
+      scheme: 'tel',
+      path: rawPhone,
+    );
+
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Impossible d’ouvrir le téléphone pour le numéro $phoneNumber",
-            ),
+          const SnackBar(
+            content: Text("Impossible de lancer l'appel sur ce téléphone."),
           ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Erreur lors de l’ouverture du téléphone."),
+          content: Text("Une erreur est survenue lors de l'appel."),
         ),
       );
     }
   }
 
+  /// Quand on clique sur "J’accepte l’offre"
   void _onAcceptOffer(BuildContext context) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) {
-        final hasPhone = phone != null && phone!.trim().isNotEmpty;
-        final hasAccount = SessionState.userId != null;
+      builder: (sheetContext) {
+        final budgetText =
+            budget == null ? "À définir" : "${budget!.toStringAsFixed(2)} €";
 
         return Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: 16 + MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.black26,
-                  borderRadius: BorderRadius.circular(999),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
               ),
-              const Text(
-                "J’accepte l’offre",
-                style: TextStyle(
-                  fontSize: 18,
+              const Center(
+                child: Text(
+                  "Récapitulatif de l’offre",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading:
-                    const Icon(Icons.call_outlined, color: kPrestoOrange),
-                title: Text(
-                  hasPhone
-                      ? "Appeler le numéro : "
-                      : "Numéro non renseigné",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+              const SizedBox(height: 6),
+              Text(
+                "$location · $category",
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
                 ),
-                subtitle: hasPhone
-                    ? Text(
-                        phone!,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                        ),
-                      )
-                    : null,
-                onTap: hasPhone
-                    ? () {
-                        Navigator.of(context).pop();
-                        _callPhone(context, phone!.trim());
-                      }
-                    : null,
               ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.chat_bubble_outline,
-                    color: kPrestoOrange),
-                title: Text(
-                  hasAccount
-                      ? "Contacter par message (bientôt disponible)"
-                      : "Contacter par message (crée d’abord un compte)",
-                  style: const TextStyle(
+              const SizedBox(height: 6),
+              Text(
+                "Budget : $budgetText",
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (phone != null && phone!.trim().isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.phone_android_outlined, size: 18),
+                    const SizedBox(width: 4),
+                    Text(
+                      phone!,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                const SizedBox(height: 10),
+                const Text(
+                  "Aucun numéro n’est indiqué dans cette offre.",
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.redAccent,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  if (!hasAccount) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          "Crée ton compte dans « Mon compte » pour utiliser la messagerie.",
-                        ),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          "Messagerie Prestō : fonctionnalité bientôt disponible.",
-                        ),
-                      ),
-                    );
-                  }
-                },
+              ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrestoBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop(); // fermer le volet
+                    _callPhone(context); // lancer l’appel
+                  },
+                  icon: const Icon(Icons.call),
+                  label: const Text(
+                    "Appeler le numéro",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
             ],
@@ -2369,6 +2407,7 @@ class OfferDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            /// Titre plus gros
             Text(
               title,
               style: const TextStyle(
@@ -2377,38 +2416,55 @@ class OfferDetailPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
+
+            /// Lieu
             Row(
               children: [
                 const Icon(Icons.place_outlined, size: 18),
                 const SizedBox(width: 4),
                 Text(
                   location,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
+
+            /// Catégorie
             Row(
               children: [
                 const Icon(Icons.category_outlined, size: 18),
                 const SizedBox(width: 4),
                 Text(
                   category,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
+
+            /// Budget
             Row(
               children: [
                 const Icon(Icons.euro_outlined, size: 18),
                 const SizedBox(width: 4),
                 Text(
                   budgetText,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
               ],
             ),
+
+            /// Téléphone (si présent)
             if (phone != null && phone!.trim().isNotEmpty) ...[
               const SizedBox(height: 6),
               Row(
@@ -2417,12 +2473,17 @@ class OfferDetailPage extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     phone!,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
                   ),
                 ],
               ),
             ],
+
             const SizedBox(height: 20),
+
             const Text(
               "Description",
               style: TextStyle(
@@ -2431,6 +2492,8 @@ class OfferDetailPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
+
+            /// 🔍 Description plus lisible (police + grande + interligne)
             Expanded(
               child: SingleChildScrollView(
                 child: Text(
@@ -2438,13 +2501,17 @@ class OfferDetailPage extends StatelessWidget {
                       ? "Aucune description détaillée fournie."
                       : description!,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,        // ← plus grand
+                    height: 1.4,         // ← interligne
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
             ),
+
             const SizedBox(height: 16),
+
+            /// Bouton J’accepte l’offre → ouvre un volet avec "Appeler le numéro"
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
