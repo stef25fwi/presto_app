@@ -236,7 +236,7 @@ class _SplashScreenState extends State<SplashScreen>
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
-                    onPressed: () => _navigateTo(const ConsultOffersPage()),
+                    onPressed: () => _navigateTo(const JeConsultePage()),
                     child: const Text(
                       "Je consulte les offres",
                       style:
@@ -470,7 +470,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
     if (index == 0) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ConsultOffersPage()),
+        MaterialPageRoute(builder: (_) => const JeConsultePage()),
       );
       return;
     }
@@ -493,7 +493,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (q.isEmpty) return;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ConsultOffersPage(searchQuery: q),
+        builder: (_) => JeConsultePage(),
       ),
     );
   }
@@ -965,9 +965,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Jardinage",
-                                  ),
+                                  builder: (_) => const JeConsultePage(),
                                 ),
                               );
                             },
@@ -980,9 +978,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Peinture",
-                                  ),
+                                  builder: (_) => const JeConsultePage(),
                                 ),
                               );
                             },
@@ -995,9 +991,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Main-d’œuvre",
-                                  ),
+                                  builder: (_) => const JeConsultePage(),
                                 ),
                               );
                             },
@@ -1010,9 +1004,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Autre",
-                                  ),
+                                  builder: (_) => const JeConsultePage(),
                                 ),
                               );
                             },
@@ -1024,9 +1016,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Garde d’enfants",
-                                  ),
+                                  builder: (_) => const JeConsultePage(),
                                 ),
                               );
                             },
@@ -1038,9 +1028,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Événementiel / DJ",
-                                  ),
+                                  builder: (_) => const JeConsultePage(),
                                 ),
                               );
                             },
@@ -1745,556 +1733,302 @@ class _HowItWorksStep extends StatelessWidget {
   }
 }
 
+
 /// PAGE "JE CONSULTE LES OFFRES" ///////////////////////////////////////////
 
-class ConsultOffersPage extends StatefulWidget {
-  final String? categoryFilter;
-  final String? searchQuery;
+class JeConsultePage extends StatefulWidget {
+  const JeConsultePage({super.key});
 
-  const ConsultOffersPage({
-    super.key,
-    this.categoryFilter,
-    this.searchQuery,
+  @override
+  State<JeConsultePage> createState() => _JeConsultePageState();
+}
+
+class _JeConsultePageState extends State<JeConsultePage> {
+  final TextEditingController _searchCtrl = TextEditingController();
+  final List<String> _filters = [
+    "Jardinage",
+    "Peinture",
+    "Bricolage",
+    "Nettoyage",
+    "Déménagement",
+    "Plomberie",
+  ];
+
+  String selectedFilter = "";
+
+  // Exemple d'annonces avec numéro de téléphone
+  final List<Map<String, dynamic>> annonces = List.generate(20, (i) {
+    return {
+      "titre": "Offre n°${i + 1} – Intervention rapide",
+      "description":
+          "Description détaillée de l'offre numéro ${i + 1}. Travail sérieux et disponible rapidement.",
+      "prix": (50 + i * 3).toString(),
+      "ville": "Baie-Mahault",
+      "phone": "0690${120000 + i}", // numéro fictif
+    };
   });
 
   @override
-  State<ConsultOffersPage> createState() => _ConsultOffersPageState();
-}
-
-class _ConsultOffersPageState extends State<ConsultOffersPage> {
-  final TextEditingController _locationController = TextEditingController();
-  final TextEditingController _subCategoryController = TextEditingController();
-  final TextEditingController _postalCodeController = TextEditingController();
-
-  String? _selectedCategory;
-
-  bool _showLocationSuggestions = false;
-  bool _showFilters = true;
-
-  final List<String> _categories = const [
-    'Toutes catégories',
-    'Restauration / Extra',
-    'Bricolage / Travaux',
-    'Aide à domicile',
-    'Garde d’enfants',
-    'Événementiel / DJ',
-    'Cours & soutien',
-    'Jardinage',
-    'Peinture',
-    'Main-d’œuvre',
-    'Autre',
-  ];
-
-  List<String> get _citySuggestions {
-    final text = _locationController.text.trim().toLowerCase();
-    if (!_showLocationSuggestions) return [];
-    if (text.length < 2) return [];
-    return kCityNames
-        .where((c) => c.toLowerCase().contains(text))
-        .take(5)
-        .toList();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.categoryFilter != null && widget.categoryFilter!.isNotEmpty) {
-      _selectedCategory = widget.categoryFilter;
-    }
-  }
-
-  @override
-  void dispose() {
-    _locationController.dispose();
-    _subCategoryController.dispose();
-    _postalCodeController.dispose();
-    super.dispose();
-  }
-
-  void _resetFilters() {
-    setState(() {
-      _selectedCategory = 'Toutes catégories';
-      _locationController.clear();
-      _subCategoryController.clear();
-      _postalCodeController.clear();
-      _showLocationSuggestions = false;
-    });
-  }
-
-  Query<Map<String, dynamic>> _buildQuery() {
-    Query<Map<String, dynamic>> query =
-        FirebaseFirestore.instance.collection('offers');
-
-    bool hasFilter = false;
-
-    final loc = _locationController.text.trim();
-    final subcat = _subCategoryController.text.trim();
-    final cat = _selectedCategory;
-    final cp = _postalCodeController.text.trim();
-
-    if (loc.isNotEmpty) {
-      hasFilter = true;
-      query = query.where('location', isEqualTo: loc);
-    }
-
-    if (cp.isNotEmpty) {
-      hasFilter = true;
-      query = query.where('postalCode', isEqualTo: cp);
-    }
-
-    if (cat != null && cat.isNotEmpty && cat != 'Toutes catégories') {
-      hasFilter = true;
-      query = query.where('category', isEqualTo: cat);
-    }
-
-    if (subcat.isNotEmpty) {
-      hasFilter = true;
-      query = query.where('subcategory', isEqualTo: subcat);
-    }
-
-    if (!hasFilter) {
-      query = query.orderBy('createdAt', descending: true);
-    }
-
-    return query;
-  }
-
-  void _onLocationChanged(String value) {
-    setState(() {
-      _showLocationSuggestions = true;
-    });
-    final lower = value.trim().toLowerCase();
-    for (final entry in kCityPostalMap.entries) {
-      if (entry.key.toLowerCase() == lower) {
-        _postalCodeController.text = entry.value;
-        break;
-      }
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final baseTitle = widget.categoryFilter == null
-        ? "Je consulte les offres"
-        : "Offres : ${widget.categoryFilter!}";
-
-    final suggestions = _citySuggestions;
-
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
-          baseTitle,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        backgroundColor: kPrestoOrange,
-        foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {
-            setState(() {
-              _showFilters = !_showFilters;
-            });
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.home_outlined),
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const HomePage()),
-                (route) => false,
-              );
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          if (_showFilters)
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      // Menu déroulant (catégorie) à gauche avec bords arrondis
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          initialValue: _selectedCategory ?? 'Toutes catégories',
-                          isDense: false,
-                          decoration: InputDecoration(
-                            labelText: "Catégorie",
-                            isDense: false,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.black26),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: kPrestoOrange, width: 2),
-                            ),
-                          ),
-                          items: _categories
-                              .map(
-                                (c) => DropdownMenuItem(
-                                  value: c,
-                                  child: Text(
-                                    c,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedCategory = value;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _locationController,
-                          decoration: InputDecoration(
-                            labelText: "Lieu / Ville",
-                            hintText: "Ex : Baie-Mahault",
-                            isDense: false,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.black26),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: kPrestoOrange, width: 2),
-                            ),
-                          ),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          enableSuggestions: true,
-                          autocorrect: true,
-                          textCapitalization: TextCapitalization.words,
-                          keyboardType: TextInputType.streetAddress,
-                          autofillHints: const [
-                            AutofillHints.addressCity,
-                            AutofillHints.addressCityAndState,
-                          ],
-                          onChanged: _onLocationChanged,
-                          onSubmitted: (_) {
-                            setState(() {
-                              _showLocationSuggestions = false;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (suggestions.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      constraints: const BoxConstraints(maxHeight: 160),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: suggestions.length,
-                        itemBuilder: (context, index) {
-                          final city = suggestions[index];
-                          return ListTile(
-                            dense: true,
-                            title: Text(city),
-                            onTap: () {
-                              setState(() {
-                                _locationController.text = city;
-                                final cp = kCityPostalMap[city];
-                                if (cp != null) {
-                                  _postalCodeController.text = cp;
-                                }
-                                _showLocationSuggestions = false;
-                              });
-                              FocusScope.of(context).unfocus();
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _subCategoryController,
-                          decoration: InputDecoration(
-                            labelText: "Sous-catégorie",
-                            hintText: "Ex : terrasse, peinture chambre…",
-                            isDense: false,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.black26),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: kPrestoOrange, width: 2),
-                            ),
-                          ),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          enableSuggestions: true,
-                          autocorrect: true,
-                          textCapitalization: TextCapitalization.sentences,
-                          onSubmitted: (_) => setState(() {}),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 110,
-                        child: TextField(
-                          controller: _postalCodeController,
-                          decoration: InputDecoration(
-                            labelText: "C/P",
-                            hintText: "97122",
-                            isDense: false,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.black26),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: kPrestoOrange, width: 2),
-                            ),
-                          ),
-                          keyboardType: TextInputType.number,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          enableSuggestions: true,
-                          autocorrect: false,
-                          autofillHints: const [AutofillHints.postalCode],
-                          onSubmitted: (_) => setState(() {}),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: _resetFilters,
-                      icon: const Icon(
-                        Icons.refresh,
-                        size: 18,
-                      ),
-                      label: const Text(
-                        "Réinitialiser",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          const Divider(height: 1),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _buildQuery().snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                    ),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        "Erreur lors du chargement des offres.\n${snapshot.error}",
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  );
-                }
-
-                List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
-                    snapshot.data?.docs ?? [];
-
-                if (widget.searchQuery != null &&
-                    widget.searchQuery!.trim().isNotEmpty) {
-                  final q = widget.searchQuery!.trim().toLowerCase();
-                  docs = docs.where((d) {
-                    final data = d.data();
-                    final title =
-                        (data['title'] ?? '').toString().toLowerCase();
-                    final desc =
-                        (data['description'] ?? '').toString().toLowerCase();
-                    return title.contains(q) || desc.contains(q);
-                  }).toList();
-                }
-
-                if (docs.isEmpty) {
-                  return const _EmptyOffers();
-                }
-
-                return ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: docs.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final data = docs[index].data();
-
-                    final title = (data['title'] ?? 'Sans titre') as String;
-                    final location =
-                        (data['location'] ?? 'Lieu non précisé') as String;
-                    final category =
-                        (data['category'] ?? 'Catégorie non précisée')
-                            as String;
-                    final budget = data['budget'];
-                    final description = (data['description'] ?? '') as String;
-                    final phone =
-                        data['phone'] == null ? null : data['phone'] as String;
-
-                    String subtitle = "$location · $category";
-                    if (budget != null) {
-                      subtitle += " · ${budget.toString()} €";
-                    }
-
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFFFF3E0),
-                          child: Icon(
-                            Icons.work_outline,
-                            color: kPrestoOrange,
-                          ),
-                        ),
-                        title: Text(
-                          title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        subtitle: Text(
-                          subtitle,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => OfferDetailPage(
-                                title: title,
-                                location: location,
-                                category: category,
-                                budget: budget is num ? budget : null,
-                                description:
-                                    description.isEmpty ? null : description,
-                                phone: phone,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyOffers extends StatelessWidget {
-  const _EmptyOffers();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Padding
-
-        (
-        padding: EdgeInsets.symmetric(horizontal: 32),
+      backgroundColor: const Color(0xFFFDF4EC),
+      body: SafeArea(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              Icons.search_off_outlined,
-              size: 56,
-              color: Colors.black26,
-            ),
-            SizedBox(height: 16),
-            Text(
-              "Aucune offre publiée pour le moment",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+            // 🔍 Barre de recherche (simple, sans gros cadre)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: TextField(
+                controller: _searchCtrl,
+                decoration: const InputDecoration(
+                  hintText: "Rechercher une offre...",
+                  border: InputBorder.none,
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
+                onChanged: (_) => setState(() {}),
               ),
-              textAlign: TextAlign.center,
             ),
-            SizedBox(height: 8),
-            Text(
-              "Clique sur « Publier une offre » pour créer ta première annonce Prestō.",
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.black54,
-                fontWeight: FontWeight.w500,
+
+            // 🧩 Filtres : même hauteur pour toutes les cases
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: -4,
+                children: _filters.map((f) {
+                  final bool isSelected = selectedFilter == f;
+                  return SizedBox(
+                    height: 40, // 👉 même hauteur pour tous
+                    child: GestureDetector(
+                      onTap: () => setState(() => selectedFilter = f),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.orange : Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.black26, width: 1),
+                        ),
+                        child: Text(
+                          f,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: isSelected ? Colors.white : Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
-              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 6),
+
+            // 📄 Liste des annonces + bandeaux motivants
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                itemCount: annonces.length,
+                itemBuilder: (context, index) {
+                  final annonce = annonces[index];
+
+                  // Tous les 5 annonces, on ajoute un petit bandeau slogan
+                  if (index % 5 == 0 && index != 0) {
+                    return Column(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade100,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            "💡 Plus vous publiez, plus vous trouvez vite quelqu'un !",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        _annonceCard(annonce),
+                      ],
+                    );
+                  }
+
+                  return _annonceCard(annonce);
+                },
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
+  // ---- Carte annonce (prix en gras) ----
+  Widget _annonceCard(Map<String, dynamic> annonce) {
+    return GestureDetector(
+      onTap: () => _openAnnonce(annonce),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.black12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              annonce["titre"] as String,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              annonce["description"] as String,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13.5),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "${annonce["prix"]} €",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold, // 👉 prix en gras
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  annonce["ville"] as String,
+                  style: const TextStyle(fontSize: 13),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---- BottomSheet détail + J'accepte l'offre ----
+  void _openAnnonce(Map<String, dynamic> annonce) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              annonce["titre"] as String,
+              style: const TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              annonce["description"] as String,
+              style: const TextStyle(
+                fontSize: 16.5, // 👉 description légèrement grossie
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              "Ville : ${annonce["ville"]}",
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Tarif proposé : ${annonce["prix"]} €",
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 18),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // ferme le bottom sheet
+                _showPhoneDialog(annonce["phone"] as String);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue, // bouton bleu
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Text(
+                "J'accepte l'offre",
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---- Dialog "Voir le numéro de téléphone" + bouton "Appeler le numéro" ----
+  void _showPhoneDialog(String phone) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Voir le numéro de téléphone"),
+          content: Text("Numéro du demandeur : $phone"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Fermer"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _callNumber(phone);
+              },
+              child: const Text("Appeler le numéro"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ---- Lancer l'appel téléphone ----
+  Future<void> _callNumber(String phone) async {
+    final uri = Uri(scheme: "tel", path: phone);
+    final ok = await launchUrl(uri);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Impossible de lancer l'appel."),
+        ),
+      );
+    }
+  }
 }
+
 
 /// PAGE DÉTAIL /////////////////////////////////////////////////////////////
 
