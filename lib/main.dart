@@ -1782,14 +1782,9 @@ class _JeConsultePageState extends State<JeConsultePage> {
               child: TextField(
                 controller: _searchCtrl,
                 decoration: const InputDecoration(
-                  hintText: "Rechercher une offre...",
+                  hintText: "Rechercher un service…",
                   border: InputBorder.none,
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
-                onChanged: (_) => setState(() {}),
               ),
             ),
 
