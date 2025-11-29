@@ -77,43 +77,29 @@ class PrestoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: kPrestoOrange,
-        brightness: Brightness.light,
-      ),
-      scaffoldBackgroundColor: const Color(0xFFFDF4EC),
-      inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.black26),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: kPrestoBlue, width: 1.4),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-        labelStyle: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-        ),
-        hintStyle: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-
     return MaterialApp(
       title: "Prestō",
       debugShowCheckedModeBanner: false,
-      theme: base.copyWith(
-        textTheme: base.textTheme.apply(fontSizeFactor: 1.06),
+      theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: kPrestoOrange,
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFFDF4EC),
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Colors.black26),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: kPrestoBlue, width: 1.4),
+          ),
+        ),
       ),
       home: const SplashScreen(),
     );
@@ -358,9 +344,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     "Jardinage Petit-Bourg demain",
   ];
 
-  /// Mots-clés dynamiques issus des annonces publiées
-  List<String> _offerKeywords = [];
-
   final List<_HomeSlide> _slides = const [
     _HomeSlide(
       title: "Slogans Prestō animés",
@@ -410,34 +393,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _sloganIndex = (_sloganIndex + 1) % _firstSlideSlogans.length;
         });
       });
-    }
-
-    _loadOfferKeywords();
-  }
-
-  Future<void> _loadOfferKeywords() async {
-    try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('offers')
-          .orderBy('createdAt', descending: true)
-          .limit(30)
-          .get();
-
-      final set = <String>{};
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-        final title = (data['title'] ?? '').toString().trim();
-        final location = (data['location'] ?? '').toString().trim();
-        if (title.isNotEmpty) set.add(title);
-        if (location.isNotEmpty) set.add(location);
-      }
-
-      if (!mounted) return;
-      setState(() {
-        _offerKeywords = set.toList();
-      });
-    } catch (_) {
-      // en cas d'erreur : on garde les mots-clés statiques
     }
   }
 
@@ -511,7 +466,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final all = <String>{
       ..._searchKeywords,
       ..._trendingSuggestions,
-      ..._offerKeywords,
     };
 
     return all.where((s) => s.toLowerCase().contains(text));
@@ -555,7 +509,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     try {
       await addOffer(
-        title: "Serveur Jarry",
+        title: "Serveur Jarry — ce soir",
         description:
             "Restaurant à Baie-Mahault (Jarry) recherche un serveur pour le service de ce soir.",
         location: "Baie-Mahault (Jarry)",
@@ -565,7 +519,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         phone: "0690 00 00 01",
       );
       await addOffer(
-        title: "Peintre Saint-François",
+        title: "Peintre Saint-François — urgent",
         description:
             "Maison à repeindre, intervention rapide, mission marquée URGENT.",
         location: "Saint-François",
@@ -575,7 +529,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         phone: "0690 00 00 03",
       );
       await addOffer(
-        title: "Jardinage Petit-Bourg",
+        title: "Jardinage Petit-Bourg — demain",
         description:
             "Entretien jardin et petite taille de haie, idéal demain matin.",
         location: "Petit-Bourg",
@@ -768,13 +722,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               itemBuilder: (context, index) {
                                 final option = options.elementAt(index);
                                 return ListTile(
-                                  title: Text(
-                                    option,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                                  title: Text(option),
                                   onTap: () => onSelected(option),
                                 );
                               },
@@ -1055,48 +1003,37 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 const SizedBox(height: 24),
 
                 // BLOC COMMENT ÇA MARCHE ? ///////////////////////////
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE3F2FD),
-                    borderRadius: BorderRadius.circular(18),
+                const Text(
+                  "Comment ça marche ?",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Comment ça marche ?",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: kPrestoBlue,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      _HowItWorksStep(
-                        stepNumber: 1,
-                        title: "Je publie une offre",
-                        description:
-                            "En quelques lignes, vous décrivez votre besoin et votre lieu.",
-                      ),
-                      SizedBox(height: 8),
-                      _HowItWorksStep(
-                        stepNumber: 2,
-                        title: "Ils la reçoivent en direct",
-                        description:
-                            "Les prestataires proches sont notifiés et voient immédiatement votre offre.",
-                      ),
-                      SizedBox(height: 8),
-                      _HowItWorksStep(
-                        stepNumber: 3,
-                        title: "Ils me contactent aussitôt",
-                        description:
-                            "Vous échangez et choisissez la personne idéale pour le job.",
-                      ),
-                    ],
-                  ),
+                ),
+                const SizedBox(height: 10),
+                Column(
+                  children: const [
+                    _HowItWorksStep(
+                      stepNumber: 1,
+                      title: "Je publie une offre",
+                      description:
+                          "En quelques lignes, vous décrivez votre besoin et votre lieu.",
+                    ),
+                    SizedBox(height: 8),
+                    _HowItWorksStep(
+                      stepNumber: 2,
+                      title: "Ils la reçoivent en direct",
+                      description:
+                          "Les prestataires proches sont notifiés et voient immédiatement votre offre.",
+                    ),
+                    SizedBox(height: 8),
+                    _HowItWorksStep(
+                      stepNumber: 3,
+                      title: "Ils me contactent aussitôt",
+                      description:
+                          "Vous échangez et choisissez la personne idéale pour le job.",
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 24),
@@ -1771,9 +1708,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   String? _selectedCategory;
 
-  bool _showLocationSuggestions = false;
-  bool _showFilters = true;
-
   final List<String> _categories = const [
     'Toutes catégories',
     'Restauration / Extra',
@@ -1789,6 +1723,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   ];
 
   List<String> get _citySuggestions {
+    if (!_showCitySuggestions) return [];
     final text = _locationController.text.trim().toLowerCase();
     if (!_showLocationSuggestions) return [];
     if (text.length < 2) return [];
@@ -1863,10 +1798,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }
 
   void _onLocationChanged(String value) {
-    setState(() {
-      _showLocationSuggestions = true;
-    });
+    setState(() {});
     final lower = value.trim().toLowerCase();
+    setState(() {
+      _showCitySuggestions = lower.length >= 2;
+    });
     for (final entry in kCityPostalMap.entries) {
       if (entry.key.toLowerCase() == lower) {
         _postalCodeController.text = entry.value;
@@ -1916,175 +1852,139 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       ),
       body: Column(
         children: [
-          if (_showFilters)
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      // Menu déroulant (catégorie) à gauche avec bords arrondis
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          value: _selectedCategory ?? 'Toutes catégories',
-                          isDense: false,
-                          decoration: const InputDecoration(
-                            labelText: "Catégorie",
-                            isDense: false,
-                          ),
-                          items: _categories
-                              .map(
-                                (c) => DropdownMenuItem(
-                                  value: c,
-                                  child: Text(
-                                    c,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+          // Zone filtres
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    // Menu déroulant (catégorie) à gauche avec bords arrondis
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedCategory ?? 'Toutes catégories',
+                        isDense: true,
+                        decoration: const InputDecoration(
+                          labelText: "Catégorie",
+                          isDense: true,
+                        ),
+                        items: _categories
+                            .map(
+                              (c) => DropdownMenuItem(
+                                value: c,
+                                child: Text(
+                                  c,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              )
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedCategory = value;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: _locationController,
-                          decoration: const InputDecoration(
-                            labelText: "Lieu / Ville",
-                            hintText: "Ex : Baie-Mahault",
-                            isDense: false,
-                          ),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          enableSuggestions: true,
-                          autocorrect: true,
-                          textCapitalization: TextCapitalization.words,
-                          keyboardType: TextInputType.streetAddress,
-                          autofillHints: const [
-                            AutofillHints.addressCity,
-                            AutofillHints.addressCityAndState,
-                          ],
-                          onChanged: _onLocationChanged,
-                          onSubmitted: (_) {
-                            setState(() {
-                              _showLocationSuggestions = false;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (suggestions.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      constraints: const BoxConstraints(maxHeight: 160),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: suggestions.length,
-                        itemBuilder: (context, index) {
-                          final city = suggestions[index];
-                          return ListTile(
-                            dense: true,
-                            title: Text(city),
-                            onTap: () {
-                              setState(() {
-                                _locationController.text = city;
-                                final cp = kCityPostalMap[city];
-                                if (cp != null) {
-                                  _postalCodeController.text = cp;
-                                }
-                                _showLocationSuggestions = false;
-                              });
-                              FocusScope.of(context).unfocus();
-                            },
-                          );
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedCategory = value;
+                          });
                         },
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _locationController,
+                        decoration: const InputDecoration(
+                          labelText: "Lieu / Ville",
+                          hintText: "Ex : Baie-Mahault",
+                          isDense: true,
+                        ),
+                        enableSuggestions: true,
+                        autocorrect: true,
+                        textCapitalization: TextCapitalization.words,
+                        keyboardType: TextInputType.streetAddress,
+                        autofillHints: const [
+                          AutofillHints.addressCity,
+                          AutofillHints.addressCityAndState,
+                        ],
+                        onChanged: _onLocationChanged,
+                        onSubmitted: (_) => setState(() {}),
+                      ),
+                    ),
                   ],
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _subCategoryController,
-                          decoration: const InputDecoration(
-                            labelText: "Sous-catégorie",
-                            hintText: "Ex : terrasse, peinture chambre…",
-                            isDense: false,
-                          ),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          enableSuggestions: true,
-                          autocorrect: true,
-                          textCapitalization: TextCapitalization.sentences,
-                          onSubmitted: (_) => setState(() {}),
+                ),
+                if (suggestions.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 110,
-                        child: TextField(
-                          controller: _postalCodeController,
-                          decoration: const InputDecoration(
-                            labelText: "C/P",
-                            hintText: "97122",
-                            isDense: false,
-                          ),
-                          keyboardType: TextInputType.number,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          enableSuggestions: true,
-                          autocorrect: false,
-                          autofillHints: const [AutofillHints.postalCode],
-                          onSubmitted: (_) => setState(() {}),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: _resetFilters,
-                      icon: const Icon(
-                        Icons.refresh,
-                        size: 18,
-                      ),
-                      label: const Text(
-                        "Réinitialiser",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                      ],
+                    ),
+                    constraints: const BoxConstraints(maxHeight: 160),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: suggestions.length,
+                      itemBuilder: (context, index) {
+                        final city = suggestions[index];
+                        return ListTile(
+                          dense: true,
+                          title: Text(city),
+                          onTap: () {
+                            setState(() {
+                              _locationController.text = city;
+                              final cp = kCityPostalMap[city];
+                              if (cp != null) {
+                                _postalCodeController.text = cp;
+                              }
+                            });
+                          },
+                        );
+                      },
                     ),
                   ),
                 ],
-              ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _subCategoryController,
+                        decoration: const InputDecoration(
+                          labelText: "Sous-catégorie",
+                          hintText: "Ex : terrasse, peinture chambre…",
+                          isDense: true,
+                        ),
+                        enableSuggestions: true,
+                        autocorrect: true,
+                        textCapitalization: TextCapitalization.sentences,
+                        onSubmitted: (_) => setState(() {}),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 110,
+                      child: TextField(
+                        controller: _postalCodeController,
+                        decoration: const InputDecoration(
+                          labelText: "Code postal",
+                          hintText: "97122",
+                          isDense: true,
+                        ),
+                        keyboardType: TextInputType.number,
+                        enableSuggestions: true,
+                        autocorrect: false,
+                        autofillHints: const [AutofillHints.postalCode],
+                        onSubmitted: (_) => setState(() {}),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
+          ),
           const Divider(height: 1),
           Expanded(
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -2218,9 +2118,7 @@ class _EmptyOffers extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding
-
-        (
+      child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -2280,12 +2178,13 @@ class OfferDetailPage extends StatelessWidget {
     final uri = Uri(scheme: 'tel', path: phoneNumber);
     try {
       if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                "Impossible d’ouvrir le téléphone pour le numéro $phoneNumber"),
+              "Impossible d’ouvrir le téléphone pour le numéro $phoneNumber",
+            ),
           ),
         );
       }
@@ -2332,8 +2231,10 @@ class OfferDetailPage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               ListTile(
-                leading:
-                    const Icon(Icons.call_outlined, color: kPrestoOrange),
+                leading: const Icon(
+                  Icons.call_outlined,
+                  color: kPrestoOrange,
+                ),
                 title: Text(
                   hasPhone
                       ? "Appeler le numéro : $phone"
@@ -2351,8 +2252,10 @@ class OfferDetailPage extends StatelessWidget {
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.chat_bubble_outline,
-                    color: kPrestoOrange),
+                leading: const Icon(
+                  Icons.chat_bubble_outline,
+                  color: kPrestoOrange,
+                ),
                 title: Text(
                   hasAccount
                       ? "Contacter par message (bientôt disponible)"
@@ -2489,7 +2392,7 @@ class OfferDetailPage extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrestoOrange,
+                  backgroundColor: kPrestoBlue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
@@ -2579,8 +2482,7 @@ class _AccountPageState extends State<AccountPage> {
 
     setState(() => _isSaving = true);
     try {
-      final doc =
-          await FirebaseFirestore.instance.collection('users').add({
+      final doc = await FirebaseFirestore.instance.collection('users').add({
         'name': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
         'email': _emailController.text.trim(),
@@ -2732,7 +2634,8 @@ class _AccountPageState extends State<AccountPage> {
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white),
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
                               : const Icon(Icons.person_add_alt_1_outlined),
@@ -2779,6 +2682,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final _postalCodeController = TextEditingController();
 
   String? _category;
+
   bool _showLocationSuggestions = false;
 
   final List<String> _categories = const [
@@ -2795,8 +2699,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   ];
 
   List<String> get _citySuggestions {
-    final text = _locationController.text.trim().toLowerCase();
     if (!_showLocationSuggestions) return [];
+    final text = _locationController.text.trim().toLowerCase();
     if (text.length < 2) return [];
     return kCityNames
         .where((c) => c.toLowerCase().contains(text))
@@ -2816,10 +2720,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   void _onLocationChanged(String value) {
-    setState(() {
-      _showLocationSuggestions = true;
-    });
     final lower = value.trim().toLowerCase();
+    setState(() {
+      _showLocationSuggestions = lower.length >= 2;
+    });
+
     for (final entry in kCityPostalMap.entries) {
       if (entry.key.toLowerCase() == lower) {
         _postalCodeController.text = entry.value;
@@ -2901,7 +2806,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 child: Text(
                   "Récapitulatif de votre offre",
                   style: TextStyle(
-                    fontSize: 19,
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -2936,7 +2841,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -2968,8 +2873,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   label: const Text(
                     "Confirmer la publication",
                     style: TextStyle(
-                      fontWeight: FontWeight.w800,
                       fontSize: 15,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -3026,40 +2931,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              "Décrivez votre besoin",
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Saisie vocale / IA : fonctionnalité bientôt disponible.",
-                                  ),
-                                ),
-                              );
-                            },
-                            icon: const Icon(
-                              Icons.mic,
-                              color: kPrestoBlue,
-                            ),
-                            tooltip: "Décrire mon besoin à l’IA",
-                          ),
-                        ],
+                      const Text(
+                        "Décrivez votre besoin",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       const Text(
                         "Plus votre demande est claire, plus vous aurez de réponses adaptées.",
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 13.5,
                           color: Colors.black54,
                           fontWeight: FontWeight.w500,
                         ),
@@ -3187,7 +3070,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               ),
                               enableSuggestions: true,
                               autocorrect: false,
-                              autofillHints: const [AutofillHints.postalCode],
+                              autofillHints: const [
+                                AutofillHints.postalCode,
+                              ],
                             ),
                           ),
                         ],
@@ -3250,7 +3135,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       TextFormField(
                         controller: _budgetController,
                         keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
+                          decimal: true,
+                        ),
                         decoration: const InputDecoration(
                           labelText: "Budget proposé (€)",
                           hintText: "Ex : 80",
@@ -3335,7 +3221,7 @@ class _RecapRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 90,
+            width: 110,
             child: Text(
               "$label :",
               style: const TextStyle(
