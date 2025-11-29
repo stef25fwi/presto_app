@@ -24,7 +24,7 @@ const Map<String, String> kCityPostalMap = {
   'Capesterre-Belle-Eau': '97130',
   'Basse-Terre': '97100',
   'Goyave': '97128',
-  'Morne-à-l'Eau': '97111',
+  'Morne-à-l\'Eau': '97111',
   'Sainte-Rose': '97115',
   'Le Moule': '97160',
   'Saint-Claude': '97120',
