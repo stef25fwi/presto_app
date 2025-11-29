@@ -407,40 +407,37 @@ class _HomePageState extends State<HomePage> {
 
                   const SizedBox(height: 10),
 
-                  /// 🟠 SECTION AVEC CONFETTIS
-                  Stack(
-                    children: [
-                      Column(
-                        children: dernieresOffres
-                            .map((offre) => _cardAnnonce(offre))
-                            .toList(),
-                      ),
-
-                      /// 🎉 CONFETTIS ORANGE
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: ConfettiWidget(
-                            confettiController: _confetti,
-                            blastDirectionality: BlastDirectionality.explosive,
-                            maxBlastForce: 20,
-                            minBlastForce: 8,
-                            gravity: 0.25,
-                            particleDrag: 0.05,
-                            emissionFrequency: 0.02,
-                            numberOfParticles: 25,
-                            colors: [
-                              Colors.orange.shade300,
-                              Colors.orange.shade500,
-                              Colors.orange.shade700,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                  /// 🟠 LISTE DES OFFRES
+                  Column(
+                    children: dernieresOffres
+                        .map((offre) => _cardAnnonce(offre))
+                        .toList(),
                   ),
 
                   const SizedBox(height: 30),
                 ],
+              ),
+            ),
+            
+            /// 🎉 CONFETTIS ORANGE (positioned at center)
+            Align(
+              alignment: Alignment.topCenter,
+              child: IgnorePointer(
+                child: ConfettiWidget(
+                  confettiController: _confetti,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  maxBlastForce: 20,
+                  minBlastForce: 8,
+                  gravity: 0.25,
+                  particleDrag: 0.05,
+                  emissionFrequency: 0.02,
+                  numberOfParticles: 25,
+                  colors: [
+                    Colors.orange.shade300,
+                    Colors.orange.shade500,
+                    Colors.orange.shade700,
+                  ],
+                ),
               ),
             ),
           ],
