@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/material.dart';
+import 'profile_page.dart';
 
 import 'firebase_options.dart';
 
@@ -2205,9 +2205,7 @@ class _EmptyOffers extends StatelessWidget {
   }
 }
 
-/// PAGE DÉTAIL /////////////////////////////////////////////////////////////
-
-/// PAGE DÉTAIL /////////////////////////////////////////////////////////////
+/// PAGE DÉTAIL OFFRE /////////////////////////////////////////////////
 
 class OfferDetailPage extends StatelessWidget {
   final String title;
@@ -2222,26 +2220,22 @@ class OfferDetailPage extends StatelessWidget {
     required this.title,
     required this.location,
     required this.category,
-    required this.budget,
-    required this.description,
-    required this.phone,
+    this.budget,
+    this.description,
+    this.phone,
   });
 
-  /// Lance l'appel téléphone
   Future<void> _callPhone(BuildContext context) async {
-    final rawPhone = phone?.trim() ?? '';
-    if (rawPhone.isEmpty) {
+    if (phone == null || phone!.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Aucun numéro de téléphone indiqué dans cette offre."),
-        ),
+        const SnackBar(content: Text("Aucun numéro disponible.")),
       );
       return;
     }
 
-    final Uri uri = Uri(
+    final uri = Uri(
       scheme: 'tel',
-      path: rawPhone,
+      path: phone!.trim(),
     );
 
     try {
@@ -2250,142 +2244,17 @@ class OfferDetailPage extends StatelessWidget {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Impossible de lancer l'appel sur ce téléphone."),
+            content: Text("Impossible de lancer l’appel sur cet appareil."),
           ),
         );
       }
-    } catch (e) {
+    } catch (_) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Une erreur est survenue lors de l'appel."),
+          content: Text("Une erreur est survenue lors de l’appel."),
         ),
       );
     }
-  }
-
-  /// Quand on clique sur "J’accepte l’offre"
-  void _onAcceptOffer(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) {
-        final budgetText =
-            budget == null ? "À définir" : "${budget!.toStringAsFixed(2)} €";
-
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: 16 + MediaQuery.of(sheetContext).viewInsets.bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.black26,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const Center(
-                child: Text(
-                  "Récapitulatif de l’offre",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "$location · $category",
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "Budget : $budgetText",
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (phone != null && phone!.trim().isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.phone_android_outlined, size: 18),
-                    const SizedBox(width: 4),
-                    Text(
-                      phone!,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ] else ...[
-                const SizedBox(height: 10),
-                const Text(
-                  "Aucun numéro n’est indiqué dans cette offre.",
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.redAccent,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrestoBlue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.of(sheetContext).pop(); // fermer le volet
-                    _callPhone(context); // lancer l’appel
-                  },
-                  icon: const Icon(Icons.call),
-                  label: const Text(
-                    "Appeler le numéro",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   @override
@@ -2407,7 +2276,7 @@ class OfferDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// Titre plus gros
+            // Titre
             Text(
               title,
               style: const TextStyle(
@@ -2417,39 +2286,43 @@ class OfferDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            /// Lieu
+            // Lieu
             Row(
               children: [
                 const Icon(Icons.place_outlined, size: 18),
                 const SizedBox(width: 4),
-                Text(
-                  location,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
+                Expanded(
+                  child: Text(
+                    location,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
 
-            /// Catégorie
+            // Catégorie
             Row(
               children: [
                 const Icon(Icons.category_outlined, size: 18),
                 const SizedBox(width: 4),
-                Text(
-                  category,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
+                Expanded(
+                  child: Text(
+                    category,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
 
-            /// Budget
+            // Budget
             Row(
               children: [
                 const Icon(Icons.euro_outlined, size: 18),
@@ -2458,15 +2331,14 @@ class OfferDetailPage extends StatelessWidget {
                   budgetText,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 15,
+                    fontSize: 18,
                   ),
                 ),
               ],
             ),
 
-            /// Téléphone (si présent)
             if (phone != null && phone!.trim().isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   const Icon(Icons.phone_android_outlined, size: 18),
@@ -2475,7 +2347,7 @@ class OfferDetailPage extends StatelessWidget {
                     phone!,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 15,
+                      fontSize: 16,
                     ),
                   ),
                 ],
@@ -2483,17 +2355,14 @@ class OfferDetailPage extends StatelessWidget {
             ],
 
             const SizedBox(height: 20),
-
             const Text(
               "Description",
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 8),
-
-            /// 🔍 Description plus lisible (police + grande + interligne)
             Expanded(
               child: SingleChildScrollView(
                 child: Text(
@@ -2501,17 +2370,16 @@ class OfferDetailPage extends StatelessWidget {
                       ? "Aucune description détaillée fournie."
                       : description!,
                   style: const TextStyle(
-                    fontSize: 16,        // ← plus grand
-                    height: 1.4,         // ← interligne
+                    fontSize: 16,
                     fontWeight: FontWeight.w500,
+                    height: 1.4,
                   ),
                 ),
               ),
             ),
-
             const SizedBox(height: 16),
 
-            /// Bouton J’accepte l’offre → ouvre un volet avec "Appeler le numéro"
+            // Bouton accepter / appeler
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -2520,13 +2388,13 @@ class OfferDetailPage extends StatelessWidget {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                onPressed: () => _onAcceptOffer(context),
-                icon: const Icon(Icons.check_circle_outline),
+                onPressed: () => _callPhone(context),
+                icon: const Icon(Icons.call),
                 label: const Text(
-                  "J’accepte l’offre",
+                  "Appeler le numéro",
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: 15,
+                    fontSize: 16,
                   ),
                 ),
               ),
@@ -2759,10 +2627,13 @@ class _AccountPageState extends State<AccountPage> {
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white),
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
-                              : const Icon(Icons.person_add_alt_1_outlined),
+                              : const Icon(
+                                  Icons.person_add_alt_1_outlined,
+                                ),
                           label: Text(
                             _isSaving
                                 ? "Création en cours..."
@@ -3012,6 +2883,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   Widget build(BuildContext context) {
     final suggestions = _citySuggestions;
+    final bool isSmall = MediaQuery.of(context).size.width < 600;
+    final double horizontalPadding = isSmall ? 16.0 : 32.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -3033,331 +2906,329 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ),
         ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isSmall = constraints.maxWidth < 600;
-          final horizontalPadding = isSmall ? 16.0 : 32.0;
-
-          return SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding,
-              24,
-              horizontalPadding,
-              24,
-            ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              "Décrivez votre besoin à notre IA",
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.10),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Saisie vocale / IA : fonctionnalité bientôt disponible.",
-                                    ),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.mic,
-                                color: kPrestoBlue,
-                              ),
-                              tooltip: "Décrire mon besoin à l’IA",
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "Plus votre demande est claire, plus vous aurez de réponses adaptées.",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      TextFormField(
-                        controller: _titleController,
-                        decoration: const InputDecoration(
-                          labelText: "Titre de l’offre *",
-                          hintText: "Ex : Serveur pour service du soir",
-                        ),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        enableSuggestions: true,
-                        autocorrect: true,
-                        textCapitalization: TextCapitalization.sentences,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return "Veuillez saisir un titre d’offre";
-                          }
-                          if (value.trim().length < 4) {
-                            return "Titre trop court";
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        value: _category,
-                        decoration: const InputDecoration(
-                          labelText: "Catégorie",
-                        ),
-                        items: _categories
-                            .map(
-                              (c) => DropdownMenuItem(
-                                value: c,
-                                child: Text(c),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _category = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _descriptionController,
-                        maxLines: 5,
-                        decoration: const InputDecoration(
-                          labelText: "Description détaillée *",
-                          hintText:
-                              "Expliquez ce que vous cherchez : horaires, tâches, niveau attendu…",
-                          alignLabelWithHint: true,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        enableSuggestions: true,
-                        autocorrect: true,
-                        textCapitalization: TextCapitalization.sentences,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return "Veuillez décrire votre besoin";
-                          }
-                          if (value.trim().length < 10) {
-                            return "Description trop courte";
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _locationController,
-                              decoration: const InputDecoration(
-                                labelText: "Lieu / Ville *",
-                                hintText: "Ex : Baie-Mahault, Jarry…",
-                              ),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              enableSuggestions: true,
-                              autocorrect: true,
-                              textCapitalization: TextCapitalization.words,
-                              keyboardType: TextInputType.streetAddress,
-                              autofillHints: const [
-                                AutofillHints.addressCity,
-                                AutofillHints.addressCityAndState,
-                              ],
-                              onChanged: _onLocationChanged,
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return "Indiquez un lieu";
-                                }
-                                return null;
-                              },
-                              onFieldSubmitted: (_) {
-                                setState(() {
-                                  _showLocationSuggestions = false;
-                                });
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            width: 110,
-                            child: TextFormField(
-                              controller: _postalCodeController,
-                              decoration: const InputDecoration(
-                                labelText: "C/P",
-                                hintText: "97122",
-                              ),
-                              keyboardType: TextInputType.number,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              enableSuggestions: true,
-                              autocorrect: false,
-                              autofillHints: const [AutofillHints.postalCode],
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (suggestions.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          constraints: const BoxConstraints(maxHeight: 160),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: suggestions.length,
-                            itemBuilder: (context, index) {
-                              final city = suggestions[index];
-                              return ListTile(
-                                dense: true,
-                                title: Text(city),
-                                onTap: () {
-                                  setState(() {
-                                    _locationController.text = city;
-                                    final cp = kCityPostalMap[city];
-                                    if (cp != null) {
-                                      _postalCodeController.text = cp;
-                                    }
-                                    _showLocationSuggestions = false;
-                                  });
-                                  FocusScope.of(context).unfocus();
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _phoneController,
-                        decoration: const InputDecoration(
-                          labelText: "Téléphone (optionnel)",
-                          hintText: "Ex : 0690 12 34 56",
-                        ),
-                        keyboardType: TextInputType.phone,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        enableSuggestions: true,
-                        autocorrect: false,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _budgetController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        decoration: const InputDecoration(
-                          labelText: "Budget proposé (€)",
-                          hintText: "Ex : 80",
-                        ),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        enableSuggestions: false,
-                        autocorrect: false,
-                        validator: (value) {
-                          if (value == null || value.trim().isNotEmpty) {
-                            final txt =
-                                (value ?? '').trim().replaceAll(',', '.');
-                            if (txt.isEmpty) {
-                              return null;
-                            }
-                            final num? val = num.tryParse(txt);
-                            if (val == null) {
-                              return "Veuillez saisir un montant valide";
-                            }
-                            if (val <= 0) {
-                              return "Le montant doit être positif";
-                            }
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 14),
-                            backgroundColor: kPrestoOrange,
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: _submitForm,
-                          icon: const Icon(Icons.send_outlined),
-                          label: const Text(
-                            "Publier l’offre",
+      resizeToAvoidBottomInset: false,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          physics: const ClampingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            24,
+            horizontalPadding,
+            24,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            "Décrivez votre besoin à notre IA",
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: 22,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
                         ),
+                        const SizedBox(width: 12),
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 6,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: IconButton(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Saisie vocale / IA : fonctionnalité bientôt disponible.",
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.mic,
+                              color: kPrestoBlue,
+                            ),
+                            tooltip: "Décrire mon besoin à l’IA",
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Plus votre demande est claire, plus vous aurez de réponses adaptées.",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w500,
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "* Champs obligatoires",
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.black45,
-                          fontWeight: FontWeight.w500,
+                    ),
+                    const SizedBox(height: 24),
+                    TextFormField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(
+                        labelText: "Titre de l’offre *",
+                        hintText: "Ex : Serveur pour service du soir",
+                      ),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      enableSuggestions: true,
+                      autocorrect: true,
+                      textCapitalization: TextCapitalization.sentences,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return "Veuillez saisir un titre d’offre";
+                        }
+                        if (value.trim().length < 4) {
+                          return "Titre trop court";
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: _category,
+                      decoration: const InputDecoration(
+                        labelText: "Catégorie",
+                      ),
+                      items: _categories
+                          .map(
+                            (c) => DropdownMenuItem(
+                              value: c,
+                              child: Text(c),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _category = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _descriptionController,
+                      maxLines: 5,
+                      decoration: const InputDecoration(
+                        labelText: "Description détaillée *",
+                        hintText:
+                            "Expliquez ce que vous cherchez : horaires, tâches, niveau attendu…",
+                        alignLabelWithHint: true,
+                      ),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      enableSuggestions: true,
+                      autocorrect: true,
+                      textCapitalization: TextCapitalization.sentences,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return "Veuillez décrire votre besoin";
+                        }
+                        if (value.trim().length < 10) {
+                          return "Description trop courte";
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _locationController,
+                            decoration: const InputDecoration(
+                              labelText: "Lieu / Ville *",
+                              hintText: "Ex : Baie-Mahault, Jarry…",
+                            ),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            enableSuggestions: true,
+                            autocorrect: true,
+                            textCapitalization: TextCapitalization.words,
+                            keyboardType: TextInputType.streetAddress,
+                            autofillHints: const [
+                              AutofillHints.addressCity,
+                              AutofillHints.addressCityAndState,
+                            ],
+                            onChanged: _onLocationChanged,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return "Indiquez un lieu";
+                              }
+                              return null;
+                            },
+                            onFieldSubmitted: (_) {
+                              setState(() {
+                                _showLocationSuggestions = false;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 110,
+                          child: TextFormField(
+                            controller: _postalCodeController,
+                            decoration: const InputDecoration(
+                              labelText: "C/P",
+                              hintText: "97122",
+                            ),
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            enableSuggestions: true,
+                            autocorrect: false,
+                            autofillHints: const [AutofillHints.postalCode],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (suggestions.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 8,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        constraints: const BoxConstraints(maxHeight: 160),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: suggestions.length,
+                          itemBuilder: (context, index) {
+                            final city = suggestions[index];
+                            return ListTile(
+                              dense: true,
+                              title: Text(city),
+                              onTap: () {
+                                setState(() {
+                                  _locationController.text = city;
+                                  final cp = kCityPostalMap[city];
+                                  if (cp != null) {
+                                    _postalCodeController.text = cp;
+                                  }
+                                  _showLocationSuggestions = false;
+                                });
+                                FocusScope.of(context).unfocus();
+                              },
+                            );
+                          },
                         ),
                       ),
                     ],
-                  ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _phoneController,
+                      decoration: const InputDecoration(
+                        labelText: "Téléphone (optionnel)",
+                        hintText: "Ex : 0690 12 34 56",
+                      ),
+                      keyboardType: TextInputType.phone,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      enableSuggestions: true,
+                      autocorrect: false,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _budgetController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: "Budget proposé (€)",
+                        hintText: "Ex : 80",
+                      ),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      enableSuggestions: false,
+                      autocorrect: false,
+                      validator: (value) {
+                        if (value == null || value.trim().isNotEmpty) {
+                          final txt =
+                              (value ?? '').trim().replaceAll(',', '.');
+                          if (txt.isEmpty) {
+                            return null;
+                          }
+                          final num? val = num.tryParse(txt);
+                          if (val == null) {
+                            return "Veuillez saisir un montant valide";
+                          }
+                          if (val <= 0) {
+                            return "Le montant doit être positif";
+                          }
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          backgroundColor: kPrestoOrange,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: _submitForm,
+                        icon: const Icon(Icons.send_outlined),
+                        label: const Text(
+                          "Publier l’offre",
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "* Champs obligatoires",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.black45,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
@@ -3401,6 +3272,779 @@ class _RecapRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+import 'package:flutter/material.dart';
+
+enum AuthMode { login, signup }
+
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  AuthMode _authMode = AuthMode.login;
+  bool _isLoggedIn = false; // TODO: à connecter avec ton vrai système d'auth
+
+  // Controllers pour les formulaires
+  final _formKeyAuth = GlobalKey<FormState>();
+  final _formKeyProfile = GlobalKey<FormState>();
+
+  final TextEditingController _emailCtrl = TextEditingController();
+  final TextEditingController _passwordCtrl = TextEditingController();
+  final TextEditingController _passwordConfirmCtrl = TextEditingController();
+
+  final TextEditingController _nameCtrl = TextEditingController();
+  final TextEditingController _cityCtrl = TextEditingController();
+  final TextEditingController _cpCtrl = TextEditingController();
+  final TextEditingController _phoneCtrl = TextEditingController();
+
+  bool _notifNearby = true;
+  bool _notifFavorites = true;
+  bool _notifAcceptOffer = true;
+  bool _notifSystem = true;
+
+  String _accountType = 'Particulier';
+  String _language = 'Français';
+  String _theme = 'Système';
+
+  final List<String> _favoriteCategories = [
+    'Jardinage',
+    'Peinture',
+    'Aide à domicile',
+  ];
+
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    _passwordConfirmCtrl.dispose();
+    _nameCtrl.dispose();
+    _cityCtrl.dispose();
+    _cpCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  // --- Actions fictives à connecter plus tard à Firebase / Auth ---
+  void _onGoogleSignIn() {
+    // TODO: Intégrer Firebase Auth Google
+    setState(() {
+      _isLoggedIn = true;
+    });
+  }
+
+  void _onAppleSignIn() {
+    // TODO: Intégrer Sign in with Apple
+    setState(() {
+      _isLoggedIn = true;
+    });
+  }
+
+  void _onEmailAuth() {
+    if (_formKeyAuth.currentState?.validate() ?? false) {
+      // TODO: login / signup email réel
+      setState(() {
+        _isLoggedIn = true;
+      });
+    }
+  }
+
+  void _onLogout() {
+    setState(() {
+      _isLoggedIn = false;
+    });
+  }
+
+  // --- UI ---
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Mon profil'),
+        centerTitle: true,
+      ),
+      body: Container(
+        color: colorScheme.surface,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: _isLoggedIn ? _buildProfileContent(colorScheme, isDark) : _buildAuthContent(colorScheme, isDark),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAuthContent(ColorScheme colorScheme, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Bienvenue sur Presto',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Connectez-vous ou créez un compte pour publier et accepter des offres autour de vous.',
+          style: TextStyle(
+            fontSize: 14,
+            color: colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Switch Connexion / Inscription
+        Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceVariant.withOpacity(isDark ? 0.3 : 1),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          padding: const EdgeInsets(4),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _authMode = AuthMode.login),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _authMode == AuthMode.login ? colorScheme.primary : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Connexion',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: _authMode == AuthMode.login ? colorScheme.onPrimary : colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _authMode = AuthMode.signup),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _authMode == AuthMode.signup ? colorScheme.primary : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Inscription',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: _authMode == AuthMode.signup ? colorScheme.onPrimary : colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Boutons Google / Apple
+        _buildSocialButton(
+          icon: Icons.g_mobiledata,
+          label: _authMode == AuthMode.login
+              ? 'Se connecter avec Google'
+              : "S’inscrire avec Google",
+          onTap: _onGoogleSignIn,
+          colorScheme: colorScheme,
+        ),
+        const SizedBox(height: 8),
+        _buildSocialButton(
+          icon: Icons.apple,
+          label: _authMode == AuthMode.login
+              ? 'Se connecter avec Apple'
+              : "S’inscrire avec Apple",
+          onTap: _onAppleSignIn,
+          colorScheme: colorScheme,
+        ),
+
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(child: Divider(color: colorScheme.outline.withOpacity(0.4))),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text('ou avec e-mail'),
+            ),
+            Expanded(child: Divider(color: colorScheme.outline.withOpacity(0.4))),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // Formulaire Email
+        Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKeyAuth,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _emailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      labelText: 'E-mail',
+                      prefixIcon: Icon(Icons.email_outlined),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Veuillez saisir un e-mail';
+                      }
+                      if (!value.contains('@')) {
+                        return 'Format e-mail invalide';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _passwordCtrl,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Mot de passe',
+                      prefixIcon: Icon(Icons.lock_outline),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Veuillez saisir un mot de passe';
+                      }
+                      if (value.length < 6) {
+                        return 'Minimum 6 caractères';
+                      }
+                      return null;
+                    },
+                  ),
+                  if (_authMode == AuthMode.signup) ...[
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _passwordConfirmCtrl,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Confirmer le mot de passe',
+                        prefixIcon: Icon(Icons.lock_outline),
+                      ),
+                      validator: (value) {
+                        if (_authMode == AuthMode.signup) {
+                          if (value == null || value.isEmpty) {
+                            return 'Veuillez confirmer le mot de passe';
+                          }
+                          if (value != _passwordCtrl.text) {
+                            return 'Les mots de passe ne correspondent pas';
+                          }
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+
+                  // Bouton email
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _onEmailAuth,
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        _authMode == AuthMode.login ? 'Se connecter' : 'Créer mon compte',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+
+                  if (_authMode == AuthMode.login) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          // TODO: mot de passe oublié
+                        },
+                        child: const Text('Mot de passe oublié ?'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 24),
+        _buildPrestoPromoCard(colorScheme),
+      ],
+    );
+  }
+
+  Widget _buildSocialButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required ColorScheme colorScheme,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon),
+        label: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: colorScheme.outline.withOpacity(0.5)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrestoPromoCard(ColorScheme colorScheme) {
+    return Card(
+      color: colorScheme.primaryContainer,
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.bolt, color: colorScheme.onPrimaryContainer),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                "Besoin d’un jardinier tout de suite ? Publiez votre offre : ils sont des dizaines autour de vous, prêts à accepter le job !",
+                style: TextStyle(
+                  color: colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileContent(ColorScheme colorScheme, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header profil
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 32,
+              backgroundColor: colorScheme.primary.withOpacity(0.15),
+              child: Icon(Icons.person, size: 32, color: colorScheme.primary),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _nameCtrl.text.isEmpty ? 'Mon profil Presto' : _nameCtrl.text,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.verified, size: 18, color: colorScheme.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Compte non vérifié',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              onPressed: _onLogout,
+              icon: Icon(Icons.logout, color: colorScheme.error),
+              tooltip: 'Déconnexion',
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // Infos personnelles
+        _buildSectionTitle('Informations personnelles'),
+        Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKeyProfile,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Nom complet',
+                      prefixIcon: Icon(Icons.person_outline),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _cityCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Commune',
+                      prefixIcon: Icon(Icons.location_on_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _cpCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'C/P',
+                      prefixIcon: Icon(Icons.markunread_mailbox_outlined),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _phoneCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Téléphone',
+                      prefixIcon: Icon(Icons.phone_outlined),
+                    ),
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _emailCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'E-mail',
+                      prefixIcon: Icon(Icons.email_outlined),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _accountType,
+                          decoration: const InputDecoration(
+                            labelText: 'Type de compte',
+                            prefixIcon: Icon(Icons.badge_outlined),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Particulier',
+                              child: Text('Particulier'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Pro',
+                              child: Text('Pro'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Micro-Entreprise',
+                              child: Text('Micro-Entreprise'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                _accountType = value;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.tonalIcon(
+                      onPressed: () {
+                        if (_formKeyProfile.currentState?.validate() ?? false) {
+                          // TODO: sauvegarde profil vers Firestore
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Profil mis à jour.')),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.save_outlined),
+                      label: const Text('Enregistrer'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Préférences
+        _buildSectionTitle('Préférences'),
+        Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildSwitchRow(
+                  title: 'Offres proches de moi',
+                  subtitle: 'Recevoir les nouvelles annonces autour de ma position.',
+                  value: _notifNearby,
+                  onChanged: (v) => setState(() => _notifNearby = v),
+                ),
+                const Divider(),
+                _buildSwitchRow(
+                  title: 'Catégories favorites',
+                  subtitle: 'Être alerté quand une annonce correspond à mes favoris.',
+                  value: _notifFavorites,
+                  onChanged: (v) => setState(() => _notifFavorites = v),
+                ),
+                const Divider(),
+                _buildSwitchRow(
+                  title: 'Quand on accepte mon offre',
+                  subtitle: 'Notification dès qu’un prestataire ou un client accepte.',
+                  value: _notifAcceptOffer,
+                  onChanged: (v) => setState(() => _notifAcceptOffer = v),
+                ),
+                const Divider(),
+                _buildSwitchRow(
+                  title: 'Infos système & sécurité',
+                  subtitle: 'Mises à jour importantes de Presto.',
+                  value: _notifSystem,
+                  onChanged: (v) => setState(() => _notifSystem = v),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Langue & thème
+        Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                DropdownButtonFormField<String>(
+                  value: _language,
+                  decoration: const InputDecoration(
+                    labelText: 'Langue',
+                    prefixIcon: Icon(Icons.language),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Français',
+                      child: Text('Français'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Créole',
+                      child: Text('Créole'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Anglais',
+                      child: Text('Anglais'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _language = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _theme,
+                  decoration: const InputDecoration(
+                    labelText: 'Thème',
+                    prefixIcon: Icon(Icons.brightness_6_outlined),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Système',
+                      child: Text('Automatique (système)'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Clair',
+                      child: Text('Clair'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Sombre',
+                      child: Text('Sombre'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _theme = value);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Catégories favorites
+        _buildSectionTitle('Mes catégories favorites'),
+        Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ..._favoriteCategories.map(
+                  (cat) => Chip(
+                    label: Text(cat),
+                    avatar: const Icon(Icons.star, size: 16),
+                  ),
+                ),
+                ActionChip(
+                  label: const Text('Ajouter'),
+                  avatar: const Icon(Icons.add),
+                  onPressed: () {
+                    // TODO: ouvrir un bottom sheet avec la liste des catégories
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Sécurité & aide
+        _buildSectionTitle('Sécurité & aide'),
+        Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.lock_reset_outlined),
+                title: const Text('Changer mon mot de passe'),
+                onTap: () {
+                  // TODO: action
+                },
+              ),
+              const Divider(height: 0),
+              ListTile(
+                leading: const Icon(Icons.description_outlined),
+                title: const Text('Télécharger mes données'),
+                onTap: () {
+                  // TODO: action
+                },
+              ),
+              const Divider(height: 0),
+              ListTile(
+                leading: const Icon(Icons.support_agent_outlined),
+                title: const Text('FAQ & support'),
+                onTap: () {
+                  // TODO: ouvrir page aide
+                },
+              ),
+              const Divider(height: 0),
+              ListTile(
+                leading: Icon(Icons.delete_forever_outlined, color: colorScheme.error),
+                title: Text(
+                  'Supprimer mon compte',
+                  style: TextStyle(color: colorScheme.error),
+                ),
+                onTap: () {
+                  // TODO: confirmation suppression
+                },
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSwitchRow({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        Switch(value: value, onChanged: onChanged),
+      ],
     );
   }
 }
