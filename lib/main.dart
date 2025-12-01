@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'profile_page.dart';
 
 import 'firebase_options.dart';
 
@@ -264,8 +263,8 @@ class _TapScaleState extends State<_TapScale>
     with SingleTickerProviderStateMixin {
   double _scale = 1.0;
 
-  void _down(_) => setState(() => _scale = 0.96);
-  void _up(_) => setState(() => _scale = 1.0);
+  void _down(TapDownDetails _) => setState(() => _scale = 0.96);
+  void _up(TapUpDetails _) => setState(() => _scale = 1.0);
 
   @override
   Widget build(BuildContext context) {
@@ -420,7 +419,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final description =
             (data['description'] ?? '').toString().toLowerCase();
         final combined = '$title $description';
-        for (final word in combined.split(RegExp(r'\\s+'))) {
+        for (final word in combined.split(RegExp(r'\s+'))) {
           if (word.length > 3 &&
               !RegExp(r'[0-9]').hasMatch(word) &&
               !word.startsWith('0')) {
@@ -477,21 +476,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
     if (index == 3) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ProfilePage()),
+        MaterialPageRoute(builder: (_) => const AccountPage()),
       );
       return;
     }
   }
 
-void _goToSearch(String query) {
-  final q = query.trim();
-  if (q.isEmpty) return;
-  Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => ConsultOffersPage(searchQuery: q),
-    ),
-  );
-}
+  void _goToSearch(String query) {
+    final q = query.trim();
+    if (q.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ConsultOffersPage(searchQuery: q),
+      ),
+    );
+  }
 
   /// Moteur de suggestions “smart” pour la barre de recherche
   Iterable<String> _buildSearchSuggestions(TextEditingValue value) {
@@ -1046,8 +1045,8 @@ void _goToSearch(String query) {
                     color: const Color(0xFFE3F2FD),
                     borderRadius: BorderRadius.circular(18),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
@@ -1196,7 +1195,8 @@ void _goToSearch(String query) {
                                     title: title,
                                     location: location,
                                     category: (data['category'] ??
-                                        'Catégorie non précisée') as String,
+                                            'Catégorie non précisée')
+                                        as String,
                                     budget: data['budget'] is num
                                         ? data['budget'] as num
                                         : null,
@@ -1217,10 +1217,12 @@ void _goToSearch(String query) {
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
-                                ]
+                                ],
                               ),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 10),
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
                               child: Row(
                                 children: [
                                   Container(
@@ -1282,58 +1284,6 @@ void _goToSearch(String query) {
                 ),
 
                 const SizedBox(height: 24),
-
-                // SECTION EXISTANTE : D’après vos dernières recherches ///////
-                const Text(
-                  "D’après vos dernières recherches",
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: const [
-                    Text(
-                      "Services à la personne",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Spacer(),
-                    Icon(
-                      Icons.chevron_right,
-                      size: 20,
-                      color: Colors.black45,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 150,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: const [
-                      _ServiceCard(
-                        label: "Nettoyage",
-                        icon: Icons.cleaning_services_outlined,
-                        badge: "Populaire",
-                      ),
-                      _ServiceCard(
-                        label: "Tonte",
-                        icon: Icons.grass_outlined,
-                        badge: "Saison",
-                      ),
-                      _ServiceCard(
-                        label: "Serveur",
-                        icon: Icons.restaurant_outlined,
-                        badge: "Week-end",
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
@@ -3117,7 +3067,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             BoxShadow(
                               color: Colors.black.withOpacity(0.08),
                               blurRadius: 8,
-                              offset: Offset(0, 3),
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
