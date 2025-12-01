@@ -483,15 +483,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  void _goToSearch(String query) {
-    final q = query.trim()
-    if (q.isEmpty) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ConsultOffersPage(searchQuery: q),
-      ),
-    );
-  }
+void _goToSearch(String query) {
+  final q = query.trim();
+  if (q.isEmpty) return;
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => ConsultOffersPage(searchQuery: q),
+    ),
+  );
+}
 
   /// Moteur de suggestions “smart” pour la barre de recherche
   Iterable<String> _buildSearchSuggestions(TextEditingValue value) {
@@ -1217,7 +1217,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     blurRadius: 10,
                                     offset: const Offset(0, 4),
                                   ),
-                                ],
+                                ]
                               ),
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 14, vertical: 10),
