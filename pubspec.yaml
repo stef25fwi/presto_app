@@ -10,6 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  firebase_auth: 
+  google_sign_in: 
+  sign_in_with_apple: 
 
   cupertino_icons: ^1.0.8
 
