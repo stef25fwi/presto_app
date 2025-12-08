@@ -1,14 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import 'firebase_options.dart';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
+import 'firebase_options.dart';
+
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -2168,6 +2169,7 @@ class OfferDetailPage extends StatelessWidget {
   final num? budget;
   final String? description;
   final String? phone;
+  final List<String>? imageUrls;
 
   const OfferDetailPage({
     super.key,
@@ -2177,6 +2179,7 @@ class OfferDetailPage extends StatelessWidget {
     this.budget,
     this.description,
     this.phone,
+    this.imageUrls,
   });
 
   Future<void> _callPhone(BuildContext context) async {
@@ -2211,10 +2214,118 @@ class OfferDetailPage extends StatelessWidget {
     }
   }
 
+  void _showActionSheet(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final bool isLoggedIn = user != null;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: false,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const Text(
+                "Que souhaites-tu faire ?",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrestoOrange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    if (isLoggedIn) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const MessagesPage(),
+                        ),
+                      );
+                    } else {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AccountPage(),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: Text(
+                    isLoggedIn
+                        ? "Envoyer un message"
+                        : "Envoyer un message / Se connecter",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrestoBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _callPhone(context);
+                  },
+                  icon: const Icon(Icons.call),
+                  label: const Text(
+                    "Appeler le numéro",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final budgetText =
         budget == null ? "À définir" : "${budget!.toStringAsFixed(2)} €";
+    final bool hasPhone = phone != null && phone!.trim().isNotEmpty;
+    final List<String> photos = imageUrls ?? const [];
 
     return Scaffold(
       appBar: AppBar(
@@ -2230,7 +2341,7 @@ class OfferDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Titre
+            // Titre de l’offre
             Text(
               title,
               style: const TextStyle(
@@ -2238,114 +2349,160 @@ class OfferDetailPage extends StatelessWidget {
                 fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-            // Lieu
-            Row(
-              children: [
-                const Icon(Icons.place_outlined, size: 18),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    location,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ],
+            // Métadonnées (lieu / catégorie / budget / téléphone masqué)
+            _OfferMetaRow(
+              icon: Icons.place_outlined,
+              text: location,
             ),
-            const SizedBox(height: 6),
-
-            // Catégorie
-            Row(
-              children: [
-                const Icon(Icons.category_outlined, size: 18),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    category,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ],
+            const SizedBox(height: 8),
+            _OfferMetaRow(
+              icon: Icons.category_outlined,
+              text: category,
             ),
-            const SizedBox(height: 6),
-
-            // Budget
-            Row(
-              children: [
-                const Icon(Icons.euro_outlined, size: 18),
-                const SizedBox(width: 4),
-                Text(
-                  budgetText,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 8),
+            _OfferMetaRow(
+              icon: Icons.euro_outlined,
+              text: budgetText,
+            ),
+            const SizedBox(height: 8),
+            _OfferMetaRow(
+              icon: Icons.phone_android_outlined,
+              text: hasPhone ? "Numéro disponible" : "Numéro non renseigné",
             ),
 
-            if (phone != null && phone!.trim().isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(Icons.phone_android_outlined, size: 18),
-                  const SizedBox(width: 4),
-                  Text(
-                    phone!,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            const SizedBox(height: 22),
 
-            const SizedBox(height: 20),
             const Text(
               "Description",
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 8),
+
+            // Bloc central scrollable : description + photos + pub
             Expanded(
-              child: SingleChildScrollView(
-                child: Text(
-                  (description == null || description!.trim().isEmpty)
-                      ? "Aucune description détaillée fournie."
-                      : description!,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    height: 1.4,
-                  ),
-                ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(minHeight: constraints.maxHeight),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            (description == null || description!.trim().isEmpty)
+                                ? "Aucune description détaillée fournie."
+                                : description!,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          const Text(
+                            "Photos de l’annonce",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+
+                          SizedBox(
+                            height: 190,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _buildPhotoTile(
+                                    url: photos.isNotEmpty ? photos[0] : null,
+                                    primary: true,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: _buildPhotoTile(
+                                    url: photos.length > 1 ? photos[1] : null,
+                                    primary: false,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 22),
+
+                          const Text(
+                            "Publicité",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+
+                          SizedBox(
+                            width: double.infinity,
+                            height: 100, // format type bannière 320x100
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(18),
+                              child: Container(
+                                color: Colors.white,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.black12,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      "Espace Google Ads\nBannière 320x100",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
+
             const SizedBox(height: 16),
 
-            // Bouton accepter / appeler
+            // Bouton principal
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrestoBlue,
+                  backgroundColor: kPrestoOrange,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(22),
+                  ),
                 ),
-                onPressed: () => _callPhone(context),
-                icon: const Icon(Icons.call),
-                label: const Text(
-                  "Appeler le numéro",
+                onPressed: () => _showActionSheet(context),
+                child: const Text(
+                  "J’accepte l’offre",
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
@@ -2356,6 +2513,96 @@ class OfferDetailPage extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPhotoTile({String? url, bool primary = false}) {
+    if (url == null || url.isEmpty) {
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          color: primary ? const Color(0xFFFFF3E0) : Colors.white,
+          boxShadow: primary
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
+        ),
+        child: Icon(
+          Icons.photo_outlined,
+          size: primary ? 44 : 36,
+          color: primary ? kPrestoOrange : Colors.black26,
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        color: Colors.grey[200],
+        child: Image.network(
+          url,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Center(
+            child: Icon(Icons.image_not_supported),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Ligne méta avec icône dans un rond orange premium
+class _OfferMetaRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _OfferMetaRow({
+    required this.icon,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: kPrestoOrange,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.10),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Icon(
+              icon,
+              size: 18,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -3279,6 +3526,7 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
+  /// ------------------ GOOGLE SIGN-IN ------------------
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
     try {
@@ -3287,9 +3535,10 @@ class _AccountPageState extends State<AccountPage> {
         final googleProvider = GoogleAuthProvider();
         await _auth.signInWithPopup(googleProvider);
       } else {
-        // Mobile : plugin google_sign_in
+        // Mobile / Desktop : plugin google_sign_in
         final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
         if (googleUser == null) {
+          // utilisateur a fermé la popup
           setState(() => _isLoading = false);
           return;
         }
@@ -3315,7 +3564,23 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
+  /// ------------------ APPLE SIGN-IN ------------------
   Future<void> _signInWithApple() async {
+    // Apple officiellement supporté sur iOS / macOS (pas sur Web / Android)
+    if (kIsWeb ||
+        !(defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Connexion Apple disponible uniquement sur iOS / macOS avec la configuration Apple.",
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       final appleCredential = await SignInWithApple.getAppleIDCredential(
@@ -3341,7 +3606,7 @@ class _AccountPageState extends State<AccountPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "Connexion Apple indisponible sur cet appareil ou erreur : $e",
+            "Connexion Apple indisponible ou erreur : $e",
           ),
         ),
       );
@@ -3351,9 +3616,19 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _signOut() async {
-    await _auth.signOut();
-    await GoogleSignIn().signOut();
+    try {
+      await _auth.signOut();
+      // Sur mobile, on essaie aussi de déconnecter Google (si utilisé)
+      if (!kIsWeb) {
+        final googleSignIn = GoogleSignIn();
+        await googleSignIn.signOut();
+      }
+    } catch (_) {
+      // on ignore les erreurs de déconnexion
+    }
   }
+
+  // ------------- UI FORMULAIRE / PROFIL -------------
 
   Widget _buildAuthForm() {
     return Scaffold(
@@ -3516,29 +3791,33 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ),
                 const SizedBox(height: 10),
+
+                // Google
                 SizedBox(
-  width: double.infinity,
-  child: OutlinedButton.icon(
-    style: OutlinedButton.styleFrom(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      side: const BorderSide(color: Colors.black12),
-      backgroundColor: Colors.white,
-    ),
-    onPressed: _isLoading ? null : _signInWithGoogle,
-    icon: const Icon(
-      Icons.login, // icône générique "connexion"
-      size: 18,
-      color: Colors.red,
-    ),
-    label: const Text(
-      "Continuer avec Google",
-      style: TextStyle(
-        fontWeight: FontWeight.w700,
-      ),
-    ),
-  ),
-),
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: const BorderSide(color: Colors.black12),
+                      backgroundColor: Colors.white,
+                    ),
+                    onPressed: _isLoading ? null : _signInWithGoogle,
+                    icon: const Icon(
+                      Icons.login, // simple icône générique
+                      size: 18,
+                      color: Colors.red,
+                    ),
+                    label: const Text(
+                      "Continuer avec Google",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 10),
+
+                // Apple
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -3550,9 +3829,9 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                     onPressed: _isLoading ? null : _signInWithApple,
                     icon: const Icon(
-  Icons.apple,
-  size: 20,
-),
+                      Icons.apple,
+                      size: 20,
+                    ),
                     label: const Text(
                       "Continuer avec Apple",
                       style: TextStyle(
