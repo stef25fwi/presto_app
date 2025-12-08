@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import 'pages/messages/conversations_list_page.dart' as msg;
 import 'firebase_options.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
@@ -470,7 +470,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
     if (index == 2) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const MessagesPage()),
+        MaterialPageRoute(
+          builder: (_) => const msg.ConversationsListPage(),
+        ),
       );
       return;
     }
@@ -1192,6 +1194,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (_) => OfferDetailPage(
+                                    offerId: d.id,
                                     title: title,
                                     location: location,
                                     category: (data['category'] ??
@@ -2045,7 +2048,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                   separatorBuilder: (context, index) =>
                       const SizedBox(height: 8),
                   itemBuilder: (context, index) {
-                    final data = docs[index].data();
+                    final doc = docs[index];
+                    final data = doc.data();
 
                     final title = (data['title'] ?? 'Sans titre') as String;
                     final location =
@@ -2089,6 +2093,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => OfferDetailPage(
+                                offerId: doc.id,
                                 title: title,
                                 location: location,
                                 category: category,
@@ -2158,6 +2163,7 @@ class _EmptyOffers extends StatelessWidget {
 /// PAGE DÉTAIL OFFRE /////////////////////////////////////////////////
 
 class OfferDetailPage extends StatelessWidget {
+  final String? offerId;
   final String title;
   final String location;
   final String category;
@@ -2167,6 +2173,7 @@ class OfferDetailPage extends StatelessWidget {
 
   const OfferDetailPage({
     super.key,
+    this.offerId,
     required this.title,
     required this.location,
     required this.category,
@@ -2174,6 +2181,8 @@ class OfferDetailPage extends StatelessWidget {
     this.description,
     this.phone,
   });
+
+  bool get _isLoggedIn => SessionState.userId != null;
 
   Future<void> _callPhone(BuildContext context) async {
     if (phone == null || phone!.trim().isEmpty) {
@@ -2205,6 +2214,126 @@ class OfferDetailPage extends StatelessWidget {
         ),
       );
     }
+  }
+
+  void _onAcceptOffer(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: false,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        final canCall = phone != null && phone!.trim().isNotEmpty;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const Text(
+                "Que souhaitez-vous faire ?",
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrestoBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    if (!_isLoggedIn) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Crée ton compte Prestō pour envoyer des messages.",
+                          ),
+                        ),
+                      );
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AccountPage(),
+                        ),
+                      );
+                    } else {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => OfferConversationPage(
+                            offerId: offerId,
+                            title: title,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: const Text(
+                    "Envoyer un message",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: canCall
+                      ? () {
+                          Navigator.of(context).pop();
+                          _callPhone(context);
+                        }
+                      : null,
+                  icon: const Icon(Icons.call),
+                  label: Text(
+                    canCall ? "Appeler le numéro" : "Numéro non disponible",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Le numéro reste masqué tant que vous n’appuyez pas sur « Appeler ».\nL’envoi de messages nécessite un compte Prestō.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -2287,23 +2416,6 @@ class OfferDetailPage extends StatelessWidget {
               ],
             ),
 
-            if (phone != null && phone!.trim().isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(Icons.phone_android_outlined, size: 18),
-                  const SizedBox(width: 4),
-                  Text(
-                    phone!,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-
             const SizedBox(height: 20),
             const Text(
               "Description",
@@ -2329,23 +2441,88 @@ class OfferDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Bouton accepter / appeler
+            // Bouton accepter l'offre
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrestoBlue,
+                  backgroundColor: kPrestoOrange,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                onPressed: () => _callPhone(context),
-                icon: const Icon(Icons.call),
+                onPressed: () => _onAcceptOffer(context),
+                icon: const Icon(Icons.handshake_outlined),
                 label: const Text(
-                  "Appeler le numéro",
+                  "Accepter l’offre",
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
                   ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// PAGE CONVERSATION POUR UNE OFFRE ////////////////////////////////////////
+
+class OfferConversationPage extends StatelessWidget {
+  final String? offerId;
+  final String title;
+
+  const OfferConversationPage({
+    super.key,
+    this.offerId,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final subtitle = offerId == null
+        ? "Identifiant d’offre non transmis (mode démo)."
+        : "ID offre : $offerId";
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          "Conversation",
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        backgroundColor: kPrestoOrange,
+        foregroundColor: Colors.white,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Offre : $title",
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black54,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Center(
+              child: Text(
+                "La messagerie détaillée sera branchée ici.\nPour l’instant, cette page confirme juste l’ouverture de la conversation liée à l’offre.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
