@@ -1,0 +1,33 @@
+[1mdiff --cc docs/flutter_bootstrap.js[m
+[1mindex d83e895,828709c..0000000[m
+[1m--- a/docs/flutter_bootstrap.js[m
+[1m+++ b/docs/flutter_bootstrap.js[m
+[36m@@@ -11,6 -11,6 +11,10 @@@[m [m_flutter.buildConfig = {"engineRevision[m
+  [m
+  _flutter.loader.load({[m
+    serviceWorkerSettings: {[m
+[32m++<<<<<<< HEAD[m
+[32m +    serviceWorkerVersion: "4196447748"[m
+[32m++=======[m
+[32m+     serviceWorkerVersion: "177393178"[m
+[32m++>>>>>>> v3-playground[m
+    }[m
+  });[m
+[1mdiff --cc docs/flutter_service_worker.js[m
+[1mindex f1de8da,b64599d..0000000[m
+[1m--- a/docs/flutter_service_worker.js[m
+[1m+++ b/docs/flutter_service_worker.js[m
+[36m@@@ -5,8 -5,8 +5,13 @@@[m [mconst CACHE_NAME = 'flutter-app-cache'[m
+  [m
+  const RESOURCES = {"version.json": "8df3cd3c7c223f3ebda8fbb9cdf0967f",[m
+  "flutter.js": "f393d3c16b631f36852323de8e583132",[m
+[32m++<<<<<<< HEAD[m
+[32m +"main.dart.js": "13bf761195bfe337b3b206f6394a2845",[m
+[32m +"flutter_bootstrap.js": "fd88672775c7abad8f73b565e216068d",[m
+[32m++=======[m
+[32m+ "main.dart.js": "af5484b36ca3ff4045ec78cd36bffdc2",[m
+[32m+ "flutter_bootstrap.js": "5554f37cef280ba2d66b2fc16e9e5432",[m
+[32m++>>>>>>> v3-playground[m
+  "manifest.json": "b8e012f650576f16cebd94a9a9003fb4",[m
+  "canvaskit/skwasm.js.symbols": "262f4827a1317abb59d71d6c587a93e2",[m
+  "canvaskit/canvaskit.wasm": "1f237a213d7370cf95f443d896176460",[m

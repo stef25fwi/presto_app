@@ -304,6 +304,8 @@ class _HomeSlide {
 
 /// HOME ///////////////////////////////////////////////////////////////////
 
+/// HOME ///////////////////////////////////////////////////////////////////
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -319,6 +321,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late final AnimationController _categoryController;
 
   bool _isSeeding = false;
+
+  /// Stream figé pour éviter le clignotement des "Dernières offres"
+  late final Stream<QuerySnapshot<Map<String, dynamic>>> _latestOffersStream;
 
   /// Slogans animés (fade) pour Prestō
   final List<String> _firstSlideSlogans = const [
@@ -410,6 +415,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     _listenDynamicKeywords();
+
+    // ✅ Stream Firestore créé une seule fois (pas de blink au changement de slide)
+    _latestOffersStream = FirebaseFirestore.instance
+        .collection('offers')
+        .orderBy('createdAt', descending: true)
+        .limit(3)
+        .snapshots();
   }
 
   void _listenDynamicKeywords() {
@@ -460,16 +472,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _onBottomTap(int index) {
-    if (index == 1) {
+    setState(() => _selectedIndex = index);
+
+    if (index == 0) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const PublishOfferPage()),
+        MaterialPageRoute(builder: (_) => const ConsultOffersPage()),
       );
       return;
     }
-    if (index == 0) {
-      setState(() => _selectedIndex = 0);
+    if (index == 1) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ConsultOffersPage()),
+        MaterialPageRoute(builder: (_) => const PublishOfferPage()),
       );
       return;
     }
@@ -635,145 +648,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                    _TapScale(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content:
-                                Text("Notifications : bientôt disponibles"),
-                          ),
-                        );
-                      },
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(999),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.notifications_none_outlined,
-                              size: 22,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Positioned(
-                            right: -2,
-                            top: -2,
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: const BoxDecoration(
-                                color: kPrestoOrange,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Text(
-                                "2",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    _buildNotificationBell(),
                   ],
-                ),
-                const SizedBox(height: 12),
-
-                // Barre de recherche (halo + auto-complétion smart)
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(999),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  child: RawAutocomplete<String>(
-                    optionsBuilder: _buildSearchSuggestions,
-                    onSelected: (String selected) {
-                      _goToSearch(selected);
-                    },
-                    fieldViewBuilder:
-                        (context, controller, focusNode, onFieldSubmitted) {
-                      return Row(
-                        children: [
-                          const Icon(Icons.search, color: Colors.black38),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: controller,
-                              focusNode: focusNode,
-                              decoration: const InputDecoration(
-                                hintText:
-                                    "Ex : jardinage aujourd’hui, serveur ce soir…",
-                                border: InputBorder.none,
-                              ),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              textInputAction: TextInputAction.search,
-                              onSubmitted: _goToSearch,
-                              enableSuggestions: true,
-                              autocorrect: true,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                    optionsViewBuilder: (context, onSelected, options) {
-                      return Align(
-                        alignment: Alignment.topLeft,
-                        child: Material(
-                          elevation: 4,
-                          borderRadius: BorderRadius.circular(12),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              maxHeight: 220,
-                              minWidth: 260,
-                            ),
-                            child: ListView.builder(
-                              padding: EdgeInsets.zero,
-                              itemCount: options.length,
-                              itemBuilder: (context, index) {
-                                final option = options.elementAt(index);
-                                return ListTile(
-                                  title: Text(
-                                    option,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                  onTap: () => onSelected(option),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
                 ),
 
                 const SizedBox(height: 16),
@@ -1090,39 +966,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
                 const SizedBox(height: 24),
 
-                // SECTION GÉOLOCALISÉE DYNAMIQUE /////////////////////////////
-                const Text(
-                  "Autour de vous",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  "Prestataires proches :",
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: const [
-                    _GeoChip(label: "Baie-Mahault"),
-                    _GeoChip(label: "Les Abymes"),
-                    _GeoChip(label: "Le Gosier"),
-                    _GeoChip(label: "Petit-Bourg"),
-                    _GeoChip(label: "Pointe-à-Pitre"),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                // PRÉVISUALISATION DES DERNIÈRES OFFRES //////////////////////
+                                // PRÉVISUALISATION DES DERNIÈRES OFFRES //////////////////////
                 Row(
                   children: [
                     const Text(
@@ -1148,13 +992,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
                 const SizedBox(height: 6),
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseFirestore.instance
-                      .collection('offers')
-                      .orderBy('createdAt', descending: true)
-                      .limit(3)
-                      .snapshots(),
+                  stream: _latestOffersStream,
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        !snapshot.hasData) {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         child: Center(
@@ -1165,6 +1006,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         ),
                       );
                     }
+
                     if (snapshot.hasError) {
                       return const SizedBox.shrink();
                     }
@@ -1336,6 +1178,66 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 }
+
+/// Cloche branchée sur Firebase Auth + favoris utilisateur
+Widget _buildNotificationBell() {
+  return StreamBuilder<User?>(
+    stream: FirebaseAuth.instance.authStateChanges(),
+    builder: (context, authSnapshot) {
+      final user = authSnapshot.data;
+
+      // Utilisateur NON connecté → cloche simple, pas de badge
+      if (user == null) {
+        return _TapScale(
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  "Connecte-toi à ton compte et ajoute des catégories favorites pour activer les notifications.",
+                ),
+              ),
+            );
+          },
+          child: const _NotificationBellBase(badgeCount: 0),
+        );
+      }
+
+      // Utilisateur connecté → on écoute son doc Firestore (profil + favoris)
+      return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .snapshots(),
+        builder: (context, userSnapshot) {
+          if (userSnapshot.connectionState == ConnectionState.waiting) {
+            return const _NotificationBellBase(badgeCount: 0);
+          }
+
+          final data = userSnapshot.data?.data();
+          final favList =
+              (data?['favoriteCategories'] as List<dynamic>? ?? [])
+                  .map((e) => e.toString())
+                  .toList();
+
+          final int badgeCount = favList.length;
+
+          return _TapScale(
+            onTap: () {
+              final msg = badgeCount == 0
+                  ? "Ajoute des catégories favorites dans « Mon profil » pour recevoir des notifications ciblées."
+                  : "Tu suis $badgeCount catégories. Bientôt : notifications push pour chaque nouvelle annonce dans tes favoris.";
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(msg)),
+              );
+            },
+            child: _NotificationBellBase(badgeCount: badgeCount),
+          );
+        },
+      );
+    },
+  );
+}
+
 
 /// CHIPS / CARDS ///////////////////////////////////////////////////////////
 
@@ -1610,6 +1512,72 @@ class _GeoChip extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Cloche de notifications avec badge dynamique /////////////////////////////
+
+class _NotificationBellBase extends StatelessWidget {
+  final int badgeCount;
+
+  const _NotificationBellBase({required this.badgeCount});
+
+  @override
+  Widget build(BuildContext context) {
+    final String? label;
+    if (badgeCount <= 0) {
+      label = null;
+    } else if (badgeCount > 9) {
+      label = "9+";
+    } else {
+      label = badgeCount.toString();
+    }
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(999),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.notifications_none_outlined,
+            size: 22,
+            color: Colors.black87,
+          ),
+        ),
+        if (label != null)
+          Positioned(
+            right: -2,
+            top: -2,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              decoration: const BoxDecoration(
+                color: kPrestoOrange,
+                shape: BoxShape.rectangle,
+                borderRadius: BorderRadius.all(Radius.circular(999)),
+              ),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 9,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -2607,51 +2575,31 @@ class _OfferMetaRow extends StatelessWidget {
   }
 }
 
-/// PAGE MESSAGES (style WhatsApp) //////////////////////////////////////////
+/// Utilitaire : format d'heure pour la liste de conversations
+String formatTimeLabel(Timestamp? ts) {
+  if (ts == null) return '';
+  final dt = ts.toDate();
+  final now = DateTime.now();
 
-class MessagesPage extends StatefulWidget {
-  const MessagesPage({super.key});
+  final sameDay = dt.year == now.year &&
+      dt.month == now.month &&
+      dt.day == now.day;
 
-  @override
-  State<MessagesPage> createState() => _MessagesPageState();
+  if (sameDay) {
+    // Exemple : 14:32
+    return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+  }
+
+  // Exemple : 08/12
+  return "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}";
 }
 
-class _MessagesPageState extends State<MessagesPage> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final TextEditingController _messageController = TextEditingController();
+/// PAGE MESSAGES (LISTE DE CONVERSATIONS) //////////////////////////////////
 
-  @override
-  void dispose() {
-    _messageController.dispose();
-    super.dispose();
-  }
+class MessagesPage extends StatelessWidget {
+  const MessagesPage({super.key});
 
-  Future<void> _sendMessage() async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Connecte-toi à ton compte pour envoyer des messages."),
-        ),
-      );
-      return;
-    }
-
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
-
-    await _firestore.collection('messages').add({
-      'text': text,
-      'senderId': user.uid,
-      'senderName': user.displayName ?? user.email ?? 'Utilisateur Prestō',
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-
-    _messageController.clear();
-  }
-
-  Widget _buildNeedAccount() {
+  Widget _buildNeedAccount(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -2686,7 +2634,8 @@ class _MessagesPageState extends State<MessagesPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kPrestoBlue,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 ),
                 onPressed: () {
                   Navigator.of(context).push(
@@ -2708,8 +2657,12 @@ class _MessagesPageState extends State<MessagesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final user = _auth.currentUser;
-    if (user == null) return _buildNeedAccount();
+    final user = FirebaseAuth.instance.currentUser;
+    final userId = user?.uid ?? SessionState.userId;
+
+    if (userId == null) {
+      return _buildNeedAccount(context);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -2731,21 +2684,576 @@ class _MessagesPageState extends State<MessagesPage> {
           ),
         ],
       ),
+      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: FirebaseFirestore.instance
+            .collection('conversations')
+            .where('participants', arrayContains: userId)
+            .orderBy('lastMessageAt', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+              ),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  "Erreur lors du chargement des conversations.\n${snapshot.error}",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          final docs = snapshot.data?.docs ?? [];
+
+          if (docs.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.chat_bubble_outline,
+                      size: 64,
+                      color: Colors.black26,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      "Aucune conversation pour l’instant",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      "Accepte une offre ou envoie un message depuis le détail d’une annonce pour démarrer une conversation.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            itemCount: docs.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 4),
+            itemBuilder: (context, index) {
+              final data = docs[index].data();
+              final conversationId = docs[index].id;
+
+              final offerTitle =
+                  (data['offerTitle'] ?? 'Conversation Prestō') as String;
+              final lastMessage =
+                  (data['lastMessage'] ?? 'Pas encore de message') as String;
+              final ts = data['lastMessageAt'] as Timestamp?;
+              final timeLabel = formatTimeLabel(ts);
+
+              final Map<String, dynamic> unreadMap =
+                  (data['unreadCount'] as Map<String, dynamic>?) ?? {};
+              final int unread =
+                  (unreadMap[userId] is int) ? unreadMap[userId] as int : 0;
+
+              return _TapScale(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ConversationPage(
+                        conversationId: conversationId,
+                        offerTitle: offerTitle,
+                      ),
+                    ),
+                  );
+                },
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  elevation: 1.5,
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    child: Row(
+                      children: [
+                        // Miniature annonce (placeholder)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            width: 46,
+                            height: 46,
+                            color: const Color(0xFFFFF3E0),
+                            child: const Icon(
+                              Icons.work_outline,
+                              color: kPrestoOrange,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Titre + dernier message
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                offerTitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                lastMessage,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: unread > 0
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: unread > 0
+                                      ? Colors.black87
+                                      : Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Heure + bulle "non lus"
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              timeLabel,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.black45,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            if (unread > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: kPrestoBlue,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  unread.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// PAGE CONVERSATION (CHAT WHATSAPP-LIKE) /////////////////////////////////
+
+class ConversationPage extends StatefulWidget {
+  final String conversationId;
+  final String offerTitle;
+
+  const ConversationPage({
+    super.key,
+    required this.conversationId,
+    required this.offerTitle,
+  });
+
+  @override
+  State<ConversationPage> createState() => _ConversationPageState();
+}
+
+class _ConversationPageState extends State<ConversationPage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final TextEditingController _messageController = TextEditingController();
+
+  List<String> _participants = [];
+  bool _isLoadingMeta = true;
+
+  /// Nom à afficher pour l’utilisateur courant dans la conversation
+  String? _currentUserName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConversationMeta();
+    _loadCurrentUserName();
+    _markAsRead();
+  }
+
+  Future<void> _loadConversationMeta() async {
+    try {
+      final doc = await _firestore
+          .collection('conversations')
+          .doc(widget.conversationId)
+          .get();
+      if (!doc.exists) {
+        setState(() {
+          _participants = [];
+          _isLoadingMeta = false;
+        });
+        return;
+      }
+      final data = doc.data() as Map<String, dynamic>;
+      final parts = (data['participants'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList();
+      setState(() {
+        _participants = parts;
+        _isLoadingMeta = false;
+      });
+    } catch (_) {
+      setState(() {
+        _participants = [];
+        _isLoadingMeta = false;
+      });
+    }
+  }
+
+  /// Charge le pseudo de l’utilisateur (ou displayName / email si pas de pseudo)
+  Future<void> _loadCurrentUserName() async {
+    final user = _auth.currentUser;
+    final userId = user?.uid ?? SessionState.userId;
+    if (userId == null) return;
+
+    String? name;
+
+    try {
+      final doc =
+          await _firestore.collection('users').doc(userId).get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        final pseudo = (data['pseudo'] ?? '') as String;
+        if (pseudo.trim().isNotEmpty) {
+          name = pseudo.trim();
+        }
+      }
+    } catch (_) {
+      // on ignore, on utilisera displayName / email
+    }
+
+    name ??= user?.displayName ?? user?.email ?? 'Utilisateur Prestō';
+
+    if (mounted) {
+      setState(() {
+        _currentUserName = name;
+      });
+    }
+  }
+
+  Future<void> _markAsRead() async {
+    final user = _auth.currentUser;
+    final userId = user?.uid ?? SessionState.userId;
+    if (userId == null) return;
+
+    try {
+      await _firestore
+          .collection('conversations')
+          .doc(widget.conversationId)
+          .update({
+        'unreadCount.$userId': 0,
+      });
+    } catch (_) {
+      // pas grave si ça échoue
+    }
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendMessage() async {
+    final user = _auth.currentUser;
+    final userId = user?.uid ?? SessionState.userId;
+
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text("Connecte-toi à ton compte pour envoyer des messages Prestō."),
+        ),
+      );
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const AccountPage()),
+      );
+      return;
+    }
+
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    final convRef =
+        _firestore.collection('conversations').doc(widget.conversationId);
+    final messagesRef = convRef.collection('messages');
+
+    // Nom affiché : pseudo Firestore > displayName > email > fallback
+    final String senderName = _currentUserName ??
+        user?.displayName ??
+        user?.email ??
+        'Utilisateur Prestō';
+
+    _messageController.clear();
+
+    try {
+      await _firestore.runTransaction((txn) async {
+        // Ajouter le message
+        await messagesRef.add({
+          'text': text,
+          'senderId': userId,
+          'senderName': senderName,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Mettre à jour le résumé de conversation
+        final Map<String, dynamic> update = {
+          'lastMessage': text,
+          'lastMessageAt': FieldValue.serverTimestamp(),
+          'lastSenderId': userId,
+        };
+
+        // Mettre à jour les unreadCount pour les autres participants
+        for (final p in _participants) {
+          if (p == userId) {
+            update['unreadCount.$p'] = 0;
+          } else {
+            update['unreadCount.$p'] = FieldValue.increment(1);
+          }
+        }
+
+        await txn.update(convRef, update);
+      });
+
+      // On marque comme lu pour moi (au cas où)
+      _markAsRead();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erreur lors de l’envoi du message : $e"),
+        ),
+      );
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchMessagesOnce() async {
+    final snap = await _firestore
+        .collection('conversations')
+        .doc(widget.conversationId)
+        .collection('messages')
+        .orderBy('createdAt', descending: false)
+        .get();
+
+    return snap.docs.map((d) => d.data()).toList();
+  }
+
+  Future<void> _shareByEmail() async {
+    final messages = await _fetchMessagesOnce();
+    final buffer = StringBuffer();
+
+    for (final m in messages) {
+      final sender = (m['senderName'] ?? 'Utilisateur') as String;
+      final text = (m['text'] ?? '') as String;
+      final ts = m['createdAt'] as Timestamp?;
+      final timeLabel = formatTimeLabel(ts);
+      buffer.writeln("[$timeLabel] $sender : $text");
+    }
+
+    final subject = Uri.encodeComponent(
+        "Conversation Prestō - ${widget.offerTitle}");
+    final body = Uri.encodeComponent(buffer.toString());
+
+    final uri = Uri.parse("mailto:?subject=$subject&body=$body");
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              "Impossible d’ouvrir le client email sur cet appareil."),
+        ),
+      );
+    }
+  }
+
+  Future<void> _exportAsText() async {
+    final messages = await _fetchMessagesOnce();
+    final buffer = StringBuffer();
+
+    buffer.writeln("Conversation Prestō - ${widget.offerTitle}");
+    buffer.writeln("======================================");
+    buffer.writeln();
+
+    for (final m in messages) {
+      final sender = (m['senderName'] ?? 'Utilisateur') as String;
+      final text = (m['text'] ?? '') as String;
+      final ts = m['createdAt'] as Timestamp?;
+      final timeLabel = formatTimeLabel(ts);
+      buffer.writeln("[$timeLabel] $sender : $text");
+    }
+
+    final text = buffer.toString();
+
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("Conversation (texte)"),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: SelectableText(
+                text.isEmpty
+                    ? "Aucun message pour l’instant."
+                    : text,
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Fermer"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _onMenuSelected(String value) {
+    switch (value) {
+      case 'email':
+        _shareByEmail();
+        break;
+      case 'txt':
+        _exportAsText();
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = _auth.currentUser;
+    final userId = user?.uid ?? SessionState.userId;
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: kPrestoOrange,
+        foregroundColor: Colors.white,
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            // Miniature annonce façon "photo"
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                width: 40,
+                height: 40,
+                color: const Color(0xFFFFF3E0),
+                child: const Icon(
+                  Icons.work_outline,
+                  color: kPrestoOrange,
+                  size: 22,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                widget.offerTitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: _onMenuSelected,
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'email',
+                child: Text("Partager par email"),
+              ),
+              PopupMenuItem(
+                value: 'txt',
+                child: Text("Enregistrer la conversation (texte)"),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: Column(
         children: [
-          // Liste des messages (style WhatsApp)
+          // Liste des messages
           Expanded(
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: _firestore
+                  .collection('conversations')
+                  .doc(widget.conversationId)
                   .collection('messages')
-                  .orderBy('timestamp', descending: true)
+                  .orderBy('createdAt', descending: true)
                   .limit(200)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !_isLoadingMeta) {
                   return const Center(
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(kPrestoOrange),
                     ),
                   );
                 }
@@ -2753,21 +3261,25 @@ class _MessagesPageState extends State<MessagesPage> {
                 final docs = snapshot.data?.docs ?? [];
                 if (docs.isEmpty) {
                   return const Center(
-                    child: Text(
-                      "Aucun message pour le moment.\nLance la conversation !",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black54,
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text(
+                        "Aucun message pour le moment.\nCommence la conversation !",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
                       ),
                     ),
                   );
                 }
 
                 return ListView.builder(
-                  reverse: true, // messages récents en bas
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  reverse: true,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 8),
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
                     final data = docs[index].data();
@@ -2775,25 +3287,32 @@ class _MessagesPageState extends State<MessagesPage> {
                     final senderName =
                         (data['senderName'] ?? 'Prestō') as String;
                     final senderId = (data['senderId'] ?? '') as String;
-                    final isMe = senderId == user.uid;
+                    final ts = data['createdAt'] as Timestamp?;
+                    final timeLabel = formatTimeLabel(ts);
+
+                    final isMe = senderId == userId;
 
                     return Align(
-                      alignment:
-                          isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      alignment: isMe
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
                       child: Container(
                         margin: const EdgeInsets.symmetric(vertical: 3),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.75,
+                          maxWidth:
+                              MediaQuery.of(context).size.width * 0.75,
                         ),
                         decoration: BoxDecoration(
                           color: isMe ? kPrestoBlue : Colors.white,
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(18),
                             topRight: const Radius.circular(18),
-                            bottomLeft: Radius.circular(isMe ? 18 : 4),
-                            bottomRight: Radius.circular(isMe ? 4 : 18),
+                            bottomLeft:
+                                Radius.circular(isMe ? 18 : 4),
+                            bottomRight:
+                                Radius.circular(isMe ? 4 : 18),
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -2821,7 +3340,21 @@ class _MessagesPageState extends State<MessagesPage> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: isMe ? Colors.white : Colors.black87,
+                                color:
+                                    isMe ? Colors.white : Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: Text(
+                                timeLabel,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: isMe
+                                      ? Colors.white70
+                                      : Colors.black38,
+                                ),
                               ),
                             ),
                           ],
@@ -2834,7 +3367,7 @@ class _MessagesPageState extends State<MessagesPage> {
             ),
           ),
 
-          // Barre de saisie du message
+          // Zone de saisie
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             color: Colors.grey[100],
@@ -2854,7 +3387,8 @@ class _MessagesPageState extends State<MessagesPage> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.send, color: kPrestoOrange),
+                    icon:
+                        const Icon(Icons.send, color: kPrestoOrange),
                     onPressed: _sendMessage,
                   ),
                 ],
@@ -3460,17 +3994,47 @@ class _AccountPageState extends State<AccountPage> {
   bool _isLoginMode = true;
   bool _isLoading = false;
 
+  // Email / mot de passe
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
+
+  // Profil utilisateur
+  final TextEditingController _profilePseudoController =
+      TextEditingController();
+  final TextEditingController _profileCityController = TextEditingController();
+  final TextEditingController _profilePhoneController = TextEditingController();
+
+  Set<String> _favoriteCategories = <String>{};
+  bool _profileLoaded = false;
+  bool _isSavingProfile = false;
+
+  // Liste de catégories possibles pour les favoris
+  static const List<String> _allFavoriteCategories = [
+    'Restauration / Extra',
+    'Bricolage / Travaux',
+    'Aide à domicile',
+    'Garde d’enfants',
+    'Événementiel / DJ',
+    'Cours & soutien',
+    'Jardinage',
+    'Peinture',
+    'Main-d’œuvre',
+    'Autre',
+  ];
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _passwordConfirmController.dispose();
+    _profilePseudoController.dispose();
+    _profileCityController.dispose();
+    _profilePhoneController.dispose();
     super.dispose();
   }
+
+  // ------------- AUTH EMAIL / MDP ------------------
 
   Future<void> _signInWithEmail() async {
     if (!_formKey.currentState!.validate()) return;
@@ -3519,26 +4083,117 @@ class _AccountPageState extends State<AccountPage> {
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? "Erreur lors de l’inscription.")),
+        SnackBar(
+            content: Text(e.message ?? "Erreur lors de l’inscription.")),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  /// ------------------ GOOGLE SIGN-IN ------------------
+  // ------------- PROFIL / FIRESTORE ------------------
+
+  Future<void> _loadUserProfile(User user) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        _profilePseudoController.text = (data['pseudo'] ?? '') as String;
+        _profileCityController.text = (data['city'] ?? '') as String;
+        _profilePhoneController.text = (data['phone'] ?? '') as String;
+        final favs = (data['favoriteCategories'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+        _favoriteCategories = favs.toSet();
+      } else {
+        _favoriteCategories = <String>{};
+      }
+    } catch (_) {
+      _favoriteCategories = <String>{};
+    }
+
+    if (mounted) {
+      setState(() {
+        _profileLoaded = true;
+      });
+    }
+  }
+
+  Future<void> _saveProfile(User user) async {
+    setState(() => _isSavingProfile = true);
+    try {
+      final pseudo = _profilePseudoController.text.trim();
+
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'pseudo': pseudo,
+        'city': _profileCityController.text.trim(),
+        'phone': _profilePhoneController.text.trim(),
+        'favoriteCategories': _favoriteCategories.toList(),
+      }, SetOptions(merge: true));
+
+      // Mettre aussi à jour le displayName Firebase si un pseudo est renseigné
+      if (pseudo.isNotEmpty) {
+        await user.updateDisplayName(pseudo);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Profil mis à jour ✅")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text("Erreur lors de la sauvegarde du profil : $e")),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingProfile = false);
+      }
+    }
+  }
+
+  Future<void> _toggleFavoriteCategory(User user, String category) async {
+    final newSet = Set<String>.from(_favoriteCategories);
+    if (newSet.contains(category)) {
+      newSet.remove(category);
+      // plus tard : FirebaseMessaging.instance.unsubscribeFromTopic(...)
+    } else {
+      newSet.add(category);
+      // plus tard : FirebaseMessaging.instance.subscribeToTopic(...)
+    }
+
+    setState(() {
+      _favoriteCategories = newSet;
+    });
+
+    await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+      {
+        'favoriteCategories': newSet.toList(),
+      },
+      SetOptions(merge: true),
+    );
+  }
+
+  // ------------- GOOGLE / APPLE ------------------
+
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
     try {
       if (kIsWeb) {
-        // Web : popup Google directement via Firebase
         final googleProvider = GoogleAuthProvider();
         await _auth.signInWithPopup(googleProvider);
       } else {
-        // Mobile / Desktop : plugin google_sign_in
-        final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+        final GoogleSignInAccount? googleUser =
+            await GoogleSignIn().signIn();
         if (googleUser == null) {
-          // utilisateur a fermé la popup
           setState(() => _isLoading = false);
           return;
         }
@@ -3564,9 +4219,8 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  /// ------------------ APPLE SIGN-IN ------------------
   Future<void> _signInWithApple() async {
-    // Apple officiellement supporté sur iOS / macOS (pas sur Web / Android)
+    // Apple : iOS / macOS uniquement
     if (kIsWeb ||
         !(defaultTargetPlatform == TargetPlatform.iOS ||
           defaultTargetPlatform == TargetPlatform.macOS)) {
@@ -3574,7 +4228,7 @@ class _AccountPageState extends State<AccountPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            "Connexion Apple disponible uniquement sur iOS / macOS avec la configuration Apple.",
+            "Connexion Apple dispo uniquement sur iOS / macOS.",
           ),
         ),
       );
@@ -3618,17 +4272,16 @@ class _AccountPageState extends State<AccountPage> {
   Future<void> _signOut() async {
     try {
       await _auth.signOut();
-      // Sur mobile, on essaie aussi de déconnecter Google (si utilisé)
       if (!kIsWeb) {
         final googleSignIn = GoogleSignIn();
         await googleSignIn.signOut();
       }
     } catch (_) {
-      // on ignore les erreurs de déconnexion
+      // on ignore
     }
   }
 
-  // ------------- UI FORMULAIRE / PROFIL -------------
+  // ------------- UI : FORMULAIRE AUTH ------------------
 
   Widget _buildAuthForm() {
     return Scaffold(
@@ -3667,8 +4320,6 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Email / mot de passe
                 Form(
                   key: _formKey,
                   child: Column(
@@ -3720,7 +4371,8 @@ class _AccountPageState extends State<AccountPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: kPrestoOrange,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 14),
                           ),
                           onPressed: _isLoading
                               ? null
@@ -3737,7 +4389,8 @@ class _AccountPageState extends State<AccountPage> {
                                   height: 18,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                    valueColor:
+                                        AlwaysStoppedAnimation<Color>(
                                       Colors.white,
                                     ),
                                   ),
@@ -3756,7 +4409,6 @@ class _AccountPageState extends State<AccountPage> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 16),
                 Center(
                   child: TextButton(
@@ -3777,11 +4429,8 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 const Divider(),
                 const SizedBox(height: 12),
-
-                // Boutons Google / Apple
                 const Text(
                   "Ou se connecter avec",
                   style: TextStyle(
@@ -3791,8 +4440,6 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ),
                 const SizedBox(height: 10),
-
-                // Google
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -3803,7 +4450,7 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                     onPressed: _isLoading ? null : _signInWithGoogle,
                     icon: const Icon(
-                      Icons.login, // simple icône générique
+                      Icons.login,
                       size: 18,
                       color: Colors.red,
                     ),
@@ -3816,8 +4463,6 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                 ),
                 const SizedBox(height: 10),
-
-                // Apple
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -3848,9 +4493,21 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
+  // ------------- UI : PROFIL CONNECTÉ ------------------
+
   Widget _buildProfile(User user) {
-    // on met à jour SessionState pour le reste de l’app
+    // Mise à jour de la session globale pour le reste de l’app
     SessionState.userId = user.uid;
+
+    // Charger le profil Firestore une fois
+    if (!_profileLoaded) {
+      _profileLoaded = true;
+      _loadUserProfile(user);
+    }
+
+    final pseudo = _profilePseudoController.text.trim();
+    final displayName =
+        pseudo.isNotEmpty ? pseudo : (user.displayName ?? "Utilisateur Prestō");
 
     return Scaffold(
       appBar: AppBar(
@@ -3865,99 +4522,274 @@ class _AccountPageState extends State<AccountPage> {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircleAvatar(
-                  radius: 48,
-                  backgroundColor: kPrestoOrange.withOpacity(0.1),
-                  backgroundImage: user.photoURL != null
-                      ? NetworkImage(user.photoURL!)
-                      : null,
-                  child: user.photoURL == null
-                      ? const Icon(
-                          Icons.person,
-                          size: 48,
-                          color: kPrestoOrange,
-                        )
-                      : null,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  user.displayName ?? "Utilisateur Prestō",
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  user.email ?? "",
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  "Tu es connecté. Tu peux maintenant publier des offres, répondre et utiliser la messagerie.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 22),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrestoBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const HomePage()),
-                        (route) => false,
-                      );
-                    },
-                    icon: const Icon(Icons.home_outlined),
-                    label: const Text(
-                      "Retour à l’accueil",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 1️⃣ Retour à l'accueil
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrestoBlue,
+                        foregroundColor: Colors.white,
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                              builder: (_) => const HomePage()),
+                          (route) => false,
+                        );
+                      },
+                      icon: const Icon(Icons.home_outlined),
+                      label: const Text(
+                        "Retour à l’accueil",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: const BorderSide(color: Colors.black26),
+                  const SizedBox(height: 20),
+                  // Avatar + pseudo / email
+                  Center(
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 42,
+                          backgroundColor: kPrestoOrange.withOpacity(0.1),
+                          backgroundImage: user.photoURL != null
+                              ? NetworkImage(user.photoURL!)
+                              : null,
+                          child: user.photoURL == null
+                              ? const Icon(
+                                  Icons.person,
+                                  size: 42,
+                                  color: kPrestoOrange,
+                                )
+                              : null,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          displayName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          user.email ?? "",
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "Tu restes connecté automatiquement.\nTu ne seras déconnecté que si tu appuies sur « Se déconnecter ».",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
-                    onPressed: _signOut,
-                    icon: const Icon(Icons.logout),
-                    label: const Text(
-                      "Se déconnecter",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
+                  ),
+                  const SizedBox(height: 24),
+                  // 2️⃣ Section "Mon profil"
+                  const Text(
+                    "Mon profil",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _profilePseudoController,
+                          decoration: const InputDecoration(
+                            labelText: "Pseudo",
+                            hintText: "Ex : DJ Heat, Stef971...",
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _profileCityController,
+                          decoration: const InputDecoration(
+                            labelText: "Ville",
+                            hintText: "Ex : Baie-Mahault",
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _profilePhoneController,
+                          decoration: const InputDecoration(
+                            labelText: "Téléphone",
+                            hintText: "Ex : 0690 12 34 56",
+                          ),
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrestoOrange,
+                              foregroundColor: Colors.white,
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                            onPressed: _isSavingProfile
+                                ? null
+                                : () => _saveProfile(user),
+                            icon: _isSavingProfile
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor:
+                                          AlwaysStoppedAnimation<Color>(
+                                              Colors.white),
+                                    ),
+                                  )
+                                : const Icon(Icons.save_outlined),
+                            label: Text(
+                              _isSavingProfile
+                                  ? "Enregistrement..."
+                                  : "Enregistrer mon profil",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // 3️⃣ Section "Mes catégories favorites"
+                  const Text(
+                    "Mes catégories favorites",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Sélectionne les catégories pour lesquelles tu veux être notifié quand une nouvelle annonce est publiée.",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: _allFavoriteCategories.map((cat) {
+                            final selected =
+                                _favoriteCategories.contains(cat);
+                            return ChoiceChip(
+                              label: Text(
+                                cat,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: selected
+                                      ? Colors.white
+                                      : Colors.black87,
+                                ),
+                              ),
+                              selected: selected,
+                              selectedColor: kPrestoBlue,
+                              backgroundColor: const Color(0xFFF5F5F5),
+                              onSelected: (_) =>
+                                  _toggleFavoriteCategory(user, cat),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Plus tard, ces favoris pourront déclencher des notifications push et un badge sur la cloche de l’accueil.",
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.black45,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  // 4️⃣ Bouton se déconnecter
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: Colors.black26),
+                      ),
+                      onPressed: _signOut,
+                      icon: const Icon(Icons.logout),
+                      label: const Text(
+                        "Se déconnecter",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+
+  // ------------- BUILD GLOBAL ------------------
 
   @override
   Widget build(BuildContext context) {
