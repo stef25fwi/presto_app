@@ -1,0 +1,248 @@
+[
+  {
+    "name": "AUBERVILLIERS",
+    "cp": "93300",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "AULNAY SOUS BOIS",
+    "cp": "93600",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "BAGNOLET",
+    "cp": "93170",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "BOBIGNY",
+    "cp": "93000",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "BONDY",
+    "cp": "93140",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "CLICHY SOUS BOIS",
+    "cp": "93390",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "COUBRON",
+    "cp": "93470",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "DRANCY",
+    "cp": "93700",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "DUGNY",
+    "cp": "93440",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "EPINAY SUR SEINE",
+    "cp": "93800",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "GAGNY",
+    "cp": "93220",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "GOURNAY SUR MARNE",
+    "cp": "93460",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "L ILE ST DENIS",
+    "cp": "93450",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "LA COURNEUVE",
+    "cp": "93120",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "LE BLANC MESNIL",
+    "cp": "93150",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "LE BOURGET",
+    "cp": "93350",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "LE PRE ST GERVAIS",
+    "cp": "93310",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "LE RAINCY",
+    "cp": "93340",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "LES LILAS",
+    "cp": "93260",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "LES PAVILLONS SOUS BOIS",
+    "cp": "93320",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "LIVRY GARGAN",
+    "cp": "93190",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "MONTFERMEIL",
+    "cp": "93370",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL",
+    "cp": "93100",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "NEUILLY PLAISANCE",
+    "cp": "93360",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "NEUILLY SUR MARNE",
+    "cp": "93330",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "NOISY LE GRAND",
+    "cp": "93160",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "NOISY LE SEC",
+    "cp": "93130",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "PANTIN",
+    "cp": "93500",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "ROMAINVILLE",
+    "cp": "93230",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "ROSNY SOUS BOIS",
+    "cp": "93110",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "SEVRAN",
+    "cp": "93270",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS",
+    "cp": "93200",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS",
+    "cp": "93210",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS",
+    "cp": "93380",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "ST OUEN SUR SEINE",
+    "cp": "93400",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "STAINS",
+    "cp": "93240",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "TREMBLAY EN FRANCE",
+    "cp": "93290",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "VAUJOURS",
+    "cp": "93410",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "VILLEMOMBLE",
+    "cp": "93250",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "VILLEPINTE",
+    "cp": "93420",
+    "dept": "93",
+    "region": ""
+  },
+  {
+    "name": "VILLETANEUSE",
+    "cp": "93430",
+    "dept": "93",
+    "region": ""
+  }
+]

@@ -1,0 +1,4238 @@
+[
+  {
+    "name": "ACLOU",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ACON",
+    "cp": "27570",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ACQUIGNY",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ACQUIGNY",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AIGLEVILLE",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AILLY",
+    "cp": "27600",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AIZIER",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ALIZAY",
+    "cp": "27460",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AMBENAY",
+    "cp": "27250",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AMECOURT",
+    "cp": "27140",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AMFREVILLE LES CHAMPS",
+    "cp": "27380",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AMFREVILLE SOUS LES MONTS",
+    "cp": "27380",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AMFREVILLE ST AMAND",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AMFREVILLE ST AMAND",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AMFREVILLE SUR ITON",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ANDE",
+    "cp": "27430",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ANGERVILLE LA CAMPAGNE",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "APPEVILLE ANNEBAULT",
+    "cp": "27290",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ARMENTIERES SUR AVRE",
+    "cp": "27820",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ARNIERES SUR ITON",
+    "cp": "27180",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ASNIERES",
+    "cp": "27260",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AULNAY SUR ITON",
+    "cp": "27180",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AUTHEUIL AUTHOUILLET",
+    "cp": "27490",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AUTHEUIL AUTHOUILLET",
+    "cp": "27490",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AUTHEVERNES",
+    "cp": "27420",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AUTHOU",
+    "cp": "27290",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "AVIRON",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BACQUEPUIS",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BACQUEVILLE",
+    "cp": "27440",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BAILLEUL LA VALLEE",
+    "cp": "27260",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BALINES",
+    "cp": "27130",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BARC",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BARNEVILLE SUR SEINE",
+    "cp": "27310",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BARQUET",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BARVILLE",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BAZINCOURT SUR EPTE",
+    "cp": "27140",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BAZOQUES",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BEAUBRAY",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BEAUFICEL EN LYONS",
+    "cp": "27480",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONT LE ROGER",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONTEL",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BEMECOURT",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BERENGEVILLE LA CAMPAGNE",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BERNAY",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BERNIENVILLE",
+    "cp": "27180",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BERNOUVILLE",
+    "cp": "27660",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BERTHOUVILLE",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BERVILLE LA CAMPAGNE",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BERVILLE SUR MER",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BEUZEVILLE",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BEZU LA FORET",
+    "cp": "27480",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BEZU ST ELOI",
+    "cp": "27660",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOIS ANZERAY",
+    "cp": "27330",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOIS ARNAULT",
+    "cp": "27250",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOIS JEROME ST OUEN",
+    "cp": "27620",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOIS LE ROI",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOIS NORMAND PRES LYRE",
+    "cp": "27330",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOISNEY",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOISSET LES PREVANCHES",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOISSEY LE CHATEL",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOISSY LAMBERVILLE",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BONCOURT",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BONNEVILLE APTOT",
+    "cp": "27290",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOSGOUET",
+    "cp": "27310",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOSQUENTIN",
+    "cp": "27480",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOSROBERT",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOSROUMOIS",
+    "cp": "27670",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOSROUMOIS",
+    "cp": "27670",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOUAFLES",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOUCHEVILLIERS",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOULLEVILLE",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOULLEVILLE",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOUQUELON",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOUQUETOT",
+    "cp": "27310",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOURG ACHARD",
+    "cp": "27310",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOURG BEAUDOUIN",
+    "cp": "27380",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOURNAINVILLE FAVEROLLES",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOURNAINVILLE FAVEROLLES",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOURNAINVILLE FAVEROLLES",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOURNEVILLE STE CROIX",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOURNEVILLE STE CROIX",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BOURTH",
+    "cp": "27580",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BRAY",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BRESTOT",
+    "cp": "27350",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BRETAGNOLLES",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BRETEUIL",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BRETEUIL",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BRETEUIL",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BRETIGNY",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BREUILPONT",
+    "cp": "27640",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BREUX SUR AVRE",
+    "cp": "27570",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BRIONNE",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BROGLIE",
+    "cp": "27270",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BROSVILLE",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BUEIL",
+    "cp": "27730",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "BUREY",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CAILLOUET ORGEVILLE",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CAILLY SUR EURE",
+    "cp": "27490",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CALLEVILLE",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CAMPIGNY",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CANAPPEVILLE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CAORCHES ST NICOLAS",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CAORCHES ST NICOLAS",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CAPELLE LES GRANDS",
+    "cp": "27270",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CAUGE",
+    "cp": "27180",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CAUMONT",
+    "cp": "27310",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CAUVERVILLE EN ROUMOIS",
+    "cp": "27350",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CESSEVILLE",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAIGNES",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAISE DIEU DU THEIL",
+    "cp": "27580",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAMBLAC",
+    "cp": "27270",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAMBLAC",
+    "cp": "27270",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAMBOIS",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAMBOIS",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAMBOIS",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAMBORD",
+    "cp": "27250",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAMBRAY",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAMP DOLENT",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAMPENARD",
+    "cp": "27600",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAMPIGNY LA FUTELAYE",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHARLEVAL",
+    "cp": "27380",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU SUR EPTE",
+    "cp": "27420",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAUVINCOURT PROVEMONT",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAUVINCOURT PROVEMONT",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHAVIGNY BAILLEUL",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHENNEBRUN",
+    "cp": "27820",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CHERONVILLIERS",
+    "cp": "27250",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CIERREY",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CLAVILLE",
+    "cp": "27180",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CLEF VALLEE D EURE",
+    "cp": "27490",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CLEF VALLEE D EURE",
+    "cp": "27490",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CLEF VALLEE D EURE",
+    "cp": "27490",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "COLLANDRES QUINCARNON",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "COLLETOT",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "COMBON",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CONCHES EN OUCHE",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CONDE SUR RISLE",
+    "cp": "27290",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CONNELLES",
+    "cp": "27430",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CONTEVILLE",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CORMEILLES",
+    "cp": "27260",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CORNEVILLE LA FOUQUETIERE",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CORNEVILLE SUR RISLE",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "COUDRAY",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "COUDRES",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "COURBEPINE",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "COURCELLES SUR SEINE",
+    "cp": "27940",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "COURDEMANCHE",
+    "cp": "27320",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "COURTEILLES",
+    "cp": "27130",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CRASVILLE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CRESTOT",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CRIQUEBEUF LA CAMPAGNE",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CRIQUEBEUF SUR SEINE",
+    "cp": "27340",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CROISY SUR EURE",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CROSVILLE LA VIEILLE",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CROTH",
+    "cp": "27530",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "CUVERVILLE",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "DANGU",
+    "cp": "27720",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "DARDEZ",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "DAUBEUF LA CAMPAGNE",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "DAUBEUF PRES VATTEVILLE",
+    "cp": "27430",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "DOUAINS",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "DOUDEAUVILLE EN VEXIN",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "DOUVILLE SUR ANDELLE",
+    "cp": "27380",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "DROISY",
+    "cp": "27320",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "DROISY",
+    "cp": "27320",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "DRUCOURT",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "DURANVILLE",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ECAQUELON",
+    "cp": "27290",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ECARDENVILLE LA CAMPAGNE",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ECAUVILLE",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ECOUIS",
+    "cp": "27440",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ECQUETOT",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "EMALLEVILLE",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "EMANVILLE",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "EPAIGNES",
+    "cp": "27260",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "EPEGARD",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "EPIEDS",
+    "cp": "27730",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "EPREVILLE EN LIEUVIN",
+    "cp": "27560",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "EPREVILLE PRES LE NEUBOURG",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ETREPAGNY",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ETREVILLE",
+    "cp": "27350",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ETURQUERAYE",
+    "cp": "27350",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "EVREUX",
+    "cp": "27000",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "EVREUX",
+    "cp": "27000",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "EZY SUR EURE",
+    "cp": "27530",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FAINS",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FARCEAUX",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FATOUVILLE GRESTAIN",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FAUVILLE",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FAVEROLLES LA CAMPAGNE",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FERRIERES HAUT CLOCHER",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FERRIERES ST HILAIRE",
+    "cp": "27270",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FEUGUEROLLES",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FIQUEFLEUR EQUAINVILLE",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FLANCOURT CRESCY EN ROUMOIS",
+    "cp": "27310",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FLANCOURT CRESCY EN ROUMOIS",
+    "cp": "27310",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FLANCOURT CRESCY EN ROUMOIS",
+    "cp": "27310",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FLEURY LA FORET",
+    "cp": "27480",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FLEURY SUR ANDELLE",
+    "cp": "27380",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FLIPOU",
+    "cp": "27380",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FOLLEVILLE",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE BELLENGER",
+    "cp": "27600",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE L ABBE",
+    "cp": "27470",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE LA LOUVET",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE SOUS JOUY",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FORT MOVILLE",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FOUCRAINVILLE",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FOULBEC",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FOUQUEVILLE",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FRANQUEVILLE",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FRENELLES EN VEXIN",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FRENELLES EN VEXIN",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FRENELLES EN VEXIN",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FRENEUSE SUR RISLE",
+    "cp": "27290",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FRESNE CAUVERVILLE",
+    "cp": "27260",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "FRESNEY",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GADENCOURT",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GAILLON",
+    "cp": "27600",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GAMACHES EN VEXIN",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GARENNES SUR EURE",
+    "cp": "27780",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GASNY",
+    "cp": "27620",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GAUCIEL",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GAUDREVILLE LA RIVIERE",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GAUVILLE LA CAMPAGNE",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GISORS",
+    "cp": "27140",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GIVERNY",
+    "cp": "27620",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GIVERVILLE",
+    "cp": "27560",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GLISOLLES",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GLOS SUR RISLE",
+    "cp": "27290",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GOUPIL OTHON",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GOUPIL OTHON",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GOURNAY LE GUERIN",
+    "cp": "27580",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GRAND BOURGTHEROULDE",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GRAND BOURGTHEROULDE",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GRAND BOURGTHEROULDE",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GRAND BOURGTHEROULDE",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GRAND BOURGTHEROULDE",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GRAND CAMP",
+    "cp": "27270",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GRAVERON SEMERVILLE",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GRAVIGNY",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GROSLEY SUR RISLE",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GROSSOEUVRE",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GUERNY",
+    "cp": "27720",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GUICHAINVILLE",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "GUISENIERS",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HACQUEVILLE",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HARCOURT",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HARDENCOURT COCHEREL",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HARQUENCY",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HAUVILLE",
+    "cp": "27350",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HEBECOURT",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HECMANVILLE",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HECOURT",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HECTOMARE",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HENNEZIS",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HERQUEVILLE",
+    "cp": "27430",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HEUBECOURT HARICOURT",
+    "cp": "27630",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HEUBECOURT HARICOURT",
+    "cp": "27630",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HEUBECOURT HARICOURT",
+    "cp": "27630",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HEUDEBOUVILLE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HEUDEBOUVILLE",
+    "cp": "27600",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HEUDICOURT",
+    "cp": "27860",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HEUDREVILLE EN LIEUVIN",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HEUDREVILLE SUR EURE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HEUQUEVILLE",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HONDOUVILLE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HONGUEMARE GUENOUVILLE",
+    "cp": "27310",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HOUETTEVILLE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HOULBEC COCHEREL",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HOUVILLE EN VEXIN",
+    "cp": "27440",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "HUEST",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "IGOVILLE",
+    "cp": "27460",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ILLEVILLE SUR MONTFORT",
+    "cp": "27290",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ILLIERS L EVEQUE",
+    "cp": "27770",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "INCARVILLE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "IRREVILLE",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "IVILLE",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "IVRY LA BATAILLE",
+    "cp": "27540",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "JOUY SUR EURE",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "JUIGNETTES",
+    "cp": "27250",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "JUMELLES",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "L HABIT",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "L HOSMES",
+    "cp": "27570",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA BARONNIE",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA BARONNIE",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA BOISSIERE",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA BONNEVILLE SUR ITON",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE BAYVEL",
+    "cp": "27260",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE DU BOIS DES FAULX",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE GAUTHIER",
+    "cp": "27270",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE HARENG",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE LONGUEVILLE",
+    "cp": "27950",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE LONGUEVILLE",
+    "cp": "27950",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE LONGUEVILLE",
+    "cp": "27950",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA COUTURE BOUSSEY",
+    "cp": "27750",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA CROISILLE",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA FERRIERE SUR RISLE",
+    "cp": "27760",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA FORET DU PARC",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA GOULAFRIERE",
+    "cp": "27390",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA HARENGERE",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA HAYE AUBREE",
+    "cp": "27350",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA HAYE DE CALLEVILLE",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA HAYE DE ROUTOT",
+    "cp": "27350",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA HAYE DU THEIL",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA HAYE LE COMTE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA HAYE MALHERBE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA HAYE ST SYLVESTRE",
+    "cp": "27330",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA HEUNIERE",
+    "cp": "27950",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA HOUSSAYE",
+    "cp": "27410",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA LANDE ST LEGER",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA LANDE ST LEGER",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA MADELEINE DE NONANCOURT",
+    "cp": "27320",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA NEUVE GRANGE",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA NEUVE LYRE",
+    "cp": "27330",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA NEUVILLE DU BOSC",
+    "cp": "27890",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA NOE POULAIN",
+    "cp": "27560",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA POTERIE MATHIEU",
+    "cp": "27560",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA PYLE",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA ROQUETTE",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA SAUSSAYE",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA TRINITE",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA TRINITE DE REVILLE",
+    "cp": "27270",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA TRINITE DE THOUBERVILLE",
+    "cp": "27310",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA VACHERIE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA VIEILLE LYRE",
+    "cp": "27330",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LA VIEILLE LYRE",
+    "cp": "27330",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LAUNAY",
+    "cp": "27470",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE BEC HELLOUIN",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE BEC THOMAS",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE BOIS HELLAIN",
+    "cp": "27260",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE BOSC DU THEIL",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE BOSC DU THEIL",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE BOULAY MORIN",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE CORMIER",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE FAVRIL",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE FIDELAIRE",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE LANDIN",
+    "cp": "27350",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE LESME",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE LESME",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE MANOIR",
+    "cp": "27460",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE MESNIL FUGUET",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE MESNIL JOURDAIN",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE MESNIL ST JEAN",
+    "cp": "27560",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE MESNIL ST JEAN",
+    "cp": "27560",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE NEUBOURG",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE NOYER EN OUCHE",
+    "cp": "27410",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE PERREY",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE PERREY",
+    "cp": "27680",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE PERREY",
+    "cp": "27680",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE PLANQUAY",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE PLESSIS GROHAN",
+    "cp": "27180",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE PLESSIS HEBERT",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE PLESSIS STE OPPORTUNE",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE THEIL NOLENT",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE THIL",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE THUIT",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE THUIT DE L OISON",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE THUIT DE L OISON",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE THUIT DE L OISON",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE TILLEUL LAMBERT",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE TORPT",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE TREMBLAY OMONVILLE",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE TRONCQ",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE TRONQUAY",
+    "cp": "27480",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE VAL D HAZEY",
+    "cp": "27600",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE VAL D HAZEY",
+    "cp": "27600",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE VAL D HAZEY",
+    "cp": "27940",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE VAL DAVID",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE VAL DORE",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE VAL DORE",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE VAL DORE",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE VAUDREUIL",
+    "cp": "27100",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LE VIEIL EVREUX",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LERY",
+    "cp": "27690",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES ANDELYS",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES AUTHIEUX",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES BARILS",
+    "cp": "27130",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES BAUX DE BRETEUIL",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES BAUX STE CROIX",
+    "cp": "27180",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES BOTTEREAUX",
+    "cp": "27250",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES BOTTEREAUX",
+    "cp": "27250",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES BOTTEREAUX",
+    "cp": "27250",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES DAMPS",
+    "cp": "27340",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES HOGUES",
+    "cp": "27910",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES MONTS DU ROUMOIS",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES MONTS DU ROUMOIS",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES MONTS DU ROUMOIS",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES PLACES",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES PREAUX",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES THILLIERS EN VEXIN",
+    "cp": "27420",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES TROIS LACS",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES TROIS LACS",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES TROIS LACS",
+    "cp": "27940",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LES VENTES",
+    "cp": "27180",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LETTEGUIVES",
+    "cp": "27910",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LIEUREY",
+    "cp": "27560",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LIGNEROLLES",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LILLY",
+    "cp": "27480",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LISORS",
+    "cp": "27440",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LIVET SUR AUTHOU",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LONGCHAMPS",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LORLEAU",
+    "cp": "27480",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LOUVERSEY",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LOUVIERS",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LOUYE",
+    "cp": "27650",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "LYONS LA FORET",
+    "cp": "27480",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MAINNEVILLE",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MALLEVILLE SUR LE BEC",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MALOUY",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MANDEVILLE",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MANDRES",
+    "cp": "27130",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MANNEVILLE LA RAOULT",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MANNEVILLE SUR RISLE",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MARAIS VERNIER",
+    "cp": "27680",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MARBEUF",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MARBOIS",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MARBOIS",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MARBOIS",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MARBOIS",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MARCILLY LA CAMPAGNE",
+    "cp": "27320",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MARCILLY SUR EURE",
+    "cp": "27810",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MARTAGNY",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MARTAINVILLE",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MARTOT",
+    "cp": "27340",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MELICOURT",
+    "cp": "27390",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MENESQUEVILLE",
+    "cp": "27850",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MENILLES",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MENNEVAL",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MERCEY",
+    "cp": "27950",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MEREY",
+    "cp": "27640",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27270",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27330",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27330",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27330",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27330",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27330",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27330",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27410",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27410",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27410",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27410",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27410",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27410",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27410",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27410",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27410",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL EN OUCHE",
+    "cp": "27410",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL ROUSSET",
+    "cp": "27390",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL SOUS VIENNE",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL SUR L ESTREE",
+    "cp": "27650",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNIL VERCLIVES",
+    "cp": "27440",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MESNILS SUR ITON",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MEZIERES EN VEXIN",
+    "cp": "27510",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MISEREY",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MOISVILLE",
+    "cp": "27320",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MONTFORT SUR RISLE",
+    "cp": "27290",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL L ARGILLE",
+    "cp": "27390",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL L ARGILLE",
+    "cp": "27390",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MORAINVILLE JOUVEAUX",
+    "cp": "27260",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MORAINVILLE JOUVEAUX",
+    "cp": "27260",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MORGNY",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MORSAN",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MOUETTES",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MOUFLAINES",
+    "cp": "27420",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MOUSSEAUX NEUVILLE",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MUIDS",
+    "cp": "27430",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "MUZY",
+    "cp": "27650",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NAGEL SEEZ MESNIL",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NASSANDRES SUR RISLE",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NASSANDRES SUR RISLE",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NASSANDRES SUR RISLE",
+    "cp": "27550",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NASSANDRES SUR RISLE",
+    "cp": "27550",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NEAUFLES AUVERGNY",
+    "cp": "27250",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NEAUFLES AUVERGNY",
+    "cp": "27250",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NEAUFLES AUVERGNY",
+    "cp": "27250",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NEAUFLES ST MARTIN",
+    "cp": "27830",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NEUILLY",
+    "cp": "27730",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE SUR AUTHOU",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NOARDS",
+    "cp": "27560",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NOGENT LE SEC",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NOJEON EN VEXIN",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NONANCOURT",
+    "cp": "27320",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NORMANVILLE",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NOTRE DAME D EPINE",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NOTRE DAME DE L ISLE",
+    "cp": "27940",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NOTRE DAME DU HAMEL",
+    "cp": "27390",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "NOYERS",
+    "cp": "27720",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ORMES",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PACY SUR EURE",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PACY SUR EURE",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PARVILLE",
+    "cp": "27180",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PERRIERS SUR ANDELLE",
+    "cp": "27910",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PERRUEL",
+    "cp": "27910",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PIENCOURT",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PINTERVILLE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PISEUX",
+    "cp": "27130",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PITRES",
+    "cp": "27590",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PLAINVILLE",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PLASNES",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PONT AUDEMER",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PONT AUDEMER",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PONT AUDEMER",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PONT AUTHOU",
+    "cp": "27290",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PONT DE L ARCHE",
+    "cp": "27340",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PONT ST PIERRE",
+    "cp": "27360",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PORT MORT",
+    "cp": "27940",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PORTE DE SEINE",
+    "cp": "27100",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PORTE DE SEINE",
+    "cp": "27430",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PORTES",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "POSES",
+    "cp": "27740",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PRESSAGNY L ORGUEILLEUX",
+    "cp": "27510",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PREY",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PUCHAY",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "PULLAY",
+    "cp": "27130",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "QUATREMARE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "QUILLEBEUF SUR SEINE",
+    "cp": "27680",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "QUITTEBEUF",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "RADEPONT",
+    "cp": "27380",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "RENNEVILLE",
+    "cp": "27910",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "REUILLY",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "RICHEVILLE",
+    "cp": "27420",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ROMILLY LA PUTHENAYE",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ROMILLY SUR ANDELLE",
+    "cp": "27610",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ROSAY SUR LIEURE",
+    "cp": "27790",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ROUGE PERRIERS",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ROUGEMONTIER",
+    "cp": "27350",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ROUTOT",
+    "cp": "27350",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ROUVRAY",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "RUGLES",
+    "cp": "27250",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SACQUENVILLE",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SANCOURT",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SASSEY",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SAUSSAY LA CAMPAGNE",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SEBECOURT",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SELLES",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SEREZ",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SERQUIGNY",
+    "cp": "27470",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST AGNAN DE CERNIERES",
+    "cp": "27390",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE DE L EURE",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST ANTONIN DE SOMMAIRE",
+    "cp": "27250",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST AUBIN D ECROSVILLE",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST AUBIN DE SCELLON",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST AUBIN DU THENNEY",
+    "cp": "27270",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST AUBIN SUR GAILLON",
+    "cp": "27600",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST AUBIN SUR QUILLEBEUF",
+    "cp": "27680",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST BENOIT DES OMBRES",
+    "cp": "27450",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST CHRISTOPHE SUR AVRE",
+    "cp": "27820",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST CHRISTOPHE SUR CONDE",
+    "cp": "27450",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST CYR DE SALERNE",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST CYR LA CAMPAGNE",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS D AUGERONS",
+    "cp": "27390",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS DES MONTS",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS LE FERMENT",
+    "cp": "27140",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS LE FERMENT",
+    "cp": "27140",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST DIDIER DES BOIS",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST ELIER",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST ELOI DE FOURQUES",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE DU VAUVRAY",
+    "cp": "27430",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE L ALLIER",
+    "cp": "27450",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE SOUS BAILLEUL",
+    "cp": "27920",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES DU VIEVRE",
+    "cp": "27450",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES MOTEL",
+    "cp": "27710",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN DE FRESNEY",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN DE PASQUIER",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN DES ANGLES",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN LA CAMPAGNE",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN SUR AVRE",
+    "cp": "27320",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST GREGOIRE DU VIEVRE",
+    "cp": "27450",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DU THENNEY",
+    "cp": "27270",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN DE LA LIEGUE",
+    "cp": "27600",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT DES BOIS",
+    "cp": "27220",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT DU TENCEMENT",
+    "cp": "27390",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER DE ROTES",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER DU GENNETEY",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST LUC",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST MACLOU",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST MARCEL",
+    "cp": "27950",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST MARDS DE BLACARVILLE",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST MARDS DE FRESNE",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DU TILLEUL",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN LA CAMPAGNE",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN ST FIRMIN",
+    "cp": "27450",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST MESLIN DU BOSC",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST OUEN DE PONTCHEUIL",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST OUEN DE THOUBERVILLE",
+    "cp": "27310",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST OUEN DU TILLEUL",
+    "cp": "27670",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL DE FOURQUES",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST PHILBERT SUR BOISSEY",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST PHILBERT SUR RISLE",
+    "cp": "27290",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DE BAILLEUL",
+    "cp": "27920",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DE CERNIERES",
+    "cp": "27390",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DE CORMEILLES",
+    "cp": "27260",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DE SALERNE",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DES FLEURS",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DES IFS",
+    "cp": "27450",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DU BOSGUERARD",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DU VAL",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DU VAUVRAY",
+    "cp": "27430",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE LA GARENNE",
+    "cp": "27600",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST SAMSON DE LA ROQUE",
+    "cp": "27680",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST SEBASTIEN DE MORSENT",
+    "cp": "27180",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST SIMEON",
+    "cp": "27560",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST SULPICE DE GRIMBOUVILLE",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST SYLVESTRE DE CORMEILLES",
+    "cp": "27260",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST SYMPHORIEN",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST VICTOR D EPINE",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST VICTOR DE CHRETIENVILLE",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST VICTOR SUR AVRE",
+    "cp": "27130",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST VIGOR",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST VINCENT DES BOIS",
+    "cp": "27950",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "ST VINCENT DU BOULAY",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "STE COLOMBE LA COMMANDERIE",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "STE COLOMBE PRES VERNON",
+    "cp": "27950",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "STE GENEVIEVE LES GASNY",
+    "cp": "27620",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE D ATTEZ",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE D ATTEZ",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE D ATTEZ",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE DE VATIMESNIL",
+    "cp": "27150",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "STE MARTHE",
+    "cp": "27190",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "STE OPPORTUNE DU BOSC",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "STE OPPORTUNE LA MARE",
+    "cp": "27680",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SURTAUVILLE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SURVILLE",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SUZAY",
+    "cp": "27420",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SYLVAINS LES MOULINS",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SYLVAINS LES MOULINS",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "SYLVAINS LES MOULINS",
+    "cp": "27240",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TERRES DE BORD",
+    "cp": "27340",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TERRES DE BORD",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "THENOUVILLE",
+    "cp": "27290",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "THENOUVILLE",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "THENOUVILLE",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "THIBERVILLE",
+    "cp": "27230",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "THIBOUVILLE",
+    "cp": "27800",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "THIERVILLE",
+    "cp": "27290",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TILLEUL DAME AGNES",
+    "cp": "27170",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TILLIERES SUR AVRE",
+    "cp": "27570",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TILLY",
+    "cp": "27510",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TOCQUEVILLE",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TOUFFREVILLE",
+    "cp": "27440",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TOURNEDOS BOIS HUBERT",
+    "cp": "27180",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TOURNEVILLE",
+    "cp": "27930",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TOURVILLE LA CAMPAGNE",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TOURVILLE SUR PONT AUDEMER",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TOUTAINVILLE",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TREIS SANTS EN OUCHE",
+    "cp": "27270",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TREIS SANTS EN OUCHE",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TREIS SANTS EN OUCHE",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TRIQUEVILLE",
+    "cp": "27500",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "TROUVILLE LA HAULE",
+    "cp": "27680",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VAL D ORGER",
+    "cp": "27380",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VAL D ORGER",
+    "cp": "27440",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VAL DE REUIL",
+    "cp": "27100",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VALAILLES",
+    "cp": "27300",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VALLETOT",
+    "cp": "27350",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VANDRIMARE",
+    "cp": "27380",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VANNECROCQ",
+    "cp": "27210",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VASCOEUIL",
+    "cp": "27910",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VATTEVILLE",
+    "cp": "27430",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VAUX SUR EURE",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VENON",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VERNEUIL D AVRE ET D ITON",
+    "cp": "27130",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VERNEUIL D AVRE ET D ITON",
+    "cp": "27160",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VERNEUSSES",
+    "cp": "27390",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VERNON",
+    "cp": "27200",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VESLY",
+    "cp": "27870",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27420",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27420",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27510",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27510",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27510",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27510",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27510",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27630",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27630",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27630",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27630",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27630",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27630",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEXIN SUR EPTE",
+    "cp": "27630",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VEZILLON",
+    "cp": "27700",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VIEUX PORT",
+    "cp": "27680",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VILLEGATS",
+    "cp": "27120",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VILLERS EN VEXIN",
+    "cp": "27420",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VILLERS SUR LE ROULE",
+    "cp": "27940",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VILLETTES",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VILLEZ SOUS BAILLEUL",
+    "cp": "27950",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VILLEZ SUR LE NEUBOURG",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VILLIERS EN DESOEUVRE",
+    "cp": "27640",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VIRONVAY",
+    "cp": "27400",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VITOT",
+    "cp": "27110",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VOISCREVILLE",
+    "cp": "27520",
+    "dept": "27",
+    "region": ""
+  },
+  {
+    "name": "VRAIVILLE",
+    "cp": "27370",
+    "dept": "27",
+    "region": ""
+  }
+]

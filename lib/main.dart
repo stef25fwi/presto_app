@@ -1,6 +1,10 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -9,7 +13,18 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'firebase_options.dart';
+import 'app_core.dart';
+import 'constants.dart';
+import 'data/city_postal_data.dart';
+import 'package:presto_app/widgets/city_postal_autocomplete_field.dart';
+import 'widgets/offer_card.dart';
+import 'services/city_search.dart';
+import 'pages/publish_offer_page.dart';
+import 'pages/pro_profile_page.dart';
+import 'dev/seed_offers.dart';
 
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -61,7 +76,100 @@ const Map<String, String> kCityPostalMap = {
   'Saint-Esprit': '97270',
 };
 
-final List<String> kCityNames = kCityPostalMap.keys.toList();
+/// Déduit une région à partir du code postal (France métropolitaine + DROM)
+String? inferRegionFromPostalCode(String cp) {
+  cp = cp.trim();
+  if (cp.length < 2) return null;
+
+  // DROM (3 chiffres)
+  if (cp.length >= 3) {
+    final dromPrefix = cp.substring(0, 3);
+    switch (dromPrefix) {
+      case '971':
+        return 'Guadeloupe';
+      case '972':
+        return 'Martinique';
+      case '973':
+        return 'Guyane';
+      case '974':
+        return 'La Réunion';
+      case '976':
+        return 'Mayotte';
+    }
+  }
+
+  // Corse : codes postaux 20000-20999 => on se base sur "20"
+  if (cp.startsWith('20')) {
+    return 'Corse';
+  }
+
+  // Métropole : 2 premiers chiffres => numéro de département
+  final two = int.tryParse(cp.substring(0, 2));
+  if (two == null) return null;
+
+  // Auvergne-Rhône-Alpes
+  if (<int>{1, 3, 7, 15, 26, 38, 42, 43, 63, 69, 73, 74}.contains(two)) {
+    return 'Auvergne-Rhône-Alpes';
+  }
+
+  // Bourgogne-Franche-Comté
+  if (<int>{21, 25, 39, 58, 70, 71, 89, 90}.contains(two)) {
+    return 'Bourgogne-Franche-Comté';
+  }
+
+  // Bretagne
+  if (<int>{22, 29, 35, 56}.contains(two)) {
+    return 'Bretagne';
+  }
+
+  // Centre-Val de Loire
+  if (<int>{18, 28, 36, 37, 41, 45}.contains(two)) {
+    return 'Centre-Val de Loire';
+  }
+
+  // Grand Est
+  if (<int>{8, 10, 51, 52, 54, 55, 57, 67, 68, 88}.contains(two)) {
+    return 'Grand Est';
+  }
+
+  // Hauts-de-France
+  if (<int>{2, 59, 60, 62, 80}.contains(two)) {
+    return 'Hauts-de-France';
+  }
+
+  // Île-de-France
+  if (<int>{75, 77, 78, 91, 92, 93, 94, 95}.contains(two)) {
+    return 'Île-de-France';
+  }
+
+  // Normandie
+  if (<int>{14, 27, 50, 61, 76}.contains(two)) {
+    return 'Normandie';
+  }
+
+  // Nouvelle-Aquitaine
+  if (<int>{16, 17, 19, 23, 24, 33, 40, 47, 64, 79, 86, 87}.contains(two)) {
+    return 'Nouvelle-Aquitaine';
+  }
+
+  // Occitanie
+  if (<int>{9, 11, 12, 30, 31, 32, 34, 46, 48, 65, 66, 81, 82}.contains(two)) {
+    return 'Occitanie';
+  }
+
+  // Pays de la Loire
+  if (<int>{44, 49, 53, 72, 85}.contains(two)) {
+    return 'Pays de la Loire';
+  }
+
+  // Provence-Alpes-Côte d'Azur
+  if (<int>{4, 5, 6, 13, 83, 84}.contains(two)) {
+    return 'Provence-Alpes-Côte d\'Azur';
+  }
+
+  // Si on n'a rien trouvé, on ne force pas
+  return null;
+}
 
 /// Petit état de session (user connecté ou non)
 class SessionState {
@@ -73,6 +181,9 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await CitySearch.instance.ensureLoaded();
+
   runApp(const PrestoApp());
 }
 
@@ -82,8 +193,11 @@ class PrestoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Prestō',
+      title: 'iliprestō',
       debugShowCheckedModeBanner: false,
+      routes: {
+        '/publish': (_) => const PublishOfferPage(),
+      },
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
@@ -182,7 +296,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ScaleTransition(
                   scale: _scaleAnimation,
                   child: const Text(
-                    'Prestō',
+                    'iliprestō',
                     style: TextStyle(
                       fontSize: 54,
                       fontWeight: FontWeight.w900,
@@ -193,7 +307,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 28),
                 const Text(
-                  'Trouvez un prestataire\nillico presto',
+                  'Trouvez un prestataire\nillico iliprestō',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 24,
@@ -253,58 +367,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-/// Micro-animation au tap
-class _TapScale extends StatefulWidget {
-  final Widget child;
-  final VoidCallback? onTap;
-
-  const _TapScale({required this.child, this.onTap});
-
-  @override
-  State<_TapScale> createState() => _TapScaleState();
-}
-
-class _TapScaleState extends State<_TapScale>
-    with SingleTickerProviderStateMixin {
-  double _scale = 1.0;
-
-  void _down(TapDownDetails _) => setState(() => _scale = 0.96);
-  void _up(TapUpDetails _) => setState(() => _scale = 1.0);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: _down,
-      onTapUp: _up,
-      onTapCancel: () => setState(() => _scale = 1.0),
-      onTap: widget.onTap,
-      child: AnimatedScale(
-        scale: _scale,
-        duration: const Duration(milliseconds: 90),
-        child: widget.child,
-      ),
-    );
-  }
-}
-
-/// Modèle carrousel
-class _HomeSlide {
-  final String title;
-  final String subtitle;
-  final String badge;
-  final IconData icon;
-
-  const _HomeSlide({
-    required this.title,
-    required this.subtitle,
-    required this.badge,
-    required this.icon,
-  });
-}
-
-/// HOME ///////////////////////////////////////////////////////////////////
-
-/// HOME ///////////////////////////////////////////////////////////////////
+/// HOME ////////////////////////////////////////////////////////////////////
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -325,11 +388,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   /// Stream figé pour éviter le clignotement des "Dernières offres"
   late final Stream<QuerySnapshot<Map<String, dynamic>>> _latestOffersStream;
 
-  /// Slogans animés (fade) pour Prestō
+  /// Slogans animés (fade + slide) pour le 1er slide
   final List<String> _firstSlideSlogans = const [
-    "Disponible en quelques secondes…",
-    "Trouvez un prestataire autour de vous",
-    "Publiez… ils arrivent !",
+    "Trouvez immédiatement quelqu’un pour faire le job.",
+    "Une personne disponible près de chez vous.",
+    "Publiez… ils arrivent aussitôt.",
   ];
   int _sloganIndex = 0;
   Timer? _sloganTimer;
@@ -362,13 +425,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     "Jardinage Petit-Bourg demain",
   ];
 
+  /// Slides d’accueil
   final List<_HomeSlide> _slides = const [
     _HomeSlide(
-      title: "Slogans Prestō animés",
-      subtitle:
-          "Contact instantané avec des personnes disponibles autour de vous.",
-      badge: "Nouveau",
-      icon: Icons.flash_on_outlined,
+      title: "Trouvez immédiatement quelqu’un pour faire le job.",
+      subtitle: "Carte des personnes disponibles en quelques secondes.",
+      badge: "Disponible",
+      // plus d'image chrono ici
+      imageAsset: null,
     ),
     _HomeSlide(
       title: "Besoin d’un extra pour ce soir ?",
@@ -389,7 +453,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       icon: Icons.business_center_outlined,
     ),
     _HomeSlide(
-      title: "Prestō 100% gratuit",
+      title: "iliprestō 100% gratuit",
       subtitle: "Publiez vos offres, recevez des réponses.",
       badge: "Gratuit",
       icon: Icons.favorite_border,
@@ -416,7 +480,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     _listenDynamicKeywords();
 
-    // ✅ Stream Firestore créé une seule fois (pas de blink au changement de slide)
     _latestOffersStream = FirebaseFirestore.instance
         .collection('offers')
         .orderBy('createdAt', descending: true)
@@ -425,31 +488,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _listenDynamicKeywords() {
-    FirebaseFirestore.instance
-        .collection('offers')
-        .snapshots()
-        .listen((snapshot) {
-      final words = <String>{};
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-        final title = (data['title'] ?? '').toString().toLowerCase();
-        final description =
-            (data['description'] ?? '').toString().toLowerCase();
-        final combined = '$title $description';
-        for (final word in combined.split(RegExp(r'\s+'))) {
-          if (word.length > 3 &&
-              !RegExp(r'[0-9]').hasMatch(word) &&
-              !word.startsWith('0')) {
-            words.add(word);
+    FirebaseFirestore.instance.collection('offers').snapshots().listen(
+      (snapshot) {
+        final words = <String>{};
+        for (final doc in snapshot.docs) {
+          final data = doc.data();
+          final title = (data['title'] ?? '').toString().toLowerCase();
+          final description =
+              (data['description'] ?? '').toString().toLowerCase();
+          final combined = '$title $description';
+          for (final word in combined.split(RegExp(r'\s+'))) {
+            if (word.length > 3 &&
+                !RegExp(r'[0-9]').hasMatch(word) &&
+                !word.startsWith('0')) {
+              words.add(word);
+            }
           }
         }
-      }
-      if (mounted) {
-        setState(() {
-          _dynamicKeywords = words.toList()..sort();
-        });
-      }
-    });
+        if (mounted) {
+          setState(() {
+            _dynamicKeywords = words.toList()..sort();
+          });
+        }
+      },
+    );
   }
 
   @override
@@ -460,8 +522,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  /// Animation "bump" séquentielle sur les 6 catégories
   double _categoryScaleForIndex(int index) {
-    const count = 4;
+    const count = 6;
     final t = _categoryController.value * count;
     final active = t.floor() % count;
     final localT = t - t.floor();
@@ -510,7 +573,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  /// Moteur de suggestions “smart” pour la barre de recherche
   Iterable<String> _buildSearchSuggestions(TextEditingValue value) {
     final text = value.text.trim().toLowerCase();
 
@@ -531,69 +593,69 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (_isSeeding) return;
     setState(() => _isSeeding = true);
 
-    final col = FirebaseFirestore.instance.collection('offers');
-
-    Future<void> addOffer({
-      required String title,
-      required String description,
-      required String location,
-      required String postalCode,
-      required String category,
-      required num budget,
-      String? phone,
-    }) async {
-      await col.add({
-        'title': title,
-        'description': description,
-        'location': location,
-        'postalCode': postalCode,
-        'category': category,
-        'budget': budget,
-        'phone': phone,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    }
-
     try {
-      await addOffer(
-        title: "Serveur Jarry ce soir",
-        description:
-            "Restaurant à Baie-Mahault (Jarry) recherche un serveur pour le service de ce soir.",
-        location: "Baie-Mahault (Jarry)",
-        postalCode: "97122",
-        category: "Restauration / Extra",
-        budget: 60,
-        phone: "0690 00 00 01",
-      );
-      await addOffer(
-        title: "Peintre chambre 30 m²",
-        description: "Peinture chambre à Saint-François, mission URGENTE.",
-        location: "Saint-François",
-        postalCode: "97118",
-        category: "Peinture",
-        budget: 150,
-        phone: "0690 00 00 03",
-      );
-      await addOffer(
-        title: "Jardinage Petit-Bourg demain",
-        description:
-            "Entretien jardin et petite taille de haie, idéal demain matin.",
-        location: "Petit-Bourg",
-        postalCode: "97170",
-        category: "Jardinage",
-        budget: 80,
-        phone: "0690 00 00 05",
-      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Offres de démonstration ajoutées ✅")),
+          const SnackBar(content: Text("Reset + seed des offres en cours…")),
+        );
+      }
+
+      await resetAndSeedOffers();
+
+      // Compat legacy : certaines vues utilisent encore `location` / `postalCode`.
+      // On les remplit à partir de `city` / `cp` si absents.
+      final fs = FirebaseFirestore.instance;
+      final col = fs.collection(kOffersCollection);
+      final snap = await col.get();
+
+      WriteBatch batch = fs.batch();
+      int ops = 0;
+      Future<void> commitIfNeeded() async {
+        if (ops == 0) return;
+        await batch.commit();
+        batch = fs.batch();
+        ops = 0;
+      }
+
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        final city = (data['city'] ?? '').toString();
+        final cp = (data['cp'] ?? '').toString();
+
+        final needsLocation =
+            !(data.containsKey('location')) || (data['location'] == null);
+        final needsPostalCode = !(data.containsKey('postalCode')) ||
+            (data['postalCode'] == null);
+
+        if (!needsLocation && !needsPostalCode) continue;
+        if (city.isEmpty && cp.isEmpty) continue;
+
+        final patch = <String, dynamic>{};
+        if (needsLocation && city.isNotEmpty) patch['location'] = city;
+        if (needsPostalCode && cp.isNotEmpty) patch['postalCode'] = cp;
+
+        if (patch.isEmpty) continue;
+
+        batch.set(doc.reference, patch, SetOptions(merge: true));
+        ops++;
+        if (ops >= 450) {
+          await commitIfNeeded();
+        }
+      }
+      await commitIfNeeded();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Offres de test réinitialisées et injectées ✅"),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Erreur lors de l’ajout des offres de démo : $e"),
+            content: Text("Erreur lors du seed des offres : $e"),
           ),
         );
       }
@@ -602,13 +664,185 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  /// Texte “quand ?” pour les dernières offres (ce soir / urgent / demain / bientôt)
   String _labelWhenFromTitle(String title) {
     final lower = title.toLowerCase();
     if (lower.contains('urgent')) return 'urgent';
     if (lower.contains('ce soir')) return 'ce soir';
     if (lower.contains('demain')) return 'demain';
     return 'bientôt';
+  }
+
+  Widget _buildSmartSearchBar() {
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue value) {
+        return _buildSearchSuggestions(value);
+      },
+      onSelected: (String selection) {
+        _goToSearch(selection);
+      },
+      fieldViewBuilder:
+          (context, textEditingController, focusNode, onFieldSubmitted) {
+        return TextField(
+          controller: textEditingController,
+          focusNode: focusNode,
+          onSubmitted: _goToSearch,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            hintText: "Que cherchez-vous ? (ex: jardinage aujourd’hui)",
+            hintStyle: const TextStyle(
+              fontSize: 13,
+              color: Colors.black45,
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            prefixIcon: const Icon(
+              Icons.search,
+              color: kPrestoBlue,
+            ),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.arrow_forward_ios, size: 18),
+              color: kPrestoOrange,
+              onPressed: () => _goToSearch(textEditingController.text),
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        );
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        if (options.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return Align(
+          alignment: Alignment.topCenter,
+          child: Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxHeight: 220,
+                maxWidth: 600,
+              ),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  final option = options.elementAt(index);
+                  return InkWell(
+                    onTap: () => onSelected(option),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.bolt_outlined,
+                            size: 18,
+                            color: kPrestoOrange,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              option,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Cloche : pastille = nombre de messages non lus
+  Widget _buildNotificationBell() {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, authSnapshot) {
+        final user = authSnapshot.data;
+
+        // Non connecté → cloche simple
+        if (user == null) {
+          return _TapScale(
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    "Connecte-toi à ton compte pour recevoir les notifications de nouveaux messages.",
+                  ),
+                ),
+              );
+            },
+            child: const _NotificationBellBase(badgeCount: 0),
+          );
+        }
+
+        // Connecté → on compte les messages non lus
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('conversations')
+              .where('participants', arrayContains: user.uid)
+              .snapshots(),
+          builder: (context, convSnapshot) {
+            int unreadTotal = 0;
+
+            if (convSnapshot.hasData) {
+              for (final doc in convSnapshot.data!.docs) {
+                final data = doc.data();
+                final unreadMap =
+                    (data['unreadCount'] as Map<String, dynamic>?) ?? {};
+                final v = unreadMap[user.uid];
+                if (v is int) unreadTotal += v;
+              }
+            }
+
+            return _TapScale(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MessagesPage()),
+                );
+              },
+              child: _NotificationBellBase(badgeCount: unreadTotal),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Illustration à droite du slide (plus de chrono image)
+  Widget _buildSlideIllustration(_HomeSlide slide, int index) {
+    // On ignore complètement slide.imageAsset, on affiche juste une icône
+    return Container(
+      width: 70,
+      height: 70,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        slide.icon ?? Icons.flash_on,
+        color: kPrestoBlue,
+        size: 32,
+      ),
+    );
   }
 
   @override
@@ -625,7 +859,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -637,7 +871,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         onLongPress: _seedSampleOffers,
                         child: const Center(
                           child: Text(
-                            "Prestō",
+                            "iliprestō",
                             style: TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.w900,
@@ -652,11 +886,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
 
-                // Carrousel
+                _buildSmartSearchBar(),
+
+                const SizedBox(height: 14),
+
+                // SLIDER
                 SizedBox(
-                  height: 200,
+                  height: 260,
                   width: double.infinity,
                   child: Stack(
                     children: [
@@ -668,126 +906,156 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         },
                         itemBuilder: (context, index) {
                           final slide = _slides[index];
-                          final String animatedText =
-                              _firstSlideSlogans[_sloganIndex];
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 2, vertical: 4),
-                            child: Container(
+                          // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
+                          if (index == 0) {
+                            const String bigText =
+                                "Trouvez immédiatement quelqu'un pour faire le job.";
+
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 0),
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFFFF8A50),
-                                    kPrestoOrange,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(22),
+                                color: kPrestoOrange,
+                                borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.12),
-                                    blurRadius: 14,
-                                    offset: const Offset(0, 6),
+                                    color: Colors.black.withOpacity(0.10),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
                                   ),
                                 ],
                               ),
                               child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            slide.badge.toUpperCase(),
-                                            style: const TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          if (index == 0)
-                                            AnimatedSwitcher(
-                                              duration: const Duration(
-                                                  milliseconds: 450),
-                                              transitionBuilder:
-                                                  (child, animation) {
-                                                return FadeTransition(
-                                                  opacity: animation,
-                                                  child: child,
-                                                );
-                                              },
-                                              child: Text(
-                                                animatedText,
-                                                key: ValueKey(animatedText),
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w800,
-                                                  height: 1.3,
-                                                ),
-                                              ),
-                                            )
-                                          else
-                                            Text(
-                                              slide.title,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w800,
-                                                height: 1.3,
-                                              ),
-                                            ),
-                                          const SizedBox(height: 6),
-                                          Text(
-                                            slide.subtitle,
-                                            style: const TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 18,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: const [
+                                    Text(
+                                      "DISPONIBLE",
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 1.2,
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
-                                    Container(
-                                      width: 60,
-                                      height: 60,
-                                      decoration: BoxDecoration(
+                                    SizedBox(height: 10),
+                                    // ✅ Phrase principale en très gros sur toute la largeur
+                                    Text(
+                                      bigText,
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
                                         color: Colors.white,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.18),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
+                                        fontSize: 24, // taille bien grosse
+                                        fontWeight: FontWeight.w900,
+                                        height: 1.25,
                                       ),
-                                      child: Icon(
-                                        slide.icon,
-                                        color: kPrestoBlue,
-                                        size: 32,
+                                    ),
+                                    SizedBox(height: 12),
+                                    Text(
+                                      "Une personne disponible près de chez vous, en quelques minutes.",
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.3,
                                       ),
                                     ),
                                   ],
                                 ),
+                              ),
+                            );
+                          }
+
+                          // 🔁 SLIDES 2, 3, 4, 5 : on garde le layout texte + icône / image
+                          return Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 0),
+                            decoration: BoxDecoration(
+                              color: kPrestoOrange,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.10),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                children: [
+                                  // Texte
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          slide.badge.toUpperCase(),
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          index == 0
+                                              ? "Trouvez immédiatement quelqu'un pour faire le job."
+                                              : slide.title,
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: index == 0
+                                                ? 22
+                                                : 16, // 🔥 plus gros sur le slide 1
+                                            fontWeight: FontWeight.w800,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          slide.subtitle,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  // 👉 Illustration uniquement à partir du slide 2
+                                  if (index != 0) ...[
+                                    const SizedBox(width: 8),
+                                    _buildSlideIllustration(slide, index),
+                                  ],
+                                ],
                               ),
                             ),
                           );
                         },
                       ),
+                      // Indicateurs
                       Positioned(
-                        bottom: 10,
+                        bottom: 8,
                         left: 0,
                         right: 0,
                         child: Row(
@@ -796,10 +1064,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             _slides.length,
                             (index) => AnimatedContainer(
                               duration: const Duration(milliseconds: 250),
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 4),
-                              width: _currentSlide == index ? 18 : 8,
-                              height: 8,
+                              margin: const EdgeInsets.symmetric(horizontal: 3),
+                              width: _currentSlide == index ? 16 : 8,
+                              height: 7,
                               decoration: BoxDecoration(
                                 color: _currentSlide == index
                                     ? Colors.white
@@ -814,9 +1081,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
 
-                const SizedBox(height: 18),
+                const SizedBox(height: 12),
 
-                // Catégories
+                // CATEGORIES COMPACTES
                 AnimatedBuilder(
                   animation: _categoryController,
                   builder: (context, child) {
@@ -824,6 +1091,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
+                          const SizedBox(width: 2),
                           _CategoryChip(
                             icon: Icons.eco_outlined,
                             label: "Jardinage",
@@ -838,7 +1106,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               );
                             },
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 6),
                           _CategoryChip(
                             icon: Icons.format_paint_outlined,
                             label: "Peinture",
@@ -853,7 +1121,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               );
                             },
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 6),
                           _CategoryChip(
                             icon: Icons.handyman_outlined,
                             label: "Main-d’œuvre",
@@ -868,7 +1136,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               );
                             },
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 6),
                           _CategoryChip(
                             icon: Icons.other_houses_outlined,
                             label: "Autres",
@@ -883,10 +1151,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               );
                             },
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 6),
                           _CategoryChip(
                             icon: Icons.child_care_outlined,
                             label: "Garde enfants",
+                            iconScale: _categoryScaleForIndex(4),
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
@@ -897,10 +1166,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               );
                             },
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 6),
                           _CategoryChip(
                             icon: Icons.music_note_outlined,
                             label: "DJ / Sono",
+                            iconScale: _categoryScaleForIndex(5),
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
@@ -911,27 +1181,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               );
                             },
                           ),
+                          const SizedBox(width: 2),
                         ],
                       ),
                     );
                   },
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
 
-                // BLOC COMMENT ÇA MARCHE ? ///////////////////////////
+                // COMMENT ÇA MARCHE
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: const Color(0xFFE3F2FD),
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
-                      Text(
+                      const Text(
                         "Comment ça marche ?",
                         style: TextStyle(
                           fontSize: 18,
@@ -939,21 +1210,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           color: kPrestoBlue,
                         ),
                       ),
-                      SizedBox(height: 10),
+                      SizedBox(height: 8),
                       _HowItWorksStep(
                         stepNumber: 1,
                         title: "Je publie une offre",
                         description:
                             "En quelques lignes, vous décrivez votre besoin et votre lieu.",
                       ),
-                      SizedBox(height: 8),
+                      SizedBox(height: 6),
                       _HowItWorksStep(
                         stepNumber: 2,
                         title: "Ils la reçoivent en direct",
                         description:
                             "Les prestataires proches sont notifiés et voient immédiatement votre offre.",
                       ),
-                      SizedBox(height: 8),
+                      SizedBox(height: 6),
                       _HowItWorksStep(
                         stepNumber: 3,
                         title: "Ils me contactent aussitôt",
@@ -964,9 +1235,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
 
-                                // PRÉVISUALISATION DES DERNIÈRES OFFRES //////////////////////
+                // DERNIÈRES OFFRES
                 Row(
                   children: [
                     const Text(
@@ -990,14 +1261,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: _latestOffersStream,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting &&
                         !snapshot.hasData) {
                       return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
+                        padding: EdgeInsets.symmetric(vertical: 10),
                         child: Center(
                           child: CircularProgressIndicator(
                             valueColor:
@@ -1026,8 +1297,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     return Column(
                       children: docs.map((d) {
                         final data = d.data();
-                        final title =
-                            (data['title'] ?? 'Sans titre') as String;
+                        final title = (data['title'] ?? 'Sans titre') as String;
                         final location =
                             (data['location'] ?? 'Lieu non précisé') as String;
                         final whenLabel = _labelWhenFromTitle(title);
@@ -1042,14 +1312,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     title: title,
                                     location: location,
                                     category: (data['category'] ??
-                                            'Catégorie non précisée')
-                                        as String,
+                                        'Catégorie non précisée') as String,
+                                    subcategory: data['subcategory'] as String?,
                                     budget: data['budget'] is num
                                         ? data['budget'] as num
                                         : null,
                                     description:
                                         (data['description'] ?? '') as String?,
                                     phone: data['phone'] as String?,
+                                    imageUrls:
+                                        (data['imageUrls'] as List<dynamic>?)
+                                            ?.map((e) => e.toString())
+                                            .toList(),
                                   ),
                                 ),
                               );
@@ -1057,7 +1331,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             child: Container(
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(22),
+                                borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.black.withOpacity(0.06),
@@ -1067,25 +1341,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 ],
                               ),
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
+                                horizontal: 12,
+                                vertical: 8,
                               ),
                               child: Row(
                                 children: [
                                   Container(
-                                    width: 38,
-                                    height: 38,
+                                    width: 36,
+                                    height: 36,
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFFFF3E0),
-                                      borderRadius: BorderRadius.circular(14),
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: const Icon(
                                       Icons.flash_on_outlined,
                                       color: kPrestoOrange,
-                                      size: 22,
+                                      size: 20,
                                     ),
                                   ),
-                                  const SizedBox(width: 10),
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -1114,10 +1388,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: 4),
                                   const Icon(
                                     Icons.chevron_right,
-                                    size: 20,
+                                    size: 18,
                                     color: Colors.black38,
                                   ),
                                 ],
@@ -1130,7 +1404,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   },
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -1141,7 +1415,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           color: kPrestoOrange,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+        padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
         child: SafeArea(
           top: false,
           child: Row(
@@ -1179,65 +1453,43 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 }
 
-/// Cloche branchée sur Firebase Auth + favoris utilisateur
-Widget _buildNotificationBell() {
-  return StreamBuilder<User?>(
-    stream: FirebaseAuth.instance.authStateChanges(),
-    builder: (context, authSnapshot) {
-      final user = authSnapshot.data;
+/// SLIDE MODEL
+class _HomeSlide {
+  final String title;
+  final String subtitle;
+  final String badge;
+  final IconData? icon;
+  final String? imageAsset;
 
-      // Utilisateur NON connecté → cloche simple, pas de badge
-      if (user == null) {
-        return _TapScale(
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  "Connecte-toi à ton compte et ajoute des catégories favorites pour activer les notifications.",
-                ),
-              ),
-            );
-          },
-          child: const _NotificationBellBase(badgeCount: 0),
-        );
-      }
-
-      // Utilisateur connecté → on écoute son doc Firestore (profil + favoris)
-      return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .snapshots(),
-        builder: (context, userSnapshot) {
-          if (userSnapshot.connectionState == ConnectionState.waiting) {
-            return const _NotificationBellBase(badgeCount: 0);
-          }
-
-          final data = userSnapshot.data?.data();
-          final favList =
-              (data?['favoriteCategories'] as List<dynamic>? ?? [])
-                  .map((e) => e.toString())
-                  .toList();
-
-          final int badgeCount = favList.length;
-
-          return _TapScale(
-            onTap: () {
-              final msg = badgeCount == 0
-                  ? "Ajoute des catégories favorites dans « Mon profil » pour recevoir des notifications ciblées."
-                  : "Tu suis $badgeCount catégories. Bientôt : notifications push pour chaque nouvelle annonce dans tes favoris.";
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(msg)),
-              );
-            },
-            child: _NotificationBellBase(badgeCount: badgeCount),
-          );
-        },
-      );
-    },
-  );
+  const _HomeSlide({
+    required this.title,
+    required this.subtitle,
+    required this.badge,
+    this.icon,
+    this.imageAsset,
+  });
 }
 
+/// EFFET SCALE SUR TAP
+class _TapScale extends StatelessWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+
+  const _TapScale({required this.child, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: onTap,
+      child: AnimatedScale(
+        scale: 1.0,
+        duration: const Duration(milliseconds: 120),
+        child: child,
+      ),
+    );
+  }
+}
 
 /// CHIPS / CARDS ///////////////////////////////////////////////////////////
 
@@ -1267,7 +1519,6 @@ class _CategoryChip extends StatelessWidget {
           },
       child: Column(
         children: [
-          // Rond orange + pictogramme blanc + bord bleu fin
           Container(
             width: 62,
             height: 62,
@@ -1297,9 +1548,7 @@ class _CategoryChip extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 6),
-
           SizedBox(
             width: 90,
             child: Text(
@@ -1313,94 +1562,6 @@ class _CategoryChip extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ServiceCard extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final String badge;
-
-  const _ServiceCard({
-    required this.label,
-    required this.icon,
-    required this.badge,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return _TapScale(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Exemples d’offres "$label" à venir')),
-        );
-      },
-      child: Container(
-        width: 140,
-        margin: const EdgeInsets.only(right: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(22),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.10),
-                        blurRadius: 14,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Stack(
-                    children: [
-                      Center(
-                        child: Icon(
-                          icon,
-                          size: 42,
-                          color: Colors.black45,
-                        ),
-                      ),
-                      Positioned(
-                        top: 8,
-                        left: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.65),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            badge,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -1423,7 +1584,7 @@ class _BottomNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Colors.white;
+    const color = Colors.white;
     final fontWeight = selected ? FontWeight.w700 : FontWeight.w500;
 
     return _TapScale(
@@ -1470,47 +1631,6 @@ class _BottomNavItem extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// CHIP GEO ////////////////////////////////////////////////////////////////
-
-class _GeoChip extends StatelessWidget {
-  final String label;
-
-  const _GeoChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.location_on_outlined,
-              size: 14, color: kPrestoOrange),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1669,12 +1789,95 @@ class ConsultOffersPage extends StatefulWidget {
   State<ConsultOffersPage> createState() => _ConsultOffersPageState();
 }
 
+class _Debouncer {
+  _Debouncer({this.delay = const Duration(milliseconds: 300)});
+  final Duration delay;
+  Timer? _t;
+
+  void run(void Function() action) {
+    _t?.cancel();
+    _t = Timer(delay, action);
+  }
+
+  void dispose() => _t?.cancel();
+}
+
 class _ConsultOffersPageState extends State<ConsultOffersPage> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _subCategoryController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
+  final TextEditingController _regionController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _keywordCtrl = TextEditingController();
+  final TextEditingController _cityCtrl = TextEditingController();
 
   String? _selectedCategory;
+  String? _selectedRegionCode;
+  String? _selectedDepartmentCode;
+  String? _selectedSubCategory;
+  double _minPrice = 0;
+  double _maxPrice = 300;
+
+  bool _showFilters = false;
+
+  final _Debouncer _filterDebounce =
+      _Debouncer(delay: const Duration(milliseconds: 300));
+
+  String? _filterCategory;
+  String? _filterRegionCode;
+  String? _filterDepartmentCode;
+  String? _filterCityName;
+
+  // Optionnel (si tu veux distinguer "draft" vs "applied")
+  String? _appliedCategory;
+  String? _appliedRegionCode;
+  String? _appliedDepartmentCode;
+  String _appliedCity = '';
+
+  // Pagination / loading state
+  DocumentSnapshot<Map<String, dynamic>>? _lastDoc;
+  bool _isLoading = false;
+
+  // Variables pour l'autocomplétion de ville dans les filtres
+  final TextEditingController _filterCityController = TextEditingController();
+  final TextEditingController _filterPostalCodeController =
+      TextEditingController();
+  final FocusNode _regionFocus = FocusNode();
+  final FocusNode _deptFocus = FocusNode();
+  final FocusNode _filterCityFocusNode = FocusNode();
+  List<CityRecord> _filterCitySuggestions = [];
+  int _filterCityHighlightedIndex = -1;
+  Timer? _filterCityDebounce;
+
+  final ScrollController _scrollController = ScrollController();
+
+  late final Map<String, String> _deptToRegion = _buildDeptToRegion();
+
+  Map<String, String> _buildDeptToRegion() {
+    final out = <String, String>{};
+    for (final entry in kRegionDepartments.entries) {
+      for (final deptCode in entry.value) {
+        out[deptCode] = entry.key;
+      }
+    }
+    return out;
+  }
+
+  // ✅ Départements affichés selon région sélectionnée
+  List<String> get _filteredDepartmentCodes {
+    if (_filterRegionCode == null) {
+      return kDepartments.keys.toList();
+    }
+    final depts = kRegionDepartments[_filterRegionCode!];
+    return depts?.toList() ?? [];
+  }
+
+  // ✅ Les départements autorisés pour filtrer les villes
+  List<String>? get _allowedDeptCodesForCity {
+    if (_filterDepartmentCode != null) return [_filterDepartmentCode!];
+    if (_filterRegionCode == null) return null; // null = pas de limite
+    return _filteredDepartmentCodes;
+  }
 
   final List<String> _categories = const [
     'Toutes catégories',
@@ -1690,31 +1893,59 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     'Autre',
   ];
 
-  bool _showLocationSuggestions = false;
-
-  List<String> get _citySuggestions {
-    final text = _locationController.text.trim().toLowerCase();
-    if (!_showLocationSuggestions) return [];
-    if (text.length < 2) return [];
-    return kCityNames
-        .where((c) => c.toLowerCase().contains(text))
-        .take(5)
-        .toList();
-  }
+  /// Régions de France + DROM
+  final List<String> _regions = const [
+    'Toutes régions',
+    // 🇫🇷 Métropole
+    'Auvergne-Rhône-Alpes',
+    'Bourgogne-Franche-Comté',
+    'Bretagne',
+    'Centre-Val de Loire',
+    'Corse',
+    'Grand Est',
+    'Hauts-de-France',
+    'Île-de-France',
+    'Normandie',
+    'Nouvelle-Aquitaine',
+    'Occitanie',
+    'Pays de la Loire',
+    'Provence-Alpes-Côte d\'Azur',
+    // 🇫🇷 DROM
+    'Guadeloupe',
+    'Martinique',
+    'Guyane',
+    'La Réunion',
+    'Mayotte',
+  ];
 
   @override
   void initState() {
     super.initState();
+
     if (widget.categoryFilter != null && widget.categoryFilter!.isNotEmpty) {
       _selectedCategory = widget.categoryFilter;
+    } else {
+      _selectedCategory = 'Toutes catégories';
     }
+
+    _selectedRegionCode = null; // Pas de région sélectionnée par défaut
+
+    // Quand le code postal change, on essaie de déduire la région
+    _postalCodeController.addListener(_syncRegionWithPostalCode);
   }
 
   @override
   void dispose() {
+    _filterDebounce.dispose();
     _locationController.dispose();
-    _subCategoryController.dispose();
     _postalCodeController.dispose();
+    _scrollController.dispose();
+    _filterCityController.dispose();
+    _filterPostalCodeController.dispose();
+    _filterCityFocusNode.dispose();
+    _filterCityDebounce?.cancel();
+    _keywordCtrl.dispose();
+    _cityCtrl.dispose();
     super.dispose();
   }
 
@@ -1725,26 +1956,64 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     bool hasFilter = false;
 
     final loc = _locationController.text.trim();
-    final subcat = _subCategoryController.text.trim();
-    final cat = _selectedCategory;
     final cp = _postalCodeController.text.trim();
+    final cat = _selectedCategory;
+    final regionCode = _selectedRegionCode;
+    final subcat = _selectedSubCategory;
 
-    if (loc.isNotEmpty) {
+    // Nouveaux filtres du panneau
+    final filterCat = _filterCategory;
+    final filterRegCode = _filterRegionCode;
+    final filterDeptCode = _filterDepartmentCode;
+    final filterCity = _filterCityName?.trim();
+
+    // Filtre catégorie (panneau de filtres prioritaire)
+    if (filterCat != null && filterCat.isNotEmpty) {
+      hasFilter = true;
+      query = query.where('category', isEqualTo: filterCat);
+    } else if (cat != null && cat.isNotEmpty && cat != 'Toutes catégories') {
+      hasFilter = true;
+      query = query.where('category', isEqualTo: cat);
+    }
+
+    // Filtre région (par code région)
+    if (filterRegCode != null && filterRegCode.isNotEmpty) {
+      hasFilter = true;
+      final regionName = kRegions[filterRegCode];
+      if (regionName != null) {
+        query = query.where('region', isEqualTo: regionName);
+      }
+    } else if (regionCode != null && regionCode.isNotEmpty) {
+      hasFilter = true;
+      final regionName = kRegions[regionCode];
+      if (regionName != null) {
+        query = query.where('region', isEqualTo: regionName);
+      }
+    }
+
+    // Filtre département (par code département)
+    if (filterDeptCode != null && filterDeptCode.isNotEmpty) {
+      hasFilter = true;
+      query = query.where('departmentCode', isEqualTo: filterDeptCode);
+    }
+
+    // Filtre ville (panneau de filtres prioritaire)
+    if (filterCity != null && filterCity.isNotEmpty) {
+      hasFilter = true;
+      query = query.where('location', isEqualTo: filterCity);
+    } else if (loc.isNotEmpty) {
       hasFilter = true;
       query = query.where('location', isEqualTo: loc);
     }
 
+    // Code postal
     if (cp.isNotEmpty) {
       hasFilter = true;
       query = query.where('postalCode', isEqualTo: cp);
     }
 
-    if (cat != null && cat.isNotEmpty && cat != 'Toutes catégories') {
-      hasFilter = true;
-      query = query.where('category', isEqualTo: cat);
-    }
-
-    if (subcat.isNotEmpty) {
+    // Sous-catégorie
+    if (subcat != null && subcat.isNotEmpty) {
       hasFilter = true;
       query = query.where('subcategory', isEqualTo: subcat);
     }
@@ -1756,27 +2025,157 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return query;
   }
 
-  void _onLocationChanged(String value) {
-    setState(() {
-      _showLocationSuggestions = true;
-    });
-    final lower = value.trim().toLowerCase();
-    for (final entry in kCityPostalMap.entries) {
-      if (entry.key.toLowerCase() == lower) {
-        _postalCodeController.text = entry.value;
-        break;
+  Future<void> _fetchOffers({bool resetPaging = false}) async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+
+    if (resetPaging) {
+      _lastDoc = null;
+      // Si tu stockes une liste d'offres en mémoire : offers.clear();
+    }
+
+    try {
+      var query = _buildQuery();
+
+      // Exemple de pagination si besoin
+      if (_lastDoc != null) {
+        query = query.startAfterDocument(_lastDoc!);
+      }
+
+      // Charge une première page (adapter la limite si besoin)
+      final snap = await query.limit(20).get();
+
+      if (snap.docs.isNotEmpty) {
+        _lastDoc = snap.docs.last;
+      }
+
+      // Si tu conserves les résultats : setState(() => offers = ...);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Erreur lors du chargement des offres: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
 
-  void _resetFilters() {
-    _locationController.clear();
-    _subCategoryController.clear();
-    _postalCodeController.clear();
+  void _applyFilters() {
     setState(() {
-      _selectedCategory = 'Toutes catégories';
-      _showLocationSuggestions = false;
+      // On referme le panneau après recherche
+      _showFilters = false;
     });
+
+    // Remonter en haut de la liste
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+
+    _fetchOffers(resetPaging: true);
+  }
+
+  void _onAnyFilterChanged() {
+    // ✅ Auto-apply avec debounce
+    _filterDebounce.run(() {
+      _applyFilters();
+    });
+  }
+
+  /// Normalise un nom de ville (retire accents, minuscules)
+  String _normalizeCity(String city) {
+    return city
+        .toLowerCase()
+        .replaceAll(RegExp(r'[àáâãäå]'), 'a')
+        .replaceAll(RegExp(r'[èéêë]'), 'e')
+        .replaceAll(RegExp(r'[ìíîï]'), 'i')
+        .replaceAll(RegExp(r'[òóôõö]'), 'o')
+        .replaceAll(RegExp(r'[ùúûü]'), 'u')
+        .replaceAll(RegExp(r'[ýÿ]'), 'y')
+        .replaceAll(RegExp(r'[ç]'), 'c')
+        .replaceAll(RegExp(r'[ñ]'), 'n');
+  }
+
+  String _deptFromPostal(String cp) {
+    final s = cp.trim();
+    if (s.length < 2) return s;
+    // DOM: 971/972/973/974/976 (postal commence par 97x) + 98x
+    if (s.startsWith('97') || s.startsWith('98')) {
+      return s.length >= 3 ? s.substring(0, 3) : s;
+    }
+    // Métropole
+    return s.substring(0, 2);
+  }
+
+  void _resetFilters() {
+    // 1) reset valeurs filtres
+    setState(() {
+      _selectedRegionCode = null;
+      _selectedCategory = null;
+      _selectedSubCategory = null;
+      _selectedDepartmentCode = null;
+      _filterCategory = null;
+      _filterRegionCode = null;
+      _filterDepartmentCode = null;
+      _filterCityName = null;
+      _filterCitySuggestions = [];
+      _filterCityHighlightedIndex = -1;
+      _minPrice = 0;
+      _maxPrice = 300;
+      _showFilters = true; // garde le panneau de filtres ouvert
+    });
+
+    // 2) reset champs texte
+    _keywordCtrl.clear();
+    _cityCtrl.clear();
+    _locationController.clear();
+    _postalCodeController.clear();
+    _filterCityController.clear();
+    _filterPostalCodeController.clear();
+
+    // 3) reset Form (labels/erreurs)
+    _formKey.currentState?.reset();
+
+    // 4) ferme le clavier si besoin
+    FocusScope.of(context).unfocus();
+
+    // 5) remonte la liste et relance sans filtre
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+
+    _fetchOffers(resetPaging: true);
+  }
+
+  void _syncRegionWithPostalCode() {
+    final cp = _postalCodeController.text.trim();
+    if (cp.length < 3) return;
+
+    final regionName = inferRegionFromPostalCode(cp);
+    if (regionName != null) {
+      // Chercher le code région correspondant
+      String? regionCode;
+      for (final entry in kRegions.entries) {
+        if (entry.value == regionName) {
+          regionCode = entry.key;
+          break;
+        }
+      }
+      if (regionCode != null && regionCode != _selectedRegionCode) {
+        setState(() {
+          _selectedRegionCode = regionCode;
+        });
+      }
+    }
   }
 
   @override
@@ -1784,8 +2183,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     final baseTitle = widget.categoryFilter == null
         ? "Je consulte les offres"
         : "Offres : ${widget.categoryFilter!}";
-
-    final suggestions = _citySuggestions;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -1797,6 +2194,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            tooltip: 'Filtres',
+            onPressed: () {
+              setState(() {
+                _showFilters = !_showFilters;
+              });
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: "Réinitialiser les filtres",
@@ -1815,157 +2221,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       ),
       body: Column(
         children: [
-          // Zone filtres
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedCategory ?? 'Toutes catégories',
-                        isDense: true,
-                        decoration: const InputDecoration(
-                          labelText: "Catégorie",
-                          isDense: true,
-                        ),
-                        items: _categories
-                            .map(
-                              (c) => DropdownMenuItem(
-                                value: c,
-                                child: Text(
-                                  c,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedCategory = value;
-                          });
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: _locationController,
-                        decoration: const InputDecoration(
-                          labelText: "Lieu / Ville",
-                          hintText: "Ex : Baie-Mahault",
-                          isDense: true,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        enableSuggestions: true,
-                        autocorrect: true,
-                        textCapitalization: TextCapitalization.words,
-                        keyboardType: TextInputType.streetAddress,
-                        autofillHints: const [
-                          AutofillHints.addressCity,
-                          AutofillHints.addressCityAndState,
-                        ],
-                        onChanged: _onLocationChanged,
-                        onSubmitted: (_) {
-                          setState(() {
-                            _showLocationSuggestions = false;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                if (suggestions.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    constraints: const BoxConstraints(maxHeight: 160),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: suggestions.length,
-                      itemBuilder: (context, index) {
-                        final city = suggestions[index];
-                        return ListTile(
-                          dense: true,
-                          title: Text(city),
-                          onTap: () {
-                            setState(() {
-                              _locationController.text = city;
-                              final cp = kCityPostalMap[city];
-                              if (cp != null) {
-                                _postalCodeController.text = cp;
-                              }
-                              _showLocationSuggestions = false;
-                            });
-                            FocusScope.of(context).unfocus();
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _subCategoryController,
-                        decoration: const InputDecoration(
-                          labelText: "Sous-catégorie",
-                          hintText: "Ex : terrasse, peinture chambre…",
-                          isDense: true,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        enableSuggestions: true,
-                        autocorrect: true,
-                        textCapitalization: TextCapitalization.sentences,
-                        onSubmitted: (_) => setState(() {}),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 110,
-                      child: TextField(
-                        controller: _postalCodeController,
-                        decoration: const InputDecoration(
-                          labelText: "C/P",
-                          hintText: "97122",
-                          isDense: true,
-                        ),
-                        keyboardType: TextInputType.number,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        enableSuggestions: true,
-                        autocorrect: false,
-                        autofillHints: const [AutofillHints.postalCode],
-                        onSubmitted: (_) => setState(() {}),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
+          _buildFilterPanel(),
           Expanded(
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: _buildQuery().snapshots(),
@@ -1986,7 +2242,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                         "Erreur lors du chargement des offres.\n${snapshot.error}",
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                            color: Colors.red, fontWeight: FontWeight.w600),
+                          color: Colors.red,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   );
@@ -2013,66 +2271,55 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                 }
 
                 return ListView.separated(
+                  controller: _scrollController,
                   padding: const EdgeInsets.all(16),
                   itemCount: docs.length,
                   separatorBuilder: (context, index) =>
                       const SizedBox(height: 8),
                   itemBuilder: (context, index) {
-                    final data = docs[index].data();
+                    final doc = docs[index];
+                    final offerId = doc.id;
+                    final data = doc.data() as Map<String, dynamic>;
 
                     final title = (data['title'] ?? 'Sans titre') as String;
                     final location =
                         (data['location'] ?? 'Lieu non précisé') as String;
-                    final category =
-                        (data['category'] ?? 'Catégorie non précisée')
-                            as String;
+                    final category = (data['category'] ??
+                        'Catégorie non précisée') as String;
                     final budget = data['budget'];
                     final description = (data['description'] ?? '') as String;
                     final phone =
                         data['phone'] == null ? null : data['phone'] as String;
 
-                    String subtitle = "$location · $category";
-                    if (budget != null) {
-                      subtitle += " · ${budget.toString()} €";
-                    }
+                    // 🔥 Récupération des URLs d’images (0, 1 ou 2)
+                    final List<String> imageUrls =
+                        (data['imageUrls'] as List<dynamic>? ?? [])
+                            .map((e) => e.toString())
+                            .toList();
 
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFFFFF3E0),
-                          child: Icon(
-                            Icons.work_outline,
-                            color: kPrestoOrange,
-                          ),
-                        ),
-                        title: Text(
-                          title,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 14),
-                        ),
-                        subtitle: Text(
-                          subtitle,
-                          style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w500),
-                        ),
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => OfferDetailPage(
-                                title: title,
-                                location: location,
-                                category: category,
-                                budget: budget is num ? budget : null,
-                                description:
-                                    description.isEmpty ? null : description,
-                                phone: phone,
-                              ),
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => OfferDetailPage(
+                              title: title,
+                              location: location,
+                              category: category,
+                              subcategory:
+                                  (data['subcategory'] ?? '') as String?,
+                              budget: budget is num ? budget : null,
+                              description:
+                                  description.isEmpty ? null : description,
+                              phone: phone,
+                              imageUrls: imageUrls.isEmpty ? null : imageUrls,
                             ),
-                          );
-                        },
+                          ),
+                        );
+                      },
+                      child: OfferCard(
+                        offerId: offerId,
+                        data: data,
+                        showActionsMenu: false,
                       ),
                     );
                   },
@@ -2083,6 +2330,519 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildFilterPanel() {
+    if (!_showFilters) return const SizedBox.shrink();
+
+    return Form(
+      key: _formKey,
+      child: Container(
+        color: Colors.grey.shade100,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(child: _buildCategoryDropdown()),
+                const SizedBox(width: 12),
+                Expanded(child: _buildRegionDropdown()),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _buildDepartmentDropdown()),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildFilterCityField(),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      _resetFilters();
+                      _onAnyFilterChanged(); // ✅ applique après reset
+                    },
+                    child: const Text('Réinitialiser'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _applyFilters,
+                    icon: const Icon(Icons.search),
+                    label: const Text('Rechercher'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRegionDropdown() {
+    return Focus(
+      focusNode: _regionFocus,
+      child: DropdownButtonFormField<String?>(
+        value: _filterRegionCode,
+        isDense: true,
+        decoration: const InputDecoration(
+          labelText: "Région",
+          isDense: true,
+        ),
+      items: <DropdownMenuItem<String?>>[
+        const DropdownMenuItem<String?>(
+          value: null,
+          child: Text("Toutes régions"),
+        ),
+        ...kRegionsOrdered.map((r) => DropdownMenuItem<String?>(
+              value: r.code,
+              child: Text(r.name),
+            )),
+      ],
+      onChanged: (code) {
+        setState(() {
+          _filterRegionCode = code;
+
+          // ✅ Région change => on reset le dept + ville + CP
+          _filterDepartmentCode = null;
+          _filterCityController.clear();
+          _filterPostalCodeController.clear();
+          _filterCityName = null;
+          _filterCitySuggestions = [];
+          _filterCityHighlightedIndex = -1;
+        });
+
+        _onAnyFilterChanged(); // ✅ auto-apply
+
+        // Passe au champ département
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          FocusScope.of(context).requestFocus(_deptFocus);
+        });
+      },
+      ),
+    );
+  }
+
+  Widget _buildDepartmentDropdown() {
+    // ✅ Utilise le getter pour obtenir les départements filtrés
+    final deptCodes = [..._filteredDepartmentCodes]..sort();
+
+    final allowedCodes = deptCodes.toSet();
+    final safeValue = (_filterDepartmentCode != null &&
+            allowedCodes.contains(_filterDepartmentCode))
+        ? _filterDepartmentCode
+        : null; // ✅ si la valeur n’existe pas, on repasse à "Tous"
+
+    // ✅ Si le filtre courant pointe vers un département non disponible,
+    // on remet aussi l'état interne à null (sinon on a un "ghost value").
+    if (_filterDepartmentCode != null && safeValue == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_filterDepartmentCode == null) return;
+
+        final stillInvalid = !allowedCodes.contains(_filterDepartmentCode);
+        if (!stillInvalid) return;
+
+        setState(() {
+          _filterDepartmentCode = null;
+
+          _filterCityController.clear();
+          _filterPostalCodeController.clear();
+          _filterCityName = null;
+          _filterCitySuggestions = [];
+          _filterCityHighlightedIndex = -1;
+        });
+
+        _onAnyFilterChanged();
+      });
+    }
+
+    return Focus(
+      focusNode: _deptFocus,
+      child: DropdownButtonFormField<String?>(
+        value: safeValue,
+        isDense: true,
+        decoration: InputDecoration(
+          labelText: 'Département',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        ),
+      items: [
+        const DropdownMenuItem<String?>(
+          value: null,
+          child: Text('Tous départements'),
+        ),
+        ...deptCodes.map(
+          (code) => DropdownMenuItem<String?>(
+            value: code,
+            child: Text(kDepartments[code] ?? code),
+          ),
+        ),
+      ],
+      onChanged: (code) {
+        setState(() {
+          _filterDepartmentCode = code;
+
+          // ✅ Si on choisit un dept, on synchronise la région automatiquement
+          if (code != null) {
+            final regionCode = _deptToRegion[code];
+            if (regionCode != null) _filterRegionCode = regionCode;
+
+            // ✅ Dept change => reset ville + CP (évite incohérences)
+            _filterCityController.clear();
+            _filterPostalCodeController.clear();
+            _filterCityName = null;
+            _filterCitySuggestions = [];
+            _filterCityHighlightedIndex = -1;
+          } else {
+            // ✅ Tous départements => reset ville + CP
+            _filterCityController.clear();
+            _filterPostalCodeController.clear();
+            _filterCityName = null;
+            _filterCitySuggestions = [];
+            _filterCityHighlightedIndex = -1;
+          }
+        });
+
+        _onAnyFilterChanged(); // ✅ auto-apply
+
+        // Passe au champ ville
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          FocusScope.of(context).requestFocus(_filterCityFocusNode);
+        });
+      },
+      ),
+    );
+  }
+
+  // Méthodes pour la gestion de l'autocomplétion de ville dans les filtres
+  List<CityRecord> _searchCities(String q) {
+    final allowed = _allowedDeptCodesForCity;
+    return CitySearch.instance.search(
+      q,
+      limit: 20,
+      allowedDeptCodes: allowed,
+    );
+  }
+
+  void _onFilterCityChanged(String value) {
+    _filterCityDebounce?.cancel();
+    _filterCityDebounce = Timer(const Duration(milliseconds: 120), () async {
+      final v = value.trim();
+
+      // ✅ IMPORTANT : on met à jour le filtre même si l'utilisateur ne clique pas une suggestion
+      if (mounted) {
+        setState(() {
+          _filterCityName = v.isEmpty ? null : v;
+        });
+      }
+
+      if (v.length < 2) {
+        if (mounted) {
+          setState(() {
+            _filterCitySuggestions = [];
+            _filterCityHighlightedIndex = -1;
+          });
+        }
+        return;
+      }
+
+      await CitySearch.instance.ensureLoaded();
+
+      // ✅ Recherche filtrée par région/département
+      final allowed = _allowedDeptCodesForCity;
+      final suggestions = CitySearch.instance.search(
+        v,
+        limit: 20,
+        allowedDeptCodes: allowed,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _filterCitySuggestions = suggestions;
+        _filterCityHighlightedIndex = suggestions.isNotEmpty ? 0 : -1;
+      });
+    });
+  }
+
+  void _onFilterCityKey(RawKeyEvent event) {
+    if (event is! RawKeyDownEvent) return;
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      setState(() {
+        if (_filterCityHighlightedIndex < _filterCitySuggestions.length - 1) {
+          _filterCityHighlightedIndex++;
+        }
+      });
+    } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      setState(() {
+        if (_filterCityHighlightedIndex > 0) {
+          _filterCityHighlightedIndex--;
+        }
+      });
+    } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+      setState(() {
+        _filterCitySuggestions = [];
+        _filterCityHighlightedIndex = -1;
+      });
+    }
+  }
+
+  void _applyFilterCitySelection(CityRecord city) {
+    setState(() {
+      _filterCityController.text = city.name;
+      _filterPostalCodeController.text = city.cp;
+      _filterCityName = city.name;
+      _filterCitySuggestions = [];
+      _filterCityHighlightedIndex = -1;
+    });
+  }
+
+  Widget _buildCityField() {
+    return TextFormField(
+      decoration: const InputDecoration(
+        labelText: 'Ville',
+        border: OutlineInputBorder(),
+        hintText: 'Paris, Les Abymes…',
+      ),
+      initialValue: _filterCityName,
+      onChanged: (value) {
+        _filterCityName = value.trim();
+      },
+    );
+  }
+
+  Widget _buildFilterCityField() {
+    return Autocomplete<CityRecord>(
+      displayStringForOption: (c) => '${c.name} (${c.cp})',
+      optionsBuilder: (TextEditingValue v) {
+        final q = v.text.trim();
+        if (q.length < 2) return const Iterable<CityRecord>.empty();
+        return _searchCities(q);
+      },
+      onSelected: (CityRecord c) {
+        final dept = (c.departmentCode.trim().isNotEmpty)
+            ? c.departmentCode.trim()
+            : _deptFromPostal(c.postalCode);
+
+        setState(() {
+          // ✅ Ville
+          _filterCityController.text = c.name;
+          _filterCityName = c.name;
+
+          // ✅ CP
+          _filterPostalCodeController.text = c.postalCode;
+
+          // ✅ Dept (ex: 971 au lieu de 97)
+          _filterDepartmentCode = dept;
+
+          // ✅ Région: prendre celle du record si dispo, sinon fallback via dept
+          final regionFromRecord = c.regionCode.trim();
+          if (regionFromRecord.isNotEmpty) {
+            _filterRegionCode = regionFromRecord;
+          } else {
+            for (final entry in kRegionDepartments.entries) {
+              if (entry.value.contains(dept)) {
+                _filterRegionCode = entry.key;
+                break;
+              }
+            }
+          }
+
+          _filterCitySuggestions = [];
+          _filterCityHighlightedIndex = -1;
+        });
+
+        _onAnyFilterChanged();
+      },
+      fieldViewBuilder: (context, textCtrl, focusNode, onFieldSubmitted) {
+        // Synchroniser avec notre controller
+        if (_filterCityController.text != textCtrl.text) {
+          textCtrl.text = _filterCityController.text;
+        }
+
+        return TextField(
+          controller: textCtrl,
+          focusNode: focusNode,
+          decoration: InputDecoration(
+            labelText: 'Ville',
+            hintText: 'Ex: Paris, Les Abymes...',
+            isDense: true,
+            suffixIcon: textCtrl.text.isEmpty
+                ? null
+                : IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      setState(() {
+                        _filterCityController.clear();
+                        _filterPostalCodeController.clear();
+                        _filterCityName = null;
+                        _filterCitySuggestions = [];
+                        _filterCityHighlightedIndex = -1;
+                      });
+                      textCtrl.clear();
+                      _onAnyFilterChanged();
+                    },
+                  ),
+          ),
+          onChanged: (value) {
+            _filterCityController.text = value;
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCategoryDropdown() {
+    return Expanded(
+      child: DropdownButtonFormField<String>(
+        value: _filterCategory,
+        decoration: const InputDecoration(
+          labelText: 'Catégorie',
+          border: OutlineInputBorder(),
+          isDense: true,
+        ),
+        items: [
+          const DropdownMenuItem(
+            value: null,
+            child: Text('Toutes les catégories'),
+          ),
+          ...kCategories.map(
+            (c) => DropdownMenuItem(
+              value: c,
+              child: Text(c),
+            ),
+          ),
+        ],
+        onChanged: (value) {
+          setState(() {
+            _filterCategory = value;
+          });
+        },
+      ),
+    );
+  }
+
+  String _ageLabelFromCreatedAt(dynamic createdAt) {
+    if (createdAt == null) return '';
+
+    DateTime dt;
+    try {
+      // Firestore Timestamp
+      if (createdAt is Timestamp) {
+        dt = createdAt.toDate();
+      }
+      // Milliseconds since epoch
+      else if (createdAt is int) {
+        dt = DateTime.fromMillisecondsSinceEpoch(createdAt);
+      }
+      // ISO string
+      else if (createdAt is String) {
+        dt = DateTime.tryParse(createdAt) ?? DateTime.now();
+      } else {
+        return '';
+      }
+    } catch (_) {
+      return '';
+    }
+
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'à l\'instant';
+    if (diff.inHours < 24) return '${diff.inHours} h';
+    return '${diff.inDays} j';
+  }
+
+  Future<void> _showEditOfferDialog(
+    BuildContext context,
+    String offerId,
+    Map<String, dynamic> data,
+  ) async {
+    final titleCtrl =
+        TextEditingController(text: (data['title'] ?? '').toString());
+    final cityCtrl =
+        TextEditingController(text: (data['city'] ?? '').toString());
+    final descCtrl =
+        TextEditingController(text: (data['description'] ?? '').toString());
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Modifier l\'annonce'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                  controller: titleCtrl,
+                  decoration: const InputDecoration(labelText: 'Titre')),
+              const SizedBox(height: 8),
+              TextField(
+                  controller: cityCtrl,
+                  decoration: const InputDecoration(labelText: 'Ville')),
+              const SizedBox(height: 8),
+              TextField(
+                controller: descCtrl,
+                decoration: const InputDecoration(labelText: 'Description'),
+                minLines: 3,
+                maxLines: 6,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annuler')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Enregistrer')),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+
+    await FirebaseFirestore.instance.collection('offers').doc(offerId).update({
+      'title': titleCtrl.text.trim(),
+      'city': cityCtrl.text.trim(),
+      'description': descCtrl.text.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> _confirmDeleteOffer(
+    BuildContext context,
+    String offerId,
+    String title,
+  ) async {
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Supprimer l\'annonce ?'),
+        content: Text('Supprimer : "$title" ?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annuler')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Supprimer')),
+        ],
+      ),
+    );
+
+    if (yes != true) return;
+
+    await FirebaseFirestore.instance.collection('offers').doc(offerId).delete();
   }
 }
 
@@ -2097,13 +2857,13 @@ class _EmptyOffers extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: const [
-            Icon(
+            const Icon(
               Icons.search_off_outlined,
               size: 56,
               color: Colors.black26,
             ),
-            SizedBox(height: 16),
-            Text(
+            const SizedBox(height: 16),
+            const Text(
               "Aucune offre publiée pour le moment",
               style: TextStyle(
                 fontSize: 16,
@@ -2113,7 +2873,7 @@ class _EmptyOffers extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              "Clique sur « Publier une offre » pour créer ta première annonce Prestō.",
+              "Clique sur « Publier une offre » pour créer ta première annonce iliprestō.",
               style: TextStyle(
                 fontSize: 13,
                 color: Colors.black54,
@@ -2128,12 +2888,11 @@ class _EmptyOffers extends StatelessWidget {
   }
 }
 
-/// PAGE DÉTAIL OFFRE /////////////////////////////////////////////////
-
 class OfferDetailPage extends StatelessWidget {
   final String title;
   final String location;
   final String category;
+  final String? subcategory;
   final num? budget;
   final String? description;
   final String? phone;
@@ -2144,6 +2903,7 @@ class OfferDetailPage extends StatelessWidget {
     required this.title,
     required this.location,
     required this.category,
+    this.subcategory,
     this.budget,
     this.description,
     this.phone,
@@ -2158,6 +2918,8 @@ class OfferDetailPage extends StatelessWidget {
       return;
     }
 
+    final messenger = ScaffoldMessenger.of(context);
+
     final uri = Uri(
       scheme: 'tel',
       path: phone!.trim(),
@@ -2167,14 +2929,14 @@ class OfferDetailPage extends StatelessWidget {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(
             content: Text("Impossible de lancer l’appel sur cet appareil."),
           ),
         );
       }
     } catch (_) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(
           content: Text("Une erreur est survenue lors de l’appel."),
         ),
@@ -2293,6 +3055,8 @@ class OfferDetailPage extends StatelessWidget {
     final budgetText =
         budget == null ? "À définir" : "${budget!.toStringAsFixed(2)} €";
     final bool hasPhone = phone != null && phone!.trim().isNotEmpty;
+
+    // 🔥 Photos (0, 1 ou 2)
     final List<String> photos = imageUrls ?? const [];
 
     return Scaffold(
@@ -2319,7 +3083,7 @@ class OfferDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Métadonnées (lieu / catégorie / budget / téléphone masqué)
+            // Métadonnées (lieu / catégorie / budget / téléphone)
             _OfferMetaRow(
               icon: Icons.place_outlined,
               text: location,
@@ -2329,6 +3093,13 @@ class OfferDetailPage extends StatelessWidget {
               icon: Icons.category_outlined,
               text: category,
             ),
+            if (subcategory != null && subcategory!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _OfferMetaRow(
+                icon: Icons.label_outline,
+                text: subcategory!,
+              ),
+            ],
             const SizedBox(height: 8),
             _OfferMetaRow(
               icon: Icons.euro_outlined,
@@ -2373,7 +3144,6 @@ class OfferDetailPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 20),
-
                           const Text(
                             "Photos de l’annonce",
                             style: TextStyle(
@@ -2382,7 +3152,6 @@ class OfferDetailPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 10),
-
                           SizedBox(
                             height: 190,
                             child: Row(
@@ -2403,9 +3172,7 @@ class OfferDetailPage extends StatelessWidget {
                               ],
                             ),
                           ),
-
                           const SizedBox(height: 22),
-
                           const Text(
                             "Publicité",
                             style: TextStyle(
@@ -2414,7 +3181,6 @@ class OfferDetailPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-
                           SizedBox(
                             width: double.infinity,
                             height: 100, // format type bannière 320x100
@@ -2444,7 +3210,6 @@ class OfferDetailPage extends StatelessWidget {
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 8),
                         ],
                       ),
@@ -2581,17 +3346,38 @@ String formatTimeLabel(Timestamp? ts) {
   final dt = ts.toDate();
   final now = DateTime.now();
 
-  final sameDay = dt.year == now.year &&
-      dt.month == now.month &&
-      dt.day == now.day;
+  final sameDay =
+      dt.year == now.year && dt.month == now.month && dt.day == now.day;
 
   if (sameDay) {
-    // Exemple : 14:32
     return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
   }
 
-  // Exemple : 08/12
   return "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}";
+}
+
+/// Utilitaire : format "il y a X h/j" depuis un Timestamp
+String formatAgeSince(Timestamp? ts) {
+  if (ts == null)
+    return ""; // quand createdAt pas encore rempli (serverTimestamp)
+  final dt = ts.toDate();
+  final now = DateTime.now();
+
+  final diff = now.difference(dt);
+  if (diff.isNegative) return ""; // sécurité si horloge bizarre
+
+  if (diff.inHours < 24) {
+    final h = diff.inHours;
+    // si < 1h, on affiche en minutes (optionnel)
+    if (h <= 0) {
+      final m = diff.inMinutes.clamp(0, 59);
+      return "il y a ${m} min";
+    }
+    return "il y a ${h} h";
+  }
+
+  final d = diff.inDays;
+  return "il y a ${d} j";
 }
 
 /// PAGE MESSAGES (LISTE DE CONVERSATIONS) //////////////////////////////////
@@ -2622,7 +3408,7 @@ class MessagesPage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               const Text(
-                "Pour utiliser la messagerie Prestō, connecte-toi à ton compte.",
+                "Pour utiliser la messagerie iliprestō, connecte-toi à ton compte.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -2763,7 +3549,7 @@ class MessagesPage extends StatelessWidget {
               final conversationId = docs[index].id;
 
               final offerTitle =
-                  (data['offerTitle'] ?? 'Conversation Prestō') as String;
+                  (data['offerTitle'] ?? 'Conversation iliprestō') as String;
               final lastMessage =
                   (data['lastMessage'] ?? 'Pas encore de message') as String;
               final ts = data['lastMessageAt'] as Timestamp?;
@@ -2795,7 +3581,6 @@ class MessagesPage extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     child: Row(
                       children: [
-                        // Miniature annonce (placeholder)
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: Container(
@@ -2809,7 +3594,6 @@ class MessagesPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        // Titre + dernier message
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2842,7 +3626,6 @@ class MessagesPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // Heure + bulle "non lus"
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -2889,7 +3672,7 @@ class MessagesPage extends StatelessWidget {
   }
 }
 
-/// PAGE CONVERSATION (CHAT WHATSAPP-LIKE) /////////////////////////////////
+/// PAGE CONVERSATION (CHAT) /////////////////////////////////
 
 class ConversationPage extends StatefulWidget {
   final String conversationId;
@@ -2913,7 +3696,6 @@ class _ConversationPageState extends State<ConversationPage> {
   List<String> _participants = [];
   bool _isLoadingMeta = true;
 
-  /// Nom à afficher pour l’utilisateur courant dans la conversation
   String? _currentUserName;
 
   @override
@@ -2953,7 +3735,6 @@ class _ConversationPageState extends State<ConversationPage> {
     }
   }
 
-  /// Charge le pseudo de l’utilisateur (ou displayName / email si pas de pseudo)
   Future<void> _loadCurrentUserName() async {
     final user = _auth.currentUser;
     final userId = user?.uid ?? SessionState.userId;
@@ -2962,8 +3743,7 @@ class _ConversationPageState extends State<ConversationPage> {
     String? name;
 
     try {
-      final doc =
-          await _firestore.collection('users').doc(userId).get();
+      final doc = await _firestore.collection('users').doc(userId).get();
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         final pseudo = (data['pseudo'] ?? '') as String;
@@ -2971,11 +3751,9 @@ class _ConversationPageState extends State<ConversationPage> {
           name = pseudo.trim();
         }
       }
-    } catch (_) {
-      // on ignore, on utilisera displayName / email
-    }
+    } catch (_) {}
 
-    name ??= user?.displayName ?? user?.email ?? 'Utilisateur Prestō';
+    name ??= user?.displayName ?? user?.email ?? 'Utilisateur iliprestō';
 
     if (mounted) {
       setState(() {
@@ -2996,9 +3774,7 @@ class _ConversationPageState extends State<ConversationPage> {
           .update({
         'unreadCount.$userId': 0,
       });
-    } catch (_) {
-      // pas grave si ça échoue
-    }
+    } catch (_) {}
   }
 
   @override
@@ -3014,8 +3790,8 @@ class _ConversationPageState extends State<ConversationPage> {
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text("Connecte-toi à ton compte pour envoyer des messages Prestō."),
+          content: Text(
+              "Connecte-toi à ton compte pour envoyer des messages iliprestō."),
         ),
       );
       Navigator.of(context).push(
@@ -3031,17 +3807,15 @@ class _ConversationPageState extends State<ConversationPage> {
         _firestore.collection('conversations').doc(widget.conversationId);
     final messagesRef = convRef.collection('messages');
 
-    // Nom affiché : pseudo Firestore > displayName > email > fallback
     final String senderName = _currentUserName ??
         user?.displayName ??
         user?.email ??
-        'Utilisateur Prestō';
+        'Utilisateur iliprestō';
 
     _messageController.clear();
 
     try {
       await _firestore.runTransaction((txn) async {
-        // Ajouter le message
         await messagesRef.add({
           'text': text,
           'senderId': userId,
@@ -3049,14 +3823,12 @@ class _ConversationPageState extends State<ConversationPage> {
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        // Mettre à jour le résumé de conversation
         final Map<String, dynamic> update = {
           'lastMessage': text,
           'lastMessageAt': FieldValue.serverTimestamp(),
           'lastSenderId': userId,
         };
 
-        // Mettre à jour les unreadCount pour les autres participants
         for (final p in _participants) {
           if (p == userId) {
             update['unreadCount.$p'] = 0;
@@ -3065,12 +3837,12 @@ class _ConversationPageState extends State<ConversationPage> {
           }
         }
 
-        await txn.update(convRef, update);
+        txn.update(convRef, update);
       });
 
-      // On marque comme lu pour moi (au cas où)
       _markAsRead();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Erreur lors de l’envoi du message : $e"),
@@ -3091,6 +3863,7 @@ class _ConversationPageState extends State<ConversationPage> {
   }
 
   Future<void> _shareByEmail() async {
+    final messenger = ScaffoldMessenger.of(context);
     final messages = await _fetchMessagesOnce();
     final buffer = StringBuffer();
 
@@ -3102,8 +3875,8 @@ class _ConversationPageState extends State<ConversationPage> {
       buffer.writeln("[$timeLabel] $sender : $text");
     }
 
-    final subject = Uri.encodeComponent(
-        "Conversation Prestō - ${widget.offerTitle}");
+    final subject =
+        Uri.encodeComponent("Conversation iliprestō - ${widget.offerTitle}");
     final body = Uri.encodeComponent(buffer.toString());
 
     final uri = Uri.parse("mailto:?subject=$subject&body=$body");
@@ -3111,10 +3884,10 @@ class _ConversationPageState extends State<ConversationPage> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(
-          content: Text(
-              "Impossible d’ouvrir le client email sur cet appareil."),
+          content:
+              Text("Impossible d’ouvrir le client email sur cet appareil."),
         ),
       );
     }
@@ -3124,7 +3897,7 @@ class _ConversationPageState extends State<ConversationPage> {
     final messages = await _fetchMessagesOnce();
     final buffer = StringBuffer();
 
-    buffer.writeln("Conversation Prestō - ${widget.offerTitle}");
+    buffer.writeln("Conversation iliprestō - ${widget.offerTitle}");
     buffer.writeln("======================================");
     buffer.writeln();
 
@@ -3138,6 +3911,7 @@ class _ConversationPageState extends State<ConversationPage> {
 
     final text = buffer.toString();
 
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (_) {
@@ -3147,9 +3921,7 @@ class _ConversationPageState extends State<ConversationPage> {
             width: double.maxFinite,
             child: SingleChildScrollView(
               child: SelectableText(
-                text.isEmpty
-                    ? "Aucun message pour l’instant."
-                    : text,
+                text.isEmpty ? "Aucun message pour l’instant." : text,
                 style: const TextStyle(
                   fontSize: 13,
                   height: 1.3,
@@ -3191,7 +3963,6 @@ class _ConversationPageState extends State<ConversationPage> {
         titleSpacing: 0,
         title: Row(
           children: [
-            // Miniature annonce façon "photo"
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Container(
@@ -3252,8 +4023,7 @@ class _ConversationPageState extends State<ConversationPage> {
                     !_isLoadingMeta) {
                   return const Center(
                     child: CircularProgressIndicator(
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                      valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
                     ),
                   );
                 }
@@ -3278,14 +4048,14 @@ class _ConversationPageState extends State<ConversationPage> {
 
                 return ListView.builder(
                   reverse: true,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
                     final data = docs[index].data();
                     final text = (data['text'] ?? '') as String;
                     final senderName =
-                        (data['senderName'] ?? 'Prestō') as String;
+                        (data['senderName'] ?? 'iliprestō') as String;
                     final senderId = (data['senderId'] ?? '') as String;
                     final ts = data['createdAt'] as Timestamp?;
                     final timeLabel = formatTimeLabel(ts);
@@ -3293,26 +4063,22 @@ class _ConversationPageState extends State<ConversationPage> {
                     final isMe = senderId == userId;
 
                     return Align(
-                      alignment: isMe
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
+                      alignment:
+                          isMe ? Alignment.centerRight : Alignment.centerLeft,
                       child: Container(
                         margin: const EdgeInsets.symmetric(vertical: 3),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         constraints: BoxConstraints(
-                          maxWidth:
-                              MediaQuery.of(context).size.width * 0.75,
+                          maxWidth: MediaQuery.of(context).size.width * 0.75,
                         ),
                         decoration: BoxDecoration(
                           color: isMe ? kPrestoBlue : Colors.white,
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(18),
                             topRight: const Radius.circular(18),
-                            bottomLeft:
-                                Radius.circular(isMe ? 18 : 4),
-                            bottomRight:
-                                Radius.circular(isMe ? 4 : 18),
+                            bottomLeft: Radius.circular(isMe ? 18 : 4),
+                            bottomRight: Radius.circular(isMe ? 4 : 18),
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -3340,8 +4106,7 @@ class _ConversationPageState extends State<ConversationPage> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color:
-                                    isMe ? Colors.white : Colors.black87,
+                                color: isMe ? Colors.white : Colors.black87,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -3351,9 +4116,7 @@ class _ConversationPageState extends State<ConversationPage> {
                                 timeLabel,
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: isMe
-                                      ? Colors.white70
-                                      : Colors.black38,
+                                  color: isMe ? Colors.white70 : Colors.black38,
                                 ),
                               ),
                             ),
@@ -3387,8 +4150,7 @@ class _ConversationPageState extends State<ConversationPage> {
                     ),
                   ),
                   IconButton(
-                    icon:
-                        const Icon(Icons.send, color: kPrestoOrange),
+                    icon: const Icon(Icons.send, color: kPrestoOrange),
                     onPressed: _sendMessage,
                   ),
                 ],
@@ -3401,7 +4163,7 @@ class _ConversationPageState extends State<ConversationPage> {
   }
 }
 
-/// FORMULAIRE /////////////////////////////////////////////////////////
+/// PAGE PUBLIER UNE OFFRE //////////////////////////////////////////////////
 
 class PublishOfferPage extends StatefulWidget {
   const PublishOfferPage({super.key});
@@ -3413,566 +4175,475 @@ class PublishOfferPage extends StatefulWidget {
 class _PublishOfferPageState extends State<PublishOfferPage> {
   final _formKey = GlobalKey<FormState>();
 
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _budgetController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _postalCodeController = TextEditingController();
+  // Champs texte
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _postalCodeController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _budgetController = TextEditingController();
 
+  // Catégories / sous-catégories
   String? _category;
-  bool _showLocationSuggestions = false;
+  String? _selectedSubCategory;
 
-  final List<String> _categories = const [
-    'Restauration / Extra',
-    'Bricolage / Travaux',
-    'Aide à domicile',
-    'Garde d’enfants',
-    'Événementiel / DJ',
-    'Cours & soutien',
-    'Jardinage',
-    'Peinture',
-    'Main-d’œuvre',
-    'Autre',
-  ];
+  List<String> get _categories =>
+      kCategorySubcategories.keys.toList(); // Map<String, List<String>>
 
-  List<String> get _citySuggestions {
-    final text = _locationController.text.trim().toLowerCase();
-    if (!_showLocationSuggestions) return [];
-    if (text.length < 2) return [];
-    return kCityNames
-        .where((c) => c.toLowerCase().contains(text))
-        .take(5)
-        .toList();
-  }
+  // Autocomplétion villes
+  List<CityRecord> _citySuggestions = [];
+  int _highlightedIndex = -1;
+
+  // Région / département (optionnel à exploiter dans le futur)
+  String? _selectedRegionCode;
+  String? _selectedDeptCode;
+
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
-    _budgetController.dispose();
-    _phoneController.dispose();
     _postalCodeController.dispose();
+    _phoneController.dispose();
+    _budgetController.dispose();
     super.dispose();
   }
 
-  void _onLocationChanged(String value) {
+  // --- LOGIQUE AUTOCOMPLÉTION VILLE ---
+
+  void _onCityChanged(String value) {
+    final query = value.trim();
+    if (query.length < 2) {
+      setState(() {
+        _citySuggestions = [];
+        _highlightedIndex = -1;
+      });
+      return;
+    }
+
+    final results = CitySearch.instance.search(query, limit: 10);
     setState(() {
-      _showLocationSuggestions = true;
+      _citySuggestions = results;
+      _highlightedIndex = results.isNotEmpty ? 0 : -1;
     });
-    final lower = value.trim().toLowerCase();
-    for (final entry in kCityPostalMap.entries) {
-      if (entry.key.toLowerCase() == lower) {
-        _postalCodeController.text = entry.value;
-        break;
+  }
+
+  void _onPostalCodeChanged(String value) {
+    final cp = value.trim();
+    if (cp.length < 2) {
+      // On ne spam pas si l'utilisateur tape juste "7"
+      return;
+    }
+
+    final results = CitySearch.instance.searchByPostalCode(cp, limit: 10);
+
+    if (!mounted) return;
+
+    if (results.isEmpty) {
+      setState(() {
+        _citySuggestions = [];
+        _highlightedIndex = -1;
+      });
+      return;
+    }
+
+    final best = CitySearch.instance.pickBestForPostalCode(cp);
+
+    setState(() {
+      _citySuggestions = results;
+      _highlightedIndex = 0;
+    });
+
+    if (best != null) {
+      _applyCity(best);
+    }
+  }
+
+  void _applyCity(CityRecord city) {
+    setState(() {
+      _locationController.text = city.name;
+      _postalCodeController.text = city.cp;
+
+      _selectedDeptCode = city.dept;
+      _selectedRegionCode = city.region;
+
+      _citySuggestions = [];
+      _highlightedIndex = -1;
+    });
+  }
+
+  Widget _buildCitySuggestionsOverlay() {
+    if (_citySuggestions.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      constraints: const BoxConstraints(maxHeight: 220),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(
+            blurRadius: 10,
+            spreadRadius: 1,
+            color: Colors.black12,
+          ),
+        ],
+      ),
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: _citySuggestions.length,
+        itemBuilder: (context, index) {
+          final city = _citySuggestions[index];
+          final selected = index == _highlightedIndex;
+
+          return InkWell(
+            onTap: () => _applyCity(city),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              color: selected ? kPrestoBlue.withOpacity(0.08) : null,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${city.name} (${city.cp})',
+                      style: TextStyle(
+                        fontWeight:
+                            selected ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Dept ${city.dept}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // TODO: sauvegarde dans Firestore (offre)
+      // Exemple :
+      // await FirebaseFirestore.instance.collection('offers').add({...});
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Votre offre a été publiée 🎉'),
+        ),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la publication : $e'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
       }
     }
   }
 
-  Future<void> _submitForm() async {
-    FocusScope.of(context).unfocus();
-
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    final title = _titleController.text.trim();
-    final description = _descriptionController.text.trim();
-    final location = _locationController.text.trim();
-    final postalCode = _postalCodeController.text.trim();
-    final category = _category ?? 'Non précisé';
-    final budgetText = _budgetController.text.trim();
-    final phone = _phoneController.text.trim();
-
-    final double? budget = budgetText.isEmpty
-        ? null
-        : double.tryParse(budgetText.replaceAll(',', '.'));
-
-    try {
-      await FirebaseFirestore.instance.collection('offers').add({
-        'title': title,
-        'description': description,
-        'location': location,
-        'postalCode': postalCode.isEmpty ? null : postalCode,
-        'category': category,
-        'budget': budget,
-        'phone': phone.isEmpty ? null : phone,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Erreur lors de l’enregistrement de l’offre : $e"),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: kPrestoOrange,
+        elevation: 0,
+        centerTitle: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
         ),
-      );
-      return;
-    }
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+        title: const Text(
+          'Je publie une offre',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+      ),
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.black26,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const Center(
-                child: Text(
-                  "Récapitulatif de votre offre",
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _RecapRow(label: "Titre", value: title),
-              _RecapRow(label: "Catégorie", value: category),
-              _RecapRow(label: "Lieu", value: location),
-              if (postalCode.isNotEmpty)
-                _RecapRow(label: "C/P", value: postalCode),
-              if (phone.isNotEmpty)
-                _RecapRow(label: "Téléphone", value: phone),
-              _RecapRow(
-                label: "Budget",
-                value: budget == null
-                    ? "À définir"
-                    : "${budget.toStringAsFixed(2)} €",
-              ),
-              const SizedBox(height: 10),
               const Text(
-                "Description",
+                'Détail de votre besoin',
                 style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 16),
+
+              // TITRE
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Titre de l’offre',
+                  border: OutlineInputBorder(),
+                  hintText: 'Ex : Monter un meuble IKEA',
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Merci de saisir un titre';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // CATÉGORIE
+              DropdownButtonFormField<String>(
+                value: _category,
+                decoration: const InputDecoration(
+                  labelText: 'Catégorie',
+                  border: OutlineInputBorder(),
+                ),
+                items: _categories
+                    .map(
+                      (cat) => DropdownMenuItem(
+                        value: cat,
+                        child: Text(cat),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _category = value;
+                    _selectedSubCategory = null;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Merci de choisir une catégorie';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // SOUS-CATÉGORIE (dropdown dynamique)
+              if (_category != null)
+                DropdownButtonFormField<String>(
+                  value: _selectedSubCategory,
+                  decoration: const InputDecoration(
+                    labelText: 'Sous-catégorie',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: (kCategorySubcategories[_category] ?? [])
+                      .map(
+                        (sub) => DropdownMenuItem(
+                          value: sub,
+                          child: Text(sub),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedSubCategory = value;
+                    });
+                  },
+                ),
+              if (_category != null) const SizedBox(height: 16),
+
+              // DESCRIPTION
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Description détaillée',
+                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
+                ),
+                minLines: 4,
+                maxLines: 8,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Merci de décrire votre besoin';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // VILLE + CP + AUTOCOMPLÉTION
+              const Text(
+                'Localisation',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _locationController,
+                decoration: const InputDecoration(
+                  labelText: 'Ville',
+                  border: OutlineInputBorder(),
+                  hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
+                ),
+                onChanged: _onCityChanged,
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _postalCodeController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Code postal',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: _onPostalCodeChanged,
+              ),
+              _buildCitySuggestionsOverlay(),
+              const SizedBox(height: 16),
+
+              // TÉLÉPHONE
+              TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Téléphone (pour être rappelé)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // BUDGET
+              TextFormField(
+                controller: _budgetController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Budget indicatif (€)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // BOUTON PUBLIER
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
+                  onPressed: _isSubmitting ? null : _submitForm,
+                  icon: _isSubmitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.send),
+                  label: Text(
+                    _isSubmitting
+                        ? 'Publication en cours...'
+                        : 'Publier mon offre',
+                  ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrestoBlue,
+                    backgroundColor: kPrestoOrange,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Offre publiée ✅"),
-                      ),
-                    );
-                    _formKey.currentState!.reset();
-                    _titleController.clear();
-                    _descriptionController.clear();
-                    _locationController.clear();
-                    _budgetController.clear();
-                    _phoneController.clear();
-                    _postalCodeController.clear();
-                    setState(() {
-                      _category = null;
-                      _showLocationSuggestions = false;
-                    });
-                  },
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text(
-                    "Confirmer la publication",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
-                    ),
-                  ),
                 ),
               ),
-              const SizedBox(height: 8),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
+}
+
+/// Petite carte pour sélectionner une photo
+class _PhotoSelectorTile extends StatelessWidget {
+  final String label;
+  final XFile? file;
+  final VoidCallback onTap;
+
+  const _PhotoSelectorTile({
+    required this.label,
+    required this.file,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final suggestions = _citySuggestions;
-    final bool isSmall = MediaQuery.of(context).size.width < 600;
-    final double horizontalPadding = isSmall ? 16.0 : 32.0;
+    // ✅ variable locale pour la promotion null-safety
+    final XFile? localFile = file;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Je publie une offre",
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        backgroundColor: kPrestoOrange,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.home_outlined),
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const HomePage()),
-                (route) => false,
-              );
-            },
-          ),
-        ],
-      ),
-      resizeToAvoidBottomInset: false,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          physics: const ClampingScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(
-            horizontalPadding,
-            24,
-            horizontalPadding,
-            24,
-          ),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            "Décrivez votre besoin à notre IA",
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 6,
-                                offset: Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Saisie vocale / IA : fonctionnalité bientôt disponible.",
-                                  ),
-                                ),
-                              );
-                            },
-                            icon: const Icon(
-                              Icons.mic,
-                              color: kPrestoBlue,
-                            ),
-                            tooltip: "Décrire mon besoin à l’IA",
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "Plus votre demande est claire, plus vous aurez de réponses adaptées.",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: "Titre de l’offre *",
-                        hintText: "Ex : Serveur pour service du soir",
-                      ),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      enableSuggestions: true,
-                      autocorrect: true,
-                      textCapitalization: TextCapitalization.sentences,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return "Veuillez saisir un titre d’offre";
-                        }
-                        if (value.trim().length < 4) {
-                          return "Titre trop court";
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: _category,
-                      decoration: const InputDecoration(
-                        labelText: "Catégorie",
-                      ),
-                      items: _categories
-                          .map(
-                            (c) => DropdownMenuItem(
-                              value: c,
-                              child: Text(c),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _category = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _descriptionController,
-                      maxLines: 5,
-                      decoration: const InputDecoration(
-                        labelText: "Description détaillée *",
-                        hintText:
-                            "Expliquez ce que vous cherchez : horaires, tâches, niveau attendu…",
-                        alignLabelWithHint: true,
-                      ),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      enableSuggestions: true,
-                      autocorrect: true,
-                      textCapitalization: TextCapitalization.sentences,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return "Veuillez décrire votre besoin";
-                        }
-                        if (value.trim().length < 10) {
-                          return "Description trop courte";
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _locationController,
-                            decoration: const InputDecoration(
-                              labelText: "Lieu / Ville *",
-                              hintText: "Ex : Baie-Mahault, Jarry…",
-                            ),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            enableSuggestions: true,
-                            autocorrect: true,
-                            textCapitalization: TextCapitalization.words,
-                            keyboardType: TextInputType.streetAddress,
-                            autofillHints: const [
-                              AutofillHints.addressCity,
-                              AutofillHints.addressCityAndState,
-                            ],
-                            onChanged: _onLocationChanged,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return "Indiquez un lieu";
-                              }
-                              return null;
-                            },
-                            onFieldSubmitted: (_) {
-                              setState(() {
-                                _showLocationSuggestions = false;
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 110,
-                          child: TextFormField(
-                            controller: _postalCodeController,
-                            decoration: const InputDecoration(
-                              labelText: "C/P",
-                              hintText: "97122",
-                            ),
-                            keyboardType: TextInputType.number,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            enableSuggestions: true,
-                            autocorrect: false,
-                            autofillHints: const [AutofillHints.postalCode],
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (suggestions.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        constraints: const BoxConstraints(maxHeight: 160),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: suggestions.length,
-                          itemBuilder: (context, index) {
-                            final city = suggestions[index];
-                            return ListTile(
-                              dense: true,
-                              title: Text(city),
-                              onTap: () {
-                                setState(() {
-                                  _locationController.text = city;
-                                  final cp = kCityPostalMap[city];
-                                  if (cp != null) {
-                                    _postalCodeController.text = cp;
-                                  }
-                                  _showLocationSuggestions = false;
-                                });
-                                FocusScope.of(context).unfocus();
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _phoneController,
-                      decoration: const InputDecoration(
-                        labelText: "Téléphone (optionnel)",
-                        hintText: "Ex : 0690 12 34 56",
-                      ),
-                      keyboardType: TextInputType.phone,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      enableSuggestions: true,
-                      autocorrect: false,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _budgetController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        labelText: "Budget proposé (€)",
-                        hintText: "Ex : 80",
-                      ),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      enableSuggestions: false,
-                      autocorrect: false,
-                      validator: (value) {
-                        if (value == null || value.trim().isNotEmpty) {
-                          final txt =
-                              (value ?? '').trim().replaceAll(',', '.');
-                          if (txt.isEmpty) {
-                            return null;
-                          }
-                          final num? val = num.tryParse(txt);
-                          if (val == null) {
-                            return "Veuillez saisir un montant valide";
-                          }
-                          if (val <= 0) {
-                            return "Le montant doit être positif";
-                          }
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          backgroundColor: kPrestoOrange,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: _submitForm,
-                        icon: const Icon(Icons.send_outlined),
-                        label: const Text(
-                          "Publier l’offre",
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "* Champs obligatoires",
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.black45,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+    Widget content;
+    if (localFile == null) {
+      content = Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.add_a_photo_outlined,
+              size: 28, color: Colors.black45),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
             ),
           ),
+        ],
+      );
+    } else {
+      content = ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Image.network(
+          localFile.path,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.image, size: 24, color: kPrestoOrange),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
+      );
+    }
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Container(
+        height: 90,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF3E0),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black12),
+        ),
+        child: content,
       ),
     );
   }
@@ -4009,7 +4680,6 @@ class _AccountPageState extends State<AccountPage> {
   bool _profileLoaded = false;
   bool _isSavingProfile = false;
 
-  // Liste de catégories possibles pour les favoris
   static const List<String> _allFavoriteCategories = [
     'Restauration / Extra',
     'Bricolage / Travaux',
@@ -4033,8 +4703,6 @@ class _AccountPageState extends State<AccountPage> {
     _profilePhoneController.dispose();
     super.dispose();
   }
-
-  // ------------- AUTH EMAIL / MDP ------------------
 
   Future<void> _signInWithEmail() async {
     if (!_formKey.currentState!.validate()) return;
@@ -4065,7 +4733,8 @@ class _AccountPageState extends State<AccountPage> {
     if (_passwordController.text.trim() !=
         _passwordConfirmController.text.trim()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Les mots de passe ne correspondent pas.")),
+        const SnackBar(
+            content: Text("Les mots de passe ne correspondent pas.")),
       );
       return;
     }
@@ -4084,14 +4753,13 @@ class _AccountPageState extends State<AccountPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(e.message ?? "Erreur lors de l’inscription.")),
+          content: Text(e.message ?? "Erreur lors de l’inscription."),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-
-  // ------------- PROFIL / FIRESTORE ------------------
 
   Future<void> _loadUserProfile(User user) async {
     try {
@@ -4135,7 +4803,6 @@ class _AccountPageState extends State<AccountPage> {
         'favoriteCategories': _favoriteCategories.toList(),
       }, SetOptions(merge: true));
 
-      // Mettre aussi à jour le displayName Firebase si un pseudo est renseigné
       if (pseudo.isNotEmpty) {
         await user.updateDisplayName(pseudo);
       }
@@ -4149,8 +4816,8 @@ class _AccountPageState extends State<AccountPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text("Erreur lors de la sauvegarde du profil : $e")),
+            content: Text("Erreur lors de la sauvegarde du profil : $e"),
+          ),
         );
       }
     } finally {
@@ -4164,10 +4831,8 @@ class _AccountPageState extends State<AccountPage> {
     final newSet = Set<String>.from(_favoriteCategories);
     if (newSet.contains(category)) {
       newSet.remove(category);
-      // plus tard : FirebaseMessaging.instance.unsubscribeFromTopic(...)
     } else {
       newSet.add(category);
-      // plus tard : FirebaseMessaging.instance.subscribeToTopic(...)
     }
 
     setState(() {
@@ -4182,8 +4847,6 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  // ------------- GOOGLE / APPLE ------------------
-
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
     try {
@@ -4191,8 +4854,7 @@ class _AccountPageState extends State<AccountPage> {
         final googleProvider = GoogleAuthProvider();
         await _auth.signInWithPopup(googleProvider);
       } else {
-        final GoogleSignInAccount? googleUser =
-            await GoogleSignIn().signIn();
+        final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
         if (googleUser == null) {
           setState(() => _isLoading = false);
           return;
@@ -4220,10 +4882,9 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _signInWithApple() async {
-    // Apple : iOS / macOS uniquement
     if (kIsWeb ||
         !(defaultTargetPlatform == TargetPlatform.iOS ||
-          defaultTargetPlatform == TargetPlatform.macOS)) {
+            defaultTargetPlatform == TargetPlatform.macOS)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -4276,18 +4937,15 @@ class _AccountPageState extends State<AccountPage> {
         final googleSignIn = GoogleSignIn();
         await googleSignIn.signOut();
       }
-    } catch (_) {
-      // on ignore
-    }
+      SessionState.userId = null;
+    } catch (_) {}
   }
-
-  // ------------- UI : FORMULAIRE AUTH ------------------
 
   Widget _buildAuthForm() {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Mon compte Prestō",
+          "Mon compte iliprestō",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         backgroundColor: kPrestoOrange,
@@ -4303,8 +4961,8 @@ class _AccountPageState extends State<AccountPage> {
               children: [
                 Text(
                   _isLoginMode
-                      ? "Se connecter à Prestō"
-                      : "Créer un compte Prestō",
+                      ? "Se connecter à iliprestō"
+                      : "Créer un compte iliprestō",
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -4371,8 +5029,7 @@ class _AccountPageState extends State<AccountPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: kPrestoOrange,
                             foregroundColor: Colors.white,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           onPressed: _isLoading
                               ? null
@@ -4389,8 +5046,7 @@ class _AccountPageState extends State<AccountPage> {
                                   height: 18,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor:
-                                        AlwaysStoppedAnimation<Color>(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
                                       Colors.white,
                                     ),
                                   ),
@@ -4449,11 +5105,14 @@ class _AccountPageState extends State<AccountPage> {
                       backgroundColor: Colors.white,
                     ),
                     onPressed: _isLoading ? null : _signInWithGoogle,
-                    icon: const Icon(
-                      Icons.login,
-                      size: 18,
-                      color: Colors.red,
-                    ),
+                      icon: Image.asset(
+                        'assets/images/google_g.png',
+                        width: 18,
+                        height: 18,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.login, size: 18, color: Colors.red);
+                        },
+                      ),
                     label: const Text(
                       "Continuer avec Google",
                       style: TextStyle(
@@ -4485,6 +5144,45 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                   ),
                 ),
+
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Vous êtes une entreprise ?",
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
+                        "Abonnement bientôt disponible.",
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const ProProfilePage()),
+                            );
+                          },
+                          icon: const Icon(Icons.business_center_outlined),
+                          label: const Text("Créer un compte Pro"),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -4493,26 +5191,23 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  // ------------- UI : PROFIL CONNECTÉ ------------------
-
   Widget _buildProfile(User user) {
-    // Mise à jour de la session globale pour le reste de l’app
     SessionState.userId = user.uid;
 
-    // Charger le profil Firestore une fois
     if (!_profileLoaded) {
       _profileLoaded = true;
       _loadUserProfile(user);
     }
 
     final pseudo = _profilePseudoController.text.trim();
-    final displayName =
-        pseudo.isNotEmpty ? pseudo : (user.displayName ?? "Utilisateur Prestō");
+    final displayName = pseudo.isNotEmpty
+        ? pseudo
+        : (user.displayName ?? "Utilisateur iliprestō");
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Mon compte Prestō",
+          "Mon compte iliprestō",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         backgroundColor: kPrestoOrange,
@@ -4528,20 +5223,17 @@ class _AccountPageState extends State<AccountPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // 1️⃣ Retour à l'accueil
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: kPrestoBlue,
                         foregroundColor: Colors.white,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       onPressed: () {
                         Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                              builder: (_) => const HomePage()),
+                          MaterialPageRoute(builder: (_) => const HomePage()),
                           (route) => false,
                         );
                       },
@@ -4556,7 +5248,6 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Avatar + pseudo / email
                   Center(
                     child: Column(
                       children: [
@@ -4604,7 +5295,6 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // 2️⃣ Section "Mon profil"
                   const Text(
                     "Mon profil",
                     style: TextStyle(
@@ -4659,8 +5349,7 @@ class _AccountPageState extends State<AccountPage> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: kPrestoOrange,
                               foregroundColor: Colors.white,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 10),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
                             ),
                             onPressed: _isSavingProfile
                                 ? null
@@ -4671,9 +5360,8 @@ class _AccountPageState extends State<AccountPage> {
                                     height: 16,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      valueColor:
-                                          AlwaysStoppedAnimation<Color>(
-                                              Colors.white),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
                                     ),
                                   )
                                 : const Icon(Icons.save_outlined),
@@ -4692,7 +5380,71 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // 3️⃣ Section "Mes catégories favorites"
+                  const Text(
+                    "Mes messages",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Retrouve toutes les conversations liées à tes offres ou aux offres auxquelles tu as répondu.",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const MessagesPage(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.chat_bubble_outline),
+                            label: const Text(
+                              "Ouvrir mes messages",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Text(
+                    "Mes annonces publiées",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  UserOffersSection(userId: user.uid),
+
+                  const SizedBox(height: 24),
                   const Text(
                     "Mes catégories favorites",
                     style: TextStyle(
@@ -4729,17 +5481,15 @@ class _AccountPageState extends State<AccountPage> {
                           spacing: 6,
                           runSpacing: 6,
                           children: _allFavoriteCategories.map((cat) {
-                            final selected =
-                                _favoriteCategories.contains(cat);
+                            final selected = _favoriteCategories.contains(cat);
                             return ChoiceChip(
                               label: Text(
                                 cat,
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: selected
-                                      ? Colors.white
-                                      : Colors.black87,
+                                  color:
+                                      selected ? Colors.white : Colors.black87,
                                 ),
                               ),
                               selected: selected,
@@ -4761,15 +5511,49 @@ class _AccountPageState extends State<AccountPage> {
                       ],
                     ),
                   ),
+
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Vous êtes une entreprise ?",
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
+                          "Abonnement bientôt disponible.",
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const ProProfilePage()),
+                              );
+                            },
+                            icon: const Icon(Icons.business_center_outlined),
+                            label: const Text("Créer un compte Pro"),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 28),
-                  // 4️⃣ Bouton se déconnecter
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: const BorderSide(color: Colors.black26),
-                      ),
                       onPressed: _signOut,
                       icon: const Icon(Icons.logout),
                       label: const Text(
@@ -4789,8 +5573,6 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  // ------------- BUILD GLOBAL ------------------
-
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
@@ -4805,6 +5587,295 @@ class _AccountPageState extends State<AccountPage> {
         }
       },
     );
+  }
+}
+
+// 🔥 SECTION "Mes annonces publiées" dans Mon compte
+class UserOffersSection extends StatelessWidget {
+  final String userId;
+
+  const UserOffersSection({
+    super.key,
+    required this.userId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (userId.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('offers')
+          .where('ownerId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+              ),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              "Erreur lors du chargement de vos annonces.\n${snapshot.error}",
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          );
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+
+        if (docs.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              "Tu n’as pas encore publié d’annonce.",
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          );
+        }
+
+        return Column(
+          children: docs.map((doc) {
+            final data = doc.data();
+            final offerId = doc.id;
+
+            final title = (data['title'] ?? 'Sans titre') as String;
+            final location = (data['location'] ?? 'Lieu non précisé') as String;
+            final category =
+                (data['category'] ?? 'Catégorie non précisée') as String;
+            final budget = data['budget'];
+
+            String subtitle = "$location · $category";
+            if (budget != null) {
+              subtitle += " · ${budget.toString()} €";
+            }
+
+            return Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFFFF3E0),
+                  child: Icon(
+                    Icons.work_outline,
+                    color: kPrestoOrange,
+                  ),
+                ),
+                title: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                subtitle: Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                trailing: PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _showEditOfferDialog(context, offerId, data);
+                    } else if (value == 'delete') {
+                      _confirmDeleteOffer(context, offerId, title);
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Text("Modifier"),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Text("Supprimer"),
+                    ),
+                  ],
+                ),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => OfferDetailPage(
+                        title: title,
+                        location: location,
+                        category: category,
+                        subcategory: data['subcategory'] as String?,
+                        budget: budget is num ? budget : null,
+                        description: (data['description'] ?? '') as String?,
+                        phone: data['phone'] as String?,
+                        imageUrls: (data['imageUrls'] as List<dynamic>?)
+                                ?.map((e) => e.toString())
+                                .toList() ??
+                            const [],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Future<void> _showEditOfferDialog(
+    BuildContext context,
+    String offerId,
+    Map<String, dynamic> data,
+  ) async {
+    final titleController =
+        TextEditingController(text: (data['title'] ?? '') as String);
+    final descController =
+        TextEditingController(text: (data['description'] ?? '') as String);
+    final budgetController = TextEditingController(
+      text: data['budget']?.toString() ?? '',
+    );
+
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text("Modifier l’annonce"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: "Titre",
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: descController,
+                  decoration: const InputDecoration(
+                    labelText: "Description",
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: budgetController,
+                  decoration: const InputDecoration(
+                    labelText: "Budget (€)",
+                  ),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text("Annuler"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final newTitle = titleController.text.trim();
+                final newDesc = descController.text.trim();
+                final budgetText = budgetController.text.trim();
+
+                num? newBudget;
+                if (budgetText.isNotEmpty) {
+                  newBudget = num.tryParse(budgetText.replaceAll(',', '.'));
+                }
+
+                await FirebaseFirestore.instance
+                    .collection('offers')
+                    .doc(offerId)
+                    .update({
+                  'title': newTitle.isEmpty ? data['title'] : newTitle,
+                  'description':
+                      newDesc.isEmpty ? data['description'] : newDesc,
+                  'budget': newBudget ?? data['budget'],
+                });
+
+                if (ctx.mounted) {
+                  Navigator.of(ctx).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Annonce mise à jour ✅"),
+                    ),
+                  );
+                }
+              },
+              child: const Text("Enregistrer"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmDeleteOffer(
+    BuildContext context,
+    String offerId,
+    String title,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text("Supprimer l’annonce"),
+          content: Text(
+            'Voulez-vous vraiment supprimer :\n"$title" ?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text("Annuler"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text("Supprimer"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await FirebaseFirestore.instance
+          .collection('offers')
+          .doc(offerId)
+          .delete();
+
+      messenger.showSnackBar(
+        const SnackBar(content: Text("Annonce supprimée ✅")),
+      );
+    }
   }
 }
 

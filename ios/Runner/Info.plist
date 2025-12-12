@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Nous avons besoin du micro pour la dictée.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Nous avons besoin de la reconnaissance vocale pour remplir les champs.</string>
 </dict>
 </plist>

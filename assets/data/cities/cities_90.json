@@ -1,0 +1,620 @@
+[
+  {
+    "name": "ANDELNANS",
+    "cp": "90400",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "ANDELNANS",
+    "cp": "90400",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "ANGEOT",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "ANJOUTEY",
+    "cp": "90170",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "ARGIESANS",
+    "cp": "90800",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "AUTRECHENE",
+    "cp": "90140",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "AUXELLES BAS",
+    "cp": "90200",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "AUXELLES HAUT",
+    "cp": "90200",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BANVILLARS",
+    "cp": "90800",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BAVILLIERS",
+    "cp": "90800",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BEAUCOURT",
+    "cp": "90500",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BELFORT",
+    "cp": "90000",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BERMONT",
+    "cp": "90400",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BESSONCOURT",
+    "cp": "90160",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BETHONVILLIERS",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BORON",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BOTANS",
+    "cp": "90400",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BOURG SOUS CHATELET",
+    "cp": "90110",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BOUROGNE",
+    "cp": "90140",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BREBOTTE",
+    "cp": "90140",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BRETAGNE",
+    "cp": "90130",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "BUC",
+    "cp": "90800",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "CHARMOIS",
+    "cp": "90140",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "CHATENOIS LES FORGES",
+    "cp": "90700",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "CHAUX",
+    "cp": "90330",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "CHAVANATTE",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "CHAVANNES LES GRANDS",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "CHEVREMONT",
+    "cp": "90340",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "COURCELLES",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "COURTELEVANT",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "CRAVANCHE",
+    "cp": "90300",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "CROIX",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "CUNELIERES",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "DANJOUTIN",
+    "cp": "90400",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "DELLE",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "DENNEY",
+    "cp": "90160",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "DORANS",
+    "cp": "90400",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "EGUENIGUE",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "ELOIE",
+    "cp": "90300",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "ESSERT",
+    "cp": "90850",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "ETUEFFONT",
+    "cp": "90170",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "EVETTE SALBERT",
+    "cp": "90350",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "FAVEROIS",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "FECHE L EGLISE",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "FELON",
+    "cp": "90110",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "FLORIMONT",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "FONTENELLE",
+    "cp": "90340",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "FOUSSEMAGNE",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "FRAIS",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "FROIDEFONTAINE",
+    "cp": "90140",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "GIROMAGNY",
+    "cp": "90200",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "GRANDVILLARS",
+    "cp": "90600",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "GROSMAGNY",
+    "cp": "90200",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "GROSNE",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "JONCHEREY",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "LACHAPELLE SOUS CHAUX",
+    "cp": "90300",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "LACHAPELLE SOUS ROUGEMONT",
+    "cp": "90360",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "LACOLLONGE",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "LAGRANGE",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "LAMADELEINE VAL DES ANGES",
+    "cp": "90170",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "LARIVIERE",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "LEBETAIN",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "LEPUIX",
+    "cp": "90200",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "LEPUIX NEUF",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "LEVAL",
+    "cp": "90110",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "MENONCOURT",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "MEROUX MOVAL",
+    "cp": "90400",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "MEROUX MOVAL",
+    "cp": "90400",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "MEZIRE",
+    "cp": "90120",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "MONTBOUTON",
+    "cp": "90500",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "MONTREUX CHATEAU",
+    "cp": "90130",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "MORVILLARS",
+    "cp": "90120",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "NOVILLARD",
+    "cp": "90340",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "OFFEMONT",
+    "cp": "90300",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "PEROUSE",
+    "cp": "90160",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "PETIT CROIX",
+    "cp": "90130",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "PETITEFONTAINE",
+    "cp": "90360",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "PETITMAGNY",
+    "cp": "90170",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "PHAFFANS",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "RECHESY",
+    "cp": "90370",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "RECOUVRANCE",
+    "cp": "90140",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "REPPE",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "RIERVESCEMONT",
+    "cp": "90200",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "ROMAGNY SOUS ROUGEMONT",
+    "cp": "90110",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "ROPPE",
+    "cp": "90380",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "ROUGEGOUTTE",
+    "cp": "90200",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "ROUGEMONT LE CHATEAU",
+    "cp": "90110",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "SERMAMAGNY",
+    "cp": "90300",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "SEVENANS",
+    "cp": "90400",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "ST DIZIER L EVEQUE",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN LE CHATELET",
+    "cp": "90110",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "SUARCE",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "THIANCOURT",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "TREVENANS",
+    "cp": "90400",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "URCEREY",
+    "cp": "90800",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "VALDOIE",
+    "cp": "90300",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "VAUTHIERMONT",
+    "cp": "90150",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "VELLESCOT",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "VESCEMONT",
+    "cp": "90200",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "VETRIGNE",
+    "cp": "90300",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "VEZELOIS",
+    "cp": "90400",
+    "dept": "90",
+    "region": ""
+  },
+  {
+    "name": "VILLARS LE SEC",
+    "cp": "90100",
+    "dept": "90",
+    "region": ""
+  }
+]

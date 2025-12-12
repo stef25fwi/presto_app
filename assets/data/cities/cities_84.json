@@ -1,0 +1,920 @@
+[
+  {
+    "name": "ALTHEN DES PALUDS",
+    "cp": "84210",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ANSOUIS",
+    "cp": "84240",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "APT",
+    "cp": "84400",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "AUBIGNAN",
+    "cp": "84810",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "AUREL",
+    "cp": "84390",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "AURIBEAU",
+    "cp": "84400",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "AVIGNON",
+    "cp": "84000",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "AVIGNON",
+    "cp": "84140",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "BEAUMES DE VENISE",
+    "cp": "84190",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "BEAUMETTES",
+    "cp": "84220",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONT DE PERTUIS",
+    "cp": "84120",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONT DU VENTOUX",
+    "cp": "84340",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "BEDARRIDES",
+    "cp": "84370",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "BEDOIN",
+    "cp": "84410",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "BLAUVAC",
+    "cp": "84570",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "BOLLENE",
+    "cp": "84500",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "BONNIEUX",
+    "cp": "84480",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "BRANTES",
+    "cp": "84390",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "BUISSON",
+    "cp": "84110",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "BUOUX",
+    "cp": "84480",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CABRIERES D AIGUES",
+    "cp": "84240",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CABRIERES D AVIGNON",
+    "cp": "84220",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CADENET",
+    "cp": "84160",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CADEROUSSE",
+    "cp": "84860",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CAIRANNE",
+    "cp": "84290",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CAMARET SUR AIGUES",
+    "cp": "84850",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CAROMB",
+    "cp": "84330",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CARPENTRAS",
+    "cp": "84200",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CASENEUVE",
+    "cp": "84750",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CASTELLET EN LUBERON",
+    "cp": "84400",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CAUMONT SUR DURANCE",
+    "cp": "84510",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CAVAILLON",
+    "cp": "84300",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CAVAILLON",
+    "cp": "84300",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUNEUF DE GADAGNE",
+    "cp": "84470",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUNEUF DU PAPE",
+    "cp": "84230",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CHEVAL BLANC",
+    "cp": "84460",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "COURTHEZON",
+    "cp": "84350",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CRESTET",
+    "cp": "84110",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CRILLON LE BRAVE",
+    "cp": "84410",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "CUCURON",
+    "cp": "84160",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ENTRAIGUES SUR LA SORGUE",
+    "cp": "84320",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ENTRECHAUX",
+    "cp": "84340",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "FAUCON",
+    "cp": "84110",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "FLASSAN",
+    "cp": "84410",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE DE VAUCLUSE",
+    "cp": "84800",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "GARGAS",
+    "cp": "84400",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "GIGNAC",
+    "cp": "84400",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "GIGONDAS",
+    "cp": "84190",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "GORDES",
+    "cp": "84220",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "GOULT",
+    "cp": "84220",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "GRAMBOIS",
+    "cp": "84240",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "GRILLON",
+    "cp": "84600",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "JONQUERETTES",
+    "cp": "84450",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "JONQUIERES",
+    "cp": "84150",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "JOUCAS",
+    "cp": "84220",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "L ISLE SUR LA SORGUE",
+    "cp": "84800",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LA BASTIDE DES JOURDANS",
+    "cp": "84240",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LA BASTIDONNE",
+    "cp": "84120",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LA MOTTE D AIGUES",
+    "cp": "84240",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LA ROQUE ALRIC",
+    "cp": "84190",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LA ROQUE SUR PERNES",
+    "cp": "84210",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LA TOUR D AIGUES",
+    "cp": "84240",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LACOSTE",
+    "cp": "84480",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LAFARE",
+    "cp": "84190",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LAGARDE D APT",
+    "cp": "84400",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LAGARDE PAREOL",
+    "cp": "84290",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LAGNES",
+    "cp": "84800",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LAMOTTE DU RHONE",
+    "cp": "84840",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LAPALUD",
+    "cp": "84840",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LAURIS",
+    "cp": "84360",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LE BARROUX",
+    "cp": "84330",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LE BEAUCET",
+    "cp": "84210",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LE PONTET",
+    "cp": "84130",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LE THOR",
+    "cp": "84250",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LIOUX",
+    "cp": "84220",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LORIOL DU COMTAT",
+    "cp": "84870",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "LOURMARIN",
+    "cp": "84160",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MALAUCENE",
+    "cp": "84340",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MALEMORT DU COMTAT",
+    "cp": "84570",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MAUBEC",
+    "cp": "84660",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MAZAN",
+    "cp": "84380",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MENERBES",
+    "cp": "84560",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MERINDOL",
+    "cp": "84360",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "METHAMIS",
+    "cp": "84570",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MIRABEAU",
+    "cp": "84120",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MODENE",
+    "cp": "84330",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MONDRAGON",
+    "cp": "84430",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MONIEUX",
+    "cp": "84390",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MONTEUX",
+    "cp": "84170",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MORIERES LES AVIGNON",
+    "cp": "84310",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MORMOIRON",
+    "cp": "84570",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MORNAS",
+    "cp": "84550",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "MURS",
+    "cp": "84220",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "OPPEDE",
+    "cp": "84580",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ORANGE",
+    "cp": "84100",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "PERNES LES FONTAINES",
+    "cp": "84210",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "PERTUIS",
+    "cp": "84120",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "PEYPIN D AIGUES",
+    "cp": "84240",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "PIOLENC",
+    "cp": "84420",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "PUGET",
+    "cp": "84360",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "PUYMERAS",
+    "cp": "84110",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "PUYVERT",
+    "cp": "84160",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "RASTEAU",
+    "cp": "84110",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "RICHERENCHES",
+    "cp": "84600",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ROAIX",
+    "cp": "84110",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ROBION",
+    "cp": "84440",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ROUSSILLON",
+    "cp": "84220",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "RUSTREL",
+    "cp": "84400",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "SABLET",
+    "cp": "84110",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "SAIGNON",
+    "cp": "84400",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "SANNES",
+    "cp": "84240",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "SARRIANS",
+    "cp": "84260",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "SAULT",
+    "cp": "84390",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "SAUMANE DE VAUCLUSE",
+    "cp": "84800",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "SAVOILLAN",
+    "cp": "84390",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "SEGURET",
+    "cp": "84110",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "SERIGNAN DU COMTAT",
+    "cp": "84830",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "SIVERGUES",
+    "cp": "84400",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "SORGUES",
+    "cp": "84700",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST CHRISTOL",
+    "cp": "84390",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST DIDIER",
+    "cp": "84210",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST HIPPOLYTE LE GRAVEYRON",
+    "cp": "84330",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER DU VENTOUX",
+    "cp": "84390",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST MARCELLIN LES VAISON",
+    "cp": "84110",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DE CASTILLON",
+    "cp": "84750",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DE LA BRASQUE",
+    "cp": "84760",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST PANTALEON",
+    "cp": "84220",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DE VASSOLS",
+    "cp": "84330",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST ROMAIN EN VIENNOIS",
+    "cp": "84110",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST ROMAN DE MALEGARDE",
+    "cp": "84290",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST SATURNIN LES APT",
+    "cp": "84490",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST SATURNIN LES AVIGNON",
+    "cp": "84450",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "ST TRINIT",
+    "cp": "84390",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "STE CECILE LES VIGNES",
+    "cp": "84290",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "SUZETTE",
+    "cp": "84190",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "TAILLADES",
+    "cp": "84300",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "TRAVAILLAN",
+    "cp": "84850",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "UCHAUX",
+    "cp": "84100",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VACQUEYRAS",
+    "cp": "84190",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VAISON LA ROMAINE",
+    "cp": "84110",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VALREAS",
+    "cp": "84600",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VAUGINES",
+    "cp": "84160",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VEDENE",
+    "cp": "84270",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VELLERON",
+    "cp": "84740",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VENASQUE",
+    "cp": "84210",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VIENS",
+    "cp": "84750",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VILLARS",
+    "cp": "84400",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VILLEDIEU",
+    "cp": "84110",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VILLELAURE",
+    "cp": "84530",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VILLES SUR AUZON",
+    "cp": "84570",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VIOLES",
+    "cp": "84150",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VISAN",
+    "cp": "84820",
+    "dept": "84",
+    "region": ""
+  },
+  {
+    "name": "VITROLLES EN LUBERON",
+    "cp": "84240",
+    "dept": "84",
+    "region": ""
+  }
+]

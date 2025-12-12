@@ -1,0 +1,1172 @@
+[
+  {
+    "name": "AIGLUN",
+    "cp": "06910",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "AMIRAT",
+    "cp": "06910",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ANDON",
+    "cp": "06750",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ANDON",
+    "cp": "06750",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ANTIBES",
+    "cp": "06160",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ANTIBES",
+    "cp": "06160",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ANTIBES",
+    "cp": "06600",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ANTIBES",
+    "cp": "06600",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ASCROS",
+    "cp": "06260",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ASPREMONT",
+    "cp": "06790",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "AURIBEAU SUR SIAGNE",
+    "cp": "06810",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "AUVARE",
+    "cp": "06260",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BAIROLS",
+    "cp": "06420",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BEAULIEU SUR MER",
+    "cp": "06310",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BEAUSOLEIL",
+    "cp": "06240",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BELVEDERE",
+    "cp": "06450",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BENDEJUN",
+    "cp": "06390",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BERRE LES ALPES",
+    "cp": "06390",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BEUIL",
+    "cp": "06470",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BEZAUDUN LES ALPES",
+    "cp": "06510",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BIOT",
+    "cp": "06410",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BLAUSASC",
+    "cp": "06440",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BONSON",
+    "cp": "06830",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BOUYON",
+    "cp": "06510",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BREIL SUR ROYA",
+    "cp": "06540",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "BRIANCONNET",
+    "cp": "06850",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CABRIS",
+    "cp": "06530",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CAGNES SUR MER",
+    "cp": "06800",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CAGNES SUR MER",
+    "cp": "06800",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CAILLE",
+    "cp": "06750",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CANNES",
+    "cp": "06150",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CANNES",
+    "cp": "06400",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CANTARON",
+    "cp": "06340",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CAP D AIL",
+    "cp": "06320",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CARROS",
+    "cp": "06510",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CASTAGNIERS",
+    "cp": "06670",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CASTELLAR",
+    "cp": "06500",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CASTILLON",
+    "cp": "06500",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CAUSSOLS",
+    "cp": "06460",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUNEUF D ENTRAUNES",
+    "cp": "06470",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUNEUF GRASSE",
+    "cp": "06740",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUNEUF VILLEVIEILLE",
+    "cp": "06390",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CIPIERES",
+    "cp": "06620",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CLANS",
+    "cp": "06420",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "COARAZE",
+    "cp": "06390",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "COLLONGUES",
+    "cp": "06910",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "COLOMARS",
+    "cp": "06670",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CONSEGUDES",
+    "cp": "06510",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CONTES",
+    "cp": "06390",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "COURMES",
+    "cp": "06620",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "COURSEGOULES",
+    "cp": "06140",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "CUEBRIS",
+    "cp": "06910",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "DALUIS",
+    "cp": "06470",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "DRAP",
+    "cp": "06340",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "DURANUS",
+    "cp": "06670",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ENTRAUNES",
+    "cp": "06470",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ENTRAUNES",
+    "cp": "06470",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ESCRAGNOLLES",
+    "cp": "06460",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "EZE",
+    "cp": "06360",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "FALICON",
+    "cp": "06950",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "FONTAN",
+    "cp": "06540",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "GARS",
+    "cp": "06850",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "GATTIERES",
+    "cp": "06510",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "GILETTE",
+    "cp": "06830",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "GORBIO",
+    "cp": "06500",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "GOURDON",
+    "cp": "06620",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "GRASSE",
+    "cp": "06130",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "GRASSE",
+    "cp": "06130",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "GRASSE",
+    "cp": "06130",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "GRASSE",
+    "cp": "06520",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "GREOLIERES",
+    "cp": "06620",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "GUILLAUMES",
+    "cp": "06470",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ILONSE",
+    "cp": "06420",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ISOLA",
+    "cp": "06420",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "L ESCARENE",
+    "cp": "06440",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LA BOLLENE VESUBIE",
+    "cp": "06450",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LA BRIGUE",
+    "cp": "06430",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LA COLLE SUR LOUP",
+    "cp": "06480",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LA CROIX SUR ROUDOULE",
+    "cp": "06260",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LA GAUDE",
+    "cp": "06610",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LA PENNE",
+    "cp": "06260",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LA ROCHETTE",
+    "cp": "06260",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LA ROQUE EN PROVENCE",
+    "cp": "06910",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LA ROQUETTE SUR SIAGNE",
+    "cp": "06550",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LA ROQUETTE SUR VAR",
+    "cp": "06670",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LA TOUR",
+    "cp": "06420",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LA TRINITE",
+    "cp": "06340",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LA TURBIE",
+    "cp": "06320",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LANTOSQUE",
+    "cp": "06450",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LE BAR SUR LOUP",
+    "cp": "06620",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LE BROC",
+    "cp": "06510",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LE CANNET",
+    "cp": "06110",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LE CANNET",
+    "cp": "06110",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LE MAS",
+    "cp": "06910",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LE ROURET",
+    "cp": "06650",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LE TIGNET",
+    "cp": "06530",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LES FERRES",
+    "cp": "06510",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LES MUJOULS",
+    "cp": "06910",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LEVENS",
+    "cp": "06670",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LEVENS",
+    "cp": "06670",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LIEUCHE",
+    "cp": "06260",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LUCERAM",
+    "cp": "06440",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "LUCERAM",
+    "cp": "06440",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "MALAUSSENE",
+    "cp": "06710",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "MANDELIEU LA NAPOULE",
+    "cp": "06210",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "MANDELIEU LA NAPOULE",
+    "cp": "06210",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "MARIE",
+    "cp": "06420",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "MASSOINS",
+    "cp": "06710",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "MENTON",
+    "cp": "06500",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "MOUANS SARTOUX",
+    "cp": "06370",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "MOUGINS",
+    "cp": "06250",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "MOULINET",
+    "cp": "06380",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "NICE",
+    "cp": "06000",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "NICE",
+    "cp": "06100",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "NICE",
+    "cp": "06200",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "NICE",
+    "cp": "06200",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "NICE",
+    "cp": "06200",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "NICE",
+    "cp": "06300",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "OPIO",
+    "cp": "06650",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "PEGOMAS",
+    "cp": "06580",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "PEILLE",
+    "cp": "06440",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "PEILLE",
+    "cp": "06440",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "PEILLON",
+    "cp": "06440",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "PEONE",
+    "cp": "06470",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "PEONE",
+    "cp": "06470",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "PEYMEINADE",
+    "cp": "06530",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "PIERLAS",
+    "cp": "06260",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "PIERREFEU",
+    "cp": "06910",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "PUGET ROSTANG",
+    "cp": "06260",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "PUGET THENIERS",
+    "cp": "06260",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "REVEST LES ROCHES",
+    "cp": "06830",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "RIGAUD",
+    "cp": "06260",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "RIMPLAS",
+    "cp": "06420",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ROQUEBILLIERE",
+    "cp": "06450",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ROQUEBRUNE CAP MARTIN",
+    "cp": "06190",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ROQUEBRUNE CAP MARTIN",
+    "cp": "06190",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ROQUEFORT LES PINS",
+    "cp": "06330",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ROQUESTERON",
+    "cp": "06910",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ROUBION",
+    "cp": "06420",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ROURE",
+    "cp": "06420",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "SALLAGRIFFON",
+    "cp": "06910",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "SAORGE",
+    "cp": "06540",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "SAUZE",
+    "cp": "06470",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "SERANON",
+    "cp": "06750",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "SERANON",
+    "cp": "06750",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "SIGALE",
+    "cp": "06910",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "SOSPEL",
+    "cp": "06380",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "SPERACEDES",
+    "cp": "06530",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE DE LA ROCHE",
+    "cp": "06730",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST ANTONIN",
+    "cp": "06260",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST AUBAN",
+    "cp": "06850",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST BLAISE",
+    "cp": "06670",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST CEZAIRE SUR SIAGNE",
+    "cp": "06530",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST DALMAS LE SELVAGE",
+    "cp": "06660",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE DE TINEE",
+    "cp": "06660",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE DE TINEE",
+    "cp": "06660",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN CAP FERRAT",
+    "cp": "06230",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST JEANNET",
+    "cp": "06640",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT DU VAR",
+    "cp": "06700",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER",
+    "cp": "06260",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN D ENTRAUNES",
+    "cp": "06470",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DU VAR",
+    "cp": "06670",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN VESUBIE",
+    "cp": "06450",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN VESUBIE",
+    "cp": "06450",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL DE VENCE",
+    "cp": "06570",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE",
+    "cp": "06260",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST SAUVEUR SUR TINEE",
+    "cp": "06420",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "ST VALLIER DE THIEY",
+    "cp": "06460",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "STE AGNES",
+    "cp": "06500",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "TENDE",
+    "cp": "06430",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "TENDE",
+    "cp": "06430",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "THEOULE SUR MER",
+    "cp": "06590",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "THEOULE SUR MER",
+    "cp": "06590",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "THIERY",
+    "cp": "06710",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "TOUDON",
+    "cp": "06830",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "TOUET DE L ESCARENE",
+    "cp": "06440",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "TOUET SUR VAR",
+    "cp": "06710",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "TOURETTE DU CHATEAU",
+    "cp": "06830",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "TOURNEFORT",
+    "cp": "06420",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "TOURRETTE LEVENS",
+    "cp": "06690",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "TOURRETTES SUR LOUP",
+    "cp": "06140",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "UTELLE",
+    "cp": "06450",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "UTELLE",
+    "cp": "06450",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "VALBONNE",
+    "cp": "06560",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "VALBONNE",
+    "cp": "06560",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "VALDEBLORE",
+    "cp": "06420",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "VALDEROURE",
+    "cp": "06750",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "VALLAURIS",
+    "cp": "06220",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "VALLAURIS",
+    "cp": "06220",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "VENANSON",
+    "cp": "06450",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "VENCE",
+    "cp": "06140",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "VILLARS SUR VAR",
+    "cp": "06710",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "VILLEFRANCHE SUR MER",
+    "cp": "06230",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE D ENTRAUNES",
+    "cp": "06470",
+    "dept": "06",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE LOUBET",
+    "cp": "06270",
+    "dept": "06",
+    "region": ""
+  }
+]

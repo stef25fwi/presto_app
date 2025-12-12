@@ -1,0 +1,242 @@
+[
+  {
+    "name": "ANSE BERTRAND",
+    "cp": "97121",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "BAIE MAHAULT",
+    "cp": "97122",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "BAILLIF",
+    "cp": "97123",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "BASSE TERRE",
+    "cp": "97100",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "BOUILLANTE",
+    "cp": "97125",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "BOUILLANTE",
+    "cp": "97125",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "CAPESTERRE BELLE EAU",
+    "cp": "97130",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "CAPESTERRE BELLE EAU",
+    "cp": "97130",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "CAPESTERRE BELLE EAU",
+    "cp": "97130",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "CAPESTERRE DE MARIE GALANTE",
+    "cp": "97140",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "DESHAIES",
+    "cp": "97126",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "GOURBEYRE",
+    "cp": "97113",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "GOYAVE",
+    "cp": "97128",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "GRAND BOURG",
+    "cp": "97112",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "LA DESIRADE",
+    "cp": "97127",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "LAMENTIN",
+    "cp": "97129",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "LE GOSIER",
+    "cp": "97190",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "LE MOULE",
+    "cp": "97160",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "LES ABYMES",
+    "cp": "97139",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "LES ABYMES",
+    "cp": "97142",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "MORNE A L EAU",
+    "cp": "97111",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "PETIT BOURG",
+    "cp": "97170",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "PETIT CANAL",
+    "cp": "97131",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "PETIT CANAL",
+    "cp": "97131",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "POINTE A PITRE",
+    "cp": "97110",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "POINTE NOIRE",
+    "cp": "97116",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "PORT LOUIS",
+    "cp": "97117",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "ST BARTHELEMY",
+    "cp": "97133",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "ST CLAUDE",
+    "cp": "97120",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "ST FRANCOIS",
+    "cp": "97118",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "ST LOUIS",
+    "cp": "97134",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN",
+    "cp": "97150",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "STE ANNE",
+    "cp": "97180",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "STE ANNE",
+    "cp": "97180",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "STE ROSE",
+    "cp": "97115",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "TERRE DE BAS",
+    "cp": "97136",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "TERRE DE HAUT",
+    "cp": "97137",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "TROIS RIVIERES",
+    "cp": "97114",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "VIEUX FORT",
+    "cp": "97141",
+    "dept": "971",
+    "region": ""
+  },
+  {
+    "name": "VIEUX HABITANTS",
+    "cp": "97119",
+    "dept": "971",
+    "region": ""
+  }
+]

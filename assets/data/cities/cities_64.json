@@ -1,0 +1,3392 @@
+[
+  {
+    "name": "AAST",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ABERE",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ABIDOS",
+    "cp": "64150",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ABITAIN",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ABOS",
+    "cp": "64360",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ACCOUS",
+    "cp": "64490",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AGNOS",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AHAXE ALCIETTE BASCASSAN",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AHETZE",
+    "cp": "64210",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AICIRITS CAMOU SUHAST",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AICIRITS CAMOU SUHAST",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AINCILLE",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AINHARP",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AINHICE MONGELOS",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AINHOA",
+    "cp": "64250",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ALCAY ALCABEHETY SUNHARETTE",
+    "cp": "64470",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ALDUDES",
+    "cp": "64430",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ALOS SIBAS ABENSE",
+    "cp": "64470",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AMENDEUIX ONEIX",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AMOROTS SUCCOS",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ANCE FEAS",
+    "cp": "64570",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ANCE FEAS",
+    "cp": "64570",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ANDOINS",
+    "cp": "64420",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ANDREIN",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ANGAIS",
+    "cp": "64510",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ANGLET",
+    "cp": "64600",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ANGOUS",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ANHAUX",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ANOS",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ANOYE",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARAMITS",
+    "cp": "64570",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARANCOU",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARAUJUZON",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARAUX",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARBERATS SILLEGUE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARBONNE",
+    "cp": "64210",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARBOUET SUSSAUTE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARBUS",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARCANGUES",
+    "cp": "64200",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AREN",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARESSY",
+    "cp": "64320",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARETTE",
+    "cp": "64570",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARGAGNON",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARGELOS",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARGET",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARHANSUS",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARMENDARITS",
+    "cp": "64640",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARNEGUY",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARNOS",
+    "cp": "64370",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AROUE ITHOROTS OLHAIBY",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AROUE ITHOROTS OLHAIBY",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARRAST LARREBIEU",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARRAUTE CHARRITTE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARRICAU BORDES",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARRIEN",
+    "cp": "64420",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARROS DE NAY",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARROSES",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARTHEZ D ASSON",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARTHEZ DE BEARN",
+    "cp": "64370",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARTIGUELOUTAN",
+    "cp": "64420",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARTIGUELOUVE",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARTIX",
+    "cp": "64170",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARUDY",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ARZACQ ARRAZIGUET",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ASASP ARROS",
+    "cp": "64660",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ASASP ARROS",
+    "cp": "64660",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ASCAIN",
+    "cp": "64310",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ASCARAT",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ASSAT",
+    "cp": "64510",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ASSON",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ASTE BEON",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ASTIS",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ATHOS ASPIS",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AUBERTIN",
+    "cp": "64290",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AUBIN",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AUBOUS",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AUDAUX",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AUGA",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AURIAC",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AURIONS IDERNES",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AUSSEVIELLE",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AUSSURUCQ",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AUTERRIVE",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AUTEVIELLE ST MARTIN BIDEREN",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AYDIE",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AYDIUS",
+    "cp": "64490",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "AYHERRE",
+    "cp": "64240",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BAIGTS DE BEARN",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BALANSUN",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BALEIX",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BALIRACQ MAUMUSSON",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BALIROS",
+    "cp": "64510",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BANCA",
+    "cp": "64430",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BARCUS",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BARDOS",
+    "cp": "64520",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BARINQUE",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BARRAUTE CAMU",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BARZUN",
+    "cp": "64530",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BASSILLON VAUZE",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BASSUSSARRY",
+    "cp": "64200",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BASTANES",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BAUDREIX",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BAYONNE",
+    "cp": "64100",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BEDEILLE",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BEDOUS",
+    "cp": "64490",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BEGUIOS",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BEHASQUE LAPISTE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BEHORLEGUY",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BELLOCQ",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BENEJACQ",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BENTAYOU SEREE",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BEOST",
+    "cp": "64440",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BERENX",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BERGOUEY VIELLENAVE",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BERGOUEY VIELLENAVE",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BERNADETS",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BERROGAIN LARUNS",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BESCAT",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BESINGRAND",
+    "cp": "64150",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BETRACQ",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BEUSTE",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BEYRIE EN BEARN",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BEYRIE SUR JOYEUSE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BIARRITZ",
+    "cp": "64200",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BIDACHE",
+    "cp": "64520",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BIDARRAY",
+    "cp": "64780",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BIDART",
+    "cp": "64210",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BIDOS",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BIELLE",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BILHERES",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BILLERE",
+    "cp": "64140",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BIRIATOU",
+    "cp": "64700",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BIRON",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BIZANOS",
+    "cp": "64320",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BOEIL BEZING",
+    "cp": "64510",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BONLOC",
+    "cp": "64240",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BONNUT",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BORCE",
+    "cp": "64490",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BORDERES",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BORDES",
+    "cp": "64510",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BOSDARROS",
+    "cp": "64290",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BOUCAU",
+    "cp": "64340",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BOUEILH BOUEILHO LASQUE",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BOUGARBER",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BOUILLON",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BOUMOURT",
+    "cp": "64370",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BOURDETTES",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BOURNOS",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BRISCOUS",
+    "cp": "64240",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BRUGES CAPBIS MIFAGET",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BRUGES CAPBIS MIFAGET",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BRUGES CAPBIS MIFAGET",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BUGNEIN",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BUNUS",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BURGARONNE",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BUROS",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BUROSSE MENDOUSSE",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BUSSUNARITS SARRASQUETTE",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BUSTINCE IRIBERRY",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BUZIET",
+    "cp": "64680",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "BUZY",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CABIDOS",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CADILLON",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CAMBO LES BAINS",
+    "cp": "64250",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CAME",
+    "cp": "64520",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CAMOU CIHIGUE",
+    "cp": "64470",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CARDESSE",
+    "cp": "64360",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CARO",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CARRERE",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CARRESSE CASSABER",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CARRESSE CASSABER",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CASTAGNEDE",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CASTEIDE CAMI",
+    "cp": "64170",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CASTEIDE CANDAU",
+    "cp": "64370",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CASTEIDE DOAT",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CASTERA LOUBIX",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CASTET",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CASTETBON",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CASTETIS",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CASTETNAU CAMBLONG",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CASTETNER",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CASTETPUGON",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CASTILLON D ARTHEZ",
+    "cp": "64370",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CASTILLON DE LEMBEYE",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CAUBIOS LOOS",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CESCAU",
+    "cp": "64170",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CETTE EYGUN",
+    "cp": "64490",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CHARRE",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CHARRITTE DE BAS",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CHERAUTE",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CIBOURE",
+    "cp": "64500",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CLARACQ",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "COARRAZE",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CONCHEZ DE BEARN",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CORBERE ABERES",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "COSLEDAA LUBE BOAST",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "COUBLUCQ",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CROUSEILLES",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "CUQUERON",
+    "cp": "64360",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "DENGUIN",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "DIUSSE",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "DOAZON",
+    "cp": "64370",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "DOGNEN",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "DOMEZAIN BERRAUTE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "DOUMY",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "EAUX BONNES",
+    "cp": "64440",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "EAUX BONNES",
+    "cp": "64440",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESCOS",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESCOT",
+    "cp": "64490",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESCOU",
+    "cp": "64870",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESCOUBES",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESCOUT",
+    "cp": "64870",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESCURES",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESLOURENTIES DABAN",
+    "cp": "64420",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESPECHEDE",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESPELETTE",
+    "cp": "64250",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESPES UNDUREIN",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESPIUTE",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESPOEY",
+    "cp": "64420",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESQUIULE",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESTERENCUBY",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESTIALESCQ",
+    "cp": "64290",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ESTOS",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ETCHARRY",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ETCHEBAR",
+    "cp": "64470",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ETSAUT",
+    "cp": "64490",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "EYSUS",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "FICHOUS RIUMAYOU",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GABASTON",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GABAT",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GAMARTHE",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GAN",
+    "cp": "64290",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GARINDEIN",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GARLEDE MONDEBAT",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GARLIN",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GAROS",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GARRIS",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GAYON",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GELOS",
+    "cp": "64110",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GER",
+    "cp": "64530",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GERDEREST",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GERE BELESTEN",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GERONCE",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GESTAS",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GEUS D ARZACQ",
+    "cp": "64370",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GEUS D OLORON",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GOES",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GOMER",
+    "cp": "64420",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GOTEIN LIBARRENX",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GUETHARY",
+    "cp": "64210",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GUICHE",
+    "cp": "64520",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GUINARTHE PARENTIES",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GURMENCON",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "GURS",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "HAGETAUBIN",
+    "cp": "64370",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "HALSOU",
+    "cp": "64480",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "HASPARREN",
+    "cp": "64240",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "HAUT DE BOSDARROS",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "HAUX",
+    "cp": "64470",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "HELETTE",
+    "cp": "64640",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "HENDAYE",
+    "cp": "64700",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "HERRERE",
+    "cp": "64680",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "HIGUERES SOUYE",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "HOSTA",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "HOURS",
+    "cp": "64420",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "IBARROLLE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "IDAUX MENDY",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "IDRON",
+    "cp": "64320",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "IGON",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "IHOLDY",
+    "cp": "64640",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ILHARRE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "IRISSARRY",
+    "cp": "64780",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "IROULEGUY",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ISPOURE",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ISSOR",
+    "cp": "64570",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ISTURITS",
+    "cp": "64240",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ITXASSOU",
+    "cp": "64250",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "IZESTE",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "JASSES",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "JATXOU",
+    "cp": "64480",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "JAXU",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "JURANCON",
+    "cp": "64110",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "JUXUE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "L HOPITAL D ORION",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "L HOPITAL ST BLAISE",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LA BASTIDE CLAIRENCE",
+    "cp": "64240",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LAA MONDRANS",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LAAS",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LABASTIDE CEZERACQ",
+    "cp": "64170",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LABASTIDE MONREJEAU",
+    "cp": "64170",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LABASTIDE VILLEFRANCHE",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LABATMALE",
+    "cp": "64530",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LABATUT FIGUIERES",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LABETS BISCAY",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LABEYRIE",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LACADEE",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LACARRE",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LACARRY ARHAN CHARRITTE DE HAUT",
+    "cp": "64470",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LACOMMANDE",
+    "cp": "64360",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LACQ",
+    "cp": "64170",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LACQ",
+    "cp": "64170",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LACQ",
+    "cp": "64170",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LAGOR",
+    "cp": "64150",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LAGOS",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LAGUINGE RESTOUE",
+    "cp": "64470",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LAHONCE",
+    "cp": "64990",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LAHONTAN",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LAHOURCADE",
+    "cp": "64150",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LALONGUE",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LALONQUETTE",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LAMAYOU",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LANNE EN BARETOUS",
+    "cp": "64570",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LANNECAUBE",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LANNEPLAA",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LANTABAT",
+    "cp": "64640",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LARCEVEAU ARROS CIBITS",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LAROIN",
+    "cp": "64110",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LARRAU",
+    "cp": "64560",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LARRESSORE",
+    "cp": "64480",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LARREULE",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LARRIBAR SORHAPURU",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LARUNS",
+    "cp": "64440",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LARUNS",
+    "cp": "64440",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LARUNS",
+    "cp": "64440",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LASCLAVERIES",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LASSE",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LASSERRE",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LASSEUBE",
+    "cp": "64290",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LASSEUBETAT",
+    "cp": "64290",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LAY LAMIDOU",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LECUMBERRY",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LEDEUIX",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LEE",
+    "cp": "64320",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LEES ATHAS",
+    "cp": "64490",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LEMBEYE",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LEME",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LEREN",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LESCAR",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LESCUN",
+    "cp": "64490",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LESPIELLE",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LESPOURCY",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LESTELLE BETHARRAM",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LICHANS SUNHAR",
+    "cp": "64470",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LICHOS",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LICQ ATHEREY",
+    "cp": "64560",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LIMENDOUS",
+    "cp": "64420",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LIVRON",
+    "cp": "64530",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LOHITZUN OYHERCQ",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LOMBIA",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LONCON",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LONS",
+    "cp": "64140",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LOUBIENG",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LOUHOSSOA",
+    "cp": "64250",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LOURDIOS ICHERE",
+    "cp": "64570",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LOURENTIES",
+    "cp": "64420",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LOUVIE JUZON",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LOUVIE SOUBIRON",
+    "cp": "64440",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LOUVIGNY",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LUC ARMAU",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LUCARRE",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LUCGARIER",
+    "cp": "64420",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LUCQ DE BEARN",
+    "cp": "64360",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LURBE ST CHRISTAU",
+    "cp": "64660",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LUSSAGNET LUSSON",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LUXE SUMBERRAUTE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "LYS",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MACAYE",
+    "cp": "64240",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MALAUSSANNE",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MASCARAAS HARON",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MASLACQ",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MASPARRAUTE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MASPIE LALONQUERE JUILLACQ",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MAUCOR",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MAULEON LICHARRE",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MAURE",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MAZERES LEZONS",
+    "cp": "64110",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MAZEROLLES",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MEHARIN",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MEILLON",
+    "cp": "64510",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MENDIONDE",
+    "cp": "64240",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MENDITTE",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MENDIVE",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MERACQ",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MERITEIN",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MESPLEDE",
+    "cp": "64370",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MIALOS",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MIOSSENS LANUSSE",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MIREPEIX",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MOMAS",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MOMY",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONASSUT AUDIRACQ",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONCAUP",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONCAYOLLE LARRORY MENDIBIEU",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONCLA",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONEIN",
+    "cp": "64360",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONPEZAT",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONSEGUR",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONT",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONT",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONT",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONT",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONT DISSE",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONTAGUT",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONTANER",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONTARDON",
+    "cp": "64121",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONTAUT",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONTFORT",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MONTORY",
+    "cp": "64470",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MORLAAS",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MORLANNE",
+    "cp": "64370",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MOUGUERRE",
+    "cp": "64990",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MOUHOUS",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MOUMOUR",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MOURENX",
+    "cp": "64150",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "MUSCULDY",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "NABAS",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "NARCASTET",
+    "cp": "64510",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "NARP",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "NAVAILLES ANGOS",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "NAVARRENX",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "NAY",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "NOGUERES",
+    "cp": "64150",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "NOUSTY",
+    "cp": "64420",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OGENNE CAMPTORT",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OGEU LES BAINS",
+    "cp": "64680",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OLORON STE MARIE",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ORAAS",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ORDIARP",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OREGUE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ORIN",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ORION",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ORRIULE",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ORSANCO",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ORTHEZ",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ORTHEZ",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OS MARSILLON",
+    "cp": "64150",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OSSAS SUHARE",
+    "cp": "64470",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OSSE EN ASPE",
+    "cp": "64490",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OSSENX",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OSSERAIN RIVAREYTE",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OSSES",
+    "cp": "64780",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OSTABAT ASME",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OUILLON",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OUSSE",
+    "cp": "64320",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OZENX MONTESTRUCQ",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "OZENX MONTESTRUCQ",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PAGOLLE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PARBAYSE",
+    "cp": "64360",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PARDIES",
+    "cp": "64150",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PARDIES PIETAT",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PAU",
+    "cp": "64000",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PEYRELONGUE ABOS",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PIETS PLASENCE MOUSTROU",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "POEY D OLORON",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "POEY DE LESCAR",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "POMPS",
+    "cp": "64370",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PONSON DEBAT POUTS",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PONSON DESSUS",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PONTACQ",
+    "cp": "64530",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PONTIACQ VIELLEPINTE",
+    "cp": "64460",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PORTET",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "POULIACQ",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "POURSIUGUES BOUCOUE",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PRECHACQ JOSBAIG",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PRECHACQ NAVARRENX",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PRECILHON",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "PUYOO",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "RAMOUS",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "REBENACQ",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "RIBARROUY",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "RIUPEYROUS",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "RIVEHAUTE",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "RONTIGNON",
+    "cp": "64110",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ROQUIAGUE",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SALIES DE BEARN",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SALLES MONGISCARD",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SALLESPISSE",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SAMES",
+    "cp": "64520",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SAMSONS LION",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SARE",
+    "cp": "64310",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SARPOURENX",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SARRANCE",
+    "cp": "64490",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SAUBOLE",
+    "cp": "64420",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SAUCEDE",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SAUGUIS ST ETIENNE",
+    "cp": "64470",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SAULT DE NAVAILLES",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SAUVAGNON",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SAUVELADE",
+    "cp": "64150",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SAUVETERRE DE BEARN",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SEBY",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SEDZE MAUBECQ",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SEDZERE",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SEMEACQ BLACHON",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SENDETS",
+    "cp": "64320",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SERRES CASTET",
+    "cp": "64121",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SERRES MORLAAS",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SERRES STE MARIE",
+    "cp": "64170",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SEVIGNACQ",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SEVIGNACQ MEYRACQ",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SIMACOURBE",
+    "cp": "64350",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SIROS",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SOUMOULOU",
+    "cp": "64420",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SOURAIDE",
+    "cp": "64250",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST ABIT",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST ARMOU",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST BOES",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST CASTIN",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST DOS",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST ESTEBEN",
+    "cp": "64640",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE DE BAIGORRY",
+    "cp": "64430",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST FAUST",
+    "cp": "64110",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST GIRONS EN BEARN",
+    "cp": "64300",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST GLADIE ARRIVE MUNEIN",
+    "cp": "64390",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST GOIN",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST JAMMES",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DE LUZ",
+    "cp": "64500",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN LE VIEUX",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN PIED DE PORT",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN POUDGE",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST JUST IBARRE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT BRETAGNE",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN D ARBEROUE",
+    "cp": "64640",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN D ARROSSA",
+    "cp": "64780",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN D ARROSSA",
+    "cp": "64780",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST MEDARD",
+    "cp": "64370",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST PALAIS",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST PE DE LEREN",
+    "cp": "64270",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST PEE SUR NIVELLE",
+    "cp": "64310",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE D IRUBE",
+    "cp": "64990",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "ST VINCENT",
+    "cp": "64800",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "STE COLOME",
+    "cp": "64260",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "STE ENGRACE",
+    "cp": "64560",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SUHESCUN",
+    "cp": "64780",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SUS",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "SUSMIOU",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "TABAILLE USQUAIN",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "TADOUSSE USSAU",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "TARDETS SORHOLUS",
+    "cp": "64470",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "TARON SADIRAC VIELLENAVE",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "TARSACQ",
+    "cp": "64360",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "THEZE",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "TROIS VILLES",
+    "cp": "64470",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "UHART CIZE",
+    "cp": "64220",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "UHART MIXE",
+    "cp": "64120",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "URCUIT",
+    "cp": "64990",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "URDOS",
+    "cp": "64490",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "UREPEL",
+    "cp": "64430",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "UROST",
+    "cp": "64160",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "URRUGNE",
+    "cp": "64122",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "URRUGNE",
+    "cp": "64700",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "URT",
+    "cp": "64240",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "USTARITZ",
+    "cp": "64480",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "UZAN",
+    "cp": "64370",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "UZEIN",
+    "cp": "64230",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "UZOS",
+    "cp": "64110",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "VERDETS",
+    "cp": "64400",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "VIALER",
+    "cp": "64330",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "VIELLENAVE D ARTHEZ",
+    "cp": "64170",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "VIELLENAVE DE NAVARRENX",
+    "cp": "64190",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "VIELLESEGURE",
+    "cp": "64150",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "VIGNES",
+    "cp": "64410",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "VILLEFRANQUE",
+    "cp": "64990",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "VIODOS ABENSE DE BAS",
+    "cp": "64130",
+    "dept": "64",
+    "region": ""
+  },
+  {
+    "name": "VIVEN",
+    "cp": "64450",
+    "dept": "64",
+    "region": ""
+  }
+]

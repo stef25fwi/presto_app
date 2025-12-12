@@ -1,0 +1,4976 @@
+[
+  {
+    "name": "ABBECOURT",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ACHERY",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ACY",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AGNICOURT ET SECHELLES",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AGUILCOURT",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AISONVILLE ET BERNOVILLE",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AIZELLES",
+    "cp": "02820",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AIZY JOUY",
+    "cp": "02370",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AIZY JOUY",
+    "cp": "02370",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ALAINCOURT",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ALLEMANT",
+    "cp": "02320",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AMBLENY",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AMBRIEF",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AMIFONTAINE",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AMIGNY ROUY",
+    "cp": "02700",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ANCIENVILLE",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ANDELAIN",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ANGUILCOURT LE SART",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ANIZY LE GRAND",
+    "cp": "02320",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ANIZY LE GRAND",
+    "cp": "02320",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ANIZY LE GRAND",
+    "cp": "02320",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ANNOIS",
+    "cp": "02480",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ANY MARTIN RIEUX",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ARCHON",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ARCY STE RESTITUE",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ARCY STE RESTITUE",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ARMENTIERES SUR OURCQ",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ARRANCY",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ARTEMPS",
+    "cp": "02480",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ASSIS SUR SERRE",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ATHIES SOUS LAON",
+    "cp": "02840",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ATTILLY",
+    "cp": "02490",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AUBENCHEUL AUX BOIS",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AUBENTON",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AUBIGNY AUX KAISNES",
+    "cp": "02590",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AUBIGNY EN LAONNOIS",
+    "cp": "02820",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AUDIGNICOURT",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AUDIGNY",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AUGY",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AULNOIS SOUS LAON",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AUTREMENCOURT",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AUTREPPES",
+    "cp": "02580",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AUTREVILLE",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "AZY SUR MARNE",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BAGNEUX",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BANCIGNY",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BARENTON BUGNY",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BARENTON CEL",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BARENTON SUR SERRE",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BARISIS AUX BOIS",
+    "cp": "02700",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BARZY EN THIERACHE",
+    "cp": "02170",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BARZY SUR MARNE",
+    "cp": "02850",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BASSOLES AULERS",
+    "cp": "02380",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BAZOCHES ET ST THIBAUT",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BAZOCHES ET ST THIBAUT",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BEAUME",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONT EN BEINE",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BEAUREVOIR",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BEAURIEUX",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BEAUTOR",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BEAUVOIS EN VERMANDOIS",
+    "cp": "02590",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BECQUIGNY",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BELLEAU",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BELLENGLISE",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BELLEU",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BELLICOURT",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BENAY",
+    "cp": "02440",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BERGUES SUR SAMBRE",
+    "cp": "02450",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BERLANCOURT",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BERLISE",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BERNOT",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BERNOY LE CHATEAU",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BERNOY LE CHATEAU",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BERNY RIVIERE",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BERRIEUX",
+    "cp": "02820",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BERRY AU BAC",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BERTAUCOURT EPOURDON",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BERTHENICOURT",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BERTRICOURT",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BESME",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BESMONT",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BESNY ET LOIZY",
+    "cp": "02870",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BETHANCOURT EN VAUX",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BEUGNEUX",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BEUVARDES",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BEZU LE GUERY",
+    "cp": "02310",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BEZU ST GERMAIN",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BICHANCOURT",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BIEUXY",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BIEVRES",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BILLY SUR AISNE",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BILLY SUR OURCQ",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BLANZY LES FISMES",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BLERANCOURT",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BLESMES",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BOHAIN EN VERMANDOIS",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BOIS LES PARGNY",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BONCOURT",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BONNEIL",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BONNESVALYN",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BONY",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BOSMONT SUR SERRE",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BOUCONVILLE VAUCLAIR",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BOUE",
+    "cp": "02450",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BOUFFIGNEREUX",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BOURESCHES",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BOURG ET COMIN",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BOURGUIGNON SOUS COUCY",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BOURGUIGNON SOUS MONTBAVIN",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRAINE",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRANCOURT EN LAONNOIS",
+    "cp": "02320",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRANCOURT LE GRAND",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRASLES",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRAY ST CHRISTOPHE",
+    "cp": "02480",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRAYE",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRAYE EN LAONNOIS",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRAYE EN THIERACHE",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRECY",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRENELLE",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRENY",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRIE",
+    "cp": "02870",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRISSAY CHOIGNY",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRISSY HAMEGICOURT",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRUMETZ",
+    "cp": "02810",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRUNEHAMEL",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRUYERES ET MONTBERAULT",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRUYERES SUR FERE",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BRUYS",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BUCILLY",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BUCY LE LONG",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BUCY LES CERNY",
+    "cp": "02870",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BUCY LES PIERREPONT",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BUIRE",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BUIRONFOSSE",
+    "cp": "02620",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BURELLES",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BUSSIARES",
+    "cp": "02810",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "BUZANCY",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CAILLOUEL CREPIGNY",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CAMELIN",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CAMELIN",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CASTRES",
+    "cp": "02680",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CAULAINCOURT",
+    "cp": "02490",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CAUMONT",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CELLES LES CONDE",
+    "cp": "02330",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CELLES SUR AISNE",
+    "cp": "02370",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CERIZY",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CERNY EN LAONNOIS",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CERNY LES BUCY",
+    "cp": "02870",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CERSEUIL",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CESSIERES SUZY",
+    "cp": "02320",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CESSIERES SUZY",
+    "cp": "02320",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHACRISE",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHAILLEVOIS",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHALANDRY",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHAMBRY",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHAMOUILLE",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHAMPS",
+    "cp": "02670",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHAOURSE",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHARLY SUR MARNE",
+    "cp": "02310",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHARMES",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHARTEVES",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHASSEMY",
+    "cp": "02370",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU THIERRY",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHATILLON LES SONS",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHATILLON SUR OISE",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHAUDARDES",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHAUDUN",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHAUNY",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHAVIGNON",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHAVIGNY",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHAVONNE",
+    "cp": "02370",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHERET",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHERMIZY AILLES",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHERY CHARTREUVE",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHERY LES POUILLY",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHERY LES ROZOY",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHEVENNES",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHEVREGNY",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHEVRESIS MONCEAU",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHEZY EN ORXOIS",
+    "cp": "02810",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHEZY SUR MARNE",
+    "cp": "02570",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHIERRY",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHIGNY",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHIVRES EN LAONNOIS",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHIVRES VAL",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHIVY LES ETOUVELLES",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CHOUY",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CIERGES",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CILLY",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CIRY SALSOGNE",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CLACY ET THIERRET",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CLAIRFONTAINE",
+    "cp": "02260",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CLAMECY",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CLASTRES",
+    "cp": "02440",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CLERMONT LES FERMES",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COEUVRES ET VALSERY",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COINCY",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COINGT",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COLLIGIS CRANDELAIN",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COLONFAY",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COMMENCHON",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CONCEVREUX",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CONDE EN BRIE",
+    "cp": "02330",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CONDE SUR AISNE",
+    "cp": "02370",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CONDE SUR SUIPPE",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CONDREN",
+    "cp": "02700",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CONNIGIS",
+    "cp": "02330",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CONTESCOURT",
+    "cp": "02680",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CORBENY",
+    "cp": "02820",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CORCY",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COUCY LA VILLE",
+    "cp": "02380",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COUCY LE CHATEAU AUFFRIQUE",
+    "cp": "02380",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COUCY LES EPPES",
+    "cp": "02840",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COULONGES COHAN",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COULONGES COHAN",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COUPRU",
+    "cp": "02310",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COURBES",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COURBOIN",
+    "cp": "02330",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COURCELLES SUR VESLE",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COURCHAMPS",
+    "cp": "02810",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COURMELLES",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COURMONT",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COURTEMONT VARENNES",
+    "cp": "02850",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COURTRIZY ET FUSSIGNY",
+    "cp": "02820",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COUVRELLES",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COUVRON ET AUMENCOURT",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "COYOLLES",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CRAMAILLE",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CRAONNE",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CRAONNELLE",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CRECY AU MONT",
+    "cp": "02380",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CRECY SUR SERRE",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CREPY",
+    "cp": "02870",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CREZANCY",
+    "cp": "02650",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CROIX FONSOMME",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CROUTTES SUR MARNE",
+    "cp": "02310",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CROUY",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CRUPILLY",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CUFFIES",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CUGNY",
+    "cp": "02480",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CUIRIEUX",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CUIRY HOUSSE",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CUIRY LES CHAUDARDES",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CUIRY LES IVIERS",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CUISSY ET GENY",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CUISY EN ALMONT",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CUTRY",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "CYS LA COMMUNE",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DAGNY LAMBERCY",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DALLON",
+    "cp": "02680",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DAMMARD",
+    "cp": "02470",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DAMPLEUX",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DANIZY",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DERCY",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DEUILLET",
+    "cp": "02700",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DHUIZEL",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DHUYS ET MORIN EN BRIE",
+    "cp": "02330",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DHUYS ET MORIN EN BRIE",
+    "cp": "02540",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DHUYS ET MORIN EN BRIE",
+    "cp": "02540",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DHUYS ET MORIN EN BRIE",
+    "cp": "02540",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DIZY LE GROS",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DOHIS",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DOLIGNON",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DOMMIERS",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DOMPTIN",
+    "cp": "02310",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DORENGT",
+    "cp": "02450",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DOUCHY",
+    "cp": "02590",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DRAVEGNY",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DROIZY",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "DURY",
+    "cp": "02480",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "EBOULEAU",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "EFFRY",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ENGLANCOURT",
+    "cp": "02260",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "EPAGNY",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "EPARCY",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "EPAUX BEZU",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "EPIEDS",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "EPPES",
+    "cp": "02840",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ERLON",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ERLOY",
+    "cp": "02260",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ESQUEHERIES",
+    "cp": "02170",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ESSIGNY LE GRAND",
+    "cp": "02690",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ESSIGNY LE PETIT",
+    "cp": "02100",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ESSISES",
+    "cp": "02570",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ESSOMES SUR MARNE",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ESTREES",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ETAMPES SUR MARNE",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ETAVES ET BOCQUIAUX",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ETOUVELLES",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ETREAUPONT",
+    "cp": "02580",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ETREILLERS",
+    "cp": "02590",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ETREPILLY",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ETREUX",
+    "cp": "02510",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "EVERGNICOURT",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FAVEROLLES",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FAYET",
+    "cp": "02100",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FERE EN TARDENOIS",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FESMY LE SART",
+    "cp": "02450",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FESMY LE SART",
+    "cp": "02450",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FESTIEUX",
+    "cp": "02840",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FIEULAINE",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FLAVIGNY LE GRAND ET BEAURAIN",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FLAVY LE MARTEL",
+    "cp": "02520",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FLEURY",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FLUQUIERES",
+    "cp": "02590",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FOLEMBRAY",
+    "cp": "02670",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FONSOMME",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE LES CLERCS",
+    "cp": "02680",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE LES VERVINS",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE NOTRE DAME",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE UTERTE",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FONTENELLE",
+    "cp": "02170",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FONTENOY",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FORESTE",
+    "cp": "02590",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FOSSOY",
+    "cp": "02650",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FOURDRAIN",
+    "cp": "02870",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FRANCILLY SELENCY",
+    "cp": "02760",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FRANQUEVILLE",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FRESNES EN TARDENOIS",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FRESNES SOUS COUCY",
+    "cp": "02380",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FRESNOY LE GRAND",
+    "cp": "02230",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FRESSANCOURT",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FRIERES FAILLOUEL",
+    "cp": "02700",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FROIDESTREES",
+    "cp": "02260",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "FROIDMONT COHARTILLE",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GANDELU",
+    "cp": "02810",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GAUCHY",
+    "cp": "02430",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GERCY",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GERGNY",
+    "cp": "02260",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GERMAINE",
+    "cp": "02590",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GIBERCOURT",
+    "cp": "02440",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GIZY",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GLAND",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GOUDELANCOURT LES BERRIEUX",
+    "cp": "02820",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GOUDELANCOURT LES PIERREPONT",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GOUSSANCOURT",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GOUY",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GRAND ROZOY",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GRAND VERLY",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GRANDLUP ET FAY",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GRANDRIEUX",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GRICOURT",
+    "cp": "02100",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GRISOLLES",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GRONARD",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GROUGIS",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GRUGIES",
+    "cp": "02680",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GUISE",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GUIVRY",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GUNY",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "GUYENCOURT",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HANNAPES",
+    "cp": "02510",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HAPPENCOURT",
+    "cp": "02480",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HARAMONT",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HARCIGNY",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HARGICOURT",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HARLY",
+    "cp": "02100",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HARTENNES ET TAUX",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HARY",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HAUTEVESNES",
+    "cp": "02810",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HAUTEVILLE",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HAUTION",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HINACOURT",
+    "cp": "02440",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HIRSON",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HOLNON",
+    "cp": "02760",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HOMBLIERES",
+    "cp": "02720",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HOURY",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "HOUSSET",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "IRON",
+    "cp": "02510",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ITANCOURT",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "IVIERS",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "JAULGONNE",
+    "cp": "02850",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "JEANCOURT",
+    "cp": "02490",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "JEANTES",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "JONCOURT",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "JOUAIGNES",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "JUMENCOURT",
+    "cp": "02380",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "JUMIGNY",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "JUSSY",
+    "cp": "02480",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "JUVIGNY",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "JUVINCOURT ET DAMARY",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "L EPINE AUX BOIS",
+    "cp": "02540",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA BOUTEILLE",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA CAPELLE",
+    "cp": "02260",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE SUR CHEZY",
+    "cp": "02570",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA CROIX SUR OURCQ",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA FERE",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA FERTE CHEVRESIS",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA FERTE MILON",
+    "cp": "02460",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA FERTE MILON",
+    "cp": "02460",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA FLAMENGRIE",
+    "cp": "02260",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA HERIE",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA MALMAISON",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA NEUVILLE BOSMONT",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA NEUVILLE EN BEINE",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA NEUVILLE HOUSSET",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA NEUVILLE LES DORENGT",
+    "cp": "02450",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA SELVE",
+    "cp": "02150",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA VALLEE AU BLE",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA VALLEE MULATRE",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA VILLE AUX BOIS LES DIZY",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LA VILLE AUX BOIS LES PONTAVERT",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LAFFAUX",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LAIGNY",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LANCHY",
+    "cp": "02590",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LANDIFAY ET BERTAIGNEMONT",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LANDOUZY LA COUR",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LANDOUZY LA VILLE",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LANDRICOURT",
+    "cp": "02380",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LANISCOURT",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LAON",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LAPPION",
+    "cp": "02150",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LARGNY SUR AUTOMNE",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LATILLY",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LAUNOY",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LAVAL EN LAONNOIS",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LAVAQUERESSE",
+    "cp": "02450",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LAVERSINE",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LE CATELET",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LE CHARMEL",
+    "cp": "02850",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LE HERIE LA VIEVILLE",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LE NOUVION EN THIERACHE",
+    "cp": "02170",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LE PLESSIER HULEU",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LE SOURD",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LE THUEL",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LE VERGUIER",
+    "cp": "02490",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LEHAUCOURT",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LEME",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LEMPIRE",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LERZY",
+    "cp": "02260",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LES AUTELS",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LES SEPTVALLONS",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LES SEPTVALLONS",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LES SEPTVALLONS",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LES SEPTVALLONS",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LES SEPTVALLONS",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LES SEPTVALLONS",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LES SEPTVALLONS",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LES SEPTVALLONS",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LESCHELLE",
+    "cp": "02170",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LESDINS",
+    "cp": "02100",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LESGES",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LESQUIELLES ST GERMAIN",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LEUILLY SOUS COUCY",
+    "cp": "02380",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LEURY",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LEUZE",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LEVERGIES",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LHUYS",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LICY CLIGNON",
+    "cp": "02810",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LIERVAL",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LIESSE NOTRE DAME",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LIEZ",
+    "cp": "02700",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LIME",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LISLET",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LOGNY LES AUBENTON",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LONGPONT",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LOR",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LOUATRE",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LOUPEIGNE",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LUCY LE BOCAGE",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LUGNY",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LUZOIR",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "LY FONTAINE",
+    "cp": "02440",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MAAST ET VIOLAINE",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MACHECOURT",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MACOGNY",
+    "cp": "02470",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MACQUIGNY",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MAGNY LA FOSSE",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MAISSEMY",
+    "cp": "02490",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MAIZY",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MALZY",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MANICAMP",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MARCHAIS",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MARCY",
+    "cp": "02720",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MARCY SOUS MARLE",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MAREST DAMPCOURT",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MAREUIL EN DOLE",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MARFONTAINE",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MARGIVAL",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MARIGNY EN ORXOIS",
+    "cp": "02810",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MARIZY ST MARD",
+    "cp": "02470",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MARIZY STE GENEVIEVE",
+    "cp": "02470",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MARLE",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MARLY GOMONT",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MARTIGNY",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MARTIGNY COURPIERRE",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MAUREGNY EN HAYE",
+    "cp": "02820",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MAYOT",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MENNESSIS",
+    "cp": "02700",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MENNEVRET",
+    "cp": "02630",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MERCIN ET VAUX",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MERLIEUX ET FOUQUEROLLES",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MESBRECOURT RICHECOURT",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MESNIL ST LAURENT",
+    "cp": "02720",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MEURIVAL",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MEZIERES SUR OISE",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MEZY MOULINS",
+    "cp": "02650",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MISSY AUX BOIS",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MISSY LES PIERREPONT",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MISSY SUR AISNE",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MOLAIN",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MOLINCHART",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONAMPTEUIL",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONCEAU LE NEUF ET FAUCOUZY",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONCEAU LE WAAST",
+    "cp": "02840",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONCEAU LES LEUPS",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONCEAU SUR OISE",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONDREPUIS",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONNES",
+    "cp": "02470",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONS EN LAONNOIS",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONT D ORIGNY",
+    "cp": "02390",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONT NOTRE DAME",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONT ST JEAN",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONT ST MARTIN",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONT ST PERE",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTAIGU",
+    "cp": "02820",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTBAVIN",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTBREHAIN",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTCHALONS",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTCORNET",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTESCOURT LIZEROLLES",
+    "cp": "02440",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTFAUCON",
+    "cp": "02540",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTGOBERT",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTGRU ST HILAIRE",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTHENAULT",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTHIERS",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTHUREL",
+    "cp": "02330",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNY EN ARROUAISE",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNY L ALLIER",
+    "cp": "02810",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNY LE FRANC",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNY LENGRAIN",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNY LES CONDE",
+    "cp": "02330",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNY SOUS MARLE",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNY SUR CRECY",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTLEVON",
+    "cp": "02330",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTLOUE",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL AUX LIONS",
+    "cp": "02310",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MORCOURT",
+    "cp": "02100",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MORGNY EN THIERACHE",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MORSAIN",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MORTEFONTAINE",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MORTIERS",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MOULINS",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MOUSSY VERNEUIL",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MOY DE L AISNE",
+    "cp": "02610",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MURET ET CROUTTES",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "MUSCOURT",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NAMPCELLES LA COUR",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NAMPTEUIL SOUS MURET",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NANTEUIL LA FOSSE",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NANTEUIL NOTRE DAME",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NAUROY",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NESLES LA MONTAGNE",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NEUFCHATEL SUR AISNE",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NEUFLIEUX",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NEUILLY ST FRONT",
+    "cp": "02470",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NEUVE MAISON",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE ST AMAND",
+    "cp": "02100",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE SUR AILETTE",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE SUR MARGIVAL",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLETTE",
+    "cp": "02390",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NIZY LE COMTE",
+    "cp": "02150",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NOGENT L ARTAUD",
+    "cp": "02310",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NOGENTEL",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NOIRCOURT",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NOROY SUR OURCQ",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NOUVION ET CATILLON",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NOUVION ET CATILLON",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NOUVION LE COMTE",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NOUVION LE VINEUX",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NOUVRON VINGRE",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "NOYALES",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "OEUILLY",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "OGNES",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "OHIS",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "OIGNY EN VALOIS",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "OISY",
+    "cp": "02450",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "OLLEZY",
+    "cp": "02480",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "OMISSY",
+    "cp": "02100",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ORAINVILLE",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ORGEVAL",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ORIGNY EN THIERACHE",
+    "cp": "02550",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ORIGNY STE BENOITE",
+    "cp": "02390",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "OSLY COURTIL",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "OSTEL",
+    "cp": "02370",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "OULCHES LA VALLEE FOULON",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "OULCHY LA VILLE",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "OULCHY LE CHATEAU",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "OULCHY LE CHATEAU",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PAARS",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PAISSY",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PANCY COURTECON",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PAPLEUX",
+    "cp": "02260",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PARCY ET TIGNY",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PARFONDEVAL",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PARFONDRU",
+    "cp": "02840",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PARGNAN",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PARGNY ET FILAIN",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PARGNY ET FILAIN",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PARGNY LA DHUYS",
+    "cp": "02330",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PARGNY LES BOIS",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PARPEVILLE",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PASLY",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PASSY EN VALOIS",
+    "cp": "02470",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PASSY SUR MARNE",
+    "cp": "02850",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PAVANT",
+    "cp": "02310",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PERNANT",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PETIT VERLY",
+    "cp": "02630",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PIERREMANDE",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PIERREPONT",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PIGNICOURT",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PINON",
+    "cp": "02320",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PITHON",
+    "cp": "02480",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PLEINE SELVE",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PLOISY",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PLOMION",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PLOYART ET VAURSEINE",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "POMMIERS",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PONT ARCY",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PONT ST MARD",
+    "cp": "02380",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PONTAVERT",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PONTRU",
+    "cp": "02490",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PONTRUET",
+    "cp": "02490",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "POUILLY SUR SERRE",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PREMONT",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PREMONTRE",
+    "cp": "02320",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PRESLES ET BOVES",
+    "cp": "02370",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PRESLES ET THIERNY",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PRIEZ",
+    "cp": "02470",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PRISCES",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PROISY",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PROIX",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PROUVAIS",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PROVISEUX ET PLESNOY",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PUISEUX EN RETZ",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "PUISIEUX ET CLANLIEU",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "QUIERZY",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "QUINCY BASSE",
+    "cp": "02380",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "QUINCY SOUS LE MONT",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "RAILLIMONT",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "RAMICOURT",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "REGNY",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "REMAUCOURT",
+    "cp": "02100",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "REMIES",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "REMIGNY",
+    "cp": "02440",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "RENANSART",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "RENNEVAL",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "RESIGNY",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "RESSONS LE LONG",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "RETHEUIL",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "REUILLY SAUVIGNY",
+    "cp": "02850",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "RIBEAUVILLE",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "RIBEMONT",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROCOURT ST MARTIN",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROCQUIGNY",
+    "cp": "02260",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROGECOURT",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROGNY",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROMENY SUR MARNE",
+    "cp": "02310",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROMERY",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "RONCHERES",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROUCY",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROUGERIES",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROUPY",
+    "cp": "02590",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROUVROY",
+    "cp": "02100",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROUVROY SUR SERRE",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROYAUCOURT ET CHAILVET",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROZET ST ALBIN",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROZIERES SUR CRISE",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROZOY BELLEVALLE",
+    "cp": "02540",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ROZOY SUR SERRE",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SACONIN ET BREUIL",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SAINS RICHAUMONT",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SAMOUSSY",
+    "cp": "02840",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SANCY LES CHEMINOTS",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SAPONAY",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SAULCHERY",
+    "cp": "02310",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SAVY",
+    "cp": "02590",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SEBONCOURT",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SELENS",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SEPTMONTS",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SEPTVAUX",
+    "cp": "02410",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SEQUEHART",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SERAIN",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SERAUCOURT LE GRAND",
+    "cp": "02790",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SERCHES",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SERGY",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SERINGES ET NESLES",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SERMOISE",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SERVAIS",
+    "cp": "02700",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SERVAL",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SERY LES MEZIERES",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SILLY LA POTERIE",
+    "cp": "02460",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SINCENY",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SISSONNE",
+    "cp": "02150",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SISSY",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SOISSONS",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SOIZE",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SOMMELANS",
+    "cp": "02470",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SOMMERON",
+    "cp": "02260",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SOMMETTE EAUCOURT",
+    "cp": "02480",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SONS ET RONCHERES",
+    "cp": "02270",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SORBAIS",
+    "cp": "02580",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SOUCY",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SOUPIR",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST ALGIS",
+    "cp": "02260",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST AUBIN",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST BANDRY",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST CHRISTOPHE A BERRY",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST CLEMENT",
+    "cp": "02360",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST ERME OUTRE ET RAMECOURT",
+    "cp": "02820",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST EUGENE",
+    "cp": "02330",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST GENGOULPH",
+    "cp": "02810",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST GOBAIN",
+    "cp": "02410",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST GOBERT",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST MARD",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN RIVIERE",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL",
+    "cp": "02830",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST NICOLAS AUX BOIS",
+    "cp": "02410",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL AUX BOIS",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE AIGLE",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE LES FRANQUEVILLE",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST PIERREMONT",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST QUENTIN",
+    "cp": "02100",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST REMY BLANZY",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST SIMON",
+    "cp": "02640",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "ST THOMAS",
+    "cp": "02820",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "STE CROIX",
+    "cp": "02820",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "STE GENEVIEVE",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "STE PREUVE",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "SURFONTAINE",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TAILLEFONTAINE",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TANNIERES",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TARTIERS",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TAVAUX ET PONTSERICOURT",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TERGNIER",
+    "cp": "02700",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TERGNIER",
+    "cp": "02700",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TERGNIER",
+    "cp": "02700",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TERGNIER",
+    "cp": "02700",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TERNY SORNY",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "THENAILLES",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "THENELLES",
+    "cp": "02390",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "THIERNU",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TORCY EN VALOIS",
+    "cp": "02810",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TOULIS ET ATTENCOURT",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TRAVECY",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TREFCON",
+    "cp": "02490",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TRELOU SUR MARNE",
+    "cp": "02850",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TROESNES",
+    "cp": "02460",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TROSLY LOIRE",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TRUCY",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TUGNY ET PONT",
+    "cp": "02640",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "TUPIGNY",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "UGNY LE GAY",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "URCEL",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "URVILLERS",
+    "cp": "02690",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VADENCOURT",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VADENCOURT",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VAILLY SUR AISNE",
+    "cp": "02370",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VALLEES EN CHAMPAGNE",
+    "cp": "02330",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VALLEES EN CHAMPAGNE",
+    "cp": "02330",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VALLEES EN CHAMPAGNE",
+    "cp": "02330",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VARISCOURT",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VASSENS",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VASSENY",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VASSOGNE",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VAUCELLES ET BEFFECOURT",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VAUDESSON",
+    "cp": "02320",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VAUX ANDIGNY",
+    "cp": "02110",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VAUX EN VERMANDOIS",
+    "cp": "02590",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VAUXAILLON",
+    "cp": "02320",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VAUXBUIN",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VAUXREZIS",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VAUXTIN",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VENDELLES",
+    "cp": "02490",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VENDEUIL",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VENDHUILE",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VENDIERES",
+    "cp": "02540",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VENDRESSE BEAULNE",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VENEROLLES",
+    "cp": "02510",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VENIZEL",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VERDILLY",
+    "cp": "02400",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VERMAND",
+    "cp": "02490",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VERNEUIL SOUS COUCY",
+    "cp": "02380",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VERNEUIL SUR SERRE",
+    "cp": "02000",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VERSIGNY",
+    "cp": "02800",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VERVINS",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VESLES ET CAUMONT",
+    "cp": "02350",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VESLUD",
+    "cp": "02840",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VEUILLY LA POTERIE",
+    "cp": "02810",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VEZAPONIN",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VEZILLY",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VIC SUR AISNE",
+    "cp": "02290",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VICHEL NANTEUIL",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VIEL ARCY",
+    "cp": "02160",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VIELS MAISONS",
+    "cp": "02540",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VIERZY",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VIFFORT",
+    "cp": "02540",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VIGNEUX HOCQUET",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLE SAVOYE",
+    "cp": "02220",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLEMONTOIRE",
+    "cp": "02210",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE ST GERMAIN",
+    "cp": "02200",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE SUR AISNE",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE SUR AISNE",
+    "cp": "02190",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE SUR FERE",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLEQUIER AUMONT",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLERET",
+    "cp": "02420",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLERS AGRON AIGUIZY",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLERS COTTERETS",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLERS COTTERETS",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLERS HELON",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLERS LE SEC",
+    "cp": "02240",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLERS LES GUISE",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLERS ST CHRISTOPHE",
+    "cp": "02590",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLERS SUR FERE",
+    "cp": "02130",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VILLIERS ST DENIS",
+    "cp": "02310",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VINCY REUIL ET MAGNY",
+    "cp": "02340",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VIRY NOUREUIL",
+    "cp": "02300",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VIVAISE",
+    "cp": "02870",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VIVIERES",
+    "cp": "02600",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VOHARIES",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VORGES",
+    "cp": "02860",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VOULPAIX",
+    "cp": "02140",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VOYENNE",
+    "cp": "02250",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VREGNY",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "VUILLERY",
+    "cp": "02880",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "WASSIGNY",
+    "cp": "02630",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "WATIGNY",
+    "cp": "02830",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "WIEGE FATY",
+    "cp": "02120",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "WIMY",
+    "cp": "02500",
+    "dept": "02",
+    "region": ""
+  },
+  {
+    "name": "WISSIGNICOURT",
+    "cp": "02320",
+    "dept": "02",
+    "region": ""
+  }
+]
