@@ -1,0 +1,2804 @@
+[
+  {
+    "name": "AIGNAN",
+    "cp": "32290",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ANSAN",
+    "cp": "32270",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ANTRAS",
+    "cp": "32360",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ARBLADE LE BAS",
+    "cp": "32720",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ARBLADE LE HAUT",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ARDIZAS",
+    "cp": "32430",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ARMENTIEUX",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ARMOUS ET CAU",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ARROUEDE",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AUBIET",
+    "cp": "32270",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AUCH",
+    "cp": "32000",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AUGNAX",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AUJAN MOURNEDE",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AURADE",
+    "cp": "32600",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AURENSAN",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AURIMONT",
+    "cp": "32450",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AUSSOS",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AUTERIVE",
+    "cp": "32550",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AUX AUSSAT",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AVENSAC",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AVERON BERGELLE",
+    "cp": "32290",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AVEZAN",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AYGUETINTE",
+    "cp": "32410",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "AYZIEU",
+    "cp": "32800",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BAJONNETTE",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BARCELONNE DU GERS",
+    "cp": "32720",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BARCUGNAN",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BARRAN",
+    "cp": "32350",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BARS",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BASCOUS",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BASSOUES",
+    "cp": "32320",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BAZIAN",
+    "cp": "32320",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BAZUGUES",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BEAUCAIRE",
+    "cp": "32410",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BEAUMARCHES",
+    "cp": "32160",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONT",
+    "cp": "32100",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BEAUPUY",
+    "cp": "32600",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BECCAS",
+    "cp": "32730",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BEDECHAN",
+    "cp": "32450",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BELLEGARDE",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BELLOC ST CLAMENS",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BELMONT",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BERAUT",
+    "cp": "32100",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BERDOUES",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BERNEDE",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BERRAC",
+    "cp": "32480",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BETCAVE AGUIN",
+    "cp": "32420",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BETOUS",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BETPLAN",
+    "cp": "32730",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BEZERIL",
+    "cp": "32130",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BEZOLLES",
+    "cp": "32310",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BEZUES BAJON",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BIRAN",
+    "cp": "32350",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BIVES",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BLANQUEFORT",
+    "cp": "32270",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BLAZIERT",
+    "cp": "32100",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BLOUSSON SERIAN",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BONAS",
+    "cp": "32410",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BOUCAGNERES",
+    "cp": "32550",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BOULAUR",
+    "cp": "32450",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BOURROUILLAN",
+    "cp": "32370",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BOUZON GELLENAVE",
+    "cp": "32290",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BRETAGNE D ARMAGNAC",
+    "cp": "32800",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "BRUGNENS",
+    "cp": "32500",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CADEILHAN",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CADEILLAN",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAHUZAC SUR ADOUR",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAILLAVET",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CALLIAN",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAMPAGNE D ARMAGNAC",
+    "cp": "32800",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAP D ASTARAC",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAP D ASTARAC",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAP D ASTARAC",
+    "cp": "32420",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAP D ASTARAC",
+    "cp": "32420",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASSAIGNE",
+    "cp": "32100",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTELNAU BARBARENS",
+    "cp": "32450",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTELNAU D ANGLES",
+    "cp": "32320",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTELNAU D ARBIEU",
+    "cp": "32500",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTELNAU D AUZAN LABARRERE",
+    "cp": "32250",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTELNAU D AUZAN LABARRERE",
+    "cp": "32440",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTELNAU SUR L AUVIGNON",
+    "cp": "32100",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTELNAVET",
+    "cp": "32290",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTERA LECTOUROIS",
+    "cp": "32700",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTERA VERDUZAN",
+    "cp": "32410",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTERON",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTET ARROUY",
+    "cp": "32340",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTEX",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTEX D ARMAGNAC",
+    "cp": "32240",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTILLON DEBATS",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTILLON MASSAS",
+    "cp": "32360",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTILLON SAVES",
+    "cp": "32490",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CASTIN",
+    "cp": "32810",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CATONVIELLE",
+    "cp": "32200",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAUMONT",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAUPENNE D ARMAGNAC",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAUSSENS",
+    "cp": "32100",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAZAUBON",
+    "cp": "32150",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAZAUBON",
+    "cp": "32150",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAZAUX D ANGLES",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAZAUX SAVES",
+    "cp": "32130",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAZAUX VILLECOMTAL",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CAZENEUVE",
+    "cp": "32800",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CERAN",
+    "cp": "32500",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CEZAN",
+    "cp": "32410",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CHELAN",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CLERMONT POUYGUILLES",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CLERMONT SAVES",
+    "cp": "32600",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "COLOGNE",
+    "cp": "32430",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CONDOM",
+    "cp": "32100",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CORNEILLAN",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "COULOUME MONDEBAT",
+    "cp": "32160",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "COURRENSAN",
+    "cp": "32330",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "COURTIES",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CRASTES",
+    "cp": "32270",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CRAVENCERES",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "CUELAS",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "DEMU",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "DUFFORT",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "DURAN",
+    "cp": "32810",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "DURBAN",
+    "cp": "32260",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "EAUZE",
+    "cp": "32800",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ENCAUSSE",
+    "cp": "32430",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ENDOUFIELLE",
+    "cp": "32600",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ESCLASSAN LABASTIDE",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ESCORNEBOEUF",
+    "cp": "32200",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ESPAON",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ESPAS",
+    "cp": "32370",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ESTAMPES",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ESTANG",
+    "cp": "32240",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ESTIPOUY",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ESTRAMIAC",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "FAGET ABBATIAL",
+    "cp": "32450",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "FLAMARENS",
+    "cp": "32340",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "FLEURANCE",
+    "cp": "32500",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "FOURCES",
+    "cp": "32250",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "FREGOUVILLE",
+    "cp": "32490",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "FUSTEROUAU",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GALIAX",
+    "cp": "32160",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GARRAVET",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GAUDONVILLE",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GAUJAC",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GAUJAN",
+    "cp": "32420",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GAVARRET SUR AULOUSTE",
+    "cp": "32390",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GAZAUPOUY",
+    "cp": "32480",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GAZAX ET BACCARISSE",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GEE RIVIERE",
+    "cp": "32720",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GIMBREDE",
+    "cp": "32340",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GIMONT",
+    "cp": "32200",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GISCARO",
+    "cp": "32200",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GONDRIN",
+    "cp": "32330",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GOUTZ",
+    "cp": "32500",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "GOUX",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "HAGET",
+    "cp": "32730",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "HAULIES",
+    "cp": "32550",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "HOMPS",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "IDRAC RESPAILLES",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "IZOTGES",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "JEGUN",
+    "cp": "32360",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "JU BELLOC",
+    "cp": "32160",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "JUILLAC",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "JUILLES",
+    "cp": "32200",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "JUSTIAN",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "L ISLE ARNE",
+    "cp": "32270",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "L ISLE BOUZON",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "L ISLE DE NOE",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "L ISLE JOURDAIN",
+    "cp": "32600",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LA ROMIEU",
+    "cp": "32480",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LA SAUVETAT",
+    "cp": "32500",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAAS",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LABARTHE",
+    "cp": "32260",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LABARTHETE",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LABASTIDE SAVES",
+    "cp": "32130",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LABEJAN",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LABRIHE",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LADEVEZE RIVIERE",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LADEVEZE VILLE",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAGARDE",
+    "cp": "32700",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAGARDE HACHAN",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAGARDERE",
+    "cp": "32310",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAGRAULET DU GERS",
+    "cp": "32330",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAGUIAN MAZOUS",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAHAS",
+    "cp": "32130",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAHITTE",
+    "cp": "32810",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LALANNE",
+    "cp": "32500",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LALANNE ARQUE",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAMAGUERE",
+    "cp": "32260",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAMAZERE",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAMOTHE GOAS",
+    "cp": "32500",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LANNE SOUBIRAN",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LANNEMAIGNAN",
+    "cp": "32240",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LANNEPAX",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LANNUX",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAREE",
+    "cp": "32150",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LARRESSINGLE",
+    "cp": "32100",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LARROQUE ENGALIN",
+    "cp": "32480",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LARROQUE ST SERNIN",
+    "cp": "32410",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LARROQUE SUR L OSSE",
+    "cp": "32100",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LARTIGUE",
+    "cp": "32450",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LASSERAN",
+    "cp": "32550",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LASSERRADE",
+    "cp": "32160",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LASSEUBE PROPRE",
+    "cp": "32550",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAUJUZAN",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAURAET",
+    "cp": "32330",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAVARDENS",
+    "cp": "32360",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAVERAET",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LAYMONT",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LE BROUILH MONBERT",
+    "cp": "32350",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LE BROUILH MONBERT",
+    "cp": "32350",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LE HOUGA",
+    "cp": "32460",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LEBOULIN",
+    "cp": "32810",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LECTOURE",
+    "cp": "32700",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LELIN LAPUJOLLE",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LIAS",
+    "cp": "32600",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LIAS D ARMAGNAC",
+    "cp": "32240",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LIGARDES",
+    "cp": "32480",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LOMBEZ",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LOUBEDAT",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LOUBERSAN",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LOURTIES MONBRUN",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LOUSLITGES",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LOUSSOUS DEBAT",
+    "cp": "32290",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LUPIAC",
+    "cp": "32290",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LUPPE VIOLLES",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "LUSSAN",
+    "cp": "32270",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MAGNAN",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MAGNAS",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MAIGNAUT TAUZIA",
+    "cp": "32310",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MALABAT",
+    "cp": "32730",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MANAS BASTANOUS",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MANCIET",
+    "cp": "32370",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MANENT MONTANE",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MANSEMPUY",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MANSENCOME",
+    "cp": "32310",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MARAMBAT",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MARAVAT",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MARCIAC",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MARESTAING",
+    "cp": "32490",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MARGOUET MEYMES",
+    "cp": "32290",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MARGUESTAU",
+    "cp": "32150",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MARSAN",
+    "cp": "32270",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MARSEILLAN",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MARSOLAN",
+    "cp": "32700",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MAS D AUVIGNON",
+    "cp": "32700",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MASCARAS",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MASSEUBE",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MAULEON D ARMAGNAC",
+    "cp": "32240",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MAULICHERES",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MAUMUSSON LAGUIAN",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MAUPAS",
+    "cp": "32240",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MAURENS",
+    "cp": "32200",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MAUROUX",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MAUVEZIN",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MEILHAN",
+    "cp": "32420",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MERENS",
+    "cp": "32360",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MIELAN",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MIRADOUX",
+    "cp": "32340",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MIRAMONT D ASTARAC",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MIRAMONT LATOUR",
+    "cp": "32390",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MIRANDE",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MIRANNES",
+    "cp": "32350",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MIREPOIX",
+    "cp": "32390",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONBLANC",
+    "cp": "32130",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONBRUN",
+    "cp": "32600",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONCASSIN",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONCLAR",
+    "cp": "32150",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONCLAR SUR LOSSE",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONCORNEIL GRAZAN",
+    "cp": "32260",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONFERRAN PLAVES",
+    "cp": "32260",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONFERRAN SAVES",
+    "cp": "32490",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONFORT",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONGAUSY",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONGUILHEM",
+    "cp": "32240",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONLAUR BERNET",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONLEZUN",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONLEZUN D ARMAGNAC",
+    "cp": "32240",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONPARDIAC",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONT D ASTARAC",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONT DE MARRAST",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONTADET",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONTAMAT",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONTAUT",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONTAUT LES CRENEAUX",
+    "cp": "32810",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONTEGUT",
+    "cp": "32550",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONTEGUT ARROS",
+    "cp": "32730",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONTEGUT SAVES",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONTESQUIOU",
+    "cp": "32320",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONTESTRUC SUR GERS",
+    "cp": "32390",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONTIES",
+    "cp": "32420",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONTIRON",
+    "cp": "32200",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONTPEZAT",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MONTREAL",
+    "cp": "32250",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MORMES",
+    "cp": "32240",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MOUCHAN",
+    "cp": "32330",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MOUCHES",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "MOUREDE",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "NIZAS",
+    "cp": "32130",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "NOGARO",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "NOILHAN",
+    "cp": "32130",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "NOUGAROULET",
+    "cp": "32270",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "NOULENS",
+    "cp": "32800",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ORBESSAN",
+    "cp": "32260",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ORDAN LARROQUE",
+    "cp": "32350",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ORNEZAN",
+    "cp": "32260",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PALLANNE",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PANASSAC",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PANJAS",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PAUILHAC",
+    "cp": "32500",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PAVIE",
+    "cp": "32550",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PEBEES",
+    "cp": "32130",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PELLEFIGUE",
+    "cp": "32420",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PERCHEDE",
+    "cp": "32460",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PERGAIN TAILLAC",
+    "cp": "32700",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PESSAN",
+    "cp": "32550",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PESSOULENS",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PEYRECAVE",
+    "cp": "32340",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PEYRUSSE GRANDE",
+    "cp": "32320",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PEYRUSSE MASSAS",
+    "cp": "32360",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PEYRUSSE VIEILLE",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PIS",
+    "cp": "32500",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PLAISANCE",
+    "cp": "32160",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PLIEUX",
+    "cp": "32340",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "POLASTRON",
+    "cp": "32130",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "POMPIAC",
+    "cp": "32130",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PONSAMPERE",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PONSAN SOUBIRAN",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "POUY LOUBRIN",
+    "cp": "32260",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "POUY ROQUELAURE",
+    "cp": "32480",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "POUYDRAGUIN",
+    "cp": "32290",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "POUYLEBON",
+    "cp": "32320",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PRECHAC",
+    "cp": "32390",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PRECHAC SUR ADOUR",
+    "cp": "32160",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PREIGNAN",
+    "cp": "32810",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PRENERON",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PROJAN",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PUJAUDRAN",
+    "cp": "32600",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PUYCASQUIER",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PUYLAUSIC",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "PUYSEGUR",
+    "cp": "32390",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "RAMOUZENS",
+    "cp": "32800",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "RAZENGUES",
+    "cp": "32600",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "REANS",
+    "cp": "32800",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "REJAUMONT",
+    "cp": "32390",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "RICOURT",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "RIGUEPEU",
+    "cp": "32320",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "RISCLE",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "RISCLE",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ROQUEBRUNE",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ROQUEFORT",
+    "cp": "32390",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ROQUELAURE",
+    "cp": "32810",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ROQUELAURE ST AUBIN",
+    "cp": "32430",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ROQUEPINE",
+    "cp": "32100",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ROQUES",
+    "cp": "32310",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ROZES",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SABAILLAN",
+    "cp": "32420",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SABAZAN",
+    "cp": "32290",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SADEILLAN",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SALLES D ARMAGNAC",
+    "cp": "32370",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SAMARAN",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SAMATAN",
+    "cp": "32130",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SANSAN",
+    "cp": "32260",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SARAMON",
+    "cp": "32450",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SARRAGACHIES",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SARRAGUZAN",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SARRANT",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SAUVETERRE",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SAUVIAC",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SAUVIMONT",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SAVIGNAC MONA",
+    "cp": "32130",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SCIEURAC ET FLOURES",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SEAILLES",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SEGOS",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SEGOUFIELLE",
+    "cp": "32600",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SEISSAN",
+    "cp": "32260",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SEISSAN",
+    "cp": "32260",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SEMBOUES",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SEMEZIES CACHAN",
+    "cp": "32450",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SEMPESSERRE",
+    "cp": "32700",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SERE",
+    "cp": "32140",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SEREMPUY",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SEYSSES SAVES",
+    "cp": "32130",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SIMORRE",
+    "cp": "32420",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SION",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SIRAC",
+    "cp": "32430",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SOLOMIAC",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "SORBETS",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE",
+    "cp": "32200",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST ANTOINE",
+    "cp": "32340",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST ANTONIN",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST ARAILLES",
+    "cp": "32350",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST ARROMAN",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST AUNIX LENGROS",
+    "cp": "32160",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST AVIT FRANDAT",
+    "cp": "32700",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST BRES",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST CAPRAIS",
+    "cp": "32200",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST CHRISTAUD",
+    "cp": "32320",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST CLAR",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST CREAC",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST CRICQ",
+    "cp": "32430",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST ELIX D ASTARAC",
+    "cp": "32450",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST ELIX THEUX",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES",
+    "cp": "32430",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST GERME",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST GERMIER",
+    "cp": "32200",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST GRIEDE",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN LE COMTAL",
+    "cp": "32550",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN POUTGE",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST JUSTIN",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST LARY",
+    "cp": "32360",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST LEONARD",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST LIZIER DU PLANTE",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST LOUBE",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN D ARMAGNAC",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DE GOYNE",
+    "cp": "32480",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN GIMOIS",
+    "cp": "32450",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST MAUR",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST MEDARD",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST MEZARD",
+    "cp": "32700",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST MONT",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST ORENS",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST ORENS POUY PETIT",
+    "cp": "32100",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST OST",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL DE BAISE",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE D AUBEZIES",
+    "cp": "32290",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST PUY",
+    "cp": "32310",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST SAUVY",
+    "cp": "32270",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "ST SOULAN",
+    "cp": "32220",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "STE ANNE",
+    "cp": "32430",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "STE AURENCE CAZAUX",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "STE CHRISTIE",
+    "cp": "32390",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "STE CHRISTIE D ARMAGNAC",
+    "cp": "32370",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "STE DODE",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "STE GEMME",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE",
+    "cp": "32200",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "STE MERE",
+    "cp": "32700",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "STE RADEGONDE",
+    "cp": "32500",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TACHOIRES",
+    "cp": "32260",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TARSAC",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TASQUE",
+    "cp": "32160",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TAYBOSC",
+    "cp": "32120",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TERMES D ARMAGNAC",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TERRAUBE",
+    "cp": "32700",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "THOUX",
+    "cp": "32430",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TIESTE URAGNOUX",
+    "cp": "32160",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TILLAC",
+    "cp": "32170",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TIRENT PONTEJAC",
+    "cp": "32450",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TOUGET",
+    "cp": "32430",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TOUJOUSE",
+    "cp": "32240",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TOURDUN",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TOURNAN",
+    "cp": "32420",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TOURNECOUPE",
+    "cp": "32380",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TOURRENQUETS",
+    "cp": "32390",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TRAVERSERES",
+    "cp": "32450",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TRONCENS",
+    "cp": "32230",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "TUDELLE",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "URDENS",
+    "cp": "32500",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "URGOSSE",
+    "cp": "32110",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "VALENCE SUR BAISE",
+    "cp": "32310",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "VERGOIGNAN",
+    "cp": "32720",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "VERLUS",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "VIC FEZENSAC",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "VIC FEZENSAC",
+    "cp": "32190",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "VIELLA",
+    "cp": "32400",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "VILLECOMTAL SUR ARROS",
+    "cp": "32730",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "VILLEFRANCHE D ASTARAC",
+    "cp": "32420",
+    "dept": "32",
+    "region": ""
+  },
+  {
+    "name": "VIOZAN",
+    "cp": "32300",
+    "dept": "32",
+    "region": ""
+  }
+]

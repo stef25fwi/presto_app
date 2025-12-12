@@ -1,0 +1,1250 @@
+[
+  {
+    "name": "ANAA",
+    "cp": "98760",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "ANAA",
+    "cp": "98786",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "ANAA",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "ARUE",
+    "cp": "98701",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "ARUTUA",
+    "cp": "98761",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "ARUTUA",
+    "cp": "98762",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "ARUTUA",
+    "cp": "98785",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "BORA BORA",
+    "cp": "98730",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "BORA BORA",
+    "cp": "98730",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "BORA BORA",
+    "cp": "98730",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "BORA BORA",
+    "cp": "98730",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "FAAA",
+    "cp": "98704",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "FAKARAVA",
+    "cp": "98763",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "FAKARAVA",
+    "cp": "98764",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "FAKARAVA",
+    "cp": "98787",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "FAKARAVA",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "FAKARAVA",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "FAKARAVA",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "FANGATAU",
+    "cp": "98765",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "FANGATAU",
+    "cp": "98766",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "FATU HIVA",
+    "cp": "98740",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "FATU HIVA",
+    "cp": "98740",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98755",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98755",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98755",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98755",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98755",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98755",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98755",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98755",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98755",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98792",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98792",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98792",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98792",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98792",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98792",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98792",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "GAMBIER",
+    "cp": "98793",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HAO",
+    "cp": "98767",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HAO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HAO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HAO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HAO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HAO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HAO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HAO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HAO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HAO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIKUERU",
+    "cp": "98768",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIKUERU",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIKUERU",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIKUERU",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIKUERU",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HITIAA O TE RA",
+    "cp": "98705",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HITIAA O TE RA",
+    "cp": "98706",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HITIAA O TE RA",
+    "cp": "98707",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HITIAA O TE RA",
+    "cp": "98708",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIVA OA",
+    "cp": "98741",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIVA OA",
+    "cp": "98741",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIVA OA",
+    "cp": "98741",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIVA OA",
+    "cp": "98741",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIVA OA",
+    "cp": "98741",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIVA OA",
+    "cp": "98741",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIVA OA",
+    "cp": "98741",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIVA OA",
+    "cp": "98749",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIVA OA",
+    "cp": "98796",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HIVA OA",
+    "cp": "98796",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HUAHINE",
+    "cp": "98731",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HUAHINE",
+    "cp": "98731",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HUAHINE",
+    "cp": "98731",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HUAHINE",
+    "cp": "98731",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HUAHINE",
+    "cp": "98731",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HUAHINE",
+    "cp": "98731",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HUAHINE",
+    "cp": "98731",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HUAHINE",
+    "cp": "98731",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HUAHINE",
+    "cp": "98731",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "HUAHINE",
+    "cp": "98732",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "ILE DE CLIPPERTON",
+    "cp": "98799",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAHINA",
+    "cp": "98709",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAHINA",
+    "cp": "98710",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAKEMO",
+    "cp": "98769",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAKEMO",
+    "cp": "98789",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAKEMO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAKEMO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAKEMO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAKEMO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAKEMO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAKEMO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAKEMO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAKEMO",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MANIHI",
+    "cp": "98770",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MANIHI",
+    "cp": "98771",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAUPITI",
+    "cp": "98732",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAUPITI",
+    "cp": "98732",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAUPITI",
+    "cp": "98732",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MAUPITI",
+    "cp": "98732",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98728",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98728",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98728",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98728",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98728",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98728",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98728",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98728",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98728",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98729",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98729",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98729",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98729",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98729",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98729",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98729",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98729",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98729",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98729",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "MOOREA MAIAO",
+    "cp": "98729",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "NAPUKA",
+    "cp": "98772",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "NUKU HIVA",
+    "cp": "98742",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "NUKU HIVA",
+    "cp": "98742",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "NUKU HIVA",
+    "cp": "98742",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "NUKU HIVA",
+    "cp": "98742",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "NUKU HIVA",
+    "cp": "98742",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "NUKU HIVA",
+    "cp": "98748",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "NUKU HIVA",
+    "cp": "98796",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "NUKU HIVA",
+    "cp": "98796",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "NUKU HIVA",
+    "cp": "98796",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "NUKUTAVAKE",
+    "cp": "98773",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "NUKUTAVAKE",
+    "cp": "98788",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "PAEA",
+    "cp": "98711",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "PAPARA",
+    "cp": "98712",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "PAPEETE",
+    "cp": "98714",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "PIRAE",
+    "cp": "98716",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "PUKAPUKA",
+    "cp": "98774",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "PUNAAUIA",
+    "cp": "98703",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "PUNAAUIA",
+    "cp": "98718",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RAIVAVAE",
+    "cp": "98750",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RAIVAVAE",
+    "cp": "98750",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RAIVAVAE",
+    "cp": "98750",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RAIVAVAE",
+    "cp": "98750",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RANGIROA",
+    "cp": "98775",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RANGIROA",
+    "cp": "98776",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RANGIROA",
+    "cp": "98777",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RANGIROA",
+    "cp": "98778",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RANGIROA",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RAPA",
+    "cp": "98751",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RAPA",
+    "cp": "98794",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "REAO",
+    "cp": "98779",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "REAO",
+    "cp": "98780",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RIMATARA",
+    "cp": "98752",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RIMATARA",
+    "cp": "98752",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RIMATARA",
+    "cp": "98752",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RIMATARA",
+    "cp": "98752",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RIMATARA",
+    "cp": "98795",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RURUTU",
+    "cp": "98753",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RURUTU",
+    "cp": "98753",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "RURUTU",
+    "cp": "98753",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHAA",
+    "cp": "98733",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHAA",
+    "cp": "98733",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHAA",
+    "cp": "98733",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHAA",
+    "cp": "98733",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHAA",
+    "cp": "98733",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHAA",
+    "cp": "98733",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHAA",
+    "cp": "98733",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHAA",
+    "cp": "98734",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHAA",
+    "cp": "98734",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHAA",
+    "cp": "98734",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHAA",
+    "cp": "98734",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHAA",
+    "cp": "98734",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHUATA",
+    "cp": "98743",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHUATA",
+    "cp": "98743",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHUATA",
+    "cp": "98743",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAHUATA",
+    "cp": "98743",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAIARAPU EST",
+    "cp": "98719",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAIARAPU EST",
+    "cp": "98719",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAIARAPU EST",
+    "cp": "98720",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAIARAPU EST",
+    "cp": "98721",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAIARAPU EST",
+    "cp": "98722",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAIARAPU OUEST",
+    "cp": "98723",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAIARAPU OUEST",
+    "cp": "98724",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAIARAPU OUEST",
+    "cp": "98725",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAKAROA",
+    "cp": "98781",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAKAROA",
+    "cp": "98782",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAKAROA",
+    "cp": "98790",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAPUTAPUATEA",
+    "cp": "98735",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAPUTAPUATEA",
+    "cp": "98735",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAPUTAPUATEA",
+    "cp": "98735",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TAPUTAPUATEA",
+    "cp": "98735",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TATAKOTO",
+    "cp": "98783",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TEVA I UTA",
+    "cp": "98726",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TEVA I UTA",
+    "cp": "98727",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TUBUAI",
+    "cp": "98754",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TUBUAI",
+    "cp": "98754",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TUBUAI",
+    "cp": "98754",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TUMARAA",
+    "cp": "98735",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TUMARAA",
+    "cp": "98735",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TUMARAA",
+    "cp": "98735",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TUMARAA",
+    "cp": "98735",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "TUREIA",
+    "cp": "98784",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "UA HUKA",
+    "cp": "98744",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "UA HUKA",
+    "cp": "98747",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "UA POU",
+    "cp": "98745",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "UA POU",
+    "cp": "98745",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "UA POU",
+    "cp": "98745",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "UA POU",
+    "cp": "98745",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "UA POU",
+    "cp": "98746",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "UA POU",
+    "cp": "98746",
+    "dept": "987",
+    "region": ""
+  },
+  {
+    "name": "UTUROA",
+    "cp": "98735",
+    "dept": "987",
+    "region": ""
+  }
+]

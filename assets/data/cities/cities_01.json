@@ -1,0 +1,2768 @@
+[
+  {
+    "name": "AMBERIEU EN BUGEY",
+    "cp": "01500",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "AMBERIEUX EN DOMBES",
+    "cp": "01330",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "AMBLEON",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "AMBRONAY",
+    "cp": "01500",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "AMBUTRIX",
+    "cp": "01500",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ANDERT ET CONDON",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ANGLEFORT",
+    "cp": "01350",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "APREMONT",
+    "cp": "01100",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARANC",
+    "cp": "01110",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARANDAS",
+    "cp": "01230",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARBENT",
+    "cp": "01100",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARBIGNY",
+    "cp": "01190",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARBOYS EN BUGEY",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARBOYS EN BUGEY",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARGIS",
+    "cp": "01230",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARMIX",
+    "cp": "01510",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARS SUR FORMANS",
+    "cp": "01480",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARTEMARE",
+    "cp": "01510",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARVIERE EN VALROMEY",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARVIERE EN VALROMEY",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARVIERE EN VALROMEY",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ARVIERE EN VALROMEY",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ASNIERES SUR SAONE",
+    "cp": "01570",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ATTIGNAT",
+    "cp": "01340",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BAGE DOMMARTIN",
+    "cp": "01380",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BAGE DOMMARTIN",
+    "cp": "01380",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BAGE LE CHATEL",
+    "cp": "01380",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BALAN",
+    "cp": "01360",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BANEINS",
+    "cp": "01990",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BEARD GEOVREISSIAT",
+    "cp": "01460",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BEAUPONT",
+    "cp": "01270",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BEAUREGARD",
+    "cp": "01480",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BELIGNEUX",
+    "cp": "01360",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BELIGNEUX",
+    "cp": "01360",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BELIGNEUX",
+    "cp": "01360",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BELIGNEUX",
+    "cp": "01360",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BELLEY",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BELLEYDOUX",
+    "cp": "01130",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BELLIGNAT",
+    "cp": "01100",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BENONCES",
+    "cp": "01470",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BENY",
+    "cp": "01370",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BEREZIAT",
+    "cp": "01340",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BETTANT",
+    "cp": "01500",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BEY",
+    "cp": "01290",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BEYNOST",
+    "cp": "01700",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BILLIAT",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BIRIEUX",
+    "cp": "01330",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BIZIAT",
+    "cp": "01290",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BLYES",
+    "cp": "01150",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BOHAS MEYRIAT RIGNAT",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BOHAS MEYRIAT RIGNAT",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BOHAS MEYRIAT RIGNAT",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BOISSEY",
+    "cp": "01190",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BOISSEY",
+    "cp": "01380",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BOLOZON",
+    "cp": "01450",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BOULIGNEUX",
+    "cp": "01330",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BOURG EN BRESSE",
+    "cp": "01000",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BOURG EN BRESSE",
+    "cp": "01000",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BOURG ST CHRISTOPHE",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BOURG ST CHRISTOPHE",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BOYEUX ST JEROME",
+    "cp": "01640",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BOZ",
+    "cp": "01190",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BREGNIER CORDON",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BRENOD",
+    "cp": "01110",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BRENS",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BRESSE VALLONS",
+    "cp": "01340",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BRESSE VALLONS",
+    "cp": "01340",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BRESSOLLES",
+    "cp": "01360",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BRESSOLLES",
+    "cp": "01360",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BRION",
+    "cp": "01460",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BRIORD",
+    "cp": "01470",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BUELLAS",
+    "cp": "01310",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "BUELLAS",
+    "cp": "01310",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CEIGNES",
+    "cp": "01430",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CERDON",
+    "cp": "01450",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CERTINES",
+    "cp": "01240",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CESSY",
+    "cp": "01170",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CEYZERIAT",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CEYZERIEU",
+    "cp": "01350",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHALAMONT",
+    "cp": "01320",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHALEINS",
+    "cp": "01480",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHALEY",
+    "cp": "01230",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHALLES LA MONTAGNE",
+    "cp": "01450",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHALLEX",
+    "cp": "01630",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHAMPAGNE EN VALROMEY",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHAMPAGNE EN VALROMEY",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHAMPAGNE EN VALROMEY",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHAMPDOR CORCELLES",
+    "cp": "01110",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHAMPDOR CORCELLES",
+    "cp": "01110",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHAMPFROMIER",
+    "cp": "01410",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHANAY",
+    "cp": "01420",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHANCIA",
+    "cp": "01590",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHANEINS",
+    "cp": "01990",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHANOZ CHATENAY",
+    "cp": "01400",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHARIX",
+    "cp": "01130",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHARNOZ SUR AIN",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU GAILLARD",
+    "cp": "01500",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHATENAY",
+    "cp": "01320",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHATILLON LA PALUD",
+    "cp": "01320",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHATILLON SUR CHALARONNE",
+    "cp": "01400",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHAVANNES SUR REYSSOUZE",
+    "cp": "01190",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHAVEYRIAT",
+    "cp": "01660",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHAZEY BONS",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHAZEY BONS",
+    "cp": "01510",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHAZEY SUR AIN",
+    "cp": "01150",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHEIGNIEU LA BALME",
+    "cp": "01510",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHEVILLARD",
+    "cp": "01430",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHEVROUX",
+    "cp": "01190",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHEVRY",
+    "cp": "01170",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHEZERY FORENS",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CHEZERY FORENS",
+    "cp": "01410",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CIVRIEUX",
+    "cp": "01390",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CIZE",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CLEYZIEU",
+    "cp": "01230",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "COLIGNY",
+    "cp": "01270",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "COLLONGES",
+    "cp": "01550",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "COLOMIEU",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CONAND",
+    "cp": "01230",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CONDAMINE",
+    "cp": "01430",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CONDEISSIAT",
+    "cp": "01400",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CONFORT",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CONFRANCON",
+    "cp": "01310",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CONTREVOZ",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CONZIEU",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CORBONOD",
+    "cp": "01420",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CORLIER",
+    "cp": "01110",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CORMORANCHE SUR SAONE",
+    "cp": "01290",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CORMOZ",
+    "cp": "01560",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CORVEISSIAT",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "COURMANGOUX",
+    "cp": "01370",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "COURTES",
+    "cp": "01560",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CRANS",
+    "cp": "01320",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CRESSIN ROCHEFORT",
+    "cp": "01350",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CROTTET",
+    "cp": "01290",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CROTTET",
+    "cp": "01750",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CROZET",
+    "cp": "01170",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CRUZILLES LES MEPILLAT",
+    "cp": "01290",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CULOZ BEON",
+    "cp": "01350",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CULOZ BEON",
+    "cp": "01350",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CURCIAT DONGALON",
+    "cp": "01560",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CURTAFOND",
+    "cp": "01310",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "CUZIEU",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "DAGNEUX",
+    "cp": "01120",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "DIVONNE LES BAINS",
+    "cp": "01220",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "DOMPIERRE SUR CHALARONNE",
+    "cp": "01400",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "DOMPIERRE SUR VEYLE",
+    "cp": "01240",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "DOMSURE",
+    "cp": "01270",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "DORTAN",
+    "cp": "01590",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "DOUVRES",
+    "cp": "01500",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "DROM",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "DRUILLAT",
+    "cp": "01160",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ECHALLON",
+    "cp": "01130",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ECHENEVEX",
+    "cp": "01170",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ELOISE",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "EVOSGES",
+    "cp": "01230",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "FARAMANS",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "FAREINS",
+    "cp": "01480",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "FARGES",
+    "cp": "01550",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "FEILLENS",
+    "cp": "01570",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "FERNEY VOLTAIRE",
+    "cp": "01210",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "FLAXIEU",
+    "cp": "01350",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "FOISSIAT",
+    "cp": "01340",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "FRANCHELEINS",
+    "cp": "01090",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "FRANCHELEINS",
+    "cp": "01090",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "FRANCHELEINS",
+    "cp": "01090",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "FRANS",
+    "cp": "01480",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "GARNERANS",
+    "cp": "01140",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "GENOUILLEUX",
+    "cp": "01090",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "GEOVREISSET",
+    "cp": "01100",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "GEX",
+    "cp": "01170",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "GIRON",
+    "cp": "01130",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "GORREVOD",
+    "cp": "01190",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "GRAND CORENT",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "GRIEGES",
+    "cp": "01290",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "GRILLY",
+    "cp": "01220",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "GROISSIAT",
+    "cp": "01100",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "GROSLEE ST BENOIT",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "GROSLEE ST BENOIT",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "GUEREINS",
+    "cp": "01090",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "HAUT VALROMEY",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "HAUT VALROMEY",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "HAUT VALROMEY",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "HAUT VALROMEY",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "HAUT VALROMEY",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "HAUTECOURT ROMANECHE",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "HAUTECOURT ROMANECHE",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ILLIAT",
+    "cp": "01140",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "INJOUX GENISSIAT",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "INJOUX GENISSIAT",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "INNIMOND",
+    "cp": "01680",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "IZENAVE",
+    "cp": "01430",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "IZERNORE",
+    "cp": "01580",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "IZIEU",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "JASSANS RIOTTIER",
+    "cp": "01480",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "JASSERON",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "JAYAT",
+    "cp": "01340",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "JOURNANS",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "JOYEUX",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "JUJURIEUX",
+    "cp": "01640",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "L ABERGEMENT CLEMENCIAT",
+    "cp": "01400",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "L ABERGEMENT DE VAREY",
+    "cp": "01640",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LA BOISSE",
+    "cp": "01120",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LA BURBANCHE",
+    "cp": "01510",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE DU CHATELARD",
+    "cp": "01240",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LA TRANCLIERE",
+    "cp": "01160",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LABALME",
+    "cp": "01450",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LAGNIEU",
+    "cp": "01150",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LAIZ",
+    "cp": "01290",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LAJOUX",
+    "cp": "01410",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LANTENAY",
+    "cp": "01430",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LAPEYROUSE",
+    "cp": "01330",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LAVANCIA EPERCY",
+    "cp": "01590",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LAVOURS",
+    "cp": "01350",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LE MONTELLIER",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LE PLANTAY",
+    "cp": "01330",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LE POIZAT LALLEYRIAT",
+    "cp": "01130",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LE POIZAT LALLEYRIAT",
+    "cp": "01130",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LEAZ",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LELEX",
+    "cp": "01410",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LENT",
+    "cp": "01240",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LES NEYROLLES",
+    "cp": "01130",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LESCHEROUX",
+    "cp": "01560",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LEYMENT",
+    "cp": "01150",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LEYSSARD",
+    "cp": "01450",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LHUIS",
+    "cp": "01680",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LOMPNAS",
+    "cp": "01680",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LOYETTES",
+    "cp": "01360",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "LURCY",
+    "cp": "01090",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MAGNIEU",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MAGNIEU",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MAILLAT",
+    "cp": "01430",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MALAFRETAZ",
+    "cp": "01340",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MANTENAY MONTLIN",
+    "cp": "01560",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MANZIAT",
+    "cp": "01570",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MARBOZ",
+    "cp": "01851",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MARCHAMP",
+    "cp": "01680",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MARIGNIEU",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MARLIEUX",
+    "cp": "01240",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MARSONNAS",
+    "cp": "01340",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MARTIGNAT",
+    "cp": "01100",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MASSIEUX",
+    "cp": "01600",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MASSIGNIEU DE RIVES",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MATAFELON GRANGES",
+    "cp": "01580",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MATAFELON GRANGES",
+    "cp": "01580",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MEILLONNAS",
+    "cp": "01370",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MERIGNAT",
+    "cp": "01450",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MESSIMY SUR SAONE",
+    "cp": "01480",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MEXIMIEUX",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MEZERIAT",
+    "cp": "01660",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MIJOUX",
+    "cp": "01170",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MIJOUX",
+    "cp": "01410",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MIONNAY",
+    "cp": "01390",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MIRIBEL",
+    "cp": "01700",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MIRIBEL",
+    "cp": "01700",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MIRIBEL",
+    "cp": "01700",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MISERIEUX",
+    "cp": "01600",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MOGNENEINS",
+    "cp": "01140",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MONTAGNAT",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MONTAGNIEU",
+    "cp": "01470",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MONTANGES",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MONTCEAUX",
+    "cp": "01090",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MONTCET",
+    "cp": "01310",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MONTHIEUX",
+    "cp": "01390",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MONTLUEL",
+    "cp": "01120",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MONTLUEL",
+    "cp": "01120",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MONTLUEL",
+    "cp": "01120",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MONTMERLE SUR SAONE",
+    "cp": "01090",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MONTRACOL",
+    "cp": "01310",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MONTREAL LA CLUSE",
+    "cp": "01460",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MONTREVEL EN BRESSE",
+    "cp": "01340",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "MURS ET GELIGNIEUX",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "NANTUA",
+    "cp": "01130",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "NANTUA",
+    "cp": "01460",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE LES DAMES",
+    "cp": "01400",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE SUR AIN",
+    "cp": "01160",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "NEYRON",
+    "cp": "01700",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "NIEVROZ",
+    "cp": "01120",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "NIVIGNE ET SURAN",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "NIVIGNE ET SURAN",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "NIVOLLET MONTGRIFFON",
+    "cp": "01230",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "NURIEUX VOLOGNAT",
+    "cp": "01460",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "NURIEUX VOLOGNAT",
+    "cp": "01460",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ONCIEU",
+    "cp": "01230",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ORDONNAZ",
+    "cp": "01510",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ORNEX",
+    "cp": "01210",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "OUTRIAZ",
+    "cp": "01430",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "OYONNAX",
+    "cp": "01100",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "OYONNAX",
+    "cp": "01100",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "OYONNAX",
+    "cp": "01100",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "OZAN",
+    "cp": "01190",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PARCIEUX",
+    "cp": "01600",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PARVES ET NATTAGES",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PARVES ET NATTAGES",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PERON",
+    "cp": "01630",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PERONNAS",
+    "cp": "01960",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PEROUGES",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PERREX",
+    "cp": "01540",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PEYRIAT",
+    "cp": "01430",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PEYRIEU",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PEYZIEUX SUR SAONE",
+    "cp": "01140",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PIRAJOUX",
+    "cp": "01270",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PIZAY",
+    "cp": "01120",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PLAGNE",
+    "cp": "01130",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PLATEAU D HAUTEVILLE",
+    "cp": "01110",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PLATEAU D HAUTEVILLE",
+    "cp": "01110",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PLATEAU D HAUTEVILLE",
+    "cp": "01110",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PLATEAU D HAUTEVILLE",
+    "cp": "01110",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "POLLIAT",
+    "cp": "01310",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "POLLIEU",
+    "cp": "01350",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PONCIN",
+    "cp": "01450",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PONT D AIN",
+    "cp": "01160",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PONT DE VAUX",
+    "cp": "01190",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PONT DE VEYLE",
+    "cp": "01290",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PORT",
+    "cp": "01460",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "POUGNY",
+    "cp": "01550",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "POUILLAT",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PREMEYZEL",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PREMILLIEU",
+    "cp": "01110",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PREVESSIN MOENS",
+    "cp": "01280",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PREVESSIN MOENS",
+    "cp": "01280",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "PRIAY",
+    "cp": "01160",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "RAMASSE",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "RANCE",
+    "cp": "01390",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "RELEVANT",
+    "cp": "01990",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "REPLONGES",
+    "cp": "01750",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "REVONNAS",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "REYRIEUX",
+    "cp": "01600",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "REYSSOUZE",
+    "cp": "01190",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "RIGNIEUX LE FRANC",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ROMANS",
+    "cp": "01400",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ROSSILLON",
+    "cp": "01510",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SALAVRE",
+    "cp": "01270",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SAMOGNAT",
+    "cp": "01580",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SANDRANS",
+    "cp": "01400",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SAULT BRENAZ",
+    "cp": "01150",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SAUVERNY",
+    "cp": "01220",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SAVIGNEUX",
+    "cp": "01480",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SEGNY",
+    "cp": "01170",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SEILLONNAZ",
+    "cp": "01470",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SERGY",
+    "cp": "01630",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SERMOYER",
+    "cp": "01190",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SERRIERES DE BRIORD",
+    "cp": "01470",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SERRIERES SUR AIN",
+    "cp": "01450",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SERVAS",
+    "cp": "01960",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SERVIGNAT",
+    "cp": "01560",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SEYSSEL",
+    "cp": "01420",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SIMANDRE SUR SURAN",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SONTHONNAX LA MONTAGNE",
+    "cp": "01580",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SONTHONNAX LA MONTAGNE",
+    "cp": "01580",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SOUCLIN",
+    "cp": "01150",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST ALBAN",
+    "cp": "01450",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE D HUIRIAT",
+    "cp": "01290",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE DE BAGE",
+    "cp": "01380",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE DE CORCY",
+    "cp": "01390",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE LE BOUCHOUX",
+    "cp": "01240",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE SUR VIEUX JONC",
+    "cp": "01960",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST BENIGNE",
+    "cp": "01190",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST BERNARD",
+    "cp": "01600",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST CYR SUR MENTHON",
+    "cp": "01380",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS EN BUGEY",
+    "cp": "01500",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS LES BOURG",
+    "cp": "01000",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST DIDIER D AUSSIAT",
+    "cp": "01340",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST DIDIER DE FORMANS",
+    "cp": "01600",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST DIDIER SUR CHALARONNE",
+    "cp": "01140",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST ELOI",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE DU BOIS",
+    "cp": "01370",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE SUR CHALARONNE",
+    "cp": "01140",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE SUR REYSSOUZE",
+    "cp": "01190",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST GENIS POUILLY",
+    "cp": "01630",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST GENIS SUR MENTHON",
+    "cp": "01380",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES SUR RENON",
+    "cp": "01400",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN DE JOUX",
+    "cp": "01130",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN LES PAROISSES",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN SUR RENON",
+    "cp": "01240",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DE GONVILLE",
+    "cp": "01630",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DE NIOST",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DE THURIGNEUX",
+    "cp": "01390",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN LE VIEUX",
+    "cp": "01640",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN SUR REYSSOUZE",
+    "cp": "01560",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN SUR VEYLE",
+    "cp": "01290",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN SUR REYSSOUZE",
+    "cp": "01560",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN SUR VEYLE",
+    "cp": "01540",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST JUST",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT SUR SAONE",
+    "cp": "01750",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST MARCEL",
+    "cp": "01390",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DE BAVEL",
+    "cp": "01510",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DU FRENE",
+    "cp": "01430",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DU MONT",
+    "cp": "01160",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN LE CHATEL",
+    "cp": "01310",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST MAURICE DE BEYNOST",
+    "cp": "01700",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST MAURICE DE GOURDANS",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST MAURICE DE REMENS",
+    "cp": "01500",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST NIZIER LE BOUCHOUX",
+    "cp": "01560",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST NIZIER LE DESERT",
+    "cp": "01320",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL DE VARAX",
+    "cp": "01240",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST RAMBERT EN BUGEY",
+    "cp": "01230",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST REMY",
+    "cp": "01310",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST SORLIN EN BUGEY",
+    "cp": "01150",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST SULPICE",
+    "cp": "01340",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST TRIVIER DE COURTES",
+    "cp": "01560",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST TRIVIER SUR MOIGNANS",
+    "cp": "01990",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "ST VULBAS",
+    "cp": "01150",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "STE CROIX",
+    "cp": "01120",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "STE EUPHEMIE",
+    "cp": "01600",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "STE JULIE",
+    "cp": "01150",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "STE OLIVE",
+    "cp": "01330",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SULIGNAT",
+    "cp": "01400",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SURJOUX LHOPITAL",
+    "cp": "01420",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "SURJOUX LHOPITAL",
+    "cp": "01420",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "TALISSIEU",
+    "cp": "01510",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "TENAY",
+    "cp": "01230",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "THIL",
+    "cp": "01120",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "THOIRY",
+    "cp": "01710",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "THOISSEY",
+    "cp": "01140",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "TORCIEU",
+    "cp": "01230",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "TOSSIAT",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "TOUSSIEUX",
+    "cp": "01600",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "TRAMOYES",
+    "cp": "01390",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "TREVOUX",
+    "cp": "01600",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VAL REVERMONT",
+    "cp": "01370",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VAL REVERMONT",
+    "cp": "01370",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VAL REVERMONT",
+    "cp": "01370",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VALEINS",
+    "cp": "01140",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VALROMEY SUR SERAN",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VALROMEY SUR SERAN",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VALROMEY SUR SERAN",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VALROMEY SUR SERAN",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VALROMEY SUR SERAN",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VALROMEY SUR SERAN",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VALROMEY SUR SERAN",
+    "cp": "01260",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VALSERHONE",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VALSERHONE",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VALSERHONE",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VALSERHONE",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VALSERHONE",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VANDEINS",
+    "cp": "01660",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VARAMBON",
+    "cp": "01160",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VAUX EN BUGEY",
+    "cp": "01150",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VERJON",
+    "cp": "01270",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VERNOUX",
+    "cp": "01560",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VERSAILLEUX",
+    "cp": "01330",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VERSONNEX",
+    "cp": "01210",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VESANCY",
+    "cp": "01170",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VESCOURS",
+    "cp": "01560",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VESINES",
+    "cp": "01570",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VIEU D IZENAVE",
+    "cp": "01430",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VILLARS LES DOMBES",
+    "cp": "01330",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VILLEBOIS",
+    "cp": "01150",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VILLEMOTIER",
+    "cp": "01270",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE",
+    "cp": "01480",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VILLEREVERSURE",
+    "cp": "01250",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VILLES",
+    "cp": "01200",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VILLETTE SUR AIN",
+    "cp": "01320",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VILLIEU LOYES MOLLON",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VILLIEU LOYES MOLLON",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VILLIEU LOYES MOLLON",
+    "cp": "01800",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VIRIAT",
+    "cp": "01440",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VIRIEU LE GRAND",
+    "cp": "01510",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VIRIGNIN",
+    "cp": "01300",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VONGNES",
+    "cp": "01350",
+    "dept": "01",
+    "region": ""
+  },
+  {
+    "name": "VONNAS",
+    "cp": "01540",
+    "dept": "01",
+    "region": ""
+  }
+]

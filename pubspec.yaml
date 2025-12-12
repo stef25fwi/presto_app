@@ -5,14 +5,16 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.5.0 <4.0.0"
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
   firebase_auth: 
   google_sign_in: 
-  sign_in_with_apple: 
+  sign_in_with_apple:
+  http: ^1.2.2 
+  
 
   cupertino_icons: ^1.0.8
 
@@ -20,6 +22,9 @@ dependencies:
   firebase_core: ^3.15.2
   cloud_firestore: ^5.6.12
   url_launcher: ^6.3.0
+  image_picker: ^1.1.2
+  firebase_storage: ^12.4.10
+  speech_to_text: ^6.6.0
 
 dev_dependencies:
   flutter_test:
@@ -30,4 +35,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/
+    - assets/images/chrono_1min.png
+    - assets/images/
+    - assets/data/cities/
+    - assets/data/cities_compact.json

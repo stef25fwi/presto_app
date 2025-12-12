@@ -1,0 +1,2066 @@
+[
+  {
+    "name": "AIGUES JUNTES",
+    "cp": "09240",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "AIGUES VIVES",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ALBIES",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ALEU",
+    "cp": "09320",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ALLIAT",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ALLIERES",
+    "cp": "09240",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ALOS",
+    "cp": "09200",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ALZEN",
+    "cp": "09240",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ANTRAS",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "APPY",
+    "cp": "09250",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ARABAUX",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ARGEIN",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ARIGNAC",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ARNAVE",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ARRIEN EN BETHMALE",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ARROUT",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ARTIGAT",
+    "cp": "09130",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ARTIGUES",
+    "cp": "09460",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ARTIX",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ARVIGNA",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ASCOU",
+    "cp": "09110",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ASTON",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "AUCAZEIN",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "AUDRESSEIN",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "AUGIREIN",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "AULOS SINSAT",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "AULOS SINSAT",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "AULUS LES BAINS",
+    "cp": "09140",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "AUZAT",
+    "cp": "09220",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "AX LES THERMES",
+    "cp": "09110",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "AXIAT",
+    "cp": "09250",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BAGERT",
+    "cp": "09230",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BALACET",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BALAGUERES",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BALAGUERES",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BARJAC",
+    "cp": "09230",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BAULOU",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BEDEILHAC ET AYNAT",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BEDEILLE",
+    "cp": "09230",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BELESTA",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BELLOC",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BENAC",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BENAGUES",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BENAIX",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BESSET",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BESTIAC",
+    "cp": "09250",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BETCHAT",
+    "cp": "09160",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BETHMALE",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BEZAC",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BEZAC",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BIERT",
+    "cp": "09320",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BOMPAS",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BONAC IRAZEIN",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BONNAC",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BORDES UCHENTEIN",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BORDES UCHENTEIN",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BOUAN",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BOUSSENAC",
+    "cp": "09320",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BRASSAC",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BRIE",
+    "cp": "09700",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BURRET",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "BUZAN",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CADARCET",
+    "cp": "09240",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CALZAN",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CAMARADE",
+    "cp": "09290",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CAMON",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CAMPAGNE SUR ARIZE",
+    "cp": "09350",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CANTE",
+    "cp": "09700",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CAPOULET ET JUNAC",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CARCANIERES",
+    "cp": "09460",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CARLA BAYLE",
+    "cp": "09130",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CARLA DE ROQUEFORT",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CASTELNAU DURBAN",
+    "cp": "09420",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CASTERAS",
+    "cp": "09130",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CASTEX",
+    "cp": "09350",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CASTILLON EN COUSERANS",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CAUMONT",
+    "cp": "09160",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CAUSSOU",
+    "cp": "09250",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CAYCHAX ET SENCONAC",
+    "cp": "09250",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CAYCHAX ET SENCONAC",
+    "cp": "09250",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CAZALS DES BAYLES",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CAZAUX",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CAZAVET",
+    "cp": "09160",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CAZENAVE SERRES ET ALLENS",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CELLES",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CERIZOLS",
+    "cp": "09230",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CESCAU",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU VERDUN",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CLERMONT",
+    "cp": "09420",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CONTRAZY",
+    "cp": "09230",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "COS",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "COUFLENS",
+    "cp": "09140",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "COUFLENS",
+    "cp": "09140",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "COUSSA",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "COUTENS",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "CRAMPAGNA",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "DALOU",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "DAUMAZAN SUR ARIZE",
+    "cp": "09350",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "DREUILHE",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "DUN",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "DUN",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "DUN",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "DUN",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "DURBAN SUR ARIZE",
+    "cp": "09240",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "DURFORT",
+    "cp": "09130",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ENCOURTIECH",
+    "cp": "09200",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ENGOMER",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ERCE",
+    "cp": "09140",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ERP",
+    "cp": "09200",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ESCLAGNE",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ESCOSSE",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ESPLAS",
+    "cp": "09700",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ESPLAS DE SEROU",
+    "cp": "09420",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "EYCHEIL",
+    "cp": "09200",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "FABAS",
+    "cp": "09230",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "FERRIERES SUR ARIEGE",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "FOIX",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "FORNEX",
+    "cp": "09350",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "FOUGAX ET BARRINEUF",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "FREYCHENET",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "GABRE",
+    "cp": "09290",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "GAJAN",
+    "cp": "09190",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "GALEY",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "GANAC",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "GARANOU",
+    "cp": "09250",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "GAUDIES",
+    "cp": "09700",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "GENAT",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "GESTIES",
+    "cp": "09220",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "GOURBIT",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "GUDAS",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "IGNAUX",
+    "cp": "09110",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ILHAT",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ILLARTEIN",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ILLIER ET LARAMADE",
+    "cp": "09220",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "JUSTINIAC",
+    "cp": "09700",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "L AIGUILLON",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "L HERM",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "L HOSPITALET PRES L ANDORRE",
+    "cp": "09390",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LA BASTIDE DE BESPLAS",
+    "cp": "09350",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LA BASTIDE DE BOUSIGNAC",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LA BASTIDE DE LORDAT",
+    "cp": "09700",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LA BASTIDE DE SEROU",
+    "cp": "09240",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LA BASTIDE DU SALAT",
+    "cp": "09160",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LA BASTIDE SUR L HERS",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LA TOUR DU CRIEU",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LABATUT",
+    "cp": "09700",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LACAVE",
+    "cp": "09160",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LACOURT",
+    "cp": "09200",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LAGARDE",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LANOUX",
+    "cp": "09130",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LAPEGE",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LAPENNE",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LARBONT",
+    "cp": "09240",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LARCAT",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LARNAT",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LAROQUE D OLMES",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LASSERRE",
+    "cp": "09230",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LASSUR",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LAVELANET",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LE BOSC",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LE CARLARET",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LE FOSSAT",
+    "cp": "09130",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LE MAS D AZIL",
+    "cp": "09290",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LE PEYRAT",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LE PLA",
+    "cp": "09460",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LE PORT",
+    "cp": "09320",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LE PUCH",
+    "cp": "09460",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LE VERNET",
+    "cp": "09700",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LERAN",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LERCOUL",
+    "cp": "09220",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LES BORDES SUR ARIZE",
+    "cp": "09350",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LES CABANNES",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LES ISSARDS",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LES PUJOLS",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LESCOUSSE",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LESCURE",
+    "cp": "09420",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LESPARROU",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LEYCHERT",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LEZAT SUR LEZE",
+    "cp": "09210",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LIEURAC",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LIMBRASSAC",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LISSAC",
+    "cp": "09700",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LORDAT",
+    "cp": "09250",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LORP SENTARAILLE",
+    "cp": "09190",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LOUBAUT",
+    "cp": "09350",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LOUBENS",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LOUBIERES",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LUDIES",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "LUZENAC",
+    "cp": "09250",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MADIERE",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MALEGOUDE",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MALLEON",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MANSES",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MASSAT",
+    "cp": "09320",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MAUVEZIN DE PRAT",
+    "cp": "09160",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MAUVEZIN DE STE CROIX",
+    "cp": "09230",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MAZERES",
+    "cp": "09270",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MERAS",
+    "cp": "09350",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MERCENAC",
+    "cp": "09160",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MERCUS GARRABET",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MERCUS GARRABET",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MERENS LES VALS",
+    "cp": "09110",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MERIGON",
+    "cp": "09230",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MIGLOS",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MIJANES",
+    "cp": "09460",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MIREPOIX",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONESPLE",
+    "cp": "09130",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTAGAGNE",
+    "cp": "09240",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTAILLOU",
+    "cp": "09110",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTARDIT",
+    "cp": "09230",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTAUT",
+    "cp": "09700",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTBEL",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTEGUT EN COUSERANS",
+    "cp": "09200",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTEGUT PLANTAUREL",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTELS",
+    "cp": "09240",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTESQUIEU AVANTES",
+    "cp": "09200",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTFA",
+    "cp": "09350",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTFERRIER",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTGAILHARD",
+    "cp": "09330",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTGAUCH",
+    "cp": "09160",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTJOIE EN COUSERANS",
+    "cp": "09200",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTJOIE EN COUSERANS",
+    "cp": "09200",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTOULIEU",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTSEGUR",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MONTSERON",
+    "cp": "09240",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MOULIN NEUF",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "MOULIS",
+    "cp": "09200",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "NALZEN",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "NESCUS",
+    "cp": "09240",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "NIAUX",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ORGEIX",
+    "cp": "09110",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ORGIBET",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ORLU",
+    "cp": "09110",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ORNOLAC USSAT LES BAINS",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ORUS",
+    "cp": "09220",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "OUST",
+    "cp": "09140",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "PAILHES",
+    "cp": "09130",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "PAMIERS",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "PECH",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "PEREILLE",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "PERLES ET CASTELET",
+    "cp": "09110",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "PRADES",
+    "cp": "09110",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "PRADETTES",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "PRADIERES",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "PRAT BONREPAUX",
+    "cp": "09160",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "PRAYOLS",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "QUERIGUT",
+    "cp": "09460",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "QUIE",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "RABAT LES TROIS SEIGNEURS",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "RAISSAC",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "REGAT",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "RIEUCROS",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "RIEUX DE PELLEPORT",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "RIMONT",
+    "cp": "09420",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "RIVERENERT",
+    "cp": "09200",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ROQUEFIXADE",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ROQUEFORT LES CASCADES",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ROUMENGOUX",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ROUZE",
+    "cp": "09460",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SABARAT",
+    "cp": "09350",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SALSEIN",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SAURAT",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SAURAT",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SAUTEL",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SAVERDUN",
+    "cp": "09700",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SAVIGNAC LES ORMEAUX",
+    "cp": "09110",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SEGURA",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SEIX",
+    "cp": "09140",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SENTEIN",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SENTENAC D OUST",
+    "cp": "09140",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SENTENAC DE SEROU",
+    "cp": "09240",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SERRES SUR ARGET",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SIEURAS",
+    "cp": "09130",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SIGUER",
+    "cp": "09220",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SOR",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SORGEAT",
+    "cp": "09110",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SOUEIX ROGALLE",
+    "cp": "09140",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SOUEIX ROGALLE",
+    "cp": "09140",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SOULA",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SOULAN",
+    "cp": "09320",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST AMADOU",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST BAUZEIL",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST FELIX DE RIEUTORD",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST FELIX DE TOURNEGAT",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST GIRONS",
+    "cp": "09200",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN D AIGUES VIVES",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DE VERGES",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DE VERGES",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DU CASTILLONNAIS",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DU FALGA",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN DE GRAS CAPOU",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST LARY",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST LIZIER",
+    "cp": "09190",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN D OYDES",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DE CARALP",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL DE JARRAT",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DE RIVIERE",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST QUENTIN LA TOUR",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST QUIRC",
+    "cp": "09700",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST VICTOR ROUZAUD",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "ST YBARS",
+    "cp": "09210",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "STE CROIX VOLVESTRE",
+    "cp": "09230",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "STE FOI",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "STE SUZANNE",
+    "cp": "09130",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SURBA",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "SUZAN",
+    "cp": "09240",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "TABRE",
+    "cp": "09600",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "TARASCON SUR ARIEGE",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "TARASCON SUR ARIEGE",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "TAURIGNAN CASTET",
+    "cp": "09160",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "TAURIGNAN VIEUX",
+    "cp": "09190",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "TEILHET",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "THOUARS SUR ARIZE",
+    "cp": "09350",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "TIGNAC",
+    "cp": "09110",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "TOURTOUSE",
+    "cp": "09230",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "TOURTROL",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "TREMOULET",
+    "cp": "09700",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "TROYE D ARIEGE",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "UNAC",
+    "cp": "09250",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "UNZENT",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "URS",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "USSAT",
+    "cp": "09400",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "USTOU",
+    "cp": "09140",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "USTOU",
+    "cp": "09140",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VAL DE SOS",
+    "cp": "09220",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VAL DE SOS",
+    "cp": "09220",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VAL DE SOS",
+    "cp": "09220",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VAL DE SOS",
+    "cp": "09220",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VALS",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VARILHES",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VAYCHIS",
+    "cp": "09110",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VEBRE",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VENTENAC",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VERDUN",
+    "cp": "09310",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VERNAJOUL",
+    "cp": "09000",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VERNAUX",
+    "cp": "09250",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VERNIOLLE",
+    "cp": "09340",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE",
+    "cp": "09800",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE D OLMES",
+    "cp": "09300",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE DU LATOU",
+    "cp": "09130",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE DU PAREAGE",
+    "cp": "09100",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VIRA",
+    "cp": "09120",
+    "dept": "09",
+    "region": ""
+  },
+  {
+    "name": "VIVIES",
+    "cp": "09500",
+    "dept": "09",
+    "region": ""
+  }
+]

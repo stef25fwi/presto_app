@@ -1,0 +1,1262 @@
+[
+  {
+    "name": "AIXE SUR VIENNE",
+    "cp": "87700",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "AMBAZAC",
+    "cp": "87240",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ARNAC LA POSTE",
+    "cp": "87160",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "AUGNE",
+    "cp": "87120",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "AUREIL",
+    "cp": "87220",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "AZAT LE RIS",
+    "cp": "87360",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BALLEDENT",
+    "cp": "87290",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONT DU LAC",
+    "cp": "87120",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BELLAC",
+    "cp": "87300",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BERNEUIL",
+    "cp": "87300",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BERSAC SUR RIVALIER",
+    "cp": "87370",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BESSINES SUR GARTEMPE",
+    "cp": "87250",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BESSINES SUR GARTEMPE",
+    "cp": "87250",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BEYNAC",
+    "cp": "87700",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BLANZAC",
+    "cp": "87300",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BLOND",
+    "cp": "87300",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BOISSEUIL",
+    "cp": "87220",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BONNAC LA COTE",
+    "cp": "87270",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BOSMIE L AIGUILLE",
+    "cp": "87110",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BREUILAUFA",
+    "cp": "87300",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BUJALEUF",
+    "cp": "87460",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BURGNAC",
+    "cp": "87800",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BUSSIERE GALANT",
+    "cp": "87230",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "BUSSIERE GALANT",
+    "cp": "87230",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CHAILLAC SUR VIENNE",
+    "cp": "87200",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CHALUS",
+    "cp": "87230",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CHAMBORET",
+    "cp": "87140",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CHAMPAGNAC LA RIVIERE",
+    "cp": "87150",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CHAMPNETERY",
+    "cp": "87400",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CHAMPSAC",
+    "cp": "87230",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CHAPTELAT",
+    "cp": "87270",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU CHERVIX",
+    "cp": "87380",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUNEUF LA FORET",
+    "cp": "87130",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUPONSAC",
+    "cp": "87290",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CHEISSOUX",
+    "cp": "87460",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CHERONNAC",
+    "cp": "87600",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CIEUX",
+    "cp": "87520",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "COGNAC LA FORET",
+    "cp": "87310",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "COMPREIGNAC",
+    "cp": "87140",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CONDAT SUR VIENNE",
+    "cp": "87920",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "COUSSAC BONNEVAL",
+    "cp": "87500",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "COUZEIX",
+    "cp": "87270",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CROMAC",
+    "cp": "87160",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "CUSSAC",
+    "cp": "87150",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "DINSAC",
+    "cp": "87210",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "DOMPIERRE LES EGLISES",
+    "cp": "87190",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "DOMPS",
+    "cp": "87120",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "DOURNAZAC",
+    "cp": "87230",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "DROUX",
+    "cp": "87190",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "EYBOULEUF",
+    "cp": "87400",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "EYJEAUX",
+    "cp": "87220",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "EYMOUTIERS",
+    "cp": "87120",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "FEYTIAT",
+    "cp": "87220",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "FLAVIGNAC",
+    "cp": "87230",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "FOLLES",
+    "cp": "87250",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "FROMENTAL",
+    "cp": "87250",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "GAJOUBERT",
+    "cp": "87330",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "GLANDON",
+    "cp": "87500",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "GLANGES",
+    "cp": "87380",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "GORRE",
+    "cp": "87310",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ISLE",
+    "cp": "87170",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "JABREILLES LES BORDES",
+    "cp": "87370",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "JANAILHAC",
+    "cp": "87800",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "JAVERDAT",
+    "cp": "87520",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "JOUAC",
+    "cp": "87890",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "JOURGNAC",
+    "cp": "87800",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LA BAZEUGE",
+    "cp": "87210",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE MONTBRANDEIX",
+    "cp": "87440",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LA CROISILLE SUR BRIANCE",
+    "cp": "87130",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LA CROIX SUR GARTEMPE",
+    "cp": "87210",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LA GENEYTOUSE",
+    "cp": "87400",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LA JONCHERE ST MAURICE",
+    "cp": "87340",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LA MEYZE",
+    "cp": "87800",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LA PORCHERIE",
+    "cp": "87380",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LA ROCHE L ABEILLE",
+    "cp": "87800",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LADIGNAC LE LONG",
+    "cp": "87500",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LAURIERE",
+    "cp": "87370",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LAVIGNAC",
+    "cp": "87230",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LE BUIS",
+    "cp": "87140",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LE CHALARD",
+    "cp": "87500",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LE CHATENET EN DOGNON",
+    "cp": "87400",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LE DORAT",
+    "cp": "87210",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LE PALAIS SUR VIENNE",
+    "cp": "87410",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LE VIGEN",
+    "cp": "87110",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LES BILLANGES",
+    "cp": "87340",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LES CARS",
+    "cp": "87230",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LES GRANDS CHEZEAUX",
+    "cp": "87160",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LES SALLES LAVAUGUYON",
+    "cp": "87440",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LIMOGES",
+    "cp": "87000",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LIMOGES",
+    "cp": "87100",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LIMOGES",
+    "cp": "87100",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LIMOGES",
+    "cp": "87280",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LIMOGES",
+    "cp": "87280",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LINARDS",
+    "cp": "87130",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "LUSSAC LES EGLISES",
+    "cp": "87360",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "MAGNAC BOURG",
+    "cp": "87380",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "MAGNAC LAVAL",
+    "cp": "87190",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "MAILHAC SUR BENAIZE",
+    "cp": "87160",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "MAISONNAIS SUR TARDOIRE",
+    "cp": "87440",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "MARVAL",
+    "cp": "87440",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "MARVAL",
+    "cp": "87440",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "MASLEON",
+    "cp": "87130",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "MEILHAC",
+    "cp": "87800",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "MEUZAC",
+    "cp": "87380",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "MOISSANNES",
+    "cp": "87400",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "MONTROL SENARD",
+    "cp": "87330",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "MORTEMART",
+    "cp": "87330",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "NANTIAT",
+    "cp": "87140",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "NEDDE",
+    "cp": "87120",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "NEUVIC ENTIER",
+    "cp": "87130",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "NEXON",
+    "cp": "87800",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "NIEUL",
+    "cp": "87510",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "NOUIC",
+    "cp": "87330",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ORADOUR ST GENEST",
+    "cp": "87210",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ORADOUR SUR GLANE",
+    "cp": "87520",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ORADOUR SUR VAYRES",
+    "cp": "87150",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "PAGEAS",
+    "cp": "87230",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "PANAZOL",
+    "cp": "87350",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "PENSOL",
+    "cp": "87440",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "PEYRAT DE BELLAC",
+    "cp": "87300",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "PEYRAT LE CHATEAU",
+    "cp": "87470",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "PEYRILHAC",
+    "cp": "87510",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "PIERRE BUFFIERE",
+    "cp": "87260",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "RANCON",
+    "cp": "87290",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "RAZES",
+    "cp": "87640",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "REMPNAT",
+    "cp": "87120",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "RILHAC LASTOURS",
+    "cp": "87800",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "RILHAC RANCON",
+    "cp": "87570",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ROCHECHOUART",
+    "cp": "87600",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ROYERES",
+    "cp": "87400",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ROZIERS ST GEORGES",
+    "cp": "87130",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "SAILLAT SUR VIENNE",
+    "cp": "87720",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "SAUVIAT SUR VIGE",
+    "cp": "87400",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "SEREILHAC",
+    "cp": "87620",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "SOLIGNAC",
+    "cp": "87110",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST AMAND LE PETIT",
+    "cp": "87120",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST AMAND MAGNAZEIX",
+    "cp": "87290",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST AUVENT",
+    "cp": "87310",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST BAZILE",
+    "cp": "87150",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET BRIANCE",
+    "cp": "87260",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET DE BELLAC",
+    "cp": "87300",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST BRICE SUR VIENNE",
+    "cp": "87200",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST CYR",
+    "cp": "87310",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS DES MURS",
+    "cp": "87400",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST GENCE",
+    "cp": "87510",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST GENEST SUR ROSELLE",
+    "cp": "87260",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES LES LANDES",
+    "cp": "87160",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN LES BELLES",
+    "cp": "87380",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST GILLES LES FORETS",
+    "cp": "87130",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE BONNEVAL",
+    "cp": "87260",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE LA TREILLE",
+    "cp": "87190",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE LES PLACES",
+    "cp": "87800",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN LIGOURE",
+    "cp": "87260",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST JOUVENT",
+    "cp": "87510",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN LE PETIT",
+    "cp": "87460",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST JUNIEN",
+    "cp": "87200",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST JUNIEN LES COMBES",
+    "cp": "87300",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST JUST LE MARTEL",
+    "cp": "87590",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT LES EGLISES",
+    "cp": "87240",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT SUR GORRE",
+    "cp": "87310",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER LA MONTAGNE",
+    "cp": "87340",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER MAGNAZEIX",
+    "cp": "87190",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST LEONARD DE NOBLAT",
+    "cp": "87400",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIAL SUR ISOP",
+    "cp": "87330",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DE JUSSAC",
+    "cp": "87200",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN LE MAULT",
+    "cp": "87360",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN LE VIEUX",
+    "cp": "87700",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN TERRESSUS",
+    "cp": "87400",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST MATHIEU",
+    "cp": "87440",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST MAURICE LES BROUSSES",
+    "cp": "87800",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST MEARD",
+    "cp": "87130",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST OUEN SUR GARTEMPE",
+    "cp": "87300",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST PARDOUX LE LAC",
+    "cp": "87140",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST PARDOUX LE LAC",
+    "cp": "87140",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST PARDOUX LE LAC",
+    "cp": "87250",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL",
+    "cp": "87260",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST PRIEST LIGOURE",
+    "cp": "87800",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST PRIEST SOUS AIXE",
+    "cp": "87700",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST PRIEST TAURION",
+    "cp": "87480",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST SORNIN LA MARCHE",
+    "cp": "87210",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST SORNIN LEULAC",
+    "cp": "87290",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST SORNIN LEULAC",
+    "cp": "87290",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST SULPICE LAURIERE",
+    "cp": "87370",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST SULPICE LES FEUILLES",
+    "cp": "87160",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST SYLVESTRE",
+    "cp": "87240",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST VICTURNIEN",
+    "cp": "87420",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST VITTE SUR BRIANCE",
+    "cp": "87380",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST YRIEIX LA PERCHE",
+    "cp": "87500",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "ST YRIEIX SOUS AIXE",
+    "cp": "87700",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "STE ANNE ST PRIEST",
+    "cp": "87120",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE DE VAUX",
+    "cp": "87420",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "SURDOUX",
+    "cp": "87130",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "SUSSAC",
+    "cp": "87130",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "TERSANNES",
+    "cp": "87360",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "THOURON",
+    "cp": "87140",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VAL D ISSOIRE",
+    "cp": "87330",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VAL D ISSOIRE",
+    "cp": "87330",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VAL D OIRE ET GARTEMPE",
+    "cp": "87320",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VAL D OIRE ET GARTEMPE",
+    "cp": "87320",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VAL D OIRE ET GARTEMPE",
+    "cp": "87320",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VAL D OIRE ET GARTEMPE",
+    "cp": "87330",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VAULRY",
+    "cp": "87140",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VAYRES",
+    "cp": "87600",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VERNEUIL MOUSTIERS",
+    "cp": "87360",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VERNEUIL SUR VIENNE",
+    "cp": "87430",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VEYRAC",
+    "cp": "87520",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VEYRAC",
+    "cp": "87520",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VICQ SUR BREUILH",
+    "cp": "87260",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VIDEIX",
+    "cp": "87600",
+    "dept": "87",
+    "region": ""
+  },
+  {
+    "name": "VILLEFAVARD",
+    "cp": "87190",
+    "dept": "87",
+    "region": ""
+  }
+]

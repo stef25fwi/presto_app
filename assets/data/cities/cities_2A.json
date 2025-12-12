@@ -1,0 +1,824 @@
+[
+  {
+    "name": "AFA",
+    "cp": "20167",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "AJACCIO",
+    "cp": "20000",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "AJACCIO",
+    "cp": "20090",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "AJACCIO",
+    "cp": "20167",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ALATA",
+    "cp": "20167",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ALBITRECCIA",
+    "cp": "20128",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ALBITRECCIA",
+    "cp": "20166",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ALTAGENE",
+    "cp": "20112",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "AMBIEGNA",
+    "cp": "20151",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "APPIETTO",
+    "cp": "20167",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ARBELLARA",
+    "cp": "20110",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ARBORI",
+    "cp": "20160",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ARGIUSTA MORICCIO",
+    "cp": "20140",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ARRO",
+    "cp": "20151",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "AULLENE",
+    "cp": "20116",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "AZILONE AMPAZA",
+    "cp": "20190",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "AZZANA",
+    "cp": "20121",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "BALOGNA",
+    "cp": "20160",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "BASTELICA",
+    "cp": "20119",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "BASTELICACCIA",
+    "cp": "20129",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "BELVEDERE CAMPOMORO",
+    "cp": "20110",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "BILIA",
+    "cp": "20100",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "BOCOGNANO",
+    "cp": "20136",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "BONIFACIO",
+    "cp": "20169",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CALCATOGGIO",
+    "cp": "20111",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CAMPO",
+    "cp": "20142",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CANNELLE",
+    "cp": "20151",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CARBINI",
+    "cp": "20170",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CARBUCCIA",
+    "cp": "20133",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CARDO TORGIA",
+    "cp": "20190",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CARGESE",
+    "cp": "20130",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CARGIACA",
+    "cp": "20164",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CASAGLIONE",
+    "cp": "20111",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CASALABRIVA",
+    "cp": "20140",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CAURO",
+    "cp": "20117",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CIAMANNACCE",
+    "cp": "20134",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "COGGIA",
+    "cp": "20118",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "COGGIA",
+    "cp": "20160",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "COGNOCOLI MONTICCHI",
+    "cp": "20123",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "COGNOCOLI MONTICCHI",
+    "cp": "20166",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CONCA",
+    "cp": "20135",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CORRANO",
+    "cp": "20168",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "COTI CHIAVARI",
+    "cp": "20138",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "COZZANO",
+    "cp": "20148",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CRISTINACCE",
+    "cp": "20126",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "CUTTOLI CORTICCHIATO",
+    "cp": "20167",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ECCICA SUARELLA",
+    "cp": "20117",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "EVISA",
+    "cp": "20126",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "FIGARI",
+    "cp": "20114",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "FOCE",
+    "cp": "20100",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "FORCIOLO",
+    "cp": "20190",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "FOZZANO",
+    "cp": "20143",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "FRASSETO",
+    "cp": "20157",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "GIUNCHETO",
+    "cp": "20100",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "GRANACE",
+    "cp": "20100",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "GROSSA",
+    "cp": "20100",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "GROSSETO PRUGNA",
+    "cp": "20128",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "GROSSETO PRUGNA",
+    "cp": "20166",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "GUAGNO",
+    "cp": "20160",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "GUARGUALE",
+    "cp": "20128",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "GUITERA LES BAINS",
+    "cp": "20153",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "LECCI",
+    "cp": "20137",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "LETIA",
+    "cp": "20160",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "LEVIE",
+    "cp": "20170",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "LOPIGNA",
+    "cp": "20139",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "LORETO DI TALLANO",
+    "cp": "20165",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "MARIGNANA",
+    "cp": "20141",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "MELA",
+    "cp": "20112",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "MOCA CROCE",
+    "cp": "20140",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "MONACIA D AULLENE",
+    "cp": "20171",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "MURZO",
+    "cp": "20160",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "OCANA",
+    "cp": "20117",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "OLIVESE",
+    "cp": "20140",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "OLMETO",
+    "cp": "20113",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "OLMICCIA",
+    "cp": "20112",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ORTO",
+    "cp": "20125",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "OSANI",
+    "cp": "20147",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "OTA",
+    "cp": "20150",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "OTA",
+    "cp": "20150",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "PALNECA",
+    "cp": "20134",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "PARTINELLO",
+    "cp": "20147",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "PASTRICCIOLA",
+    "cp": "20121",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "PERI",
+    "cp": "20167",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "PETRETO BICCHISANO",
+    "cp": "20140",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "PIANA",
+    "cp": "20115",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "PIANOTTOLI CALDARELLO",
+    "cp": "20131",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "PIETROSELLA",
+    "cp": "20166",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "PILA CANALE",
+    "cp": "20123",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "POGGIOLO",
+    "cp": "20125",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "POGGIOLO",
+    "cp": "20160",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "PORTO VECCHIO",
+    "cp": "20137",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "PROPRIANO",
+    "cp": "20110",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "QUASQUARA",
+    "cp": "20142",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "QUENZA",
+    "cp": "20122",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "RENNO",
+    "cp": "20160",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "REZZA",
+    "cp": "20121",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ROSAZIA",
+    "cp": "20121",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SALICE",
+    "cp": "20121",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SAMPOLO",
+    "cp": "20134",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SAN GAVINO DI CARBINI",
+    "cp": "20137",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SAN GAVINO DI CARBINI",
+    "cp": "20170",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SANT ANDREA D ORCINO",
+    "cp": "20151",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SANTA MARIA FIGANIELLA",
+    "cp": "20143",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SANTA MARIA SICHE",
+    "cp": "20190",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SARI D ORCINO",
+    "cp": "20151",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SARI SOLENZARA",
+    "cp": "20145",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SARI SOLENZARA",
+    "cp": "20145",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SARROLA CARCOPINO",
+    "cp": "20167",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SARTENE",
+    "cp": "20100",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SERRA DI FERRO",
+    "cp": "20140",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SERRA DI FERRO",
+    "cp": "20140",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SERRA DI SCOPAMENE",
+    "cp": "20127",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SERRIERA",
+    "cp": "20147",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SOCCIA",
+    "cp": "20125",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SOLLACARO",
+    "cp": "20140",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SORBOLLANO",
+    "cp": "20152",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "SOTTA",
+    "cp": "20146",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "STE LUCIE DE TALLANO",
+    "cp": "20112",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "TASSO",
+    "cp": "20134",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "TAVACO",
+    "cp": "20167",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "TAVERA",
+    "cp": "20163",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "TOLLA",
+    "cp": "20117",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "UCCIANI",
+    "cp": "20133",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "URBALACONE",
+    "cp": "20128",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "VALLE DI MEZZANA",
+    "cp": "20167",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "VERO",
+    "cp": "20172",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "VICO",
+    "cp": "20118",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "VICO",
+    "cp": "20160",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "VIGGIANELLO",
+    "cp": "20110",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "VILLANOVA",
+    "cp": "20167",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ZERUBIA",
+    "cp": "20116",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ZEVACO",
+    "cp": "20173",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ZICAVO",
+    "cp": "20132",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ZIGLIARA",
+    "cp": "20190",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ZONZA",
+    "cp": "20124",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ZONZA",
+    "cp": "20144",
+    "dept": "2A",
+    "region": ""
+  },
+  {
+    "name": "ZOZA",
+    "cp": "20112",
+    "dept": "2A",
+    "region": ""
+  }
+]

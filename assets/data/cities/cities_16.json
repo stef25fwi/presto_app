@@ -1,0 +1,2540 @@
+[
+  {
+    "name": "ABZAC",
+    "cp": "16500",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "AGRIS",
+    "cp": "16110",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "AIGRE",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "AIGRE",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ALLOUE",
+    "cp": "16490",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "AMBERAC",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "AMBERNAC",
+    "cp": "16490",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ANAIS",
+    "cp": "16560",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ANGEAC CHAMPAGNE",
+    "cp": "16130",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ANGEAC CHARENTE",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ANGEDUC",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ANGOULEME",
+    "cp": "16000",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ANSAC SUR VIENNE",
+    "cp": "16500",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ARS",
+    "cp": "16130",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ASNIERES SUR NOUERE",
+    "cp": "16290",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "AUBETERRE SUR DRONNE",
+    "cp": "16390",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "AUNAC SUR CHARENTE",
+    "cp": "16460",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "AUNAC SUR CHARENTE",
+    "cp": "16460",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "AUNAC SUR CHARENTE",
+    "cp": "16460",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "AUNAC SUR CHARENTE",
+    "cp": "16460",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "AUSSAC VADALLE",
+    "cp": "16560",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BAIGNES STE RADEGONDE",
+    "cp": "16360",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BALZAC",
+    "cp": "16430",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BARBEZIERES",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BARBEZIEUX ST HILAIRE",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BARBEZIEUX ST HILAIRE",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BARDENAC",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BARRET",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BARRO",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BASSAC",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BAZAC",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BEAULIEU SUR SONNETTE",
+    "cp": "16450",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BECHERESSE",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BELLEVIGNE",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BELLEVIGNE",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BELLEVIGNE",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BELLEVIGNE",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BELLEVIGNE",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BELLON",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BENEST",
+    "cp": "16350",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BERNAC",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BERNEUIL",
+    "cp": "16480",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BESSAC",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BESSE",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BIOUSSAC",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BIRAC",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BLANZAGUET ST CYBARD",
+    "cp": "16320",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BOISBRETEAU",
+    "cp": "16480",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BOISNE LA TUDE",
+    "cp": "16320",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BOISNE LA TUDE",
+    "cp": "16320",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BOISNE LA TUDE",
+    "cp": "16320",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BONNES",
+    "cp": "16390",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BONNEUIL",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BORS DE BAIGNES",
+    "cp": "16360",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BORS DE MONTMOREAU",
+    "cp": "16190",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BOUEX",
+    "cp": "16410",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BOURG CHARENTE",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BOUTEVILLE",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BOUTIERS ST TROJAN",
+    "cp": "16100",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BRETTES",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BREVILLE",
+    "cp": "16370",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BRIE",
+    "cp": "16590",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BRIE SOUS BARBEZIEUX",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BRIE SOUS CHALAIS",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BRIGUEUIL",
+    "cp": "16420",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BRILLAC",
+    "cp": "16500",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BROSSAC",
+    "cp": "16480",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "BUNZAC",
+    "cp": "16110",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CELLEFROUIN",
+    "cp": "16260",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CELLETTES",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHABANAIS",
+    "cp": "16150",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHABRAC",
+    "cp": "16150",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHADURIE",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHALAIS",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHALAIS",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHALAIS",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHALLIGNAC",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHAMPAGNE MOUTON",
+    "cp": "16350",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHAMPAGNE VIGNY",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHAMPMILLON",
+    "cp": "16290",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHAMPNIERS",
+    "cp": "16430",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHANTILLAC",
+    "cp": "16360",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHARME",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHARRAS",
+    "cp": "16380",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHASSENEUIL SUR BONNIEURE",
+    "cp": "16260",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHASSENON",
+    "cp": "16150",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHASSIECQ",
+    "cp": "16350",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHASSORS",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUBERNARD",
+    "cp": "16100",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUNEUF SUR CHARENTE",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHATIGNAC",
+    "cp": "16480",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHAZELLES",
+    "cp": "16380",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHENON",
+    "cp": "16460",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHERVES CHATELARS",
+    "cp": "16310",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHILLAC",
+    "cp": "16480",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CHIRAC",
+    "cp": "16150",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CLAIX",
+    "cp": "16440",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COGNAC",
+    "cp": "16100",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COMBIERS",
+    "cp": "16320",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CONDAC",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CONDEON",
+    "cp": "16360",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CONFOLENS",
+    "cp": "16500",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CONFOLENS",
+    "cp": "16500",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COTEAUX DU BLANZACAIS",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COTEAUX DU BLANZACAIS",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COTEAUX DU BLANZACAIS",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COTEAUX DU BLANZACAIS",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COTEAUX DU BLANZACAIS",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COULGENS",
+    "cp": "16560",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COULONGES",
+    "cp": "16330",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COURBILLAC",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COURCOME",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COURCOME",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COURCOME",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COURGEAC",
+    "cp": "16190",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COURLAC",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "COUTURE",
+    "cp": "16460",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CRITEUIL LA MAGDELEINE",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "CURAC",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "DEVIAT",
+    "cp": "16190",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "DIGNAC",
+    "cp": "16410",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "DIRAC",
+    "cp": "16410",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "DOUZAT",
+    "cp": "16290",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "EBREON",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ECHALLAT",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ECURAS",
+    "cp": "16220",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "EDON",
+    "cp": "16320",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "EMPURE",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "EPENEDE",
+    "cp": "16490",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ESSE",
+    "cp": "16500",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ETAGNAC",
+    "cp": "16150",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ETRIAC",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "EXIDEUIL SUR VIENNE",
+    "cp": "16150",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "EYMOUTHIERS",
+    "cp": "16220",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "FEUILLADE",
+    "cp": "16380",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "FLEAC",
+    "cp": "16730",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "FLEURAC",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "FONTENILLE",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "FOUQUEBRUNE",
+    "cp": "16410",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "FOUQUEURE",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "FOUSSIGNAC",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "GARAT",
+    "cp": "16410",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "GENAC BIGNAC",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "GENAC BIGNAC",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "GENSAC LA PALLUE",
+    "cp": "16130",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "GENTE",
+    "cp": "16130",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "GIMEUX",
+    "cp": "16130",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "GOND PONTOUVRE",
+    "cp": "16160",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "GRASSAC",
+    "cp": "16380",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "GRAVES ST AMANT",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "GRAVES ST AMANT",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "GUIMPS",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "GUIZENGEARD",
+    "cp": "16480",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "GURAT",
+    "cp": "16320",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "HIERSAC",
+    "cp": "16290",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "HIESSE",
+    "cp": "16490",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "HOULETTE",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "JARNAC",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "JAULDES",
+    "cp": "16560",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "JAVREZAC",
+    "cp": "16100",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "JUIGNAC",
+    "cp": "16190",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "JUILLAC LE COQ",
+    "cp": "16130",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "JUILLE",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "JULIENNE",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "L ISLE D ESPAGNAC",
+    "cp": "16340",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LA BOIXE",
+    "cp": "16330",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LA BOIXE",
+    "cp": "16330",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LA CHEVRERIE",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LA COURONNE",
+    "cp": "16400",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LA FAYE",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LA FORET DE TESSE",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LA MAGDELEINE",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LA ROCHEFOUCAULD EN ANGOUMOIS",
+    "cp": "16110",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LA ROCHEFOUCAULD EN ANGOUMOIS",
+    "cp": "16110",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LA ROCHETTE",
+    "cp": "16110",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LA TACHE",
+    "cp": "16260",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LACHAISE",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LADIVILLE",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LAGARDE SUR LE NE",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LAPRADE",
+    "cp": "16390",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LE BOUCHAGE",
+    "cp": "16350",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LE GRAND MADIEU",
+    "cp": "16450",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LE LINDOIS",
+    "cp": "16310",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LE TATRE",
+    "cp": "16360",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LE VIEUX CERIER",
+    "cp": "16350",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LES ADJOTS",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LES ESSARDS",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LES GOURS",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LES METAIRIES",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LES PINS",
+    "cp": "16260",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LESIGNAC DURAND",
+    "cp": "16310",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LESSAC",
+    "cp": "16500",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LESTERPS",
+    "cp": "16420",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LICHERES",
+    "cp": "16460",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LIGNE",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LIGNIERES AMBLEVILLE",
+    "cp": "16130",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LIGNIERES AMBLEVILLE",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LINARS",
+    "cp": "16730",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LONDIGNY",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LONGRE",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LONNES",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LOUZAC ST ANDRE",
+    "cp": "16100",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LOUZAC ST ANDRE",
+    "cp": "16100",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LUPSAULT",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LUSSAC",
+    "cp": "16450",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "LUXE",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MAGNAC LES GARDES",
+    "cp": "16320",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MAGNAC LES GARDES",
+    "cp": "16320",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MAGNAC SUR TOUVRE",
+    "cp": "16600",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MAINE DE BOIXE",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MAINXE GONDEVILLE",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MAINXE GONDEVILLE",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MAINZAC",
+    "cp": "16380",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MANOT",
+    "cp": "16500",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MANSLE LES FONTAINES",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MANSLE LES FONTAINES",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MARCILLAC LANVILLE",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MAREUIL",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MARILLAC LE FRANC",
+    "cp": "16110",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MARSAC",
+    "cp": "16570",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MARTHON",
+    "cp": "16380",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MASSIGNAC",
+    "cp": "16310",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MAZEROLLES",
+    "cp": "16310",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MEDILLAC",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MERIGNAC",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MERPINS",
+    "cp": "16100",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MESNAC",
+    "cp": "16370",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONS",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONTBOYER",
+    "cp": "16620",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONTBRON",
+    "cp": "16220",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONTEMBOEUF",
+    "cp": "16310",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNAC LE COQ",
+    "cp": "16390",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONTJEAN",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONTMERAC",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONTMERAC",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONTMOREAU",
+    "cp": "16190",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONTMOREAU",
+    "cp": "16190",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONTMOREAU",
+    "cp": "16190",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONTMOREAU",
+    "cp": "16190",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONTMOREAU",
+    "cp": "16190",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MONTROLLET",
+    "cp": "16420",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MORNAC",
+    "cp": "16600",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MOSNAC ST SIMEUX",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MOSNAC ST SIMEUX",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MOULIDARS",
+    "cp": "16290",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MOULINS SUR TARDOIRE",
+    "cp": "16110",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MOULINS SUR TARDOIRE",
+    "cp": "16220",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MOUTHIERS SUR BOEME",
+    "cp": "16440",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MOUTON",
+    "cp": "16460",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "MOUZON",
+    "cp": "16310",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "NABINAUD",
+    "cp": "16390",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "NANCLARS",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "NANTEUIL EN VALLEE",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "NANTEUIL EN VALLEE",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "NANTEUIL EN VALLEE",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "NANTEUIL EN VALLEE",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "NANTEUIL EN VALLEE",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "NANTEUIL EN VALLEE",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "NERCILLAC",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "NERSAC",
+    "cp": "16440",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "NIEUIL",
+    "cp": "16270",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "NONAC",
+    "cp": "16190",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ORADOUR",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ORADOUR FANAIS",
+    "cp": "16500",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ORGEDEUIL",
+    "cp": "16220",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ORIOLLES",
+    "cp": "16480",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ORIVAL",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "PAIZAY NAUDOUIN EMBOURIE",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "PAIZAY NAUDOUIN EMBOURIE",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "PALLUAUD",
+    "cp": "16390",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "PARZAC",
+    "cp": "16450",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "PASSIRAC",
+    "cp": "16480",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "PERIGNAC",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "PILLAC",
+    "cp": "16390",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "PLASSAC ROUFFIAC",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "PLEUVILLE",
+    "cp": "16490",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "POULLIGNAC",
+    "cp": "16190",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "POURSAC",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "PRANZAC",
+    "cp": "16110",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "PRESSIGNAC",
+    "cp": "16150",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "PUYMOYEN",
+    "cp": "16400",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "PUYREAUX",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "RAIX",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "RANVILLE BREUILLAUD",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "REIGNAC",
+    "cp": "16360",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "REPARSAC",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "RIOUX MARTIN",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "RIVIERES",
+    "cp": "16110",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "RONSENAC",
+    "cp": "16320",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ROUFFIAC",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ROUGNAC",
+    "cp": "16320",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ROUILLAC",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ROUILLAC",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ROUILLAC",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ROUILLAC",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ROULLET ST ESTEPHE",
+    "cp": "16440",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ROULLET ST ESTEPHE",
+    "cp": "16440",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ROUSSINES",
+    "cp": "16310",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ROUZEDE",
+    "cp": "16220",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "RUELLE SUR TOUVRE",
+    "cp": "16600",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "RUFFEC",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SALLES D ANGLES",
+    "cp": "16130",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SALLES DE BARBEZIEUX",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SALLES DE VILLEFAGNAN",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SALLES LAVALETTE",
+    "cp": "16190",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SAULGOND",
+    "cp": "16420",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SAUVAGNAC",
+    "cp": "16310",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SAUVIGNAC",
+    "cp": "16480",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SEGONZAC",
+    "cp": "16130",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SERS",
+    "cp": "16410",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SIGOGNE",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SIREUIL",
+    "cp": "16440",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SOUFFRIGNAC",
+    "cp": "16380",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SOUVIGNE",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SOYAUX",
+    "cp": "16800",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST ADJUTORY",
+    "cp": "16310",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST AMANT DE BOIXE",
+    "cp": "16330",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST AMANT DE NOUERE",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST AULAIS LA CHAPELLE",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST AVIT",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST BRICE",
+    "cp": "16100",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST CHRISTOPHE",
+    "cp": "16420",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST CIERS SUR BONNIEURE",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST CLAUD",
+    "cp": "16450",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST COUTANT",
+    "cp": "16350",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST CYBARDEAUX",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST FELIX",
+    "cp": "16480",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST FORT SUR LE NE",
+    "cp": "16130",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST FRAIGNE",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST FRONT",
+    "cp": "16460",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST GENIS D HIERSAC",
+    "cp": "16570",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN DE MONTBRON",
+    "cp": "16380",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST GOURSON",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST GROUX",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT DE CERIS",
+    "cp": "16450",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT DE COGNAC",
+    "cp": "16100",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT DES COMBES",
+    "cp": "16480",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIAL",
+    "cp": "16190",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DU CLOCHER",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST MARY",
+    "cp": "16260",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST MAURICE DES LIONS",
+    "cp": "16500",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST MEDARD",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST MEME LES CARRIERES",
+    "cp": "16720",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL",
+    "cp": "16470",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST PALAIS DU NE",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST PREUIL",
+    "cp": "16130",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST QUENTIN DE CHALAIS",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST QUENTIN SUR CHARENTE",
+    "cp": "16150",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST ROMAIN",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST SATURNIN",
+    "cp": "16290",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST SEVERIN",
+    "cp": "16390",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST SIMON",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST SORNIN",
+    "cp": "16220",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST SULPICE DE RUFFEC",
+    "cp": "16460",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST VALLIER",
+    "cp": "16480",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "ST YRIEIX SUR CHARENTE",
+    "cp": "16710",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "STE SEVERE",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "STE SOULINE",
+    "cp": "16480",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "SUAUX",
+    "cp": "16260",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TAIZE AIZIE",
+    "cp": "16700",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TAPONNAT FLEURIGNAC",
+    "cp": "16110",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TERRES DE HAUTE CHARENTE",
+    "cp": "16270",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TERRES DE HAUTE CHARENTE",
+    "cp": "16270",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TERRES DE HAUTE CHARENTE",
+    "cp": "16270",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TERRES DE HAUTE CHARENTE",
+    "cp": "16270",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TERRES DE HAUTE CHARENTE",
+    "cp": "16270",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TERRES DE HAUTE CHARENTE",
+    "cp": "16270",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "THEIL RABIER",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TORSAC",
+    "cp": "16410",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TOURRIERS",
+    "cp": "16560",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TOUVERAC",
+    "cp": "16360",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TOUVRE",
+    "cp": "16600",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TRIAC LAUTRAIT",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TRIAC LAUTRAIT",
+    "cp": "16200",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TROIS PALIS",
+    "cp": "16730",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TURGON",
+    "cp": "16350",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "TUSSON",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL D AUGE",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL D AUGE",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL D AUGE",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL D AUGE",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL D AUGE",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL D AUGE",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL DE BONNIEURE",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL DE BONNIEURE",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL DE BONNIEURE",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL DE COGNAC",
+    "cp": "16370",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL DE COGNAC",
+    "cp": "16370",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL DE COGNAC",
+    "cp": "16370",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL DES VIGNES",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL DES VIGNES",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL DES VIGNES",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAL DES VIGNES",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VALENCE",
+    "cp": "16460",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAUX LAVALETTE",
+    "cp": "16320",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VAUX ROUILLAC",
+    "cp": "16170",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VENTOUSE",
+    "cp": "16460",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VERDILLE",
+    "cp": "16140",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VERNEUIL",
+    "cp": "16310",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VERRIERES",
+    "cp": "16130",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VERTEUIL SUR CHARENTE",
+    "cp": "16510",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VERVANT",
+    "cp": "16330",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VIBRAC",
+    "cp": "16120",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VIEUX RUFFEC",
+    "cp": "16350",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VIGNOLLES",
+    "cp": "16300",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VILLEBOIS LAVALETTE",
+    "cp": "16320",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VILLEFAGNAN",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VILLEJOUBERT",
+    "cp": "16560",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VILLIERS LE ROUX",
+    "cp": "16240",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VILLOGNON",
+    "cp": "16230",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VINDELLE",
+    "cp": "16430",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VITRAC ST VINCENT",
+    "cp": "16310",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VOEUIL ET GIGET",
+    "cp": "16400",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VOUHARTE",
+    "cp": "16330",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VOULGEZAC",
+    "cp": "16250",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VOUTHON",
+    "cp": "16220",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "VOUZAN",
+    "cp": "16410",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "XAMBES",
+    "cp": "16330",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "YVIERS",
+    "cp": "16210",
+    "dept": "16",
+    "region": ""
+  },
+  {
+    "name": "YVRAC ET MALLEYRAND",
+    "cp": "16110",
+    "dept": "16",
+    "region": ""
+  }
+]

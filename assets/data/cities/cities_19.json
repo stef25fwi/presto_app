@@ -1,0 +1,1736 @@
+[
+  {
+    "name": "AFFIEUX",
+    "cp": "19260",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "AIX",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ALBIGNAC",
+    "cp": "19190",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ALBUSSAC",
+    "cp": "19380",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ALLASSAC",
+    "cp": "19240",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ALLEYRAT",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ALTILLAC",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "AMBRUGEAT",
+    "cp": "19250",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ARGENTAT SUR DORDOGNE",
+    "cp": "19320",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ARGENTAT SUR DORDOGNE",
+    "cp": "19400",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ARNAC POMPADOUR",
+    "cp": "19230",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ASTAILLAC",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "AUBAZINES",
+    "cp": "19190",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "AURIAC",
+    "cp": "19220",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "AYEN",
+    "cp": "19310",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BAR",
+    "cp": "19800",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BASSIGNAC LE BAS",
+    "cp": "19430",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BASSIGNAC LE HAUT",
+    "cp": "19220",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BEAULIEU SUR DORDOGNE",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BEAULIEU SUR DORDOGNE",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONT",
+    "cp": "19390",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BELLECHASSAGNE",
+    "cp": "19290",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BENAYES",
+    "cp": "19510",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BEYNAT",
+    "cp": "19190",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BEYSSAC",
+    "cp": "19230",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BEYSSENAC",
+    "cp": "19230",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BILHAC",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BONNEFOND",
+    "cp": "19170",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BORT LES ORGUES",
+    "cp": "19110",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BRANCEILLES",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BRIGNAC LA PLAINE",
+    "cp": "19310",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BRIVE LA GAILLARDE",
+    "cp": "19100",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "BUGEAT",
+    "cp": "19170",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CAMPS ST MATHURIN LEOBAZEL",
+    "cp": "19430",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CAMPS ST MATHURIN LEOBAZEL",
+    "cp": "19430",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHABRIGNAC",
+    "cp": "19350",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHAMBERET",
+    "cp": "19370",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHAMBOULIVE",
+    "cp": "19450",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHAMEYRAT",
+    "cp": "19330",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHAMPAGNAC LA NOAILLE",
+    "cp": "19320",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHAMPAGNAC LA PRUNE",
+    "cp": "19320",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHANAC LES MINES",
+    "cp": "19150",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHANTEIX",
+    "cp": "19330",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHAPELLE SPINASSE",
+    "cp": "19300",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHARTRIER FERRIERE",
+    "cp": "19600",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHASTEAUX",
+    "cp": "19600",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHAUFFOUR SUR VELL",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHAUMEIL",
+    "cp": "19390",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHAVANAC",
+    "cp": "19290",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHAVEROCHE",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHENAILLER MASCHEIX",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CHIRAC BELLEVUE",
+    "cp": "19160",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CLERGOUX",
+    "cp": "19320",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "COLLONGES LA ROUGE",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "COMBRESSOL",
+    "cp": "19250",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CONCEZE",
+    "cp": "19350",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CONDAT SUR GANAVEIX",
+    "cp": "19140",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CONFOLENT PORT DIEU",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CORNIL",
+    "cp": "19150",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CORREZE",
+    "cp": "19800",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "COSNAC",
+    "cp": "19360",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "COUFFY SUR SARSONNE",
+    "cp": "19340",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "COURTEIX",
+    "cp": "19340",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CUBLAC",
+    "cp": "19520",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "CUREMONTE",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "DAMPNIAT",
+    "cp": "19360",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "DARAZAC",
+    "cp": "19220",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "DARNETS",
+    "cp": "19300",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "DAVIGNAC",
+    "cp": "19250",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "DONZENAC",
+    "cp": "19270",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "EGLETONS",
+    "cp": "19300",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ESPAGNAC",
+    "cp": "19150",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ESPARTIGNAC",
+    "cp": "19140",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ESTIVALS",
+    "cp": "19600",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ESTIVAUX",
+    "cp": "19410",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "EYBURIE",
+    "cp": "19140",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "EYGURANDE",
+    "cp": "19340",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "EYREIN",
+    "cp": "19800",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "FAVARS",
+    "cp": "19330",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "FEYT",
+    "cp": "19340",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "FORGES",
+    "cp": "19380",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "GIMEL LES CASCADES",
+    "cp": "19800",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "GOULLES",
+    "cp": "19430",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "GOURDON MURAT",
+    "cp": "19170",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "GRANDSAIGNE",
+    "cp": "19300",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "GROS CHASTANG",
+    "cp": "19320",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "GUMOND",
+    "cp": "19320",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "HAUTEFAGE",
+    "cp": "19400",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "JUGEALS NAZARETH",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "JUILLAC",
+    "cp": "19350",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "L EGLISE AUX BOIS",
+    "cp": "19170",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE AUX BROCS",
+    "cp": "19360",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE AUX SAINTS",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE ST GERAUD",
+    "cp": "19430",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LA ROCHE CANILLAC",
+    "cp": "19320",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LACELLE",
+    "cp": "19170",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LADIGNAC SUR RONDELLES",
+    "cp": "19150",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LAFAGE SUR SOMBRE",
+    "cp": "19320",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LAGARDE MARC LA TOUR",
+    "cp": "19150",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LAGARDE MARC LA TOUR",
+    "cp": "19150",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LAGLEYGEOLLE",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LAGRAULIERE",
+    "cp": "19700",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LAGUENNE SUR AVALOUZE",
+    "cp": "19150",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LAGUENNE SUR AVALOUZE",
+    "cp": "19150",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LAMAZIERE BASSE",
+    "cp": "19160",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LAMAZIERE HAUTE",
+    "cp": "19340",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LAMONGERIE",
+    "cp": "19510",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LANTEUIL",
+    "cp": "19190",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LAPLEAU",
+    "cp": "19550",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LARCHE",
+    "cp": "19600",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LAROCHE PRES FEYT",
+    "cp": "19340",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LASCAUX",
+    "cp": "19130",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LATRONCHE",
+    "cp": "19160",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LAVAL SUR LUZEGE",
+    "cp": "19550",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LE CHASTANG",
+    "cp": "19190",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LE LONZAC",
+    "cp": "19470",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LE PESCHER",
+    "cp": "19190",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LES ANGLES SUR CORREZE",
+    "cp": "19000",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LES TROIS SAINTS",
+    "cp": "19140",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LES TROIS SAINTS",
+    "cp": "19210",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LES TROIS SAINTS",
+    "cp": "19210",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LESTARDS",
+    "cp": "19170",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LIGINIAC",
+    "cp": "19160",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LIGNAREIX",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LIGNEYRAC",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LIOURDRES",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LISSAC SUR COUZE",
+    "cp": "19600",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LOSTANGES",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LOUIGNAC",
+    "cp": "19310",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "LUBERSAC",
+    "cp": "19210",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MADRANGES",
+    "cp": "19470",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MALEMORT",
+    "cp": "19360",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MALEMORT",
+    "cp": "19360",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MANSAC",
+    "cp": "19520",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MARCILLAC LA CROISILLE",
+    "cp": "19320",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MARCILLAC LA CROZE",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MARGERIDES",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MASSERET",
+    "cp": "19510",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MAUSSAC",
+    "cp": "19250",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MEILHARDS",
+    "cp": "19510",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MENOIRE",
+    "cp": "19190",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MERCOEUR",
+    "cp": "19430",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MERLINES",
+    "cp": "19340",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MESTES",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MEYMAC",
+    "cp": "19250",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MEYRIGNAC L EGLISE",
+    "cp": "19800",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MEYSSAC",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MILLEVACHES",
+    "cp": "19290",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MONCEAUX SUR DORDOGNE",
+    "cp": "19400",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MONESTIER MERLINES",
+    "cp": "19340",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MONESTIER PORT DIEU",
+    "cp": "19110",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MONTAIGNAC SUR DOUSTRE",
+    "cp": "19300",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MONTAIGNAC SUR DOUSTRE",
+    "cp": "19300",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MONTGIBAUD",
+    "cp": "19210",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "MOUSTIER VENTADOUR",
+    "cp": "19300",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "NAVES",
+    "cp": "19460",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "NESPOULS",
+    "cp": "19600",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "NEUVIC",
+    "cp": "19160",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE",
+    "cp": "19380",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "NOAILHAC",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "NOAILLES",
+    "cp": "19600",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "NONARDS",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "OBJAT",
+    "cp": "19130",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ORGNAC SUR VEZERE",
+    "cp": "19410",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ORLIAC DE BAR",
+    "cp": "19390",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "PALAZINGES",
+    "cp": "19190",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "PALISSE",
+    "cp": "19160",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "PANDRIGNES",
+    "cp": "19150",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "PERET BEL AIR",
+    "cp": "19300",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "PEROLS SUR VEZERE",
+    "cp": "19170",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "PERPEZAC LE BLANC",
+    "cp": "19310",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "PERPEZAC LE NOIR",
+    "cp": "19410",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "PEYRELEVADE",
+    "cp": "19290",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "PEYRISSAC",
+    "cp": "19260",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "PIERREFITTE",
+    "cp": "19450",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "PRADINES",
+    "cp": "19170",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "PUY D ARNAC",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "QUEYSSAC LES VIGNES",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "REYGADE",
+    "cp": "19430",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "RILHAC TREIGNAC",
+    "cp": "19260",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "RILHAC XAINTRIE",
+    "cp": "19220",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ROCHE LE PEYROUX",
+    "cp": "19160",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ROSIERS D EGLETONS",
+    "cp": "19300",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ROSIERS DE JUILLAC",
+    "cp": "19350",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SADROC",
+    "cp": "19270",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SAILLAC",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SALON LA TOUR",
+    "cp": "19510",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SARRAN",
+    "cp": "19800",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SARROUX ST JULIEN",
+    "cp": "19110",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SARROUX ST JULIEN",
+    "cp": "19110",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SEGONZAC",
+    "cp": "19310",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SEGUR LE CHATEAU",
+    "cp": "19230",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SEILHAC",
+    "cp": "19700",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SERANDON",
+    "cp": "19160",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SERILHAC",
+    "cp": "19190",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SERVIERES LE CHATEAU",
+    "cp": "19220",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SEXCLES",
+    "cp": "19430",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SIONIAC",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SORNAC",
+    "cp": "19290",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SOUDAINE LAVINADIERE",
+    "cp": "19370",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SOUDEILLES",
+    "cp": "19300",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "SOURSAC",
+    "cp": "19550",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST ANGEL",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST AUGUSTIN",
+    "cp": "19390",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST AULAIRE",
+    "cp": "19130",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST BAZILE DE MEYSSAC",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET ELVERT",
+    "cp": "19380",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET L ENFANTIER",
+    "cp": "19410",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET LA RIVIERE",
+    "cp": "19130",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET LES TOURS DE MERLE",
+    "cp": "19430",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET PRES BORT",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST CERNIN DE LARCHE",
+    "cp": "19600",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST CHAMANT",
+    "cp": "19380",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST CIRGUES LA LOUTRE",
+    "cp": "19220",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST CLEMENT",
+    "cp": "19700",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST CYPRIEN",
+    "cp": "19130",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST CYR LA ROCHE",
+    "cp": "19130",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST ELOY LES TUILERIES",
+    "cp": "19210",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE AUX CLOS",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE LA GENESTE",
+    "cp": "19160",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST EXUPERY LES ROCHES",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST FREJOUX",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST GENIEZ O MERLE",
+    "cp": "19220",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN LAVOLPS",
+    "cp": "19290",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN LES VERGNES",
+    "cp": "19330",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE FOISSAC",
+    "cp": "19550",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE LES COURBES",
+    "cp": "19170",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE LUC",
+    "cp": "19160",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE PEYROUX",
+    "cp": "19560",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE TAURIEUX",
+    "cp": "19400",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST JAL",
+    "cp": "19700",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN AUX BOIS",
+    "cp": "19220",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN LE PELERIN",
+    "cp": "19430",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN LE VENDOMOIS",
+    "cp": "19210",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN MAUMONT",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIAL DE GIMEL",
+    "cp": "19150",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIAL ENTRAYGUES",
+    "cp": "19400",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN LA MEANNE",
+    "cp": "19320",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST MERD DE LAPLEAU",
+    "cp": "19320",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST MERD LES OUSSINES",
+    "cp": "19170",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST MEXANT",
+    "cp": "19330",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST PANTALEON DE LAPLEAU",
+    "cp": "19160",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST PANTALEON DE LARCHE",
+    "cp": "19600",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST PARDOUX L ORTIGIER",
+    "cp": "19270",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST PARDOUX LA CROISILLE",
+    "cp": "19320",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST PARDOUX LE NEUF",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST PARDOUX LE VIEUX",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL",
+    "cp": "19150",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST PRIEST DE GIMEL",
+    "cp": "19800",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST PRIVAT",
+    "cp": "19220",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST REMY",
+    "cp": "19290",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST ROBERT",
+    "cp": "19310",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST SALVADOUR",
+    "cp": "19700",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST SETIERS",
+    "cp": "19290",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST SOLVE",
+    "cp": "19130",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST SORNIN LAVOLPS",
+    "cp": "19230",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST SULPICE LES BOIS",
+    "cp": "19250",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST SYLVAIN",
+    "cp": "19380",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST VIANCE",
+    "cp": "19240",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST VICTOUR",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "ST YRIEIX LE DEJALAT",
+    "cp": "19300",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "STE FEREOLE",
+    "cp": "19270",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "STE FORTUNADE",
+    "cp": "19490",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE LAPANOUZE",
+    "cp": "19160",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "TARNAC",
+    "cp": "19170",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "THALAMY",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "TOY VIAM",
+    "cp": "19170",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "TREIGNAC",
+    "cp": "19260",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "TROCHE",
+    "cp": "19230",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "TUDEILS",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "TULLE",
+    "cp": "19000",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "TURENNE",
+    "cp": "19500",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "USSAC",
+    "cp": "19270",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "USSEL",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "USSEL",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "USSEL",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "UZERCHE",
+    "cp": "19140",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "VALIERGUES",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "VARETZ",
+    "cp": "19240",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "VARS SUR ROSEIX",
+    "cp": "19130",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "VEGENNES",
+    "cp": "19120",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "VEIX",
+    "cp": "19260",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "VEYRIERES",
+    "cp": "19200",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "VIAM",
+    "cp": "19170",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "VIGEOIS",
+    "cp": "19410",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "VIGNOLS",
+    "cp": "19130",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "VITRAC SUR MONTANE",
+    "cp": "19800",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "VOUTEZAC",
+    "cp": "19130",
+    "dept": "19",
+    "region": ""
+  },
+  {
+    "name": "YSSANDON",
+    "cp": "19310",
+    "dept": "19",
+    "region": ""
+  }
+]

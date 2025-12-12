@@ -1,0 +1,1658 @@
+[
+  {
+    "name": "AHUILLE",
+    "cp": "53940",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ALEXAIN",
+    "cp": "53240",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "AMBRIERES LES VALLEES",
+    "cp": "53300",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "AMBRIERES LES VALLEES",
+    "cp": "53300",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ANDOUILLE",
+    "cp": "53240",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ARGENTRE",
+    "cp": "53210",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ARON",
+    "cp": "53440",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ARQUENAY",
+    "cp": "53170",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ASSE LE BERENGER",
+    "cp": "53600",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ASTILLE",
+    "cp": "53230",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ATHEE",
+    "cp": "53400",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "AVERTON",
+    "cp": "53700",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BAIS",
+    "cp": "53160",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BALLOTS",
+    "cp": "53350",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BANNES",
+    "cp": "53340",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BAZOUGERS",
+    "cp": "53170",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BEAULIEU SUR OUDON",
+    "cp": "53320",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONT PIED DE BOEUF",
+    "cp": "53290",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BELGEARD",
+    "cp": "53440",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BIERNE LES VILLAGES",
+    "cp": "53290",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BIERNE LES VILLAGES",
+    "cp": "53290",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BIERNE LES VILLAGES",
+    "cp": "53290",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BIERNE LES VILLAGES",
+    "cp": "53290",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BLANDOUET ST JEAN",
+    "cp": "53270",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BLANDOUET ST JEAN",
+    "cp": "53270",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BONCHAMP LES LAVAL",
+    "cp": "53960",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BOUCHAMPS LES CRAON",
+    "cp": "53800",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BOUERE",
+    "cp": "53290",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BOUESSAY",
+    "cp": "53290",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BOULAY LES IFS",
+    "cp": "53370",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BOURGON",
+    "cp": "53410",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BRAINS SUR LES MARCHES",
+    "cp": "53350",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BRECE",
+    "cp": "53120",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "BREE",
+    "cp": "53150",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CARELLES",
+    "cp": "53120",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHAILLAND",
+    "cp": "53420",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHALONS DU MAINE",
+    "cp": "53470",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHAMPEON",
+    "cp": "53640",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHAMPFREMONT",
+    "cp": "53370",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHAMPGENETEUX",
+    "cp": "53160",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHANGE",
+    "cp": "53810",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHANTRIGNE",
+    "cp": "53300",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHARCHIGNE",
+    "cp": "53250",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU GONTIER SUR MAYENNE",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU GONTIER SUR MAYENNE",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU GONTIER SUR MAYENNE",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU GONTIER SUR MAYENNE",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHATELAIN",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHATILLON SUR COLMONT",
+    "cp": "53100",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHEMAZE",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHEMERE LE ROI",
+    "cp": "53340",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHERANCE",
+    "cp": "53400",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CHEVAIGNE DU MAINE",
+    "cp": "53250",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "COLOMBIERS DU PLESSIS",
+    "cp": "53120",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "COMMER",
+    "cp": "53470",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CONGRIER",
+    "cp": "53800",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CONTEST",
+    "cp": "53100",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "COSMES",
+    "cp": "53230",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "COSSE EN CHAMPAGNE",
+    "cp": "53340",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "COSSE LE VIVIEN",
+    "cp": "53230",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "COUDRAY",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "COUESMES VAUCE",
+    "cp": "53300",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "COUESMES VAUCE",
+    "cp": "53300",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "COUPTRAIN",
+    "cp": "53250",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "COURBEVEILLE",
+    "cp": "53230",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "COURCITE",
+    "cp": "53700",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CRAON",
+    "cp": "53400",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CRENNES SUR FRAUBEE",
+    "cp": "53700",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "CUILLE",
+    "cp": "53540",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "DAON",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "DENAZE",
+    "cp": "53400",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "DESERTINES",
+    "cp": "53190",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ENTRAMMES",
+    "cp": "53260",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ERNEE",
+    "cp": "53500",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "EVRON",
+    "cp": "53150",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "EVRON",
+    "cp": "53600",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "EVRON",
+    "cp": "53600",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE COUVERTE",
+    "cp": "53350",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "FORCE",
+    "cp": "53260",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "FOUGEROLLES DU PLESSIS",
+    "cp": "53190",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "FROMENTIERES",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "GASTINES",
+    "cp": "53540",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "GENNES LONGUEFUYE",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "GENNES LONGUEFUYE",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "GESNES",
+    "cp": "53150",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "GESVRES",
+    "cp": "53370",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "GORRON",
+    "cp": "53120",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "GRAZAY",
+    "cp": "53440",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "GREZ EN BOUERE",
+    "cp": "53290",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "HAMBERS",
+    "cp": "53160",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "HARDANGES",
+    "cp": "53640",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "HERCE",
+    "cp": "53120",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "HOUSSAY",
+    "cp": "53360",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "IZE",
+    "cp": "53160",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "JAVRON LES CHAPELLES",
+    "cp": "53250",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "JAVRON LES CHAPELLES",
+    "cp": "53250",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "JUBLAINS",
+    "cp": "53160",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "JUVIGNE",
+    "cp": "53380",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "L HUISSERIE",
+    "cp": "53970",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA BACONNIERE",
+    "cp": "53240",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA BAZOGE MONTPINCON",
+    "cp": "53440",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA BAZOUGE DE CHEMERE",
+    "cp": "53170",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA BAZOUGE DES ALLEUX",
+    "cp": "53470",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA BIGOTTIERE",
+    "cp": "53240",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA BOISSIERE",
+    "cp": "53800",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA BRULATTE",
+    "cp": "53410",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE ANTHENAISE",
+    "cp": "53950",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE AU RIBOUL",
+    "cp": "53440",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE CRAONNAISE",
+    "cp": "53230",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE RAINSOUIN",
+    "cp": "53150",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA CROIXILLE",
+    "cp": "53380",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA CROPTE",
+    "cp": "53170",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA DOREE",
+    "cp": "53190",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA GRAVELLE",
+    "cp": "53410",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA HAIE TRAVERSAINE",
+    "cp": "53300",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA PALLU",
+    "cp": "53140",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA PELLERINE",
+    "cp": "53220",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA ROCHE NEUVILLE",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA ROCHE NEUVILLE",
+    "cp": "53360",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA ROE",
+    "cp": "53350",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA ROUAUDIERE",
+    "cp": "53390",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LA SELLE CRAONNAISE",
+    "cp": "53800",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LANDIVY",
+    "cp": "53190",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LARCHAMP",
+    "cp": "53220",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LASSAY LES CHATEAUX",
+    "cp": "53110",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LASSAY LES CHATEAUX",
+    "cp": "53110",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LASSAY LES CHATEAUX",
+    "cp": "53110",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LASSAY LES CHATEAUX",
+    "cp": "53110",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LAUBRIERES",
+    "cp": "53540",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LAUNAY VILLIERS",
+    "cp": "53410",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LAVAL",
+    "cp": "53000",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LE BIGNON DU MAINE",
+    "cp": "53170",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LE BOURGNEUF LA FORET",
+    "cp": "53410",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LE BURET",
+    "cp": "53170",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LE GENEST ST ISLE",
+    "cp": "53940",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LE GENEST ST ISLE",
+    "cp": "53940",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LE HAM",
+    "cp": "53250",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LE HORPS",
+    "cp": "53640",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LE HOUSSEAU BRETIGNOLLES",
+    "cp": "53110",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LE HOUSSEAU BRETIGNOLLES",
+    "cp": "53110",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LE PAS",
+    "cp": "53300",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LE RIBAY",
+    "cp": "53640",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LESBOIS",
+    "cp": "53120",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LEVARE",
+    "cp": "53120",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LIGNIERES ORGERES",
+    "cp": "53140",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LIGNIERES ORGERES",
+    "cp": "53140",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LIVET",
+    "cp": "53150",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LIVRE LA TOUCHE",
+    "cp": "53400",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LOIRON RUILLE",
+    "cp": "53320",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LOIRON RUILLE",
+    "cp": "53320",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LOUPFOUGERES",
+    "cp": "53700",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LOUVERNE",
+    "cp": "53950",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "LOUVIGNE",
+    "cp": "53210",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MADRE",
+    "cp": "53250",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MAISONCELLES DU MAINE",
+    "cp": "53170",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MARCILLE LA VILLE",
+    "cp": "53440",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MARIGNE PEUTON",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MARTIGNE SUR MAYENNE",
+    "cp": "53470",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MAYENNE",
+    "cp": "53100",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MEE",
+    "cp": "53400",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MENIL",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MERAL",
+    "cp": "53230",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MESLAY DU MAINE",
+    "cp": "53170",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MEZANGERS",
+    "cp": "53600",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MONTAUDIN",
+    "cp": "53220",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MONTENAY",
+    "cp": "53500",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MONTFLOURS",
+    "cp": "53240",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNE LE BRILLANT",
+    "cp": "53970",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MONTJEAN",
+    "cp": "53320",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL POULAY",
+    "cp": "53640",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL POULAY",
+    "cp": "53640",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MONTSURS",
+    "cp": "53150",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MONTSURS",
+    "cp": "53150",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MONTSURS",
+    "cp": "53150",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MONTSURS",
+    "cp": "53150",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MONTSURS",
+    "cp": "53150",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "MOULAY",
+    "cp": "53100",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "NEAU",
+    "cp": "53150",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "NEUILLY LE VENDIN",
+    "cp": "53250",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "NIAFLES",
+    "cp": "53400",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "NUILLE SUR VICOIN",
+    "cp": "53970",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "OISSEAU",
+    "cp": "53300",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "OLIVET",
+    "cp": "53410",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ORIGNE",
+    "cp": "53360",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "PARIGNE SUR BRAYE",
+    "cp": "53100",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "PARNE SUR ROC",
+    "cp": "53260",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "PEUTON",
+    "cp": "53360",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "PLACE",
+    "cp": "53240",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "POMMERIEUX",
+    "cp": "53400",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "PONTMAIN",
+    "cp": "53220",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "PORT BRILLET",
+    "cp": "53410",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "PRE EN PAIL ST SAMSON",
+    "cp": "53140",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "PRE EN PAIL ST SAMSON",
+    "cp": "53140",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "PREAUX",
+    "cp": "53340",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "PREE D ANJOU",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "PREE D ANJOU",
+    "cp": "53200",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "QUELAINES ST GAULT",
+    "cp": "53360",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "QUELAINES ST GAULT",
+    "cp": "53360",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "RAVIGNY",
+    "cp": "53370",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "RENAZE",
+    "cp": "53800",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "RENNES EN GRENOUILLES",
+    "cp": "53110",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "RUILLE FROID FONDS",
+    "cp": "53170",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "SACE",
+    "cp": "53470",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "SAULGES",
+    "cp": "53340",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "SENONNES",
+    "cp": "53390",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "SIMPLE",
+    "cp": "53360",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "SOUCE",
+    "cp": "53300",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "SOULGE SUR OUETTE",
+    "cp": "53210",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "SOULGE SUR OUETTE",
+    "cp": "53210",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST AIGNAN DE COUPTRAIN",
+    "cp": "53250",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST AIGNAN SUR ROE",
+    "cp": "53390",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST AUBIN DU DESERT",
+    "cp": "53700",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST AUBIN FOSSE LOUVAIN",
+    "cp": "53120",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST BAUDELLE",
+    "cp": "53100",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST BERTHEVIN",
+    "cp": "53940",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST BERTHEVIN LA TANNIERE",
+    "cp": "53220",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST BRICE",
+    "cp": "53290",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST CALAIS DU DESERT",
+    "cp": "53140",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST CHARLES LA FORET",
+    "cp": "53170",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST CYR EN PAIL",
+    "cp": "53140",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST CYR LE GRAVELAIS",
+    "cp": "53320",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS D ANJOU",
+    "cp": "53290",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS DE GASTINES",
+    "cp": "53500",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS DU MAINE",
+    "cp": "53170",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST ELLIER DU MAINE",
+    "cp": "53220",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST ERBLON",
+    "cp": "53390",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST FRAIMBAULT DE PRIERES",
+    "cp": "53300",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES BUTTAVENT",
+    "cp": "53100",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES BUTTAVENT",
+    "cp": "53100",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES LE FLECHARD",
+    "cp": "53480",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES SUR ERVE",
+    "cp": "53600",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN D ANXURE",
+    "cp": "53240",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN DE COULAMER",
+    "cp": "53700",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN LE FOUILLOUX",
+    "cp": "53240",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN LE GUILLAUME",
+    "cp": "53240",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE DU MAINE",
+    "cp": "53380",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN SUR MAYENNE",
+    "cp": "53240",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN DU TERROUX",
+    "cp": "53110",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER",
+    "cp": "53480",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST LOUP DU DORAT",
+    "cp": "53290",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST LOUP DU GAST",
+    "cp": "53300",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST MARS DU DESERT",
+    "cp": "53700",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST MARS SUR COLMONT",
+    "cp": "53300",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST MARS SUR LA FUTAIE",
+    "cp": "53220",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DU LIMET",
+    "cp": "53800",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL DE LA ROE",
+    "cp": "53350",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST OUEN DES TOITS",
+    "cp": "53410",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DES LANDES",
+    "cp": "53500",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DES NIDS",
+    "cp": "53370",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE LA COUR",
+    "cp": "53410",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE SUR ERVE",
+    "cp": "53270",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST POIX",
+    "cp": "53540",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST QUENTIN LES ANGES",
+    "cp": "53400",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST SATURNIN DU LIMET",
+    "cp": "53800",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "ST THOMAS DE COURCERIERS",
+    "cp": "53160",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "STE GEMMES LE ROBERT",
+    "cp": "53600",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE DU BOIS",
+    "cp": "53110",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "STE SUZANNE ET CHAMMES",
+    "cp": "53270",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "STE SUZANNE ET CHAMMES",
+    "cp": "53270",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "THORIGNE EN CHARNIE",
+    "cp": "53270",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "THUBOEUF",
+    "cp": "53110",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "TORCE VIVIERS EN CHARNIE",
+    "cp": "53270",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "TORCE VIVIERS EN CHARNIE",
+    "cp": "53270",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "TRANS",
+    "cp": "53160",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "VAIGES",
+    "cp": "53480",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "VAL DU MAINE",
+    "cp": "53340",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "VAL DU MAINE",
+    "cp": "53340",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "VAUTORTE",
+    "cp": "53500",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "VIEUVY",
+    "cp": "53120",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "VILLAINES LA JUHEL",
+    "cp": "53700",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "VILLEPAIL",
+    "cp": "53250",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "VILLIERS CHARLEMAGNE",
+    "cp": "53170",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "VIMARTIN SUR ORTHE",
+    "cp": "53160",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "VIMARTIN SUR ORTHE",
+    "cp": "53160",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "VIMARTIN SUR ORTHE",
+    "cp": "53160",
+    "dept": "53",
+    "region": ""
+  },
+  {
+    "name": "VOUTRE",
+    "cp": "53600",
+    "dept": "53",
+    "region": ""
+  }
+]

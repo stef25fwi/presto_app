@@ -22,8 +22,8 @@ class ConversationsListPage extends StatelessWidget {
 
 /// Variante avec le nom buggé dans main.dart : `versationsListPage`
 /// (on la garde pour ne pas casser les appels existants)
-class versationsListPage extends StatelessWidget {
-  const versationsListPage({super.key});
+class VersationsListPage extends StatelessWidget {
+  const VersationsListPage({super.key});
 
   @override
   Widget build(BuildContext context) {

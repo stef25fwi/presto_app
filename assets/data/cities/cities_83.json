@@ -1,0 +1,1130 @@
+[
+  {
+    "name": "AIGUINES",
+    "cp": "83630",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "AMPUS",
+    "cp": "83111",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ARTIGNOSC SUR VERDON",
+    "cp": "83630",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ARTIGUES",
+    "cp": "83560",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "AUPS",
+    "cp": "83630",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BAGNOLS EN FORET",
+    "cp": "83600",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BANDOL",
+    "cp": "83150",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BARGEME",
+    "cp": "83840",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BARGEMON",
+    "cp": "83830",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BARJOLS",
+    "cp": "83670",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BAUDINARD SUR VERDON",
+    "cp": "83630",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BAUDUEN",
+    "cp": "83630",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BELGENTIER",
+    "cp": "83210",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BESSE SUR ISSOLE",
+    "cp": "83890",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BORMES LES MIMOSAS",
+    "cp": "83230",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BRAS",
+    "cp": "83149",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BRENON",
+    "cp": "83840",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BRIGNOLES",
+    "cp": "83170",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "BRUE AURIAC",
+    "cp": "83119",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CABASSE",
+    "cp": "83340",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CALLAS",
+    "cp": "83830",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CALLIAN",
+    "cp": "83440",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CAMPS LA SOURCE",
+    "cp": "83170",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CARCES",
+    "cp": "83570",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CARNOULES",
+    "cp": "83660",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CARQUEIRANNE",
+    "cp": "83320",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CAVALAIRE SUR MER",
+    "cp": "83240",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUDOUBLE",
+    "cp": "83300",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUDOUBLE",
+    "cp": "83300",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUVERT",
+    "cp": "83670",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUVIEUX",
+    "cp": "83840",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CLAVIERS",
+    "cp": "83830",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "COGOLIN",
+    "cp": "83310",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "COLLOBRIERES",
+    "cp": "83610",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "COMPS SUR ARTUBY",
+    "cp": "83840",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CORRENS",
+    "cp": "83570",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "COTIGNAC",
+    "cp": "83570",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "CUERS",
+    "cp": "83390",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "DRAGUIGNAN",
+    "cp": "83300",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ENTRECASTEAUX",
+    "cp": "83570",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ESPARRON",
+    "cp": "83560",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "EVENOS",
+    "cp": "83330",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "FAYENCE",
+    "cp": "83440",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "FIGANIERES",
+    "cp": "83830",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "FLASSANS SUR ISSOLE",
+    "cp": "83340",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "FLAYOSC",
+    "cp": "83780",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "FORCALQUEIRET",
+    "cp": "83136",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "FOX AMPHOUX",
+    "cp": "83670",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "FREJUS",
+    "cp": "83370",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "FREJUS",
+    "cp": "83600",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "GAREOULT",
+    "cp": "83136",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "GASSIN",
+    "cp": "83580",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "GINASSERVIS",
+    "cp": "83560",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "GONFARON",
+    "cp": "83590",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "GRIMAUD",
+    "cp": "83310",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "GRIMAUD",
+    "cp": "83310",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "HYERES",
+    "cp": "83400",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "HYERES",
+    "cp": "83400",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "HYERES",
+    "cp": "83400",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "HYERES",
+    "cp": "83400",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "HYERES",
+    "cp": "83400",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "HYERES",
+    "cp": "83400",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "HYERES",
+    "cp": "83400",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "HYERES",
+    "cp": "83400",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "HYERES",
+    "cp": "83400",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "HYERES",
+    "cp": "83400",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA BASTIDE",
+    "cp": "83840",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA CADIERE D AZUR",
+    "cp": "83740",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA CADIERE D AZUR",
+    "cp": "83740",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA CELLE",
+    "cp": "83170",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA CRAU",
+    "cp": "83260",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA CRAU",
+    "cp": "83260",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA CROIX VALMER",
+    "cp": "83420",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA FARLEDE",
+    "cp": "83210",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA GARDE",
+    "cp": "83130",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA GARDE FREINET",
+    "cp": "83680",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA LONDE LES MAURES",
+    "cp": "83250",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA MARTRE",
+    "cp": "83840",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA MOLE",
+    "cp": "83310",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA MOTTE",
+    "cp": "83920",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA ROQUE ESCLAPON",
+    "cp": "83840",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA ROQUEBRUSSANNE",
+    "cp": "83136",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA SEYNE SUR MER",
+    "cp": "83500",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA SEYNE SUR MER",
+    "cp": "83500",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA SEYNE SUR MER",
+    "cp": "83500",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA VALETTE DU VAR",
+    "cp": "83160",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LA VERDIERE",
+    "cp": "83560",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE BEAUSSET",
+    "cp": "83330",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE BOURGUET",
+    "cp": "83840",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE CANNET DES MAURES",
+    "cp": "83340",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE CASTELLET",
+    "cp": "83330",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE CASTELLET",
+    "cp": "83330",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE CASTELLET",
+    "cp": "83330",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE CASTELLET",
+    "cp": "83330",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE CASTELLET",
+    "cp": "83330",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE LAVANDOU",
+    "cp": "83980",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE LAVANDOU",
+    "cp": "83980",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE LUC",
+    "cp": "83340",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE MUY",
+    "cp": "83490",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE PLAN DE LA TOUR",
+    "cp": "83120",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE PRADET",
+    "cp": "83220",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE REVEST LES EAUX",
+    "cp": "83200",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE THORONET",
+    "cp": "83340",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LE VAL",
+    "cp": "83143",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LES ADRETS DE L ESTEREL",
+    "cp": "83600",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LES ARCS",
+    "cp": "83460",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LES MAYONS",
+    "cp": "83340",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LES SALLES SUR VERDON",
+    "cp": "83630",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "LORGUES",
+    "cp": "83510",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "MAZAUGUES",
+    "cp": "83136",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "MEOUNES LES MONTRIEUX",
+    "cp": "83136",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "MOISSAC BELLEVUE",
+    "cp": "83630",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "MONS",
+    "cp": "83440",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "MONTAUROUX",
+    "cp": "83440",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "MONTFERRAT",
+    "cp": "83131",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "MONTFORT SUR ARGENS",
+    "cp": "83570",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "MONTMEYAN",
+    "cp": "83670",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "NANS LES PINS",
+    "cp": "83860",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "NEOULES",
+    "cp": "83136",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "OLLIERES",
+    "cp": "83470",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "OLLIOULES",
+    "cp": "83190",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "PIERREFEU DU VAR",
+    "cp": "83390",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "PIGNANS",
+    "cp": "83790",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "PLAN D AUPS STE BAUME",
+    "cp": "83640",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "PONTEVES",
+    "cp": "83670",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "POURCIEUX",
+    "cp": "83470",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "POURRIERES",
+    "cp": "83910",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "PUGET SUR ARGENS",
+    "cp": "83480",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "PUGET VILLE",
+    "cp": "83390",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "RAMATUELLE",
+    "cp": "83350",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "RAYOL CANADEL SUR MER",
+    "cp": "83820",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "RAYOL CANADEL SUR MER",
+    "cp": "83820",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "REGUSSE",
+    "cp": "83630",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "RIANS",
+    "cp": "83560",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ROCBARON",
+    "cp": "83136",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ROQUEBRUNE SUR ARGENS",
+    "cp": "83380",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ROQUEBRUNE SUR ARGENS",
+    "cp": "83520",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ROUGIERS",
+    "cp": "83170",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "SALERNES",
+    "cp": "83690",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "SANARY SUR MER",
+    "cp": "83110",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "SEILLANS",
+    "cp": "83440",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "SEILLANS",
+    "cp": "83440",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "SEILLONS SOURCE D ARGENS",
+    "cp": "83470",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "SIGNES",
+    "cp": "83870",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "SILLANS LA CASCADE",
+    "cp": "83690",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "SIX FOURS LES PLAGES",
+    "cp": "83140",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "SIX FOURS LES PLAGES",
+    "cp": "83140",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "SIX FOURS LES PLAGES",
+    "cp": "83140",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "SOLLIES PONT",
+    "cp": "83210",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "SOLLIES TOUCAS",
+    "cp": "83210",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "SOLLIES VILLE",
+    "cp": "83210",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST ANTONIN DU VAR",
+    "cp": "83510",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST CYR SUR MER",
+    "cp": "83270",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST CYR SUR MER",
+    "cp": "83270",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST CYR SUR MER",
+    "cp": "83270",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST CYR SUR MER",
+    "cp": "83270",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN",
+    "cp": "83560",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST MANDRIER SUR MER",
+    "cp": "83430",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DE PALLIERES",
+    "cp": "83560",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST MAXIMIN LA STE BAUME",
+    "cp": "83470",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL EN FORET",
+    "cp": "83440",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST RAPHAEL",
+    "cp": "83530",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST RAPHAEL",
+    "cp": "83530",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST RAPHAEL",
+    "cp": "83530",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST RAPHAEL",
+    "cp": "83530",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST RAPHAEL",
+    "cp": "83700",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST RAPHAEL",
+    "cp": "83700",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST TROPEZ",
+    "cp": "83990",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "ST ZACHARIE",
+    "cp": "83640",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "STE ANASTASIE SUR ISSOLE",
+    "cp": "83136",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "STE MAXIME",
+    "cp": "83120",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "TANNERON",
+    "cp": "83440",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "TARADEAU",
+    "cp": "83460",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "TAVERNES",
+    "cp": "83670",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "TOULON",
+    "cp": "83000",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "TOULON",
+    "cp": "83100",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "TOULON",
+    "cp": "83200",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "TOURRETTES",
+    "cp": "83440",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "TOURTOUR",
+    "cp": "83690",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "TOURVES",
+    "cp": "83170",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "TRANS EN PROVENCE",
+    "cp": "83720",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "TRIGANCE",
+    "cp": "83840",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "VARAGES",
+    "cp": "83670",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "VERIGNON",
+    "cp": "83630",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "VIDAUBAN",
+    "cp": "83550",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "VILLECROZE",
+    "cp": "83690",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "VINON SUR VERDON",
+    "cp": "83560",
+    "dept": "83",
+    "region": ""
+  },
+  {
+    "name": "VINS SUR CARAMY",
+    "cp": "83170",
+    "dept": "83",
+    "region": ""
+  }
+]

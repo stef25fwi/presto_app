@@ -1,0 +1,1628 @@
+[
+  {
+    "name": "ALBEPIERRE BREDONS",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ALLANCHE",
+    "cp": "15160",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ALLEUZE",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ALLY",
+    "cp": "15700",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ALLY",
+    "cp": "15700",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ANDELAT",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ANGLARDS DE SALERS",
+    "cp": "15380",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ANGLARDS DE ST FLOUR",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ANTERRIEUX",
+    "cp": "15110",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ANTIGNAC",
+    "cp": "15240",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "APCHON",
+    "cp": "15400",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ARCHES",
+    "cp": "15200",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ARNAC",
+    "cp": "15150",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ARPAJON SUR CERE",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "AURIAC L EGLISE",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "AURILLAC",
+    "cp": "15000",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "AUZERS",
+    "cp": "15240",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "AYRENS",
+    "cp": "15250",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "BADAILHAC",
+    "cp": "15800",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "BARRIAC LES BOSQUETS",
+    "cp": "15700",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "BASSIGNAC",
+    "cp": "15240",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "BEAULIEU",
+    "cp": "15270",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "BESSE",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "BOISSET",
+    "cp": "15600",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "BONNAC",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "BRAGEAC",
+    "cp": "15700",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "BREZONS",
+    "cp": "15230",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CARLAT",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CASSANIOUZE",
+    "cp": "15340",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CAYROLS",
+    "cp": "15290",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CELLES",
+    "cp": "15170",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CELOUX",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CEZENS",
+    "cp": "15230",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CHALIERS",
+    "cp": "15320",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CHALINARGUES",
+    "cp": "15170",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CHALVIGNAC",
+    "cp": "15200",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CHAMPAGNAC",
+    "cp": "15350",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CHAMPS SUR TARENTAINE MARCHAL",
+    "cp": "15270",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CHAMPS SUR TARENTAINE MARCHAL",
+    "cp": "15270",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CHANTERELLE",
+    "cp": "15190",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CHARMENSAC",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CHAUDES AIGUES",
+    "cp": "15110",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CHAUSSENAC",
+    "cp": "15700",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CHAVAGNAC",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CHAZELLES",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CHEYLADE",
+    "cp": "15400",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CLAVIERES",
+    "cp": "15320",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "COLLANDRES",
+    "cp": "15400",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "COLTINES",
+    "cp": "15170",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CONDAT",
+    "cp": "15190",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "COREN",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CRANDELLES",
+    "cp": "15250",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CROS DE MONTVERT",
+    "cp": "15150",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CROS DE RONESQUE",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "CUSSAC",
+    "cp": "15430",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "DEUX VERGES",
+    "cp": "15110",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "DIENNE",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "DRUGEAC",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ESCORAILLES",
+    "cp": "15700",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ESPINASSE",
+    "cp": "15110",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "FERRIERES ST MARY",
+    "cp": "15170",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "FONTANGES",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "FREIX ANGLARDS",
+    "cp": "15310",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "FRIDEFONT",
+    "cp": "15110",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "GIOU DE MAMOU",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "GIRGOLS",
+    "cp": "15310",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "GLENAT",
+    "cp": "15150",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "GOURDIEGES",
+    "cp": "15230",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "JABRUN",
+    "cp": "15110",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "JALEYRAC",
+    "cp": "15200",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "JOU SOUS MONJOU",
+    "cp": "15800",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "JOURSAC",
+    "cp": "15170",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "JUNHAC",
+    "cp": "15120",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "JUSSAC",
+    "cp": "15250",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE D ALAGNON",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE LAURENT",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LA MONSELIE",
+    "cp": "15240",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LA SEGALASSIERE",
+    "cp": "15290",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LA TRINITAT",
+    "cp": "15110",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LABESSERETTE",
+    "cp": "15120",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LABROUSSE",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LACAPELLE BARRES",
+    "cp": "15230",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LACAPELLE DEL FRAISSE",
+    "cp": "15120",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LACAPELLE VIESCAMP",
+    "cp": "15150",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LADINHAC",
+    "cp": "15120",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LAFEUILLADE EN VEZIE",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LANDEYRAT",
+    "cp": "15160",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LANOBRE",
+    "cp": "15270",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LANOBRE",
+    "cp": "15270",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LAPEYRUGUE",
+    "cp": "15120",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LAROQUEBROU",
+    "cp": "15150",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LAROQUEVIEILLE",
+    "cp": "15250",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LASCELLE",
+    "cp": "15590",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LASTIC",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LAURIE",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LAVEISSENET",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LAVEISSIERE",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LAVEISSIERE",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LAVEISSIERE",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LAVIGERIE",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LE CLAUX",
+    "cp": "15400",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LE FALGOUX",
+    "cp": "15380",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LE FAU",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LE MONTEIL",
+    "cp": "15240",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LE ROUGET PERS",
+    "cp": "15290",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LE ROUGET PERS",
+    "cp": "15290",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LE TRIOULOU",
+    "cp": "15600",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LE VAULMIER",
+    "cp": "15380",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LE VIGEAN",
+    "cp": "15200",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LES TERNES",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LEUCAMP",
+    "cp": "15120",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LEYNHAC",
+    "cp": "15600",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LIEUTADES",
+    "cp": "15110",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LORCIERES",
+    "cp": "15320",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "LUGARDE",
+    "cp": "15190",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MADIC",
+    "cp": "15210",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MALBO",
+    "cp": "15230",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MANDAILLES ST JULIEN",
+    "cp": "15590",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MANDAILLES ST JULIEN",
+    "cp": "15590",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MARCENAT",
+    "cp": "15190",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MARCHASTEL",
+    "cp": "15400",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MARCOLES",
+    "cp": "15220",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MARMANHAC",
+    "cp": "15250",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MASSIAC",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MAURIAC",
+    "cp": "15200",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MAURINES",
+    "cp": "15110",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MAURS",
+    "cp": "15600",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MEALLET",
+    "cp": "15200",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MENET",
+    "cp": "15400",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MENTIERES",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MOLEDES",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MOLOMPIZE",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MONTBOUDIF",
+    "cp": "15190",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MONTCHAMP",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MONTGRELEIX",
+    "cp": "15190",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MONTMURAT",
+    "cp": "15600",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MONTSALVY",
+    "cp": "15120",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MONTVERT",
+    "cp": "15150",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MOUSSAGES",
+    "cp": "15380",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MURAT",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "MURAT",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "NARNHAC",
+    "cp": "15230",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "NAUCELLES",
+    "cp": "15250",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "NEUSSARGUES MOISSAC",
+    "cp": "15170",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "NEUVEGLISE SUR TRUYERE",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "NEUVEGLISE SUR TRUYERE",
+    "cp": "15260",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "NEUVEGLISE SUR TRUYERE",
+    "cp": "15260",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "NEUVEGLISE SUR TRUYERE",
+    "cp": "15260",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "NIEUDAN",
+    "cp": "15150",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "OMPS",
+    "cp": "15290",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PAILHEROLS",
+    "cp": "15800",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PARLAN",
+    "cp": "15290",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PAULHAC",
+    "cp": "15430",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PAULHENC",
+    "cp": "15230",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PEYRUSSE",
+    "cp": "15170",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PIERREFORT",
+    "cp": "15230",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PLEAUX",
+    "cp": "15700",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PLEAUX",
+    "cp": "15700",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PLEAUX",
+    "cp": "15700",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PLEAUX",
+    "cp": "15700",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "POLMINHAC",
+    "cp": "15800",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PRADIERS",
+    "cp": "15160",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PRUNET",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PUYCAPEL",
+    "cp": "15340",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "PUYCAPEL",
+    "cp": "15340",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "QUEZAC",
+    "cp": "15600",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "RAGEADE",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "RAULHAC",
+    "cp": "15800",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "REILHAC",
+    "cp": "15250",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "REZENTIERES",
+    "cp": "15170",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "RIOM ES MONTAGNES",
+    "cp": "15400",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ROANNES ST MARY",
+    "cp": "15220",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ROFFIAC",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ROUFFIAC",
+    "cp": "15150",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ROUMEGOUX",
+    "cp": "15290",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ROUZIERS",
+    "cp": "15600",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "RUYNES EN MARGERIDE",
+    "cp": "15320",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "SAIGNES",
+    "cp": "15240",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "SALERS",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "SALINS",
+    "cp": "15200",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "SANSAC DE MARMIESSE",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "SANSAC VEINAZES",
+    "cp": "15120",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "SAUVAT",
+    "cp": "15240",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "SEGUR LES VILLAS",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "SENEZERGUES",
+    "cp": "15340",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "SIRAN",
+    "cp": "15150",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "SOULAGES",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "SOURNIAC",
+    "cp": "15200",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST AMANDIN",
+    "cp": "15190",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST ANTOINE",
+    "cp": "15220",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET DE CONDAT",
+    "cp": "15190",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET DE SALERS",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST CERNIN",
+    "cp": "15310",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST CHAMANT",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST CIRGUES DE JORDANNE",
+    "cp": "15590",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST CIRGUES DE MALBERT",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST CLEMENT",
+    "cp": "15800",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST CONSTANT FOURNOULES",
+    "cp": "15600",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST CONSTANT FOURNOULES",
+    "cp": "15600",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE CANTALES",
+    "cp": "15150",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE DE CARLAT",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE DE CHOMEIL",
+    "cp": "15400",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE DE MAURS",
+    "cp": "15600",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST FLOUR",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST GERONS",
+    "cp": "15150",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST HIPPOLYTE",
+    "cp": "15400",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST ILLIDE",
+    "cp": "15310",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST JACQUES DES BLATS",
+    "cp": "15800",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN DE TOURSAC",
+    "cp": "15600",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST MAMET LA SALVETAT",
+    "cp": "15220",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIAL",
+    "cp": "15110",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN CANTALES",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN SOUS VIGOUROUX",
+    "cp": "15230",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN VALMEROUX",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN VALMEROUX",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST MARY LE PLAIN",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL DE SALERS",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL DES LANDES",
+    "cp": "15250",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE",
+    "cp": "15350",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST PONCY",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST PROJET DE SALERS",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST REMY DE CHAUDES AIGUES",
+    "cp": "15110",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST SANTIN CANTALES",
+    "cp": "15150",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST SANTIN DE MAURS",
+    "cp": "15600",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST SATURNIN",
+    "cp": "15190",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST SAURY",
+    "cp": "15290",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST SIMON",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST URCIZE",
+    "cp": "15110",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST VICTOR",
+    "cp": "15150",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "ST VINCENT DE SALERS",
+    "cp": "15380",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "STE ANASTASIE",
+    "cp": "15170",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "STE EULALIE",
+    "cp": "15140",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE",
+    "cp": "15230",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "TALIZAT",
+    "cp": "15170",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "TANAVELLE",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "TEISSIERES DE CORNET",
+    "cp": "15250",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "TEISSIERES LES BOULIES",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "THIEZAC",
+    "cp": "15800",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "TIVIERS",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "TOURNEMIRE",
+    "cp": "15310",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "TREMOUILLE",
+    "cp": "15270",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "TRIZAC",
+    "cp": "15400",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "USSEL",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VABRES",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VAL D ARCOMIE",
+    "cp": "15320",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VAL D ARCOMIE",
+    "cp": "15320",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VAL D ARCOMIE",
+    "cp": "15320",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VAL D ARCOMIE",
+    "cp": "15320",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VAL D ARCOMIE",
+    "cp": "15320",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VALETTE",
+    "cp": "15400",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VALJOUZE",
+    "cp": "15170",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VALUEJOLS",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VEBRET",
+    "cp": "15240",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VEDRINES ST LOUP",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VELZIC",
+    "cp": "15590",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VERNOLS",
+    "cp": "15160",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VEYRIERES",
+    "cp": "15350",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VEZAC",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VEZE",
+    "cp": "15160",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VEZELS ROUSSY",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VIC SUR CERE",
+    "cp": "15800",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VIEILLESPESSE",
+    "cp": "15500",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VIEILLEVIE",
+    "cp": "15120",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VILLEDIEU",
+    "cp": "15100",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VIRARGUES",
+    "cp": "15300",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "VITRAC",
+    "cp": "15220",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "YDES",
+    "cp": "15210",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "YOLET",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "YTRAC",
+    "cp": "15000",
+    "dept": "15",
+    "region": ""
+  },
+  {
+    "name": "YTRAC",
+    "cp": "15130",
+    "dept": "15",
+    "region": ""
+  }
+]

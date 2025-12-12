@@ -1,0 +1,2048 @@
+[
+  {
+    "name": "AFFOUX",
+    "cp": "69170",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "AIGUEPERSE",
+    "cp": "69790",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ALBIGNY SUR SAONE",
+    "cp": "69250",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ALIX",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "AMBERIEUX",
+    "cp": "69480",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "AMPLEPUIS",
+    "cp": "69550",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "AMPLEPUIS",
+    "cp": "69550",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "AMPUIS",
+    "cp": "69420",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ANCY",
+    "cp": "69490",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ANSE",
+    "cp": "69480",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ARNAS",
+    "cp": "69400",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "AVEIZE",
+    "cp": "69610",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "AZOLETTE",
+    "cp": "69790",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BAGNOLS",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BEAUJEU",
+    "cp": "69430",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BEAUJEU",
+    "cp": "69430",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BEAUVALLON",
+    "cp": "69700",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BEAUVALLON",
+    "cp": "69700",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BEAUVALLON",
+    "cp": "69700",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BELLEVILLE EN BEAUJOLAIS",
+    "cp": "69220",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BELLEVILLE EN BEAUJOLAIS",
+    "cp": "69220",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BELMONT D AZERGUES",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BESSENAY",
+    "cp": "69690",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BESSENAY",
+    "cp": "69690",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BESSENAY",
+    "cp": "69690",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BESSENAY",
+    "cp": "69690",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BESSENAY",
+    "cp": "69690",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BESSENAY",
+    "cp": "69690",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BIBOST",
+    "cp": "69690",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BIBOST",
+    "cp": "69690",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BLACE",
+    "cp": "69460",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BRIGNAIS",
+    "cp": "69530",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BRIGNAIS",
+    "cp": "69530",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BRINDAS",
+    "cp": "69126",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BRON",
+    "cp": "69500",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BRULLIOLES",
+    "cp": "69690",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BRUSSIEU",
+    "cp": "69690",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "BULLY",
+    "cp": "69210",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CAILLOUX SUR FONTAINES",
+    "cp": "69270",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CALUIRE ET CUIRE",
+    "cp": "69300",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CENVES",
+    "cp": "69840",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CERCIE",
+    "cp": "69220",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHABANIERE",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHABANIERE",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHABANIERE",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHABANIERE",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHABANIERE",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHAMBOST ALLIERES",
+    "cp": "69870",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHAMBOST LONGESSAIGNE",
+    "cp": "69770",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHAMELET",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHAMPAGNE AU MONT D OR",
+    "cp": "69410",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHAPONNAY",
+    "cp": "69970",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHAPONOST",
+    "cp": "69630",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHARBONNIERES LES BAINS",
+    "cp": "69260",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHARENTAY",
+    "cp": "69220",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHARLY",
+    "cp": "69390",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHARNAY",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHASSELAY",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHASSIEU",
+    "cp": "69680",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHATILLON",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHAUSSAN",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHAUSSAN",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHAZAY D AZERGUES",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHENAS",
+    "cp": "69840",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHENELETTE",
+    "cp": "69430",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHESSY",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHEVINAY",
+    "cp": "69210",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CHIROUBLES",
+    "cp": "69115",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CIVRIEUX D AZERGUES",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CLAVEISOLLES",
+    "cp": "69870",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COGNY",
+    "cp": "69640",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COISE",
+    "cp": "69590",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COLLONGES AU MONT D OR",
+    "cp": "69660",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COLOMBIER SAUGNIEU",
+    "cp": "69124",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COLOMBIER SAUGNIEU",
+    "cp": "69124",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COLOMBIER SAUGNIEU",
+    "cp": "69125",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COLOMBIER SAUGNIEU",
+    "cp": "69125",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COMMUNAY",
+    "cp": "69360",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CONDRIEU",
+    "cp": "69420",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CORBAS",
+    "cp": "69960",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CORCELLES EN BEAUJOLAIS",
+    "cp": "69220",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COURS",
+    "cp": "69470",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COURS",
+    "cp": "69470",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COURS",
+    "cp": "69470",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COURS",
+    "cp": "69470",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COURZIEU",
+    "cp": "69690",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "COUZON AU MONT D OR",
+    "cp": "69270",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CRAPONNE",
+    "cp": "69290",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CUBLIZE",
+    "cp": "69550",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "CURIS AU MONT D OR",
+    "cp": "69250",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DARDILLY",
+    "cp": "69570",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DECINES CHARPIEU",
+    "cp": "69150",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DECINES CHARPIEU",
+    "cp": "69150",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DENICE",
+    "cp": "69640",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DEUX GROSNES",
+    "cp": "69430",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DEUX GROSNES",
+    "cp": "69860",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DEUX GROSNES",
+    "cp": "69860",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DEUX GROSNES",
+    "cp": "69860",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DEUX GROSNES",
+    "cp": "69860",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DEUX GROSNES",
+    "cp": "69860",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DEUX GROSNES",
+    "cp": "69860",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DIEME",
+    "cp": "69170",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DOMMARTIN",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DRACE",
+    "cp": "69220",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "DUERNE",
+    "cp": "69850",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ECHALAS",
+    "cp": "69700",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ECHALAS",
+    "cp": "69700",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ECULLY",
+    "cp": "69130",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "EMERINGES",
+    "cp": "69840",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "EVEUX",
+    "cp": "69210",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "FEYZIN",
+    "cp": "69320",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "FLEURIE",
+    "cp": "69820",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "FLEURIEU SUR SAONE",
+    "cp": "69250",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "FLEURIEUX SUR L ARBRESLE",
+    "cp": "69210",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "FONTAINES ST MARTIN",
+    "cp": "69270",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "FONTAINES SUR SAONE",
+    "cp": "69270",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "FRANCHEVILLE",
+    "cp": "69340",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "FRONTENAS",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "GENAS",
+    "cp": "69740",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "GENAY",
+    "cp": "69730",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "GIVORS",
+    "cp": "69700",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "GIVORS",
+    "cp": "69700",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "GLEIZE",
+    "cp": "69400",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "GRANDRIS",
+    "cp": "69870",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "GREZIEU LA VARENNE",
+    "cp": "69290",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "GREZIEU LE MARCHE",
+    "cp": "69610",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "GRIGNY SUR RHONE",
+    "cp": "69520",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "HAUTE RIVOIRE",
+    "cp": "69610",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "IRIGNY",
+    "cp": "69540",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "JONAGE",
+    "cp": "69330",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "JONS",
+    "cp": "69330",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "JOUX",
+    "cp": "69170",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "JULIENAS",
+    "cp": "69840",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "JULLIE",
+    "cp": "69840",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "L ARBRESLE",
+    "cp": "69210",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE SUR COISE",
+    "cp": "69590",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LA MULATIERE",
+    "cp": "69350",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LA TOUR DE SALVAGNY",
+    "cp": "69890",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LACENAS",
+    "cp": "69640",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LACHASSAGNE",
+    "cp": "69480",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LAMURE SUR AZERGUES",
+    "cp": "69870",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LANCIE",
+    "cp": "69220",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LANTIGNIE",
+    "cp": "69430",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LARAJASSE",
+    "cp": "69590",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LARAJASSE",
+    "cp": "69590",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LE BREUIL",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LE PERREON",
+    "cp": "69460",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LEGNY",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LENTILLY",
+    "cp": "69210",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LES ARDILLATS",
+    "cp": "69430",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LES CHERES",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LES HAIES",
+    "cp": "69420",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LES HALLES",
+    "cp": "69610",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LES SAUVAGES",
+    "cp": "69170",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LETRA",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LETRA",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LIMAS",
+    "cp": "69400",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LIMONEST",
+    "cp": "69760",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LISSIEU",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LOIRE SUR RHONE",
+    "cp": "69700",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LONGES",
+    "cp": "69420",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LONGESSAIGNE",
+    "cp": "69770",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LOZANNE",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LUCENAY",
+    "cp": "69480",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LYON 01",
+    "cp": "69001",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LYON 02",
+    "cp": "69002",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LYON 03",
+    "cp": "69003",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LYON 04",
+    "cp": "69004",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LYON 05",
+    "cp": "69005",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LYON 06",
+    "cp": "69006",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LYON 07",
+    "cp": "69007",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LYON 08",
+    "cp": "69008",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "LYON 09",
+    "cp": "69009",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MARCHAMPT",
+    "cp": "69430",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MARCILLY D AZERGUES",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MARCY",
+    "cp": "69480",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MARCY L ETOILE",
+    "cp": "69280",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MARENNES",
+    "cp": "69970",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MEAUX LA MONTAGNE",
+    "cp": "69550",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MESSIMY",
+    "cp": "69510",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MEYS",
+    "cp": "69610",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MEYZIEU",
+    "cp": "69330",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MILLERY",
+    "cp": "69390",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MIONS",
+    "cp": "69780",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MOIRE",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MONTAGNY",
+    "cp": "69700",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MONTAGNY",
+    "cp": "69700",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MONTANAY",
+    "cp": "69250",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MONTMELAS ST SORLIN",
+    "cp": "69640",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MONTROMANT",
+    "cp": "69610",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MONTROTTIER",
+    "cp": "69770",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MORANCE",
+    "cp": "69480",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MORANCE",
+    "cp": "69480",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MORNANT",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "MORNANT",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE SUR SAONE",
+    "cp": "69250",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ODENAS",
+    "cp": "69460",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ORLIENAS",
+    "cp": "69530",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ORLIENAS",
+    "cp": "69530",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "OULLINS PIERRE BENITE",
+    "cp": "69310",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "OULLINS PIERRE BENITE",
+    "cp": "69600",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "POLEYMIEUX AU MONT D OR",
+    "cp": "69250",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "POLLIONNAY",
+    "cp": "69290",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "POMEYS",
+    "cp": "69590",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "POMMIERS",
+    "cp": "69480",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "PORTE DES PIERRES DOREES",
+    "cp": "69400",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "PORTE DES PIERRES DOREES",
+    "cp": "69400",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "PORTE DES PIERRES DOREES",
+    "cp": "69400",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "PORTE DES PIERRES DOREES",
+    "cp": "69640",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "POULE LES ECHARMEAUX",
+    "cp": "69870",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "POULE LES ECHARMEAUX",
+    "cp": "69870",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "PROPIERES",
+    "cp": "69790",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "PUSIGNAN",
+    "cp": "69330",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "QUINCIE EN BEAUJOLAIS",
+    "cp": "69430",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "QUINCIEUX",
+    "cp": "69650",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "QUINCIEUX",
+    "cp": "69650",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "RANCHAL",
+    "cp": "69470",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "REGNIE DURETTE",
+    "cp": "69430",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "REGNIE DURETTE",
+    "cp": "69430",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "RILLIEUX LA PAPE",
+    "cp": "69140",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "RILLIEUX LA PAPE",
+    "cp": "69140",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "RIVERIE",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "RIVOLET",
+    "cp": "69640",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "RIVOLET",
+    "cp": "69640",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ROCHETAILLEE SUR SAONE",
+    "cp": "69270",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "RONNO",
+    "cp": "69550",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "RONTALON",
+    "cp": "69510",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "SAIN BEL",
+    "cp": "69210",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "SALLES ARBUISSONNAS EN BEAUJOLAIS",
+    "cp": "69460",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "SALLES ARBUISSONNAS EN BEAUJOLAIS",
+    "cp": "69460",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "SARCEY",
+    "cp": "69490",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "SATHONAY CAMP",
+    "cp": "69580",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "SATHONAY VILLAGE",
+    "cp": "69580",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "SAVIGNY",
+    "cp": "69210",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "SEREZIN DU RHONE",
+    "cp": "69360",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "SIMANDRES",
+    "cp": "69360",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "SOLAIZE",
+    "cp": "69360",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "SOUCIEU EN JARREST",
+    "cp": "69510",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "SOURCIEUX LES MINES",
+    "cp": "69210",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "SOUZY",
+    "cp": "69610",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE LA COTE",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST APPOLINAIRE",
+    "cp": "69170",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET DE MURE",
+    "cp": "69720",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET DES BRUYERES",
+    "cp": "69790",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET LE TRONCY",
+    "cp": "69870",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST CLEMENT DE VERS",
+    "cp": "69790",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST CLEMENT LES PLACES",
+    "cp": "69930",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST CLEMENT SUR VALSONNE",
+    "cp": "69170",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST CYR AU MONT D OR",
+    "cp": "69450",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST CYR LE CHATOUX",
+    "cp": "69870",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST CYR SUR LE RHONE",
+    "cp": "69560",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST DIDIER AU MONT D OR",
+    "cp": "69370",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST DIDIER SUR BEAUJEU",
+    "cp": "69430",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE DES OULLIERES",
+    "cp": "69460",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE LA VARENNE",
+    "cp": "69460",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST FONS",
+    "cp": "69190",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST FORGEUX",
+    "cp": "69490",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST GENIS L ARGENTIERE",
+    "cp": "69610",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST GENIS LAVAL",
+    "cp": "69230",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST GENIS LES OLLIERES",
+    "cp": "69290",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES DE RENEINS",
+    "cp": "69830",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN AU MONT D OR",
+    "cp": "69650",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN NUELLES",
+    "cp": "69210",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN NUELLES",
+    "cp": "69210",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST IGNY DE VERS",
+    "cp": "69790",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DES VIGNES",
+    "cp": "69380",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN LA BUSSIERE",
+    "cp": "69550",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN",
+    "cp": "69640",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN",
+    "cp": "69640",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN SUR BIBOST",
+    "cp": "69690",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST JUST D AVRAY",
+    "cp": "69870",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST LAGER",
+    "cp": "69220",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT D AGNY",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT D AGNY",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT DE CHAMOUSSET",
+    "cp": "69930",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT DE MURE",
+    "cp": "69720",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST MARCEL L ECLAIRE",
+    "cp": "69170",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN EN HAUT",
+    "cp": "69850",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN EN HAUT",
+    "cp": "69850",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST NIZIER D AZERGUES",
+    "cp": "69870",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DE CHANDIEU",
+    "cp": "69780",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE LA PALUD",
+    "cp": "69210",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST PRIEST",
+    "cp": "69800",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST ROMAIN AU MONT D OR",
+    "cp": "69270",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST ROMAIN DE POPEY",
+    "cp": "69490",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST ROMAIN EN GAL",
+    "cp": "69560",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST ROMAIN EN GAL",
+    "cp": "69560",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST ROMAIN EN GIER",
+    "cp": "69700",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST SYMPHORIEN D OZON",
+    "cp": "69360",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST SYMPHORIEN SUR COISE",
+    "cp": "69590",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST VERAND",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "ST VINCENT DE REINS",
+    "cp": "69240",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "STE CATHERINE",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "STE CATHERINE",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "STE CATHERINE",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "STE COLOMBE",
+    "cp": "69560",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "STE CONSORCE",
+    "cp": "69280",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "STE FOY L ARGENTIERE",
+    "cp": "69610",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "STE FOY LES LYON",
+    "cp": "69110",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "STE PAULE",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "TALUYERS",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "TALUYERS",
+    "cp": "69440",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "TAPONAS",
+    "cp": "69220",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "TARARE",
+    "cp": "69170",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "TASSIN LA DEMI LUNE",
+    "cp": "69160",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "TERNAND",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "TERNAY",
+    "cp": "69360",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "THEIZE",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "THIZY LES BOURGS",
+    "cp": "69240",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "THIZY LES BOURGS",
+    "cp": "69240",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "THIZY LES BOURGS",
+    "cp": "69240",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "THIZY LES BOURGS",
+    "cp": "69240",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "THIZY LES BOURGS",
+    "cp": "69240",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "THURINS",
+    "cp": "69510",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "TOUSSIEU",
+    "cp": "69780",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "TREVES",
+    "cp": "69420",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "TUPIN ET SEMONS",
+    "cp": "69420",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VAL D OINGT",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VAL D OINGT",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VAL D OINGT",
+    "cp": "69620",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VALSONNE",
+    "cp": "69170",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VAUGNERAY",
+    "cp": "69670",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VAUGNERAY",
+    "cp": "69670",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VAULX EN VELIN",
+    "cp": "69120",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VAUX EN BEAUJOLAIS",
+    "cp": "69460",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VAUXRENARD",
+    "cp": "69820",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VENISSIEUX",
+    "cp": "69200",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VERNAISON",
+    "cp": "69390",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VERNAY",
+    "cp": "69430",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VILLE SUR JARNIOUX",
+    "cp": "69640",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VILLECHENEVE",
+    "cp": "69770",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VILLEFRANCHE SUR SAONE",
+    "cp": "69400",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VILLEURBANNE",
+    "cp": "69100",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VILLIE MORGON",
+    "cp": "69910",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VINDRY SUR TURDINE",
+    "cp": "69490",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VINDRY SUR TURDINE",
+    "cp": "69490",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VINDRY SUR TURDINE",
+    "cp": "69490",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VINDRY SUR TURDINE",
+    "cp": "69490",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VOURLES",
+    "cp": "69390",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "VOURLES",
+    "cp": "69390",
+    "dept": "69",
+    "region": ""
+  },
+  {
+    "name": "YZERON",
+    "cp": "69510",
+    "dept": "69",
+    "region": ""
+  }
+]
