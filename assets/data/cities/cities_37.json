@@ -475,12 +475,6 @@
   },
   {
     "name": "COTEAUX SUR LOIRE",
-    "cp": "37130",
-    "dept": "37",
-    "region": ""
-  },
-  {
-    "name": "COTEAUX SUR LOIRE",
     "cp": "37140",
     "dept": "37",
     "region": ""
@@ -752,12 +746,6 @@
   {
     "name": "LA VILLE AUX DAMES",
     "cp": "37700",
-    "dept": "37",
-    "region": ""
-  },
-  {
-    "name": "LANGEAIS",
-    "cp": "37130",
     "dept": "37",
     "region": ""
   },
@@ -1495,12 +1483,6 @@
   },
   {
     "name": "SUBLAINES",
-    "cp": "37310",
-    "dept": "37",
-    "region": ""
-  },
-  {
-    "name": "TAUXIGNY ST BAULD",
     "cp": "37310",
     "dept": "37",
     "region": ""

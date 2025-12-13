@@ -156,18 +156,6 @@
     "region": ""
   },
   {
-    "name": "BELSENTES",
-    "cp": "07160",
-    "dept": "07",
-    "region": ""
-  },
-  {
-    "name": "BERRIAS ET CASTELJAU",
-    "cp": "07460",
-    "dept": "07",
-    "region": ""
-  },
-  {
     "name": "BERRIAS ET CASTELJAU",
     "cp": "07460",
     "dept": "07",
@@ -876,24 +864,6 @@
     "region": ""
   },
   {
-    "name": "LES VANS",
-    "cp": "07140",
-    "dept": "07",
-    "region": ""
-  },
-  {
-    "name": "LES VANS",
-    "cp": "07140",
-    "dept": "07",
-    "region": ""
-  },
-  {
-    "name": "LES VANS",
-    "cp": "07140",
-    "dept": "07",
-    "region": ""
-  },
-  {
     "name": "LESPERON",
     "cp": "07660",
     "dept": "07",
@@ -920,18 +890,6 @@
   {
     "name": "LYAS",
     "cp": "07000",
-    "dept": "07",
-    "region": ""
-  },
-  {
-    "name": "MALARCE SUR LA THINES",
-    "cp": "07140",
-    "dept": "07",
-    "region": ""
-  },
-  {
-    "name": "MALARCE SUR LA THINES",
-    "cp": "07140",
     "dept": "07",
     "region": ""
   },
@@ -1308,18 +1266,6 @@
     "region": ""
   },
   {
-    "name": "ST AGREVE",
-    "cp": "07320",
-    "dept": "07",
-    "region": ""
-  },
-  {
-    "name": "ST ALBAN AURIOLLES",
-    "cp": "07120",
-    "dept": "07",
-    "region": ""
-  },
-  {
     "name": "ST ALBAN AURIOLLES",
     "cp": "07120",
     "dept": "07",
@@ -1603,12 +1549,6 @@
   },
   {
     "name": "ST JULIEN D INTRES",
-    "cp": "07310",
-    "dept": "07",
-    "region": ""
-  },
-  {
-    "name": "ST JULIEN D INTRES",
     "cp": "07320",
     "dept": "07",
     "region": ""
@@ -1662,12 +1602,6 @@
     "region": ""
   },
   {
-    "name": "ST LAURENT BAINS LAVAL D AURELLE",
-    "cp": "07590",
-    "dept": "07",
-    "region": ""
-  },
-  {
     "name": "ST LAURENT DU PAPE",
     "cp": "07800",
     "dept": "07",
@@ -1706,12 +1640,6 @@
   {
     "name": "ST MARTIN DE VALAMAS",
     "cp": "07310",
-    "dept": "07",
-    "region": ""
-  },
-  {
-    "name": "ST MARTIN SUR LAVEZON",
-    "cp": "07400",
     "dept": "07",
     "region": ""
   },
@@ -1790,12 +1718,6 @@
   {
     "name": "ST PIERRE LA ROCHE",
     "cp": "07400",
-    "dept": "07",
-    "region": ""
-  },
-  {
-    "name": "ST PIERRE ST JEAN",
-    "cp": "07140",
     "dept": "07",
     "region": ""
   },

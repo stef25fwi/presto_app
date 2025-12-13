@@ -186,12 +186,6 @@
     "region": ""
   },
   {
-    "name": "BEAUVOISIN",
-    "cp": "30640",
-    "dept": "30",
-    "region": ""
-  },
-  {
     "name": "BELLEGARDE",
     "cp": "30127",
     "dept": "30",
@@ -206,12 +200,6 @@
   {
     "name": "BERNIS",
     "cp": "30620",
-    "dept": "30",
-    "region": ""
-  },
-  {
-    "name": "BESSEGES",
-    "cp": "30160",
     "dept": "30",
     "region": ""
   },
@@ -302,12 +290,6 @@
   {
     "name": "BRANOUX LES TAILLADES",
     "cp": "30110",
-    "dept": "30",
-    "region": ""
-  },
-  {
-    "name": "BREAU MARS",
-    "cp": "30120",
     "dept": "30",
     "region": ""
   },
@@ -440,12 +422,6 @@
   {
     "name": "CHAMBORIGAUD",
     "cp": "30530",
-    "dept": "30",
-    "region": ""
-  },
-  {
-    "name": "CHUSCLAN",
-    "cp": "30200",
     "dept": "30",
     "region": ""
   },
@@ -726,12 +702,6 @@
     "region": ""
   },
   {
-    "name": "GENOLHAC",
-    "cp": "30450",
-    "dept": "30",
-    "region": ""
-  },
-  {
     "name": "GOUDARGUES",
     "cp": "30630",
     "dept": "30",
@@ -798,12 +768,6 @@
     "region": ""
   },
   {
-    "name": "LA GRAND COMBE",
-    "cp": "30110",
-    "dept": "30",
-    "region": ""
-  },
-  {
     "name": "LA ROQUE SUR CEZE",
     "cp": "30200",
     "dept": "30",
@@ -852,12 +816,6 @@
     "region": ""
   },
   {
-    "name": "LAUDUN L ARDOISE",
-    "cp": "30290",
-    "dept": "30",
-    "region": ""
-  },
-  {
     "name": "LAVAL PRADEL",
     "cp": "30110",
     "dept": "30",
@@ -878,12 +836,6 @@
   {
     "name": "LE GARN",
     "cp": "30760",
-    "dept": "30",
-    "region": ""
-  },
-  {
-    "name": "LE GRAU DU ROI",
-    "cp": "30240",
     "dept": "30",
     "region": ""
   },
@@ -1202,12 +1154,6 @@
   {
     "name": "NIMES",
     "cp": "30000",
-    "dept": "30",
-    "region": ""
-  },
-  {
-    "name": "NIMES",
-    "cp": "30900",
     "dept": "30",
     "region": ""
   },
@@ -1944,12 +1890,6 @@
     "region": ""
   },
   {
-    "name": "ST SAUVEUR CAMPRIEU",
-    "cp": "30750",
-    "dept": "30",
-    "region": ""
-  },
-  {
     "name": "ST SEBASTIEN D AIGREFEUILLE",
     "cp": "30140",
     "dept": "30",
@@ -2010,12 +1950,6 @@
     "region": ""
   },
   {
-    "name": "SUMENE",
-    "cp": "30440",
-    "dept": "30",
-    "region": ""
-  },
-  {
     "name": "TAVEL",
     "cp": "30126",
     "dept": "30",
@@ -2030,12 +1964,6 @@
   {
     "name": "THEZIERS",
     "cp": "30390",
-    "dept": "30",
-    "region": ""
-  },
-  {
-    "name": "THOIRAS CORBES",
-    "cp": "30140",
     "dept": "30",
     "region": ""
   },
@@ -2088,24 +2016,6 @@
     "region": ""
   },
   {
-    "name": "VAL D AIGOUAL",
-    "cp": "30570",
-    "dept": "30",
-    "region": ""
-  },
-  {
-    "name": "VAL D AIGOUAL",
-    "cp": "30570",
-    "dept": "30",
-    "region": ""
-  },
-  {
-    "name": "VAL D AIGOUAL",
-    "cp": "30570",
-    "dept": "30",
-    "region": ""
-  },
-  {
     "name": "VALLABREGUES",
     "cp": "30300",
     "dept": "30",
@@ -2126,24 +2036,6 @@
   {
     "name": "VALLIGUIERES",
     "cp": "30210",
-    "dept": "30",
-    "region": ""
-  },
-  {
-    "name": "VAUVERT",
-    "cp": "30600",
-    "dept": "30",
-    "region": ""
-  },
-  {
-    "name": "VAUVERT",
-    "cp": "30600",
-    "dept": "30",
-    "region": ""
-  },
-  {
-    "name": "VAUVERT",
-    "cp": "30600",
     "dept": "30",
     "region": ""
   },

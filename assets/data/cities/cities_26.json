@@ -48,12 +48,6 @@
     "region": ""
   },
   {
-    "name": "ANDANCETTE",
-    "cp": "26140",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "ANNEYRON",
     "cp": "26140",
     "dept": "26",
@@ -270,18 +264,6 @@
     "region": ""
   },
   {
-    "name": "BOULC",
-    "cp": "26410",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "BOULC",
-    "cp": "26410",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "BOURDEAUX",
     "cp": "26460",
     "dept": "26",
@@ -326,12 +308,6 @@
   {
     "name": "BUIS LES BARONNIES",
     "cp": "26170",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "CHABEUIL",
-    "cp": "26120",
     "dept": "26",
     "region": ""
   },
@@ -408,12 +384,6 @@
     "region": ""
   },
   {
-    "name": "CHARPEY",
-    "cp": "26300",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "CHASTEL ARNAUD",
     "cp": "26340",
     "dept": "26",
@@ -456,18 +426,6 @@
     "region": ""
   },
   {
-    "name": "CHATILLON EN DIOIS",
-    "cp": "26410",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "CHATILLON EN DIOIS",
-    "cp": "26410",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "CHATILLON ST JEAN",
     "cp": "26750",
     "dept": "26",
@@ -480,20 +438,8 @@
     "region": ""
   },
   {
-    "name": "CHATUZANGE LE GOUBET",
-    "cp": "26300",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "CHAUDEBONNE",
     "cp": "26110",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "CHAUVAC LAUX MONTAUX",
-    "cp": "26510",
     "dept": "26",
     "region": ""
   },
@@ -684,12 +630,6 @@
     "region": ""
   },
   {
-    "name": "ETOILE SUR RHONE",
-    "cp": "26800",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "EURRE",
     "cp": "26400",
     "dept": "26",
@@ -710,12 +650,6 @@
   {
     "name": "EYGLUY ESCOULIN",
     "cp": "26400",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "EYMEUX",
-    "cp": "26730",
     "dept": "26",
     "region": ""
   },
@@ -888,12 +822,6 @@
     "region": ""
   },
   {
-    "name": "LA CHAPELLE EN VERCORS",
-    "cp": "26420",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "LA CHARCE",
     "cp": "26470",
     "dept": "26",
@@ -902,12 +830,6 @@
   {
     "name": "LA CHAUDIERE",
     "cp": "26340",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "LA COUCOURDE",
-    "cp": "26740",
     "dept": "26",
     "region": ""
   },
@@ -1026,12 +948,6 @@
     "region": ""
   },
   {
-    "name": "LE CHAFFAL",
-    "cp": "26190",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "LE CHALON",
     "cp": "26350",
     "dept": "26",
@@ -1134,12 +1050,6 @@
     "region": ""
   },
   {
-    "name": "LIVRON SUR DROME",
-    "cp": "26250",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "LORIOL SUR DROME",
     "cp": "26270",
     "dept": "26",
@@ -1214,12 +1124,6 @@
   {
     "name": "MENGLON",
     "cp": "26410",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "MERCUROL VEAUNES",
-    "cp": "26600",
     "dept": "26",
     "region": ""
   },
@@ -1316,12 +1220,6 @@
   {
     "name": "MONTELEGER",
     "cp": "26760",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "MONTELIER",
-    "cp": "26120",
     "dept": "26",
     "region": ""
   },
@@ -1626,12 +1524,6 @@
     "region": ""
   },
   {
-    "name": "RECOUBEAU JANSAC",
-    "cp": "26310",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "REILHANETTE",
     "cp": "26570",
     "dept": "26",
@@ -1652,12 +1544,6 @@
   {
     "name": "RIOMS",
     "cp": "26170",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "ROCHE ST SECRET BECONNE",
-    "cp": "26770",
     "dept": "26",
     "region": ""
   },
@@ -1764,12 +1650,6 @@
     "region": ""
   },
   {
-    "name": "SAILLANS",
-    "cp": "26340",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "SALETTES",
     "cp": "26160",
     "dept": "26",
@@ -1794,19 +1674,7 @@
     "region": ""
   },
   {
-    "name": "SAULCE SUR RHONE",
-    "cp": "26270",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "SAUZET",
-    "cp": "26740",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "SAVASSE",
     "cp": "26740",
     "dept": "26",
     "region": ""
@@ -1836,12 +1704,6 @@
     "region": ""
   },
   {
-    "name": "SOLAURE EN DIOIS",
-    "cp": "26150",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "SOLERIEUX",
     "cp": "26130",
     "dept": "26",
@@ -1856,18 +1718,6 @@
   {
     "name": "SOYANS",
     "cp": "26400",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "ST AGNAN EN VERCORS",
-    "cp": "26420",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "ST AGNAN EN VERCORS",
-    "cp": "26420",
     "dept": "26",
     "region": ""
   },
@@ -1940,12 +1790,6 @@
   {
     "name": "ST GERVAIS SUR ROUBION",
     "cp": "26160",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "ST JEAN DE GALAURE",
-    "cp": "26240",
     "dept": "26",
     "region": ""
   },
@@ -2220,18 +2064,6 @@
     "region": ""
   },
   {
-    "name": "VAL MARAVEL",
-    "cp": "26310",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "VAL MARAVEL",
-    "cp": "26310",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "VALAURIE",
     "cp": "26230",
     "dept": "26",
@@ -2256,18 +2088,6 @@
     "region": ""
   },
   {
-    "name": "VALHERBASSE",
-    "cp": "26350",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "VALHERBASSE",
-    "cp": "26350",
-    "dept": "26",
-    "region": ""
-  },
-  {
     "name": "VALOUSE",
     "cp": "26110",
     "dept": "26",
@@ -2276,12 +2096,6 @@
   {
     "name": "VASSIEUX EN VERCORS",
     "cp": "26420",
-    "dept": "26",
-    "region": ""
-  },
-  {
-    "name": "VAUNAVEYS LA ROCHETTE",
-    "cp": "26400",
     "dept": "26",
     "region": ""
   },

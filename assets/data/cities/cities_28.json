@@ -42,18 +42,6 @@
     "region": ""
   },
   {
-    "name": "ARCISSES",
-    "cp": "28400",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "ARCISSES",
-    "cp": "28400",
-    "dept": "28",
-    "region": ""
-  },
-  {
     "name": "ARDELLES",
     "cp": "28170",
     "dept": "28",
@@ -90,24 +78,6 @@
     "region": ""
   },
   {
-    "name": "AUNEAU BLEURY ST SYMPHORIEN",
-    "cp": "28700",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "AUNEAU BLEURY ST SYMPHORIEN",
-    "cp": "28700",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "AUTHON DU PERCHE",
-    "cp": "28330",
-    "dept": "28",
-    "region": ""
-  },
-  {
     "name": "AUTHON DU PERCHE",
     "cp": "28330",
     "dept": "28",
@@ -116,12 +86,6 @@
   {
     "name": "BAIGNEAUX",
     "cp": "28140",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "BAILLEAU ARMENONVILLE",
-    "cp": "28320",
     "dept": "28",
     "region": ""
   },
@@ -194,12 +158,6 @@
   {
     "name": "BERCHERES LES PIERRES",
     "cp": "28630",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "BERCHERES ST GERMAIN",
-    "cp": "28300",
     "dept": "28",
     "region": ""
   },
@@ -284,12 +242,6 @@
   {
     "name": "BOUGLAINVAL",
     "cp": "28130",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "BOUTIGNY PROUAIS",
-    "cp": "28410",
     "dept": "28",
     "region": ""
   },
@@ -498,54 +450,6 @@
     "region": ""
   },
   {
-    "name": "CLOYES LES TROIS RIVIERES",
-    "cp": "28220",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "CLOYES LES TROIS RIVIERES",
-    "cp": "28220",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "CLOYES LES TROIS RIVIERES",
-    "cp": "28220",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "CLOYES LES TROIS RIVIERES",
-    "cp": "28220",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "CLOYES LES TROIS RIVIERES",
-    "cp": "28220",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "CLOYES LES TROIS RIVIERES",
-    "cp": "28220",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "CLOYES LES TROIS RIVIERES",
-    "cp": "28220",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "CLOYES LES TROIS RIVIERES",
-    "cp": "28220",
-    "dept": "28",
-    "region": ""
-  },
-  {
     "name": "COLTAINVILLE",
     "cp": "28300",
     "dept": "28",
@@ -618,18 +522,6 @@
     "region": ""
   },
   {
-    "name": "CRUCEY VILLAGES",
-    "cp": "28270",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "CRUCEY VILLAGES",
-    "cp": "28270",
-    "dept": "28",
-    "region": ""
-  },
-  {
     "name": "DAMBRON",
     "cp": "28140",
     "dept": "28",
@@ -656,18 +548,6 @@
   {
     "name": "DANCY",
     "cp": "28800",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "DANGEAU",
-    "cp": "28160",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "DANGEAU",
-    "cp": "28160",
     "dept": "28",
     "region": ""
   },
@@ -722,30 +602,6 @@
   {
     "name": "ECROSNES",
     "cp": "28320",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "EOLE EN BEAUCE",
-    "cp": "28150",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "EOLE EN BEAUCE",
-    "cp": "28150",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "EOLE EN BEAUCE",
-    "cp": "28150",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "EOLE EN BEAUCE",
-    "cp": "28150",
     "dept": "28",
     "region": ""
   },
@@ -888,12 +744,6 @@
     "region": ""
   },
   {
-    "name": "GALLARDON",
-    "cp": "28320",
-    "dept": "28",
-    "region": ""
-  },
-  {
     "name": "GARANCIERES EN BEAUCE",
     "cp": "28700",
     "dept": "28",
@@ -955,12 +805,6 @@
   },
   {
     "name": "GOMMERVILLE",
-    "cp": "28310",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "GOMMERVILLE",
     "cp": "28700",
     "dept": "28",
     "region": ""
@@ -968,12 +812,6 @@
   {
     "name": "GOUILLONS",
     "cp": "28310",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "GOUSSAINVILLE",
-    "cp": "28410",
     "dept": "28",
     "region": ""
   },
@@ -1056,24 +894,6 @@
     "region": ""
   },
   {
-    "name": "JANVILLE EN BEAUCE",
-    "cp": "28310",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "JANVILLE EN BEAUCE",
-    "cp": "28310",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "JANVILLE EN BEAUCE",
-    "cp": "28310",
-    "dept": "28",
-    "region": ""
-  },
-  {
     "name": "JAUDRAIS",
     "cp": "28250",
     "dept": "28",
@@ -1088,12 +908,6 @@
   {
     "name": "LA BAZOCHE GOUET",
     "cp": "28330",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "LA BOURDINIERE ST LOUP",
-    "cp": "28360",
     "dept": "28",
     "region": ""
   },
@@ -1308,24 +1122,6 @@
     "region": ""
   },
   {
-    "name": "LES VILLAGES VOVEENS",
-    "cp": "28150",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "LES VILLAGES VOVEENS",
-    "cp": "28150",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "LES VILLAGES VOVEENS",
-    "cp": "28150",
-    "dept": "28",
-    "region": ""
-  },
-  {
     "name": "LETHUIN",
     "cp": "28700",
     "dept": "28",
@@ -1424,18 +1220,6 @@
   {
     "name": "MAGNY",
     "cp": "28120",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "MAILLEBOIS",
-    "cp": "28170",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "MAILLEBOIS",
-    "cp": "28170",
     "dept": "28",
     "region": ""
   },
@@ -1560,12 +1344,6 @@
     "region": ""
   },
   {
-    "name": "MITTAINVILLIERS VERIGNY",
-    "cp": "28190",
-    "dept": "28",
-    "region": ""
-  },
-  {
     "name": "MOINVILLE LA JEULIN",
     "cp": "28700",
     "dept": "28",
@@ -1680,18 +1458,6 @@
     "region": ""
   },
   {
-    "name": "NEUVILLE ST DENIS",
-    "cp": "28310",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "NEUVILLE ST DENIS",
-    "cp": "28310",
-    "dept": "28",
-    "region": ""
-  },
-  {
     "name": "NEUVY EN DUNOIS",
     "cp": "28800",
     "dept": "28",
@@ -1700,12 +1466,6 @@
   {
     "name": "NOGENT LE PHAYE",
     "cp": "28630",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "NOGENT LE ROI",
-    "cp": "28210",
     "dept": "28",
     "region": ""
   },
@@ -1914,12 +1674,6 @@
     "region": ""
   },
   {
-    "name": "SAINTIGNY",
-    "cp": "28480",
-    "dept": "28",
-    "region": ""
-  },
-  {
     "name": "SAINVILLE",
     "cp": "28700",
     "dept": "28",
@@ -1970,18 +1724,6 @@
   {
     "name": "SENANTES",
     "cp": "28210",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "SENONCHES",
-    "cp": "28250",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "SENONCHES",
-    "cp": "28250",
     "dept": "28",
     "region": ""
   },
@@ -2066,12 +1808,6 @@
   {
     "name": "ST DENIS DES PUITS",
     "cp": "28240",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "ST DENIS LANNERAY",
-    "cp": "28200",
     "dept": "28",
     "region": ""
   },
@@ -2214,12 +1950,6 @@
     "region": ""
   },
   {
-    "name": "ST SAUVEUR MARVILLE",
-    "cp": "28170",
-    "dept": "28",
-    "region": ""
-  },
-  {
     "name": "ST VICTOR DE BUTHON",
     "cp": "28240",
     "dept": "28",
@@ -2246,12 +1976,6 @@
   {
     "name": "THEUVILLE",
     "cp": "28360",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "THIMERT GATELLES",
-    "cp": "28170",
     "dept": "28",
     "region": ""
   },
@@ -2304,36 +2028,6 @@
     "region": ""
   },
   {
-    "name": "TREMBLAY LES VILLAGES",
-    "cp": "28170",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "TREMBLAY LES VILLAGES",
-    "cp": "28170",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "TREMBLAY LES VILLAGES",
-    "cp": "28170",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "TREMBLAY LES VILLAGES",
-    "cp": "28170",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "TREMBLAY LES VILLAGES",
-    "cp": "28170",
-    "dept": "28",
-    "region": ""
-  },
-  {
     "name": "TREON",
     "cp": "28500",
     "dept": "28",
@@ -2360,36 +2054,6 @@
   {
     "name": "UNVERRE",
     "cp": "28160",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "VALD YERRE",
-    "cp": "28290",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "VALD YERRE",
-    "cp": "28290",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "VALD YERRE",
-    "cp": "28290",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "VALD YERRE",
-    "cp": "28290",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "VALD YERRE",
-    "cp": "28290",
     "dept": "28",
     "region": ""
   },
@@ -2462,24 +2126,6 @@
   {
     "name": "VILLEBON",
     "cp": "28190",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "VILLEMAURY",
-    "cp": "28200",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "VILLEMAURY",
-    "cp": "28200",
-    "dept": "28",
-    "region": ""
-  },
-  {
-    "name": "VILLEMAURY",
-    "cp": "28200",
     "dept": "28",
     "region": ""
   },

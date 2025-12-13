@@ -150,12 +150,6 @@
     "region": ""
   },
   {
-    "name": "ART SUR MEURTHE",
-    "cp": "54510",
-    "dept": "54",
-    "region": ""
-  },
-  {
     "name": "ATHIENVILLE",
     "cp": "54370",
     "dept": "54",
@@ -230,18 +224,6 @@
   {
     "name": "AZERAILLES",
     "cp": "54122",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "BACCARAT",
-    "cp": "54120",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "BACCARAT",
-    "cp": "54120",
     "dept": "54",
     "region": ""
   },
@@ -356,30 +338,6 @@
   {
     "name": "BECHAMPS",
     "cp": "54800",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "BELLEAU",
-    "cp": "54610",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "BELLEAU",
-    "cp": "54610",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "BELLEAU",
-    "cp": "54610",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "BELLEAU",
-    "cp": "54610",
     "dept": "54",
     "region": ""
   },
@@ -522,12 +480,6 @@
     "region": ""
   },
   {
-    "name": "BOIS DE HAYE",
-    "cp": "54840",
-    "dept": "54",
-    "region": ""
-  },
-  {
     "name": "BOISMONT",
     "cp": "54620",
     "dept": "54",
@@ -566,12 +518,6 @@
   {
     "name": "BOUVRON",
     "cp": "54200",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "BOUXIERES AUX CHENES",
-    "cp": "54770",
     "dept": "54",
     "region": ""
   },
@@ -810,12 +756,6 @@
     "region": ""
   },
   {
-    "name": "CHOLOY MENILLOT",
-    "cp": "54200",
-    "dept": "54",
-    "region": ""
-  },
-  {
     "name": "CIREY SUR VEZOUZE",
     "cp": "54480",
     "dept": "54",
@@ -852,12 +792,6 @@
     "region": ""
   },
   {
-    "name": "COLMEY",
-    "cp": "54260",
-    "dept": "54",
-    "region": ""
-  },
-  {
     "name": "COLOMBEY LES BELLES",
     "cp": "54170",
     "dept": "54",
@@ -872,12 +806,6 @@
   {
     "name": "CONS LA GRANDVILLE",
     "cp": "54870",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "COSNES ET ROMAIN",
-    "cp": "54400",
     "dept": "54",
     "region": ""
   },
@@ -1074,12 +1002,6 @@
     "region": ""
   },
   {
-    "name": "DOMPRIX",
-    "cp": "54490",
-    "dept": "54",
-    "region": ""
-  },
-  {
     "name": "DOMPTAIL EN L AIR",
     "cp": "54290",
     "dept": "54",
@@ -1100,12 +1022,6 @@
   {
     "name": "DROUVILLE",
     "cp": "54370",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "ECROUVES",
-    "cp": "54200",
     "dept": "54",
     "region": ""
   },
@@ -1488,12 +1404,6 @@
     "region": ""
   },
   {
-    "name": "GRAND FAILLY",
-    "cp": "54260",
-    "dept": "54",
-    "region": ""
-  },
-  {
     "name": "GRIMONVILLER",
     "cp": "54115",
     "dept": "54",
@@ -1608,12 +1518,6 @@
     "region": ""
   },
   {
-    "name": "HAUCOURT MOULAINE",
-    "cp": "54860",
-    "dept": "54",
-    "region": ""
-  },
-  {
     "name": "HAUDONVILLE",
     "cp": "54830",
     "dept": "54",
@@ -1712,12 +1616,6 @@
   {
     "name": "JAILLON",
     "cp": "54200",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "JARNY",
-    "cp": "54800",
     "dept": "54",
     "region": ""
   },
@@ -1890,12 +1788,6 @@
     "region": ""
   },
   {
-    "name": "LANEUVEVILLE DEVANT NANCY",
-    "cp": "54410",
-    "dept": "54",
-    "region": ""
-  },
-  {
     "name": "LANFROICOURT",
     "cp": "54760",
     "dept": "54",
@@ -1908,20 +1800,8 @@
     "region": ""
   },
   {
-    "name": "LANTEFONTAINE",
-    "cp": "54150",
-    "dept": "54",
-    "region": ""
-  },
-  {
     "name": "LARONXE",
     "cp": "54950",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "LAXOU",
-    "cp": "54520",
     "dept": "54",
     "region": ""
   },
@@ -1970,12 +1850,6 @@
   {
     "name": "LENONCOURT",
     "cp": "54110",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "LES BAROCHES",
-    "cp": "54150",
     "dept": "54",
     "region": ""
   },
@@ -2036,18 +1910,6 @@
   {
     "name": "LONGLAVILLE",
     "cp": "54810",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "LONGUYON",
-    "cp": "54260",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "LONGUYON",
-    "cp": "54260",
     "dept": "54",
     "region": ""
   },
@@ -2120,12 +1982,6 @@
   {
     "name": "MAILLY SUR SEILLE",
     "cp": "54610",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "MAIRY MAINVILLE",
-    "cp": "54150",
     "dept": "54",
     "region": ""
   },
@@ -2256,12 +2112,6 @@
     "region": ""
   },
   {
-    "name": "MAXEVILLE",
-    "cp": "54320",
-    "dept": "54",
-    "region": ""
-  },
-  {
     "name": "MAZERULLES",
     "cp": "54280",
     "dept": "54",
@@ -2282,12 +2132,6 @@
   {
     "name": "MERCY LE BAS",
     "cp": "54960",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "MERCY LE HAUT",
-    "cp": "54560",
     "dept": "54",
     "region": ""
   },
@@ -2408,12 +2252,6 @@
   {
     "name": "MONTIGNY",
     "cp": "54540",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "MONTIGNY SUR CHIERS",
-    "cp": "54870",
     "dept": "54",
     "region": ""
   },
@@ -2832,12 +2670,6 @@
     "region": ""
   },
   {
-    "name": "REHON",
-    "cp": "54430",
-    "dept": "54",
-    "region": ""
-  },
-  {
     "name": "REILLON",
     "cp": "54450",
     "dept": "54",
@@ -3060,12 +2892,6 @@
     "region": ""
   },
   {
-    "name": "ST AIL",
-    "cp": "54580",
-    "dept": "54",
-    "region": ""
-  },
-  {
     "name": "ST BAUSSANT",
     "cp": "54470",
     "dept": "54",
@@ -3092,12 +2918,6 @@
   {
     "name": "ST GERMAIN",
     "cp": "54290",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "ST JEAN LES LONGUYON",
-    "cp": "54260",
     "dept": "54",
     "region": ""
   },
@@ -3367,12 +3187,6 @@
   },
   {
     "name": "VAL DE BRIEY",
-    "cp": "54150",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "VAL DE BRIEY",
     "cp": "54790",
     "dept": "54",
     "region": ""
@@ -3624,12 +3438,6 @@
     "region": ""
   },
   {
-    "name": "VILLERUPT",
-    "cp": "54190",
-    "dept": "54",
-    "region": ""
-  },
-  {
     "name": "VILLETTE",
     "cp": "54260",
     "dept": "54",
@@ -3674,18 +3482,6 @@
   {
     "name": "VITTONVILLE",
     "cp": "54700",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "VIVIERS SUR CHIERS",
-    "cp": "54260",
-    "dept": "54",
-    "region": ""
-  },
-  {
-    "name": "VIVIERS SUR CHIERS",
-    "cp": "54260",
     "dept": "54",
     "region": ""
   },

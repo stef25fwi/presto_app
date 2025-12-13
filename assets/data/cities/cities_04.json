@@ -24,12 +24,6 @@
     "region": ""
   },
   {
-    "name": "ALLOS",
-    "cp": "04260",
-    "dept": "04",
-    "region": ""
-  },
-  {
     "name": "ANGLES",
     "cp": "04170",
     "dept": "04",
@@ -108,24 +102,6 @@
     "region": ""
   },
   {
-    "name": "BAYONS",
-    "cp": "04250",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "BAYONS",
-    "cp": "04250",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "BAYONS",
-    "cp": "04250",
-    "dept": "04",
-    "region": ""
-  },
-  {
     "name": "BEAUJEU",
     "cp": "04420",
     "dept": "04",
@@ -176,36 +152,6 @@
   {
     "name": "BRUNET",
     "cp": "04210",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "CASTELLANE",
-    "cp": "04120",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "CASTELLANE",
-    "cp": "04120",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "CASTELLANE",
-    "cp": "04120",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "CASTELLANE",
-    "cp": "04120",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "CASTELLANE",
-    "cp": "04120",
     "dept": "04",
     "region": ""
   },
@@ -330,20 +276,8 @@
     "region": ""
   },
   {
-    "name": "DIGNE LES BAINS",
-    "cp": "04000",
-    "dept": "04",
-    "region": ""
-  },
-  {
     "name": "DRAIX",
     "cp": "04420",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "ENCHASTRAYES",
-    "cp": "04400",
     "dept": "04",
     "region": ""
   },
@@ -362,18 +296,6 @@
   {
     "name": "ENTRAGES",
     "cp": "04270",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "ENTREPIERRES",
-    "cp": "04200",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "ENTREPIERRES",
-    "cp": "04200",
     "dept": "04",
     "region": ""
   },
@@ -398,18 +320,6 @@
   {
     "name": "ESPARRON DE VERDON",
     "cp": "04800",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "ESPARRON DE VERDON",
-    "cp": "04800",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "ESTOUBLON",
-    "cp": "04270",
     "dept": "04",
     "region": ""
   },
@@ -468,12 +378,6 @@
     "region": ""
   },
   {
-    "name": "HAUTES DUYES",
-    "cp": "04380",
-    "dept": "04",
-    "region": ""
-  },
-  {
     "name": "JAUSIERS",
     "cp": "04850",
     "dept": "04",
@@ -494,12 +398,6 @@
   {
     "name": "LA BRILLANNE",
     "cp": "04700",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "LA CONDAMINE CHATELARD",
-    "cp": "04530",
     "dept": "04",
     "region": ""
   },
@@ -540,38 +438,8 @@
     "region": ""
   },
   {
-    "name": "LA MURE ARGENS",
-    "cp": "04170",
-    "dept": "04",
-    "region": ""
-  },
-  {
     "name": "LA PALUD SUR VERDON",
     "cp": "04120",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "LA PALUD SUR VERDON",
-    "cp": "04120",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "LA ROBINE SUR GALABRE",
-    "cp": "04000",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "LA ROBINE SUR GALABRE",
-    "cp": "04000",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "LA ROBINE SUR GALABRE",
-    "cp": "04000",
     "dept": "04",
     "region": ""
   },
@@ -618,20 +486,8 @@
     "region": ""
   },
   {
-    "name": "LE CASTELLARD MELAN",
-    "cp": "04380",
-    "dept": "04",
-    "region": ""
-  },
-  {
     "name": "LE CASTELLET",
     "cp": "04700",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "LE CHAFFAUT ST JURSON",
-    "cp": "04510",
     "dept": "04",
     "region": ""
   },
@@ -756,18 +612,6 @@
     "region": ""
   },
   {
-    "name": "MEOLANS REVEL",
-    "cp": "04340",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "MEOLANS REVEL",
-    "cp": "04340",
-    "dept": "04",
-    "region": ""
-  },
-  {
     "name": "MEZEL",
     "cp": "04270",
     "dept": "04",
@@ -782,12 +626,6 @@
   {
     "name": "MISON",
     "cp": "04200",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "MONTAGNAC MONTPEZAT",
-    "cp": "04500",
     "dept": "04",
     "region": ""
   },
@@ -888,12 +726,6 @@
     "region": ""
   },
   {
-    "name": "PEIPIN",
-    "cp": "04200",
-    "dept": "04",
-    "region": ""
-  },
-  {
     "name": "PEYROULES",
     "cp": "04120",
     "dept": "04",
@@ -914,18 +746,6 @@
   {
     "name": "PIERREVERT",
     "cp": "04860",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "PRADS HAUTE BLEONE",
-    "cp": "04420",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "PRADS HAUTE BLEONE",
-    "cp": "04420",
     "dept": "04",
     "region": ""
   },
@@ -1062,18 +882,6 @@
     "region": ""
   },
   {
-    "name": "SIMIANE LA ROTONDE",
-    "cp": "04150",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "SIMIANE LA ROTONDE",
-    "cp": "04150",
-    "dept": "04",
-    "region": ""
-  },
-  {
     "name": "SISTERON",
     "cp": "04200",
     "dept": "04",
@@ -1188,12 +996,6 @@
     "region": ""
   },
   {
-    "name": "ST MICHEL L OBSERVATOIRE",
-    "cp": "04870",
-    "dept": "04",
-    "region": ""
-  },
-  {
     "name": "ST PAUL SUR UBAYE",
     "cp": "04530",
     "dept": "04",
@@ -1248,19 +1050,7 @@
     "region": ""
   },
   {
-    "name": "THOARD",
-    "cp": "04380",
-    "dept": "04",
-    "region": ""
-  },
-  {
     "name": "THORAME BASSE",
-    "cp": "04170",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "THORAME HAUTE",
     "cp": "04170",
     "dept": "04",
     "region": ""
@@ -1284,26 +1074,8 @@
     "region": ""
   },
   {
-    "name": "UBAYE SERRE PONCON",
-    "cp": "04340",
-    "dept": "04",
-    "region": ""
-  },
-  {
     "name": "UBRAYE",
     "cp": "04240",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "UVERNET FOURS",
-    "cp": "04400",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "UVERNET FOURS",
-    "cp": "04400",
     "dept": "04",
     "region": ""
   },
@@ -1322,24 +1094,6 @@
   {
     "name": "VAL D ORONAYE",
     "cp": "04530",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "VAL D ORONAYE",
-    "cp": "04530",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "VAL DE CHALVAGNE",
-    "cp": "04320",
-    "dept": "04",
-    "region": ""
-  },
-  {
-    "name": "VAL DE CHALVAGNE",
-    "cp": "04320",
     "dept": "04",
     "region": ""
   },

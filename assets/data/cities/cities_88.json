@@ -180,12 +180,6 @@
     "region": ""
   },
   {
-    "name": "BAN SUR MEURTHE CLEFCY",
-    "cp": "88230",
-    "dept": "88",
-    "region": ""
-  },
-  {
     "name": "BARBEY SEROUX",
     "cp": "88640",
     "dept": "88",
@@ -510,12 +504,6 @@
     "region": ""
   },
   {
-    "name": "CHATENOIS",
-    "cp": "88170",
-    "dept": "88",
-    "region": ""
-  },
-  {
     "name": "CHATILLON SUR SAONE",
     "cp": "88410",
     "dept": "88",
@@ -798,12 +786,6 @@
     "region": ""
   },
   {
-    "name": "DOMJULIEN",
-    "cp": "88800",
-    "dept": "88",
-    "region": ""
-  },
-  {
     "name": "DOMMARTIN AUX BOIS",
     "cp": "88390",
     "dept": "88",
@@ -984,12 +966,6 @@
     "region": ""
   },
   {
-    "name": "FONTENOY LE CHATEAU",
-    "cp": "88240",
-    "dept": "88",
-    "region": ""
-  },
-  {
     "name": "FOUCHECOURT",
     "cp": "88320",
     "dept": "88",
@@ -1058,12 +1034,6 @@
   {
     "name": "FRIZON",
     "cp": "88440",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "GELVECOURT ET ADOMPT",
-    "cp": "88270",
     "dept": "88",
     "region": ""
   },
@@ -1200,12 +1170,6 @@
     "region": ""
   },
   {
-    "name": "GRANGES AUMONTZEY",
-    "cp": "88640",
-    "dept": "88",
-    "region": ""
-  },
-  {
     "name": "GREUX",
     "cp": "88630",
     "dept": "88",
@@ -1250,12 +1214,6 @@
   {
     "name": "HAGECOURT",
     "cp": "88270",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "HAGNEVILLE ET RONCOURT",
-    "cp": "88300",
     "dept": "88",
     "region": ""
   },
@@ -1446,12 +1404,6 @@
     "region": ""
   },
   {
-    "name": "LA CHAPELLE AUX BOIS",
-    "cp": "88240",
-    "dept": "88",
-    "region": ""
-  },
-  {
     "name": "LA CHAPELLE DEVANT BRUYERES",
     "cp": "88600",
     "dept": "88",
@@ -1494,18 +1446,6 @@
     "region": ""
   },
   {
-    "name": "LA NEUVEVILLE DEVANT LEPANGES",
-    "cp": "88600",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "LA NEUVEVILLE DEVANT LEPANGES",
-    "cp": "88600",
-    "dept": "88",
-    "region": ""
-  },
-  {
     "name": "LA NEUVEVILLE SOUS CHATENOIS",
     "cp": "88170",
     "dept": "88",
@@ -1538,30 +1478,6 @@
   {
     "name": "LA VACHERESSE ET LA ROUILLIE",
     "cp": "88140",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "LA VOGE LES BAINS",
-    "cp": "88240",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "LA VOGE LES BAINS",
-    "cp": "88240",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "LA VOGE LES BAINS",
-    "cp": "88240",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "LA VOGE LES BAINS",
-    "cp": "88240",
     "dept": "88",
     "region": ""
   },
@@ -1662,20 +1578,8 @@
     "region": ""
   },
   {
-    "name": "LE SYNDICAT",
-    "cp": "88120",
-    "dept": "88",
-    "region": ""
-  },
-  {
     "name": "LE THILLOT",
     "cp": "88160",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "LE THOLY",
-    "cp": "88530",
     "dept": "88",
     "region": ""
   },
@@ -2076,12 +1980,6 @@
     "region": ""
   },
   {
-    "name": "NEUFCHATEAU",
-    "cp": "88300",
-    "dept": "88",
-    "region": ""
-  },
-  {
     "name": "NEUVILLERS SUR FAVE",
     "cp": "88100",
     "dept": "88",
@@ -2208,18 +2106,6 @@
     "region": ""
   },
   {
-    "name": "PLOMBIERES LES BAINS",
-    "cp": "88370",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "PLOMBIERES LES BAINS",
-    "cp": "88370",
-    "dept": "88",
-    "region": ""
-  },
-  {
     "name": "POMPIERRE",
     "cp": "88300",
     "dept": "88",
@@ -2258,12 +2144,6 @@
   {
     "name": "PREY",
     "cp": "88600",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "PROVENCHERES ET COLROY",
-    "cp": "88490",
     "dept": "88",
     "region": ""
   },
@@ -2330,12 +2210,6 @@
   {
     "name": "RAON AUX BOIS",
     "cp": "88220",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "RAON L ETAPE",
-    "cp": "88110",
     "dept": "88",
     "region": ""
   },
@@ -2820,18 +2694,6 @@
     "region": ""
   },
   {
-    "name": "THAON LES VOSGES",
-    "cp": "88150",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "THAON LES VOSGES",
-    "cp": "88150",
-    "dept": "88",
-    "region": ""
-  },
-  {
     "name": "THEY SOUS MONTFORT",
     "cp": "88800",
     "dept": "88",
@@ -2864,12 +2726,6 @@
   {
     "name": "TILLEUX",
     "cp": "88300",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "TOLLAINCOURT",
-    "cp": "88320",
     "dept": "88",
     "region": ""
   },
@@ -3126,12 +2982,6 @@
     "region": ""
   },
   {
-    "name": "VOUXEY",
-    "cp": "88170",
-    "dept": "88",
-    "region": ""
-  },
-  {
     "name": "VRECOURT",
     "cp": "88140",
     "dept": "88",
@@ -3164,12 +3014,6 @@
   {
     "name": "XARONVAL",
     "cp": "88130",
-    "dept": "88",
-    "region": ""
-  },
-  {
-    "name": "XERTIGNY",
-    "cp": "88220",
     "dept": "88",
     "region": ""
   },

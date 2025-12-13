@@ -72,12 +72,6 @@
     "region": ""
   },
   {
-    "name": "AUBIAT",
-    "cp": "63260",
-    "dept": "63",
-    "region": ""
-  },
-  {
     "name": "AUBIERE",
     "cp": "63170",
     "dept": "63",
@@ -108,12 +102,6 @@
     "region": ""
   },
   {
-    "name": "AULHAT FLAT",
-    "cp": "63500",
-    "dept": "63",
-    "region": ""
-  },
-  {
     "name": "AULNAT",
     "cp": "63510",
     "dept": "63",
@@ -128,12 +116,6 @@
   {
     "name": "AUTHEZAT",
     "cp": "63114",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "AUZAT LA COMBELLE",
-    "cp": "63570",
     "dept": "63",
     "region": ""
   },
@@ -230,18 +212,6 @@
   {
     "name": "BERTIGNAT",
     "cp": "63480",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "BESSE ET ST ANASTAISE",
-    "cp": "63610",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "BESSE ET ST ANASTAISE",
-    "cp": "63610",
     "dept": "63",
     "region": ""
   },
@@ -390,18 +360,6 @@
     "region": ""
   },
   {
-    "name": "CELLES SUR DUROLLE",
-    "cp": "63250",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "CEYRAT",
-    "cp": "63122",
-    "dept": "63",
-    "region": ""
-  },
-  {
     "name": "CEYRAT",
     "cp": "63122",
     "dept": "63",
@@ -434,12 +392,6 @@
   {
     "name": "CHAMALIERES",
     "cp": "63400",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "CHAMBARON SUR MORGE",
-    "cp": "63200",
     "dept": "63",
     "region": ""
   },
@@ -528,12 +480,6 @@
     "region": ""
   },
   {
-    "name": "CHARBONNIERES LES VARENNES",
-    "cp": "63410",
-    "dept": "63",
-    "region": ""
-  },
-  {
     "name": "CHARBONNIERES LES VIEILLES",
     "cp": "63410",
     "dept": "63",
@@ -584,12 +530,6 @@
   {
     "name": "CHATEAUNEUF LES BAINS",
     "cp": "63390",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "CHATEL GUYON",
-    "cp": "63140",
     "dept": "63",
     "region": ""
   },
@@ -1230,12 +1170,6 @@
     "region": ""
   },
   {
-    "name": "LE VERNET CHAMEANE",
-    "cp": "63580",
-    "dept": "63",
-    "region": ""
-  },
-  {
     "name": "LE VERNET STE MARGUERITE",
     "cp": "63710",
     "dept": "63",
@@ -1256,12 +1190,6 @@
   {
     "name": "LES ANCIZES COMPS",
     "cp": "63770",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "LES DEUX RIVES",
-    "cp": "63320",
     "dept": "63",
     "region": ""
   },
@@ -1458,18 +1386,6 @@
     "region": ""
   },
   {
-    "name": "MESSEIX",
-    "cp": "63750",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "MESSEIX",
-    "cp": "63750",
-    "dept": "63",
-    "region": ""
-  },
-  {
     "name": "MIREFLEURS",
     "cp": "63730",
     "dept": "63",
@@ -1638,12 +1554,6 @@
     "region": ""
   },
   {
-    "name": "NONETTE ORSONNETTE",
-    "cp": "63340",
-    "dept": "63",
-    "region": ""
-  },
-  {
     "name": "NOVACELLES",
     "cp": "63220",
     "dept": "63",
@@ -1754,12 +1664,6 @@
   {
     "name": "PERRIER",
     "cp": "63500",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "PESCHADOIRES",
-    "cp": "63920",
     "dept": "63",
     "region": ""
   },
@@ -1908,12 +1812,6 @@
     "region": ""
   },
   {
-    "name": "ROCHE CHARLES LA MAYRAND",
-    "cp": "63420",
-    "dept": "63",
-    "region": ""
-  },
-  {
     "name": "ROCHE D AGOUX",
     "cp": "63330",
     "dept": "63",
@@ -1922,18 +1820,6 @@
   {
     "name": "ROCHEFORT MONTAGNE",
     "cp": "63210",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "ROMAGNAT",
-    "cp": "63540",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "ROMAGNAT",
-    "cp": "63540",
     "dept": "63",
     "region": ""
   },
@@ -2184,12 +2070,6 @@
     "region": ""
   },
   {
-    "name": "ST DIERY",
-    "cp": "63320",
-    "dept": "63",
-    "region": ""
-  },
-  {
     "name": "ST DONAT",
     "cp": "63680",
     "dept": "63",
@@ -2240,30 +2120,6 @@
   {
     "name": "ST GAL SUR SIOULE",
     "cp": "63440",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "ST GENES CHAMPANELLE",
-    "cp": "63122",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "ST GENES CHAMPANELLE",
-    "cp": "63122",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "ST GENES CHAMPANELLE",
-    "cp": "63122",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "ST GENES CHAMPANELLE",
-    "cp": "63122",
     "dept": "63",
     "region": ""
   },
@@ -2832,12 +2688,6 @@
     "region": ""
   },
   {
-    "name": "VIC LE COMTE",
-    "cp": "63270",
-    "dept": "63",
-    "region": ""
-  },
-  {
     "name": "VICHEL",
     "cp": "63340",
     "dept": "63",
@@ -2918,12 +2768,6 @@
   {
     "name": "VOLVIC",
     "cp": "63530",
-    "dept": "63",
-    "region": ""
-  },
-  {
-    "name": "YOUX",
-    "cp": "63700",
     "dept": "63",
     "region": ""
   },

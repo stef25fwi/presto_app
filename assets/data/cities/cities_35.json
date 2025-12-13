@@ -216,12 +216,6 @@
     "region": ""
   },
   {
-    "name": "BRUZ",
-    "cp": "35170",
-    "dept": "35",
-    "region": ""
-  },
-  {
     "name": "CANCALE",
     "cp": "35260",
     "dept": "35",
@@ -272,30 +266,6 @@
   {
     "name": "CHATEAUBOURG",
     "cp": "35220",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "CHATEAUBOURG",
-    "cp": "35220",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "CHATEAUBOURG",
-    "cp": "35220",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "CHATEAUGIRON",
-    "cp": "35410",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "CHATEAUGIRON",
-    "cp": "35410",
     "dept": "35",
     "region": ""
   },
@@ -422,12 +392,6 @@
   {
     "name": "DOL DE BRETAGNE",
     "cp": "35120",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "DOMAGNE",
-    "cp": "35113",
     "dept": "35",
     "region": ""
   },
@@ -570,12 +534,6 @@
     "region": ""
   },
   {
-    "name": "GUICHEN",
-    "cp": "35580",
-    "dept": "35",
-    "region": ""
-  },
-  {
     "name": "GUIGNEN",
     "cp": "35580",
     "dept": "35",
@@ -594,26 +552,8 @@
     "region": ""
   },
   {
-    "name": "GUIPRY MESSAC",
-    "cp": "35480",
-    "dept": "35",
-    "region": ""
-  },
-  {
     "name": "HEDE BAZOUGES",
     "cp": "35630",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "HEDE BAZOUGES",
-    "cp": "35630",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "HIREL",
-    "cp": "35120",
     "dept": "35",
     "region": ""
   },
@@ -708,12 +648,6 @@
     "region": ""
   },
   {
-    "name": "LA CHAPELLE DE BRAIN",
-    "cp": "35660",
-    "dept": "35",
-    "region": ""
-  },
-  {
     "name": "LA CHAPELLE DES FOUGERETZ",
     "cp": "35520",
     "dept": "35",
@@ -726,20 +660,8 @@
     "region": ""
   },
   {
-    "name": "LA CHAPELLE DU LOU DU LAC",
-    "cp": "35360",
-    "dept": "35",
-    "region": ""
-  },
-  {
     "name": "LA CHAPELLE ERBREE",
     "cp": "35500",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "LA CHAPELLE FLEURIGNE",
-    "cp": "35133",
     "dept": "35",
     "region": ""
   },
@@ -948,12 +870,6 @@
     "region": ""
   },
   {
-    "name": "LE RHEU",
-    "cp": "35650",
-    "dept": "35",
-    "region": ""
-  },
-  {
     "name": "LE SEL DE BRETAGNE",
     "cp": "35320",
     "dept": "35",
@@ -1004,18 +920,6 @@
   {
     "name": "LES IFFS",
     "cp": "35630",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "LES PORTES DU COGLAIS",
-    "cp": "35460",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "LES PORTES DU COGLAIS",
-    "cp": "35460",
     "dept": "35",
     "region": ""
   },
@@ -1104,12 +1008,6 @@
     "region": ""
   },
   {
-    "name": "MAEN ROCH",
-    "cp": "35460",
-    "dept": "35",
-    "region": ""
-  },
-  {
     "name": "MARCILLE RAOUL",
     "cp": "35560",
     "dept": "35",
@@ -1182,26 +1080,8 @@
     "region": ""
   },
   {
-    "name": "MESNIL ROC H",
-    "cp": "35720",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "MESNIL ROC H",
-    "cp": "35720",
-    "dept": "35",
-    "region": ""
-  },
-  {
     "name": "MEZIERES SUR COUESNON",
     "cp": "35140",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "MINIAC MORVAN",
-    "cp": "35540",
     "dept": "35",
     "region": ""
   },
@@ -1226,12 +1106,6 @@
   {
     "name": "MONT DOL",
     "cp": "35120",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "MONTAUBAN DE BRETAGNE",
-    "cp": "35360",
     "dept": "35",
     "region": ""
   },
@@ -1344,12 +1218,6 @@
     "region": ""
   },
   {
-    "name": "NOYAL CHATILLON SUR SEICHE",
-    "cp": "35230",
-    "dept": "35",
-    "region": ""
-  },
-  {
     "name": "NOYAL SOUS BAZOUGES",
     "cp": "35560",
     "dept": "35",
@@ -1418,12 +1286,6 @@
   {
     "name": "PIRE CHANCE",
     "cp": "35680",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "PLECHATEL",
-    "cp": "35470",
     "dept": "35",
     "region": ""
   },
@@ -1562,24 +1424,6 @@
   {
     "name": "RIMOU",
     "cp": "35560",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "RIVES DU COUESNON",
-    "cp": "35140",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "RIVES DU COUESNON",
-    "cp": "35140",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "RIVES DU COUESNON",
-    "cp": "35140",
     "dept": "35",
     "region": ""
   },
@@ -1860,30 +1704,6 @@
     "region": ""
   },
   {
-    "name": "ST MALO",
-    "cp": "35400",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "ST MALO",
-    "cp": "35400",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "ST MALO",
-    "cp": "35400",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "ST MALO",
-    "cp": "35400",
-    "dept": "35",
-    "region": ""
-  },
-  {
     "name": "ST MALO DE PHILY",
     "cp": "35480",
     "dept": "35",
@@ -1892,12 +1712,6 @@
   {
     "name": "ST MALON SUR MEL",
     "cp": "35750",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "ST MARC LE BLANC",
-    "cp": "35460",
     "dept": "35",
     "region": ""
   },
@@ -2137,25 +1951,7 @@
   },
   {
     "name": "VAL COUESNON",
-    "cp": "35460",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "VAL COUESNON",
     "cp": "35560",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "VAL COUESNON",
-    "cp": "35560",
-    "dept": "35",
-    "region": ""
-  },
-  {
-    "name": "VAL D ANAST",
-    "cp": "35330",
     "dept": "35",
     "region": ""
   },

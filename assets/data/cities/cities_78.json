@@ -42,20 +42,8 @@
     "region": ""
   },
   {
-    "name": "ANDRESY",
-    "cp": "78570",
-    "dept": "78",
-    "region": ""
-  },
-  {
     "name": "ARNOUVILLE LES MANTES",
     "cp": "78790",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "AUBERGENVILLE",
-    "cp": "78410",
     "dept": "78",
     "region": ""
   },
@@ -128,18 +116,6 @@
   {
     "name": "BENNECOURT",
     "cp": "78270",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "BEYNES",
-    "cp": "78650",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "BEYNES",
-    "cp": "78650",
     "dept": "78",
     "region": ""
   },
@@ -260,12 +236,6 @@
   {
     "name": "BULLION",
     "cp": "78830",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "CARRIERES SOUS POISSY",
-    "cp": "78955",
     "dept": "78",
     "region": ""
   },
@@ -398,12 +368,6 @@
   {
     "name": "DAMMARTIN EN SERVE",
     "cp": "78111",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "DAMPIERRE EN YVELINES",
-    "cp": "78720",
     "dept": "78",
     "region": ""
   },
@@ -630,18 +594,6 @@
     "region": ""
   },
   {
-    "name": "GUYANCOURT",
-    "cp": "78280",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "GUYANCOURT",
-    "cp": "78280",
-    "dept": "78",
-    "region": ""
-  },
-  {
     "name": "HARDRICOURT",
     "cp": "78250",
     "dept": "78",
@@ -786,24 +738,6 @@
     "region": ""
   },
   {
-    "name": "LE CHESNAY ROCQUENCOURT",
-    "cp": "78150",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "LE CHESNAY ROCQUENCOURT",
-    "cp": "78150",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "LE MESNIL LE ROI",
-    "cp": "78600",
-    "dept": "78",
-    "region": ""
-  },
-  {
     "name": "LE MESNIL LE ROI",
     "cp": "78600",
     "dept": "78",
@@ -872,12 +806,6 @@
   {
     "name": "LES CLAYES SOUS BOIS",
     "cp": "78340",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "LES ESSARTS LE ROI",
-    "cp": "78690",
     "dept": "78",
     "region": ""
   },
@@ -960,12 +888,6 @@
     "region": ""
   },
   {
-    "name": "MAGNY LES HAMEAUX",
-    "cp": "78114",
-    "dept": "78",
-    "region": ""
-  },
-  {
     "name": "MAISONS LAFFITTE",
     "cp": "78600",
     "dept": "78",
@@ -1014,20 +936,8 @@
     "region": ""
   },
   {
-    "name": "MARLY LE ROI",
-    "cp": "78160",
-    "dept": "78",
-    "region": ""
-  },
-  {
     "name": "MAULE",
     "cp": "78580",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "MAULETTE",
-    "cp": "78550",
     "dept": "78",
     "region": ""
   },
@@ -1212,12 +1122,6 @@
     "region": ""
   },
   {
-    "name": "NOTRE DAME DE LA MER",
-    "cp": "78270",
-    "dept": "78",
-    "region": ""
-  },
-  {
     "name": "OINVILLE SUR MONTCIENT",
     "cp": "78250",
     "dept": "78",
@@ -1296,12 +1200,6 @@
     "region": ""
   },
   {
-    "name": "POISSY",
-    "cp": "78300",
-    "dept": "78",
-    "region": ""
-  },
-  {
     "name": "PONTHEVRARD",
     "cp": "78730",
     "dept": "78",
@@ -1310,12 +1208,6 @@
   {
     "name": "PORCHEVILLE",
     "cp": "78440",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "PRUNAY EN YVELINES",
-    "cp": "78660",
     "dept": "78",
     "region": ""
   },
@@ -1512,20 +1404,8 @@
     "region": ""
   },
   {
-    "name": "ST NOM LA BRETECHE",
-    "cp": "78860",
-    "dept": "78",
-    "region": ""
-  },
-  {
     "name": "ST REMY L HONORE",
     "cp": "78690",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "ST REMY LES CHEVREUSE",
-    "cp": "78470",
     "dept": "78",
     "region": ""
   },
@@ -1590,18 +1470,6 @@
     "region": ""
   },
   {
-    "name": "TRIEL SUR SEINE",
-    "cp": "78510",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "TRIEL SUR SEINE",
-    "cp": "78510",
-    "dept": "78",
-    "region": ""
-  },
-  {
     "name": "VAUX SUR SEINE",
     "cp": "78740",
     "dept": "78",
@@ -1616,12 +1484,6 @@
   {
     "name": "VERNEUIL SUR SEINE",
     "cp": "78480",
-    "dept": "78",
-    "region": ""
-  },
-  {
-    "name": "VERNOUILLET",
-    "cp": "78540",
     "dept": "78",
     "region": ""
   },

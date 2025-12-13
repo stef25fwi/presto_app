@@ -66,12 +66,6 @@
     "region": ""
   },
   {
-    "name": "AIRAINES",
-    "cp": "80270",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "AIZECOURT LE BAS",
     "cp": "80240",
     "dept": "80",
@@ -498,19 +492,7 @@
     "region": ""
   },
   {
-    "name": "BERMESNIL",
-    "cp": "80140",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "BERNATRE",
-    "cp": "80370",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "BERNAVILLE",
     "cp": "80370",
     "dept": "80",
     "region": ""
@@ -918,12 +900,6 @@
     "region": ""
   },
   {
-    "name": "BUSSUS LES YAUCOURT",
-    "cp": "80135",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "BUSSY LES DAOURS",
     "cp": "80800",
     "dept": "80",
@@ -1028,12 +1004,6 @@
   {
     "name": "CARDONNETTE",
     "cp": "80260",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "CARNOY MAMETZ",
-    "cp": "80300",
     "dept": "80",
     "region": ""
   },
@@ -1236,12 +1206,6 @@
     "region": ""
   },
   {
-    "name": "CONTY",
-    "cp": "80160",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "CORBIE",
     "cp": "80800",
     "dept": "80",
@@ -1308,12 +1272,6 @@
     "region": ""
   },
   {
-    "name": "CRECY EN PONTHIEU",
-    "cp": "80150",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "CREMERY",
     "cp": "80700",
     "dept": "80",
@@ -1346,18 +1304,6 @@
   {
     "name": "CROUY ST PIERRE",
     "cp": "80310",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "CROUY ST PIERRE",
-    "cp": "80310",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "CURCHY",
-    "cp": "80190",
     "dept": "80",
     "region": ""
   },
@@ -1448,12 +1394,6 @@
   {
     "name": "DOMINOIS",
     "cp": "80120",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "DOMLEGER LONGVILLERS",
-    "cp": "80370",
     "dept": "80",
     "region": ""
   },
@@ -1626,12 +1566,6 @@
     "region": ""
   },
   {
-    "name": "EQUENNES ERAMECOURT",
-    "cp": "80290",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "ERCHES",
     "cp": "80500",
     "dept": "80",
@@ -1704,12 +1638,6 @@
     "region": ""
   },
   {
-    "name": "ESTREES MONS",
-    "cp": "80200",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "ESTREES SUR NOYE",
     "cp": "80250",
     "dept": "80",
@@ -1730,12 +1658,6 @@
   {
     "name": "ETERPIGNY",
     "cp": "80200",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "ETINEHEM MERICOURT",
-    "cp": "80340",
     "dept": "80",
     "region": ""
   },
@@ -1808,12 +1730,6 @@
   {
     "name": "FEUQUIERES EN VIMEU",
     "cp": "80210",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "FIEFFES MONTRELET",
-    "cp": "80670",
     "dept": "80",
     "region": ""
   },
@@ -2172,12 +2088,6 @@
     "region": ""
   },
   {
-    "name": "FROHEN SUR AUTHIE",
-    "cp": "80370",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "FROYELLES",
     "cp": "80150",
     "dept": "80",
@@ -2370,18 +2280,6 @@
     "region": ""
   },
   {
-    "name": "HALLENCOURT",
-    "cp": "80490",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "HALLENCOURT",
-    "cp": "80490",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "HALLIVILLERS",
     "cp": "80250",
     "dept": "80",
@@ -2550,24 +2448,6 @@
     "region": ""
   },
   {
-    "name": "HESCAMPS",
-    "cp": "80290",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "HESCAMPS",
-    "cp": "80290",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "HESCAMPS",
-    "cp": "80290",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "HEUCOURT CROQUOISON",
     "cp": "80270",
     "dept": "80",
@@ -2598,48 +2478,6 @@
     "region": ""
   },
   {
-    "name": "HOMBLEUX",
-    "cp": "80400",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "HORNOY LE BOURG",
-    "cp": "80640",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "HORNOY LE BOURG",
-    "cp": "80640",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "HORNOY LE BOURG",
-    "cp": "80640",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "HORNOY LE BOURG",
-    "cp": "80640",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "HORNOY LE BOURG",
-    "cp": "80640",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "HORNOY LE BOURG",
-    "cp": "80640",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "HORNOY LE BOURG",
     "cp": "80640",
     "dept": "80",
@@ -2660,18 +2498,6 @@
   {
     "name": "HUPPY",
     "cp": "80140",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "HYPERCOURT",
-    "cp": "80320",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "HYPERCOURT",
-    "cp": "80320",
     "dept": "80",
     "region": ""
   },
@@ -2772,24 +2598,6 @@
     "region": ""
   },
   {
-    "name": "LAFRESGUIMONT ST MARTIN",
-    "cp": "80430",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "LAFRESGUIMONT ST MARTIN",
-    "cp": "80430",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "LAFRESGUIMONT ST MARTIN",
-    "cp": "80430",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "LAHOUSSOYE",
     "cp": "80800",
     "dept": "80",
@@ -2816,12 +2624,6 @@
   {
     "name": "LAMOTTE BULEUX",
     "cp": "80150",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "LAMOTTE WARFUSEE",
-    "cp": "80800",
     "dept": "80",
     "region": ""
   },
@@ -3144,12 +2946,6 @@
     "region": ""
   },
   {
-    "name": "MARCHELEPOT MISERY",
-    "cp": "80200",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "MARESTMONTIERS",
     "cp": "80500",
     "dept": "80",
@@ -3372,18 +3168,6 @@
     "region": ""
   },
   {
-    "name": "MOLLIENS DREUIL",
-    "cp": "80540",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "MONCHY LAGACHE",
-    "cp": "80200",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "MONCHY LAGACHE",
     "cp": "80200",
     "dept": "80",
@@ -3474,12 +3258,6 @@
     "region": ""
   },
   {
-    "name": "MORVILLERS ST SATURNIN",
-    "cp": "80290",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "MOUFLERS",
     "cp": "80690",
     "dept": "80",
@@ -3518,24 +3296,6 @@
   {
     "name": "NAMPONT",
     "cp": "80120",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "NAMPS MAISNIL",
-    "cp": "80290",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "NAMPS MAISNIL",
-    "cp": "80290",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "NAMPS MAISNIL",
-    "cp": "80290",
     "dept": "80",
     "region": ""
   },
@@ -3648,18 +3408,6 @@
     "region": ""
   },
   {
-    "name": "O DE SELLE",
-    "cp": "80160",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "O DE SELLE",
-    "cp": "80160",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "OCCOCHES",
     "cp": "80600",
     "dept": "80",
@@ -3738,12 +3486,6 @@
     "region": ""
   },
   {
-    "name": "PARVILLERS LE QUESNOY",
-    "cp": "80700",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "PENDE",
     "cp": "80230",
     "dept": "80",
@@ -3774,12 +3516,6 @@
     "region": ""
   },
   {
-    "name": "PIENNES ONVILLERS",
-    "cp": "80500",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "PIERREGOT",
     "cp": "80260",
     "dept": "80",
@@ -3800,12 +3536,6 @@
   {
     "name": "POEUILLY",
     "cp": "80240",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "POIX DE PICARDIE",
-    "cp": "80290",
     "dept": "80",
     "region": ""
   },
@@ -4308,12 +4038,6 @@
     "region": ""
   },
   {
-    "name": "ST GERMAIN SUR BRESLE",
-    "cp": "80430",
-    "dept": "80",
-    "region": ""
-  },
-  {
     "name": "ST GRATIEN",
     "cp": "80260",
     "dept": "80",
@@ -4544,18 +4268,6 @@
   {
     "name": "TREUX",
     "cp": "80300",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "TROIS RIVIERES",
-    "cp": "80500",
-    "dept": "80",
-    "region": ""
-  },
-  {
-    "name": "TROIS RIVIERES",
-    "cp": "80500",
     "dept": "80",
     "region": ""
   },

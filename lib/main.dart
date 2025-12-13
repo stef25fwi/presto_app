@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -15,16 +14,12 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'firebase_options.dart';
 import 'app_core.dart';
 import 'constants.dart';
-import 'data/city_postal_data.dart';
-import 'package:presto_app/widgets/city_postal_autocomplete_field.dart';
 import 'widgets/offer_card.dart';
 import 'services/city_search.dart';
-import 'pages/publish_offer_page.dart';
 import 'pages/pro_profile_page.dart';
 import 'dev/seed_offers.dart';
 
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -307,7 +302,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 28),
                 const Text(
-                  'Trouvez un prestataire\nillico iliprestō',
+                  'Trouvez un prestataire\nillico presto!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 24,
@@ -1259,16 +1254,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
                 // COMMENT ÇA MARCHE
                 Container(
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE3F2FD),
-                    borderRadius: BorderRadius.circular(16),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE3F2FD),
+                    borderRadius: BorderRadius.all(Radius.circular(16)),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
-                      const Text(
+                      Text(
                         "Comment ça marche ?",
                         style: TextStyle(
                           fontSize: 18,
@@ -1315,7 +1309,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
                     ),
                     const Spacer(),
                     TextButton(
-                      onPressed: () => _onBottomTap(0),
+                      onPressed: () => _onBottomTap(1),
                       child: const Text(
                         "Voir tout",
                         style: TextStyle(
@@ -1390,6 +1384,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
                                         (data['imageUrls'] as List<dynamic>?)
                                             ?.map((e) => e.toString())
                                             .toList(),
+                                    annonceurId:
+                                      (data['userId'] ?? '') as String,
                                   ),
                                 ),
                               );
@@ -1831,21 +1827,16 @@ class _Debouncer {
 
 class _ConsultOffersPageState extends State<ConsultOffersPage> {
   final TextEditingController _locationController = TextEditingController();
-  final TextEditingController _subCategoryController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-  final TextEditingController _regionController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _keywordCtrl = TextEditingController();
   final TextEditingController _cityCtrl = TextEditingController();
+  
+  int _filterPanelKey = 0;
 
   String? _selectedCategory;
   String? _selectedRegionCode;
-  String? _selectedDepartmentCode;
   String? _selectedSubCategory;
-  double _minPrice = 0;
-  double _maxPrice = 300;
-
-  bool _showFilters = false;
 
   final _Debouncer _filterDebounce =
       _Debouncer(delay: const Duration(milliseconds: 300));
@@ -1854,12 +1845,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   String? _filterRegionCode;
   String? _filterDepartmentCode;
   String? _filterCityName;
-
-  // Optionnel (si tu veux distinguer "draft" vs "applied")
-  String? _appliedCategory;
-  String? _appliedRegionCode;
-  String? _appliedDepartmentCode;
-  String _appliedCity = '';
 
   // Pagination / loading state
   DocumentSnapshot<Map<String, dynamic>>? _lastDoc;
@@ -1905,45 +1890,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     if (_filterRegionCode == null) return null; // null = pas de limite
     return _filteredDepartmentCodes;
   }
-
-  final List<String> _categories = const [
-    'Toutes catégories',
-    'Restauration / Extra',
-    'Bricolage / Travaux',
-    'Aide à domicile',
-    'Garde d’enfants',
-    'Événementiel / DJ',
-    'Cours & soutien',
-    'Jardinage',
-    'Peinture',
-    'Main-d’œuvre',
-    'Autre',
-  ];
-
-  /// Régions de France + DROM
-  final List<String> _regions = const [
-    'Toutes régions',
-    // 🇫🇷 Métropole
-    'Auvergne-Rhône-Alpes',
-    'Bourgogne-Franche-Comté',
-    'Bretagne',
-    'Centre-Val de Loire',
-    'Corse',
-    'Grand Est',
-    'Hauts-de-France',
-    'Île-de-France',
-    'Normandie',
-    'Nouvelle-Aquitaine',
-    'Occitanie',
-    'Pays de la Loire',
-    'Provence-Alpes-Côte d\'Azur',
-    // 🇫🇷 DROM
-    'Guadeloupe',
-    'Martinique',
-    'Guyane',
-    'La Réunion',
-    'Mayotte',
-  ];
 
   @override
   void initState() {
@@ -2090,11 +2036,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }
 
   void _applyFilters() {
-    setState(() {
-      // On referme le panneau après recherche
-      _showFilters = false;
-    });
-
     // Remonter en haut de la liste
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
@@ -2114,20 +2055,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     });
   }
 
-  /// Normalise un nom de ville (retire accents, minuscules)
-  String _normalizeCity(String city) {
-    return city
-        .toLowerCase()
-        .replaceAll(RegExp(r'[àáâãäå]'), 'a')
-        .replaceAll(RegExp(r'[èéêë]'), 'e')
-        .replaceAll(RegExp(r'[ìíîï]'), 'i')
-        .replaceAll(RegExp(r'[òóôõö]'), 'o')
-        .replaceAll(RegExp(r'[ùúûü]'), 'u')
-        .replaceAll(RegExp(r'[ýÿ]'), 'y')
-        .replaceAll(RegExp(r'[ç]'), 'c')
-        .replaceAll(RegExp(r'[ñ]'), 'n');
-  }
-
   String _deptFromPostal(String cp) {
     final s = cp.trim();
     if (s.length < 2) return s;
@@ -2142,19 +2069,16 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   void _resetFilters() {
     // 1) reset valeurs filtres
     setState(() {
+      _selectedCategory = 'Toutes catégories';
       _selectedRegionCode = null;
-      _selectedCategory = null;
       _selectedSubCategory = null;
-      _selectedDepartmentCode = null;
       _filterCategory = null;
       _filterRegionCode = null;
       _filterDepartmentCode = null;
       _filterCityName = null;
       _filterCitySuggestions = [];
       _filterCityHighlightedIndex = -1;
-      _minPrice = 0;
-      _maxPrice = 300;
-      _showFilters = true; // garde le panneau de filtres ouvert
+      _filterPanelKey++; // Force la reconstruction du panneau
     });
 
     // 2) reset champs texte
@@ -2165,13 +2089,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     _filterCityController.clear();
     _filterPostalCodeController.clear();
 
-    // 3) reset Form (labels/erreurs)
-    _formKey.currentState?.reset();
-
-    // 4) ferme le clavier si besoin
+    // 3) ferme le clavier si besoin
     FocusScope.of(context).unfocus();
 
-    // 5) remonte la liste et relance sans filtre
+    // 4) remonte la liste
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         0,
@@ -2179,8 +2100,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         curve: Curves.easeOut,
       );
     }
-
-    _fetchOffers(resetPaging: true);
   }
 
   void _syncRegionWithPostalCode() {
@@ -2224,20 +2143,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            tooltip: 'Filtres',
-            onPressed: () {
-              setState(() {
-                _showFilters = !_showFilters;
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: "Réinitialiser les filtres",
-            onPressed: _resetFilters,
-          ),
           IconButton(
             icon: const Icon(Icons.home_outlined),
             onPressed: () {
@@ -2302,14 +2207,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
                 return ListView.separated(
                   controller: _scrollController,
-                  padding: const EdgeInsets.fromLTRB(4, 8, 4, 120),
+                  padding: const EdgeInsets.fromLTRB(4, 16, 4, 120),
                   itemCount: docs.length,
                   separatorBuilder: (context, index) =>
                       const SizedBox(height: 4),
                   itemBuilder: (context, index) {
                     final doc = docs[index];
                     final offerId = doc.id;
-                    final data = doc.data() as Map<String, dynamic>;
+                    final data = doc.data();
 
                     final title = (data['title'] ?? 'Sans titre') as String;
                     final location =
@@ -2342,6 +2247,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                   description.isEmpty ? null : description,
                               phone: phone,
                               imageUrls: imageUrls.isEmpty ? null : imageUrls,
+                              annonceurId: (data['userId'] ?? '') as String,
                             ),
                           ),
                         );
@@ -2363,29 +2269,19 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }
 
   Widget _buildFilterPanel() {
-    if (!_showFilters) return const SizedBox.shrink();
-
     return Form(
-      key: _formKey,
+      key: ValueKey(_filterPanelKey),
       child: Container(
         color: Colors.grey.shade100,
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Expanded(child: _buildCategoryDropdown()),
-                const SizedBox(width: 12),
-                Expanded(child: _buildRegionDropdown()),
-              ],
-            ),
+            _buildCategoryDropdown(),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(child: _buildDepartmentDropdown()),
-              ],
-            ),
+            _buildRegionDropdown(),
+            const SizedBox(height: 12),
+            _buildDepartmentDropdown(),
             const SizedBox(height: 12),
             _buildFilterCityField(),
             const SizedBox(height: 16),
@@ -2393,10 +2289,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {
-                      _resetFilters();
-                      _onAnyFilterChanged(); // ✅ applique après reset
-                    },
+                    onPressed: _resetFilters,
                     child: const Text('Réinitialiser'),
                   ),
                 ),
@@ -2564,93 +2457,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     );
   }
 
-  void _onFilterCityChanged(String value) {
-    _filterCityDebounce?.cancel();
-    _filterCityDebounce = Timer(const Duration(milliseconds: 120), () async {
-      final v = value.trim();
-
-      // ✅ IMPORTANT : on met à jour le filtre même si l'utilisateur ne clique pas une suggestion
-      if (mounted) {
-        setState(() {
-          _filterCityName = v.isEmpty ? null : v;
-        });
-      }
-
-      if (v.length < 2) {
-        if (mounted) {
-          setState(() {
-            _filterCitySuggestions = [];
-            _filterCityHighlightedIndex = -1;
-          });
-        }
-        return;
-      }
-
-      await CitySearch.instance.ensureLoaded();
-
-      // ✅ Recherche filtrée par région/département
-      final allowed = _allowedDeptCodesForCity;
-      final suggestions = CitySearch.instance.search(
-        v,
-        limit: 20,
-        allowedDeptCodes: allowed,
-      );
-
-      if (!mounted) return;
-      setState(() {
-        _filterCitySuggestions = suggestions;
-        _filterCityHighlightedIndex = suggestions.isNotEmpty ? 0 : -1;
-      });
-    });
-  }
-
-  void _onFilterCityKey(RawKeyEvent event) {
-    if (event is! RawKeyDownEvent) return;
-
-    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-      setState(() {
-        if (_filterCityHighlightedIndex < _filterCitySuggestions.length - 1) {
-          _filterCityHighlightedIndex++;
-        }
-      });
-    } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-      setState(() {
-        if (_filterCityHighlightedIndex > 0) {
-          _filterCityHighlightedIndex--;
-        }
-      });
-    } else if (event.logicalKey == LogicalKeyboardKey.escape) {
-      setState(() {
-        _filterCitySuggestions = [];
-        _filterCityHighlightedIndex = -1;
-      });
-    }
-  }
-
-  void _applyFilterCitySelection(CityRecord city) {
-    setState(() {
-      _filterCityController.text = city.name;
-      _filterPostalCodeController.text = city.cp;
-      _filterCityName = city.name;
-      _filterCitySuggestions = [];
-      _filterCityHighlightedIndex = -1;
-    });
-  }
-
-  Widget _buildCityField() {
-    return TextFormField(
-      decoration: const InputDecoration(
-        labelText: 'Ville',
-        border: OutlineInputBorder(),
-        hintText: 'Paris, Les Abymes…',
-      ),
-      initialValue: _filterCityName,
-      onChanged: (value) {
-        _filterCityName = value.trim();
-      },
-    );
-  }
-
   Widget _buildFilterCityField() {
     return Autocomplete<CityRecord>(
       displayStringForOption: (c) => '${c.name} (${c.cp})',
@@ -2761,6 +2567,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     );
   }
 
+  // ignore: unused_element
   String _ageLabelFromCreatedAt(dynamic createdAt) {
     if (createdAt == null) return '';
 
@@ -2790,6 +2597,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return '${diff.inDays} j';
   }
 
+  // ignore: unused_element
   Future<void> _showEditOfferDialog(
     BuildContext context,
     String offerId,
@@ -2848,6 +2656,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     });
   }
 
+  // ignore: unused_element
   Future<void> _confirmDeleteOffer(
     BuildContext context,
     String offerId,
@@ -2902,9 +2711,9 @@ class _EmptyOffers extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              "Clique sur « Publier une offre » pour créer ta première annonce iliprestō.",
+              "Les annonces peuvent arriver à tout moment.\n⭐ Ajoutez cette catégorie en favori pour être alerté dès qu'une annonce est publiée.\n👤 Créez un compte pour enregistrer vos favoris et activer les notifications.",
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 15,
                 color: Colors.black54,
                 fontWeight: FontWeight.w500,
               ),
@@ -2926,6 +2735,7 @@ class OfferDetailPage extends StatelessWidget {
   final String? description;
   final String? phone;
   final List<String>? imageUrls;
+  final String annonceurId;
 
   const OfferDetailPage({
     super.key,
@@ -2937,6 +2747,7 @@ class OfferDetailPage extends StatelessWidget {
     this.description,
     this.phone,
     this.imageUrls,
+    required this.annonceurId,
   });
 
   Future<void> _callPhone(BuildContext context) async {
@@ -3018,21 +2829,57 @@ class OfferDetailPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(ctx);
-                    if (isLoggedIn) {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const MessagesPage(),
-                        ),
-                      );
-                    } else {
+                    if (!isLoggedIn) {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const AccountPage(),
                         ),
                       );
+                      return;
                     }
+
+                    // Utilise l'identifiant de l'annonceur passé au détail de l'offre
+                    final annonceurId = this.annonceurId;
+                    if (annonceurId.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Impossible de retrouver l'annonceur.")),
+                      );
+                      return;
+                    }
+
+                    // Cherche ou crée la conversation entre l'utilisateur courant et l'annonceur
+                    final convs = await FirebaseFirestore.instance
+                        .collection('conversations')
+                        .where('participants', arrayContains: user.uid)
+                        .get();
+                    String? conversationId;
+                    for (final doc in convs.docs) {
+                      final parts = List<String>.from(doc['participants'] ?? []);
+                      if (parts.contains(annonceurId)) {
+                        conversationId = doc.id;
+                        break;
+                      }
+                    }
+                    if (conversationId == null) {
+                      final doc = await FirebaseFirestore.instance.collection('conversations').add({
+                        'participants': [user.uid, annonceurId],
+                        'createdAt': FieldValue.serverTimestamp(),
+                        'lastMessage': '',
+                        'unreadCount': {user.uid: 0, annonceurId: 0},
+                      });
+                      conversationId = doc.id;
+                    }
+
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ConversationPage(
+                          conversationId: conversationId!,
+                          offerTitle: title,
+                        ),
+                      ),
+                    );
                   },
                   icon: const Icon(Icons.chat_bubble_outline),
                   label: Text(
@@ -3387,8 +3234,9 @@ String formatTimeLabel(Timestamp? ts) {
 
 /// Utilitaire : format "il y a X h/j" depuis un Timestamp
 String formatAgeSince(Timestamp? ts) {
-  if (ts == null)
+  if (ts == null) {
     return ""; // quand createdAt pas encore rempli (serverTimestamp)
+  }
   final dt = ts.toDate();
   final now = DateTime.now();
 
@@ -3400,13 +3248,13 @@ String formatAgeSince(Timestamp? ts) {
     // si < 1h, on affiche en minutes (optionnel)
     if (h <= 0) {
       final m = diff.inMinutes.clamp(0, 59);
-      return "il y a ${m} min";
+      return "il y a $m min";
     }
-    return "il y a ${h} h";
+    return "il y a $h h";
   }
 
   final d = diff.inDays;
-  return "il y a ${d} j";
+  return "il y a $d j";
 }
 
 /// PAGE MESSAGES (LISTE DE CONVERSATIONS) //////////////////////////////////
@@ -4224,7 +4072,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   int _highlightedIndex = -1;
 
   // Région / département (optionnel à exploiter dans le futur)
+  // ignore: unused_field
   String? _selectedRegionCode;
+  // ignore: unused_field
   String? _selectedDeptCode;
 
   bool _isSubmitting = false;
@@ -4603,6 +4453,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 }
 
+// ignore: unused_element
 /// Petite carte pour sélectionner une photo
 class _PhotoSelectorTile extends StatelessWidget {
   final String label;
@@ -5760,6 +5611,7 @@ class UserOffersSection extends StatelessWidget {
                                 ?.map((e) => e.toString())
                                 .toList() ??
                             const [],
+                        annonceurId: (data['userId'] ?? '') as String,
                       ),
                     ),
                   );
@@ -5909,6 +5761,7 @@ class UserOffersSection extends StatelessWidget {
   }
 }
 
+// ignore: unused_element
 class _RecapRow extends StatelessWidget {
   final String label;
   final String value;

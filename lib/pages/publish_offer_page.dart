@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/city_repo_compact.dart';
 import '../widgets/city_postal_autocomplete_compact.dart';
 
@@ -13,7 +15,14 @@ const kFieldFill = Color(0xFFF7F2EB);
 const kBorder = Color(0xFFD9D2C9);
 
 class PublishOfferPage extends StatefulWidget {
-  const PublishOfferPage({super.key});
+  final CityRepoCompact? repo;
+  final bool enableSpeechToText;
+
+  const PublishOfferPage({
+    super.key,
+    this.repo,
+    this.enableSpeechToText = true,
+  });
 
   @override
   State<PublishOfferPage> createState() => _PublishOfferPageState();
@@ -21,7 +30,7 @@ class PublishOfferPage extends StatefulWidget {
 
 class _PublishOfferPageState extends State<PublishOfferPage> {
   final _formKey = GlobalKey<FormState>();
-  final _repo = CityRepoCompact();
+  late final CityRepoCompact _repo;
 
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
@@ -59,8 +68,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   void initState() {
     super.initState();
+    _repo = widget.repo ?? CityRepoCompact();
+
     _stt = stt.SpeechToText();
-    _initStt();
+    if (widget.enableSpeechToText) {
+      _initStt();
+    } else {
+      _sttReady = false;
+    }
   }
 
   Future<void> _initStt() async {
@@ -126,8 +141,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     await _stt.listen(
       localeId: 'fr_FR',
-      listenMode: stt.ListenMode.dictation,
-      partialResults: true,
+      listenOptions: stt.SpeechListenOptions(
+        listenMode: stt.ListenMode.dictation,
+        partialResults: true,
+      ),
       onResult: (res) {
         if (!mounted) return;
         final text = res.recognizedWords.trim();
@@ -186,13 +203,54 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     super.dispose();
   }
 
-  void _publish() {
+  void _publish() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // TODO: ici tu branches Firestore (offers.add({...}))
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Offre prête à être publiée ✅")),
-    );
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vous devez être connecté")),
+      );
+      return;
+    }
+
+    try {
+      final city = _cityCtrl.text.trim();
+      final cp = _cpCtrl.text.trim();
+      final budgetStr = _budgetCtrl.text.trim();
+      final budget = budgetStr.isEmpty ? null : int.tryParse(budgetStr);
+
+      await FirebaseFirestore.instance.collection('offers').add({
+        'title': _titleCtrl.text.trim(),
+        'description': _descCtrl.text.trim(),
+        'category': _category ?? 'Autre',
+        // 🔥 Compatibilité : écriture des 2 variantes
+        'city': city,
+        'location': city,
+        'cp': cp.isEmpty ? null : cp,
+        'postalCode': cp.isEmpty ? null : cp,
+        'budget': budget,
+        'phone': _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+        'userId': user.uid,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'status': 'active',
+      });
+
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Offre publiée avec succès ✅")),
+      );
+      
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur lors de la publication : $e")),
+      );
+    }
   }
 
   @override
@@ -223,43 +281,45 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         ],
       ),
       body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Décrivez votre besoin à notre IA",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1B1B1B),
+        child: Container(
+          color: const Color(0xFFE3F0FF), // Bleu clair
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Décrivez votre besoin à notre IA",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1B1B1B),
+                            ),
                           ),
-                        ),
-                        SizedBox(height: 6),
-                        Text(
-                          "Plus votre demande est claire, plus vous aurez de réponses adaptées.",
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF7A7A7A),
+                          SizedBox(height: 6),
+                          Text(
+                            "Plus votre demande est claire, plus vous aurez de réponses adaptées.",
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF7A7A7A),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  _MicButton(
-                    listening: _listening,
-                    onTap: _toggleMic,
-                  ),
-                ],
+                    const SizedBox(width: 10),
+                    _MicButton(
+                      listening: _listening,
+                      onTap: _toggleMic,
+                    ),
+                  ],
               ),
 
               const SizedBox(height: 16),
@@ -376,7 +436,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

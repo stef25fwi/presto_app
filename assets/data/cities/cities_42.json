@@ -204,12 +204,6 @@
     "region": ""
   },
   {
-    "name": "CHALMAZEL JEANSAGNIERE",
-    "cp": "42920",
-    "dept": "42",
-    "region": ""
-  },
-  {
     "name": "CHAMBEON",
     "cp": "42110",
     "dept": "42",
@@ -498,12 +492,6 @@
     "region": ""
   },
   {
-    "name": "GENILAC",
-    "cp": "42800",
-    "dept": "42",
-    "region": ""
-  },
-  {
     "name": "GRAIX",
     "cp": "42220",
     "dept": "42",
@@ -602,12 +590,6 @@
   {
     "name": "LA CHAPELLE VILLARS",
     "cp": "42410",
-    "dept": "42",
-    "region": ""
-  },
-  {
-    "name": "LA COTE ST DIDIER",
-    "cp": "42111",
     "dept": "42",
     "region": ""
   },
@@ -810,12 +792,6 @@
     "region": ""
   },
   {
-    "name": "MABLY",
-    "cp": "42300",
-    "dept": "42",
-    "region": ""
-  },
-  {
     "name": "MACHEZAL",
     "cp": "42114",
     "dept": "42",
@@ -920,12 +896,6 @@
   {
     "name": "MONTARCHER",
     "cp": "42380",
-    "dept": "42",
-    "region": ""
-  },
-  {
-    "name": "MONTBRISON",
-    "cp": "42600",
     "dept": "42",
     "region": ""
   },
@@ -1158,12 +1128,6 @@
     "region": ""
   },
   {
-    "name": "ROANNE",
-    "cp": "42300",
-    "dept": "42",
-    "region": ""
-  },
-  {
     "name": "ROCHE EN FOREZ",
     "cp": "42600",
     "dept": "42",
@@ -1248,18 +1212,6 @@
     "region": ""
   },
   {
-    "name": "SOLORE EN FOREZ",
-    "cp": "42130",
-    "dept": "42",
-    "region": ""
-  },
-  {
-    "name": "SOLORE EN FOREZ",
-    "cp": "42130",
-    "dept": "42",
-    "region": ""
-  },
-  {
     "name": "SORBIERS",
     "cp": "42290",
     "dept": "42",
@@ -1332,24 +1284,6 @@
     "region": ""
   },
   {
-    "name": "ST CHAMOND",
-    "cp": "42400",
-    "dept": "42",
-    "region": ""
-  },
-  {
-    "name": "ST CHAMOND",
-    "cp": "42400",
-    "dept": "42",
-    "region": ""
-  },
-  {
-    "name": "ST CHAMOND",
-    "cp": "42400",
-    "dept": "42",
-    "region": ""
-  },
-  {
     "name": "ST CHRISTO EN JAREZ",
     "cp": "42320",
     "dept": "42",
@@ -1394,18 +1328,6 @@
   {
     "name": "ST ETIENNE",
     "cp": "42000",
-    "dept": "42",
-    "region": ""
-  },
-  {
-    "name": "ST ETIENNE",
-    "cp": "42100",
-    "dept": "42",
-    "region": ""
-  },
-  {
-    "name": "ST ETIENNE",
-    "cp": "42100",
     "dept": "42",
     "region": ""
   },
@@ -1542,12 +1464,6 @@
     "region": ""
   },
   {
-    "name": "ST JEAN ST MAURICE SUR LOIRE",
-    "cp": "42155",
-    "dept": "42",
-    "region": ""
-  },
-  {
     "name": "ST JODARD",
     "cp": "42590",
     "dept": "42",
@@ -1586,12 +1502,6 @@
   {
     "name": "ST JUST LA PENDUE",
     "cp": "42540",
-    "dept": "42",
-    "region": ""
-  },
-  {
-    "name": "ST JUST ST RAMBERT",
-    "cp": "42170",
     "dept": "42",
     "region": ""
   },
@@ -1970,12 +1880,6 @@
   {
     "name": "VETRE SUR ANZON",
     "cp": "42440",
-    "dept": "42",
-    "region": ""
-  },
-  {
-    "name": "VEZELIN SUR LOIRE",
-    "cp": "42260",
     "dept": "42",
     "region": ""
   },

@@ -18,12 +18,6 @@
     "region": ""
   },
   {
-    "name": "AGDE",
-    "cp": "34300",
-    "dept": "34",
-    "region": ""
-  },
-  {
     "name": "AGEL",
     "cp": "34210",
     "dept": "34",
@@ -516,12 +510,6 @@
     "region": ""
   },
   {
-    "name": "ENTRE VIGNES",
-    "cp": "34400",
-    "dept": "34",
-    "region": ""
-  },
-  {
     "name": "ESPONDEILHAN",
     "cp": "34290",
     "dept": "34",
@@ -602,12 +590,6 @@
   {
     "name": "FRAISSE SUR AGOUT",
     "cp": "34330",
-    "dept": "34",
-    "region": ""
-  },
-  {
-    "name": "FRONTIGNAN",
-    "cp": "34110",
     "dept": "34",
     "region": ""
   },
@@ -960,12 +942,6 @@
     "region": ""
   },
   {
-    "name": "LUNAS LES CHATEAUX",
-    "cp": "34650",
-    "dept": "34",
-    "region": ""
-  },
-  {
     "name": "LUNEL",
     "cp": "34400",
     "dept": "34",
@@ -1002,12 +978,6 @@
     "region": ""
   },
   {
-    "name": "MARSEILLAN",
-    "cp": "34340",
-    "dept": "34",
-    "region": ""
-  },
-  {
     "name": "MARSILLARGUES",
     "cp": "34590",
     "dept": "34",
@@ -1016,12 +986,6 @@
   {
     "name": "MAS DE LONDRES",
     "cp": "34380",
-    "dept": "34",
-    "region": ""
-  },
-  {
-    "name": "MAUGUIO",
-    "cp": "34130",
     "dept": "34",
     "region": ""
   },
@@ -1688,12 +1652,6 @@
   {
     "name": "ST GENIES DE FONTEDIT",
     "cp": "34480",
-    "dept": "34",
-    "region": ""
-  },
-  {
-    "name": "ST GENIES DE VARENSAL",
-    "cp": "34610",
     "dept": "34",
     "region": ""
   },

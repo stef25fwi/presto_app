@@ -44,6 +44,7 @@ Map<String, dynamic> _offer({
   String status = 'active',
   String type = 'mission',
   bool proOnly = false,
+  String? userId,
 }) {
   final dept = deptFromCp(cp);
   final cityNorm = normalize(city);
@@ -53,8 +54,13 @@ Map<String, dynamic> _offer({
     "title": title,
     "category": category,
     "description": description,
+    
+    // 🔥 Compatibilité : écriture des 2 variantes
     "city": city,
+    "location": city,
     "cp": cp,
+    "postalCode": cp,
+    
     "dept": dept,
 
     // champs utiles filtres/UX
@@ -68,7 +74,82 @@ Map<String, dynamic> _offer({
 
     // optionnels (à garder si tu veux)
     "updatedAt": Timestamp.fromDate(createdAt),
+    if (userId != null && userId.isNotEmpty) "userId": userId,
   };
+}
+
+/// Ajoute rapidement 4 offres complètes pour tester la messagerie.
+Future<void> seedMessagingOffers({required String userId}) async {
+  final author = userId.trim();
+  if (author.isEmpty) {
+    throw ArgumentError('userId ne doit pas être vide');
+  }
+
+  final fs = FirebaseFirestore.instance;
+  final col = fs.collection(kOffersCollection);
+  final now = DateTime.now();
+
+  final seed = <Map<String, dynamic>>[
+    _offer(
+      title: "Extra serveur cocktail (ce soir)",
+      category: "Restauration / Extra",
+      description: "Service plateau + rangement, tenue noire souhaitée.",
+      city: "Paris",
+      cp: "75011",
+      budget: 90,
+      createdAt: now.subtract(const Duration(hours: 2)),
+      userId: author,
+    ),
+    _offer(
+      title: "Ménage 3h appartement T2",
+      category: "Ménage",
+      description: "Aspiration, sols, salle de bain, produits fournis.",
+      city: "Lyon",
+      cp: "69002",
+      budget: 60,
+      createdAt: now.subtract(const Duration(hours: 5)),
+      userId: author,
+    ),
+    _offer(
+      title: "Bricolage : poser deux étagères",
+      category: "Bricolage",
+      description: "Perçage placo + chevilles, niveau et vis fournis.",
+      city: "Marseille",
+      cp: "13006",
+      budget: 70,
+      createdAt: now.subtract(const Duration(hours: 8)),
+      userId: author,
+    ),
+    _offer(
+      title: "Baby-sitting mercredi 18h–21h",
+      category: "Baby-sitting",
+      description: "Deux enfants (4 et 7 ans), repas réchauffé, coucher.",
+      city: "Nantes",
+      cp: "44000",
+      budget: 45,
+      createdAt: now.subtract(const Duration(hours: 12)),
+      userId: author,
+    ),
+  ];
+
+  WriteBatch batch = fs.batch();
+  int ops = 0;
+
+  Future<void> commitIfNeeded() async {
+    if (ops == 0) return;
+    await batch.commit();
+    batch = fs.batch();
+    ops = 0;
+  }
+
+  for (final o in seed) {
+    batch.set(col.doc(), o);
+    ops++;
+    if (ops >= 450) {
+      await commitIfNeeded();
+    }
+  }
+  await commitIfNeeded();
 }
 
 /// 🔥 Reset total + réinjection d'offres de test

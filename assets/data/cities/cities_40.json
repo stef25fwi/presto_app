@@ -258,12 +258,6 @@
     "region": ""
   },
   {
-    "name": "BISCARROSSE",
-    "cp": "40600",
-    "dept": "40",
-    "region": ""
-  },
-  {
     "name": "BONNEGARDE",
     "cp": "40330",
     "dept": "40",
@@ -1164,24 +1158,6 @@
     "region": ""
   },
   {
-    "name": "MORCENX LA NOUVELLE",
-    "cp": "40110",
-    "dept": "40",
-    "region": ""
-  },
-  {
-    "name": "MORCENX LA NOUVELLE",
-    "cp": "40110",
-    "dept": "40",
-    "region": ""
-  },
-  {
-    "name": "MORCENX LA NOUVELLE",
-    "cp": "40110",
-    "dept": "40",
-    "region": ""
-  },
-  {
     "name": "MORGANX",
     "cp": "40700",
     "dept": "40",
@@ -1250,12 +1226,6 @@
   {
     "name": "ONDRES",
     "cp": "40440",
-    "dept": "40",
-    "region": ""
-  },
-  {
-    "name": "ONESSE LAHARIE",
-    "cp": "40110",
     "dept": "40",
     "region": ""
   },
@@ -1368,12 +1338,6 @@
     "region": ""
   },
   {
-    "name": "PISSOS",
-    "cp": "40410",
-    "dept": "40",
-    "region": ""
-  },
-  {
     "name": "POMAREZ",
     "cp": "40360",
     "dept": "40",
@@ -1460,12 +1424,6 @@
   {
     "name": "RIMBEZ ET BAUDIETS",
     "cp": "40310",
-    "dept": "40",
-    "region": ""
-  },
-  {
-    "name": "RION DES LANDES",
-    "cp": "40370",
     "dept": "40",
     "region": ""
   },
@@ -1952,18 +1910,6 @@
   {
     "name": "VIELLE SOUBIRAN",
     "cp": "40240",
-    "dept": "40",
-    "region": ""
-  },
-  {
-    "name": "VIELLE ST GIRONS",
-    "cp": "40560",
-    "dept": "40",
-    "region": ""
-  },
-  {
-    "name": "VIELLE ST GIRONS",
-    "cp": "40560",
     "dept": "40",
     "region": ""
   },

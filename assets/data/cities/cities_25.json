@@ -96,18 +96,6 @@
     "region": ""
   },
   {
-    "name": "ANTEUIL",
-    "cp": "25340",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "ANTEUIL",
-    "cp": "25340",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "APPENANS",
     "cp": "25250",
     "dept": "25",
@@ -186,12 +174,6 @@
     "region": ""
   },
   {
-    "name": "AVANNE AVENEY",
-    "cp": "25720",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "AVILLEY",
     "cp": "25680",
     "dept": "25",
@@ -246,12 +228,6 @@
     "region": ""
   },
   {
-    "name": "BAUME LES DAMES",
-    "cp": "25110",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "BAVANS",
     "cp": "25550",
     "dept": "25",
@@ -260,12 +236,6 @@
   {
     "name": "BELFAYS",
     "cp": "25470",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "BELLEHERBE",
-    "cp": "25380",
     "dept": "25",
     "region": ""
   },
@@ -396,12 +366,6 @@
     "region": ""
   },
   {
-    "name": "BOUCLANS",
-    "cp": "25360",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "BOUJAILLES",
     "cp": "25560",
     "dept": "25",
@@ -506,18 +470,6 @@
   {
     "name": "BULLE",
     "cp": "25560",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "BURGILLE",
-    "cp": "25170",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "BURGILLE",
-    "cp": "25170",
     "dept": "25",
     "region": ""
   },
@@ -662,12 +614,6 @@
   {
     "name": "CHARNAY",
     "cp": "25440",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "CHARQUEMONT",
-    "cp": "25140",
     "dept": "25",
     "region": ""
   },
@@ -918,18 +864,6 @@
     "region": ""
   },
   {
-    "name": "CUSSEY SUR LISON",
-    "cp": "25440",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "DAMBELIN",
-    "cp": "25150",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "DAMBELIN",
     "cp": "25150",
     "dept": "25",
@@ -1074,12 +1008,6 @@
     "region": ""
   },
   {
-    "name": "ECOLE VALENTIN",
-    "cp": "25480",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "ECOT",
     "cp": "25150",
     "dept": "25",
@@ -1129,43 +1057,7 @@
   },
   {
     "name": "ETALANS",
-    "cp": "25580",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "ETALANS",
     "cp": "25620",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "ETERNOZ VALLEE DU LISON",
-    "cp": "25330",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "ETERNOZ VALLEE DU LISON",
-    "cp": "25330",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "ETERNOZ VALLEE DU LISON",
-    "cp": "25330",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "ETERNOZ VALLEE DU LISON",
-    "cp": "25330",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "ETERNOZ VALLEE DU LISON",
-    "cp": "25330",
     "dept": "25",
     "region": ""
   },
@@ -1356,12 +1248,6 @@
     "region": ""
   },
   {
-    "name": "FOURNETS LUISANS",
-    "cp": "25390",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "FRAMBOUHANS",
     "cp": "25140",
     "dept": "25",
@@ -1460,18 +1346,6 @@
   {
     "name": "GLAY",
     "cp": "25310",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "GLERE",
-    "cp": "25190",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "GLERE",
-    "cp": "25190",
     "dept": "25",
     "region": ""
   },
@@ -1620,12 +1494,6 @@
     "region": ""
   },
   {
-    "name": "HYEVRE PAROISSE",
-    "cp": "25110",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "INDEVILLERS",
     "cp": "25470",
     "dept": "25",
@@ -1748,12 +1616,6 @@
   {
     "name": "LA VEZE",
     "cp": "25660",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "LABERGEMENT STE MARIE",
-    "cp": "25160",
     "dept": "25",
     "region": ""
   },
@@ -1896,12 +1758,6 @@
     "region": ""
   },
   {
-    "name": "LE VAL",
-    "cp": "25440",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "LE VERNOY",
     "cp": "25750",
     "dept": "25",
@@ -1910,12 +1766,6 @@
   {
     "name": "LES ALLIES",
     "cp": "25300",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "LES AUXONS",
-    "cp": "25870",
     "dept": "25",
     "region": ""
   },
@@ -2016,36 +1866,6 @@
     "region": ""
   },
   {
-    "name": "LES PREMIERS SAPINS",
-    "cp": "25580",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "LES PREMIERS SAPINS",
-    "cp": "25580",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "LES PREMIERS SAPINS",
-    "cp": "25580",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "LES PREMIERS SAPINS",
-    "cp": "25580",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "LES PREMIERS SAPINS",
-    "cp": "25580",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "LES TERRES DE CHAUX",
     "cp": "25190",
     "dept": "25",
@@ -2054,18 +1874,6 @@
   {
     "name": "LES VILLEDIEU",
     "cp": "25240",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "LEVIER",
-    "cp": "25270",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "LEVIER",
-    "cp": "25270",
     "dept": "25",
     "region": ""
   },
@@ -2184,12 +1992,6 @@
     "region": ""
   },
   {
-    "name": "MAISONS DU BOIS LIEVREMONT",
-    "cp": "25650",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "MALANS",
     "cp": "25330",
     "dept": "25",
@@ -2210,12 +2012,6 @@
   {
     "name": "MALPAS",
     "cp": "25160",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "MAMIROLLE",
-    "cp": "25620",
     "dept": "25",
     "region": ""
   },
@@ -2250,12 +2046,6 @@
     "region": ""
   },
   {
-    "name": "MARCHAUX CHAUDEFONTAINE",
-    "cp": "25640",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "MARVELISE",
     "cp": "25250",
     "dept": "25",
@@ -2276,12 +2066,6 @@
   {
     "name": "MEDIERE",
     "cp": "25250",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "MERCEY LE GRAND",
-    "cp": "25410",
     "dept": "25",
     "region": ""
   },
@@ -2354,18 +2138,6 @@
   {
     "name": "MONT DE VOUGNEY",
     "cp": "25120",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "MONT DE VOUGNEY",
-    "cp": "25120",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "MONTAGNEY SERVIGNEY",
-    "cp": "25680",
     "dept": "25",
     "region": ""
   },
@@ -2508,12 +2280,6 @@
     "region": ""
   },
   {
-    "name": "NAISEY LES GRANGES",
-    "cp": "25360",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "NANCRAY",
     "cp": "25360",
     "dept": "25",
@@ -2588,12 +2354,6 @@
   {
     "name": "ORCHAMPS VENNES",
     "cp": "25390",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "ORGEANS BLANCHEFONTAINE",
-    "cp": "25120",
     "dept": "25",
     "region": ""
   },
@@ -2706,42 +2466,6 @@
     "region": ""
   },
   {
-    "name": "PAYS DE CLERVAL",
-    "cp": "25340",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "PAYS DE CLERVAL",
-    "cp": "25340",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "PAYS DE MONTBENOIT",
-    "cp": "25650",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "PAYS DE MONTBENOIT",
-    "cp": "25650",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "PAYS DE MONTBENOIT",
-    "cp": "25650",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "PAYS DE MONTBENOIT",
-    "cp": "25650",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "PAYS DE MONTBENOIT",
     "cp": "25650",
     "dept": "25",
@@ -2820,12 +2544,6 @@
     "region": ""
   },
   {
-    "name": "PONT DE ROIDE VERMONDANS",
-    "cp": "25150",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "PONT LES MOULINS",
     "cp": "25110",
     "dept": "25",
@@ -2846,12 +2564,6 @@
   {
     "name": "POUILLEY LES VIGNES",
     "cp": "25115",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "POULIGNEY LUSANS",
-    "cp": "25640",
     "dept": "25",
     "region": ""
   },
@@ -2936,18 +2648,6 @@
   {
     "name": "REMONDANS VAIVRE",
     "cp": "25150",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "REMONDANS VAIVRE",
-    "cp": "25150",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "REMORAY BOUJEONS",
-    "cp": "25160",
     "dept": "25",
     "region": ""
   },
@@ -3066,24 +2766,6 @@
     "region": ""
   },
   {
-    "name": "ROUGEMONT",
-    "cp": "25680",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "ROUGEMONT",
-    "cp": "25680",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "ROUGEMONT",
-    "cp": "25680",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "ROUGEMONTOT",
     "cp": "25640",
     "dept": "25",
@@ -3126,12 +2808,6 @@
     "region": ""
   },
   {
-    "name": "SANCEY",
-    "cp": "25430",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "SAONE",
     "cp": "25660",
     "dept": "25",
@@ -3152,12 +2828,6 @@
   {
     "name": "SAUVAGNEY",
     "cp": "25170",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "SCEY MAISIERES",
-    "cp": "25290",
     "dept": "25",
     "region": ""
   },
@@ -3276,12 +2946,6 @@
     "region": ""
   },
   {
-    "name": "ST HIPPOLYTE",
-    "cp": "25190",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "ST JUAN",
     "cp": "25360",
     "dept": "25",
@@ -3306,20 +2970,8 @@
     "region": ""
   },
   {
-    "name": "ST MAURICE COLOMBIER",
-    "cp": "25260",
-    "dept": "25",
-    "region": ""
-  },
-  {
     "name": "ST POINT LAC",
     "cp": "25160",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "ST VIT",
-    "cp": "25410",
     "dept": "25",
     "region": ""
   },
@@ -3374,12 +3026,6 @@
   {
     "name": "TALLENAY",
     "cp": "25870",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "TARCENAY FOUCHERANS",
-    "cp": "25620",
     "dept": "25",
     "region": ""
   },
@@ -3476,30 +3122,6 @@
   {
     "name": "VAIRE",
     "cp": "25220",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "VAIRE",
-    "cp": "25220",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "VAIRE",
-    "cp": "25220",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "VAL D USIERS",
-    "cp": "25520",
-    "dept": "25",
-    "region": ""
-  },
-  {
-    "name": "VAL D USIERS",
-    "cp": "25520",
     "dept": "25",
     "region": ""
   },

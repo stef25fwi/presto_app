@@ -12,12 +12,6 @@
     "region": ""
   },
   {
-    "name": "ABAUCOURT HAUTECOURT",
-    "cp": "55400",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "AINCREVILLE",
     "cp": "55110",
     "dept": "55",
@@ -56,24 +50,6 @@
   {
     "name": "ANDERNAY",
     "cp": "55800",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "APREMONT LA FORET",
-    "cp": "55300",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "APREMONT LA FORET",
-    "cp": "55300",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "APREMONT LA FORET",
-    "cp": "55300",
     "dept": "55",
     "region": ""
   },
@@ -140,12 +116,6 @@
   {
     "name": "BAALON",
     "cp": "55700",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "BADONVILLIERS GERAUVILLIERS",
-    "cp": "55130",
     "dept": "55",
     "region": ""
   },
@@ -224,24 +194,6 @@
   {
     "name": "BEAUMONT EN VERDUNOIS",
     "cp": "55100",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "BEAUSITE",
-    "cp": "55250",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "BEAUSITE",
-    "cp": "55250",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "BEAUSITE",
-    "cp": "55250",
     "dept": "55",
     "region": ""
   },
@@ -350,18 +302,6 @@
   {
     "name": "BONNET",
     "cp": "55130",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "BONZEE",
-    "cp": "55160",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "BONZEE",
-    "cp": "55160",
     "dept": "55",
     "region": ""
   },
@@ -510,12 +450,6 @@
     "region": ""
   },
   {
-    "name": "BROUSSEY RAULECOURT",
-    "cp": "55200",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "BURE",
     "cp": "55290",
     "dept": "55",
@@ -536,24 +470,6 @@
   {
     "name": "BUXIERES SOUS LES COTES",
     "cp": "55300",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "BUXIERES SOUS LES COTES",
-    "cp": "55300",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "BUXIERES SOUS LES COTES",
-    "cp": "55300",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "BUZY DARMONT",
-    "cp": "55400",
     "dept": "55",
     "region": ""
   },
@@ -590,18 +506,6 @@
   {
     "name": "CHAMPOUGNY",
     "cp": "55140",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "CHANTERAINE",
-    "cp": "55500",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "CHANTERAINE",
-    "cp": "55500",
     "dept": "55",
     "region": ""
   },
@@ -690,32 +594,8 @@
     "region": ""
   },
   {
-    "name": "CHONVILLE MALAUMONT",
-    "cp": "55200",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "CIERGES SOUS MONTFAUCON",
     "cp": "55270",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "CLERMONT EN ARGONNE",
-    "cp": "55120",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "CLERMONT EN ARGONNE",
-    "cp": "55120",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "CLERMONT EN ARGONNE",
-    "cp": "55120",
     "dept": "55",
     "region": ""
   },
@@ -788,12 +668,6 @@
   {
     "name": "COUSANCES LES FORGES",
     "cp": "55170",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "COUSANCES LES TRICONVILLE",
-    "cp": "55500",
     "dept": "55",
     "region": ""
   },
@@ -882,20 +756,8 @@
     "region": ""
   },
   {
-    "name": "DELOUZE ROSIERES",
-    "cp": "55130",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "DELUT",
     "cp": "55150",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "DEMANGE BAUDIGNECOURT",
-    "cp": "55130",
     "dept": "55",
     "region": ""
   },
@@ -1056,18 +918,6 @@
     "region": ""
   },
   {
-    "name": "ERNEVILLE AUX BOIS",
-    "cp": "55500",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "ERNEVILLE AUX BOIS",
-    "cp": "55500",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "ESNES EN ARGONNE",
     "cp": "55100",
     "dept": "55",
@@ -1098,32 +948,8 @@
     "region": ""
   },
   {
-    "name": "EUVILLE",
-    "cp": "55200",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "EUVILLE",
-    "cp": "55200",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "EUVILLE",
-    "cp": "55200",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "EVRES",
     "cp": "55250",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "FAINS VEEL",
-    "cp": "55000",
     "dept": "55",
     "region": ""
   },
@@ -1142,12 +968,6 @@
   {
     "name": "FLEURY DEVANT DOUAUMONT",
     "cp": "55100",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "FOAMEIX ORNEL",
-    "cp": "55400",
     "dept": "55",
     "region": ""
   },
@@ -1254,18 +1074,6 @@
     "region": ""
   },
   {
-    "name": "GEVILLE",
-    "cp": "55200",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "GEVILLE",
-    "cp": "55200",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "GIMECOURT",
     "cp": "55260",
     "dept": "55",
@@ -1286,18 +1094,6 @@
   {
     "name": "GIVRAUVAL",
     "cp": "55500",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "GONDRECOURT LE CHATEAU",
-    "cp": "55130",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "GONDRECOURT LE CHATEAU",
-    "cp": "55130",
     "dept": "55",
     "region": ""
   },
@@ -1364,18 +1160,6 @@
   {
     "name": "HAN LES JUVIGNY",
     "cp": "55600",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "HAN SUR MEUSE",
-    "cp": "55300",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "HAN SUR MEUSE",
-    "cp": "55300",
     "dept": "55",
     "region": ""
   },
@@ -1554,18 +1338,6 @@
     "region": ""
   },
   {
-    "name": "LACHAUSSEE",
-    "cp": "55210",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "LACHAUSSEE",
-    "cp": "55210",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "LACROIX SUR MEUSE",
     "cp": "55300",
     "dept": "55",
@@ -1602,32 +1374,8 @@
     "region": ""
   },
   {
-    "name": "LAMORVILLE",
-    "cp": "55300",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "LAMORVILLE",
-    "cp": "55300",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "LAMORVILLE",
-    "cp": "55300",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "LAMOUILLY",
     "cp": "55700",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "LANDRECOURT LEMPIRE",
-    "cp": "55100",
     "dept": "55",
     "region": ""
   },
@@ -1722,30 +1470,6 @@
     "region": ""
   },
   {
-    "name": "LES HAUTS DE CHEE",
-    "cp": "55000",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "LES HAUTS DE CHEE",
-    "cp": "55000",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "LES HAUTS DE CHEE",
-    "cp": "55000",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "LES HAUTS DE CHEE",
-    "cp": "55000",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "LES ISLETTES",
     "cp": "55120",
     "dept": "55",
@@ -1771,30 +1495,6 @@
   },
   {
     "name": "LES SOUHESMES RAMPONT",
-    "cp": "55220",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "LES SOUHESMES RAMPONT",
-    "cp": "55220",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "LES TROIS DOMAINES",
-    "cp": "55220",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "LES TROIS DOMAINES",
-    "cp": "55220",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "LES TROIS DOMAINES",
     "cp": "55220",
     "dept": "55",
     "region": ""
@@ -2070,18 +1770,6 @@
     "region": ""
   },
   {
-    "name": "MOIREY FLABAS CREPION",
-    "cp": "55150",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "MOIREY FLABAS CREPION",
-    "cp": "55150",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "MONT DEVANT SASSEY",
     "cp": "55110",
     "dept": "55",
@@ -2220,12 +1908,6 @@
     "region": ""
   },
   {
-    "name": "NAIVES ROSIERES",
-    "cp": "55000",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "NAIX AUX FORGES",
     "cp": "55500",
     "dept": "55",
@@ -2316,18 +1998,6 @@
     "region": ""
   },
   {
-    "name": "NIXEVILLE BLERCOURT",
-    "cp": "55120",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "NONSARD LAMARCHE",
-    "cp": "55210",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "NONSARD LAMARCHE",
     "cp": "55210",
     "dept": "55",
@@ -2342,24 +2012,6 @@
   {
     "name": "NOYERS AUZECOURT",
     "cp": "55800",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "NOYERS AUZECOURT",
-    "cp": "55800",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "NUBECOURT",
-    "cp": "55250",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "NUBECOURT",
-    "cp": "55250",
     "dept": "55",
     "region": ""
   },
@@ -2472,12 +2124,6 @@
     "region": ""
   },
   {
-    "name": "RAIVAL",
-    "cp": "55260",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "RAMBLUZIN ET BENOITE VAUX",
     "cp": "55220",
     "dept": "55",
@@ -2528,12 +2174,6 @@
   {
     "name": "REGNEVILLE SUR MEUSE",
     "cp": "55110",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "REMBERCOURT SOMMAISNE",
-    "cp": "55250",
     "dept": "55",
     "region": ""
   },
@@ -2718,24 +2358,6 @@
     "region": ""
   },
   {
-    "name": "SAULVAUX",
-    "cp": "55500",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "SAULVAUX",
-    "cp": "55500",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "SAULX LES CHAMPLON",
-    "cp": "55160",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "SAULX LES CHAMPLON",
     "cp": "55160",
     "dept": "55",
@@ -2792,18 +2414,6 @@
   {
     "name": "SEPVIGNY",
     "cp": "55140",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "SEUIL D ARGONNE",
-    "cp": "55250",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "SEUIL D ARGONNE",
-    "cp": "55250",
     "dept": "55",
     "region": ""
   },
@@ -2880,30 +2490,6 @@
     "region": ""
   },
   {
-    "name": "SPINCOURT",
-    "cp": "55230",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "SPINCOURT",
-    "cp": "55230",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "SPINCOURT",
-    "cp": "55230",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "SPINCOURT",
-    "cp": "55230",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "ST AMAND SUR ORNAIN",
     "cp": "55500",
     "dept": "55",
@@ -2924,18 +2510,6 @@
   {
     "name": "ST GERMAIN SUR MEUSE",
     "cp": "55140",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "ST HILAIRE EN WOEVRE",
-    "cp": "55160",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "ST HILAIRE EN WOEVRE",
-    "cp": "55160",
     "dept": "55",
     "region": ""
   },
@@ -3132,30 +2706,6 @@
     "region": ""
   },
   {
-    "name": "VAL D ORNAIN",
-    "cp": "55000",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "VAL D ORNAIN",
-    "cp": "55000",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "VALBOIS",
-    "cp": "55300",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "VALBOIS",
-    "cp": "55300",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "VALBOIS",
     "cp": "55300",
     "dept": "55",
@@ -3270,42 +2820,6 @@
     "region": ""
   },
   {
-    "name": "VIGNEULLES LES HATTONCHATEL",
-    "cp": "55210",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "VIGNEULLES LES HATTONCHATEL",
-    "cp": "55210",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "VIGNEULLES LES HATTONCHATEL",
-    "cp": "55210",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "VIGNEULLES LES HATTONCHATEL",
-    "cp": "55210",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "VIGNEULLES LES HATTONCHATEL",
-    "cp": "55210",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "VIGNEULLES LES HATTONCHATEL",
-    "cp": "55210",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "VIGNOT",
     "cp": "55200",
     "dept": "55",
@@ -3408,20 +2922,8 @@
     "region": ""
   },
   {
-    "name": "VILOSNES HARAUMONT",
-    "cp": "55110",
-    "dept": "55",
-    "region": ""
-  },
-  {
     "name": "VITTARVILLE",
     "cp": "55150",
-    "dept": "55",
-    "region": ""
-  },
-  {
-    "name": "VOID VACON",
-    "cp": "55190",
     "dept": "55",
     "region": ""
   },

@@ -36,12 +36,6 @@
     "region": ""
   },
   {
-    "name": "AMPLEPUIS",
-    "cp": "69550",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "AMPUIS",
     "cp": "69420",
     "dept": "69",
@@ -90,32 +84,8 @@
     "region": ""
   },
   {
-    "name": "BEAUJEU",
-    "cp": "69430",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "BEAUVALLON",
     "cp": "69700",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "BEAUVALLON",
-    "cp": "69700",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "BEAUVALLON",
-    "cp": "69700",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "BELLEVILLE EN BEAUJOLAIS",
-    "cp": "69220",
     "dept": "69",
     "region": ""
   },
@@ -138,42 +108,6 @@
     "region": ""
   },
   {
-    "name": "BESSENAY",
-    "cp": "69690",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "BESSENAY",
-    "cp": "69690",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "BESSENAY",
-    "cp": "69690",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "BESSENAY",
-    "cp": "69690",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "BESSENAY",
-    "cp": "69690",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "BIBOST",
-    "cp": "69690",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "BIBOST",
     "cp": "69690",
     "dept": "69",
@@ -182,12 +116,6 @@
   {
     "name": "BLACE",
     "cp": "69460",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "BRIGNAIS",
-    "cp": "69530",
     "dept": "69",
     "region": ""
   },
@@ -248,30 +176,6 @@
   {
     "name": "CERCIE",
     "cp": "69220",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "CHABANIERE",
-    "cp": "69440",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "CHABANIERE",
-    "cp": "69440",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "CHABANIERE",
-    "cp": "69440",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "CHABANIERE",
-    "cp": "69440",
     "dept": "69",
     "region": ""
   },
@@ -366,12 +270,6 @@
     "region": ""
   },
   {
-    "name": "CHAUSSAN",
-    "cp": "69440",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "CHAZAY D AZERGUES",
     "cp": "69380",
     "dept": "69",
@@ -445,18 +343,6 @@
   },
   {
     "name": "COLOMBIER SAUGNIEU",
-    "cp": "69124",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "COLOMBIER SAUGNIEU",
-    "cp": "69125",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "COLOMBIER SAUGNIEU",
     "cp": "69125",
     "dept": "69",
     "region": ""
@@ -482,24 +368,6 @@
   {
     "name": "CORCELLES EN BEAUJOLAIS",
     "cp": "69220",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "COURS",
-    "cp": "69470",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "COURS",
-    "cp": "69470",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "COURS",
-    "cp": "69470",
     "dept": "69",
     "region": ""
   },
@@ -552,12 +420,6 @@
     "region": ""
   },
   {
-    "name": "DECINES CHARPIEU",
-    "cp": "69150",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "DENICE",
     "cp": "69640",
     "dept": "69",
@@ -566,36 +428,6 @@
   {
     "name": "DEUX GROSNES",
     "cp": "69430",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "DEUX GROSNES",
-    "cp": "69860",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "DEUX GROSNES",
-    "cp": "69860",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "DEUX GROSNES",
-    "cp": "69860",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "DEUX GROSNES",
-    "cp": "69860",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "DEUX GROSNES",
-    "cp": "69860",
     "dept": "69",
     "region": ""
   },
@@ -626,12 +458,6 @@
   {
     "name": "DUERNE",
     "cp": "69850",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "ECHALAS",
-    "cp": "69700",
     "dept": "69",
     "region": ""
   },
@@ -716,12 +542,6 @@
   {
     "name": "GENAY",
     "cp": "69730",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "GIVORS",
-    "cp": "69700",
     "dept": "69",
     "region": ""
   },
@@ -864,12 +684,6 @@
     "region": ""
   },
   {
-    "name": "LARAJASSE",
-    "cp": "69590",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "LE BREUIL",
     "cp": "69620",
     "dept": "69",
@@ -920,12 +734,6 @@
   {
     "name": "LES SAUVAGES",
     "cp": "69170",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "LETRA",
-    "cp": "69620",
     "dept": "69",
     "region": ""
   },
@@ -1116,12 +924,6 @@
     "region": ""
   },
   {
-    "name": "MONTAGNY",
-    "cp": "69700",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "MONTANAY",
     "cp": "69250",
     "dept": "69",
@@ -1152,18 +954,6 @@
     "region": ""
   },
   {
-    "name": "MORANCE",
-    "cp": "69480",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "MORNANT",
-    "cp": "69440",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "MORNANT",
     "cp": "69440",
     "dept": "69",
@@ -1178,12 +968,6 @@
   {
     "name": "ODENAS",
     "cp": "69460",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "ORLIENAS",
-    "cp": "69530",
     "dept": "69",
     "region": ""
   },
@@ -1237,25 +1021,7 @@
   },
   {
     "name": "PORTE DES PIERRES DOREES",
-    "cp": "69400",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "PORTE DES PIERRES DOREES",
-    "cp": "69400",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "PORTE DES PIERRES DOREES",
     "cp": "69640",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "POULE LES ECHARMEAUX",
-    "cp": "69870",
     "dept": "69",
     "region": ""
   },
@@ -1290,12 +1056,6 @@
     "region": ""
   },
   {
-    "name": "QUINCIEUX",
-    "cp": "69650",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "RANCHAL",
     "cp": "69470",
     "dept": "69",
@@ -1308,18 +1068,6 @@
     "region": ""
   },
   {
-    "name": "REGNIE DURETTE",
-    "cp": "69430",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "RILLIEUX LA PAPE",
-    "cp": "69140",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "RILLIEUX LA PAPE",
     "cp": "69140",
     "dept": "69",
@@ -1328,12 +1076,6 @@
   {
     "name": "RIVERIE",
     "cp": "69440",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "RIVOLET",
-    "cp": "69640",
     "dept": "69",
     "region": ""
   },
@@ -1364,12 +1106,6 @@
   {
     "name": "SAIN BEL",
     "cp": "69210",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "SALLES ARBUISSONNAS EN BEAUJOLAIS",
-    "cp": "69460",
     "dept": "69",
     "region": ""
   },
@@ -1578,12 +1314,6 @@
     "region": ""
   },
   {
-    "name": "ST GERMAIN NUELLES",
-    "cp": "69210",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "ST IGNY DE VERS",
     "cp": "69790",
     "dept": "69",
@@ -1598,12 +1328,6 @@
   {
     "name": "ST JEAN LA BUSSIERE",
     "cp": "69550",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "ST JULIEN",
-    "cp": "69640",
     "dept": "69",
     "region": ""
   },
@@ -1638,12 +1362,6 @@
     "region": ""
   },
   {
-    "name": "ST LAURENT D AGNY",
-    "cp": "69440",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "ST LAURENT DE CHAMOUSSET",
     "cp": "69930",
     "dept": "69",
@@ -1658,12 +1376,6 @@
   {
     "name": "ST MARCEL L ECLAIRE",
     "cp": "69170",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "ST MARTIN EN HAUT",
-    "cp": "69850",
     "dept": "69",
     "region": ""
   },
@@ -1716,12 +1428,6 @@
     "region": ""
   },
   {
-    "name": "ST ROMAIN EN GAL",
-    "cp": "69560",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "ST ROMAIN EN GIER",
     "cp": "69700",
     "dept": "69",
@@ -1758,18 +1464,6 @@
     "region": ""
   },
   {
-    "name": "STE CATHERINE",
-    "cp": "69440",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "STE CATHERINE",
-    "cp": "69440",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "STE COLOMBE",
     "cp": "69560",
     "dept": "69",
@@ -1796,12 +1490,6 @@
   {
     "name": "STE PAULE",
     "cp": "69620",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "TALUYERS",
-    "cp": "69440",
     "dept": "69",
     "region": ""
   },
@@ -1854,30 +1542,6 @@
     "region": ""
   },
   {
-    "name": "THIZY LES BOURGS",
-    "cp": "69240",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "THIZY LES BOURGS",
-    "cp": "69240",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "THIZY LES BOURGS",
-    "cp": "69240",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "THIZY LES BOURGS",
-    "cp": "69240",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "THURINS",
     "cp": "69510",
     "dept": "69",
@@ -1908,26 +1572,8 @@
     "region": ""
   },
   {
-    "name": "VAL D OINGT",
-    "cp": "69620",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "VAL D OINGT",
-    "cp": "69620",
-    "dept": "69",
-    "region": ""
-  },
-  {
     "name": "VALSONNE",
     "cp": "69170",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "VAUGNERAY",
-    "cp": "69670",
     "dept": "69",
     "region": ""
   },
@@ -2006,30 +1652,6 @@
   {
     "name": "VINDRY SUR TURDINE",
     "cp": "69490",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "VINDRY SUR TURDINE",
-    "cp": "69490",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "VINDRY SUR TURDINE",
-    "cp": "69490",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "VINDRY SUR TURDINE",
-    "cp": "69490",
-    "dept": "69",
-    "region": ""
-  },
-  {
-    "name": "VOURLES",
-    "cp": "69390",
     "dept": "69",
     "region": ""
   },

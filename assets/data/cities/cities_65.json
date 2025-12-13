@@ -18,12 +18,6 @@
     "region": ""
   },
   {
-    "name": "ADERVIELLE POUCHERGUES",
-    "cp": "65240",
-    "dept": "65",
-    "region": ""
-  },
-  {
     "name": "AGOS VIDALOS",
     "cp": "65400",
     "dept": "65",
@@ -180,12 +174,6 @@
     "region": ""
   },
   {
-    "name": "ARRENS MARSOUS",
-    "cp": "65400",
-    "dept": "65",
-    "region": ""
-  },
-  {
     "name": "ARRODETS",
     "cp": "65130",
     "dept": "65",
@@ -318,12 +306,6 @@
     "region": ""
   },
   {
-    "name": "AVEZAC PRAT LAHITTE",
-    "cp": "65130",
-    "dept": "65",
-    "region": ""
-  },
-  {
     "name": "AYROS ARBOUIX",
     "cp": "65400",
     "dept": "65",
@@ -344,12 +326,6 @@
   {
     "name": "AZET",
     "cp": "65170",
-    "dept": "65",
-    "region": ""
-  },
-  {
-    "name": "BAGNERES DE BIGORRE",
-    "cp": "65200",
     "dept": "65",
     "region": ""
   },
@@ -498,12 +474,6 @@
     "region": ""
   },
   {
-    "name": "BENQUE MOLERE",
-    "cp": "65130",
-    "dept": "65",
-    "region": ""
-  },
-  {
     "name": "BERBERUST LIAS",
     "cp": "65100",
     "dept": "65",
@@ -570,12 +540,6 @@
     "region": ""
   },
   {
-    "name": "BEYREDE JUMET CAMOUS",
-    "cp": "65410",
-    "dept": "65",
-    "region": ""
-  },
-  {
     "name": "BIZE",
     "cp": "65150",
     "dept": "65",
@@ -608,12 +572,6 @@
   {
     "name": "BOO SILHEN",
     "cp": "65400",
-    "dept": "65",
-    "region": ""
-  },
-  {
-    "name": "BORDERES LOURON",
-    "cp": "65590",
     "dept": "65",
     "region": ""
   },
@@ -762,30 +720,6 @@
     "region": ""
   },
   {
-    "name": "CAMPAN",
-    "cp": "65710",
-    "dept": "65",
-    "region": ""
-  },
-  {
-    "name": "CAMPAN",
-    "cp": "65710",
-    "dept": "65",
-    "region": ""
-  },
-  {
-    "name": "CAMPAN",
-    "cp": "65710",
-    "dept": "65",
-    "region": ""
-  },
-  {
-    "name": "CAMPAN",
-    "cp": "65710",
-    "dept": "65",
-    "region": ""
-  },
-  {
     "name": "CAMPARAN",
     "cp": "65170",
     "dept": "65",
@@ -890,18 +824,6 @@
   {
     "name": "CAZAUX DEBAT",
     "cp": "65590",
-    "dept": "65",
-    "region": ""
-  },
-  {
-    "name": "CAZAUX FRECHET ANERAN CAMORS",
-    "cp": "65240",
-    "dept": "65",
-    "region": ""
-  },
-  {
-    "name": "CAZAUX FRECHET ANERAN CAMORS",
-    "cp": "65240",
     "dept": "65",
     "region": ""
   },
@@ -1188,12 +1110,6 @@
     "region": ""
   },
   {
-    "name": "GAVARNIE GEDRE",
-    "cp": "65120",
-    "dept": "65",
-    "region": ""
-  },
-  {
     "name": "GAYAN",
     "cp": "65320",
     "dept": "65",
@@ -1358,12 +1274,6 @@
   {
     "name": "HAUTAGET",
     "cp": "65150",
-    "dept": "65",
-    "region": ""
-  },
-  {
-    "name": "HECHES",
-    "cp": "65250",
     "dept": "65",
     "region": ""
   },
@@ -1826,12 +1736,6 @@
   {
     "name": "LUTILHOUS",
     "cp": "65300",
-    "dept": "65",
-    "region": ""
-  },
-  {
-    "name": "LUZ ST SAUVEUR",
-    "cp": "65120",
     "dept": "65",
     "region": ""
   },
@@ -2360,12 +2264,6 @@
   {
     "name": "SALECHAN",
     "cp": "65370",
-    "dept": "65",
-    "region": ""
-  },
-  {
-    "name": "SALIGOS",
-    "cp": "65120",
     "dept": "65",
     "region": ""
   },

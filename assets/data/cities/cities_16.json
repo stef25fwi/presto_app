@@ -18,12 +18,6 @@
     "region": ""
   },
   {
-    "name": "AIGRE",
-    "cp": "16140",
-    "dept": "16",
-    "region": ""
-  },
-  {
     "name": "ALLOUE",
     "cp": "16490",
     "dept": "16",
@@ -102,24 +96,6 @@
     "region": ""
   },
   {
-    "name": "AUNAC SUR CHARENTE",
-    "cp": "16460",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "AUNAC SUR CHARENTE",
-    "cp": "16460",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "AUNAC SUR CHARENTE",
-    "cp": "16460",
-    "dept": "16",
-    "region": ""
-  },
-  {
     "name": "AUSSAC VADALLE",
     "cp": "16560",
     "dept": "16",
@@ -140,12 +116,6 @@
   {
     "name": "BARBEZIERES",
     "cp": "16140",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "BARBEZIEUX ST HILAIRE",
-    "cp": "16300",
     "dept": "16",
     "region": ""
   },
@@ -194,30 +164,6 @@
   {
     "name": "BECHERESSE",
     "cp": "16250",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "BELLEVIGNE",
-    "cp": "16120",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "BELLEVIGNE",
-    "cp": "16120",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "BELLEVIGNE",
-    "cp": "16120",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "BELLEVIGNE",
-    "cp": "16120",
     "dept": "16",
     "region": ""
   },
@@ -284,18 +230,6 @@
   {
     "name": "BOISBRETEAU",
     "cp": "16480",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "BOISNE LA TUDE",
-    "cp": "16320",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "BOISNE LA TUDE",
-    "cp": "16320",
     "dept": "16",
     "region": ""
   },
@@ -434,18 +368,6 @@
   {
     "name": "CHADURIE",
     "cp": "16250",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "CHALAIS",
-    "cp": "16210",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "CHALAIS",
-    "cp": "16210",
     "dept": "16",
     "region": ""
   },
@@ -612,36 +534,6 @@
     "region": ""
   },
   {
-    "name": "CONFOLENS",
-    "cp": "16500",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "COTEAUX DU BLANZACAIS",
-    "cp": "16250",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "COTEAUX DU BLANZACAIS",
-    "cp": "16250",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "COTEAUX DU BLANZACAIS",
-    "cp": "16250",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "COTEAUX DU BLANZACAIS",
-    "cp": "16250",
-    "dept": "16",
-    "region": ""
-  },
-  {
     "name": "COTEAUX DU BLANZACAIS",
     "cp": "16250",
     "dept": "16",
@@ -668,12 +560,6 @@
   {
     "name": "COURCOME",
     "cp": "16240",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "COURCOME",
-    "cp": "16700",
     "dept": "16",
     "region": ""
   },
@@ -858,12 +744,6 @@
     "region": ""
   },
   {
-    "name": "GENAC BIGNAC",
-    "cp": "16170",
-    "dept": "16",
-    "region": ""
-  },
-  {
     "name": "GENSAC LA PALLUE",
     "cp": "16130",
     "dept": "16",
@@ -890,12 +770,6 @@
   {
     "name": "GRASSAC",
     "cp": "16380",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "GRAVES ST AMANT",
-    "cp": "16120",
     "dept": "16",
     "region": ""
   },
@@ -996,12 +870,6 @@
     "region": ""
   },
   {
-    "name": "LA BOIXE",
-    "cp": "16330",
-    "dept": "16",
-    "region": ""
-  },
-  {
     "name": "LA CHAPELLE",
     "cp": "16140",
     "dept": "16",
@@ -1034,12 +902,6 @@
   {
     "name": "LA MAGDELEINE",
     "cp": "16240",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "LA ROCHEFOUCAULD EN ANGOUMOIS",
-    "cp": "16110",
     "dept": "16",
     "region": ""
   },
@@ -1218,12 +1080,6 @@
     "region": ""
   },
   {
-    "name": "LOUZAC ST ANDRE",
-    "cp": "16100",
-    "dept": "16",
-    "region": ""
-  },
-  {
     "name": "LUPSAULT",
     "cp": "16140",
     "dept": "16",
@@ -1238,12 +1094,6 @@
   {
     "name": "LUXE",
     "cp": "16230",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "MAGNAC LES GARDES",
-    "cp": "16320",
     "dept": "16",
     "region": ""
   },
@@ -1272,12 +1122,6 @@
     "region": ""
   },
   {
-    "name": "MAINXE GONDEVILLE",
-    "cp": "16200",
-    "dept": "16",
-    "region": ""
-  },
-  {
     "name": "MAINZAC",
     "cp": "16380",
     "dept": "16",
@@ -1286,12 +1130,6 @@
   {
     "name": "MANOT",
     "cp": "16500",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "MANSLE LES FONTAINES",
-    "cp": "16230",
     "dept": "16",
     "region": ""
   },
@@ -1410,36 +1248,6 @@
     "region": ""
   },
   {
-    "name": "MONTMERAC",
-    "cp": "16300",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "MONTMOREAU",
-    "cp": "16190",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "MONTMOREAU",
-    "cp": "16190",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "MONTMOREAU",
-    "cp": "16190",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "MONTMOREAU",
-    "cp": "16190",
-    "dept": "16",
-    "region": ""
-  },
-  {
     "name": "MONTMOREAU",
     "cp": "16190",
     "dept": "16",
@@ -1454,12 +1262,6 @@
   {
     "name": "MORNAC",
     "cp": "16600",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "MOSNAC ST SIMEUX",
-    "cp": "16120",
     "dept": "16",
     "region": ""
   },
@@ -1524,36 +1326,6 @@
     "region": ""
   },
   {
-    "name": "NANTEUIL EN VALLEE",
-    "cp": "16700",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "NANTEUIL EN VALLEE",
-    "cp": "16700",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "NANTEUIL EN VALLEE",
-    "cp": "16700",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "NANTEUIL EN VALLEE",
-    "cp": "16700",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "NANTEUIL EN VALLEE",
-    "cp": "16700",
-    "dept": "16",
-    "region": ""
-  },
-  {
     "name": "NERCILLAC",
     "cp": "16200",
     "dept": "16",
@@ -1604,12 +1376,6 @@
   {
     "name": "ORIVAL",
     "cp": "16210",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "PAIZAY NAUDOUIN EMBOURIE",
-    "cp": "16240",
     "dept": "16",
     "region": ""
   },
@@ -1754,30 +1520,6 @@
   {
     "name": "ROUILLAC",
     "cp": "16170",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "ROUILLAC",
-    "cp": "16170",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "ROUILLAC",
-    "cp": "16170",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "ROUILLAC",
-    "cp": "16170",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "ROULLET ST ESTEPHE",
-    "cp": "16440",
     "dept": "16",
     "region": ""
   },
@@ -2190,36 +1932,6 @@
     "region": ""
   },
   {
-    "name": "TERRES DE HAUTE CHARENTE",
-    "cp": "16270",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "TERRES DE HAUTE CHARENTE",
-    "cp": "16270",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "TERRES DE HAUTE CHARENTE",
-    "cp": "16270",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "TERRES DE HAUTE CHARENTE",
-    "cp": "16270",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "TERRES DE HAUTE CHARENTE",
-    "cp": "16270",
-    "dept": "16",
-    "region": ""
-  },
-  {
     "name": "THEIL RABIER",
     "cp": "16240",
     "dept": "16",
@@ -2256,12 +1968,6 @@
     "region": ""
   },
   {
-    "name": "TRIAC LAUTRAIT",
-    "cp": "16200",
-    "dept": "16",
-    "region": ""
-  },
-  {
     "name": "TROIS PALIS",
     "cp": "16730",
     "dept": "16",
@@ -2286,48 +1992,6 @@
     "region": ""
   },
   {
-    "name": "VAL D AUGE",
-    "cp": "16170",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "VAL D AUGE",
-    "cp": "16170",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "VAL D AUGE",
-    "cp": "16170",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "VAL D AUGE",
-    "cp": "16170",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "VAL D AUGE",
-    "cp": "16170",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "VAL DE BONNIEURE",
-    "cp": "16230",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "VAL DE BONNIEURE",
-    "cp": "16230",
-    "dept": "16",
-    "region": ""
-  },
-  {
     "name": "VAL DE BONNIEURE",
     "cp": "16230",
     "dept": "16",
@@ -2336,36 +2000,6 @@
   {
     "name": "VAL DE COGNAC",
     "cp": "16370",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "VAL DE COGNAC",
-    "cp": "16370",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "VAL DE COGNAC",
-    "cp": "16370",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "VAL DES VIGNES",
-    "cp": "16250",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "VAL DES VIGNES",
-    "cp": "16250",
-    "dept": "16",
-    "region": ""
-  },
-  {
-    "name": "VAL DES VIGNES",
-    "cp": "16250",
     "dept": "16",
     "region": ""
   },

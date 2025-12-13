@@ -96,18 +96,6 @@
     "region": ""
   },
   {
-    "name": "BARGUELONNE EN QUERCY",
-    "cp": "46800",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "BARGUELONNE EN QUERCY",
-    "cp": "46800",
-    "dept": "46",
-    "region": ""
-  },
-  {
     "name": "BEAUREGARD",
     "cp": "46260",
     "dept": "46",
@@ -128,18 +116,6 @@
   {
     "name": "BELFORT DU QUERCY",
     "cp": "46230",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "BELLEFONT LA RAUZE",
-    "cp": "46090",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "BELLEFONT LA RAUZE",
-    "cp": "46090",
     "dept": "46",
     "region": ""
   },
@@ -366,12 +342,6 @@
     "region": ""
   },
   {
-    "name": "CASTELNAU MONTRATIER",
-    "cp": "46170",
-    "dept": "46",
-    "region": ""
-  },
-  {
     "name": "CATUS",
     "cp": "46150",
     "dept": "46",
@@ -404,30 +374,6 @@
   {
     "name": "CIEURAC",
     "cp": "46230",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "COEUR DE CAUSSE",
-    "cp": "46240",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "COEUR DE CAUSSE",
-    "cp": "46240",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "COEUR DE CAUSSE",
-    "cp": "46240",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "COEUR DE CAUSSE",
-    "cp": "46240",
     "dept": "46",
     "region": ""
   },
@@ -494,12 +440,6 @@
   {
     "name": "CREMPS",
     "cp": "46230",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "CRESSENSAC SARRAZAC",
-    "cp": "46600",
     "dept": "46",
     "region": ""
   },
@@ -1002,18 +942,6 @@
     "region": ""
   },
   {
-    "name": "LENDOU EN QUERCY",
-    "cp": "46800",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "LENDOU EN QUERCY",
-    "cp": "46800",
-    "dept": "46",
-    "region": ""
-  },
-  {
     "name": "LENTILLAC DU CAUSSE",
     "cp": "46330",
     "dept": "46",
@@ -1040,12 +968,6 @@
   {
     "name": "LES JUNIES",
     "cp": "46150",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "LES PECHS DU VERS",
-    "cp": "46360",
     "dept": "46",
     "region": ""
   },
@@ -1242,30 +1164,6 @@
     "region": ""
   },
   {
-    "name": "MONTCUQ EN QUERCY BLANC",
-    "cp": "46800",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "MONTCUQ EN QUERCY BLANC",
-    "cp": "46800",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "MONTCUQ EN QUERCY BLANC",
-    "cp": "46800",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "MONTCUQ EN QUERCY BLANC",
-    "cp": "46800",
-    "dept": "46",
-    "region": ""
-  },
-  {
     "name": "MONTDOUMERC",
     "cp": "46230",
     "dept": "46",
@@ -1362,12 +1260,6 @@
     "region": ""
   },
   {
-    "name": "PERN LHOSPITALET",
-    "cp": "46170",
-    "dept": "46",
-    "region": ""
-  },
-  {
     "name": "PESCADOIRES",
     "cp": "46220",
     "dept": "46",
@@ -1400,24 +1292,6 @@
   {
     "name": "PONTCIRQ",
     "cp": "46150",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "PORTE DU QUERCY",
-    "cp": "46800",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "PORTE DU QUERCY",
-    "cp": "46800",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "PORTE DU QUERCY",
-    "cp": "46800",
     "dept": "46",
     "region": ""
   },
@@ -1638,30 +1512,6 @@
     "region": ""
   },
   {
-    "name": "SOUSCEYRAC EN QUERCY",
-    "cp": "46190",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "SOUSCEYRAC EN QUERCY",
-    "cp": "46190",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "SOUSCEYRAC EN QUERCY",
-    "cp": "46190",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "SOUSCEYRAC EN QUERCY",
-    "cp": "46190",
-    "dept": "46",
-    "region": ""
-  },
-  {
     "name": "ST BRESSOU",
     "cp": "46120",
     "dept": "46",
@@ -1844,12 +1694,6 @@
   {
     "name": "ST PAUL DE VERN",
     "cp": "46400",
-    "dept": "46",
-    "region": ""
-  },
-  {
-    "name": "ST PAUL FLAUGNAC",
-    "cp": "46170",
     "dept": "46",
     "region": ""
   },

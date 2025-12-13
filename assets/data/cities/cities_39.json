@@ -54,12 +54,6 @@
     "region": ""
   },
   {
-    "name": "ANDELOT MORVAL",
-    "cp": "39320",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "ANNOIRE",
     "cp": "39120",
     "dept": "39",
@@ -96,12 +90,6 @@
     "region": ""
   },
   {
-    "name": "ARINTHOD",
-    "cp": "39240",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "ARLAY",
     "cp": "39140",
     "dept": "39",
@@ -120,26 +108,8 @@
     "region": ""
   },
   {
-    "name": "AROMAS",
-    "cp": "39240",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "AROMAS",
-    "cp": "39240",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "ARSURE ARSURETTE",
     "cp": "39250",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "ASNANS BEAUVOISIN",
-    "cp": "39120",
     "dept": "39",
     "region": ""
   },
@@ -258,12 +228,6 @@
     "region": ""
   },
   {
-    "name": "BEAUFORT ORBAGNA",
-    "cp": "39190",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "BEFFIA",
     "cp": "39270",
     "dept": "39",
@@ -284,18 +248,6 @@
   {
     "name": "BELMONT",
     "cp": "39380",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "BERSAILLIN",
-    "cp": "39800",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "BERSAILLIN",
-    "cp": "39800",
     "dept": "39",
     "region": ""
   },
@@ -474,12 +426,6 @@
     "region": ""
   },
   {
-    "name": "CERNON",
-    "cp": "39240",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "CESANCEY",
     "cp": "39570",
     "dept": "39",
@@ -594,12 +540,6 @@
     "region": ""
   },
   {
-    "name": "CHASSAL MOLINGES",
-    "cp": "39360",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "CHATEAU CHALON",
     "cp": "39210",
     "dept": "39",
@@ -650,12 +590,6 @@
   {
     "name": "CHAUSSIN",
     "cp": "39120",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "CHAUX CHAMPAGNY",
-    "cp": "39110",
     "dept": "39",
     "region": ""
   },
@@ -840,12 +774,6 @@
     "region": ""
   },
   {
-    "name": "COTEAUX DU LIZON",
-    "cp": "39170",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "COURBETTE",
     "cp": "39570",
     "dept": "39",
@@ -853,12 +781,6 @@
   },
   {
     "name": "COURBOUZON",
-    "cp": "39570",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "COURLANS",
     "cp": "39570",
     "dept": "39",
     "region": ""
@@ -954,12 +876,6 @@
     "region": ""
   },
   {
-    "name": "DAMMARTIN MARPAIN",
-    "cp": "39290",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "DAMPARIS",
     "cp": "39500",
     "dept": "39",
@@ -968,12 +884,6 @@
   {
     "name": "DAMPIERRE",
     "cp": "39350",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "DAMPIERRE",
-    "cp": "39700",
     "dept": "39",
     "region": ""
   },
@@ -1004,18 +914,6 @@
   {
     "name": "DIGNA",
     "cp": "39190",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "DOLE",
-    "cp": "39100",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "DOLE",
-    "cp": "39100",
     "dept": "39",
     "region": ""
   },
@@ -1074,12 +972,6 @@
     "region": ""
   },
   {
-    "name": "ECLANS NENON",
-    "cp": "39700",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "ECLEUX",
     "cp": "39600",
     "dept": "39",
@@ -1106,12 +998,6 @@
   {
     "name": "ESSERVAL TARTRE",
     "cp": "39250",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "ETIVAL",
-    "cp": "39130",
     "dept": "39",
     "region": ""
   },
@@ -1296,18 +1182,6 @@
     "region": ""
   },
   {
-    "name": "GRANDE RIVIERE CHATEAU",
-    "cp": "39150",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "GRANDE RIVIERE CHATEAU",
-    "cp": "39150",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "GRANGE DE VAIVRE",
     "cp": "39600",
     "dept": "39",
@@ -1346,24 +1220,6 @@
   {
     "name": "HAUTEROCHE",
     "cp": "39570",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "HAUTEROCHE",
-    "cp": "39570",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "HAUTS DE BIENNE",
-    "cp": "39400",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "HAUTS DE BIENNE",
-    "cp": "39400",
     "dept": "39",
     "region": ""
   },
@@ -1418,18 +1274,6 @@
   {
     "name": "LA BRETENIERE",
     "cp": "39700",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "LA CHAILLEUSE",
-    "cp": "39270",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "LA CHAILLEUSE",
-    "cp": "39270",
     "dept": "39",
     "region": ""
   },
@@ -1608,30 +1452,6 @@
     "region": ""
   },
   {
-    "name": "LAVANS LES ST CLAUDE",
-    "cp": "39170",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "LAVANS LES ST CLAUDE",
-    "cp": "39170",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "LAVANS LES ST CLAUDE",
-    "cp": "39170",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "LAVIGNY",
-    "cp": "39210",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "LAVIGNY",
     "cp": "39210",
     "dept": "39",
@@ -1716,12 +1536,6 @@
     "region": ""
   },
   {
-    "name": "LECT",
-    "cp": "39260",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "LEMUY",
     "cp": "39110",
     "dept": "39",
@@ -1794,12 +1608,6 @@
     "region": ""
   },
   {
-    "name": "LES PLANCHES EN MONTAGNE",
-    "cp": "39150",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "LES PLANCHES PRES ARBOIS",
     "cp": "39600",
     "dept": "39",
@@ -1819,43 +1627,7 @@
   },
   {
     "name": "LES ROUSSES",
-    "cp": "39220",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "LES ROUSSES",
     "cp": "39400",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "LES ROUSSES",
-    "cp": "39400",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "LES ROUSSES",
-    "cp": "39400",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "LES TROIS CHATEAUX",
-    "cp": "39160",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "LES TROIS CHATEAUX",
-    "cp": "39160",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "LES TROIS CHATEAUX",
-    "cp": "39160",
     "dept": "39",
     "region": ""
   },
@@ -2040,38 +1812,8 @@
     "region": ""
   },
   {
-    "name": "MIEGES",
-    "cp": "39250",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "MIEGES",
-    "cp": "39250",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "MIERY",
     "cp": "39800",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "MIGNOVILLARD",
-    "cp": "39250",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "MIGNOVILLARD",
-    "cp": "39250",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "MIGNOVILLARD",
-    "cp": "39250",
     "dept": "39",
     "region": ""
   },
@@ -2220,18 +1962,6 @@
     "region": ""
   },
   {
-    "name": "MONTLAINSIA",
-    "cp": "39320",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "MONTLAINSIA",
-    "cp": "39320",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "MONTMARLON",
     "cp": "39110",
     "dept": "39",
@@ -2256,12 +1986,6 @@
     "region": ""
   },
   {
-    "name": "MONTMOROT",
-    "cp": "39570",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "MONTREVEL",
     "cp": "39320",
     "dept": "39",
@@ -2276,18 +2000,6 @@
   {
     "name": "MORBIER",
     "cp": "39400",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "MORBIER",
-    "cp": "39400",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "MOUCHARD",
-    "cp": "39330",
     "dept": "39",
     "region": ""
   },
@@ -2335,24 +2047,6 @@
   },
   {
     "name": "NANCHEZ",
-    "cp": "39150",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "NANCHEZ",
-    "cp": "39150",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "NANCHEZ",
-    "cp": "39150",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "NANCHEZ",
     "cp": "39200",
     "dept": "39",
     "region": ""
@@ -2360,12 +2054,6 @@
   {
     "name": "NANCUISE",
     "cp": "39270",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "NEUBLANS ABERGEMENT",
-    "cp": "39120",
     "dept": "39",
     "region": ""
   },
@@ -2432,12 +2120,6 @@
   {
     "name": "ORCHAMPS",
     "cp": "39700",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "ORGELET",
-    "cp": "39270",
     "dept": "39",
     "region": ""
   },
@@ -2616,24 +2298,6 @@
     "region": ""
   },
   {
-    "name": "POLIGNY",
-    "cp": "39800",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "PONT D HERY",
-    "cp": "39110",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "PONT D HERY",
-    "cp": "39110",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "PONT D HERY",
     "cp": "39110",
     "dept": "39",
@@ -2666,12 +2330,6 @@
   {
     "name": "PREMANON",
     "cp": "39220",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "PREMANON",
-    "cp": "39400",
     "dept": "39",
     "region": ""
   },
@@ -2886,24 +2544,6 @@
     "region": ""
   },
   {
-    "name": "SARROGNA",
-    "cp": "39270",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "SARROGNA",
-    "cp": "39270",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "SARROGNA",
-    "cp": "39270",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "SAUGEOT",
     "cp": "39130",
     "dept": "39",
@@ -2918,12 +2558,6 @@
   {
     "name": "SELLIERES",
     "cp": "39230",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "SEPTMONCEL LES MOLUNES",
-    "cp": "39310",
     "dept": "39",
     "region": ""
   },
@@ -2954,12 +2588,6 @@
   {
     "name": "SERRE LES MOULIERES",
     "cp": "39700",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "SIROD",
-    "cp": "39300",
     "dept": "39",
     "region": ""
   },
@@ -3012,42 +2640,6 @@
     "region": ""
   },
   {
-    "name": "ST CLAUDE",
-    "cp": "39200",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "ST CLAUDE",
-    "cp": "39200",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "ST CLAUDE",
-    "cp": "39200",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "ST CLAUDE",
-    "cp": "39200",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "ST CLAUDE",
-    "cp": "39200",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "ST CYR MONTMALIN",
-    "cp": "39600",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "ST CYR MONTMALIN",
     "cp": "39600",
     "dept": "39",
@@ -3062,24 +2654,6 @@
   {
     "name": "ST GERMAIN EN MONTAGNE",
     "cp": "39300",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "ST HYMETIERE SUR VALOUSE",
-    "cp": "39240",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "ST HYMETIERE SUR VALOUSE",
-    "cp": "39240",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "ST HYMETIERE SUR VALOUSE",
-    "cp": "39240",
     "dept": "39",
     "region": ""
   },
@@ -3116,12 +2690,6 @@
   {
     "name": "ST MAUR",
     "cp": "39570",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "ST MAURICE CRILLAT",
-    "cp": "39130",
     "dept": "39",
     "region": ""
   },
@@ -3192,12 +2760,6 @@
     "region": ""
   },
   {
-    "name": "THOIRETTE COISIA",
-    "cp": "39240",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "THOIRIA",
     "cp": "39130",
     "dept": "39",
@@ -3253,36 +2815,6 @@
   },
   {
     "name": "VAL D EPY",
-    "cp": "39160",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VAL D EPY",
-    "cp": "39160",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VAL D EPY",
-    "cp": "39160",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VAL D EPY",
-    "cp": "39160",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VAL D EPY",
-    "cp": "39320",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VAL D EPY",
     "cp": "39320",
     "dept": "39",
     "region": ""
@@ -3290,48 +2822,6 @@
   {
     "name": "VAL SONNETTE",
     "cp": "39190",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VAL SONNETTE",
-    "cp": "39190",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VAL SONNETTE",
-    "cp": "39190",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VAL SONNETTE",
-    "cp": "39190",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VAL SONNETTE",
-    "cp": "39190",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VAL SURAN",
-    "cp": "39320",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VAL SURAN",
-    "cp": "39320",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VAL SURAN",
-    "cp": "39320",
     "dept": "39",
     "region": ""
   },
@@ -3344,24 +2834,6 @@
   {
     "name": "VALEMPOULIERES",
     "cp": "39300",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VALZIN EN PETITE MONTAGNE",
-    "cp": "39240",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VALZIN EN PETITE MONTAGNE",
-    "cp": "39240",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VALZIN EN PETITE MONTAGNE",
-    "cp": "39240",
     "dept": "39",
     "region": ""
   },
@@ -3516,12 +2988,6 @@
     "region": ""
   },
   {
-    "name": "VINCENT FROIDEVILLE",
-    "cp": "39230",
-    "dept": "39",
-    "region": ""
-  },
-  {
     "name": "VIRY",
     "cp": "39360",
     "dept": "39",
@@ -3536,12 +3002,6 @@
   {
     "name": "VOITEUR",
     "cp": "39210",
-    "dept": "39",
-    "region": ""
-  },
-  {
-    "name": "VOSBLES VALFIN",
-    "cp": "39240",
     "dept": "39",
     "region": ""
   },

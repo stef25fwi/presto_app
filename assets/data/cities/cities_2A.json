@@ -468,12 +468,6 @@
     "region": ""
   },
   {
-    "name": "OTA",
-    "cp": "20150",
-    "dept": "2A",
-    "region": ""
-  },
-  {
     "name": "PALNECA",
     "cp": "20134",
     "dept": "2A",
@@ -636,12 +630,6 @@
     "region": ""
   },
   {
-    "name": "SARI SOLENZARA",
-    "cp": "20145",
-    "dept": "2A",
-    "region": ""
-  },
-  {
     "name": "SARROLA CARCOPINO",
     "cp": "20167",
     "dept": "2A",
@@ -650,12 +638,6 @@
   {
     "name": "SARTENE",
     "cp": "20100",
-    "dept": "2A",
-    "region": ""
-  },
-  {
-    "name": "SERRA DI FERRO",
-    "cp": "20140",
     "dept": "2A",
     "region": ""
   },

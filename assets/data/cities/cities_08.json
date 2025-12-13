@@ -186,12 +186,6 @@
     "region": ""
   },
   {
-    "name": "AUVILLERS LES FORGES",
-    "cp": "08260",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "AVANCON",
     "cp": "08300",
     "dept": "08",
@@ -206,12 +200,6 @@
   {
     "name": "BAALONS",
     "cp": "08430",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "BAIRON ET SES ENVIRONS",
-    "cp": "08390",
     "dept": "08",
     "region": ""
   },
@@ -282,24 +270,6 @@
     "region": ""
   },
   {
-    "name": "BAZEILLES",
-    "cp": "08140",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "BAZEILLES",
-    "cp": "08140",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "BAZEILLES",
-    "cp": "08140",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "BEAUMONT EN ARGONNE",
     "cp": "08210",
     "dept": "08",
@@ -308,12 +278,6 @@
   {
     "name": "BEFFU ET LE MORTHOMME",
     "cp": "08250",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "BELLEVILLE ET CHATILLON SUR BAR",
-    "cp": "08240",
     "dept": "08",
     "region": ""
   },
@@ -368,12 +332,6 @@
   {
     "name": "BLAGNY",
     "cp": "08110",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "BLANCHEFOSSE ET BAY",
-    "cp": "08290",
     "dept": "08",
     "region": ""
   },
@@ -492,18 +450,6 @@
     "region": ""
   },
   {
-    "name": "BUZANCY",
-    "cp": "08240",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "CARIGNAN",
-    "cp": "08110",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "CARIGNAN",
     "cp": "08110",
     "dept": "08",
@@ -606,32 +552,8 @@
     "region": ""
   },
   {
-    "name": "CHAUMONT PORCIEN",
-    "cp": "08220",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "CHAUMONT PORCIEN",
-    "cp": "08220",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "CHEMERY CHEHERY",
     "cp": "08350",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "CHEMERY CHEHERY",
-    "cp": "08450",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "CHEMERY CHEHERY",
-    "cp": "08450",
     "dept": "08",
     "region": ""
   },
@@ -756,12 +678,6 @@
     "region": ""
   },
   {
-    "name": "DOM LE MESNIL",
-    "cp": "08160",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "DOMMERY",
     "cp": "08460",
     "dept": "08",
@@ -782,12 +698,6 @@
   {
     "name": "DOUX",
     "cp": "08300",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "DOUZY",
-    "cp": "08140",
     "dept": "08",
     "region": ""
   },
@@ -906,12 +816,6 @@
     "region": ""
   },
   {
-    "name": "FLAIGNES HAVYS",
-    "cp": "08260",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "FLEIGNEUX",
     "cp": "08200",
     "dept": "08",
@@ -926,24 +830,6 @@
   {
     "name": "FLIGNY",
     "cp": "08380",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "FLIZE",
-    "cp": "08160",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "FLIZE",
-    "cp": "08160",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "FLIZE",
-    "cp": "08160",
     "dept": "08",
     "region": ""
   },
@@ -990,12 +876,6 @@
     "region": ""
   },
   {
-    "name": "FROMELENNES",
-    "cp": "08600",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "FROMY",
     "cp": "08370",
     "dept": "08",
@@ -1022,12 +902,6 @@
   {
     "name": "GESPUNSART",
     "cp": "08700",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "GIRONDELLE",
-    "cp": "08260",
     "dept": "08",
     "region": ""
   },
@@ -1081,12 +955,6 @@
   },
   {
     "name": "GRANDHAM",
-    "cp": "08250",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "GRANDPRE",
     "cp": "08250",
     "dept": "08",
     "region": ""
@@ -1410,12 +1278,6 @@
     "region": ""
   },
   {
-    "name": "LAIFOUR",
-    "cp": "08800",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "LALOBBE",
     "cp": "08460",
     "dept": "08",
@@ -1508,12 +1370,6 @@
   {
     "name": "LES GRANDES ARMOISES",
     "cp": "08390",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "LES HAUTES RIVIERES",
-    "cp": "08800",
     "dept": "08",
     "region": ""
   },
@@ -1776,18 +1632,6 @@
     "region": ""
   },
   {
-    "name": "MONTHERME",
-    "cp": "08800",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "MONTHERME",
-    "cp": "08800",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "MONTHOIS",
     "cp": "08400",
     "dept": "08",
@@ -1814,12 +1658,6 @@
   {
     "name": "MOURON",
     "cp": "08250",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "MOUZON",
-    "cp": "08210",
     "dept": "08",
     "region": ""
   },
@@ -1878,12 +1716,6 @@
     "region": ""
   },
   {
-    "name": "NEUVILLE LEZ BEAULIEU",
-    "cp": "08380",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "NEUVIZY",
     "cp": "08430",
     "dept": "08",
@@ -1902,12 +1734,6 @@
     "region": ""
   },
   {
-    "name": "NOUART",
-    "cp": "08240",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "NOUVION SUR MEUSE",
     "cp": "08160",
     "dept": "08",
@@ -1916,18 +1742,6 @@
   {
     "name": "NOUZONVILLE",
     "cp": "08700",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "NOUZONVILLE",
-    "cp": "08700",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "NOVION PORCIEN",
-    "cp": "08270",
     "dept": "08",
     "region": ""
   },
@@ -1952,12 +1766,6 @@
   {
     "name": "OCHES",
     "cp": "08240",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "OLIZY PRIMAT",
-    "cp": "08250",
     "dept": "08",
     "region": ""
   },
@@ -2018,12 +1826,6 @@
   {
     "name": "POURU ST REMY",
     "cp": "08140",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "PREZ",
-    "cp": "08290",
     "dept": "08",
     "region": ""
   },
@@ -2130,12 +1932,6 @@
     "region": ""
   },
   {
-    "name": "RETHEL",
-    "cp": "08300",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "REVIN",
     "cp": "08500",
     "dept": "08",
@@ -2160,36 +1956,6 @@
     "region": ""
   },
   {
-    "name": "ROCQUIGNY",
-    "cp": "08220",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "ROCQUIGNY",
-    "cp": "08220",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "ROCQUIGNY",
-    "cp": "08220",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "ROCROI",
-    "cp": "08230",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "ROCROI",
-    "cp": "08230",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "ROCROI",
     "cp": "08230",
     "dept": "08",
@@ -2198,12 +1964,6 @@
   {
     "name": "ROIZY",
     "cp": "08190",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "ROUVROY SUR AUDRY",
-    "cp": "08150",
     "dept": "08",
     "region": ""
   },
@@ -2328,12 +2088,6 @@
     "region": ""
   },
   {
-    "name": "SERAINCOURT",
-    "cp": "08220",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "SERY",
     "cp": "08270",
     "dept": "08",
@@ -2360,18 +2114,6 @@
   {
     "name": "SIGNY L ABBAYE",
     "cp": "08460",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "SIGNY L ABBAYE",
-    "cp": "08460",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "SIGNY LE PETIT",
-    "cp": "08380",
     "dept": "08",
     "region": ""
   },
@@ -2444,12 +2186,6 @@
   {
     "name": "ST ETIENNE A ARNES",
     "cp": "08310",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "ST FERGEUX",
-    "cp": "08360",
     "dept": "08",
     "region": ""
   },
@@ -2616,32 +2352,8 @@
     "region": ""
   },
   {
-    "name": "TAILLY",
-    "cp": "08240",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "TAILLY",
-    "cp": "08240",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "TAILLY",
-    "cp": "08240",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "TAIZY",
     "cp": "08360",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "TANNAY LE MONT DIEU",
-    "cp": "08390",
     "dept": "08",
     "region": ""
   },
@@ -2672,12 +2384,6 @@
   {
     "name": "THENORGUES",
     "cp": "08240",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "THILAY",
-    "cp": "08800",
     "dept": "08",
     "region": ""
   },
@@ -2808,12 +2514,6 @@
     "region": ""
   },
   {
-    "name": "VENDRESSE",
-    "cp": "08160",
-    "dept": "08",
-    "region": ""
-  },
-  {
     "name": "VERPEL",
     "cp": "08240",
     "dept": "08",
@@ -2822,12 +2522,6 @@
   {
     "name": "VERRIERES",
     "cp": "08390",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "VIEL ST REMY",
-    "cp": "08270",
     "dept": "08",
     "region": ""
   },
@@ -2923,24 +2617,6 @@
   },
   {
     "name": "VONCQ",
-    "cp": "08400",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "VOUZIERS",
-    "cp": "08400",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "VOUZIERS",
-    "cp": "08400",
-    "dept": "08",
-    "region": ""
-  },
-  {
-    "name": "VOUZIERS",
     "cp": "08400",
     "dept": "08",
     "region": ""

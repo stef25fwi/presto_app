@@ -48,12 +48,6 @@
     "region": ""
   },
   {
-    "name": "ANDELOT BLANCHEVILLE",
-    "cp": "52700",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "ANDILLY EN BASSIGNY",
     "cp": "52360",
     "dept": "52",
@@ -163,18 +157,6 @@
   },
   {
     "name": "AUTREVILLE SUR LA RENNE",
-    "cp": "52120",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "AUTREVILLE SUR LA RENNE",
-    "cp": "52330",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "AUTREVILLE SUR LA RENNE",
     "cp": "52330",
     "dept": "52",
     "region": ""
@@ -228,24 +210,6 @@
     "region": ""
   },
   {
-    "name": "BAYARD SUR MARNE",
-    "cp": "52170",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "BAYARD SUR MARNE",
-    "cp": "52170",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "BAYARD SUR MARNE",
-    "cp": "52170",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "BEAUCHEMIN",
     "cp": "52260",
     "dept": "52",
@@ -266,12 +230,6 @@
   {
     "name": "BEURVILLE",
     "cp": "52110",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "BIESLES",
-    "cp": "52340",
     "dept": "52",
     "region": ""
   },
@@ -318,32 +276,8 @@
     "region": ""
   },
   {
-    "name": "BOLOGNE",
-    "cp": "52310",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "BOLOGNE",
-    "cp": "52310",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "BONNECOURT",
     "cp": "52360",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "BOURBONNE LES BAINS",
-    "cp": "52400",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "BOURBONNE LES BAINS",
-    "cp": "52400",
     "dept": "52",
     "region": ""
   },
@@ -367,24 +301,6 @@
   },
   {
     "name": "BOURG STE MARIE",
-    "cp": "52150",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "BOURMONT ENTRE MEUSE ET MOUZON",
-    "cp": "52150",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "BOURMONT ENTRE MEUSE ET MOUZON",
-    "cp": "52150",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "BOURMONT ENTRE MEUSE ET MOUZON",
     "cp": "52150",
     "dept": "52",
     "region": ""
@@ -428,18 +344,6 @@
   {
     "name": "BRETHENAY",
     "cp": "52000",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "BREUVANNES EN BASSIGNY",
-    "cp": "52240",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "BREUVANNES EN BASSIGNY",
-    "cp": "52240",
     "dept": "52",
     "region": ""
   },
@@ -498,18 +402,6 @@
     "region": ""
   },
   {
-    "name": "CEFFONDS",
-    "cp": "52220",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "CEFFONDS",
-    "cp": "52220",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "CELLES EN BASSIGNY",
     "cp": "52360",
     "dept": "52",
@@ -552,18 +444,6 @@
     "region": ""
   },
   {
-    "name": "CHAMARANDES CHOIGNES",
-    "cp": "52000",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "CHAMARANDES CHOIGNES",
-    "cp": "52000",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "CHAMBRONCOURT",
     "cp": "52700",
     "dept": "52",
@@ -590,18 +470,6 @@
   {
     "name": "CHAMPIGNY SOUS VARENNES",
     "cp": "52400",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "CHAMPSEVRAINE",
-    "cp": "52500",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "CHAMPSEVRAINE",
-    "cp": "52500",
     "dept": "52",
     "region": ""
   },
@@ -666,24 +534,6 @@
     "region": ""
   },
   {
-    "name": "CHATEAUVILLAIN",
-    "cp": "52120",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "CHATEAUVILLAIN",
-    "cp": "52120",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "CHATEAUVILLAIN",
-    "cp": "52120",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "CHATENAY MACHERON",
     "cp": "52200",
     "dept": "52",
@@ -692,12 +542,6 @@
   {
     "name": "CHATENAY VAUDIN",
     "cp": "52360",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "CHATONRUPT SOMMERMONT",
-    "cp": "52300",
     "dept": "52",
     "region": ""
   },
@@ -726,12 +570,6 @@
     "region": ""
   },
   {
-    "name": "CHAUMONT",
-    "cp": "52000",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "CHAUMONT LA VILLE",
     "cp": "52150",
     "dept": "52",
@@ -744,26 +582,8 @@
     "region": ""
   },
   {
-    "name": "CHEVILLON",
-    "cp": "52170",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "CHEVILLON",
-    "cp": "52170",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "CHEZEAUX",
     "cp": "52400",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "CHOILLEY DARDENAY",
-    "cp": "52190",
     "dept": "52",
     "region": ""
   },
@@ -852,54 +672,6 @@
     "region": ""
   },
   {
-    "name": "COLOMBEY LES DEUX EGLISES",
-    "cp": "52330",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "COLOMBEY LES DEUX EGLISES",
-    "cp": "52330",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "COLOMBEY LES DEUX EGLISES",
-    "cp": "52330",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "COLOMBEY LES DEUX EGLISES",
-    "cp": "52330",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "COLOMBEY LES DEUX EGLISES",
-    "cp": "52330",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "COLOMBEY LES DEUX EGLISES",
-    "cp": "52330",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "COLOMBEY LES DEUX EGLISES",
-    "cp": "52330",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "COLOMBEY LES DEUX EGLISES",
-    "cp": "52330",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "CONDES",
     "cp": "52000",
     "dept": "52",
@@ -956,12 +728,6 @@
   {
     "name": "CURMONT",
     "cp": "52330",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "CUSEY",
-    "cp": "52190",
     "dept": "52",
     "region": ""
   },
@@ -1056,12 +822,6 @@
     "region": ""
   },
   {
-    "name": "DOMREMY LANDEVILLE",
-    "cp": "52270",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "DONCOURT SUR MEUSE",
     "cp": "52150",
     "dept": "52",
@@ -1080,18 +840,6 @@
     "region": ""
   },
   {
-    "name": "DOULAINCOURT SAUCOURT",
-    "cp": "52270",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "DOULEVANT LE CHATEAU",
-    "cp": "52110",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "DOULEVANT LE CHATEAU",
     "cp": "52110",
     "dept": "52",
@@ -1106,18 +854,6 @@
   {
     "name": "ECHENAY",
     "cp": "52230",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "ECLARON BRAUCOURT STE LIVIERE",
-    "cp": "52290",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "ECLARON BRAUCOURT STE LIVIERE",
-    "cp": "52290",
     "dept": "52",
     "region": ""
   },
@@ -1153,18 +889,6 @@
   },
   {
     "name": "EPIZON",
-    "cp": "52230",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "EPIZON",
-    "cp": "52270",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "EPIZON",
     "cp": "52270",
     "dept": "52",
     "region": ""
@@ -1188,12 +912,6 @@
     "region": ""
   },
   {
-    "name": "EURVILLE BIENVILLE",
-    "cp": "52410",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "FARINCOURT",
     "cp": "52500",
     "dept": "52",
@@ -1202,18 +920,6 @@
   {
     "name": "FAVEROLLES",
     "cp": "52260",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "FAYL BILLOT",
-    "cp": "52500",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "FAYL BILLOT",
-    "cp": "52500",
     "dept": "52",
     "region": ""
   },
@@ -1286,18 +992,6 @@
   {
     "name": "FRESNES SUR APANCE",
     "cp": "52400",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "FRONCLES",
-    "cp": "52320",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "FRONCLES",
-    "cp": "52320",
     "dept": "52",
     "region": ""
   },
@@ -1392,12 +1086,6 @@
     "region": ""
   },
   {
-    "name": "GUDMONT VILLIERS",
-    "cp": "52320",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "GUINDRECOURT AUX ORMES",
     "cp": "52300",
     "dept": "52",
@@ -1440,30 +1128,6 @@
     "region": ""
   },
   {
-    "name": "HAUTE AMANCE",
-    "cp": "52600",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "HAUTE AMANCE",
-    "cp": "52600",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "HAUTE AMANCE",
-    "cp": "52600",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "HAUTE AMANCE",
-    "cp": "52600",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "HEUILLEY LE GRAND",
     "cp": "52600",
     "dept": "52",
@@ -1484,12 +1148,6 @@
   {
     "name": "HUMBERVILLE",
     "cp": "52700",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "HUMES JORQUENAY",
-    "cp": "52200",
     "dept": "52",
     "region": ""
   },
@@ -1530,18 +1188,6 @@
     "region": ""
   },
   {
-    "name": "JONCHERY",
-    "cp": "52000",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "JONCHERY",
-    "cp": "52000",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "JUZENNECOURT",
     "cp": "52330",
     "dept": "52",
@@ -1550,12 +1196,6 @@
   {
     "name": "LA GENEVROYE",
     "cp": "52320",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "LA PORTE DU DER",
-    "cp": "52220",
     "dept": "52",
     "region": ""
   },
@@ -1620,12 +1260,6 @@
     "region": ""
   },
   {
-    "name": "LANGRES",
-    "cp": "52200",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "LANQUES SUR ROGNON",
     "cp": "52800",
     "dept": "52",
@@ -1640,18 +1274,6 @@
   {
     "name": "LARIVIERE ARNONCOURT",
     "cp": "52400",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "LARIVIERE ARNONCOURT",
-    "cp": "52400",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "LATRECEY ORMOY SUR AUBE",
-    "cp": "52120",
     "dept": "52",
     "region": ""
   },
@@ -1692,30 +1314,6 @@
     "region": ""
   },
   {
-    "name": "LE CHATELET SUR MEUSE",
-    "cp": "52400",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "LE CHATELET SUR MEUSE",
-    "cp": "52400",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "LE MONTSAUGEONNAIS",
-    "cp": "52190",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "LE MONTSAUGEONNAIS",
-    "cp": "52190",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "LE MONTSAUGEONNAIS",
     "cp": "52190",
     "dept": "52",
@@ -1724,24 +1322,6 @@
   {
     "name": "LE PAILLY",
     "cp": "52600",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "LE VAL D ESNOMS",
-    "cp": "52190",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "LE VAL D ESNOMS",
-    "cp": "52190",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "LE VAL D ESNOMS",
-    "cp": "52190",
     "dept": "52",
     "region": ""
   },
@@ -1800,18 +1380,6 @@
     "region": ""
   },
   {
-    "name": "LEZEVILLE",
-    "cp": "52230",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "LEZEVILLE",
-    "cp": "52230",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "LIFFOL LE PETIT",
     "cp": "52700",
     "dept": "52",
@@ -1820,18 +1388,6 @@
   {
     "name": "LONGCHAMP",
     "cp": "52240",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "LONGEAU PERCEY",
-    "cp": "52250",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "LONGEAU PERCEY",
-    "cp": "52250",
     "dept": "52",
     "region": ""
   },
@@ -2094,24 +1650,6 @@
     "region": ""
   },
   {
-    "name": "NOGENT",
-    "cp": "52800",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "NOGENT",
-    "cp": "52800",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "NOGENT",
-    "cp": "52800",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "NOIDANT CHATENOY",
     "cp": "52600",
     "dept": "52",
@@ -2238,18 +1776,6 @@
     "region": ""
   },
   {
-    "name": "PARNOY EN BASSIGNY",
-    "cp": "52400",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "PARNOY EN BASSIGNY",
-    "cp": "52400",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "PAROY SUR SAULX",
     "cp": "52300",
     "dept": "52",
@@ -2268,18 +1794,6 @@
     "region": ""
   },
   {
-    "name": "PERRANCEY LES VIEUX MOULINS",
-    "cp": "52200",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "PERROGNEY LES FONTAINES",
-    "cp": "52160",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "PERROGNEY LES FONTAINES",
     "cp": "52160",
     "dept": "52",
@@ -2294,18 +1808,6 @@
   {
     "name": "PERTHES",
     "cp": "52100",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "PIERREMONT SUR AMANCE",
-    "cp": "52500",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "PIERREMONT SUR AMANCE",
-    "cp": "52500",
     "dept": "52",
     "region": ""
   },
@@ -2460,24 +1962,6 @@
     "region": ""
   },
   {
-    "name": "RIVES DERVOISES",
-    "cp": "52220",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "RIVES DERVOISES",
-    "cp": "52220",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "RIVES DERVOISES",
-    "cp": "52220",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "RIVIERE LES FOSSES",
     "cp": "52190",
     "dept": "52",
@@ -2486,12 +1970,6 @@
   {
     "name": "RIVIERES LE BOIS",
     "cp": "52600",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "RIZAUCOURT BUCHEY",
-    "cp": "52330",
     "dept": "52",
     "region": ""
   },
@@ -2514,18 +1992,6 @@
     "region": ""
   },
   {
-    "name": "ROCHES BETTAINCOURT",
-    "cp": "52270",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "ROCHES BETTAINCOURT",
-    "cp": "52270",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "ROCHES SUR MARNE",
     "cp": "52410",
     "dept": "52",
@@ -2534,30 +2000,6 @@
   {
     "name": "ROCHETAILLEE",
     "cp": "52210",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "ROCHETAILLEE",
-    "cp": "52210",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "ROLAMPONT",
-    "cp": "52260",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "ROLAMPONT",
-    "cp": "52260",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "ROLAMPONT",
-    "cp": "52260",
     "dept": "52",
     "region": ""
   },
@@ -2622,12 +2064,6 @@
     "region": ""
   },
   {
-    "name": "SAINTS GEOSMES",
-    "cp": "52200",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "SAPIGNICOURT",
     "cp": "52100",
     "dept": "52",
@@ -2682,12 +2118,6 @@
     "region": ""
   },
   {
-    "name": "SEMOUTIERS MONTSAON",
-    "cp": "52000",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "SERQUEUX",
     "cp": "52400",
     "dept": "52",
@@ -2720,12 +2150,6 @@
   {
     "name": "SOMMERECOURT",
     "cp": "52150",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "SOMMEVOIRE",
-    "cp": "52220",
     "dept": "52",
     "region": ""
   },
@@ -2796,18 +2220,6 @@
     "region": ""
   },
   {
-    "name": "ST LOUP SUR AUJON",
-    "cp": "52210",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "ST LOUP SUR AUJON",
-    "cp": "52210",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "ST MARTIN LES LANGRES",
     "cp": "52200",
     "dept": "52",
@@ -2822,12 +2234,6 @@
   {
     "name": "ST THIEBAULT",
     "cp": "52150",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "ST URBAIN MACONCOURT",
-    "cp": "52300",
     "dept": "52",
     "region": ""
   },
@@ -2886,24 +2292,6 @@
     "region": ""
   },
   {
-    "name": "THONNANCE LES MOULINS",
-    "cp": "52230",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "THONNANCE LES MOULINS",
-    "cp": "52230",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "THONNANCE LES MOULINS",
-    "cp": "52230",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "TORCENAY",
     "cp": "52600",
     "dept": "52",
@@ -2934,68 +2322,8 @@
     "region": ""
   },
   {
-    "name": "TROISFONTAINES LA VILLE",
-    "cp": "52130",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "TROISFONTAINES LA VILLE",
-    "cp": "52130",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "TROISFONTAINES LA VILLE",
-    "cp": "52130",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "VAILLANT",
     "cp": "52160",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VAL DE MEUSE",
-    "cp": "52140",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VAL DE MEUSE",
-    "cp": "52140",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VAL DE MEUSE",
-    "cp": "52140",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VAL DE MEUSE",
-    "cp": "52140",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VAL DE MEUSE",
-    "cp": "52140",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VAL DE MEUSE",
-    "cp": "52140",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VAL DE MEUSE",
-    "cp": "52140",
     "dept": "52",
     "region": ""
   },
@@ -3026,36 +2354,6 @@
   {
     "name": "VALLEROY",
     "cp": "52500",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VALS DES TILLES",
-    "cp": "52160",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VALS DES TILLES",
-    "cp": "52160",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VALS DES TILLES",
-    "cp": "52160",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VALS DES TILLES",
-    "cp": "52160",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VALS DES TILLES",
-    "cp": "52160",
     "dept": "52",
     "region": ""
   },
@@ -3186,38 +2484,8 @@
     "region": ""
   },
   {
-    "name": "VILLARS SANTENOGE",
-    "cp": "52160",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VILLARS SANTENOGE",
-    "cp": "52160",
-    "dept": "52",
-    "region": ""
-  },
-  {
     "name": "VILLE EN BLAISOIS",
     "cp": "52130",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VILLEGUSIEN LE LAC",
-    "cp": "52190",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VILLEGUSIEN LE LAC",
-    "cp": "52190",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VILLEGUSIEN LE LAC",
-    "cp": "52190",
     "dept": "52",
     "region": ""
   },
@@ -3284,12 +2552,6 @@
   {
     "name": "VOILLECOMTE",
     "cp": "52130",
-    "dept": "52",
-    "region": ""
-  },
-  {
-    "name": "VOISEY",
-    "cp": "52400",
     "dept": "52",
     "region": ""
   },

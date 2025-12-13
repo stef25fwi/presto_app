@@ -6,12 +6,6 @@
     "region": ""
   },
   {
-    "name": "ABRIES RISTOLAS",
-    "cp": "05460",
-    "dept": "05",
-    "region": ""
-  },
-  {
     "name": "AIGUILLES",
     "cp": "05470",
     "dept": "05",
@@ -44,12 +38,6 @@
   {
     "name": "ASPRES SUR BUECH",
     "cp": "05140",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "AUBESSAGNE",
-    "cp": "05500",
     "dept": "05",
     "region": ""
   },
@@ -146,12 +134,6 @@
   {
     "name": "CHANOUSSE",
     "cp": "05700",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "CHATEAU VILLE VIEILLE",
-    "cp": "05350",
     "dept": "05",
     "region": ""
   },
@@ -272,24 +254,6 @@
   {
     "name": "GAP",
     "cp": "05000",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "GAP",
-    "cp": "05000",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "GARDE COLOMBE",
-    "cp": "05300",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "GARDE COLOMBE",
-    "cp": "05300",
     "dept": "05",
     "region": ""
   },
@@ -462,30 +426,6 @@
     "region": ""
   },
   {
-    "name": "LE DEVOLUY",
-    "cp": "05250",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "LE DEVOLUY",
-    "cp": "05250",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "LE DEVOLUY",
-    "cp": "05250",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "LE DEVOLUY",
-    "cp": "05250",
-    "dept": "05",
-    "region": ""
-  },
-  {
     "name": "LE GLAIZIL",
     "cp": "05800",
     "dept": "05",
@@ -632,12 +572,6 @@
   {
     "name": "NOSSAGE ET BENEVENT",
     "cp": "05700",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "ORCIERES",
-    "cp": "05170",
     "dept": "05",
     "region": ""
   },
@@ -858,18 +792,6 @@
     "region": ""
   },
   {
-    "name": "ST BONNET EN CHAMPSAUR",
-    "cp": "05500",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "ST BONNET EN CHAMPSAUR",
-    "cp": "05500",
-    "dept": "05",
-    "region": ""
-  },
-  {
     "name": "ST CHAFFREY",
     "cp": "05330",
     "dept": "05",
@@ -902,12 +824,6 @@
   {
     "name": "ST JACQUES EN VALGODEMARD",
     "cp": "05800",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "ST JEAN ST NICOLAS",
-    "cp": "05260",
     "dept": "05",
     "region": ""
   },
@@ -1020,18 +936,6 @@
     "region": ""
   },
   {
-    "name": "VAL BUECH MEOUGE",
-    "cp": "05300",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "VAL BUECH MEOUGE",
-    "cp": "05300",
-    "dept": "05",
-    "region": ""
-  },
-  {
     "name": "VAL DES PRES",
     "cp": "05100",
     "dept": "05",
@@ -1044,26 +948,8 @@
     "region": ""
   },
   {
-    "name": "VALDOULE",
-    "cp": "05150",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "VALDOULE",
-    "cp": "05150",
-    "dept": "05",
-    "region": ""
-  },
-  {
     "name": "VALLOUISE PELVOUX",
     "cp": "05290",
-    "dept": "05",
-    "region": ""
-  },
-  {
-    "name": "VALLOUISE PELVOUX",
-    "cp": "05340",
     "dept": "05",
     "region": ""
   },

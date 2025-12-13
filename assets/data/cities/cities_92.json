@@ -60,12 +60,6 @@
     "region": ""
   },
   {
-    "name": "CLAMART",
-    "cp": "92140",
-    "dept": "92",
-    "region": ""
-  },
-  {
     "name": "CLICHY",
     "cp": "92110",
     "dept": "92",
@@ -110,12 +104,6 @@
   {
     "name": "LA GARENNE COLOMBES",
     "cp": "92250",
-    "dept": "92",
-    "region": ""
-  },
-  {
-    "name": "LE PLESSIS ROBINSON",
-    "cp": "92350",
     "dept": "92",
     "region": ""
   },
@@ -176,12 +164,6 @@
   {
     "name": "PUTEAUX",
     "cp": "92800",
-    "dept": "92",
-    "region": ""
-  },
-  {
-    "name": "RUEIL MALMAISON",
-    "cp": "92500",
     "dept": "92",
     "region": ""
   },

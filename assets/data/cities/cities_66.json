@@ -18,12 +18,6 @@
     "region": ""
   },
   {
-    "name": "ANGOUSTRINE VILLENEUVE DES ESCALDES",
-    "cp": "66760",
-    "dept": "66",
-    "region": ""
-  },
-  {
     "name": "ANSIGNAN",
     "cp": "66220",
     "dept": "66",
@@ -42,20 +36,8 @@
     "region": ""
   },
   {
-    "name": "ARGELES SUR MER",
-    "cp": "66700",
-    "dept": "66",
-    "region": ""
-  },
-  {
     "name": "ARLES SUR TECH",
     "cp": "66150",
-    "dept": "66",
-    "region": ""
-  },
-  {
-    "name": "AYGUATEBIA TALAU",
-    "cp": "66360",
     "dept": "66",
     "region": ""
   },
@@ -114,12 +96,6 @@
     "region": ""
   },
   {
-    "name": "BOLQUERE",
-    "cp": "66210",
-    "dept": "66",
-    "region": ""
-  },
-  {
     "name": "BOMPAS",
     "cp": "66430",
     "dept": "66",
@@ -134,12 +110,6 @@
   {
     "name": "BOULETERNERE",
     "cp": "66130",
-    "dept": "66",
-    "region": ""
-  },
-  {
-    "name": "BOURG MADAME",
-    "cp": "66760",
     "dept": "66",
     "region": ""
   },
@@ -200,12 +170,6 @@
   {
     "name": "CANAVEILLES",
     "cp": "66360",
-    "dept": "66",
-    "region": ""
-  },
-  {
-    "name": "CANET EN ROUSSILLON",
-    "cp": "66140",
     "dept": "66",
     "region": ""
   },
@@ -468,12 +432,6 @@
     "region": ""
   },
   {
-    "name": "FONT ROMEU ODEILLO VIA",
-    "cp": "66120",
-    "dept": "66",
-    "region": ""
-  },
-  {
     "name": "FONTPEDROUSE",
     "cp": "66360",
     "dept": "66",
@@ -600,12 +558,6 @@
     "region": ""
   },
   {
-    "name": "LE BARCARES",
-    "cp": "66420",
-    "dept": "66",
-    "region": ""
-  },
-  {
     "name": "LE BOULOU",
     "cp": "66160",
     "dept": "66",
@@ -692,18 +644,6 @@
   {
     "name": "MATEMALE",
     "cp": "66210",
-    "dept": "66",
-    "region": ""
-  },
-  {
-    "name": "MAUREILLAS LAS ILLAS",
-    "cp": "66480",
-    "dept": "66",
-    "region": ""
-  },
-  {
-    "name": "MAUREILLAS LAS ILLAS",
-    "cp": "66480",
     "dept": "66",
     "region": ""
   },
@@ -818,12 +758,6 @@
   {
     "name": "OMS",
     "cp": "66400",
-    "dept": "66",
-    "region": ""
-  },
-  {
-    "name": "OPOUL PERILLOS",
-    "cp": "66600",
     "dept": "66",
     "region": ""
   },
@@ -950,12 +884,6 @@
   {
     "name": "PRADES",
     "cp": "66500",
-    "dept": "66",
-    "region": ""
-  },
-  {
-    "name": "PRATS DE MOLLO LA PRESTE",
-    "cp": "66230",
     "dept": "66",
     "region": ""
   },
@@ -1124,12 +1052,6 @@
   {
     "name": "ST ARNAC",
     "cp": "66220",
-    "dept": "66",
-    "region": ""
-  },
-  {
-    "name": "ST CYPRIEN",
-    "cp": "66750",
     "dept": "66",
     "region": ""
   },

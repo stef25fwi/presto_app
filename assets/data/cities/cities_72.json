@@ -120,18 +120,6 @@
     "region": ""
   },
   {
-    "name": "BALLON ST MARS",
-    "cp": "72290",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "BAZOUGES CRE SUR LOIR",
-    "cp": "72200",
-    "dept": "72",
-    "region": ""
-  },
-  {
     "name": "BAZOUGES CRE SUR LOIR",
     "cp": "72200",
     "dept": "72",
@@ -170,12 +158,6 @@
   {
     "name": "BERFAY",
     "cp": "72320",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "BERNAY NEUVY EN CHAMPAGNE",
-    "cp": "72240",
     "dept": "72",
     "region": ""
   },
@@ -378,12 +360,6 @@
     "region": ""
   },
   {
-    "name": "CHERRE AU",
-    "cp": "72400",
-    "dept": "72",
-    "region": ""
-  },
-  {
     "name": "CHEVILLE",
     "cp": "72350",
     "dept": "72",
@@ -488,12 +464,6 @@
   {
     "name": "COURCIVAL",
     "cp": "72110",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "COURDEMANCHE",
-    "cp": "72150",
     "dept": "72",
     "region": ""
   },
@@ -662,24 +632,6 @@
   {
     "name": "FONTENAY SUR VEGRE",
     "cp": "72350",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "FRESNAY SUR SARTHE",
-    "cp": "72130",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "FRESNAY SUR SARTHE",
-    "cp": "72130",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "FRESNAY SUR SARTHE",
-    "cp": "72130",
     "dept": "72",
     "region": ""
   },
@@ -870,12 +822,6 @@
     "region": ""
   },
   {
-    "name": "LAIGNE ST GERVAIS",
-    "cp": "72220",
-    "dept": "72",
-    "region": ""
-  },
-  {
     "name": "LAMNAY",
     "cp": "72320",
     "dept": "72",
@@ -936,12 +882,6 @@
     "region": ""
   },
   {
-    "name": "LE LUDE",
-    "cp": "72800",
-    "dept": "72",
-    "region": ""
-  },
-  {
     "name": "LE MANS",
     "cp": "72000",
     "dept": "72",
@@ -992,24 +932,6 @@
   {
     "name": "LOIR EN VALLEE",
     "cp": "72310",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "LOIR EN VALLEE",
-    "cp": "72310",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "LOIR EN VALLEE",
-    "cp": "72340",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "LOIR EN VALLEE",
-    "cp": "72340",
     "dept": "72",
     "region": ""
   },
@@ -1146,12 +1068,6 @@
     "region": ""
   },
   {
-    "name": "MAROLLES LES BRAULTS",
-    "cp": "72260",
-    "dept": "72",
-    "region": ""
-  },
-  {
     "name": "MAROLLES LES ST CALAIS",
     "cp": "72120",
     "dept": "72",
@@ -1196,12 +1112,6 @@
   {
     "name": "MEZIERES SUR PONTHOUIN",
     "cp": "72290",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "MOITRON SUR SARTHE",
-    "cp": "72170",
     "dept": "72",
     "region": ""
   },
@@ -1268,24 +1178,6 @@
   {
     "name": "MONTREUIL LE HENRI",
     "cp": "72150",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "MONTVAL SUR LOIR",
-    "cp": "72500",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "MONTVAL SUR LOIR",
-    "cp": "72500",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "MONTVAL SUR LOIR",
-    "cp": "72500",
     "dept": "72",
     "region": ""
   },
@@ -1890,12 +1782,6 @@
     "region": ""
   },
   {
-    "name": "ST PATERNE LE CHEVAIN",
-    "cp": "72610",
-    "dept": "72",
-    "region": ""
-  },
-  {
     "name": "ST PAUL LE GAULTIER",
     "cp": "72130",
     "dept": "72",
@@ -1988,12 +1874,6 @@
   {
     "name": "STE CEROTTE",
     "cp": "72120",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "STE JAMME SUR SARTHE",
-    "cp": "72380",
     "dept": "72",
     "region": ""
   },
@@ -2112,12 +1992,6 @@
     "region": ""
   },
   {
-    "name": "TUFFE VAL DE LA CHERONNE",
-    "cp": "72160",
-    "dept": "72",
-    "region": ""
-  },
-  {
     "name": "VAAS",
     "cp": "72500",
     "dept": "72",
@@ -2126,18 +2000,6 @@
   {
     "name": "VAL D ETANGSON",
     "cp": "72120",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "VAL D ETANGSON",
-    "cp": "72120",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "VAL DE LA HUNE",
-    "cp": "72440",
     "dept": "72",
     "region": ""
   },
@@ -2216,36 +2078,6 @@
   {
     "name": "VILLENEUVE EN PERSEIGNE",
     "cp": "72600",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "VILLENEUVE EN PERSEIGNE",
-    "cp": "72600",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "VILLENEUVE EN PERSEIGNE",
-    "cp": "72600",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "VILLENEUVE EN PERSEIGNE",
-    "cp": "72600",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "VILLENEUVE EN PERSEIGNE",
-    "cp": "72610",
-    "dept": "72",
-    "region": ""
-  },
-  {
-    "name": "VILLENEUVE EN PERSEIGNE",
-    "cp": "72610",
     "dept": "72",
     "region": ""
   },

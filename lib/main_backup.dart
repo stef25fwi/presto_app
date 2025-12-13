@@ -3812,8 +3812,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       await FirebaseFirestore.instance.collection('offers').add({
         'title': title,
         'description': description,
+        // 🔥 Compatibilité : écriture des 2 variantes
         'location': location,
+        'city': location,
         'postalCode': postalCode.isEmpty ? null : postalCode,
+        'cp': postalCode.isEmpty ? null : postalCode,
         'category': category,
         'budget': budget,
         'phone': phone.isEmpty ? null : phone,

@@ -186,12 +186,6 @@
     "region": ""
   },
   {
-    "name": "ATHESANS ETROITEFONTAINE",
-    "cp": "70110",
-    "dept": "70",
-    "region": ""
-  },
-  {
     "name": "ATTRICOURT",
     "cp": "70100",
     "dept": "70",
@@ -264,12 +258,6 @@
     "region": ""
   },
   {
-    "name": "AVRIGNEY VIREY",
-    "cp": "70150",
-    "dept": "70",
-    "region": ""
-  },
-  {
     "name": "BAIGNES",
     "cp": "70000",
     "dept": "70",
@@ -324,18 +312,6 @@
     "region": ""
   },
   {
-    "name": "BEAUJEU ST VALLIER PIERREJUX QUITTEUR",
-    "cp": "70100",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "BEAUMOTTE AUBERTANS",
-    "cp": "70190",
-    "dept": "70",
-    "region": ""
-  },
-  {
     "name": "BEAUMOTTE AUBERTANS",
     "cp": "70190",
     "dept": "70",
@@ -350,18 +326,6 @@
   {
     "name": "BELFAHY",
     "cp": "70290",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "BELLES FONTAINES",
-    "cp": "70110",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "BELLES FONTAINES",
-    "cp": "70110",
     "dept": "70",
     "region": ""
   },
@@ -594,18 +558,6 @@
     "region": ""
   },
   {
-    "name": "BROYE AUBIGNEY MONTSEUGNY",
-    "cp": "70140",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "BROYE AUBIGNEY MONTSEUGNY",
-    "cp": "70140",
-    "dept": "70",
-    "region": ""
-  },
-  {
     "name": "BROYE LES LOUPS ET VERFONTAINE",
     "cp": "70100",
     "dept": "70",
@@ -710,36 +662,6 @@
   {
     "name": "CHAMPEY",
     "cp": "70400",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "CHAMPLITTE",
-    "cp": "70600",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "CHAMPLITTE",
-    "cp": "70600",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "CHAMPLITTE",
-    "cp": "70600",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "CHAMPLITTE",
-    "cp": "70600",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "CHAMPLITTE",
-    "cp": "70600",
     "dept": "70",
     "region": ""
   },
@@ -960,12 +882,6 @@
     "region": ""
   },
   {
-    "name": "COLOMBINE",
-    "cp": "70700",
-    "dept": "70",
-    "region": ""
-  },
-  {
     "name": "COLOMBOTTE",
     "cp": "70240",
     "dept": "70",
@@ -1122,26 +1038,8 @@
     "region": ""
   },
   {
-    "name": "DAMBENOIT LES COLOMBE",
-    "cp": "70200",
-    "dept": "70",
-    "region": ""
-  },
-  {
     "name": "DAMPIERRE LES CONFLANS",
     "cp": "70800",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "DAMPIERRE SUR LINOTTE",
-    "cp": "70230",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "DAMPIERRE SUR LINOTTE",
-    "cp": "70230",
     "dept": "70",
     "region": ""
   },
@@ -1314,12 +1212,6 @@
     "region": ""
   },
   {
-    "name": "FAVERNEY",
-    "cp": "70160",
-    "dept": "70",
-    "region": ""
-  },
-  {
     "name": "FAYMONT",
     "cp": "70200",
     "dept": "70",
@@ -1422,26 +1314,8 @@
     "region": ""
   },
   {
-    "name": "FOUVENT ST ANDOCHE",
-    "cp": "70600",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "FOUVENT ST ANDOCHE",
-    "cp": "70600",
-    "dept": "70",
-    "region": ""
-  },
-  {
     "name": "FRAHIER ET CHATEBIER",
     "cp": "70400",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "FRAMONT",
-    "cp": "70600",
     "dept": "70",
     "region": ""
   },
@@ -1632,32 +1506,8 @@
     "region": ""
   },
   {
-    "name": "HAUT DU THEM CHATEAU LAMBERT",
-    "cp": "70440",
-    "dept": "70",
-    "region": ""
-  },
-  {
     "name": "HAUTEVELLE",
     "cp": "70800",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "HERICOURT",
-    "cp": "70400",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "HERICOURT",
-    "cp": "70400",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "HERICOURT",
-    "cp": "70400",
     "dept": "70",
     "region": ""
   },
@@ -1699,12 +1549,6 @@
   },
   {
     "name": "JONVELLE",
-    "cp": "70500",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "JUSSEY",
     "cp": "70500",
     "dept": "70",
     "region": ""
@@ -1842,38 +1686,8 @@
     "region": ""
   },
   {
-    "name": "LA ROCHE MOREY",
-    "cp": "70120",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "LA ROCHE MOREY",
-    "cp": "70120",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "LA ROCHE MOREY",
-    "cp": "70120",
-    "dept": "70",
-    "region": ""
-  },
-  {
     "name": "LA ROCHELLE",
     "cp": "70120",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "LA ROMAINE",
-    "cp": "70130",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "LA ROMAINE",
-    "cp": "70130",
     "dept": "70",
     "region": ""
   },
@@ -2048,12 +1862,6 @@
   {
     "name": "LONGEVELLE",
     "cp": "70110",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "LOULANS VERCHAMP",
-    "cp": "70230",
     "dept": "70",
     "region": ""
   },
@@ -2730,12 +2538,6 @@
     "region": ""
   },
   {
-    "name": "RIOZ",
-    "cp": "70190",
-    "dept": "70",
-    "region": ""
-  },
-  {
     "name": "ROCHE ET RAUCOURT",
     "cp": "70180",
     "dept": "70",
@@ -2786,18 +2588,6 @@
   {
     "name": "SAPONCOURT",
     "cp": "70210",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "SAULNOT",
-    "cp": "70400",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "SAULNOT",
-    "cp": "70400",
     "dept": "70",
     "region": ""
   },
@@ -2868,20 +2658,8 @@
     "region": ""
   },
   {
-    "name": "SENARGENT MIGNAFANS",
-    "cp": "70110",
-    "dept": "70",
-    "region": ""
-  },
-  {
     "name": "SENONCOURT",
     "cp": "70160",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "SERVANCE MIELLIN",
-    "cp": "70440",
     "dept": "70",
     "region": ""
   },
@@ -2899,24 +2677,6 @@
   },
   {
     "name": "SEVEUX MOTEY",
-    "cp": "70130",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "SEVEUX MOTEY",
-    "cp": "70130",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "SOING CUBRY CHARENTENAY",
-    "cp": "70130",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "SOING CUBRY CHARENTENAY",
     "cp": "70130",
     "dept": "70",
     "region": ""
@@ -2972,12 +2732,6 @@
   {
     "name": "ST GERMAIN",
     "cp": "70200",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "ST LOUP NANTOUARD",
-    "cp": "70100",
     "dept": "70",
     "region": ""
   },
@@ -3188,12 +2942,6 @@
   {
     "name": "VAUX LE MONCELOT",
     "cp": "70700",
-    "dept": "70",
-    "region": ""
-  },
-  {
-    "name": "VELESMES ECHEVANNE",
-    "cp": "70100",
     "dept": "70",
     "region": ""
   },

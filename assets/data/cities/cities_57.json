@@ -108,20 +108,8 @@
     "region": ""
   },
   {
-    "name": "AMNEVILLE",
-    "cp": "57360",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "ANCERVILLE",
     "cp": "57580",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "ANCY DORNOT",
-    "cp": "57130",
     "dept": "57",
     "region": ""
   },
@@ -366,18 +354,6 @@
     "region": ""
   },
   {
-    "name": "BELLES FORETS",
-    "cp": "57930",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "BELLES FORETS",
-    "cp": "57930",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "BENESTROFF",
     "cp": "57670",
     "dept": "57",
@@ -572,12 +548,6 @@
   {
     "name": "BOULANGE",
     "cp": "57655",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "BOULAY MOSELLE",
-    "cp": "57220",
     "dept": "57",
     "region": ""
   },
@@ -798,18 +768,6 @@
     "region": ""
   },
   {
-    "name": "CHATEAU SALINS",
-    "cp": "57170",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "CHATEAU VOUE",
-    "cp": "57170",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "CHATEAU VOUE",
     "cp": "57170",
     "dept": "57",
@@ -876,12 +834,6 @@
     "region": ""
   },
   {
-    "name": "COCHEREN",
-    "cp": "57800",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "COIN LES CUVRY",
     "cp": "57420",
     "dept": "57",
@@ -906,20 +858,8 @@
     "region": ""
   },
   {
-    "name": "COLLIGNY MAIZERY",
-    "cp": "57530",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "COLMEN",
     "cp": "57320",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "CONDE NORTHEN",
-    "cp": "57220",
     "dept": "57",
     "region": ""
   },
@@ -950,12 +890,6 @@
   {
     "name": "COUME",
     "cp": "57220",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "COURCELLES CHAUSSY",
-    "cp": "57530",
     "dept": "57",
     "region": ""
   },
@@ -998,12 +932,6 @@
   {
     "name": "CUVRY",
     "cp": "57420",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "DABO",
-    "cp": "57850",
     "dept": "57",
     "region": ""
   },
@@ -1236,26 +1164,8 @@
     "region": ""
   },
   {
-    "name": "FAILLY",
-    "cp": "57640",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "FALCK",
     "cp": "57550",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "FAMECK",
-    "cp": "57290",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "FAMECK",
-    "cp": "57290",
     "dept": "57",
     "region": ""
   },
@@ -1274,12 +1184,6 @@
   {
     "name": "FARSCHVILLER",
     "cp": "57450",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "FAULQUEMONT",
-    "cp": "57380",
     "dept": "57",
     "region": ""
   },
@@ -1362,12 +1266,6 @@
     "region": ""
   },
   {
-    "name": "FLORANGE",
-    "cp": "57190",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "FOLKLING",
     "cp": "57600",
     "dept": "57",
@@ -1388,18 +1286,6 @@
   {
     "name": "FONTOY",
     "cp": "57650",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "FORBACH",
-    "cp": "57600",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "FORBACH",
-    "cp": "57600",
     "dept": "57",
     "region": ""
   },
@@ -1488,12 +1374,6 @@
     "region": ""
   },
   {
-    "name": "FREYMING MERLEBACH",
-    "cp": "57800",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "FRIBOURG",
     "cp": "57810",
     "dept": "57",
@@ -1548,20 +1428,8 @@
     "region": ""
   },
   {
-    "name": "GOETZENBRUCK",
-    "cp": "57620",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "GOIN",
     "cp": "57420",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "GOMELANGE",
-    "cp": "57220",
     "dept": "57",
     "region": ""
   },
@@ -1868,18 +1736,6 @@
   {
     "name": "HAVANGE",
     "cp": "57650",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "HAYANGE",
-    "cp": "57700",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "HAYANGE",
-    "cp": "57700",
     "dept": "57",
     "region": ""
   },
@@ -2604,12 +2460,6 @@
     "region": ""
   },
   {
-    "name": "MACHEREN",
-    "cp": "57730",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "MAINVILLERS",
     "cp": "57380",
     "dept": "57",
@@ -2648,12 +2498,6 @@
   {
     "name": "MALROY",
     "cp": "57640",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "MANDEREN RITZING",
-    "cp": "57480",
     "dept": "57",
     "region": ""
   },
@@ -2940,12 +2784,6 @@
     "region": ""
   },
   {
-    "name": "MOULINS LES METZ",
-    "cp": "57160",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "MOUSSEY",
     "cp": "57770",
     "dept": "57",
@@ -2960,12 +2798,6 @@
   {
     "name": "MOYENVIC",
     "cp": "57630",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "MOYEUVRE GRANDE",
-    "cp": "57250",
     "dept": "57",
     "region": ""
   },
@@ -3276,12 +3108,6 @@
     "region": ""
   },
   {
-    "name": "PIBLANGE",
-    "cp": "57220",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "PIERREVILLERS",
     "cp": "57120",
     "dept": "57",
@@ -3492,12 +3318,6 @@
     "region": ""
   },
   {
-    "name": "REZONVILLE VIONVILLE",
-    "cp": "57130",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "RHODES",
     "cp": "57810",
     "dept": "57",
@@ -3696,12 +3516,6 @@
     "region": ""
   },
   {
-    "name": "SARREGUEMINES",
-    "cp": "57200",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "SARREINSMING",
     "cp": "57905",
     "dept": "57",
@@ -3858,12 +3672,6 @@
     "region": ""
   },
   {
-    "name": "SPICHEREN",
-    "cp": "57350",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "ST AVOLD",
     "cp": "57500",
     "dept": "57",
@@ -3978,18 +3786,6 @@
     "region": ""
   },
   {
-    "name": "STIRING WENDEL",
-    "cp": "57350",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "STIRING WENDEL",
-    "cp": "57350",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "STUCKANGE",
     "cp": "57970",
     "dept": "57",
@@ -4068,24 +3864,6 @@
     "region": ""
   },
   {
-    "name": "THIONVILLE",
-    "cp": "57100",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "THIONVILLE",
-    "cp": "57100",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "THIONVILLE",
-    "cp": "57100",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "THONVILLE",
     "cp": "57380",
     "dept": "57",
@@ -4122,20 +3900,8 @@
     "region": ""
   },
   {
-    "name": "TRESSANGE",
-    "cp": "57710",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "TRITTELING REDLACH",
     "cp": "57385",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "TROISFONTAINES",
-    "cp": "57870",
     "dept": "57",
     "region": ""
   },
@@ -4188,12 +3954,6 @@
     "region": ""
   },
   {
-    "name": "VAL DE BRIDE",
-    "cp": "57260",
-    "dept": "57",
-    "region": ""
-  },
-  {
     "name": "VALLERANGE",
     "cp": "57340",
     "dept": "57",
@@ -4232,12 +3992,6 @@
   {
     "name": "VANY",
     "cp": "57070",
-    "dept": "57",
-    "region": ""
-  },
-  {
-    "name": "VARIZE VAUDONCOURT",
-    "cp": "57220",
     "dept": "57",
     "region": ""
   },

@@ -120,12 +120,6 @@
     "region": ""
   },
   {
-    "name": "BEAUMONT ST CYR",
-    "cp": "86490",
-    "dept": "86",
-    "region": ""
-  },
-  {
     "name": "BELLEFONDS",
     "cp": "86210",
     "dept": "86",
@@ -176,24 +170,6 @@
   {
     "name": "BLANZAY",
     "cp": "86400",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "BOIVRE LA VALLEE",
-    "cp": "86470",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "BOIVRE LA VALLEE",
-    "cp": "86470",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "BOIVRE LA VALLEE",
-    "cp": "86470",
     "dept": "86",
     "region": ""
   },
@@ -318,12 +294,6 @@
     "region": ""
   },
   {
-    "name": "CHAMPIGNY EN ROCHEREAU",
-    "cp": "86170",
-    "dept": "86",
-    "region": ""
-  },
-  {
     "name": "CHAMPNIERS",
     "cp": "86400",
     "dept": "86",
@@ -372,20 +342,8 @@
     "region": ""
   },
   {
-    "name": "CHATELLERAULT",
-    "cp": "86100",
-    "dept": "86",
-    "region": ""
-  },
-  {
     "name": "CHAUNAY",
     "cp": "86510",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "CHAUVIGNY",
-    "cp": "86300",
     "dept": "86",
     "region": ""
   },
@@ -702,12 +660,6 @@
     "region": ""
   },
   {
-    "name": "LA GRIMAUDIERE",
-    "cp": "86330",
-    "dept": "86",
-    "region": ""
-  },
-  {
     "name": "LA PUYE",
     "cp": "86260",
     "dept": "86",
@@ -726,18 +678,6 @@
     "region": ""
   },
   {
-    "name": "LA ROCHE RIGAULT",
-    "cp": "86200",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "LA ROCHE RIGAULT",
-    "cp": "86200",
-    "dept": "86",
-    "region": ""
-  },
-  {
     "name": "LA TRIMOUILLE",
     "cp": "86290",
     "dept": "86",
@@ -746,12 +686,6 @@
   {
     "name": "LA VILLEDIEU DU CLAIN",
     "cp": "86340",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "LATHUS ST REMY",
-    "cp": "86390",
     "dept": "86",
     "region": ""
   },
@@ -866,12 +800,6 @@
   {
     "name": "LIZANT",
     "cp": "86400",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "LOUDUN",
-    "cp": "86200",
     "dept": "86",
     "region": ""
   },
@@ -1004,24 +932,6 @@
   {
     "name": "MIREBEAU",
     "cp": "86110",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "MONCONTOUR",
-    "cp": "86330",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "MONCONTOUR",
-    "cp": "86330",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "MONCONTOUR",
-    "cp": "86330",
     "dept": "86",
     "region": ""
   },
@@ -1338,12 +1248,6 @@
     "region": ""
   },
   {
-    "name": "SENILLE ST SAUVEUR",
-    "cp": "86100",
-    "dept": "86",
-    "region": ""
-  },
-  {
     "name": "SERIGNY",
     "cp": "86230",
     "dept": "86",
@@ -1434,12 +1338,6 @@
     "region": ""
   },
   {
-    "name": "ST JEAN DE SAUVES",
-    "cp": "86330",
-    "dept": "86",
-    "region": ""
-  },
-  {
     "name": "ST JULIEN L ARS",
     "cp": "86800",
     "dept": "86",
@@ -1484,18 +1382,6 @@
   {
     "name": "ST MARTIN LA PALLU",
     "cp": "86170",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "ST MARTIN LA PALLU",
-    "cp": "86170",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "ST MARTIN LA PALLU",
-    "cp": "86380",
     "dept": "86",
     "region": ""
   },
@@ -1614,62 +1500,8 @@
     "region": ""
   },
   {
-    "name": "VAL DE COMPORTE",
-    "cp": "86400",
-    "dept": "86",
-    "region": ""
-  },
-  {
     "name": "VALDIVIENNE",
     "cp": "86300",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "VALDIVIENNE",
-    "cp": "86300",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "VALDIVIENNE",
-    "cp": "86300",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "VALDIVIENNE",
-    "cp": "86300",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "VALDIVIENNE",
-    "cp": "86300",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "VALENCE EN POITOU",
-    "cp": "86700",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "VALENCE EN POITOU",
-    "cp": "86700",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "VALENCE EN POITOU",
-    "cp": "86700",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "VALENCE EN POITOU",
-    "cp": "86700",
     "dept": "86",
     "region": ""
   },
@@ -1754,12 +1586,6 @@
   {
     "name": "VOULON",
     "cp": "86700",
-    "dept": "86",
-    "region": ""
-  },
-  {
-    "name": "VOUNEUIL SOUS BIARD",
-    "cp": "86580",
     "dept": "86",
     "region": ""
   },

@@ -60,12 +60,6 @@
     "region": ""
   },
   {
-    "name": "AUBEPIERRE OZOUER LE REPOS",
-    "cp": "77720",
-    "dept": "77",
-    "region": ""
-  },
-  {
     "name": "AUFFERVILLE",
     "cp": "77570",
     "dept": "77",
@@ -120,12 +114,6 @@
     "region": ""
   },
   {
-    "name": "BANNOST VILLEGAGNON",
-    "cp": "77970",
-    "dept": "77",
-    "region": ""
-  },
-  {
     "name": "BARBEY",
     "cp": "77130",
     "dept": "77",
@@ -162,20 +150,8 @@
     "region": ""
   },
   {
-    "name": "BEAUCHERY ST MARTIN",
-    "cp": "77560",
-    "dept": "77",
-    "region": ""
-  },
-  {
     "name": "BEAUMONT DU GATINAIS",
     "cp": "77890",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "BEAUTHEIL SAINTS",
-    "cp": "77120",
     "dept": "77",
     "region": ""
   },
@@ -194,12 +170,6 @@
   {
     "name": "BELLOT",
     "cp": "77510",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "BERNAY VILBERT",
-    "cp": "77540",
     "dept": "77",
     "region": ""
   },
@@ -361,12 +331,6 @@
   },
   {
     "name": "BUSSY ST GEORGES",
-    "cp": "77600",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "BUSSY ST MARTIN",
     "cp": "77600",
     "dept": "77",
     "region": ""
@@ -582,18 +546,6 @@
     "region": ""
   },
   {
-    "name": "CHAUCONIN NEUFMONTIERS",
-    "cp": "77124",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "CHAUCONIN NEUFMONTIERS",
-    "cp": "77124",
-    "dept": "77",
-    "region": ""
-  },
-  {
     "name": "CHAUFFRY",
     "cp": "77169",
     "dept": "77",
@@ -608,18 +560,6 @@
   {
     "name": "CHELLES",
     "cp": "77500",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "CHELLES",
-    "cp": "77500",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "CHENOISE CUCHARMOY",
-    "cp": "77160",
     "dept": "77",
     "region": ""
   },
@@ -660,12 +600,6 @@
     "region": ""
   },
   {
-    "name": "CHEVRY COSSIGNY",
-    "cp": "77173",
-    "dept": "77",
-    "region": ""
-  },
-  {
     "name": "CHEVRY EN SEREINE",
     "cp": "77710",
     "dept": "77",
@@ -680,12 +614,6 @@
   {
     "name": "CITRY",
     "cp": "77730",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "CLAYE SOUILLY",
-    "cp": "77410",
     "dept": "77",
     "region": ""
   },
@@ -840,12 +768,6 @@
     "region": ""
   },
   {
-    "name": "CRECY LA CHAPELLE",
-    "cp": "77580",
-    "dept": "77",
-    "region": ""
-  },
-  {
     "name": "CREGY LES MEAUX",
     "cp": "77124",
     "dept": "77",
@@ -860,12 +782,6 @@
   {
     "name": "CRISENOY",
     "cp": "77390",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "CROISSY BEAUBOURG",
-    "cp": "77183",
     "dept": "77",
     "region": ""
   },
@@ -984,12 +900,6 @@
     "region": ""
   },
   {
-    "name": "EMERAINVILLE",
-    "cp": "77184",
-    "dept": "77",
-    "region": ""
-  },
-  {
     "name": "ESBLY",
     "cp": "77450",
     "dept": "77",
@@ -1010,12 +920,6 @@
   {
     "name": "EVERLY",
     "cp": "77157",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "EVRY GREGY SUR YERRE",
-    "cp": "77166",
     "dept": "77",
     "region": ""
   },
@@ -1212,12 +1116,6 @@
     "region": ""
   },
   {
-    "name": "GRANDPUITS BAILLY CARROIS",
-    "cp": "77720",
-    "dept": "77",
-    "region": ""
-  },
-  {
     "name": "GRAVON",
     "cp": "77118",
     "dept": "77",
@@ -1238,12 +1136,6 @@
   {
     "name": "GREZ SUR LOING",
     "cp": "77880",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "GRISY SUISNES",
-    "cp": "77166",
     "dept": "77",
     "region": ""
   },
@@ -1280,12 +1172,6 @@
   {
     "name": "GUIGNES",
     "cp": "77390",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "GURCY LE CHATEL",
-    "cp": "77520",
     "dept": "77",
     "region": ""
   },
@@ -1424,12 +1310,6 @@
   {
     "name": "LA CHAPELLE LA REINE",
     "cp": "77760",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "LA CHAPELLE MOUTILS",
-    "cp": "77320",
     "dept": "77",
     "region": ""
   },
@@ -1710,24 +1590,6 @@
     "region": ""
   },
   {
-    "name": "LORREZ LE BOCAGE PREAUX",
-    "cp": "77710",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "LOUAN VILLEGRUIS FONTAINE",
-    "cp": "77560",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "LOUAN VILLEGRUIS FONTAINE",
-    "cp": "77560",
-    "dept": "77",
-    "region": ""
-  },
-  {
     "name": "LOUAN VILLEGRUIS FONTAINE",
     "cp": "77560",
     "dept": "77",
@@ -1736,18 +1598,6 @@
   {
     "name": "LUISETAINES",
     "cp": "77520",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "LUMIGNY NESLES ORMEAUX",
-    "cp": "77540",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "LUMIGNY NESLES ORMEAUX",
-    "cp": "77540",
     "dept": "77",
     "region": ""
   },
@@ -2040,30 +1890,6 @@
     "region": ""
   },
   {
-    "name": "MORET LOING ET ORVANNE",
-    "cp": "77250",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "MORET LOING ET ORVANNE",
-    "cp": "77250",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "MORET LOING ET ORVANNE",
-    "cp": "77250",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "MORET LOING ET ORVANNE",
-    "cp": "77250",
-    "dept": "77",
-    "region": ""
-  },
-  {
     "name": "MORMANT",
     "cp": "77720",
     "dept": "77",
@@ -2324,18 +2150,6 @@
   {
     "name": "POMPONNE",
     "cp": "77400",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "POMPONNE",
-    "cp": "77400",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "PONTAULT COMBAULT",
-    "cp": "77340",
     "dept": "77",
     "region": ""
   },
@@ -2646,12 +2460,6 @@
     "region": ""
   },
   {
-    "name": "ST FARGEAU PONTHIERRY",
-    "cp": "77310",
-    "dept": "77",
-    "region": ""
-  },
-  {
     "name": "ST FIACRE",
     "cp": "77470",
     "dept": "77",
@@ -2726,12 +2534,6 @@
   {
     "name": "ST MARD",
     "cp": "77230",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "ST MARS VIEUX MAISONS",
-    "cp": "77320",
     "dept": "77",
     "region": ""
   },
@@ -3024,12 +2826,6 @@
     "region": ""
   },
   {
-    "name": "VERNOU LA CELLE SUR SEINE",
-    "cp": "77670",
-    "dept": "77",
-    "region": ""
-  },
-  {
     "name": "VERT ST DENIS",
     "cp": "77240",
     "dept": "77",
@@ -3062,12 +2858,6 @@
   {
     "name": "VILLECERF",
     "cp": "77250",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "VILLEMARECHAL",
-    "cp": "77710",
     "dept": "77",
     "region": ""
   },
@@ -3139,18 +2929,6 @@
   },
   {
     "name": "VILLEROY",
-    "cp": "77410",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "VILLEVAUDE",
-    "cp": "77410",
-    "dept": "77",
-    "region": ""
-  },
-  {
-    "name": "VILLEVAUDE",
     "cp": "77410",
     "dept": "77",
     "region": ""

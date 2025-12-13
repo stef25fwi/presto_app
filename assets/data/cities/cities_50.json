@@ -78,12 +78,6 @@
     "region": ""
   },
   {
-    "name": "AVRANCHES",
-    "cp": "50300",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "AZEVILLE",
     "cp": "50310",
     "dept": "50",
@@ -240,36 +234,6 @@
     "region": ""
   },
   {
-    "name": "BOURGVALLEES",
-    "cp": "50750",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "BOURGVALLEES",
-    "cp": "50750",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "BOURGVALLEES",
-    "cp": "50750",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "BOURGVALLEES",
-    "cp": "50750",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "BOURGVALLEES",
-    "cp": "50750",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "BOUTTEVILLE",
     "cp": "50480",
     "dept": "50",
@@ -284,12 +248,6 @@
   {
     "name": "BRECEY",
     "cp": "50370",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "BREHAL",
-    "cp": "50290",
     "dept": "50",
     "region": ""
   },
@@ -320,36 +278,6 @@
   {
     "name": "BREVILLE SUR MER",
     "cp": "50290",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "BRICQUEBEC EN COTENTIN",
-    "cp": "50260",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "BRICQUEBEC EN COTENTIN",
-    "cp": "50260",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "BRICQUEBEC EN COTENTIN",
-    "cp": "50260",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "BRICQUEBEC EN COTENTIN",
-    "cp": "50260",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "BRICQUEBEC EN COTENTIN",
-    "cp": "50260",
     "dept": "50",
     "region": ""
   },
@@ -402,12 +330,6 @@
     "region": ""
   },
   {
-    "name": "BUAIS LES MONTS",
-    "cp": "50640",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "CAMBERNON",
     "cp": "50200",
     "dept": "50",
@@ -422,12 +344,6 @@
   {
     "name": "CAMPROND",
     "cp": "50210",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "CANISY",
-    "cp": "50750",
     "dept": "50",
     "region": ""
   },
@@ -458,60 +374,6 @@
   {
     "name": "CARENTAN LES MARAIS",
     "cp": "50480",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "CARENTAN LES MARAIS",
-    "cp": "50480",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "CARENTAN LES MARAIS",
-    "cp": "50480",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "CARENTAN LES MARAIS",
-    "cp": "50480",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "CARENTAN LES MARAIS",
-    "cp": "50500",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "CARENTAN LES MARAIS",
-    "cp": "50500",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "CARENTAN LES MARAIS",
-    "cp": "50500",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "CARENTAN LES MARAIS",
-    "cp": "50500",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "CARENTAN LES MARAIS",
-    "cp": "50500",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "CARENTAN LES MARAIS",
-    "cp": "50500",
     "dept": "50",
     "region": ""
   },
@@ -600,12 +462,6 @@
     "region": ""
   },
   {
-    "name": "CHAULIEU",
-    "cp": "50150",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "CHAVOY",
     "cp": "50870",
     "dept": "50",
@@ -626,12 +482,6 @@
   {
     "name": "CHERBOURG EN COTENTIN",
     "cp": "50120",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "CHERBOURG EN COTENTIN",
-    "cp": "50130",
     "dept": "50",
     "region": ""
   },
@@ -668,12 +518,6 @@
   {
     "name": "COLOMBY",
     "cp": "50700",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "CONDE SUR VIRE",
-    "cp": "50420",
     "dept": "50",
     "region": ""
   },
@@ -798,18 +642,6 @@
     "region": ""
   },
   {
-    "name": "DRAGEY RONTHON",
-    "cp": "50530",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "DUCEY LES CHERIS",
-    "cp": "50220",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "DUCEY LES CHERIS",
     "cp": "50220",
     "dept": "50",
@@ -888,18 +720,6 @@
     "region": ""
   },
   {
-    "name": "FOLLIGNY",
-    "cp": "50320",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "FOLLIGNY",
-    "cp": "50320",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "FONTENAY SUR MER",
     "cp": "50310",
     "dept": "50",
@@ -926,36 +746,6 @@
   {
     "name": "GATTEVILLE LE PHARE",
     "cp": "50760",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "GAVRAY SUR SIENNE",
-    "cp": "50450",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "GAVRAY SUR SIENNE",
-    "cp": "50450",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "GAVRAY SUR SIENNE",
-    "cp": "50450",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "GAVRAY SUR SIENNE",
-    "cp": "50450",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "GAVRAY SUR SIENNE",
-    "cp": "50450",
     "dept": "50",
     "region": ""
   },
@@ -1002,12 +792,6 @@
     "region": ""
   },
   {
-    "name": "GONNEVILLE LE THEIL",
-    "cp": "50330",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "GORGES",
     "cp": "50190",
     "dept": "50",
@@ -1027,24 +811,6 @@
   },
   {
     "name": "GOUVILLE SUR MER",
-    "cp": "50200",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "GOUVILLE SUR MER",
-    "cp": "50200",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "GOUVILLE SUR MER",
-    "cp": "50560",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "GOUVILLE SUR MER",
     "cp": "50560",
     "dept": "50",
     "region": ""
@@ -1056,38 +822,8 @@
     "region": ""
   },
   {
-    "name": "GRAIGNES MESNIL ANGOT",
-    "cp": "50620",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "GRANDPARIGNY",
     "cp": "50600",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "GRANDPARIGNY",
-    "cp": "50600",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "GRANDPARIGNY",
-    "cp": "50600",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "GRANDPARIGNY",
-    "cp": "50600",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "GRANVILLE",
-    "cp": "50400",
     "dept": "50",
     "region": ""
   },
@@ -1212,60 +948,6 @@
     "region": ""
   },
   {
-    "name": "ISIGNY LE BUAT",
-    "cp": "50540",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ISIGNY LE BUAT",
-    "cp": "50540",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ISIGNY LE BUAT",
-    "cp": "50540",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ISIGNY LE BUAT",
-    "cp": "50540",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ISIGNY LE BUAT",
-    "cp": "50540",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ISIGNY LE BUAT",
-    "cp": "50540",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ISIGNY LE BUAT",
-    "cp": "50540",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ISIGNY LE BUAT",
-    "cp": "50540",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ISIGNY LE BUAT",
-    "cp": "50540",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "JOGANVILLE",
     "cp": "50310",
     "dept": "50",
@@ -1280,48 +962,6 @@
   {
     "name": "JULLOUVILLE",
     "cp": "50610",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "JULLOUVILLE",
-    "cp": "50610",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "JUVIGNY LES VALLEES",
-    "cp": "50520",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "JUVIGNY LES VALLEES",
-    "cp": "50520",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "JUVIGNY LES VALLEES",
-    "cp": "50520",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "JUVIGNY LES VALLEES",
-    "cp": "50520",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "JUVIGNY LES VALLEES",
-    "cp": "50520",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "JUVIGNY LES VALLEES",
-    "cp": "50520",
     "dept": "50",
     "region": ""
   },
@@ -1405,102 +1045,6 @@
   },
   {
     "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50440",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
-    "cp": "50460",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAGUE",
     "cp": "50460",
     "dept": "50",
     "region": ""
@@ -1508,48 +1052,6 @@
   {
     "name": "LA HAGUE",
     "cp": "50690",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAYE",
-    "cp": "50250",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAYE",
-    "cp": "50250",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAYE",
-    "cp": "50250",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAYE",
-    "cp": "50250",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAYE",
-    "cp": "50250",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAYE",
-    "cp": "50250",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LA HAYE",
-    "cp": "50250",
     "dept": "50",
     "region": ""
   },
@@ -1670,12 +1172,6 @@
   {
     "name": "LE GRAND CELLAND",
     "cp": "50370",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LE GRIPPON",
-    "cp": "50320",
     "dept": "50",
     "region": ""
   },
@@ -1812,18 +1308,6 @@
     "region": ""
   },
   {
-    "name": "LE PARC",
-    "cp": "50870",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LE PARC",
-    "cp": "50870",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "LE PERRON",
     "cp": "50160",
     "dept": "50",
@@ -1850,36 +1334,6 @@
   {
     "name": "LE TANU",
     "cp": "50320",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LE TANU",
-    "cp": "50320",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LE TEILLEUL",
-    "cp": "50640",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LE TEILLEUL",
-    "cp": "50640",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LE TEILLEUL",
-    "cp": "50640",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LE TEILLEUL",
-    "cp": "50640",
     "dept": "50",
     "region": ""
   },
@@ -1940,12 +1394,6 @@
   {
     "name": "LES PIEUX",
     "cp": "50340",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "LESSAY",
-    "cp": "50430",
     "dept": "50",
     "region": ""
   },
@@ -2018,12 +1466,6 @@
   {
     "name": "MARGUERAY",
     "cp": "50410",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "MARIGNY LE LOZON",
-    "cp": "50570",
     "dept": "50",
     "region": ""
   },
@@ -2148,30 +1590,6 @@
     "region": ""
   },
   {
-    "name": "MONTSENELLE",
-    "cp": "50250",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "MONTSENELLE",
-    "cp": "50250",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "MONTSENELLE",
-    "cp": "50250",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "MONTSENELLE",
-    "cp": "50250",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "MOON SUR ELLE",
     "cp": "50680",
     "dept": "50",
@@ -2180,30 +1598,6 @@
   {
     "name": "MORIGNY",
     "cp": "50410",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "MORTAIN BOCAGE",
-    "cp": "50140",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "MORTAIN BOCAGE",
-    "cp": "50140",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "MORTAIN BOCAGE",
-    "cp": "50140",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "MORTAIN BOCAGE",
-    "cp": "50140",
     "dept": "50",
     "region": ""
   },
@@ -2228,12 +1622,6 @@
   {
     "name": "MOYON VILLAGES",
     "cp": "50420",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "MOYON VILLAGES",
-    "cp": "50860",
     "dept": "50",
     "region": ""
   },
@@ -2334,12 +1722,6 @@
     "region": ""
   },
   {
-    "name": "ORVAL SUR SIENNE",
-    "cp": "50660",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "OUVILLE",
     "cp": "50210",
     "dept": "50",
@@ -2348,12 +1730,6 @@
   {
     "name": "OZEVILLE",
     "cp": "50310",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PERCY EN NORMANDIE",
-    "cp": "50410",
     "dept": "50",
     "region": ""
   },
@@ -2383,31 +1759,7 @@
   },
   {
     "name": "PICAUVILLE",
-    "cp": "50250",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PICAUVILLE",
-    "cp": "50250",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PICAUVILLE",
     "cp": "50360",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PICAUVILLE",
-    "cp": "50360",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PICAUVILLE",
-    "cp": "50480",
     "dept": "50",
     "region": ""
   },
@@ -2460,68 +1812,8 @@
     "region": ""
   },
   {
-    "name": "PONTORSON",
-    "cp": "50170",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PONTORSON",
-    "cp": "50170",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PONTORSON",
-    "cp": "50170",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PONTORSON",
-    "cp": "50170",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PONTORSON",
-    "cp": "50170",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PONTORSON",
-    "cp": "50170",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PONTORSON",
-    "cp": "50170",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PONTORSON",
-    "cp": "50170",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "PONTS",
     "cp": "50300",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PORT BAIL SUR MER",
-    "cp": "50580",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "PORT BAIL SUR MER",
-    "cp": "50580",
     "dept": "50",
     "region": ""
   },
@@ -2544,38 +1836,8 @@
     "region": ""
   },
   {
-    "name": "QUETTEHOU",
-    "cp": "50630",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "QUETTREVILLE SUR SIENNE",
     "cp": "50210",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "QUETTREVILLE SUR SIENNE",
-    "cp": "50660",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "QUETTREVILLE SUR SIENNE",
-    "cp": "50660",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "QUETTREVILLE SUR SIENNE",
-    "cp": "50660",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "QUETTREVILLE SUR SIENNE",
-    "cp": "50660",
     "dept": "50",
     "region": ""
   },
@@ -2647,12 +1909,6 @@
   },
   {
     "name": "REMILLY LES MARAIS",
-    "cp": "50570",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "REMILLY LES MARAIS",
     "cp": "50620",
     "dept": "50",
     "region": ""
@@ -2676,12 +1932,6 @@
     "region": ""
   },
   {
-    "name": "ROMAGNY FONTENAY",
-    "cp": "50140",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "RONCEY",
     "cp": "50210",
     "dept": "50",
@@ -2690,30 +1940,6 @@
   {
     "name": "SACEY",
     "cp": "50170",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "SARTILLY BAIE BOCAGE",
-    "cp": "50530",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "SARTILLY BAIE BOCAGE",
-    "cp": "50530",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "SARTILLY BAIE BOCAGE",
-    "cp": "50530",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "SARTILLY BAIE BOCAGE",
-    "cp": "50530",
     "dept": "50",
     "region": ""
   },
@@ -2808,30 +2034,6 @@
     "region": ""
   },
   {
-    "name": "SOURDEVAL",
-    "cp": "50150",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST AMAND VILLAGES",
-    "cp": "50160",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST AMAND VILLAGES",
-    "cp": "50160",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST AMAND VILLAGES",
-    "cp": "50160",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "ST AMAND VILLAGES",
     "cp": "50160",
     "dept": "50",
@@ -2888,12 +2090,6 @@
   {
     "name": "ST CLAIR SUR L ELLE",
     "cp": "50680",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST CLEMENT RANCOUDRAY",
-    "cp": "50140",
     "dept": "50",
     "region": ""
   },
@@ -3019,12 +2215,6 @@
   },
   {
     "name": "ST HILAIRE DU HARCOUET",
-    "cp": "50600",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST HILAIRE DU HARCOUET",
     "cp": "50730",
     "dept": "50",
     "region": ""
@@ -3038,66 +2228,6 @@
   {
     "name": "ST JAMES",
     "cp": "50240",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST JAMES",
-    "cp": "50240",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST JAMES",
-    "cp": "50240",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST JAMES",
-    "cp": "50240",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST JAMES",
-    "cp": "50240",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST JAMES",
-    "cp": "50240",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST JAMES",
-    "cp": "50240",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST JEAN D ELLE",
-    "cp": "50810",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST JEAN D ELLE",
-    "cp": "50810",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST JEAN D ELLE",
-    "cp": "50810",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST JEAN D ELLE",
-    "cp": "50810",
     "dept": "50",
     "region": ""
   },
@@ -3128,18 +2258,6 @@
   {
     "name": "ST JEAN DE SAVIGNY",
     "cp": "50680",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST JEAN DES CHAMPS",
-    "cp": "50320",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST JEAN DES CHAMPS",
-    "cp": "50320",
     "dept": "50",
     "region": ""
   },
@@ -3288,12 +2406,6 @@
     "region": ""
   },
   {
-    "name": "ST OVIN",
-    "cp": "50300",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "ST PAIR SUR MER",
     "cp": "50380",
     "dept": "50",
@@ -3384,36 +2496,6 @@
     "region": ""
   },
   {
-    "name": "ST SAUVEUR VILLAGES",
-    "cp": "50490",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST SAUVEUR VILLAGES",
-    "cp": "50490",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST SAUVEUR VILLAGES",
-    "cp": "50490",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST SAUVEUR VILLAGES",
-    "cp": "50490",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST SAUVEUR VILLAGES",
-    "cp": "50490",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "ST SEBASTIEN DE RAIDS",
     "cp": "50190",
     "dept": "50",
@@ -3428,12 +2510,6 @@
   {
     "name": "ST SENIER SOUS AVRANCHES",
     "cp": "50300",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "ST VAAST LA HOUGUE",
-    "cp": "50550",
     "dept": "50",
     "region": ""
   },
@@ -3469,42 +2545,6 @@
   },
   {
     "name": "STE MARIE DU MONT",
-    "cp": "50480",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "STE MERE EGLISE",
-    "cp": "50480",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "STE MERE EGLISE",
-    "cp": "50480",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "STE MERE EGLISE",
-    "cp": "50480",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "STE MERE EGLISE",
-    "cp": "50480",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "STE MERE EGLISE",
-    "cp": "50480",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "STE MERE EGLISE",
     "cp": "50480",
     "dept": "50",
     "region": ""
@@ -3558,30 +2598,6 @@
     "region": ""
   },
   {
-    "name": "TERRE ET MARAIS",
-    "cp": "50500",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "TESSY BOCAGE",
-    "cp": "50420",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "TESSY BOCAGE",
-    "cp": "50420",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "TESSY BOCAGE",
-    "cp": "50420",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "TESSY BOCAGE",
     "cp": "50420",
     "dept": "50",
@@ -3630,12 +2646,6 @@
     "region": ""
   },
   {
-    "name": "TIREPIED SUR SEE",
-    "cp": "50870",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "TOCQUEVILLE",
     "cp": "50330",
     "dept": "50",
@@ -3650,30 +2660,6 @@
   {
     "name": "TORIGNY LES VILLES",
     "cp": "50160",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "TORIGNY LES VILLES",
-    "cp": "50160",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "TORIGNY LES VILLES",
-    "cp": "50160",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "TORIGNY LES VILLES",
-    "cp": "50160",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "TOURNEVILLE SUR MER",
-    "cp": "50660",
     "dept": "50",
     "region": ""
   },
@@ -3768,42 +2754,6 @@
     "region": ""
   },
   {
-    "name": "VESLY",
-    "cp": "50430",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "VICQ SUR MER",
-    "cp": "50330",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "VICQ SUR MER",
-    "cp": "50330",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "VICQ SUR MER",
-    "cp": "50330",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "VICQ SUR MER",
-    "cp": "50330",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "VICQ SUR MER",
-    "cp": "50330",
-    "dept": "50",
-    "region": ""
-  },
-  {
     "name": "VICQ SUR MER",
     "cp": "50330",
     "dept": "50",
@@ -3818,12 +2768,6 @@
   {
     "name": "VILLEBAUDON",
     "cp": "50410",
-    "dept": "50",
-    "region": ""
-  },
-  {
-    "name": "VILLEDIEU LES POELES ROUFFIGNY",
-    "cp": "50800",
     "dept": "50",
     "region": ""
   },

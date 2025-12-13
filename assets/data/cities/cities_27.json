@@ -18,12 +18,6 @@
     "region": ""
   },
   {
-    "name": "ACQUIGNY",
-    "cp": "27400",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "AIGLEVILLE",
     "cp": "27120",
     "dept": "27",
@@ -78,12 +72,6 @@
     "region": ""
   },
   {
-    "name": "AMFREVILLE ST AMAND",
-    "cp": "27370",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "AMFREVILLE SUR ITON",
     "cp": "27400",
     "dept": "27",
@@ -128,12 +116,6 @@
   {
     "name": "AULNAY SUR ITON",
     "cp": "27180",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "AUTHEUIL AUTHOUILLET",
-    "cp": "27490",
     "dept": "27",
     "region": ""
   },
@@ -402,12 +384,6 @@
     "region": ""
   },
   {
-    "name": "BOSROUMOIS",
-    "cp": "27670",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "BOUAFLES",
     "cp": "27700",
     "dept": "27",
@@ -416,12 +392,6 @@
   {
     "name": "BOUCHEVILLIERS",
     "cp": "27150",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "BOULLEVILLE",
-    "cp": "27210",
     "dept": "27",
     "region": ""
   },
@@ -462,24 +432,6 @@
     "region": ""
   },
   {
-    "name": "BOURNAINVILLE FAVEROLLES",
-    "cp": "27230",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "BOURNAINVILLE FAVEROLLES",
-    "cp": "27230",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "BOURNEVILLE STE CROIX",
-    "cp": "27500",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "BOURNEVILLE STE CROIX",
     "cp": "27500",
     "dept": "27",
@@ -506,18 +458,6 @@
   {
     "name": "BRETAGNOLLES",
     "cp": "27220",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "BRETEUIL",
-    "cp": "27160",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "BRETEUIL",
-    "cp": "27160",
     "dept": "27",
     "region": ""
   },
@@ -612,12 +552,6 @@
     "region": ""
   },
   {
-    "name": "CAORCHES ST NICOLAS",
-    "cp": "27300",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "CAPELLE LES GRANDS",
     "cp": "27270",
     "dept": "27",
@@ -662,24 +596,6 @@
   {
     "name": "CHAMBLAC",
     "cp": "27270",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "CHAMBLAC",
-    "cp": "27270",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "CHAMBOIS",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "CHAMBOIS",
-    "cp": "27240",
     "dept": "27",
     "region": ""
   },
@@ -738,12 +654,6 @@
     "region": ""
   },
   {
-    "name": "CHAUVINCOURT PROVEMONT",
-    "cp": "27150",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "CHAVIGNY BAILLEUL",
     "cp": "27220",
     "dept": "27",
@@ -770,18 +680,6 @@
   {
     "name": "CLAVILLE",
     "cp": "27180",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "CLEF VALLEE D EURE",
-    "cp": "27490",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "CLEF VALLEE D EURE",
-    "cp": "27490",
     "dept": "27",
     "region": ""
   },
@@ -984,12 +882,6 @@
     "region": ""
   },
   {
-    "name": "DROISY",
-    "cp": "27320",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "DRUCOURT",
     "cp": "27230",
     "dept": "27",
@@ -1098,12 +990,6 @@
     "region": ""
   },
   {
-    "name": "EVREUX",
-    "cp": "27000",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "EZY SUR EURE",
     "cp": "27530",
     "dept": "27",
@@ -1160,18 +1046,6 @@
   {
     "name": "FIQUEFLEUR EQUAINVILLE",
     "cp": "27210",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "FLANCOURT CRESCY EN ROUMOIS",
-    "cp": "27310",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "FLANCOURT CRESCY EN ROUMOIS",
-    "cp": "27310",
     "dept": "27",
     "region": ""
   },
@@ -1262,12 +1136,6 @@
   {
     "name": "FRENELLES EN VEXIN",
     "cp": "27150",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "FRENELLES EN VEXIN",
-    "cp": "27700",
     "dept": "27",
     "region": ""
   },
@@ -1380,38 +1248,8 @@
     "region": ""
   },
   {
-    "name": "GOUPIL OTHON",
-    "cp": "27170",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "GOURNAY LE GUERIN",
     "cp": "27580",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "GRAND BOURGTHEROULDE",
-    "cp": "27520",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "GRAND BOURGTHEROULDE",
-    "cp": "27520",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "GRAND BOURGTHEROULDE",
-    "cp": "27520",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "GRAND BOURGTHEROULDE",
-    "cp": "27520",
     "dept": "27",
     "region": ""
   },
@@ -1532,18 +1370,6 @@
   {
     "name": "HERQUEVILLE",
     "cp": "27430",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "HEUBECOURT HARICOURT",
-    "cp": "27630",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "HEUBECOURT HARICOURT",
-    "cp": "27630",
     "dept": "27",
     "region": ""
   },
@@ -1704,12 +1530,6 @@
     "region": ""
   },
   {
-    "name": "LA BARONNIE",
-    "cp": "27220",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "LA BOISSIERE",
     "cp": "27220",
     "dept": "27",
@@ -1742,18 +1562,6 @@
   {
     "name": "LA CHAPELLE HARENG",
     "cp": "27230",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "LA CHAPELLE LONGUEVILLE",
-    "cp": "27950",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "LA CHAPELLE LONGUEVILLE",
-    "cp": "27950",
     "dept": "27",
     "region": ""
   },
@@ -1860,12 +1668,6 @@
     "region": ""
   },
   {
-    "name": "LA LANDE ST LEGER",
-    "cp": "27210",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "LA MADELEINE DE NONANCOURT",
     "cp": "27320",
     "dept": "27",
@@ -1950,12 +1752,6 @@
     "region": ""
   },
   {
-    "name": "LA VIEILLE LYRE",
-    "cp": "27330",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "LAUNAY",
     "cp": "27470",
     "dept": "27",
@@ -1976,12 +1772,6 @@
   {
     "name": "LE BOIS HELLAIN",
     "cp": "27260",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "LE BOSC DU THEIL",
-    "cp": "27370",
     "dept": "27",
     "region": ""
   },
@@ -2028,12 +1818,6 @@
     "region": ""
   },
   {
-    "name": "LE LESME",
-    "cp": "27160",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "LE MANOIR",
     "cp": "27460",
     "dept": "27",
@@ -2058,12 +1842,6 @@
     "region": ""
   },
   {
-    "name": "LE MESNIL ST JEAN",
-    "cp": "27560",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "LE NEUBOURG",
     "cp": "27110",
     "dept": "27",
@@ -2078,12 +1856,6 @@
   {
     "name": "LE PERREY",
     "cp": "27500",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "LE PERREY",
-    "cp": "27680",
     "dept": "27",
     "region": ""
   },
@@ -2142,18 +1914,6 @@
     "region": ""
   },
   {
-    "name": "LE THUIT DE L OISON",
-    "cp": "27370",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "LE THUIT DE L OISON",
-    "cp": "27370",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "LE TILLEUL LAMBERT",
     "cp": "27110",
     "dept": "27",
@@ -2191,12 +1951,6 @@
   },
   {
     "name": "LE VAL D HAZEY",
-    "cp": "27600",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "LE VAL D HAZEY",
     "cp": "27940",
     "dept": "27",
     "region": ""
@@ -2204,18 +1958,6 @@
   {
     "name": "LE VAL DAVID",
     "cp": "27120",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "LE VAL DORE",
-    "cp": "27190",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "LE VAL DORE",
-    "cp": "27190",
     "dept": "27",
     "region": ""
   },
@@ -2280,18 +2022,6 @@
     "region": ""
   },
   {
-    "name": "LES BOTTEREAUX",
-    "cp": "27250",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "LES BOTTEREAUX",
-    "cp": "27250",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "LES DAMPS",
     "cp": "27340",
     "dept": "27",
@@ -2316,12 +2046,6 @@
     "region": ""
   },
   {
-    "name": "LES MONTS DU ROUMOIS",
-    "cp": "27520",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "LES PLACES",
     "cp": "27230",
     "dept": "27",
@@ -2336,12 +2060,6 @@
   {
     "name": "LES THILLIERS EN VEXIN",
     "cp": "27420",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "LES TROIS LACS",
-    "cp": "27700",
     "dept": "27",
     "region": ""
   },
@@ -2497,18 +2215,6 @@
   },
   {
     "name": "MARBOIS",
-    "cp": "27160",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MARBOIS",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MARBOIS",
     "cp": "27240",
     "dept": "27",
     "region": ""
@@ -2593,90 +2299,6 @@
   },
   {
     "name": "MESNIL EN OUCHE",
-    "cp": "27330",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
-    "cp": "27330",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
-    "cp": "27330",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
-    "cp": "27330",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
-    "cp": "27330",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
-    "cp": "27410",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
-    "cp": "27410",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
-    "cp": "27410",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
-    "cp": "27410",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
-    "cp": "27410",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
-    "cp": "27410",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
-    "cp": "27410",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
-    "cp": "27410",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
-    "cp": "27410",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNIL EN OUCHE",
     "cp": "27410",
     "dept": "27",
     "region": ""
@@ -2718,78 +2340,6 @@
     "region": ""
   },
   {
-    "name": "MESNILS SUR ITON",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNILS SUR ITON",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNILS SUR ITON",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNILS SUR ITON",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNILS SUR ITON",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNILS SUR ITON",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNILS SUR ITON",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNILS SUR ITON",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNILS SUR ITON",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNILS SUR ITON",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNILS SUR ITON",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MESNILS SUR ITON",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "MEZIERES EN VEXIN",
     "cp": "27510",
     "dept": "27",
@@ -2816,18 +2366,6 @@
   {
     "name": "MONTREUIL L ARGILLE",
     "cp": "27390",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MONTREUIL L ARGILLE",
-    "cp": "27390",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "MORAINVILLE JOUVEAUX",
-    "cp": "27260",
     "dept": "27",
     "region": ""
   },
@@ -2900,24 +2438,6 @@
   {
     "name": "NASSANDRES SUR RISLE",
     "cp": "27550",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "NASSANDRES SUR RISLE",
-    "cp": "27550",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "NEAUFLES AUVERGNY",
-    "cp": "27250",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "NEAUFLES AUVERGNY",
-    "cp": "27250",
     "dept": "27",
     "region": ""
   },
@@ -3012,12 +2532,6 @@
     "region": ""
   },
   {
-    "name": "PACY SUR EURE",
-    "cp": "27120",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "PARVILLE",
     "cp": "27180",
     "dept": "27",
@@ -3068,18 +2582,6 @@
   {
     "name": "PLASNES",
     "cp": "27300",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "PONT AUDEMER",
-    "cp": "27500",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "PONT AUDEMER",
-    "cp": "27500",
     "dept": "27",
     "region": ""
   },
@@ -3386,12 +2888,6 @@
   {
     "name": "ST DENIS DES MONTS",
     "cp": "27520",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "ST DENIS LE FERMENT",
-    "cp": "27140",
     "dept": "27",
     "region": ""
   },
@@ -3768,18 +3264,6 @@
     "region": ""
   },
   {
-    "name": "STE MARIE D ATTEZ",
-    "cp": "27160",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "STE MARIE D ATTEZ",
-    "cp": "27160",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "STE MARIE DE VATIMESNIL",
     "cp": "27150",
     "dept": "27",
@@ -3828,18 +3312,6 @@
     "region": ""
   },
   {
-    "name": "SYLVAINS LES MOULINS",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "SYLVAINS LES MOULINS",
-    "cp": "27240",
-    "dept": "27",
-    "region": ""
-  },
-  {
     "name": "TERRES DE BORD",
     "cp": "27340",
     "dept": "27",
@@ -3854,12 +3326,6 @@
   {
     "name": "THENOUVILLE",
     "cp": "27290",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "THENOUVILLE",
-    "cp": "27520",
     "dept": "27",
     "region": ""
   },
@@ -3950,12 +3416,6 @@
   {
     "name": "TREIS SANTS EN OUCHE",
     "cp": "27270",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "TREIS SANTS EN OUCHE",
-    "cp": "27300",
     "dept": "27",
     "region": ""
   },
@@ -4081,73 +3541,7 @@
   },
   {
     "name": "VEXIN SUR EPTE",
-    "cp": "27420",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "VEXIN SUR EPTE",
     "cp": "27510",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "VEXIN SUR EPTE",
-    "cp": "27510",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "VEXIN SUR EPTE",
-    "cp": "27510",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "VEXIN SUR EPTE",
-    "cp": "27510",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "VEXIN SUR EPTE",
-    "cp": "27510",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "VEXIN SUR EPTE",
-    "cp": "27630",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "VEXIN SUR EPTE",
-    "cp": "27630",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "VEXIN SUR EPTE",
-    "cp": "27630",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "VEXIN SUR EPTE",
-    "cp": "27630",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "VEXIN SUR EPTE",
-    "cp": "27630",
-    "dept": "27",
-    "region": ""
-  },
-  {
-    "name": "VEXIN SUR EPTE",
-    "cp": "27630",
     "dept": "27",
     "region": ""
   },

@@ -18,12 +18,6 @@
     "region": ""
   },
   {
-    "name": "AMBRIERES LES VALLEES",
-    "cp": "53300",
-    "dept": "53",
-    "region": ""
-  },
-  {
     "name": "ANDOUILLE",
     "cp": "53240",
     "dept": "53",
@@ -116,30 +110,6 @@
   {
     "name": "BIERNE LES VILLAGES",
     "cp": "53290",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "BIERNE LES VILLAGES",
-    "cp": "53290",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "BIERNE LES VILLAGES",
-    "cp": "53290",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "BIERNE LES VILLAGES",
-    "cp": "53290",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "BLANDOUET ST JEAN",
-    "cp": "53270",
     "dept": "53",
     "region": ""
   },
@@ -264,24 +234,6 @@
     "region": ""
   },
   {
-    "name": "CHATEAU GONTIER SUR MAYENNE",
-    "cp": "53200",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "CHATEAU GONTIER SUR MAYENNE",
-    "cp": "53200",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "CHATEAU GONTIER SUR MAYENNE",
-    "cp": "53200",
-    "dept": "53",
-    "region": ""
-  },
-  {
     "name": "CHATELAIN",
     "cp": "53200",
     "dept": "53",
@@ -372,12 +324,6 @@
     "region": ""
   },
   {
-    "name": "COUESMES VAUCE",
-    "cp": "53300",
-    "dept": "53",
-    "region": ""
-  },
-  {
     "name": "COUPTRAIN",
     "cp": "53250",
     "dept": "53",
@@ -456,12 +402,6 @@
     "region": ""
   },
   {
-    "name": "EVRON",
-    "cp": "53600",
-    "dept": "53",
-    "region": ""
-  },
-  {
     "name": "FONTAINE COUVERTE",
     "cp": "53350",
     "dept": "53",
@@ -488,12 +428,6 @@
   {
     "name": "GASTINES",
     "cp": "53540",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "GENNES LONGUEFUYE",
-    "cp": "53200",
     "dept": "53",
     "region": ""
   },
@@ -560,12 +494,6 @@
   {
     "name": "IZE",
     "cp": "53160",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "JAVRON LES CHAPELLES",
-    "cp": "53250",
     "dept": "53",
     "region": ""
   },
@@ -750,24 +678,6 @@
     "region": ""
   },
   {
-    "name": "LASSAY LES CHATEAUX",
-    "cp": "53110",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "LASSAY LES CHATEAUX",
-    "cp": "53110",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "LASSAY LES CHATEAUX",
-    "cp": "53110",
-    "dept": "53",
-    "region": ""
-  },
-  {
     "name": "LAUBRIERES",
     "cp": "53540",
     "dept": "53",
@@ -810,12 +720,6 @@
     "region": ""
   },
   {
-    "name": "LE GENEST ST ISLE",
-    "cp": "53940",
-    "dept": "53",
-    "region": ""
-  },
-  {
     "name": "LE HAM",
     "cp": "53250",
     "dept": "53",
@@ -824,12 +728,6 @@
   {
     "name": "LE HORPS",
     "cp": "53640",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "LE HOUSSEAU BRETIGNOLLES",
-    "cp": "53110",
     "dept": "53",
     "region": ""
   },
@@ -870,12 +768,6 @@
     "region": ""
   },
   {
-    "name": "LIGNIERES ORGERES",
-    "cp": "53140",
-    "dept": "53",
-    "region": ""
-  },
-  {
     "name": "LIVET",
     "cp": "53150",
     "dept": "53",
@@ -884,12 +776,6 @@
   {
     "name": "LIVRE LA TOUCHE",
     "cp": "53400",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "LOIRON RUILLE",
-    "cp": "53320",
     "dept": "53",
     "region": ""
   },
@@ -1020,36 +906,6 @@
     "region": ""
   },
   {
-    "name": "MONTREUIL POULAY",
-    "cp": "53640",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "MONTSURS",
-    "cp": "53150",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "MONTSURS",
-    "cp": "53150",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "MONTSURS",
-    "cp": "53150",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "MONTSURS",
-    "cp": "53150",
-    "dept": "53",
-    "region": ""
-  },
-  {
     "name": "MONTSURS",
     "cp": "53150",
     "dept": "53",
@@ -1152,12 +1008,6 @@
     "region": ""
   },
   {
-    "name": "PRE EN PAIL ST SAMSON",
-    "cp": "53140",
-    "dept": "53",
-    "region": ""
-  },
-  {
     "name": "PREAUX",
     "cp": "53340",
     "dept": "53",
@@ -1166,18 +1016,6 @@
   {
     "name": "PREE D ANJOU",
     "cp": "53200",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "PREE D ANJOU",
-    "cp": "53200",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "QUELAINES ST GAULT",
-    "cp": "53360",
     "dept": "53",
     "region": ""
   },
@@ -1238,12 +1076,6 @@
   {
     "name": "SOUCE",
     "cp": "53300",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "SOULGE SUR OUETTE",
-    "cp": "53210",
     "dept": "53",
     "region": ""
   },
@@ -1358,12 +1190,6 @@
   {
     "name": "ST FRAIMBAULT DE PRIERES",
     "cp": "53300",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "ST GEORGES BUTTAVENT",
-    "cp": "53100",
     "dept": "53",
     "region": ""
   },
@@ -1548,12 +1374,6 @@
     "region": ""
   },
   {
-    "name": "STE SUZANNE ET CHAMMES",
-    "cp": "53270",
-    "dept": "53",
-    "region": ""
-  },
-  {
     "name": "THORIGNE EN CHARNIE",
     "cp": "53270",
     "dept": "53",
@@ -1572,12 +1392,6 @@
     "region": ""
   },
   {
-    "name": "TORCE VIVIERS EN CHARNIE",
-    "cp": "53270",
-    "dept": "53",
-    "region": ""
-  },
-  {
     "name": "TRANS",
     "cp": "53160",
     "dept": "53",
@@ -1586,12 +1400,6 @@
   {
     "name": "VAIGES",
     "cp": "53480",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "VAL DU MAINE",
-    "cp": "53340",
     "dept": "53",
     "region": ""
   },
@@ -1628,18 +1436,6 @@
   {
     "name": "VILLIERS CHARLEMAGNE",
     "cp": "53170",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "VIMARTIN SUR ORTHE",
-    "cp": "53160",
-    "dept": "53",
-    "region": ""
-  },
-  {
-    "name": "VIMARTIN SUR ORTHE",
-    "cp": "53160",
     "dept": "53",
     "region": ""
   },

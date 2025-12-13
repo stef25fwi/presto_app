@@ -5,6 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 class CityEntry {
+    /// Affichage user-friendly pour Paris arrondissements
+    String get displayName {
+      final match = RegExp(r'^PARIS (\d{2})').firstMatch(name);
+      if (match != null) {
+        final num = int.parse(match.group(1)!);
+        final suffix = num == 1 ? 'er' : 'e';
+        return 'Paris $num$suffix arrondissement';
+      }
+      return name;
+    }
   final String name;
   final String dept; // "75", "971", "2A", "987"...
   final List<String> cps; // ["75001","75002",...]
@@ -187,7 +197,7 @@ class _CityPostalAutocompleteFieldState extends State<CityPostalAutocompleteFiel
   Widget build(BuildContext context) {
     return Autocomplete<CityEntry>(
       optionsBuilder: (_) => _options,
-      displayStringForOption: (c) => c.name,
+      displayStringForOption: (c) => c.displayName,
       fieldViewBuilder: (context, controller, focusNode, onSubmitted) {
         controller.value = widget.cityController.value;
         return TextFormField(
@@ -216,7 +226,7 @@ class _CityPostalAutocompleteFieldState extends State<CityPostalAutocompleteFiel
                       : (c.cps.length == 1 ? c.cps.first : "${c.cps.first} … (+${c.cps.length - 1})");
                   return ListTile(
                     dense: true,
-                    title: Text(c.name),
+                    title: Text(c.displayName),
                     subtitle: Text("${c.dept}${cpLabel.isNotEmpty ? " • $cpLabel" : ""}"),
                     onTap: () => onSelected(c),
                   );

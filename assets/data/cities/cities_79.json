@@ -18,50 +18,8 @@
     "region": ""
   },
   {
-    "name": "AIGONDIGNE",
-    "cp": "79370",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "AIGONDIGNE",
-    "cp": "79370",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "AIGONDIGNE",
-    "cp": "79370",
-    "dept": "79",
-    "region": ""
-  },
-  {
     "name": "AIRVAULT",
     "cp": "79600",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "AIRVAULT",
-    "cp": "79600",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "AIRVAULT",
-    "cp": "79600",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "AIRVAULT",
-    "cp": "79600",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "ALLOINAY",
-    "cp": "79110",
     "dept": "79",
     "region": ""
   },
@@ -115,42 +73,6 @@
   },
   {
     "name": "ARGENTONNAY",
-    "cp": "79150",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "ARGENTONNAY",
-    "cp": "79150",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "ARGENTONNAY",
-    "cp": "79150",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "ARGENTONNAY",
-    "cp": "79150",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "ARGENTONNAY",
-    "cp": "79150",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "ARGENTONNAY",
-    "cp": "79150",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "ARGENTONNAY",
     "cp": "79300",
     "dept": "79",
     "region": ""
@@ -158,12 +80,6 @@
   {
     "name": "ASNIERES EN POITOU",
     "cp": "79170",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "ASSAIS LES JUMEAUX",
-    "cp": "79600",
     "dept": "79",
     "region": ""
   },
@@ -228,24 +144,6 @@
     "region": ""
   },
   {
-    "name": "BEAUSSAIS VITRE",
-    "cp": "79370",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "BEAUVOIR SUR NIORT",
-    "cp": "79360",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "BEAUVOIR SUR NIORT",
-    "cp": "79360",
-    "dept": "79",
-    "region": ""
-  },
-  {
     "name": "BEAUVOIR SUR NIORT",
     "cp": "79360",
     "dept": "79",
@@ -300,54 +198,6 @@
     "region": ""
   },
   {
-    "name": "BRESSUIRE",
-    "cp": "79300",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "BRESSUIRE",
-    "cp": "79300",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "BRESSUIRE",
-    "cp": "79300",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "BRESSUIRE",
-    "cp": "79300",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "BRESSUIRE",
-    "cp": "79300",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "BRESSUIRE",
-    "cp": "79300",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "BRESSUIRE",
-    "cp": "79300",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "BRESSUIRE",
-    "cp": "79300",
-    "dept": "79",
-    "region": ""
-  },
-  {
     "name": "BRETIGNOLLES",
     "cp": "79140",
     "dept": "79",
@@ -384,38 +234,8 @@
     "region": ""
   },
   {
-    "name": "CELLES SUR BELLE",
-    "cp": "79370",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "CELLES SUR BELLE",
-    "cp": "79370",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "CELLES SUR BELLE",
-    "cp": "79370",
-    "dept": "79",
-    "region": ""
-  },
-  {
     "name": "CERIZAY",
     "cp": "79140",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "CHAMPDENIERS",
-    "cp": "79220",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "CHAMPDENIERS",
-    "cp": "79220",
     "dept": "79",
     "region": ""
   },
@@ -440,24 +260,6 @@
   {
     "name": "CHAURAY",
     "cp": "79180",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "CHEF BOUTONNE",
-    "cp": "79110",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "CHEF BOUTONNE",
-    "cp": "79110",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "CHEF BOUTONNE",
-    "cp": "79110",
     "dept": "79",
     "region": ""
   },
@@ -494,12 +296,6 @@
   {
     "name": "CHICHE",
     "cp": "79350",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "CHIZE",
-    "cp": "79170",
     "dept": "79",
     "region": ""
   },
@@ -648,12 +444,6 @@
     "region": ""
   },
   {
-    "name": "FONTENILLE ST MARTIN D ENTRAIGUES",
-    "cp": "79110",
-    "dept": "79",
-    "region": ""
-  },
-  {
     "name": "FONTIVILLIE",
     "cp": "79110",
     "dept": "79",
@@ -708,12 +498,6 @@
     "region": ""
   },
   {
-    "name": "GERMOND ROUVRE",
-    "cp": "79220",
-    "dept": "79",
-    "region": ""
-  },
-  {
     "name": "GLENAY",
     "cp": "79330",
     "dept": "79",
@@ -722,12 +506,6 @@
   {
     "name": "GOURGE",
     "cp": "79200",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "GRANZAY GRIPT",
-    "cp": "79360",
     "dept": "79",
     "region": ""
   },
@@ -800,24 +578,6 @@
   {
     "name": "LA FERRIERE EN PARTHENAY",
     "cp": "79390",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "LA FORET SUR SEVRE",
-    "cp": "79380",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "LA FORET SUR SEVRE",
-    "cp": "79380",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "LA FORET SUR SEVRE",
-    "cp": "79380",
     "dept": "79",
     "region": ""
   },
@@ -924,12 +684,6 @@
     "region": ""
   },
   {
-    "name": "LES CHATELIERS",
-    "cp": "79340",
-    "dept": "79",
-    "region": ""
-  },
-  {
     "name": "LES FORGES",
     "cp": "79340",
     "dept": "79",
@@ -962,18 +716,6 @@
   {
     "name": "LIMALONGES",
     "cp": "79190",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "LORETZ D ARGENTON",
-    "cp": "79290",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "LORETZ D ARGENTON",
-    "cp": "79290",
     "dept": "79",
     "region": ""
   },
@@ -1068,12 +810,6 @@
     "region": ""
   },
   {
-    "name": "MARCILLE",
-    "cp": "79500",
-    "dept": "79",
-    "region": ""
-  },
-  {
     "name": "MARIGNY",
     "cp": "79360",
     "dept": "79",
@@ -1092,42 +828,6 @@
     "region": ""
   },
   {
-    "name": "MAULEON",
-    "cp": "79700",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "MAULEON",
-    "cp": "79700",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "MAULEON",
-    "cp": "79700",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "MAULEON",
-    "cp": "79700",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "MAULEON",
-    "cp": "79700",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "MAULEON",
-    "cp": "79700",
-    "dept": "79",
-    "region": ""
-  },
-  {
     "name": "MAUZE SUR LE MIGNON",
     "cp": "79210",
     "dept": "79",
@@ -1136,36 +836,6 @@
   {
     "name": "MAZIERES EN GATINE",
     "cp": "79310",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "MELLE",
-    "cp": "79500",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "MELLE",
-    "cp": "79500",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "MELLE",
-    "cp": "79500",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "MELLE",
-    "cp": "79500",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "MELLE",
-    "cp": "79500",
     "dept": "79",
     "region": ""
   },
@@ -1207,24 +877,6 @@
   },
   {
     "name": "MONCOUTANT SUR SEVRE",
-    "cp": "79320",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "MONCOUTANT SUR SEVRE",
-    "cp": "79320",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "MONCOUTANT SUR SEVRE",
-    "cp": "79320",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "MONCOUTANT SUR SEVRE",
     "cp": "79380",
     "dept": "79",
     "region": ""
@@ -1250,36 +902,6 @@
   {
     "name": "NIORT",
     "cp": "79000",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "NIORT",
-    "cp": "79000",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "NIORT",
-    "cp": "79000",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "NIORT",
-    "cp": "79000",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "NIORT",
-    "cp": "79000",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "NUEIL LES AUBIERS",
-    "cp": "79250",
     "dept": "79",
     "region": ""
   },
@@ -1340,60 +962,6 @@
   {
     "name": "PLAINE D ARGENSON",
     "cp": "79360",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "PLAINE D ARGENSON",
-    "cp": "79360",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "PLAINE D ARGENSON",
-    "cp": "79360",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "PLAINE D ARGENSON",
-    "cp": "79360",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "PLAINE D ARGENSON",
-    "cp": "79360",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "PLAINE ET VALLEES",
-    "cp": "79100",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "PLAINE ET VALLEES",
-    "cp": "79100",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "PLAINE ET VALLEES",
-    "cp": "79100",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "PLAINE ET VALLEES",
-    "cp": "79100",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "PLAINE ET VALLEES",
-    "cp": "79100",
     "dept": "79",
     "region": ""
   },
@@ -1496,30 +1064,6 @@
   {
     "name": "SAURAIS",
     "cp": "79200",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "SAUZE ENTRE BOIS",
-    "cp": "79190",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "SAUZE ENTRE BOIS",
-    "cp": "79190",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "SAUZE ENTRE BOIS",
-    "cp": "79190",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "SAUZE ENTRE BOIS",
-    "cp": "79190",
     "dept": "79",
     "region": ""
   },
@@ -1698,12 +1242,6 @@
     "region": ""
   },
   {
-    "name": "ST LOUP LAMAIRE",
-    "cp": "79600",
-    "dept": "79",
-    "region": ""
-  },
-  {
     "name": "ST MAIXENT DE BEUGNE",
     "cp": "79160",
     "dept": "79",
@@ -1758,20 +1296,8 @@
     "region": ""
   },
   {
-    "name": "ST MAURICE ETUSSON",
-    "cp": "79150",
-    "dept": "79",
-    "region": ""
-  },
-  {
     "name": "ST MAXIRE",
     "cp": "79410",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "ST PARDOUX SOUTIERS",
-    "cp": "79310",
     "dept": "79",
     "region": ""
   },
@@ -1890,30 +1416,6 @@
     "region": ""
   },
   {
-    "name": "THOUARS",
-    "cp": "79100",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "THOUARS",
-    "cp": "79100",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "THOUARS",
-    "cp": "79100",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "THOUARS",
-    "cp": "79100",
-    "dept": "79",
-    "region": ""
-  },
-  {
     "name": "TOURTENAY",
     "cp": "79100",
     "dept": "79",
@@ -1922,12 +1424,6 @@
   {
     "name": "TRAYES",
     "cp": "79240",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "VAL DU MIGNON",
-    "cp": "79210",
     "dept": "79",
     "region": ""
   },
@@ -1952,36 +1448,6 @@
   {
     "name": "VAL EN VIGNES",
     "cp": "79290",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "VAL EN VIGNES",
-    "cp": "79290",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "VAL EN VIGNES",
-    "cp": "79290",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "VALDELAUME",
-    "cp": "79110",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "VALDELAUME",
-    "cp": "79110",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "VALDELAUME",
-    "cp": "79110",
     "dept": "79",
     "region": ""
   },
@@ -2090,12 +1556,6 @@
   {
     "name": "VOUILLE",
     "cp": "79230",
-    "dept": "79",
-    "region": ""
-  },
-  {
-    "name": "VOULMENTIN",
-    "cp": "79150",
     "dept": "79",
     "region": ""
   },

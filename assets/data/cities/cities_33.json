@@ -222,12 +222,6 @@
     "region": ""
   },
   {
-    "name": "BELIN BELIET",
-    "cp": "33830",
-    "dept": "33",
-    "region": ""
-  },
-  {
     "name": "BELLEBAT",
     "cp": "33760",
     "dept": "33",
@@ -282,12 +276,6 @@
     "region": ""
   },
   {
-    "name": "BIGANOS",
-    "cp": "33380",
-    "dept": "33",
-    "region": ""
-  },
-  {
     "name": "BIRAC",
     "cp": "33430",
     "dept": "33",
@@ -296,12 +284,6 @@
   {
     "name": "BLAIGNAC",
     "cp": "33190",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "BLAIGNAN PRIGNAC",
-    "cp": "33340",
     "dept": "33",
     "region": ""
   },
@@ -570,12 +552,6 @@
     "region": ""
   },
   {
-    "name": "CARCANS",
-    "cp": "33121",
-    "dept": "33",
-    "region": ""
-  },
-  {
     "name": "CARDAN",
     "cp": "33410",
     "dept": "33",
@@ -620,12 +596,6 @@
   {
     "name": "CASTELVIEL",
     "cp": "33540",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "CASTETS ET CASTILLON",
-    "cp": "33210",
     "dept": "33",
     "region": ""
   },
@@ -710,12 +680,6 @@
   {
     "name": "CESSAC",
     "cp": "33760",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "CESTAS",
-    "cp": "33610",
     "dept": "33",
     "region": ""
   },
@@ -1279,18 +1243,6 @@
   },
   {
     "name": "LA TESTE DE BUCH",
-    "cp": "33115",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "LA TESTE DE BUCH",
-    "cp": "33260",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "LA TESTE DE BUCH",
     "cp": "33260",
     "dept": "33",
     "region": ""
@@ -1304,12 +1256,6 @@
   {
     "name": "LABESCAU",
     "cp": "33690",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "LACANAU",
-    "cp": "33680",
     "dept": "33",
     "region": ""
   },
@@ -1532,18 +1478,6 @@
   {
     "name": "LEGE CAP FERRET",
     "cp": "33950",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "LEGE CAP FERRET",
-    "cp": "33950",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "LEGE CAP FERRET",
-    "cp": "33970",
     "dept": "33",
     "region": ""
   },
@@ -1776,12 +1710,6 @@
     "region": ""
   },
   {
-    "name": "MARGAUX CANTENAC",
-    "cp": "33460",
-    "dept": "33",
-    "region": ""
-  },
-  {
     "name": "MARGUERON",
     "cp": "33220",
     "dept": "33",
@@ -1878,12 +1806,6 @@
     "region": ""
   },
   {
-    "name": "MIOS",
-    "cp": "33380",
-    "dept": "33",
-    "region": ""
-  },
-  {
     "name": "MOMBRIER",
     "cp": "33710",
     "dept": "33",
@@ -1904,18 +1826,6 @@
   {
     "name": "MONSEGUR",
     "cp": "33580",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "MONTAGNE",
-    "cp": "33570",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "MONTAGNE",
-    "cp": "33570",
     "dept": "33",
     "region": ""
   },
@@ -2160,18 +2070,6 @@
     "region": ""
   },
   {
-    "name": "PORTE DE BENAUGE",
-    "cp": "33760",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "PORTE DE BENAUGE",
-    "cp": "33760",
-    "dept": "33",
-    "region": ""
-  },
-  {
     "name": "PORTETS",
     "cp": "33640",
     "dept": "33",
@@ -2198,18 +2096,6 @@
   {
     "name": "PUGNAC",
     "cp": "33710",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "PUGNAC",
-    "cp": "33710",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "PUISSEGUIN",
-    "cp": "33570",
     "dept": "33",
     "region": ""
   },
@@ -2509,12 +2395,6 @@
   },
   {
     "name": "ST AVIT DE SOULEGE",
-    "cp": "33220",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "ST AVIT ST NAZAIRE",
     "cp": "33220",
     "dept": "33",
     "region": ""
@@ -3282,18 +3162,6 @@
     "region": ""
   },
   {
-    "name": "VAL DE VIRVEE",
-    "cp": "33240",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "VAL DE VIRVEE",
-    "cp": "33240",
-    "dept": "33",
-    "region": ""
-  },
-  {
     "name": "VALEYRAC",
     "cp": "33340",
     "dept": "33",
@@ -3350,12 +3218,6 @@
   {
     "name": "VILLEGOUGE",
     "cp": "33141",
-    "dept": "33",
-    "region": ""
-  },
-  {
-    "name": "VILLENAVE D ORNON",
-    "cp": "33140",
     "dept": "33",
     "region": ""
   },

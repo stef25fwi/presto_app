@@ -264,12 +264,6 @@
     "region": ""
   },
   {
-    "name": "CIRON",
-    "cp": "36300",
-    "dept": "36",
-    "region": ""
-  },
-  {
     "name": "CLERE DU BOIS",
     "cp": "36700",
     "dept": "36",
@@ -362,12 +356,6 @@
   {
     "name": "ECUEILLE",
     "cp": "36240",
-    "dept": "36",
-    "region": ""
-  },
-  {
-    "name": "EGUZON CHANTOME",
-    "cp": "36270",
     "dept": "36",
     "region": ""
   },
@@ -608,18 +596,6 @@
   {
     "name": "LES BORDES",
     "cp": "36100",
-    "dept": "36",
-    "region": ""
-  },
-  {
-    "name": "LEVROUX",
-    "cp": "36110",
-    "dept": "36",
-    "region": ""
-  },
-  {
-    "name": "LEVROUX",
-    "cp": "36110",
     "dept": "36",
     "region": ""
   },
@@ -1254,12 +1230,6 @@
     "region": ""
   },
   {
-    "name": "ST MAUR",
-    "cp": "36250",
-    "dept": "36",
-    "region": ""
-  },
-  {
     "name": "ST MEDARD",
     "cp": "36700",
     "dept": "36",
@@ -1358,18 +1328,6 @@
   {
     "name": "URCIERS",
     "cp": "36160",
-    "dept": "36",
-    "region": ""
-  },
-  {
-    "name": "VAL FOUZON",
-    "cp": "36210",
-    "dept": "36",
-    "region": ""
-  },
-  {
-    "name": "VAL FOUZON",
-    "cp": "36210",
     "dept": "36",
     "region": ""
   },
