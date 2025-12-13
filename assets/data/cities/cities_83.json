@@ -168,12 +168,6 @@
     "region": ""
   },
   {
-    "name": "CHATEAUDOUBLE",
-    "cp": "83300",
-    "dept": "83",
-    "region": ""
-  },
-  {
     "name": "CHATEAUVERT",
     "cp": "83670",
     "dept": "83",
@@ -330,66 +324,6 @@
     "region": ""
   },
   {
-    "name": "GRIMAUD",
-    "cp": "83310",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "HYERES",
-    "cp": "83400",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "HYERES",
-    "cp": "83400",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "HYERES",
-    "cp": "83400",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "HYERES",
-    "cp": "83400",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "HYERES",
-    "cp": "83400",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "HYERES",
-    "cp": "83400",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "HYERES",
-    "cp": "83400",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "HYERES",
-    "cp": "83400",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "HYERES",
-    "cp": "83400",
-    "dept": "83",
-    "region": ""
-  },
-  {
     "name": "HYERES",
     "cp": "83400",
     "dept": "83",
@@ -408,20 +342,8 @@
     "region": ""
   },
   {
-    "name": "LA CADIERE D AZUR",
-    "cp": "83740",
-    "dept": "83",
-    "region": ""
-  },
-  {
     "name": "LA CELLE",
     "cp": "83170",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "LA CRAU",
-    "cp": "83260",
     "dept": "83",
     "region": ""
   },
@@ -498,18 +420,6 @@
     "region": ""
   },
   {
-    "name": "LA SEYNE SUR MER",
-    "cp": "83500",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "LA SEYNE SUR MER",
-    "cp": "83500",
-    "dept": "83",
-    "region": ""
-  },
-  {
     "name": "LA VALETTE DU VAR",
     "cp": "83160",
     "dept": "83",
@@ -542,36 +452,6 @@
   {
     "name": "LE CASTELLET",
     "cp": "83330",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "LE CASTELLET",
-    "cp": "83330",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "LE CASTELLET",
-    "cp": "83330",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "LE CASTELLET",
-    "cp": "83330",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "LE CASTELLET",
-    "cp": "83330",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "LE LAVANDOU",
-    "cp": "83980",
     "dept": "83",
     "region": ""
   },
@@ -786,12 +666,6 @@
     "region": ""
   },
   {
-    "name": "RAYOL CANADEL SUR MER",
-    "cp": "83820",
-    "dept": "83",
-    "region": ""
-  },
-  {
     "name": "REGUSSE",
     "cp": "83630",
     "dept": "83",
@@ -846,12 +720,6 @@
     "region": ""
   },
   {
-    "name": "SEILLANS",
-    "cp": "83440",
-    "dept": "83",
-    "region": ""
-  },
-  {
     "name": "SEILLONS SOURCE D ARGENS",
     "cp": "83470",
     "dept": "83",
@@ -866,18 +734,6 @@
   {
     "name": "SILLANS LA CASCADE",
     "cp": "83690",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "SIX FOURS LES PLAGES",
-    "cp": "83140",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "SIX FOURS LES PLAGES",
-    "cp": "83140",
     "dept": "83",
     "region": ""
   },
@@ -908,24 +764,6 @@
   {
     "name": "ST ANTONIN DU VAR",
     "cp": "83510",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "ST CYR SUR MER",
-    "cp": "83270",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "ST CYR SUR MER",
-    "cp": "83270",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "ST CYR SUR MER",
-    "cp": "83270",
     "dept": "83",
     "region": ""
   },
@@ -968,30 +806,6 @@
   {
     "name": "ST RAPHAEL",
     "cp": "83530",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "ST RAPHAEL",
-    "cp": "83530",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "ST RAPHAEL",
-    "cp": "83530",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "ST RAPHAEL",
-    "cp": "83530",
-    "dept": "83",
-    "region": ""
-  },
-  {
-    "name": "ST RAPHAEL",
-    "cp": "83700",
     "dept": "83",
     "region": ""
   },

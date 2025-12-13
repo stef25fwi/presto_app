@@ -12,12 +12,6 @@
     "region": ""
   },
   {
-    "name": "ALBARET STE MARIE",
-    "cp": "48200",
-    "dept": "48",
-    "region": ""
-  },
-  {
     "name": "ALLENC",
     "cp": "48190",
     "dept": "48",
@@ -72,12 +66,6 @@
     "region": ""
   },
   {
-    "name": "BANASSAC CANILHAC",
-    "cp": "48500",
-    "dept": "48",
-    "region": ""
-  },
-  {
     "name": "BARJAC",
     "cp": "48000",
     "dept": "48",
@@ -102,18 +90,6 @@
     "region": ""
   },
   {
-    "name": "BEDOUES COCURES",
-    "cp": "48400",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "BEL AIR VAL D ANCE",
-    "cp": "48600",
-    "dept": "48",
-    "region": ""
-  },
-  {
     "name": "BEL AIR VAL D ANCE",
     "cp": "48600",
     "dept": "48",
@@ -122,18 +98,6 @@
   {
     "name": "BLAVIGNAC",
     "cp": "48200",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "BOURGS SUR COLAGNE",
-    "cp": "48100",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "BOURGS SUR COLAGNE",
-    "cp": "48100",
     "dept": "48",
     "region": ""
   },
@@ -156,18 +120,6 @@
     "region": ""
   },
   {
-    "name": "BRION",
-    "cp": "48310",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "CANS ET CEVENNES",
-    "cp": "48400",
-    "dept": "48",
-    "region": ""
-  },
-  {
     "name": "CANS ET CEVENNES",
     "cp": "48400",
     "dept": "48",
@@ -182,12 +134,6 @@
   {
     "name": "CHADENET",
     "cp": "48190",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "CHANAC",
-    "cp": "48230",
     "dept": "48",
     "region": ""
   },
@@ -270,12 +216,6 @@
     "region": ""
   },
   {
-    "name": "FLORAC TROIS RIVIERES",
-    "cp": "48400",
-    "dept": "48",
-    "region": ""
-  },
-  {
     "name": "FONTANS",
     "cp": "48700",
     "dept": "48",
@@ -314,24 +254,6 @@
   {
     "name": "GORGES DU TARN CAUSSES",
     "cp": "48210",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "GORGES DU TARN CAUSSES",
-    "cp": "48210",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "GORGES DU TARN CAUSSES",
-    "cp": "48210",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "GORGES DU TARN CAUSSES",
-    "cp": "48320",
     "dept": "48",
     "region": ""
   },
@@ -380,24 +302,6 @@
   {
     "name": "LA BASTIDE PUYLAURENT",
     "cp": "48250",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "LA CANOURGUE",
-    "cp": "48500",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "LA CANOURGUE",
-    "cp": "48500",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "LA CANOURGUE",
-    "cp": "48500",
     "dept": "48",
     "region": ""
   },
@@ -558,18 +462,6 @@
     "region": ""
   },
   {
-    "name": "LES MONTS VERTS",
-    "cp": "48200",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "LES MONTS VERTS",
-    "cp": "48200",
-    "dept": "48",
-    "region": ""
-  },
-  {
     "name": "LES SALCES",
     "cp": "48100",
     "dept": "48",
@@ -618,24 +510,6 @@
     "region": ""
   },
   {
-    "name": "MASSEGROS CAUSSES GORGES",
-    "cp": "48500",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "MASSEGROS CAUSSES GORGES",
-    "cp": "48500",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "MASSEGROS CAUSSES GORGES",
-    "cp": "48500",
-    "dept": "48",
-    "region": ""
-  },
-  {
     "name": "MENDE",
     "cp": "48000",
     "dept": "48",
@@ -662,24 +536,6 @@
   {
     "name": "MONT LOZERE ET GOULET",
     "cp": "48170",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "MONT LOZERE ET GOULET",
-    "cp": "48190",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "MONT LOZERE ET GOULET",
-    "cp": "48190",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "MONT LOZERE ET GOULET",
-    "cp": "48190",
     "dept": "48",
     "region": ""
   },
@@ -720,32 +576,8 @@
     "region": ""
   },
   {
-    "name": "MONTS DE RANDON",
-    "cp": "48700",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "MONTS DE RANDON",
-    "cp": "48700",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "MONTS DE RANDON",
-    "cp": "48700",
-    "dept": "48",
-    "region": ""
-  },
-  {
     "name": "NASBINALS",
     "cp": "48260",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "NAUSSAC FONTANES",
-    "cp": "48300",
     "dept": "48",
     "region": ""
   },
@@ -786,36 +618,6 @@
     "region": ""
   },
   {
-    "name": "PEYRE EN AUBRAC",
-    "cp": "48130",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "PEYRE EN AUBRAC",
-    "cp": "48130",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "PEYRE EN AUBRAC",
-    "cp": "48130",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "PEYRE EN AUBRAC",
-    "cp": "48130",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "PEYRE EN AUBRAC",
-    "cp": "48130",
-    "dept": "48",
-    "region": ""
-  },
-  {
     "name": "PIED DE BORNE",
     "cp": "48800",
     "dept": "48",
@@ -824,18 +626,6 @@
   {
     "name": "PIERREFICHE",
     "cp": "48300",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "PONT DE MONTVERT SUD MONT LOZERE",
-    "cp": "48220",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "PONT DE MONTVERT SUD MONT LOZERE",
-    "cp": "48220",
     "dept": "48",
     "region": ""
   },
@@ -938,18 +728,6 @@
   {
     "name": "ST BONNET DE CHIRAC",
     "cp": "48100",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "ST BONNET LAVAL",
-    "cp": "48600",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "ST BONNET LAVAL",
-    "cp": "48600",
     "dept": "48",
     "region": ""
   },
@@ -1164,12 +942,6 @@
     "region": ""
   },
   {
-    "name": "VEBRON",
-    "cp": "48400",
-    "dept": "48",
-    "region": ""
-  },
-  {
     "name": "VENTALON EN CEVENNES",
     "cp": "48160",
     "dept": "48",
@@ -1184,12 +956,6 @@
   {
     "name": "VIALAS",
     "cp": "48220",
-    "dept": "48",
-    "region": ""
-  },
-  {
-    "name": "VILLEFORT",
-    "cp": "48800",
     "dept": "48",
     "region": ""
   },

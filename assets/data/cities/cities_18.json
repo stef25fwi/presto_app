@@ -48,12 +48,6 @@
     "region": ""
   },
   {
-    "name": "ARCOMPS",
-    "cp": "18200",
-    "dept": "18",
-    "region": ""
-  },
-  {
     "name": "ARDENAIS",
     "cp": "18170",
     "dept": "18",
@@ -128,18 +122,6 @@
   {
     "name": "BARLIEU",
     "cp": "18260",
-    "dept": "18",
-    "region": ""
-  },
-  {
-    "name": "BAUGY",
-    "cp": "18800",
-    "dept": "18",
-    "region": ""
-  },
-  {
-    "name": "BAUGY",
-    "cp": "18800",
     "dept": "18",
     "region": ""
   },
@@ -290,12 +272,6 @@
   {
     "name": "CHAROST",
     "cp": "18290",
-    "dept": "18",
-    "region": ""
-  },
-  {
-    "name": "CHASSY",
-    "cp": "18800",
     "dept": "18",
     "region": ""
   },
@@ -1628,12 +1604,6 @@
   {
     "name": "VAILLY SUR SAULDRE",
     "cp": "18260",
-    "dept": "18",
-    "region": ""
-  },
-  {
-    "name": "VALLENAY",
-    "cp": "18190",
     "dept": "18",
     "region": ""
   },

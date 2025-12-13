@@ -18,12 +18,6 @@
     "region": ""
   },
   {
-    "name": "AIX VILLEMAUR PALIS",
-    "cp": "10190",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "ALLIBAUDIERES",
     "cp": "10700",
     "dept": "10",
@@ -192,12 +186,6 @@
     "region": ""
   },
   {
-    "name": "BARBUISE",
-    "cp": "10400",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "BAROVILLE",
     "cp": "10200",
     "dept": "10",
@@ -336,20 +324,8 @@
     "region": ""
   },
   {
-    "name": "BRAGELOGNE BEAUVOIR",
-    "cp": "10340",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "BRAUX",
     "cp": "10500",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "BREVIANDES",
-    "cp": "10450",
     "dept": "10",
     "region": ""
   },
@@ -392,12 +368,6 @@
   {
     "name": "BUCEY EN OTHE",
     "cp": "10190",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "BUCHERES",
-    "cp": "10800",
     "dept": "10",
     "region": ""
   },
@@ -488,12 +458,6 @@
   {
     "name": "CHAPPES",
     "cp": "10260",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "CHARMONT SOUS BARBUISE",
-    "cp": "10150",
     "dept": "10",
     "region": ""
   },
@@ -666,20 +630,8 @@
     "region": ""
   },
   {
-    "name": "COUVIGNON",
-    "cp": "10200",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "CRANCEY",
     "cp": "10100",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "CRENEY PRES TROYES",
-    "cp": "10150",
     "dept": "10",
     "region": ""
   },
@@ -846,12 +798,6 @@
     "region": ""
   },
   {
-    "name": "ESTISSAC",
-    "cp": "10190",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "ETOURVY",
     "cp": "10210",
     "dept": "10",
@@ -878,12 +824,6 @@
   {
     "name": "FAYS LA CHAPELLE",
     "cp": "10320",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "FERREUX QUINCEY",
-    "cp": "10400",
     "dept": "10",
     "region": ""
   },
@@ -1206,12 +1146,6 @@
     "region": ""
   },
   {
-    "name": "LAVAU",
-    "cp": "10150",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "LE CHENE",
     "cp": "10700",
     "dept": "10",
@@ -1368,12 +1302,6 @@
     "region": ""
   },
   {
-    "name": "MACEY",
-    "cp": "10300",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "MACHY",
     "cp": "10320",
     "dept": "10",
@@ -1418,12 +1346,6 @@
   {
     "name": "MAISONS LES SOULAINES",
     "cp": "10200",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "MAIZIERES LA GRANDE PAROISSE",
-    "cp": "10510",
     "dept": "10",
     "region": ""
   },
@@ -1562,12 +1484,6 @@
   {
     "name": "MOLINS SUR AUBE",
     "cp": "10500",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "MONTAULIN",
-    "cp": "10270",
     "dept": "10",
     "region": ""
   },
@@ -1818,12 +1734,6 @@
     "region": ""
   },
   {
-    "name": "PLANCY L ABBAYE",
-    "cp": "10380",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "PLANTY",
     "cp": "10160",
     "dept": "10",
@@ -1962,12 +1872,6 @@
     "region": ""
   },
   {
-    "name": "RAMERUPT",
-    "cp": "10240",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "RANCES",
     "cp": "10500",
     "dept": "10",
@@ -2016,12 +1920,6 @@
     "region": ""
   },
   {
-    "name": "ROSIERES PRES TROYES",
-    "cp": "10430",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "ROSNAY L HOPITAL",
     "cp": "10500",
     "dept": "10",
@@ -2030,12 +1928,6 @@
   {
     "name": "ROUILLY SACEY",
     "cp": "10220",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "ROUILLY ST LOUP",
-    "cp": "10800",
     "dept": "10",
     "region": ""
   },
@@ -2166,18 +2058,6 @@
     "region": ""
   },
   {
-    "name": "ST GERMAIN",
-    "cp": "10120",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "ST GERMAIN",
-    "cp": "10120",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "ST HILAIRE SOUS ROMILLY",
     "cp": "10100",
     "dept": "10",
@@ -2222,12 +2102,6 @@
   {
     "name": "ST LUPIEN",
     "cp": "10350",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "ST LYE",
-    "cp": "10180",
     "dept": "10",
     "region": ""
   },
@@ -2322,12 +2196,6 @@
     "region": ""
   },
   {
-    "name": "STE MAURE",
-    "cp": "10150",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "STE SAVINE",
     "cp": "10300",
     "dept": "10",
@@ -2400,12 +2268,6 @@
     "region": ""
   },
   {
-    "name": "TROUANS",
-    "cp": "10700",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "TROYES",
     "cp": "10000",
     "dept": "10",
@@ -2432,18 +2294,6 @@
   {
     "name": "VAILLY",
     "cp": "10150",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "VAL D AUZON",
-    "cp": "10220",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "VAL D AUZON",
-    "cp": "10220",
     "dept": "10",
     "region": ""
   },
@@ -2568,12 +2418,6 @@
     "region": ""
   },
   {
-    "name": "VILLE SOUS LA FERTE",
-    "cp": "10310",
-    "dept": "10",
-    "region": ""
-  },
-  {
     "name": "VILLE SUR ARCE",
     "cp": "10110",
     "dept": "10",
@@ -2582,12 +2426,6 @@
   {
     "name": "VILLE SUR TERRE",
     "cp": "10200",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "VILLECHETIF",
-    "cp": "10410",
     "dept": "10",
     "region": ""
   },
@@ -2624,12 +2462,6 @@
   {
     "name": "VILLEMOYENNE",
     "cp": "10260",
-    "dept": "10",
-    "region": ""
-  },
-  {
-    "name": "VILLENAUXE LA GRANDE",
-    "cp": "10370",
     "dept": "10",
     "region": ""
   },

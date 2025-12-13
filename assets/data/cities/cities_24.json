@@ -133,30 +133,6 @@
   },
   {
     "name": "BASSILLAC ET AUBEROCHE",
-    "cp": "24330",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BASSILLAC ET AUBEROCHE",
-    "cp": "24330",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BASSILLAC ET AUBEROCHE",
-    "cp": "24330",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BASSILLAC ET AUBEROCHE",
-    "cp": "24330",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BASSILLAC ET AUBEROCHE",
     "cp": "24640",
     "dept": "24",
     "region": ""
@@ -164,30 +140,6 @@
   {
     "name": "BAYAC",
     "cp": "24150",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BEAUMONTOIS EN PERIGORD",
-    "cp": "24440",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BEAUMONTOIS EN PERIGORD",
-    "cp": "24440",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BEAUMONTOIS EN PERIGORD",
-    "cp": "24440",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BEAUMONTOIS EN PERIGORD",
-    "cp": "24440",
     "dept": "24",
     "region": ""
   },
@@ -313,18 +265,6 @@
   },
   {
     "name": "BOULAZAC ISLE MANOIRE",
-    "cp": "24330",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BOULAZAC ISLE MANOIRE",
-    "cp": "24750",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BOULAZAC ISLE MANOIRE",
     "cp": "24750",
     "dept": "24",
     "region": ""
@@ -380,36 +320,6 @@
   {
     "name": "BOUZIC",
     "cp": "24250",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BRANTOME EN PERIGORD",
-    "cp": "24310",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BRANTOME EN PERIGORD",
-    "cp": "24310",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BRANTOME EN PERIGORD",
-    "cp": "24310",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BRANTOME EN PERIGORD",
-    "cp": "24310",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "BRANTOME EN PERIGORD",
-    "cp": "24310",
     "dept": "24",
     "region": ""
   },
@@ -518,18 +428,6 @@
   {
     "name": "CASTELNAUD LA CHAPELLE",
     "cp": "24250",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "CASTELNAUD LA CHAPELLE",
-    "cp": "24250",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "CASTELS ET BEZENAC",
-    "cp": "24220",
     "dept": "24",
     "region": ""
   },
@@ -774,12 +672,6 @@
     "region": ""
   },
   {
-    "name": "COUX ET BIGAROQUE MOUZENS",
-    "cp": "24220",
-    "dept": "24",
-    "region": ""
-  },
-  {
     "name": "COUZE ET ST FRONT",
     "cp": "24150",
     "dept": "24",
@@ -800,18 +692,6 @@
   {
     "name": "CREYSSENSAC ET PISSOT",
     "cp": "24380",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "CUBJAC AUVEZERE VAL D ANS",
-    "cp": "24640",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "CUBJAC AUVEZERE VAL D ANS",
-    "cp": "24640",
     "dept": "24",
     "region": ""
   },
@@ -920,18 +800,6 @@
   {
     "name": "EYRAUD CREMPSE MAURENS",
     "cp": "24130",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "EYRAUD CREMPSE MAURENS",
-    "cp": "24140",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "EYRAUD CREMPSE MAURENS",
-    "cp": "24140",
     "dept": "24",
     "region": ""
   },
@@ -1230,24 +1098,6 @@
     "region": ""
   },
   {
-    "name": "LA JEMAYE PONTEYRAUD",
-    "cp": "24410",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "LA ROCHE CHALAIS",
-    "cp": "24490",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "LA ROCHE CHALAIS",
-    "cp": "24490",
-    "dept": "24",
-    "region": ""
-  },
-  {
     "name": "LA ROCHE CHALAIS",
     "cp": "24490",
     "dept": "24",
@@ -1262,12 +1112,6 @@
   {
     "name": "LA ROQUE GAGEAC",
     "cp": "24250",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "LA TOUR BLANCHE CERCLES",
-    "cp": "24320",
     "dept": "24",
     "region": ""
   },
@@ -1356,18 +1200,6 @@
     "region": ""
   },
   {
-    "name": "LE BUISSON DE CADOUIN",
-    "cp": "24480",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "LE BUISSON DE CADOUIN",
-    "cp": "24480",
-    "dept": "24",
-    "region": ""
-  },
-  {
     "name": "LE FLEIX",
     "cp": "24130",
     "dept": "24",
@@ -1410,26 +1242,8 @@
     "region": ""
   },
   {
-    "name": "LES COTEAUX PERIGOURDINS",
-    "cp": "24120",
-    "dept": "24",
-    "region": ""
-  },
-  {
     "name": "LES EYZIES",
     "cp": "24260",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "LES EYZIES",
-    "cp": "24620",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "LES EYZIES",
-    "cp": "24620",
     "dept": "24",
     "region": ""
   },
@@ -1524,54 +1338,6 @@
     "region": ""
   },
   {
-    "name": "MAREUIL EN PERIGORD",
-    "cp": "24340",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "MAREUIL EN PERIGORD",
-    "cp": "24340",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "MAREUIL EN PERIGORD",
-    "cp": "24340",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "MAREUIL EN PERIGORD",
-    "cp": "24340",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "MAREUIL EN PERIGORD",
-    "cp": "24340",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "MAREUIL EN PERIGORD",
-    "cp": "24340",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "MAREUIL EN PERIGORD",
-    "cp": "24340",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "MAREUIL EN PERIGORD",
-    "cp": "24340",
-    "dept": "24",
-    "region": ""
-  },
-  {
     "name": "MARNAC",
     "cp": "24220",
     "dept": "24",
@@ -1592,12 +1358,6 @@
   {
     "name": "MARSALES",
     "cp": "24540",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "MAUZAC ET GRAND CASTANG",
-    "cp": "24150",
     "dept": "24",
     "region": ""
   },
@@ -1836,12 +1596,6 @@
     "region": ""
   },
   {
-    "name": "NANTEUIL AURIAC DE BOURZAC",
-    "cp": "24320",
-    "dept": "24",
-    "region": ""
-  },
-  {
     "name": "NANTHEUIL",
     "cp": "24800",
     "dept": "24",
@@ -1896,12 +1650,6 @@
     "region": ""
   },
   {
-    "name": "PARCOUL CHENAUD",
-    "cp": "24410",
-    "dept": "24",
-    "region": ""
-  },
-  {
     "name": "PAULIN",
     "cp": "24590",
     "dept": "24",
@@ -1926,18 +1674,6 @@
     "region": ""
   },
   {
-    "name": "PAYS DE BELVES",
-    "cp": "24170",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "PAYS DE BELVES",
-    "cp": "24170",
-    "dept": "24",
-    "region": ""
-  },
-  {
     "name": "PAYZAC",
     "cp": "24270",
     "dept": "24",
@@ -1946,18 +1682,6 @@
   {
     "name": "PAZAYAC",
     "cp": "24120",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "PECHS DE L ESPERANCE",
-    "cp": "24370",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "PECHS DE L ESPERANCE",
-    "cp": "24370",
     "dept": "24",
     "region": ""
   },
@@ -2000,18 +1724,6 @@
   {
     "name": "PIEGUT PLUVIERS",
     "cp": "24360",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "PLAISANCE",
-    "cp": "24560",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "PLAISANCE",
-    "cp": "24560",
     "dept": "24",
     "region": ""
   },
@@ -2136,12 +1848,6 @@
     "region": ""
   },
   {
-    "name": "ROUFFIGNAC ST CERNIN DE REILHAC",
-    "cp": "24580",
-    "dept": "24",
-    "region": ""
-  },
-  {
     "name": "RUDEAU LADOSSE",
     "cp": "24340",
     "dept": "24",
@@ -2156,12 +1862,6 @@
   {
     "name": "SAGELAT",
     "cp": "24170",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "SALAGNAC",
-    "cp": "24160",
     "dept": "24",
     "region": ""
   },
@@ -2298,12 +1998,6 @@
     "region": ""
   },
   {
-    "name": "SIGOULES ET FLAUGEAC",
-    "cp": "24240",
-    "dept": "24",
-    "region": ""
-  },
-  {
     "name": "SIMEYROLS",
     "cp": "24370",
     "dept": "24",
@@ -2414,12 +2108,6 @@
   {
     "name": "ST AUBIN DE NABIRAT",
     "cp": "24250",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "ST AULAYE PUYMANGOU",
-    "cp": "24410",
     "dept": "24",
     "region": ""
   },
@@ -2678,18 +2366,6 @@
   {
     "name": "ST JULIEN DE LAMPON",
     "cp": "24370",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "ST JULIEN INNOCENCE EULALIE",
-    "cp": "24500",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "ST JULIEN INNOCENCE EULALIE",
-    "cp": "24500",
     "dept": "24",
     "region": ""
   },
@@ -2982,18 +2658,6 @@
     "region": ""
   },
   {
-    "name": "ST PRIVAT EN PERIGORD",
-    "cp": "24410",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "ST PRIVAT EN PERIGORD",
-    "cp": "24410",
-    "dept": "24",
-    "region": ""
-  },
-  {
     "name": "ST RABIER",
     "cp": "24210",
     "dept": "24",
@@ -3204,18 +2868,6 @@
     "region": ""
   },
   {
-    "name": "THENAC",
-    "cp": "24240",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "THENAC",
-    "cp": "24240",
-    "dept": "24",
-    "region": ""
-  },
-  {
     "name": "THENON",
     "cp": "24210",
     "dept": "24",
@@ -3272,12 +2924,6 @@
   {
     "name": "VAL DE LOUYRE ET CAUDEAU",
     "cp": "24380",
-    "dept": "24",
-    "region": ""
-  },
-  {
-    "name": "VAL DE LOUYRE ET CAUDEAU",
-    "cp": "24510",
     "dept": "24",
     "region": ""
   },

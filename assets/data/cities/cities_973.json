@@ -36,6 +36,12 @@
     "region": ""
   },
   {
+    "name": "JAVOUHEY",
+    "cp": "97318",
+    "dept": "973",
+    "region": ""
+  },
+  {
     "name": "KOUROU",
     "cp": "97310",
     "dept": "973",
@@ -61,7 +67,7 @@
   },
   {
     "name": "MARIPASOULA",
-    "cp": "97370",
+    "cp": "97353",
     "dept": "973",
     "region": ""
   },

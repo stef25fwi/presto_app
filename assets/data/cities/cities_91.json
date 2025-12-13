@@ -12,12 +12,6 @@
     "region": ""
   },
   {
-    "name": "ANGERVILLE",
-    "cp": "91670",
-    "dept": "91",
-    "region": ""
-  },
-  {
     "name": "ANGERVILLIERS",
     "cp": "91470",
     "dept": "91",
@@ -234,12 +228,6 @@
     "region": ""
   },
   {
-    "name": "BURES SUR YVETTE",
-    "cp": "91440",
-    "dept": "91",
-    "region": ""
-  },
-  {
     "name": "CERNY",
     "cp": "91590",
     "dept": "91",
@@ -318,12 +306,6 @@
     "region": ""
   },
   {
-    "name": "CONGERVILLE THIONVILLE",
-    "cp": "91740",
-    "dept": "91",
-    "region": ""
-  },
-  {
     "name": "CORBEIL ESSONNES",
     "cp": "91100",
     "dept": "91",
@@ -374,12 +356,6 @@
   {
     "name": "DOURDAN",
     "cp": "91410",
-    "dept": "91",
-    "region": ""
-  },
-  {
-    "name": "DRAVEIL",
-    "cp": "91210",
     "dept": "91",
     "region": ""
   },
@@ -528,12 +504,6 @@
     "region": ""
   },
   {
-    "name": "IGNY",
-    "cp": "91430",
-    "dept": "91",
-    "region": ""
-  },
-  {
     "name": "ITTEVILLE",
     "cp": "91760",
     "dept": "91",
@@ -600,18 +570,6 @@
     "region": ""
   },
   {
-    "name": "LE COUDRAY MONTCEAUX",
-    "cp": "91830",
-    "dept": "91",
-    "region": ""
-  },
-  {
-    "name": "LE MEREVILLOIS",
-    "cp": "91660",
-    "dept": "91",
-    "region": ""
-  },
-  {
     "name": "LE MEREVILLOIS",
     "cp": "91660",
     "dept": "91",
@@ -674,12 +632,6 @@
   {
     "name": "LISSES",
     "cp": "91090",
-    "dept": "91",
-    "region": ""
-  },
-  {
-    "name": "LONGJUMEAU",
-    "cp": "91160",
     "dept": "91",
     "region": ""
   },
@@ -852,12 +804,6 @@
     "region": ""
   },
   {
-    "name": "ORSAY",
-    "cp": "91400",
-    "dept": "91",
-    "region": ""
-  },
-  {
     "name": "ORVEAU",
     "cp": "91590",
     "dept": "91",
@@ -948,12 +894,6 @@
     "region": ""
   },
   {
-    "name": "SACLAY",
-    "cp": "91400",
-    "dept": "91",
-    "region": ""
-  },
-  {
     "name": "SAINTRY SUR SEINE",
     "cp": "91250",
     "dept": "91",
@@ -1002,12 +942,6 @@
     "region": ""
   },
   {
-    "name": "ST AUBIN",
-    "cp": "91190",
-    "dept": "91",
-    "region": ""
-  },
-  {
     "name": "ST CHERON",
     "cp": "91530",
     "dept": "91",
@@ -1046,12 +980,6 @@
   {
     "name": "ST HILAIRE",
     "cp": "91780",
-    "dept": "91",
-    "region": ""
-  },
-  {
-    "name": "ST JEAN DE BEAUREGARD",
-    "cp": "91940",
     "dept": "91",
     "region": ""
   },

@@ -84,12 +84,6 @@
     "region": ""
   },
   {
-    "name": "AVERNES",
-    "cp": "95450",
-    "dept": "95",
-    "region": ""
-  },
-  {
     "name": "BAILLET EN FRANCE",
     "cp": "95560",
     "dept": "95",
@@ -229,12 +223,6 @@
   },
   {
     "name": "CERGY",
-    "cp": "95000",
-    "dept": "95",
-    "region": ""
-  },
-  {
-    "name": "CERGY",
     "cp": "95800",
     "dept": "95",
     "region": ""
@@ -296,12 +284,6 @@
   {
     "name": "CLERY EN VEXIN",
     "cp": "95420",
-    "dept": "95",
-    "region": ""
-  },
-  {
-    "name": "COMMENY",
-    "cp": "95450",
     "dept": "95",
     "region": ""
   },
@@ -528,12 +510,6 @@
     "region": ""
   },
   {
-    "name": "HERBLAY SUR SEINE",
-    "cp": "95220",
-    "dept": "95",
-    "region": ""
-  },
-  {
     "name": "HEROUVILLE EN VEXIN",
     "cp": "95300",
     "dept": "95",
@@ -548,18 +524,6 @@
   {
     "name": "JAGNY SOUS BOIS",
     "cp": "95850",
-    "dept": "95",
-    "region": ""
-  },
-  {
-    "name": "JOUY LE MOUTIER",
-    "cp": "95280",
-    "dept": "95",
-    "region": ""
-  },
-  {
-    "name": "JOUY LE MOUTIER",
-    "cp": "95280",
     "dept": "95",
     "region": ""
   },
@@ -914,12 +878,6 @@
   {
     "name": "PUISEUX PONTOISE",
     "cp": "95650",
-    "dept": "95",
-    "region": ""
-  },
-  {
-    "name": "ROISSY EN FRANCE",
-    "cp": "95700",
     "dept": "95",
     "region": ""
   },

@@ -48,12 +48,6 @@
     "region": ""
   },
   {
-    "name": "ACQUIN WESTBECOURT",
-    "cp": "62380",
-    "dept": "62",
-    "region": ""
-  },
-  {
     "name": "ADINFER",
     "cp": "62116",
     "dept": "62",
@@ -224,18 +218,6 @@
   {
     "name": "ANZIN ST AUBIN",
     "cp": "62223",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "ARDRES",
-    "cp": "62610",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "ARDRES",
-    "cp": "62610",
     "dept": "62",
     "region": ""
   },
@@ -528,12 +510,6 @@
     "region": ""
   },
   {
-    "name": "BAVINCOURT",
-    "cp": "62158",
-    "dept": "62",
-    "region": ""
-  },
-  {
     "name": "BAYENGHEM LES EPERLECQUES",
     "cp": "62910",
     "dept": "62",
@@ -644,12 +620,6 @@
   {
     "name": "BELLEBRUNE",
     "cp": "62142",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "BELLINGHEM",
-    "cp": "62129",
     "dept": "62",
     "region": ""
   },
@@ -840,12 +810,6 @@
     "region": ""
   },
   {
-    "name": "BLANGERVAL BLANGERMONT",
-    "cp": "62270",
-    "dept": "62",
-    "region": ""
-  },
-  {
     "name": "BLANGY SUR TERNOISE",
     "cp": "62770",
     "dept": "62",
@@ -948,12 +912,6 @@
     "region": ""
   },
   {
-    "name": "BONNIERES",
-    "cp": "62270",
-    "dept": "62",
-    "region": ""
-  },
-  {
     "name": "BONNINGUES LES ARDRES",
     "cp": "62890",
     "dept": "62",
@@ -974,12 +932,6 @@
   {
     "name": "BOUBERS SUR CANCHE",
     "cp": "62270",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "BOUIN PLUMOISON",
-    "cp": "62140",
     "dept": "62",
     "region": ""
   },
@@ -1110,12 +1062,6 @@
     "region": ""
   },
   {
-    "name": "BRUAY LA BUISSIERE",
-    "cp": "62700",
-    "dept": "62",
-    "region": ""
-  },
-  {
     "name": "BRUNEMBERT",
     "cp": "62240",
     "dept": "62",
@@ -1232,12 +1178,6 @@
   {
     "name": "CAMBRIN",
     "cp": "62149",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "CAMIERS",
-    "cp": "62176",
     "dept": "62",
     "region": ""
   },
@@ -1578,18 +1518,6 @@
     "region": ""
   },
   {
-    "name": "CUCQ",
-    "cp": "62780",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "CUCQ",
-    "cp": "62780",
-    "dept": "62",
-    "region": ""
-  },
-  {
     "name": "CUINCHY",
     "cp": "62149",
     "dept": "62",
@@ -1772,12 +1700,6 @@
   {
     "name": "EMBRY",
     "cp": "62990",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "ENQUIN LEZ GUINEGATTE",
-    "cp": "62145",
     "dept": "62",
     "region": ""
   },
@@ -2670,24 +2592,6 @@
     "region": ""
   },
   {
-    "name": "HESDIN LA FORET",
-    "cp": "62140",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "HESDIN LA FORET",
-    "cp": "62140",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "HESDIN LA FORET",
-    "cp": "62140",
-    "dept": "62",
-    "region": ""
-  },
-  {
     "name": "HESMOND",
     "cp": "62990",
     "dept": "62",
@@ -2816,18 +2720,6 @@
   {
     "name": "INXENT",
     "cp": "62170",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "ISBERGUES",
-    "cp": "62330",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "ISBERGUES",
-    "cp": "62330",
     "dept": "62",
     "region": ""
   },
@@ -3714,12 +3606,6 @@
     "region": ""
   },
   {
-    "name": "NEUFCHATEL HARDELOT",
-    "cp": "62152",
-    "dept": "62",
-    "region": ""
-  },
-  {
     "name": "NEULETTE",
     "cp": "62770",
     "dept": "62",
@@ -3872,12 +3758,6 @@
   {
     "name": "NOYELLETTE",
     "cp": "62123",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "NUNCQ HAUTECOTE",
-    "cp": "62270",
     "dept": "62",
     "region": ""
   },
@@ -4170,12 +4050,6 @@
     "region": ""
   },
   {
-    "name": "QUOEUX HAUT MAINIL",
-    "cp": "62390",
-    "dept": "62",
-    "region": ""
-  },
-  {
     "name": "RACQUINGHEM",
     "cp": "62120",
     "dept": "62",
@@ -4214,12 +4088,6 @@
   {
     "name": "REBERGUES",
     "cp": "62850",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "REBREUVE RANCHICOURT",
-    "cp": "62150",
     "dept": "62",
     "region": ""
   },
@@ -4530,12 +4398,6 @@
     "region": ""
   },
   {
-    "name": "SANGATTE",
-    "cp": "62231",
-    "dept": "62",
-    "region": ""
-  },
-  {
     "name": "SANGHEN",
     "cp": "62850",
     "dept": "62",
@@ -4728,12 +4590,6 @@
     "region": ""
   },
   {
-    "name": "ST ETIENNE AU MONT",
-    "cp": "62360",
-    "dept": "62",
-    "region": ""
-  },
-  {
     "name": "ST FLORIS",
     "cp": "62350",
     "dept": "62",
@@ -4802,12 +4658,6 @@
   {
     "name": "ST MARTIN D HARDINGHEM",
     "cp": "62560",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "ST MARTIN LEZ TATINGHEM",
-    "cp": "62500",
     "dept": "62",
     "region": ""
   },
@@ -5048,12 +4898,6 @@
   {
     "name": "VACQUERIE LE BOUCQ",
     "cp": "62270",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "VACQUERIETTE ERQUIERES",
-    "cp": "62140",
     "dept": "62",
     "region": ""
   },
@@ -5462,12 +5306,6 @@
   {
     "name": "ZOTEUX",
     "cp": "62650",
-    "dept": "62",
-    "region": ""
-  },
-  {
-    "name": "ZOUAFQUES",
-    "cp": "62890",
     "dept": "62",
     "region": ""
   },

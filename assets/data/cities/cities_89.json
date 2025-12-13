@@ -18,12 +18,6 @@
     "region": ""
   },
   {
-    "name": "ANCY LE FRANC",
-    "cp": "89160",
-    "dept": "89",
-    "region": ""
-  },
-  {
     "name": "ANCY LE LIBRE",
     "cp": "89160",
     "dept": "89",
@@ -68,12 +62,6 @@
   {
     "name": "APPOIGNY",
     "cp": "89380",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "ARCES DILO",
-    "cp": "89320",
     "dept": "89",
     "region": ""
   },
@@ -306,12 +294,6 @@
     "region": ""
   },
   {
-    "name": "BRIENON SUR ARMANCON",
-    "cp": "89210",
-    "dept": "89",
-    "region": ""
-  },
-  {
     "name": "BRION",
     "cp": "89400",
     "dept": "89",
@@ -384,24 +366,6 @@
     "region": ""
   },
   {
-    "name": "CHABLIS",
-    "cp": "89800",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHABLIS",
-    "cp": "89800",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHABLIS",
-    "cp": "89800",
-    "dept": "89",
-    "region": ""
-  },
-  {
     "name": "CHAILLEY",
     "cp": "89770",
     "dept": "89",
@@ -416,12 +380,6 @@
   {
     "name": "CHAMPCEVRAIS",
     "cp": "89220",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHAMPIGNELLES",
-    "cp": "89350",
     "dept": "89",
     "region": ""
   },
@@ -476,84 +434,6 @@
   {
     "name": "CHARMOY",
     "cp": "89400",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHARNY OREE DE PUISAYE",
-    "cp": "89120",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHARNY OREE DE PUISAYE",
-    "cp": "89120",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHARNY OREE DE PUISAYE",
-    "cp": "89120",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHARNY OREE DE PUISAYE",
-    "cp": "89120",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHARNY OREE DE PUISAYE",
-    "cp": "89120",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHARNY OREE DE PUISAYE",
-    "cp": "89120",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHARNY OREE DE PUISAYE",
-    "cp": "89120",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHARNY OREE DE PUISAYE",
-    "cp": "89120",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHARNY OREE DE PUISAYE",
-    "cp": "89120",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHARNY OREE DE PUISAYE",
-    "cp": "89120",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHARNY OREE DE PUISAYE",
-    "cp": "89120",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHARNY OREE DE PUISAYE",
-    "cp": "89120",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "CHARNY OREE DE PUISAYE",
-    "cp": "89120",
     "dept": "89",
     "region": ""
   },
@@ -794,12 +674,6 @@
   {
     "name": "DANNEMOINE",
     "cp": "89700",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "DEUX RIVIERES",
-    "cp": "89460",
     "dept": "89",
     "region": ""
   },
@@ -1104,30 +978,6 @@
     "region": ""
   },
   {
-    "name": "GUILLON TERRE PLAINE",
-    "cp": "89420",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "GUILLON TERRE PLAINE",
-    "cp": "89420",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "GUILLON TERRE PLAINE",
-    "cp": "89420",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "GUILLON TERRE PLAINE",
-    "cp": "89420",
-    "dept": "89",
-    "region": ""
-  },
-  {
     "name": "GURGY",
     "cp": "89250",
     "dept": "89",
@@ -1302,12 +1152,6 @@
     "region": ""
   },
   {
-    "name": "LE VAL D OCRE",
-    "cp": "89110",
-    "dept": "89",
-    "region": ""
-  },
-  {
     "name": "LES BORDES",
     "cp": "89500",
     "dept": "89",
@@ -1316,18 +1160,6 @@
   {
     "name": "LES CLERIMOIS",
     "cp": "89190",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "LES HAUTS DE FORTERRE",
-    "cp": "89560",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "LES HAUTS DE FORTERRE",
-    "cp": "89560",
     "dept": "89",
     "region": ""
   },
@@ -1352,12 +1184,6 @@
   {
     "name": "LES VALLEES DE LA VANNE",
     "cp": "89190",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "LES VALLEES DE LA VANNE",
-    "cp": "89320",
     "dept": "89",
     "region": ""
   },
@@ -1440,12 +1266,6 @@
     "region": ""
   },
   {
-    "name": "LUCY SUR CURE",
-    "cp": "89270",
-    "dept": "89",
-    "region": ""
-  },
-  {
     "name": "LUCY SUR YONNE",
     "cp": "89480",
     "dept": "89",
@@ -1502,12 +1322,6 @@
   {
     "name": "MARSANGY",
     "cp": "89500",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "MASSANGIS",
-    "cp": "89440",
     "dept": "89",
     "region": ""
   },
@@ -1608,12 +1422,6 @@
     "region": ""
   },
   {
-    "name": "MONETEAU",
-    "cp": "89470",
-    "dept": "89",
-    "region": ""
-  },
-  {
     "name": "MONT ST SULPICE",
     "cp": "89250",
     "dept": "89",
@@ -1628,18 +1436,6 @@
   {
     "name": "MONTHOLON",
     "cp": "89110",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "MONTHOLON",
-    "cp": "89110",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "MONTHOLON",
-    "cp": "89710",
     "dept": "89",
     "region": ""
   },
@@ -1740,12 +1536,6 @@
     "region": ""
   },
   {
-    "name": "OUANNE",
-    "cp": "89560",
-    "dept": "89",
-    "region": ""
-  },
-  {
     "name": "PACY SUR ARMANCON",
     "cp": "89160",
     "dept": "89",
@@ -1790,36 +1580,6 @@
   {
     "name": "PASSY",
     "cp": "89510",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "PERCENEIGE",
-    "cp": "89260",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "PERCENEIGE",
-    "cp": "89260",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "PERCENEIGE",
-    "cp": "89260",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "PERCENEIGE",
-    "cp": "89260",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "PERCENEIGE",
-    "cp": "89260",
     "dept": "89",
     "region": ""
   },
@@ -2118,12 +1878,6 @@
     "region": ""
   },
   {
-    "name": "SEPEAUX ST ROMAIN",
-    "cp": "89116",
-    "dept": "89",
-    "region": ""
-  },
-  {
     "name": "SERBONNES",
     "cp": "89140",
     "dept": "89",
@@ -2234,18 +1988,6 @@
   {
     "name": "ST FARGEAU",
     "cp": "89170",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "ST FARGEAU",
-    "cp": "89170",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "ST FLORENTIN",
-    "cp": "89600",
     "dept": "89",
     "region": ""
   },
@@ -2412,18 +2154,6 @@
     "region": ""
   },
   {
-    "name": "TANLAY",
-    "cp": "89430",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "TANLAY",
-    "cp": "89430",
-    "dept": "89",
-    "region": ""
-  },
-  {
     "name": "TANNERRE EN PUISAYE",
     "cp": "89350",
     "dept": "89",
@@ -2460,18 +2190,6 @@
     "region": ""
   },
   {
-    "name": "THORIGNY SUR OREUSE",
-    "cp": "89260",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "THORIGNY SUR OREUSE",
-    "cp": "89260",
-    "dept": "89",
-    "region": ""
-  },
-  {
     "name": "THORY",
     "cp": "89200",
     "dept": "89",
@@ -2498,18 +2216,6 @@
   {
     "name": "TOUCY",
     "cp": "89130",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "TREIGNY PERREUSE STE COLOMBE",
-    "cp": "89520",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "TREIGNY PERREUSE STE COLOMBE",
-    "cp": "89520",
     "dept": "89",
     "region": ""
   },
@@ -2574,18 +2280,6 @@
     "region": ""
   },
   {
-    "name": "VALRAVILLON",
-    "cp": "89113",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "VALRAVILLON",
-    "cp": "89113",
-    "dept": "89",
-    "region": ""
-  },
-  {
     "name": "VARENNES",
     "cp": "89144",
     "dept": "89",
@@ -2640,26 +2334,8 @@
     "region": ""
   },
   {
-    "name": "VERGIGNY",
-    "cp": "89600",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "VERGIGNY",
-    "cp": "89600",
-    "dept": "89",
-    "region": ""
-  },
-  {
     "name": "VERLIN",
     "cp": "89330",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "VERMENTON",
-    "cp": "89270",
     "dept": "89",
     "region": ""
   },
@@ -2810,12 +2486,6 @@
   {
     "name": "VILLIERS LOUIS",
     "cp": "89320",
-    "dept": "89",
-    "region": ""
-  },
-  {
-    "name": "VILLIERS ST BENOIT",
-    "cp": "89130",
     "dept": "89",
     "region": ""
   },

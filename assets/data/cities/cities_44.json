@@ -18,18 +18,6 @@
     "region": ""
   },
   {
-    "name": "ANCENIS ST GEREON",
-    "cp": "44150",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "ASSERAC",
-    "cp": "44410",
-    "dept": "44",
-    "region": ""
-  },
-  {
     "name": "ASSERAC",
     "cp": "44410",
     "dept": "44",
@@ -66,18 +54,6 @@
     "region": ""
   },
   {
-    "name": "BLAIN",
-    "cp": "44130",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "BLAIN",
-    "cp": "44130",
-    "dept": "44",
-    "region": ""
-  },
-  {
     "name": "BOUAYE",
     "cp": "44830",
     "dept": "44",
@@ -86,12 +62,6 @@
   {
     "name": "BOUEE",
     "cp": "44260",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "BOUGUENAIS",
-    "cp": "44340",
     "dept": "44",
     "region": ""
   },
@@ -157,12 +127,6 @@
   },
   {
     "name": "CHAUMES EN RETZ",
-    "cp": "44320",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "CHAUMES EN RETZ",
     "cp": "44680",
     "dept": "44",
     "region": ""
@@ -198,18 +162,6 @@
     "region": ""
   },
   {
-    "name": "CORCOUE SUR LOGNE",
-    "cp": "44650",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "CORCOUE SUR LOGNE",
-    "cp": "44650",
-    "dept": "44",
-    "region": ""
-  },
-  {
     "name": "CORDEMAIS",
     "cp": "44360",
     "dept": "44",
@@ -218,12 +170,6 @@
   {
     "name": "CORSEPT",
     "cp": "44560",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "COUERON",
-    "cp": "44220",
     "dept": "44",
     "region": ""
   },
@@ -248,12 +194,6 @@
   {
     "name": "DERVAL",
     "cp": "44590",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "DIVATTE SUR LOIRE",
-    "cp": "44450",
     "dept": "44",
     "region": ""
   },
@@ -342,44 +282,8 @@
     "region": ""
   },
   {
-    "name": "GUEMENE PENFAO",
-    "cp": "44290",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "GUEMENE PENFAO",
-    "cp": "44290",
-    "dept": "44",
-    "region": ""
-  },
-  {
     "name": "GUENROUET",
     "cp": "44530",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "GUENROUET",
-    "cp": "44530",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "GUERANDE",
-    "cp": "44350",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "GUERANDE",
-    "cp": "44350",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "GUERANDE",
-    "cp": "44350",
     "dept": "44",
     "region": ""
   },
@@ -402,26 +306,8 @@
     "region": ""
   },
   {
-    "name": "HERBIGNAC",
-    "cp": "44410",
-    "dept": "44",
-    "region": ""
-  },
-  {
     "name": "HERIC",
     "cp": "44810",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "INDRE",
-    "cp": "44610",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "INDRE",
-    "cp": "44610",
     "dept": "44",
     "region": ""
   },
@@ -440,12 +326,6 @@
   {
     "name": "JANS",
     "cp": "44170",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "JOUE SUR ERDRE",
-    "cp": "44440",
     "dept": "44",
     "region": ""
   },
@@ -522,12 +402,6 @@
     "region": ""
   },
   {
-    "name": "LA CHEVROLIERE",
-    "cp": "44118",
-    "dept": "44",
-    "region": ""
-  },
-  {
     "name": "LA GRIGONNAIS",
     "cp": "44170",
     "dept": "44",
@@ -590,12 +464,6 @@
   {
     "name": "LA ROCHE BLANCHE",
     "cp": "44522",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "LA TURBALLE",
-    "cp": "44420",
     "dept": "44",
     "region": ""
   },
@@ -714,24 +582,6 @@
     "region": ""
   },
   {
-    "name": "LOIREAUXENCE",
-    "cp": "44370",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "LOIREAUXENCE",
-    "cp": "44370",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "LOIREAUXENCE",
-    "cp": "44370",
-    "dept": "44",
-    "region": ""
-  },
-  {
     "name": "LOUISFERT",
     "cp": "44110",
     "dept": "44",
@@ -740,12 +590,6 @@
   {
     "name": "LUSANGER",
     "cp": "44590",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "MACHECOUL ST MEME",
-    "cp": "44270",
     "dept": "44",
     "region": ""
   },
@@ -788,12 +632,6 @@
   {
     "name": "MESANGER",
     "cp": "44522",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "MESQUER",
-    "cp": "44420",
     "dept": "44",
     "region": ""
   },
@@ -966,24 +804,6 @@
     "region": ""
   },
   {
-    "name": "PLESSE",
-    "cp": "44630",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "PLESSE",
-    "cp": "44630",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "PONT ST MARTIN",
-    "cp": "44860",
-    "dept": "44",
-    "region": ""
-  },
-  {
     "name": "PONT ST MARTIN",
     "cp": "44860",
     "dept": "44",
@@ -992,30 +812,6 @@
   {
     "name": "PONTCHATEAU",
     "cp": "44160",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "PONTCHATEAU",
-    "cp": "44160",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "PONTCHATEAU",
-    "cp": "44160",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "PORNIC",
-    "cp": "44210",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "PORNIC",
-    "cp": "44210",
     "dept": "44",
     "region": ""
   },
@@ -1070,12 +866,6 @@
   {
     "name": "REMOUILLE",
     "cp": "44140",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "REZE",
-    "cp": "44400",
     "dept": "44",
     "region": ""
   },
@@ -1172,24 +962,6 @@
   {
     "name": "ST BREVIN LES PINS",
     "cp": "44250",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "ST BREVIN LES PINS",
-    "cp": "44250",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "ST BREVIN LES PINS",
-    "cp": "44250",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "ST COLOMBAN",
-    "cp": "44310",
     "dept": "44",
     "region": ""
   },
@@ -1314,20 +1086,8 @@
     "region": ""
   },
   {
-    "name": "ST MICHEL CHEF CHEF",
-    "cp": "44730",
-    "dept": "44",
-    "region": ""
-  },
-  {
     "name": "ST MOLF",
     "cp": "44350",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "ST NAZAIRE",
-    "cp": "44600",
     "dept": "44",
     "region": ""
   },
@@ -1452,44 +1212,8 @@
     "region": ""
   },
   {
-    "name": "VAIR SUR LOIRE",
-    "cp": "44150",
-    "dept": "44",
-    "region": ""
-  },
-  {
     "name": "VALLET",
     "cp": "44330",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "VALLONS DE L ERDRE",
-    "cp": "44540",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "VALLONS DE L ERDRE",
-    "cp": "44540",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "VALLONS DE L ERDRE",
-    "cp": "44540",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "VALLONS DE L ERDRE",
-    "cp": "44540",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "VALLONS DE L ERDRE",
-    "cp": "44540",
     "dept": "44",
     "region": ""
   },
@@ -1512,12 +1236,6 @@
     "region": ""
   },
   {
-    "name": "VERTOU",
-    "cp": "44120",
-    "dept": "44",
-    "region": ""
-  },
-  {
     "name": "VIEILLEVIGNE",
     "cp": "44116",
     "dept": "44",
@@ -1526,24 +1244,6 @@
   {
     "name": "VIGNEUX DE BRETAGNE",
     "cp": "44360",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "VIGNEUX DE BRETAGNE",
-    "cp": "44360",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "VILLENEUVE EN RETZ",
-    "cp": "44580",
-    "dept": "44",
-    "region": ""
-  },
-  {
-    "name": "VILLENEUVE EN RETZ",
-    "cp": "44580",
     "dept": "44",
     "region": ""
   },

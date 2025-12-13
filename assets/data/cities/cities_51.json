@@ -90,12 +90,6 @@
     "region": ""
   },
   {
-    "name": "ARZILLIERES NEUVILLE",
-    "cp": "51290",
-    "dept": "51",
-    "region": ""
-  },
-  {
     "name": "ATHIS",
     "cp": "51150",
     "dept": "51",
@@ -152,12 +146,6 @@
   {
     "name": "AY CHAMPAGNE",
     "cp": "51150",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "AY CHAMPAGNE",
-    "cp": "51160",
     "dept": "51",
     "region": ""
   },
@@ -373,18 +361,6 @@
   },
   {
     "name": "BLANCS COTEAUX",
-    "cp": "51130",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "BLANCS COTEAUX",
-    "cp": "51130",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "BLANCS COTEAUX",
     "cp": "51190",
     "dept": "51",
     "region": ""
@@ -427,12 +403,6 @@
   },
   {
     "name": "BOULT SUR SUIPPE",
-    "cp": "51110",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "BOURGOGNE FRESNE",
     "cp": "51110",
     "dept": "51",
     "region": ""
@@ -846,12 +816,6 @@
     "region": ""
   },
   {
-    "name": "COEUR DE LA VALLEE",
-    "cp": "51700",
-    "dept": "51",
-    "region": ""
-  },
-  {
     "name": "COIZARD JOCHES",
     "cp": "51270",
     "dept": "51",
@@ -920,12 +884,6 @@
   {
     "name": "CORFELIX",
     "cp": "51210",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "CORMICY",
-    "cp": "51220",
     "dept": "51",
     "region": ""
   },
@@ -1176,12 +1134,6 @@
     "region": ""
   },
   {
-    "name": "DORMANS",
-    "cp": "51700",
-    "dept": "51",
-    "region": ""
-  },
-  {
     "name": "DROSNAY",
     "cp": "51290",
     "dept": "51",
@@ -1314,12 +1266,6 @@
     "region": ""
   },
   {
-    "name": "FAUX VESIGNEUL",
-    "cp": "51320",
-    "dept": "51",
-    "region": ""
-  },
-  {
     "name": "FAVEROLLES ET COEMY",
     "cp": "51170",
     "dept": "51",
@@ -1328,12 +1274,6 @@
   {
     "name": "FAVRESSE",
     "cp": "51300",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "FERE CHAMPENOISE",
-    "cp": "51230",
     "dept": "51",
     "region": ""
   },
@@ -1746,12 +1686,6 @@
     "region": ""
   },
   {
-    "name": "LA NEUVILLE AU TEMPLE",
-    "cp": "51400",
-    "dept": "51",
-    "region": ""
-  },
-  {
     "name": "LA NEUVILLE AUX BOIS",
     "cp": "51330",
     "dept": "51",
@@ -2100,12 +2034,6 @@
     "region": ""
   },
   {
-    "name": "MAREUIL LE PORT",
-    "cp": "51700",
-    "dept": "51",
-    "region": ""
-  },
-  {
     "name": "MARFAUX",
     "cp": "51170",
     "dept": "51",
@@ -2276,18 +2204,6 @@
   {
     "name": "MONTMIRAIL",
     "cp": "51210",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "MONTMIRAIL",
-    "cp": "51210",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "MONTMORT LUCY",
-    "cp": "51270",
     "dept": "51",
     "region": ""
   },
@@ -2636,12 +2552,6 @@
   {
     "name": "RECY",
     "cp": "51520",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "REIMS",
-    "cp": "51100",
     "dept": "51",
     "region": ""
   },
@@ -3366,12 +3276,6 @@
     "region": ""
   },
   {
-    "name": "VAL DE LIVRE",
-    "cp": "51150",
-    "dept": "51",
-    "region": ""
-  },
-  {
     "name": "VAL DE VESLE",
     "cp": "51360",
     "dept": "51",
@@ -3380,24 +3284,6 @@
   {
     "name": "VAL DE VIERE",
     "cp": "51340",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "VAL DES MARAIS",
-    "cp": "51130",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "VAL DES MARAIS",
-    "cp": "51130",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "VAL DES MARAIS",
-    "cp": "51130",
     "dept": "51",
     "region": ""
   },
@@ -3530,12 +3416,6 @@
   {
     "name": "VERRIERES",
     "cp": "51800",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "VERT TOULON",
-    "cp": "51130",
     "dept": "51",
     "region": ""
   },
@@ -3710,12 +3590,6 @@
   {
     "name": "VITRY EN PERTHOIS",
     "cp": "51300",
-    "dept": "51",
-    "region": ""
-  },
-  {
-    "name": "VITRY LA VILLE",
-    "cp": "51240",
     "dept": "51",
     "region": ""
   },

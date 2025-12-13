@@ -432,12 +432,6 @@
     "region": ""
   },
   {
-    "name": "FURSAC",
-    "cp": "23290",
-    "dept": "23",
-    "region": ""
-  },
-  {
     "name": "GARTEMPE",
     "cp": "23320",
     "dept": "23",
@@ -456,12 +450,6 @@
     "region": ""
   },
   {
-    "name": "GENTIOUX PIGEROLLES",
-    "cp": "23340",
-    "dept": "23",
-    "region": ""
-  },
-  {
     "name": "GIOUX",
     "cp": "23500",
     "dept": "23",
@@ -470,18 +458,6 @@
   {
     "name": "GLENIC",
     "cp": "23380",
-    "dept": "23",
-    "region": ""
-  },
-  {
-    "name": "GOUZON",
-    "cp": "23230",
-    "dept": "23",
-    "region": ""
-  },
-  {
-    "name": "GOUZON",
-    "cp": "23230",
     "dept": "23",
     "region": ""
   },
@@ -738,12 +714,6 @@
     "region": ""
   },
   {
-    "name": "LINARD MALVAL",
-    "cp": "23220",
-    "dept": "23",
-    "region": ""
-  },
-  {
     "name": "LIOUX LES MONGES",
     "cp": "23700",
     "dept": "23",
@@ -752,12 +722,6 @@
   {
     "name": "LIZIERES",
     "cp": "23240",
-    "dept": "23",
-    "region": ""
-  },
-  {
-    "name": "LOURDOUEIX ST PIERRE",
-    "cp": "23360",
     "dept": "23",
     "region": ""
   },
@@ -932,18 +896,6 @@
   {
     "name": "NOUZIERS",
     "cp": "23350",
-    "dept": "23",
-    "region": ""
-  },
-  {
-    "name": "PARSAC RIMONDEIX",
-    "cp": "23140",
-    "dept": "23",
-    "region": ""
-  },
-  {
-    "name": "PARSAC RIMONDEIX",
-    "cp": "23140",
     "dept": "23",
     "region": ""
   },
@@ -1152,12 +1104,6 @@
     "region": ""
   },
   {
-    "name": "ST DIZIER MASBARAUD",
-    "cp": "23400",
-    "dept": "23",
-    "region": ""
-  },
-  {
     "name": "ST DOMET",
     "cp": "23190",
     "dept": "23",
@@ -1190,12 +1136,6 @@
   {
     "name": "ST GEORGES NIGREMONT",
     "cp": "23500",
-    "dept": "23",
-    "region": ""
-  },
-  {
-    "name": "ST GERMAIN BEAUPRE",
-    "cp": "23160",
     "dept": "23",
     "region": ""
   },
@@ -1314,18 +1254,6 @@
     "region": ""
   },
   {
-    "name": "ST MARTIN STE CATHERINE",
-    "cp": "23430",
-    "dept": "23",
-    "region": ""
-  },
-  {
-    "name": "ST MAURICE LA SOUTERRAINE",
-    "cp": "23300",
-    "dept": "23",
-    "region": ""
-  },
-  {
     "name": "ST MAURICE LA SOUTERRAINE",
     "cp": "23300",
     "dept": "23",
@@ -1334,18 +1262,6 @@
   {
     "name": "ST MAURICE PRES CROCQ",
     "cp": "23260",
-    "dept": "23",
-    "region": ""
-  },
-  {
-    "name": "ST MEDARD LA ROCHETTE",
-    "cp": "23200",
-    "dept": "23",
-    "region": ""
-  },
-  {
-    "name": "ST MEDARD LA ROCHETTE",
-    "cp": "23200",
     "dept": "23",
     "region": ""
   },
@@ -1406,12 +1322,6 @@
   {
     "name": "ST PARDOUX MORTEROLLES",
     "cp": "23400",
-    "dept": "23",
-    "region": ""
-  },
-  {
-    "name": "ST PIERRE BELLEVUE",
-    "cp": "23460",
     "dept": "23",
     "region": ""
   },

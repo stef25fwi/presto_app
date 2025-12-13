@@ -156,12 +156,6 @@
     "region": ""
   },
   {
-    "name": "AULOS SINSAT",
-    "cp": "09310",
-    "dept": "09",
-    "region": ""
-  },
-  {
     "name": "AULUS LES BAINS",
     "cp": "09140",
     "dept": "09",
@@ -193,12 +187,6 @@
   },
   {
     "name": "BALACET",
-    "cp": "09800",
-    "dept": "09",
-    "region": ""
-  },
-  {
-    "name": "BALAGUERES",
     "cp": "09800",
     "dept": "09",
     "region": ""
@@ -294,12 +282,6 @@
     "region": ""
   },
   {
-    "name": "BEZAC",
-    "cp": "09100",
-    "dept": "09",
-    "region": ""
-  },
-  {
     "name": "BIERT",
     "cp": "09320",
     "dept": "09",
@@ -320,12 +302,6 @@
   {
     "name": "BONNAC",
     "cp": "09100",
-    "dept": "09",
-    "region": ""
-  },
-  {
-    "name": "BORDES UCHENTEIN",
-    "cp": "09800",
     "dept": "09",
     "region": ""
   },
@@ -474,12 +450,6 @@
     "region": ""
   },
   {
-    "name": "CAYCHAX ET SENCONAC",
-    "cp": "09250",
-    "dept": "09",
-    "region": ""
-  },
-  {
     "name": "CAZALS DES BAYLES",
     "cp": "09500",
     "dept": "09",
@@ -552,12 +522,6 @@
     "region": ""
   },
   {
-    "name": "COUFLENS",
-    "cp": "09140",
-    "dept": "09",
-    "region": ""
-  },
-  {
     "name": "COUSSA",
     "cp": "09120",
     "dept": "09",
@@ -590,24 +554,6 @@
   {
     "name": "DREUILHE",
     "cp": "09300",
-    "dept": "09",
-    "region": ""
-  },
-  {
-    "name": "DUN",
-    "cp": "09600",
-    "dept": "09",
-    "region": ""
-  },
-  {
-    "name": "DUN",
-    "cp": "09600",
-    "dept": "09",
-    "region": ""
-  },
-  {
-    "name": "DUN",
-    "cp": "09600",
     "dept": "09",
     "region": ""
   },
@@ -1200,12 +1146,6 @@
     "region": ""
   },
   {
-    "name": "MERCUS GARRABET",
-    "cp": "09400",
-    "dept": "09",
-    "region": ""
-  },
-  {
     "name": "MERENS LES VALS",
     "cp": "09110",
     "dept": "09",
@@ -1316,12 +1256,6 @@
   {
     "name": "MONTGAUCH",
     "cp": "09160",
-    "dept": "09",
-    "region": ""
-  },
-  {
-    "name": "MONTJOIE EN COUSERANS",
-    "cp": "09200",
     "dept": "09",
     "region": ""
   },
@@ -1572,12 +1506,6 @@
     "region": ""
   },
   {
-    "name": "SAURAT",
-    "cp": "09400",
-    "dept": "09",
-    "region": ""
-  },
-  {
     "name": "SAUTEL",
     "cp": "09300",
     "dept": "09",
@@ -1662,12 +1590,6 @@
     "region": ""
   },
   {
-    "name": "SOUEIX ROGALLE",
-    "cp": "09140",
-    "dept": "09",
-    "region": ""
-  },
-  {
     "name": "SOULA",
     "cp": "09000",
     "dept": "09",
@@ -1712,12 +1634,6 @@
   {
     "name": "ST JEAN D AIGUES VIVES",
     "cp": "09300",
-    "dept": "09",
-    "region": ""
-  },
-  {
-    "name": "ST JEAN DE VERGES",
-    "cp": "09000",
     "dept": "09",
     "region": ""
   },
@@ -1854,12 +1770,6 @@
     "region": ""
   },
   {
-    "name": "TARASCON SUR ARIEGE",
-    "cp": "09400",
-    "dept": "09",
-    "region": ""
-  },
-  {
     "name": "TAURIGNAN CASTET",
     "cp": "09160",
     "dept": "09",
@@ -1940,30 +1850,6 @@
   {
     "name": "USTOU",
     "cp": "09140",
-    "dept": "09",
-    "region": ""
-  },
-  {
-    "name": "USTOU",
-    "cp": "09140",
-    "dept": "09",
-    "region": ""
-  },
-  {
-    "name": "VAL DE SOS",
-    "cp": "09220",
-    "dept": "09",
-    "region": ""
-  },
-  {
-    "name": "VAL DE SOS",
-    "cp": "09220",
-    "dept": "09",
-    "region": ""
-  },
-  {
-    "name": "VAL DE SOS",
-    "cp": "09220",
     "dept": "09",
     "region": ""
   },

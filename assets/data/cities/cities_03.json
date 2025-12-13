@@ -684,18 +684,6 @@
     "region": ""
   },
   {
-    "name": "HAUT BOCAGE",
-    "cp": "03190",
-    "dept": "03",
-    "region": ""
-  },
-  {
-    "name": "HAUT BOCAGE",
-    "cp": "03190",
-    "dept": "03",
-    "region": ""
-  },
-  {
     "name": "HAUTERIVE",
     "cp": "03270",
     "dept": "03",
@@ -1040,12 +1028,6 @@
   {
     "name": "MAZIRAT",
     "cp": "03420",
-    "dept": "03",
-    "region": ""
-  },
-  {
-    "name": "MEAULNE VITRAY",
-    "cp": "03360",
     "dept": "03",
     "region": ""
   },
@@ -1874,12 +1856,6 @@
   {
     "name": "VILLEBRET",
     "cp": "03310",
-    "dept": "03",
-    "region": ""
-  },
-  {
-    "name": "VILLEFRANCHE D ALLIER",
-    "cp": "03430",
     "dept": "03",
     "region": ""
   },

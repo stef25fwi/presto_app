@@ -210,12 +210,6 @@
     "region": ""
   },
   {
-    "name": "BOURNONCLE ST PIERRE",
-    "cp": "43360",
-    "dept": "43",
-    "region": ""
-  },
-  {
     "name": "BRIOUDE",
     "cp": "43100",
     "dept": "43",
@@ -654,12 +648,6 @@
     "region": ""
   },
   {
-    "name": "LANDOS",
-    "cp": "43340",
-    "dept": "43",
-    "region": ""
-  },
-  {
     "name": "LANGEAC",
     "cp": "43300",
     "dept": "43",
@@ -848,18 +836,6 @@
   {
     "name": "MAZET ST VOY",
     "cp": "43520",
-    "dept": "43",
-    "region": ""
-  },
-  {
-    "name": "MAZEYRAT D ALLIER",
-    "cp": "43300",
-    "dept": "43",
-    "region": ""
-  },
-  {
-    "name": "MAZEYRAT D ALLIER",
-    "cp": "43300",
     "dept": "43",
     "region": ""
   },
@@ -1064,12 +1040,6 @@
   {
     "name": "SENEUJOLS",
     "cp": "43510",
-    "dept": "43",
-    "region": ""
-  },
-  {
-    "name": "SIAUGUES STE MARIE",
-    "cp": "43300",
     "dept": "43",
     "region": ""
   },
@@ -1392,12 +1362,6 @@
     "region": ""
   },
   {
-    "name": "ST PRIVAT D ALLIER",
-    "cp": "43580",
-    "dept": "43",
-    "region": ""
-  },
-  {
     "name": "ST PRIVAT DU DRAGON",
     "cp": "43380",
     "dept": "43",
@@ -1580,12 +1544,6 @@
   {
     "name": "VILLENEUVE D ALLIER",
     "cp": "43380",
-    "dept": "43",
-    "region": ""
-  },
-  {
-    "name": "VISSAC AUTEYRAC",
-    "cp": "43300",
     "dept": "43",
     "region": ""
   },

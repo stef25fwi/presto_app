@@ -6,12 +6,6 @@
     "region": ""
   },
   {
-    "name": "ANDELNANS",
-    "cp": "90400",
-    "dept": "90",
-    "region": ""
-  },
-  {
     "name": "ANGEOT",
     "cp": "90150",
     "dept": "90",
@@ -398,12 +392,6 @@
   {
     "name": "MENONCOURT",
     "cp": "90150",
-    "dept": "90",
-    "region": ""
-  },
-  {
-    "name": "MEROUX MOVAL",
-    "cp": "90400",
     "dept": "90",
     "region": ""
   },

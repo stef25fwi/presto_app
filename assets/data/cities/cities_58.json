@@ -138,26 +138,8 @@
     "region": ""
   },
   {
-    "name": "BAZOLLES",
-    "cp": "58110",
-    "dept": "58",
-    "region": ""
-  },
-  {
     "name": "BEARD",
     "cp": "58160",
-    "dept": "58",
-    "region": ""
-  },
-  {
-    "name": "BEAULIEU",
-    "cp": "58420",
-    "dept": "58",
-    "region": ""
-  },
-  {
-    "name": "BEAULIEU",
-    "cp": "58420",
     "dept": "58",
     "region": ""
   },
@@ -306,12 +288,6 @@
     "region": ""
   },
   {
-    "name": "CHALLUY",
-    "cp": "58000",
-    "dept": "58",
-    "region": ""
-  },
-  {
     "name": "CHAMPALLEMENT",
     "cp": "58420",
     "dept": "58",
@@ -338,12 +314,6 @@
   {
     "name": "CHAMPVOUX",
     "cp": "58400",
-    "dept": "58",
-    "region": ""
-  },
-  {
-    "name": "CHANTENAY ST IMBERT",
-    "cp": "58240",
     "dept": "58",
     "region": ""
   },
@@ -474,18 +444,6 @@
     "region": ""
   },
   {
-    "name": "CLAMECY",
-    "cp": "58500",
-    "dept": "58",
-    "region": ""
-  },
-  {
-    "name": "CLAMECY",
-    "cp": "58500",
-    "dept": "58",
-    "region": ""
-  },
-  {
     "name": "COLMERY",
     "cp": "58350",
     "dept": "58",
@@ -512,12 +470,6 @@
   {
     "name": "CORVOL L ORGUEILLEUX",
     "cp": "58460",
-    "dept": "58",
-    "region": ""
-  },
-  {
-    "name": "COSNE COURS SUR LOIRE",
-    "cp": "58200",
     "dept": "58",
     "region": ""
   },
@@ -716,12 +668,6 @@
   {
     "name": "GARCHIZY",
     "cp": "58600",
-    "dept": "58",
-    "region": ""
-  },
-  {
-    "name": "GARCHY",
-    "cp": "58150",
     "dept": "58",
     "region": ""
   },
@@ -1002,12 +948,6 @@
     "region": ""
   },
   {
-    "name": "MARZY",
-    "cp": "58180",
-    "dept": "58",
-    "region": ""
-  },
-  {
     "name": "MAUX",
     "cp": "58290",
     "dept": "58",
@@ -1112,12 +1052,6 @@
   {
     "name": "MONTREUILLON",
     "cp": "58800",
-    "dept": "58",
-    "region": ""
-  },
-  {
-    "name": "MONTSAUCHE LES SETTONS",
-    "cp": "58230",
     "dept": "58",
     "region": ""
   },
@@ -1404,12 +1338,6 @@
     "region": ""
   },
   {
-    "name": "SAUVIGNY LES BOIS",
-    "cp": "58160",
-    "dept": "58",
-    "region": ""
-  },
-  {
     "name": "SAVIGNY POIL FOL",
     "cp": "58170",
     "dept": "58",
@@ -1650,12 +1578,6 @@
     "region": ""
   },
   {
-    "name": "ST PARIZE LE CHATEL",
-    "cp": "58490",
-    "dept": "58",
-    "region": ""
-  },
-  {
     "name": "ST PERE",
     "cp": "58200",
     "dept": "58",
@@ -1818,12 +1740,6 @@
     "region": ""
   },
   {
-    "name": "TRACY SUR LOIRE",
-    "cp": "58150",
-    "dept": "58",
-    "region": ""
-  },
-  {
     "name": "TRESNAY",
     "cp": "58240",
     "dept": "58",
@@ -1880,12 +1796,6 @@
   {
     "name": "VAUCLAIX",
     "cp": "58140",
-    "dept": "58",
-    "region": ""
-  },
-  {
-    "name": "VAUX D AMOGNES",
-    "cp": "58130",
     "dept": "58",
     "region": ""
   },

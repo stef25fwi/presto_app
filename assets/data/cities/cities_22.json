@@ -24,44 +24,8 @@
     "region": ""
   },
   {
-    "name": "BEAUSSAIS SUR MER",
-    "cp": "22650",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "BEAUSSAIS SUR MER",
-    "cp": "22650",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "BEGARD",
     "cp": "22140",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "BEGARD",
-    "cp": "22140",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "BEGARD",
-    "cp": "22140",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "BEGARD",
-    "cp": "22140",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "BELLE ISLE EN TERRE",
-    "cp": "22810",
     "dept": "22",
     "region": ""
   },
@@ -92,18 +56,6 @@
   {
     "name": "BOBITAL",
     "cp": "22100",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "BON REPOS SUR BLAVET",
-    "cp": "22570",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "BON REPOS SUR BLAVET",
-    "cp": "22570",
     "dept": "22",
     "region": ""
   },
@@ -204,12 +156,6 @@
     "region": ""
   },
   {
-    "name": "CAOUENNEC LANVEZEAC",
-    "cp": "22300",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "CARNOET",
     "cp": "22160",
     "dept": "22",
@@ -230,12 +176,6 @@
   {
     "name": "CAVAN",
     "cp": "22140",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "CHATELAUDREN PLOUAGAT",
-    "cp": "22170",
     "dept": "22",
     "region": ""
   },
@@ -300,12 +240,6 @@
     "region": ""
   },
   {
-    "name": "DINAN",
-    "cp": "22100",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "DUAULT",
     "cp": "22160",
     "dept": "22",
@@ -324,32 +258,8 @@
     "region": ""
   },
   {
-    "name": "ERQUY",
-    "cp": "22430",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "ERQUY",
-    "cp": "22430",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "EVRAN",
     "cp": "22630",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "FREHEL",
-    "cp": "22240",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "FREHEL",
-    "cp": "22240",
     "dept": "22",
     "region": ""
   },
@@ -408,20 +318,8 @@
     "region": ""
   },
   {
-    "name": "GRACES",
-    "cp": "22200",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "GUENROC",
     "cp": "22350",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "GUERLEDAN",
-    "cp": "22530",
     "dept": "22",
     "region": ""
   },
@@ -480,12 +378,6 @@
     "region": ""
   },
   {
-    "name": "HILLION",
-    "cp": "22120",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "ILE DE BREHAT",
     "cp": "22870",
     "dept": "22",
@@ -494,24 +386,6 @@
   {
     "name": "ILLIFAUT",
     "cp": "22230",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "JUGON LES LACS",
-    "cp": "22270",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "JUGON LES LACS",
-    "cp": "22270",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "JUGON LES LACS",
-    "cp": "22270",
     "dept": "22",
     "region": ""
   },
@@ -630,74 +504,8 @@
     "region": ""
   },
   {
-    "name": "LA ROCHE JAUDY",
-    "cp": "22450",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LA ROCHE JAUDY",
-    "cp": "22450",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LA ROCHE JAUDY",
-    "cp": "22450",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "LA VICOMTE SUR RANCE",
     "cp": "22690",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LAMBALLE ARMOR",
-    "cp": "22400",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LAMBALLE ARMOR",
-    "cp": "22400",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LAMBALLE ARMOR",
-    "cp": "22400",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LAMBALLE ARMOR",
-    "cp": "22400",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LAMBALLE ARMOR",
-    "cp": "22400",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LAMBALLE ARMOR",
-    "cp": "22400",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LAMBALLE ARMOR",
-    "cp": "22400",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LAMBALLE ARMOR",
-    "cp": "22400",
     "dept": "22",
     "region": ""
   },
@@ -768,12 +576,6 @@
     "region": ""
   },
   {
-    "name": "LANGUEUX",
-    "cp": "22360",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "LANLEFF",
     "cp": "22290",
     "dept": "22",
@@ -810,12 +612,6 @@
     "region": ""
   },
   {
-    "name": "LANNION",
-    "cp": "22300",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "LANRELAS",
     "cp": "22250",
     "dept": "22",
@@ -836,24 +632,6 @@
   {
     "name": "LANTIC",
     "cp": "22410",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LANTIC",
-    "cp": "22410",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LANVALLAY",
-    "cp": "22100",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LANVALLAY",
-    "cp": "22100",
     "dept": "22",
     "region": ""
   },
@@ -924,42 +702,6 @@
     "region": ""
   },
   {
-    "name": "LE MENE",
-    "cp": "22330",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LE MENE",
-    "cp": "22330",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LE MENE",
-    "cp": "22330",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LE MENE",
-    "cp": "22330",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LE MENE",
-    "cp": "22330",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LE MENE",
-    "cp": "22330",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "LE MERZER",
     "cp": "22200",
     "dept": "22",
@@ -1014,12 +756,6 @@
     "region": ""
   },
   {
-    "name": "LEZARDRIEUX",
-    "cp": "22740",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "LOC ENVEL",
     "cp": "22810",
     "dept": "22",
@@ -1052,12 +788,6 @@
   {
     "name": "LOUANNEC",
     "cp": "22700",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "LOUARGAT",
-    "cp": "22540",
     "dept": "22",
     "region": ""
   },
@@ -1112,12 +842,6 @@
   {
     "name": "MELLIONNEC",
     "cp": "22110",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "MERDRIGNAC",
-    "cp": "22230",
     "dept": "22",
     "region": ""
   },
@@ -1188,12 +912,6 @@
     "region": ""
   },
   {
-    "name": "PEDERNEC",
-    "cp": "22540",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "PENGUILY",
     "cp": "22510",
     "dept": "22",
@@ -1202,30 +920,6 @@
   {
     "name": "PENVENAN",
     "cp": "22710",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PENVENAN",
-    "cp": "22710",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PENVENAN",
-    "cp": "22710",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PERROS GUIREC",
-    "cp": "22700",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PERROS GUIREC",
-    "cp": "22700",
     "dept": "22",
     "region": ""
   },
@@ -1308,18 +1002,6 @@
     "region": ""
   },
   {
-    "name": "PLELO",
-    "cp": "22170",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PLEMET",
-    "cp": "22210",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "PLEMET",
     "cp": "22210",
     "dept": "22",
@@ -1350,18 +1032,6 @@
     "region": ""
   },
   {
-    "name": "PLERIN",
-    "cp": "22190",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PLERIN",
-    "cp": "22190",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "PLERNEUF",
     "cp": "22170",
     "dept": "22",
@@ -1380,12 +1050,6 @@
     "region": ""
   },
   {
-    "name": "PLESLIN TRIGAVOU",
-    "cp": "22490",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "PLESTAN",
     "cp": "22640",
     "dept": "22",
@@ -1394,18 +1058,6 @@
   {
     "name": "PLESTIN LES GREVES",
     "cp": "22310",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PLESTIN LES GREVES",
-    "cp": "22310",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PLEUBIAN",
-    "cp": "22610",
     "dept": "22",
     "region": ""
   },
@@ -1434,18 +1086,6 @@
     "region": ""
   },
   {
-    "name": "PLEUMEUR BODOU",
-    "cp": "22560",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PLEUMEUR BODOU",
-    "cp": "22560",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "PLEUMEUR GAUTIER",
     "cp": "22740",
     "dept": "22",
@@ -1460,12 +1100,6 @@
   {
     "name": "PLEVIN",
     "cp": "22340",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PLOEUC L HERMITAGE",
-    "cp": "22150",
     "dept": "22",
     "region": ""
   },
@@ -1506,18 +1140,6 @@
     "region": ""
   },
   {
-    "name": "PLOUBAZLANEC",
-    "cp": "22620",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PLOUBAZLANEC",
-    "cp": "22620",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "PLOUBEZRE",
     "cp": "22300",
     "dept": "22",
@@ -1538,18 +1160,6 @@
   {
     "name": "PLOUEZEC",
     "cp": "22470",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PLOUEZEC",
-    "cp": "22470",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PLOUFRAGAN",
-    "cp": "22440",
     "dept": "22",
     "region": ""
   },
@@ -1584,12 +1194,6 @@
     "region": ""
   },
   {
-    "name": "PLOUGUENAST LANGAST",
-    "cp": "22150",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "PLOUGUERNEVEL",
     "cp": "22110",
     "dept": "22",
@@ -1608,20 +1212,8 @@
     "region": ""
   },
   {
-    "name": "PLOUHA",
-    "cp": "22580",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "PLOUISY",
     "cp": "22200",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PLOULEC H",
-    "cp": "22300",
     "dept": "22",
     "region": ""
   },
@@ -1722,18 +1314,6 @@
     "region": ""
   },
   {
-    "name": "PLUMIEUX",
-    "cp": "22210",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PLUMIEUX",
-    "cp": "22210",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "PLURIEN",
     "cp": "22240",
     "dept": "22",
@@ -1788,18 +1368,6 @@
     "region": ""
   },
   {
-    "name": "PORDIC",
-    "cp": "22590",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "PORDIC",
-    "cp": "22590",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "PRAT",
     "cp": "22140",
     "dept": "22",
@@ -1824,18 +1392,6 @@
     "region": ""
   },
   {
-    "name": "QUESSOY",
-    "cp": "22120",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "QUEVERT",
-    "cp": "22100",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "QUEVERT",
     "cp": "22100",
     "dept": "22",
@@ -1856,12 +1412,6 @@
   {
     "name": "ROSPEZ",
     "cp": "22300",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "ROSTRENEN",
-    "cp": "22110",
     "dept": "22",
     "region": ""
   },
@@ -1970,12 +1520,6 @@
   {
     "name": "ST CARREUC",
     "cp": "22150",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "ST CAST LE GUILDO",
-    "cp": "22380",
     "dept": "22",
     "region": ""
   },
@@ -2208,20 +1752,8 @@
     "region": ""
   },
   {
-    "name": "ST QUAY PORTRIEUX",
-    "cp": "22410",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "ST RIEUL",
     "cp": "22270",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "ST SAMSON SUR RANCE",
-    "cp": "22100",
     "dept": "22",
     "region": ""
   },
@@ -2328,12 +1860,6 @@
     "region": ""
   },
   {
-    "name": "TREDREZ LOCQUEMEAU",
-    "cp": "22300",
-    "dept": "22",
-    "region": ""
-  },
-  {
     "name": "TREDUDER",
     "cp": "22310",
     "dept": "22",
@@ -2378,12 +1904,6 @@
   {
     "name": "TREGROM",
     "cp": "22420",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "TREGUEUX",
-    "cp": "22950",
     "dept": "22",
     "region": ""
   },
@@ -2516,12 +2036,6 @@
   {
     "name": "UZEL",
     "cp": "22460",
-    "dept": "22",
-    "region": ""
-  },
-  {
-    "name": "VAL D ARGUENON",
-    "cp": "22130",
     "dept": "22",
     "region": ""
   },

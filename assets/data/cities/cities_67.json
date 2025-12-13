@@ -174,44 +174,8 @@
     "region": ""
   },
   {
-    "name": "BERSTETT",
-    "cp": "67370",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "BERSTETT",
-    "cp": "67370",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "BERSTETT",
-    "cp": "67370",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "BERSTHEIM",
     "cp": "67170",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "BETSCHDORF",
-    "cp": "67660",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "BETSCHDORF",
-    "cp": "67660",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "BETSCHDORF",
-    "cp": "67660",
     "dept": "67",
     "region": ""
   },
@@ -312,12 +276,6 @@
     "region": ""
   },
   {
-    "name": "BOERSCH",
-    "cp": "67530",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "BOESENBIESEN",
     "cp": "67390",
     "dept": "67",
@@ -360,32 +318,8 @@
     "region": ""
   },
   {
-    "name": "BOURG BRUCHE",
-    "cp": "67420",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "BOURGHEIM",
     "cp": "67140",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "BOUXWILLER",
-    "cp": "67330",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "BOUXWILLER",
-    "cp": "67330",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "BOUXWILLER",
-    "cp": "67330",
     "dept": "67",
     "region": ""
   },
@@ -462,12 +396,6 @@
     "region": ""
   },
   {
-    "name": "CLEEBOURG",
-    "cp": "67160",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "CLIMBACH",
     "cp": "67510",
     "dept": "67",
@@ -522,12 +450,6 @@
     "region": ""
   },
   {
-    "name": "DAMBACH",
-    "cp": "67110",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "DAMBACH LA VILLE",
     "cp": "67650",
     "dept": "67",
@@ -542,12 +464,6 @@
   {
     "name": "DAUBENSAND",
     "cp": "67150",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "DAUENDORF",
-    "cp": "67350",
     "dept": "67",
     "region": ""
   },
@@ -650,12 +566,6 @@
   {
     "name": "DOSSENHEIM SUR ZINSEL",
     "cp": "67330",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "DRACHENBRONN BIRLENBACH",
-    "cp": "67160",
     "dept": "67",
     "region": ""
   },
@@ -810,12 +720,6 @@
     "region": ""
   },
   {
-    "name": "ERSTEIN",
-    "cp": "67150",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "ESCHAU",
     "cp": "67114",
     "dept": "67",
@@ -824,12 +728,6 @@
   {
     "name": "ESCHBACH",
     "cp": "67360",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "ESCHBOURG",
-    "cp": "67320",
     "dept": "67",
     "region": ""
   },
@@ -854,12 +752,6 @@
   {
     "name": "EYWILLER",
     "cp": "67320",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "FEGERSHEIM",
-    "cp": "67640",
     "dept": "67",
     "region": ""
   },
@@ -966,12 +858,6 @@
     "region": ""
   },
   {
-    "name": "GEISWILLER ZOEBERSDORF",
-    "cp": "67270",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "GERSTHEIM",
     "cp": "67150",
     "dept": "67",
@@ -992,12 +878,6 @@
   {
     "name": "GOERLINGEN",
     "cp": "67320",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "GOERSDORF",
-    "cp": "67360",
     "dept": "67",
     "region": ""
   },
@@ -1086,24 +966,6 @@
     "region": ""
   },
   {
-    "name": "GUNDERSHOFFEN",
-    "cp": "67110",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "GUNDERSHOFFEN",
-    "cp": "67110",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "GUNDERSHOFFEN",
-    "cp": "67110",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "GUNGWILLER",
     "cp": "67320",
     "dept": "67",
@@ -1118,18 +980,6 @@
   {
     "name": "HAEGEN",
     "cp": "67700",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "HAGUENAU",
-    "cp": "67500",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "HAGUENAU",
-    "cp": "67500",
     "dept": "67",
     "region": ""
   },
@@ -1266,12 +1116,6 @@
     "region": ""
   },
   {
-    "name": "HOCHFELDEN",
-    "cp": "67270",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "HOCHSTETT",
     "cp": "67170",
     "dept": "67",
@@ -1286,18 +1130,6 @@
   {
     "name": "HOERDT",
     "cp": "67720",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "HOFFEN",
-    "cp": "67250",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "HOFFEN",
-    "cp": "67250",
     "dept": "67",
     "region": ""
   },
@@ -1548,32 +1380,8 @@
     "region": ""
   },
   {
-    "name": "KUTZENHAUSEN",
-    "cp": "67250",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "LA BROQUE",
     "cp": "67130",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "LA BROQUE",
-    "cp": "67130",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "LA BROQUE",
-    "cp": "67130",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "LA BROQUE",
-    "cp": "67570",
     "dept": "67",
     "region": ""
   },
@@ -1598,12 +1406,6 @@
   {
     "name": "LA WANTZENAU",
     "cp": "67610",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "LALAYE",
-    "cp": "67220",
     "dept": "67",
     "region": ""
   },
@@ -1652,12 +1454,6 @@
   {
     "name": "LE HOHWALD",
     "cp": "67140",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "LEMBACH",
-    "cp": "67510",
     "dept": "67",
     "region": ""
   },
@@ -1770,12 +1566,6 @@
     "region": ""
   },
   {
-    "name": "MAISONSGOUTTE",
-    "cp": "67220",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "MARCKOLSHEIM",
     "cp": "67390",
     "dept": "67",
@@ -1790,12 +1580,6 @@
   {
     "name": "MARMOUTIER",
     "cp": "67440",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "MATZENHEIM",
-    "cp": "67150",
     "dept": "67",
     "region": ""
   },
@@ -1826,12 +1610,6 @@
   {
     "name": "MENCHHOFFEN",
     "cp": "67340",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "MERKWILLER PECHELBRONN",
-    "cp": "67250",
     "dept": "67",
     "region": ""
   },
@@ -1956,12 +1734,6 @@
     "region": ""
   },
   {
-    "name": "MUTTERSHOLTZ",
-    "cp": "67600",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "MUTZENHOUSE",
     "cp": "67270",
     "dept": "67",
@@ -1998,18 +1770,6 @@
     "region": ""
   },
   {
-    "name": "NEUGARTHEIM ITTLENHEIM",
-    "cp": "67370",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "NEUGARTHEIM ITTLENHEIM",
-    "cp": "67370",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "NEUHAEUSEL",
     "cp": "67480",
     "dept": "67",
@@ -2018,12 +1778,6 @@
   {
     "name": "NEUVE EGLISE",
     "cp": "67220",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "NEUVILLER LA ROCHE",
-    "cp": "67130",
     "dept": "67",
     "region": ""
   },
@@ -2160,26 +1914,8 @@
     "region": ""
   },
   {
-    "name": "OBERHOFFEN SUR MODER",
-    "cp": "67240",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "OBERLAUTERBACH",
     "cp": "67160",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "OBERMODERN ZUTZENDORF",
-    "cp": "67330",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "OBERMODERN ZUTZENDORF",
-    "cp": "67330",
     "dept": "67",
     "region": ""
   },
@@ -2340,18 +2076,6 @@
     "region": ""
   },
   {
-    "name": "PLAINE",
-    "cp": "67420",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "PLAINE",
-    "cp": "67420",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "PLOBSHEIM",
     "cp": "67115",
     "dept": "67",
@@ -2408,12 +2132,6 @@
   {
     "name": "REICHSFELD",
     "cp": "67140",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "REICHSHOFFEN",
-    "cp": "67110",
     "dept": "67",
     "region": ""
   },
@@ -2580,24 +2298,6 @@
     "region": ""
   },
   {
-    "name": "ROUNTZENHEIM AUENHEIM",
-    "cp": "67480",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "RUSS",
-    "cp": "67130",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "RUSS",
-    "cp": "67130",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "RUSS",
     "cp": "67130",
     "dept": "67",
@@ -2646,32 +2346,8 @@
     "region": ""
   },
   {
-    "name": "SARREWERDEN",
-    "cp": "67260",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "SARREWERDEN",
-    "cp": "67260",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "SAULXURES",
     "cp": "67420",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "SAVERNE",
-    "cp": "67700",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "SAVERNE",
-    "cp": "67700",
     "dept": "67",
     "region": ""
   },
@@ -2706,12 +2382,6 @@
     "region": ""
   },
   {
-    "name": "SCHARRACHBERGHEIM IRMSTETT",
-    "cp": "67310",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "SCHEIBENHARD",
     "cp": "67630",
     "dept": "67",
@@ -2720,12 +2390,6 @@
   {
     "name": "SCHERLENHEIM",
     "cp": "67270",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "SCHERWILLER",
-    "cp": "67750",
     "dept": "67",
     "region": ""
   },
@@ -2754,12 +2418,6 @@
     "region": ""
   },
   {
-    "name": "SCHIRMECK",
-    "cp": "67130",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "SCHIRRHEIN",
     "cp": "67240",
     "dept": "67",
@@ -2774,18 +2432,6 @@
   {
     "name": "SCHLEITHAL",
     "cp": "67160",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "SCHNERSHEIM",
-    "cp": "67370",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "SCHNERSHEIM",
-    "cp": "67370",
     "dept": "67",
     "region": ""
   },
@@ -2840,18 +2486,6 @@
   {
     "name": "SCHWOBSHEIM",
     "cp": "67390",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "SEEBACH",
-    "cp": "67160",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "SEEBACH",
-    "cp": "67160",
     "dept": "67",
     "region": ""
   },
@@ -2922,18 +2556,6 @@
     "region": ""
   },
   {
-    "name": "SOMMERAU",
-    "cp": "67440",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "SOMMERAU",
-    "cp": "67440",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "SOUFFELWEYERSHEIM",
     "cp": "67460",
     "dept": "67",
@@ -2948,12 +2570,6 @@
   {
     "name": "SOULTZ LES BAINS",
     "cp": "67120",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "SOULTZ SOUS FORETS",
-    "cp": "67250",
     "dept": "67",
     "region": ""
   },
@@ -3002,12 +2618,6 @@
   {
     "name": "ST PIERRE",
     "cp": "67140",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "ST PIERRE BOIS",
-    "cp": "67220",
     "dept": "67",
     "region": ""
   },
@@ -3090,12 +2700,6 @@
     "region": ""
   },
   {
-    "name": "STUTZHEIM OFFENHEIM",
-    "cp": "67370",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "SUNDHOUSE",
     "cp": "67920",
     "dept": "67",
@@ -3110,18 +2714,6 @@
   {
     "name": "THAL DRULINGEN",
     "cp": "67320",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "THAL MARMOUTIER",
-    "cp": "67440",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "THAL MARMOUTIER",
-    "cp": "67440",
     "dept": "67",
     "region": ""
   },
@@ -3168,24 +2760,6 @@
     "region": ""
   },
   {
-    "name": "TRUCHTERSHEIM",
-    "cp": "67370",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "TRUCHTERSHEIM",
-    "cp": "67370",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "UHLWILLER",
-    "cp": "67350",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "UHLWILLER",
     "cp": "67350",
     "dept": "67",
@@ -3224,24 +2798,6 @@
   {
     "name": "UTTWILLER",
     "cp": "67330",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "VAL DE MODER",
-    "cp": "67350",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "VAL DE MODER",
-    "cp": "67350",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "VAL DE MODER",
-    "cp": "67350",
     "dept": "67",
     "region": ""
   },
@@ -3330,36 +2886,6 @@
     "region": ""
   },
   {
-    "name": "WANGENBOURG ENGENTHAL",
-    "cp": "67710",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "WANGENBOURG ENGENTHAL",
-    "cp": "67710",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "WANGENBOURG ENGENTHAL",
-    "cp": "67710",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "WANGENBOURG ENGENTHAL",
-    "cp": "67710",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "WASSELONNE",
-    "cp": "67310",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "WASSELONNE",
     "cp": "67310",
     "dept": "67",
@@ -3426,20 +2952,8 @@
     "region": ""
   },
   {
-    "name": "WICKERSHEIM WILSHAUSEN",
-    "cp": "67270",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "WILDERSBACH",
     "cp": "67130",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "WILLGOTTHEIM",
-    "cp": "67370",
     "dept": "67",
     "region": ""
   },
@@ -3468,18 +2982,6 @@
     "region": ""
   },
   {
-    "name": "WINDSTEIN",
-    "cp": "67110",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "WINGEN",
-    "cp": "67510",
-    "dept": "67",
-    "region": ""
-  },
-  {
     "name": "WINGEN",
     "cp": "67510",
     "dept": "67",
@@ -3488,18 +2990,6 @@
   {
     "name": "WINGEN SUR MODER",
     "cp": "67290",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "WINGERSHEIM LES QUATRE BANS",
-    "cp": "67170",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "WINGERSHEIM LES QUATRE BANS",
-    "cp": "67170",
     "dept": "67",
     "region": ""
   },
@@ -3536,30 +3026,6 @@
   {
     "name": "WISCHES",
     "cp": "67130",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "WISCHES",
-    "cp": "67130",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "WISCHES",
-    "cp": "67130",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "WISSEMBOURG",
-    "cp": "67160",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "WISSEMBOURG",
-    "cp": "67160",
     "dept": "67",
     "region": ""
   },
@@ -3614,12 +3080,6 @@
   {
     "name": "WOLSCHHEIM",
     "cp": "67700",
-    "dept": "67",
-    "region": ""
-  },
-  {
-    "name": "WOLXHEIM",
-    "cp": "67120",
     "dept": "67",
     "region": ""
   },

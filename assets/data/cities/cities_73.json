@@ -24,36 +24,6 @@
     "region": ""
   },
   {
-    "name": "AIME LA PLAGNE",
-    "cp": "73210",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "AIME LA PLAGNE",
-    "cp": "73210",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "AIME LA PLAGNE",
-    "cp": "73210",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "AIME LA PLAGNE",
-    "cp": "73210",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "AIME LA PLAGNE",
-    "cp": "73210",
-    "dept": "73",
-    "region": ""
-  },
-  {
     "name": "AITON",
     "cp": "73220",
     "dept": "73",
@@ -174,12 +144,6 @@
     "region": ""
   },
   {
-    "name": "BEAUFORT",
-    "cp": "73270",
-    "dept": "73",
-    "region": ""
-  },
-  {
     "name": "BELLECOMBE EN BAUGES",
     "cp": "73340",
     "dept": "73",
@@ -230,18 +194,6 @@
   {
     "name": "BOURDEAU",
     "cp": "73370",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "BOURG ST MAURICE",
-    "cp": "73700",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "BOURG ST MAURICE",
-    "cp": "73700",
     "dept": "73",
     "region": ""
   },
@@ -408,12 +360,6 @@
     "region": ""
   },
   {
-    "name": "COURCHEVEL",
-    "cp": "73120",
-    "dept": "73",
-    "region": ""
-  },
-  {
     "name": "CREST VOLAND",
     "cp": "73590",
     "dept": "73",
@@ -474,42 +420,6 @@
     "region": ""
   },
   {
-    "name": "ENTRELACS",
-    "cp": "73410",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "ENTRELACS",
-    "cp": "73410",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "ENTRELACS",
-    "cp": "73410",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "ENTRELACS",
-    "cp": "73410",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "ENTRELACS",
-    "cp": "73410",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "ENTRELACS",
-    "cp": "73410",
-    "dept": "73",
-    "region": ""
-  },
-  {
     "name": "ENTREMONT LE VIEUX",
     "cp": "73670",
     "dept": "73",
@@ -536,12 +446,6 @@
   {
     "name": "FLUMET",
     "cp": "73590",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "FONTCOUVERTE LA TOUSSUIRE",
-    "cp": "73300",
     "dept": "73",
     "region": ""
   },
@@ -584,18 +488,6 @@
   {
     "name": "GILLY SUR ISERE",
     "cp": "73200",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "GRAND AIGUEBLANCHE",
-    "cp": "73260",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "GRAND AIGUEBLANCHE",
-    "cp": "73260",
     "dept": "73",
     "region": ""
   },
@@ -756,48 +648,6 @@
     "region": ""
   },
   {
-    "name": "LA LECHERE",
-    "cp": "73260",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LA LECHERE",
-    "cp": "73260",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LA LECHERE",
-    "cp": "73260",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LA LECHERE",
-    "cp": "73260",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LA LECHERE",
-    "cp": "73260",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LA LECHERE",
-    "cp": "73260",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LA LECHERE",
-    "cp": "73260",
-    "dept": "73",
-    "region": ""
-  },
-  {
     "name": "LA MOTTE EN BAUGES",
     "cp": "73340",
     "dept": "73",
@@ -806,30 +656,6 @@
   {
     "name": "LA MOTTE SERVOLEX",
     "cp": "73290",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LA PLAGNE TARENTAISE",
-    "cp": "73210",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LA PLAGNE TARENTAISE",
-    "cp": "73210",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LA PLAGNE TARENTAISE",
-    "cp": "73210",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LA PLAGNE TARENTAISE",
-    "cp": "73210",
     "dept": "73",
     "region": ""
   },
@@ -854,24 +680,6 @@
   {
     "name": "LA THUILE",
     "cp": "73190",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LA TOUR EN MAURIENNE",
-    "cp": "73300",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LA TOUR EN MAURIENNE",
-    "cp": "73300",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LA TOUR EN MAURIENNE",
-    "cp": "73300",
     "dept": "73",
     "region": ""
   },
@@ -948,32 +756,8 @@
     "region": ""
   },
   {
-    "name": "LES ALLUES",
-    "cp": "73550",
-    "dept": "73",
-    "region": ""
-  },
-  {
     "name": "LES AVANCHERS VALMOREL",
     "cp": "73260",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LES BELLEVILLE",
-    "cp": "73440",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LES BELLEVILLE",
-    "cp": "73440",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LES BELLEVILLE",
-    "cp": "73440",
     "dept": "73",
     "region": ""
   },
@@ -998,12 +782,6 @@
   {
     "name": "LES CHAVANNES EN MAURIENNE",
     "cp": "73660",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "LES DESERTS",
-    "cp": "73230",
     "dept": "73",
     "region": ""
   },
@@ -1124,12 +902,6 @@
   {
     "name": "MONTMELIAN",
     "cp": "73800",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "MONTRICHER ALBANNE",
-    "cp": "73870",
     "dept": "73",
     "region": ""
   },
@@ -1266,12 +1038,6 @@
     "region": ""
   },
   {
-    "name": "PORTE DE SAVOIE",
-    "cp": "73800",
-    "dept": "73",
-    "region": ""
-  },
-  {
     "name": "PRALOGNAN LA VANOISE",
     "cp": "73710",
     "dept": "73",
@@ -1322,12 +1088,6 @@
   {
     "name": "RUFFIEUX",
     "cp": "73310",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "SALINS FONTAINE",
-    "cp": "73600",
     "dept": "73",
     "region": ""
   },
@@ -1446,30 +1206,6 @@
     "region": ""
   },
   {
-    "name": "ST FRANCOIS LONGCHAMP",
-    "cp": "73130",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "ST FRANCOIS LONGCHAMP",
-    "cp": "73130",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "ST GENIX LES VILLAGES",
-    "cp": "73240",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "ST GENIX LES VILLAGES",
-    "cp": "73240",
-    "dept": "73",
-    "region": ""
-  },
-  {
     "name": "ST GENIX LES VILLAGES",
     "cp": "73240",
     "dept": "73",
@@ -1566,26 +1302,8 @@
     "region": ""
   },
   {
-    "name": "ST MICHEL DE MAURIENNE",
-    "cp": "73140",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "ST MICHEL DE MAURIENNE",
-    "cp": "73140",
-    "dept": "73",
-    "region": ""
-  },
-  {
     "name": "ST NICOLAS LA CHAPELLE",
     "cp": "73590",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "ST OFFENGE",
-    "cp": "73100",
     "dept": "73",
     "region": ""
   },
@@ -1789,31 +1507,7 @@
   },
   {
     "name": "VAL CENIS",
-    "cp": "73480",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "VAL CENIS",
     "cp": "73500",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "VAL CENIS",
-    "cp": "73500",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "VAL CENIS",
-    "cp": "73500",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "VAL D ARC",
-    "cp": "73220",
     "dept": "73",
     "region": ""
   },
@@ -1826,12 +1520,6 @@
   {
     "name": "VAL D ISERE",
     "cp": "73150",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "VALGELON LA ROCHETTE",
-    "cp": "73110",
     "dept": "73",
     "region": ""
   },
@@ -1904,12 +1592,6 @@
   {
     "name": "VILLARD SUR DORON",
     "cp": "73270",
-    "dept": "73",
-    "region": ""
-  },
-  {
-    "name": "VILLAREMBERT",
-    "cp": "73300",
     "dept": "73",
     "region": ""
   },

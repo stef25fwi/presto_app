@@ -30,24 +30,6 @@
     "region": ""
   },
   {
-    "name": "BOUILLANTE",
-    "cp": "97125",
-    "dept": "971",
-    "region": ""
-  },
-  {
-    "name": "CAPESTERRE BELLE EAU",
-    "cp": "97130",
-    "dept": "971",
-    "region": ""
-  },
-  {
-    "name": "CAPESTERRE BELLE EAU",
-    "cp": "97130",
-    "dept": "971",
-    "region": ""
-  },
-  {
     "name": "CAPESTERRE BELLE EAU",
     "cp": "97130",
     "dept": "971",
@@ -114,12 +96,6 @@
     "region": ""
   },
   {
-    "name": "LES ABYMES",
-    "cp": "97142",
-    "dept": "971",
-    "region": ""
-  },
-  {
     "name": "MORNE A L EAU",
     "cp": "97111",
     "dept": "971",
@@ -128,12 +104,6 @@
   {
     "name": "PETIT BOURG",
     "cp": "97170",
-    "dept": "971",
-    "region": ""
-  },
-  {
-    "name": "PETIT CANAL",
-    "cp": "97131",
     "dept": "971",
     "region": ""
   },
@@ -188,12 +158,6 @@
   {
     "name": "ST MARTIN",
     "cp": "97150",
-    "dept": "971",
-    "region": ""
-  },
-  {
-    "name": "STE ANNE",
-    "cp": "97180",
     "dept": "971",
     "region": ""
   },

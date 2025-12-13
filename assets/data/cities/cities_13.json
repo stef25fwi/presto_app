@@ -19,12 +19,6 @@
   },
   {
     "name": "AIX EN PROVENCE",
-    "cp": "13100",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "AIX EN PROVENCE",
     "cp": "13290",
     "dept": "13",
     "region": ""
@@ -38,18 +32,6 @@
   {
     "name": "ALLAUCH",
     "cp": "13190",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "ALLAUCH",
-    "cp": "13190",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "ALLEINS",
-    "cp": "13980",
     "dept": "13",
     "region": ""
   },
@@ -85,25 +67,7 @@
   },
   {
     "name": "ARLES",
-    "cp": "13200",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "ARLES",
     "cp": "13280",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "ARLES",
-    "cp": "13280",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "AUBAGNE",
-    "cp": "13400",
     "dept": "13",
     "region": ""
   },
@@ -150,12 +114,6 @@
     "region": ""
   },
   {
-    "name": "BELCODENE",
-    "cp": "13720",
-    "dept": "13",
-    "region": ""
-  },
-  {
     "name": "BERRE L ETANG",
     "cp": "13130",
     "dept": "13",
@@ -186,12 +144,6 @@
     "region": ""
   },
   {
-    "name": "CABRIES",
-    "cp": "13480",
-    "dept": "13",
-    "region": ""
-  },
-  {
     "name": "CADOLIVE",
     "cp": "13950",
     "dept": "13",
@@ -200,12 +152,6 @@
   {
     "name": "CARNOUX EN PROVENCE",
     "cp": "13470",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "CARRY LE ROUET",
-    "cp": "13620",
     "dept": "13",
     "region": ""
   },
@@ -236,12 +182,6 @@
   {
     "name": "CHATEAUNEUF LE ROUGE",
     "cp": "13790",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "CHATEAUNEUF LES MARTIGUES",
-    "cp": "13220",
     "dept": "13",
     "region": ""
   },
@@ -288,12 +228,6 @@
     "region": ""
   },
   {
-    "name": "ENSUES LA REDONNE",
-    "cp": "13820",
-    "dept": "13",
-    "region": ""
-  },
-  {
     "name": "EYGALIERES",
     "cp": "13810",
     "dept": "13",
@@ -330,30 +264,6 @@
     "region": ""
   },
   {
-    "name": "FUVEAU",
-    "cp": "13710",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "FUVEAU",
-    "cp": "13710",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "GARDANNE",
-    "cp": "13120",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "GARDANNE",
-    "cp": "13120",
-    "dept": "13",
-    "region": ""
-  },
-  {
     "name": "GARDANNE",
     "cp": "13120",
     "dept": "13",
@@ -362,12 +272,6 @@
   {
     "name": "GEMENOS",
     "cp": "13420",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "GIGNAC LA NERTHE",
-    "cp": "13180",
     "dept": "13",
     "region": ""
   },
@@ -426,24 +330,6 @@
     "region": ""
   },
   {
-    "name": "LA BOUILLADISSE",
-    "cp": "13720",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "LA BOUILLADISSE",
-    "cp": "13720",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "LA BOUILLADISSE",
-    "cp": "13720",
-    "dept": "13",
-    "region": ""
-  },
-  {
     "name": "LA CIOTAT",
     "cp": "13600",
     "dept": "13",
@@ -458,12 +344,6 @@
   {
     "name": "LA FARE LES OLIVIERS",
     "cp": "13580",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "LA PENNE SUR HUVEAUNE",
-    "cp": "13821",
     "dept": "13",
     "region": ""
   },
@@ -510,18 +390,6 @@
     "region": ""
   },
   {
-    "name": "LE ROVE",
-    "cp": "13740",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "LE ROVE",
-    "cp": "13740",
-    "dept": "13",
-    "region": ""
-  },
-  {
     "name": "LE THOLONET",
     "cp": "13100",
     "dept": "13",
@@ -540,26 +408,8 @@
     "region": ""
   },
   {
-    "name": "LES PENNES MIRABEAU",
-    "cp": "13170",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "LES PENNES MIRABEAU",
-    "cp": "13170",
-    "dept": "13",
-    "region": ""
-  },
-  {
     "name": "MAILLANE",
     "cp": "13910",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "MALLEMORT",
-    "cp": "13370",
     "dept": "13",
     "region": ""
   },
@@ -624,30 +474,6 @@
     "region": ""
   },
   {
-    "name": "MARSEILLE 08",
-    "cp": "13008",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "MARSEILLE 08",
-    "cp": "13008",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "MARSEILLE 09",
-    "cp": "13009",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "MARSEILLE 09",
-    "cp": "13009",
-    "dept": "13",
-    "region": ""
-  },
-  {
     "name": "MARSEILLE 09",
     "cp": "13009",
     "dept": "13",
@@ -666,44 +492,8 @@
     "region": ""
   },
   {
-    "name": "MARSEILLE 11",
-    "cp": "13011",
-    "dept": "13",
-    "region": ""
-  },
-  {
     "name": "MARSEILLE 12",
     "cp": "13012",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "MARSEILLE 13",
-    "cp": "13013",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "MARSEILLE 13",
-    "cp": "13013",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "MARSEILLE 13",
-    "cp": "13013",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "MARSEILLE 13",
-    "cp": "13013",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "MARSEILLE 13",
-    "cp": "13013",
     "dept": "13",
     "region": ""
   },
@@ -732,32 +522,8 @@
     "region": ""
   },
   {
-    "name": "MARSEILLE 16",
-    "cp": "13016",
-    "dept": "13",
-    "region": ""
-  },
-  {
     "name": "MARTIGUES",
     "cp": "13117",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "MARTIGUES",
-    "cp": "13500",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "MARTIGUES",
-    "cp": "13500",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "MARTIGUES",
-    "cp": "13500",
     "dept": "13",
     "region": ""
   },
@@ -822,12 +588,6 @@
     "region": ""
   },
   {
-    "name": "NOVES",
-    "cp": "13550",
-    "dept": "13",
-    "region": ""
-  },
-  {
     "name": "ORGON",
     "cp": "13660",
     "dept": "13",
@@ -842,12 +602,6 @@
   {
     "name": "PELISSANNE",
     "cp": "13330",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "PEYNIER",
-    "cp": "13790",
     "dept": "13",
     "region": ""
   },
@@ -900,12 +654,6 @@
     "region": ""
   },
   {
-    "name": "PUYLOUBIER",
-    "cp": "13114",
-    "dept": "13",
-    "region": ""
-  },
-  {
     "name": "RIBOUX",
     "cp": "13780",
     "dept": "13",
@@ -932,24 +680,6 @@
   {
     "name": "ROQUEFORT LA BEDOULE",
     "cp": "13830",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "ROQUEFORT LA BEDOULE",
-    "cp": "13830",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "ROQUEVAIRE",
-    "cp": "13360",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "ROQUEVAIRE",
-    "cp": "13360",
     "dept": "13",
     "region": ""
   },
@@ -986,12 +716,6 @@
   {
     "name": "SENAS",
     "cp": "13560",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "SEPTEMES LES VALLONS",
-    "cp": "13240",
     "dept": "13",
     "region": ""
   },
@@ -1104,12 +828,6 @@
     "region": ""
   },
   {
-    "name": "TRETS",
-    "cp": "13530",
-    "dept": "13",
-    "region": ""
-  },
-  {
     "name": "VAUVENARGUES",
     "cp": "13126",
     "dept": "13",
@@ -1124,12 +842,6 @@
   {
     "name": "VENELLES",
     "cp": "13770",
-    "dept": "13",
-    "region": ""
-  },
-  {
-    "name": "VENTABREN",
-    "cp": "13122",
     "dept": "13",
     "region": ""
   },

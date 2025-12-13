@@ -427,18 +427,6 @@
   },
   {
     "name": "CAP D ASTARAC",
-    "cp": "32140",
-    "dept": "32",
-    "region": ""
-  },
-  {
-    "name": "CAP D ASTARAC",
-    "cp": "32420",
-    "dept": "32",
-    "region": ""
-  },
-  {
-    "name": "CAP D ASTARAC",
     "cp": "32420",
     "dept": "32",
     "region": ""
@@ -572,12 +560,6 @@
   {
     "name": "CAUSSENS",
     "cp": "32100",
-    "dept": "32",
-    "region": ""
-  },
-  {
-    "name": "CAZAUBON",
-    "cp": "32150",
     "dept": "32",
     "region": ""
   },
@@ -1232,12 +1214,6 @@
   {
     "name": "LAYMONT",
     "cp": "32220",
-    "dept": "32",
-    "region": ""
-  },
-  {
-    "name": "LE BROUILH MONBERT",
-    "cp": "32350",
     "dept": "32",
     "region": ""
   },
@@ -2070,12 +2046,6 @@
     "region": ""
   },
   {
-    "name": "RISCLE",
-    "cp": "32400",
-    "dept": "32",
-    "region": ""
-  },
-  {
     "name": "ROQUEBRUNE",
     "cp": "32190",
     "dept": "32",
@@ -2228,12 +2198,6 @@
   {
     "name": "SEGOUFIELLE",
     "cp": "32600",
-    "dept": "32",
-    "region": ""
-  },
-  {
-    "name": "SEISSAN",
-    "cp": "32260",
     "dept": "32",
     "region": ""
   },
@@ -2762,12 +2726,6 @@
   {
     "name": "VERLUS",
     "cp": "32400",
-    "dept": "32",
-    "region": ""
-  },
-  {
-    "name": "VIC FEZENSAC",
-    "cp": "32190",
     "dept": "32",
     "region": ""
   },

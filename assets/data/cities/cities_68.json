@@ -66,12 +66,6 @@
     "region": ""
   },
   {
-    "name": "ASPACH MICHELBACH",
-    "cp": "68700",
-    "dept": "68",
-    "region": ""
-  },
-  {
     "name": "ATTENSCHWILLER",
     "cp": "68220",
     "dept": "68",
@@ -108,12 +102,6 @@
     "region": ""
   },
   {
-    "name": "BALSCHWILLER",
-    "cp": "68210",
-    "dept": "68",
-    "region": ""
-  },
-  {
     "name": "BALTZENHEIM",
     "cp": "68320",
     "dept": "68",
@@ -122,12 +110,6 @@
   {
     "name": "BANTZENHEIM",
     "cp": "68490",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "BARTENHEIM",
-    "cp": "68870",
     "dept": "68",
     "region": ""
   },
@@ -194,12 +176,6 @@
   {
     "name": "BERGHOLTZZELL",
     "cp": "68500",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "BERNWILLER",
-    "cp": "68210",
     "dept": "68",
     "region": ""
   },
@@ -326,12 +302,6 @@
   {
     "name": "BRUEBACH",
     "cp": "68440",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "BRUNSTATT DIDENHEIM",
-    "cp": "68350",
     "dept": "68",
     "region": ""
   },
@@ -528,12 +498,6 @@
     "region": ""
   },
   {
-    "name": "FELLERING",
-    "cp": "68470",
-    "dept": "68",
-    "region": ""
-  },
-  {
     "name": "FERRETTE",
     "cp": "68480",
     "dept": "68",
@@ -626,12 +590,6 @@
   {
     "name": "GILDWILLER",
     "cp": "68210",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "GOLDBACH ALTENBACH",
-    "cp": "68760",
     "dept": "68",
     "region": ""
   },
@@ -858,12 +816,6 @@
     "region": ""
   },
   {
-    "name": "HORBOURG WIHR",
-    "cp": "68180",
-    "dept": "68",
-    "region": ""
-  },
-  {
     "name": "HOUSSEN",
     "cp": "68125",
     "dept": "68",
@@ -918,24 +870,6 @@
     "region": ""
   },
   {
-    "name": "ILLTAL",
-    "cp": "68960",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "ILLTAL",
-    "cp": "68960",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "ILLZACH",
-    "cp": "68110",
-    "dept": "68",
-    "region": ""
-  },
-  {
     "name": "ILLZACH",
     "cp": "68110",
     "dept": "68",
@@ -986,24 +920,6 @@
   {
     "name": "KAYSERSBERG VIGNOBLE",
     "cp": "68240",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "KAYSERSBERG VIGNOBLE",
-    "cp": "68240",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "KAYSERSBERG VIGNOBLE",
-    "cp": "68240",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "KEMBS",
-    "cp": "68680",
     "dept": "68",
     "region": ""
   },
@@ -1092,24 +1008,6 @@
     "region": ""
   },
   {
-    "name": "LAUTENBACH",
-    "cp": "68610",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "LAUTENBACH",
-    "cp": "68610",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "LAUTENBACHZELL",
-    "cp": "68610",
-    "dept": "68",
-    "region": ""
-  },
-  {
     "name": "LAUTENBACHZELL",
     "cp": "68610",
     "dept": "68",
@@ -1124,12 +1022,6 @@
   {
     "name": "LE BONHOMME",
     "cp": "68650",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "LE HAUT SOULTZBACH",
-    "cp": "68780",
     "dept": "68",
     "region": ""
   },
@@ -1266,12 +1158,6 @@
     "region": ""
   },
   {
-    "name": "MASEVAUX NIEDERBRUCK",
-    "cp": "68290",
-    "dept": "68",
-    "region": ""
-  },
-  {
     "name": "MERTZEN",
     "cp": "68210",
     "dept": "68",
@@ -1362,20 +1248,8 @@
     "region": ""
   },
   {
-    "name": "MOOSLARGUE",
-    "cp": "68580",
-    "dept": "68",
-    "region": ""
-  },
-  {
     "name": "MORSCHWILLER LE BAS",
     "cp": "68790",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "MUESPACH",
-    "cp": "68640",
     "dept": "68",
     "region": ""
   },
@@ -1400,18 +1274,6 @@
   {
     "name": "MULHOUSE",
     "cp": "68100",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "MULHOUSE",
-    "cp": "68200",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "MULHOUSE",
-    "cp": "68200",
     "dept": "68",
     "region": ""
   },
@@ -1598,12 +1460,6 @@
   {
     "name": "PFETTERHOUSE",
     "cp": "68480",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "PORTE DU RIED",
-    "cp": "68320",
     "dept": "68",
     "region": ""
   },
@@ -1914,18 +1770,6 @@
     "region": ""
   },
   {
-    "name": "SOULTZMATT",
-    "cp": "68570",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "SPECHBACH",
-    "cp": "68720",
-    "dept": "68",
-    "region": ""
-  },
-  {
     "name": "SPECHBACH",
     "cp": "68720",
     "dept": "68",
@@ -1944,12 +1788,6 @@
     "region": ""
   },
   {
-    "name": "ST BERNARD",
-    "cp": "68720",
-    "dept": "68",
-    "region": ""
-  },
-  {
     "name": "ST COSME",
     "cp": "68210",
     "dept": "68",
@@ -1958,18 +1796,6 @@
   {
     "name": "ST HIPPOLYTE",
     "cp": "68590",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "ST LOUIS",
-    "cp": "68300",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "ST LOUIS",
-    "cp": "68300",
     "dept": "68",
     "region": ""
   },
@@ -2000,12 +1826,6 @@
   {
     "name": "STE CROIX EN PLAINE",
     "cp": "68127",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "STE MARIE AUX MINES",
-    "cp": "68160",
     "dept": "68",
     "region": ""
   },
@@ -2150,12 +1970,6 @@
   {
     "name": "URSCHENHEIM",
     "cp": "68320",
-    "dept": "68",
-    "region": ""
-  },
-  {
-    "name": "VALDIEU LUTRAN",
-    "cp": "68210",
     "dept": "68",
     "region": ""
   },

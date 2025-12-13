@@ -60,12 +60,6 @@
     "region": ""
   },
   {
-    "name": "AICIRITS CAMOU SUHAST",
-    "cp": "64120",
-    "dept": "64",
-    "region": ""
-  },
-  {
     "name": "AINCILLE",
     "cp": "64220",
     "dept": "64",
@@ -116,12 +110,6 @@
   {
     "name": "AMOROTS SUCCOS",
     "cp": "64120",
-    "dept": "64",
-    "region": ""
-  },
-  {
-    "name": "ANCE FEAS",
-    "cp": "64570",
     "dept": "64",
     "region": ""
   },
@@ -300,12 +288,6 @@
     "region": ""
   },
   {
-    "name": "AROUE ITHOROTS OLHAIBY",
-    "cp": "64120",
-    "dept": "64",
-    "region": ""
-  },
-  {
     "name": "ARRAST LARREBIEU",
     "cp": "64130",
     "dept": "64",
@@ -380,12 +362,6 @@
   {
     "name": "ARZACQ ARRAZIGUET",
     "cp": "64410",
-    "dept": "64",
-    "region": ""
-  },
-  {
-    "name": "ASASP ARROS",
-    "cp": "64660",
     "dept": "64",
     "region": ""
   },
@@ -684,12 +660,6 @@
     "region": ""
   },
   {
-    "name": "BERGOUEY VIELLENAVE",
-    "cp": "64270",
-    "dept": "64",
-    "region": ""
-  },
-  {
     "name": "BERNADETS",
     "cp": "64160",
     "dept": "64",
@@ -900,18 +870,6 @@
     "region": ""
   },
   {
-    "name": "BRUGES CAPBIS MIFAGET",
-    "cp": "64800",
-    "dept": "64",
-    "region": ""
-  },
-  {
-    "name": "BRUGES CAPBIS MIFAGET",
-    "cp": "64800",
-    "dept": "64",
-    "region": ""
-  },
-  {
     "name": "BUGNEIN",
     "cp": "64190",
     "dept": "64",
@@ -1010,12 +968,6 @@
   {
     "name": "CARRERE",
     "cp": "64160",
-    "dept": "64",
-    "region": ""
-  },
-  {
-    "name": "CARRESSE CASSABER",
-    "cp": "64270",
     "dept": "64",
     "region": ""
   },
@@ -1226,12 +1178,6 @@
   {
     "name": "DOUMY",
     "cp": "64450",
-    "dept": "64",
-    "region": ""
-  },
-  {
-    "name": "EAUX BONNES",
-    "cp": "64440",
     "dept": "64",
     "region": ""
   },
@@ -1800,18 +1746,6 @@
     "region": ""
   },
   {
-    "name": "LACQ",
-    "cp": "64170",
-    "dept": "64",
-    "region": ""
-  },
-  {
-    "name": "LACQ",
-    "cp": "64170",
-    "dept": "64",
-    "region": ""
-  },
-  {
     "name": "LAGOR",
     "cp": "64150",
     "dept": "64",
@@ -1922,18 +1856,6 @@
   {
     "name": "LARRIBAR SORHAPURU",
     "cp": "64120",
-    "dept": "64",
-    "region": ""
-  },
-  {
-    "name": "LARUNS",
-    "cp": "64440",
-    "dept": "64",
-    "region": ""
-  },
-  {
-    "name": "LARUNS",
-    "cp": "64440",
     "dept": "64",
     "region": ""
   },
@@ -2388,24 +2310,6 @@
     "region": ""
   },
   {
-    "name": "MONT",
-    "cp": "64300",
-    "dept": "64",
-    "region": ""
-  },
-  {
-    "name": "MONT",
-    "cp": "64300",
-    "dept": "64",
-    "region": ""
-  },
-  {
-    "name": "MONT",
-    "cp": "64300",
-    "dept": "64",
-    "region": ""
-  },
-  {
     "name": "MONT DISSE",
     "cp": "64330",
     "dept": "64",
@@ -2604,12 +2508,6 @@
     "region": ""
   },
   {
-    "name": "ORTHEZ",
-    "cp": "64300",
-    "dept": "64",
-    "region": ""
-  },
-  {
     "name": "OS MARSILLON",
     "cp": "64150",
     "dept": "64",
@@ -2660,12 +2558,6 @@
   {
     "name": "OUSSE",
     "cp": "64320",
-    "dept": "64",
-    "region": ""
-  },
-  {
-    "name": "OZENX MONTESTRUCQ",
-    "cp": "64300",
     "dept": "64",
     "region": ""
   },
@@ -3128,12 +3020,6 @@
   {
     "name": "ST MARTIN D ARBEROUE",
     "cp": "64640",
-    "dept": "64",
-    "region": ""
-  },
-  {
-    "name": "ST MARTIN D ARROSSA",
-    "cp": "64780",
     "dept": "64",
     "region": ""
   },

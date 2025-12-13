@@ -72,12 +72,6 @@
     "region": ""
   },
   {
-    "name": "BESSINES SUR GARTEMPE",
-    "cp": "87250",
-    "dept": "87",
-    "region": ""
-  },
-  {
     "name": "BEYNAC",
     "cp": "87700",
     "dept": "87",
@@ -128,12 +122,6 @@
   {
     "name": "BURGNAC",
     "cp": "87800",
-    "dept": "87",
-    "region": ""
-  },
-  {
-    "name": "BUSSIERE GALANT",
-    "cp": "87230",
     "dept": "87",
     "region": ""
   },
@@ -541,18 +529,6 @@
   },
   {
     "name": "LIMOGES",
-    "cp": "87100",
-    "dept": "87",
-    "region": ""
-  },
-  {
-    "name": "LIMOGES",
-    "cp": "87280",
-    "dept": "87",
-    "region": ""
-  },
-  {
-    "name": "LIMOGES",
     "cp": "87280",
     "dept": "87",
     "region": ""
@@ -589,12 +565,6 @@
   },
   {
     "name": "MAISONNAIS SUR TARDOIRE",
-    "cp": "87440",
-    "dept": "87",
-    "region": ""
-  },
-  {
-    "name": "MARVAL",
     "cp": "87440",
     "dept": "87",
     "region": ""
@@ -1039,12 +1009,6 @@
   },
   {
     "name": "ST PARDOUX LE LAC",
-    "cp": "87140",
-    "dept": "87",
-    "region": ""
-  },
-  {
-    "name": "ST PARDOUX LE LAC",
     "cp": "87250",
     "dept": "87",
     "region": ""
@@ -1076,12 +1040,6 @@
   {
     "name": "ST SORNIN LA MARCHE",
     "cp": "87210",
-    "dept": "87",
-    "region": ""
-  },
-  {
-    "name": "ST SORNIN LEULAC",
-    "cp": "87290",
     "dept": "87",
     "region": ""
   },
@@ -1176,24 +1134,6 @@
     "region": ""
   },
   {
-    "name": "VAL D ISSOIRE",
-    "cp": "87330",
-    "dept": "87",
-    "region": ""
-  },
-  {
-    "name": "VAL D OIRE ET GARTEMPE",
-    "cp": "87320",
-    "dept": "87",
-    "region": ""
-  },
-  {
-    "name": "VAL D OIRE ET GARTEMPE",
-    "cp": "87320",
-    "dept": "87",
-    "region": ""
-  },
-  {
     "name": "VAL D OIRE ET GARTEMPE",
     "cp": "87320",
     "dept": "87",
@@ -1226,12 +1166,6 @@
   {
     "name": "VERNEUIL SUR VIENNE",
     "cp": "87430",
-    "dept": "87",
-    "region": ""
-  },
-  {
-    "name": "VEYRAC",
-    "cp": "87520",
     "dept": "87",
     "region": ""
   },

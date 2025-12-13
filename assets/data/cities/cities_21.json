@@ -930,12 +930,6 @@
     "region": ""
   },
   {
-    "name": "CHAUME ET COURCHAMP",
-    "cp": "21610",
-    "dept": "21",
-    "region": ""
-  },
-  {
     "name": "CHAUME LES BAIGNEUX",
     "cp": "21450",
     "dept": "21",
@@ -1062,12 +1056,6 @@
     "region": ""
   },
   {
-    "name": "COLLONGES ET PREMIERES",
-    "cp": "21110",
-    "dept": "21",
-    "region": ""
-  },
-  {
     "name": "COLLONGES LES BEVY",
     "cp": "21220",
     "dept": "21",
@@ -1130,12 +1118,6 @@
   {
     "name": "CORGOLOIN",
     "cp": "21700",
-    "dept": "21",
-    "region": ""
-  },
-  {
-    "name": "CORMOT VAUCHIGNON",
-    "cp": "21340",
     "dept": "21",
     "region": ""
   },
@@ -1764,12 +1746,6 @@
     "region": ""
   },
   {
-    "name": "GRANCEY LE CHATEAU NEUVELLE",
-    "cp": "21580",
-    "dept": "21",
-    "region": ""
-  },
-  {
     "name": "GRANCEY SUR OURCE",
     "cp": "21570",
     "dept": "21",
@@ -2136,12 +2112,6 @@
     "region": ""
   },
   {
-    "name": "LONGEAULT PLUVAULT",
-    "cp": "21110",
-    "dept": "21",
-    "region": ""
-  },
-  {
     "name": "LONGECOURT EN PLAINE",
     "cp": "21110",
     "dept": "21",
@@ -2466,12 +2436,6 @@
     "region": ""
   },
   {
-    "name": "MESSIGNY ET VANTOUX",
-    "cp": "21380",
-    "dept": "21",
-    "region": ""
-  },
-  {
     "name": "MEUILLEY",
     "cp": "21700",
     "dept": "21",
@@ -2610,18 +2574,6 @@
     "region": ""
   },
   {
-    "name": "MONTIGNY MORNAY VILLENEUVE VINGEANNE",
-    "cp": "21610",
-    "dept": "21",
-    "region": ""
-  },
-  {
-    "name": "MONTIGNY MORNAY VILLENEUVE VINGEANNE",
-    "cp": "21610",
-    "dept": "21",
-    "region": ""
-  },
-  {
     "name": "MONTIGNY ST BARTHELEMY",
     "cp": "21390",
     "dept": "21",
@@ -2736,12 +2688,6 @@
     "region": ""
   },
   {
-    "name": "NEUILLY CRIMOLOIS",
-    "cp": "21800",
-    "dept": "21",
-    "region": ""
-  },
-  {
     "name": "NICEY",
     "cp": "21330",
     "dept": "21",
@@ -2780,12 +2726,6 @@
   {
     "name": "NOIRON SUR SEINE",
     "cp": "21400",
-    "dept": "21",
-    "region": ""
-  },
-  {
-    "name": "NOLAY",
-    "cp": "21340",
     "dept": "21",
     "region": ""
   },
@@ -3050,12 +2990,6 @@
   {
     "name": "PRECY SOUS THIL",
     "cp": "21390",
-    "dept": "21",
-    "region": ""
-  },
-  {
-    "name": "PREMEAUX PRISSEY",
-    "cp": "21700",
     "dept": "21",
     "region": ""
   },
@@ -3420,12 +3354,6 @@
     "region": ""
   },
   {
-    "name": "SOURCE SEINE",
-    "cp": "21690",
-    "dept": "21",
-    "region": ""
-  },
-  {
     "name": "SOUSSEY SUR BRIONNE",
     "cp": "21350",
     "dept": "21",
@@ -3672,20 +3600,8 @@
     "region": ""
   },
   {
-    "name": "STE MARIE SUR OUCHE",
-    "cp": "21410",
-    "dept": "21",
-    "region": ""
-  },
-  {
     "name": "STE SABINE",
     "cp": "21320",
-    "dept": "21",
-    "region": ""
-  },
-  {
-    "name": "SUSSEY",
-    "cp": "21430",
     "dept": "21",
     "region": ""
   },
@@ -3722,12 +3638,6 @@
   {
     "name": "TARSUL",
     "cp": "21120",
-    "dept": "21",
-    "region": ""
-  },
-  {
-    "name": "TART",
-    "cp": "21110",
     "dept": "21",
     "region": ""
   },
@@ -3912,20 +3822,8 @@
     "region": ""
   },
   {
-    "name": "VAL MONT",
-    "cp": "21340",
-    "dept": "21",
-    "region": ""
-  },
-  {
     "name": "VAL SUZON",
     "cp": "21121",
-    "dept": "21",
-    "region": ""
-  },
-  {
-    "name": "VALFORET",
-    "cp": "21220",
     "dept": "21",
     "region": ""
   },
@@ -3996,12 +3894,6 @@
     "region": ""
   },
   {
-    "name": "VENAREY LES LAUMES",
-    "cp": "21150",
-    "dept": "21",
-    "region": ""
-  },
-  {
     "name": "VERDONNET",
     "cp": "21330",
     "dept": "21",
@@ -4016,12 +3908,6 @@
   {
     "name": "VERNOT",
     "cp": "21120",
-    "dept": "21",
-    "region": ""
-  },
-  {
-    "name": "VERONNES",
-    "cp": "21260",
     "dept": "21",
     "region": ""
   },

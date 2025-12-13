@@ -48,12 +48,6 @@
     "region": ""
   },
   {
-    "name": "CHAMPIGNY SUR MARNE",
-    "cp": "94500",
-    "dept": "94",
-    "region": ""
-  },
-  {
     "name": "CHARENTON LE PONT",
     "cp": "94220",
     "dept": "94",
@@ -246,20 +240,8 @@
     "region": ""
   },
   {
-    "name": "SUCY EN BRIE",
-    "cp": "94370",
-    "dept": "94",
-    "region": ""
-  },
-  {
     "name": "THIAIS",
     "cp": "94320",
-    "dept": "94",
-    "region": ""
-  },
-  {
-    "name": "VALENTON",
-    "cp": "94460",
     "dept": "94",
     "region": ""
   },

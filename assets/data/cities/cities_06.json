@@ -18,26 +18,8 @@
     "region": ""
   },
   {
-    "name": "ANDON",
-    "cp": "06750",
-    "dept": "06",
-    "region": ""
-  },
-  {
     "name": "ANTIBES",
     "cp": "06160",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "ANTIBES",
-    "cp": "06160",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "ANTIBES",
-    "cp": "06600",
     "dept": "06",
     "region": ""
   },
@@ -158,12 +140,6 @@
   {
     "name": "CABRIS",
     "cp": "06530",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "CAGNES SUR MER",
-    "cp": "06800",
     "dept": "06",
     "region": ""
   },
@@ -336,12 +312,6 @@
     "region": ""
   },
   {
-    "name": "ENTRAUNES",
-    "cp": "06470",
-    "dept": "06",
-    "region": ""
-  },
-  {
     "name": "ESCRAGNOLLES",
     "cp": "06460",
     "dept": "06",
@@ -392,18 +362,6 @@
   {
     "name": "GOURDON",
     "cp": "06620",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "GRASSE",
-    "cp": "06130",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "GRASSE",
-    "cp": "06130",
     "dept": "06",
     "region": ""
   },
@@ -552,12 +510,6 @@
     "region": ""
   },
   {
-    "name": "LE CANNET",
-    "cp": "06110",
-    "dept": "06",
-    "region": ""
-  },
-  {
     "name": "LE MAS",
     "cp": "06910",
     "dept": "06",
@@ -594,12 +546,6 @@
     "region": ""
   },
   {
-    "name": "LEVENS",
-    "cp": "06670",
-    "dept": "06",
-    "region": ""
-  },
-  {
     "name": "LIEUCHE",
     "cp": "06260",
     "dept": "06",
@@ -612,20 +558,8 @@
     "region": ""
   },
   {
-    "name": "LUCERAM",
-    "cp": "06440",
-    "dept": "06",
-    "region": ""
-  },
-  {
     "name": "MALAUSSENE",
     "cp": "06710",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "MANDELIEU LA NAPOULE",
-    "cp": "06210",
     "dept": "06",
     "region": ""
   },
@@ -691,18 +625,6 @@
   },
   {
     "name": "NICE",
-    "cp": "06200",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "NICE",
-    "cp": "06200",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "NICE",
     "cp": "06300",
     "dept": "06",
     "region": ""
@@ -726,20 +648,8 @@
     "region": ""
   },
   {
-    "name": "PEILLE",
-    "cp": "06440",
-    "dept": "06",
-    "region": ""
-  },
-  {
     "name": "PEILLON",
     "cp": "06440",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "PEONE",
-    "cp": "06470",
     "dept": "06",
     "region": ""
   },
@@ -810,12 +720,6 @@
     "region": ""
   },
   {
-    "name": "ROQUEBRUNE CAP MARTIN",
-    "cp": "06190",
-    "dept": "06",
-    "region": ""
-  },
-  {
     "name": "ROQUEFORT LES PINS",
     "cp": "06330",
     "dept": "06",
@@ -854,12 +758,6 @@
   {
     "name": "SAUZE",
     "cp": "06470",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "SERANON",
-    "cp": "06750",
     "dept": "06",
     "region": ""
   },
@@ -930,12 +828,6 @@
     "region": ""
   },
   {
-    "name": "ST ETIENNE DE TINEE",
-    "cp": "06660",
-    "dept": "06",
-    "region": ""
-  },
-  {
     "name": "ST JEAN CAP FERRAT",
     "cp": "06230",
     "dept": "06",
@@ -978,12 +870,6 @@
     "region": ""
   },
   {
-    "name": "ST MARTIN VESUBIE",
-    "cp": "06450",
-    "dept": "06",
-    "region": ""
-  },
-  {
     "name": "ST PAUL DE VENCE",
     "cp": "06570",
     "dept": "06",
@@ -1016,18 +902,6 @@
   {
     "name": "TENDE",
     "cp": "06430",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "TENDE",
-    "cp": "06430",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "THEOULE SUR MER",
-    "cp": "06590",
     "dept": "06",
     "region": ""
   },
@@ -1092,18 +966,6 @@
     "region": ""
   },
   {
-    "name": "UTELLE",
-    "cp": "06450",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "VALBONNE",
-    "cp": "06560",
-    "dept": "06",
-    "region": ""
-  },
-  {
     "name": "VALBONNE",
     "cp": "06560",
     "dept": "06",
@@ -1118,12 +980,6 @@
   {
     "name": "VALDEROURE",
     "cp": "06750",
-    "dept": "06",
-    "region": ""
-  },
-  {
-    "name": "VALLAURIS",
-    "cp": "06220",
     "dept": "06",
     "region": ""
   },

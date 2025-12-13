@@ -24,18 +24,6 @@
     "region": ""
   },
   {
-    "name": "ALBERTACCE",
-    "cp": "20224",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "ALERIA",
-    "cp": "20270",
-    "dept": "2B",
-    "region": ""
-  },
-  {
     "name": "ALERIA",
     "cp": "20270",
     "dept": "2B",
@@ -109,19 +97,7 @@
   },
   {
     "name": "BASTIA",
-    "cp": "20200",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "BASTIA",
     "cp": "20600",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "BELGODERE",
-    "cp": "20226",
     "dept": "2B",
     "region": ""
   },
@@ -144,12 +120,6 @@
     "region": ""
   },
   {
-    "name": "BIGUGLIA",
-    "cp": "20620",
-    "dept": "2B",
-    "region": ""
-  },
-  {
     "name": "BISINCHI",
     "cp": "20235",
     "dept": "2B",
@@ -158,24 +128,6 @@
   {
     "name": "BORGO",
     "cp": "20290",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "BORGO",
-    "cp": "20290",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "BRANDO",
-    "cp": "20222",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "BRANDO",
-    "cp": "20222",
     "dept": "2B",
     "region": ""
   },
@@ -200,12 +152,6 @@
   {
     "name": "CALACUCCIA",
     "cp": "20224",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "CALENZANA",
-    "cp": "20214",
     "dept": "2B",
     "region": ""
   },
@@ -384,12 +330,6 @@
     "region": ""
   },
   {
-    "name": "CERVIONE",
-    "cp": "20221",
-    "dept": "2B",
-    "region": ""
-  },
-  {
     "name": "CHIATRA",
     "cp": "20230",
     "dept": "2B",
@@ -522,18 +462,6 @@
     "region": ""
   },
   {
-    "name": "GHISONACCIA",
-    "cp": "20240",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "GHISONACCIA",
-    "cp": "20240",
-    "dept": "2B",
-    "region": ""
-  },
-  {
     "name": "GHISONI",
     "cp": "20227",
     "dept": "2B",
@@ -548,18 +476,6 @@
   {
     "name": "GIUNCAGGIO",
     "cp": "20251",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "ISOLACCIO DI FIUMORBO",
-    "cp": "20243",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "ISOLACCIO DI FIUMORBO",
-    "cp": "20243",
     "dept": "2B",
     "region": ""
   },
@@ -612,12 +528,6 @@
     "region": ""
   },
   {
-    "name": "LINGUIZZETTA",
-    "cp": "20230",
-    "dept": "2B",
-    "region": ""
-  },
-  {
     "name": "LORETO DI CASINCA",
     "cp": "20215",
     "dept": "2B",
@@ -636,18 +546,6 @@
     "region": ""
   },
   {
-    "name": "LUCCIANA",
-    "cp": "20290",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "LUCCIANA",
-    "cp": "20290",
-    "dept": "2B",
-    "region": ""
-  },
-  {
     "name": "LUGO DI NAZZA",
     "cp": "20240",
     "dept": "2B",
@@ -656,12 +554,6 @@
   {
     "name": "LUMIO",
     "cp": "20260",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "LURI",
-    "cp": "20228",
     "dept": "2B",
     "region": ""
   },
@@ -738,32 +630,8 @@
     "region": ""
   },
   {
-    "name": "MONTEGROSSO",
-    "cp": "20214",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "MONTEGROSSO",
-    "cp": "20214",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "MONTEGROSSO",
-    "cp": "20214",
-    "dept": "2B",
-    "region": ""
-  },
-  {
     "name": "MONTICELLO",
     "cp": "20220",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "MOROSAGLIA",
-    "cp": "20218",
     "dept": "2B",
     "region": ""
   },
@@ -888,12 +756,6 @@
     "region": ""
   },
   {
-    "name": "OMESSA",
-    "cp": "20236",
-    "dept": "2B",
-    "region": ""
-  },
-  {
     "name": "ORTALE",
     "cp": "20234",
     "dept": "2B",
@@ -938,12 +800,6 @@
   {
     "name": "PENTA ACQUATELLA",
     "cp": "20290",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "PENTA DI CASINCA",
-    "cp": "20213",
     "dept": "2B",
     "region": ""
   },
@@ -1152,24 +1008,6 @@
     "region": ""
   },
   {
-    "name": "PRUNELLI DI FIUMORBO",
-    "cp": "20243",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "PRUNELLI DI FIUMORBO",
-    "cp": "20243",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "PRUNO",
-    "cp": "20213",
-    "dept": "2B",
-    "region": ""
-  },
-  {
     "name": "PRUNO",
     "cp": "20213",
     "dept": "2B",
@@ -1272,12 +1110,6 @@
     "region": ""
   },
   {
-    "name": "SAN GIULIANO",
-    "cp": "20230",
-    "dept": "2B",
-    "region": ""
-  },
-  {
     "name": "SAN LORENZO",
     "cp": "20244",
     "dept": "2B",
@@ -1286,24 +1118,6 @@
   {
     "name": "SAN MARTINO DI LOTA",
     "cp": "20200",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "SAN MARTINO DI LOTA",
-    "cp": "20200",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "SAN NICOLAO",
-    "cp": "20230",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "SAN NICOLAO",
-    "cp": "20230",
     "dept": "2B",
     "region": ""
   },
@@ -1340,12 +1154,6 @@
   {
     "name": "SANTA LUCIA DI MORIANI",
     "cp": "20230",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "SANTA MARIA DI LOTA",
-    "cp": "20200",
     "dept": "2B",
     "region": ""
   },
@@ -1440,12 +1248,6 @@
     "region": ""
   },
   {
-    "name": "SORBO OCAGNANO",
-    "cp": "20213",
-    "dept": "2B",
-    "region": ""
-  },
-  {
     "name": "SORIO",
     "cp": "20246",
     "dept": "2B",
@@ -1484,18 +1286,6 @@
   {
     "name": "TALASANI",
     "cp": "20230",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "TALASANI",
-    "cp": "20230",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "TALLONE",
-    "cp": "20270",
     "dept": "2B",
     "region": ""
   },
@@ -1590,18 +1380,6 @@
     "region": ""
   },
   {
-    "name": "VENTISERI",
-    "cp": "20240",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "VENTISERI",
-    "cp": "20240",
-    "dept": "2B",
-    "region": ""
-  },
-  {
     "name": "VENZOLASCA",
     "cp": "20215",
     "dept": "2B",
@@ -1646,24 +1424,6 @@
   {
     "name": "VIVARIO",
     "cp": "20219",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "VIVARIO",
-    "cp": "20219",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "VIVARIO",
-    "cp": "20219",
-    "dept": "2B",
-    "region": ""
-  },
-  {
-    "name": "VOLPAJOLA",
-    "cp": "20290",
     "dept": "2B",
     "region": ""
   },

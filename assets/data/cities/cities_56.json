@@ -30,12 +30,6 @@
     "region": ""
   },
   {
-    "name": "ARZON",
-    "cp": "56640",
-    "dept": "56",
-    "region": ""
-  },
-  {
     "name": "AUGAN",
     "cp": "56800",
     "dept": "56",
@@ -198,12 +192,6 @@
     "region": ""
   },
   {
-    "name": "CARENTOIR",
-    "cp": "56910",
-    "dept": "56",
-    "region": ""
-  },
-  {
     "name": "CARNAC",
     "cp": "56340",
     "dept": "56",
@@ -300,18 +288,6 @@
     "region": ""
   },
   {
-    "name": "EVELLYS",
-    "cp": "56500",
-    "dept": "56",
-    "region": ""
-  },
-  {
-    "name": "EVELLYS",
-    "cp": "56500",
-    "dept": "56",
-    "region": ""
-  },
-  {
     "name": "EVRIGUET",
     "cp": "56490",
     "dept": "56",
@@ -320,12 +296,6 @@
   {
     "name": "FEREL",
     "cp": "56130",
-    "dept": "56",
-    "region": ""
-  },
-  {
-    "name": "FORGES DE LANOUEE",
-    "cp": "56120",
     "dept": "56",
     "region": ""
   },
@@ -398,12 +368,6 @@
   {
     "name": "GUENIN",
     "cp": "56150",
-    "dept": "56",
-    "region": ""
-  },
-  {
-    "name": "GUER",
-    "cp": "56380",
     "dept": "56",
     "region": ""
   },
@@ -530,18 +494,6 @@
   {
     "name": "LA CROIX HELLEAN",
     "cp": "56120",
-    "dept": "56",
-    "region": ""
-  },
-  {
-    "name": "LA GACILLY",
-    "cp": "56200",
-    "dept": "56",
-    "region": ""
-  },
-  {
-    "name": "LA GACILLY",
-    "cp": "56200",
     "dept": "56",
     "region": ""
   },
@@ -1038,12 +990,6 @@
     "region": ""
   },
   {
-    "name": "PLOERMEL",
-    "cp": "56800",
-    "dept": "56",
-    "region": ""
-  },
-  {
     "name": "PLOUAY",
     "cp": "56240",
     "dept": "56",
@@ -1112,12 +1058,6 @@
   {
     "name": "PLUNERET",
     "cp": "56400",
-    "dept": "56",
-    "region": ""
-  },
-  {
-    "name": "PLUVIGNER",
-    "cp": "56330",
     "dept": "56",
     "region": ""
   },
@@ -1214,18 +1154,6 @@
   {
     "name": "ROCHEFORT EN TERRE",
     "cp": "56220",
-    "dept": "56",
-    "region": ""
-  },
-  {
-    "name": "ROHAN",
-    "cp": "56580",
-    "dept": "56",
-    "region": ""
-  },
-  {
-    "name": "ROHAN",
-    "cp": "56580",
     "dept": "56",
     "region": ""
   },
@@ -1340,12 +1268,6 @@
   {
     "name": "ST DOLAY",
     "cp": "56130",
-    "dept": "56",
-    "region": ""
-  },
-  {
-    "name": "ST GERAND CROIXANVEC",
-    "cp": "56920",
     "dept": "56",
     "region": ""
   },
@@ -1542,12 +1464,6 @@
     "region": ""
   },
   {
-    "name": "THEIX NOYALO",
-    "cp": "56450",
-    "dept": "56",
-    "region": ""
-  },
-  {
     "name": "TREAL",
     "cp": "56140",
     "dept": "56",
@@ -1568,12 +1484,6 @@
   {
     "name": "TREHORENTEUC",
     "cp": "56430",
-    "dept": "56",
-    "region": ""
-  },
-  {
-    "name": "VAL D OUST",
-    "cp": "56460",
     "dept": "56",
     "region": ""
   },

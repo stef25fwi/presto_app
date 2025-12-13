@@ -132,12 +132,6 @@
     "region": ""
   },
   {
-    "name": "LE ROBERT",
-    "cp": "97231",
-    "dept": "972",
-    "region": ""
-  },
-  {
     "name": "LE VAUCLIN",
     "cp": "97280",
     "dept": "972",
@@ -164,12 +158,6 @@
   {
     "name": "RIVIERE PILOTE",
     "cp": "97211",
-    "dept": "972",
-    "region": ""
-  },
-  {
-    "name": "RIVIERE SALEE",
-    "cp": "97215",
     "dept": "972",
     "region": ""
   },
@@ -212,12 +200,6 @@
   {
     "name": "STE LUCE",
     "cp": "97228",
-    "dept": "972",
-    "region": ""
-  },
-  {
-    "name": "STE MARIE",
-    "cp": "97230",
     "dept": "972",
     "region": ""
   },

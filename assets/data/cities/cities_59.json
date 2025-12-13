@@ -90,12 +90,6 @@
     "region": ""
   },
   {
-    "name": "ARMENTIERES",
-    "cp": "59280",
-    "dept": "59",
-    "region": ""
-  },
-  {
     "name": "ARNEKE",
     "cp": "59285",
     "dept": "59",
@@ -234,12 +228,6 @@
     "region": ""
   },
   {
-    "name": "BAILLEUL",
-    "cp": "59270",
-    "dept": "59",
-    "region": ""
-  },
-  {
     "name": "BAISIEUX",
     "cp": "59780",
     "dept": "59",
@@ -284,12 +272,6 @@
   {
     "name": "BAUVIN",
     "cp": "59221",
-    "dept": "59",
-    "region": ""
-  },
-  {
-    "name": "BAVAY",
-    "cp": "59570",
     "dept": "59",
     "region": ""
   },
@@ -414,12 +396,6 @@
     "region": ""
   },
   {
-    "name": "BERTHEN",
-    "cp": "59270",
-    "dept": "59",
-    "region": ""
-  },
-  {
     "name": "BERTRY",
     "cp": "59980",
     "dept": "59",
@@ -524,12 +500,6 @@
   {
     "name": "BORRE",
     "cp": "59190",
-    "dept": "59",
-    "region": ""
-  },
-  {
-    "name": "BOUCHAIN",
-    "cp": "59111",
     "dept": "59",
     "region": ""
   },
@@ -714,12 +684,6 @@
     "region": ""
   },
   {
-    "name": "CAMBRAI",
-    "cp": "59400",
-    "dept": "59",
-    "region": ""
-  },
-  {
     "name": "CAMPHIN EN CAREMBAULT",
     "cp": "59133",
     "dept": "59",
@@ -806,12 +770,6 @@
   {
     "name": "CATTENIERES",
     "cp": "59217",
-    "dept": "59",
-    "region": ""
-  },
-  {
-    "name": "CAUDRY",
-    "cp": "59540",
     "dept": "59",
     "region": ""
   },
@@ -936,12 +894,6 @@
     "region": ""
   },
   {
-    "name": "CRESPIN",
-    "cp": "59154",
-    "dept": "59",
-    "region": ""
-  },
-  {
     "name": "CREVECOEUR SUR L ESCAUT",
     "cp": "59258",
     "dept": "59",
@@ -1056,18 +1008,6 @@
     "region": ""
   },
   {
-    "name": "DOUAI",
-    "cp": "59500",
-    "dept": "59",
-    "region": ""
-  },
-  {
-    "name": "DOUAI",
-    "cp": "59500",
-    "dept": "59",
-    "region": ""
-  },
-  {
     "name": "DOUCHY LES MINES",
     "cp": "59282",
     "dept": "59",
@@ -1099,18 +1039,6 @@
   },
   {
     "name": "DUNKERQUE",
-    "cp": "59240",
-    "dept": "59",
-    "region": ""
-  },
-  {
-    "name": "DUNKERQUE",
-    "cp": "59240",
-    "dept": "59",
-    "region": ""
-  },
-  {
-    "name": "DUNKERQUE",
     "cp": "59279",
     "dept": "59",
     "region": ""
@@ -1118,18 +1046,6 @@
   {
     "name": "DUNKERQUE",
     "cp": "59430",
-    "dept": "59",
-    "region": ""
-  },
-  {
-    "name": "DUNKERQUE",
-    "cp": "59430",
-    "dept": "59",
-    "region": ""
-  },
-  {
-    "name": "DUNKERQUE",
-    "cp": "59640",
     "dept": "59",
     "region": ""
   },
@@ -1376,12 +1292,6 @@
   {
     "name": "FECHAIN",
     "cp": "59247",
-    "dept": "59",
-    "region": ""
-  },
-  {
-    "name": "FEIGNIES",
-    "cp": "59750",
     "dept": "59",
     "region": ""
   },
@@ -2436,12 +2346,6 @@
     "region": ""
   },
   {
-    "name": "MAUBEUGE",
-    "cp": "59600",
-    "dept": "59",
-    "region": ""
-  },
-  {
     "name": "MAULDE",
     "cp": "59158",
     "dept": "59",
@@ -2886,12 +2790,6 @@
     "region": ""
   },
   {
-    "name": "PREMESQUES",
-    "cp": "59840",
-    "dept": "59",
-    "region": ""
-  },
-  {
     "name": "PRESEAU",
     "cp": "59990",
     "dept": "59",
@@ -2960,12 +2858,6 @@
   {
     "name": "QUIEVELON",
     "cp": "59680",
-    "dept": "59",
-    "region": ""
-  },
-  {
-    "name": "QUIEVRECHAIN",
-    "cp": "59920",
     "dept": "59",
     "region": ""
   },
@@ -3474,12 +3366,6 @@
     "region": ""
   },
   {
-    "name": "ST SOUPLET",
-    "cp": "59360",
-    "dept": "59",
-    "region": ""
-  },
-  {
     "name": "ST SYLVESTRE CAPPEL",
     "cp": "59114",
     "dept": "59",
@@ -3524,12 +3410,6 @@
   {
     "name": "STEENVOORDE",
     "cp": "59114",
-    "dept": "59",
-    "region": ""
-  },
-  {
-    "name": "STEENWERCK",
-    "cp": "59181",
     "dept": "59",
     "region": ""
   },
@@ -3792,12 +3672,6 @@
     "region": ""
   },
   {
-    "name": "VILLEREAU",
-    "cp": "59530",
-    "dept": "59",
-    "region": ""
-  },
-  {
     "name": "VILLERS AU TERTRE",
     "cp": "59234",
     "dept": "59",
@@ -3860,18 +3734,6 @@
   {
     "name": "WALINCOURT SELVIGNY",
     "cp": "59127",
-    "dept": "59",
-    "region": ""
-  },
-  {
-    "name": "WALINCOURT SELVIGNY",
-    "cp": "59127",
-    "dept": "59",
-    "region": ""
-  },
-  {
-    "name": "WALLERS",
-    "cp": "59135",
     "dept": "59",
     "region": ""
   },

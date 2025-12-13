@@ -30,18 +30,6 @@
     "region": ""
   },
   {
-    "name": "AUBIGNY LES CLOUZEAUX",
-    "cp": "85430",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "AUCHAY SUR VENDEE",
-    "cp": "85200",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "AUCHAY SUR VENDEE",
     "cp": "85200",
     "dept": "85",
@@ -102,24 +90,6 @@
     "region": ""
   },
   {
-    "name": "BELLEVIGNY",
-    "cp": "85170",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "BENET",
-    "cp": "85490",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "BENET",
-    "cp": "85490",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "BENET",
     "cp": "85490",
     "dept": "85",
@@ -162,18 +132,6 @@
     "region": ""
   },
   {
-    "name": "BOURNEZEAU",
-    "cp": "85480",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "BREM SUR MER",
-    "cp": "85470",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "BREM SUR MER",
     "cp": "85470",
     "dept": "85",
@@ -192,18 +150,6 @@
     "region": ""
   },
   {
-    "name": "CHAILLE LES MARAIS",
-    "cp": "85450",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "CHAILLE LES MARAIS",
-    "cp": "85450",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "CHALLANS",
     "cp": "85300",
     "dept": "85",
@@ -212,12 +158,6 @@
   {
     "name": "CHAMPAGNE LES MARAIS",
     "cp": "85450",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "CHANTONNAY",
-    "cp": "85110",
     "dept": "85",
     "region": ""
   },
@@ -306,12 +246,6 @@
     "region": ""
   },
   {
-    "name": "CUGAND LA BERNARDIERE",
-    "cp": "85610",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "CURZON",
     "cp": "85540",
     "dept": "85",
@@ -320,12 +254,6 @@
   {
     "name": "DAMVIX",
     "cp": "85420",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "DOIX LES FONTAINES",
-    "cp": "85200",
     "dept": "85",
     "region": ""
   },
@@ -348,12 +276,6 @@
     "region": ""
   },
   {
-    "name": "ESSARTS EN BOCAGE",
-    "cp": "85140",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "FALLERON",
     "cp": "85670",
     "dept": "85",
@@ -362,12 +284,6 @@
   {
     "name": "FAYMOREAU",
     "cp": "85240",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "FONTENAY LE COMTE",
-    "cp": "85200",
     "dept": "85",
     "region": ""
   },
@@ -432,12 +348,6 @@
     "region": ""
   },
   {
-    "name": "L AIGUILLON LA PRESQU ILE",
-    "cp": "85460",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "L AIGUILLON SUR VIE",
     "cp": "85220",
     "dept": "85",
@@ -480,12 +390,6 @@
     "region": ""
   },
   {
-    "name": "L ILE D YEU",
-    "cp": "85350",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "L OIE",
     "cp": "85140",
     "dept": "85",
@@ -494,12 +398,6 @@
   {
     "name": "L ORBRIE",
     "cp": "85200",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "LA BARRE DE MONTS",
-    "cp": "85550",
     "dept": "85",
     "region": ""
   },
@@ -528,12 +426,6 @@
     "region": ""
   },
   {
-    "name": "LA BRETONNIERE LA CLAYE",
-    "cp": "85320",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "LA BRUFFIERE",
     "cp": "85530",
     "dept": "85",
@@ -546,20 +438,8 @@
     "region": ""
   },
   {
-    "name": "LA CAILLERE ST HILAIRE",
-    "cp": "85410",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "LA CHAIZE GIRAUD",
     "cp": "85220",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "LA CHAIZE LE VICOMTE",
-    "cp": "85310",
     "dept": "85",
     "region": ""
   },
@@ -786,12 +666,6 @@
     "region": ""
   },
   {
-    "name": "LES ACHARDS",
-    "cp": "85150",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "LES BROUZILS",
     "cp": "85260",
     "dept": "85",
@@ -848,12 +722,6 @@
   {
     "name": "LES SABLES D OLONNE",
     "cp": "85340",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "LES VELLUIRE SUR VENDEE",
-    "cp": "85770",
     "dept": "85",
     "region": ""
   },
@@ -924,12 +792,6 @@
     "region": ""
   },
   {
-    "name": "MAREUIL SUR LAY DISSAIS",
-    "cp": "85320",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "MARILLET",
     "cp": "85240",
     "dept": "85",
@@ -978,30 +840,6 @@
     "region": ""
   },
   {
-    "name": "MONTAIGU VENDEE",
-    "cp": "85600",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "MONTAIGU VENDEE",
-    "cp": "85600",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "MONTAIGU VENDEE",
-    "cp": "85600",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "MONTAIGU VENDEE",
-    "cp": "85600",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "MONTOURNAIS",
     "cp": "85700",
     "dept": "85",
@@ -1010,18 +848,6 @@
   {
     "name": "MONTREUIL",
     "cp": "85200",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "MONTREVERD",
-    "cp": "85260",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "MONTREVERD",
-    "cp": "85260",
     "dept": "85",
     "region": ""
   },
@@ -1052,12 +878,6 @@
   {
     "name": "MOUILLERON LE CAPTIF",
     "cp": "85000",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "MOUILLERON ST GERMAIN",
-    "cp": "85390",
     "dept": "85",
     "region": ""
   },
@@ -1200,24 +1020,6 @@
     "region": ""
   },
   {
-    "name": "RIVES DE L YON",
-    "cp": "85310",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "RIVES DU FOUGERAIS",
-    "cp": "85410",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "RIVES DU FOUGERAIS",
-    "cp": "85410",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "RIVES DU FOUGERAIS",
     "cp": "85410",
     "dept": "85",
@@ -1250,24 +1052,6 @@
   {
     "name": "SERIGNE",
     "cp": "85200",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "SEVREMONT",
-    "cp": "85700",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "SEVREMONT",
-    "cp": "85700",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "SEVREMONT",
-    "cp": "85700",
     "dept": "85",
     "region": ""
   },
@@ -1398,12 +1182,6 @@
     "region": ""
   },
   {
-    "name": "ST HILAIRE DE RIEZ",
-    "cp": "85270",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "ST HILAIRE DE VOUST",
     "cp": "85120",
     "dept": "85",
@@ -1424,12 +1202,6 @@
   {
     "name": "ST HILAIRE LE VOUHIS",
     "cp": "85480",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "ST JEAN D HERMINE",
-    "cp": "85210",
     "dept": "85",
     "region": ""
   },
@@ -1626,12 +1398,6 @@
     "region": ""
   },
   {
-    "name": "ST VINCENT SUR GRAON",
-    "cp": "85540",
-    "dept": "85",
-    "region": ""
-  },
-  {
     "name": "ST VINCENT SUR JARD",
     "cp": "85520",
     "dept": "85",
@@ -1688,24 +1454,6 @@
   {
     "name": "TALMONT ST HILAIRE",
     "cp": "85440",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "TALMONT ST HILAIRE",
-    "cp": "85440",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "TERVAL",
-    "cp": "85120",
-    "dept": "85",
-    "region": ""
-  },
-  {
-    "name": "TERVAL",
-    "cp": "85120",
     "dept": "85",
     "region": ""
   },

@@ -246,12 +246,6 @@
     "region": ""
   },
   {
-    "name": "BAGNERES DE LUCHON",
-    "cp": "31110",
-    "dept": "31",
-    "region": ""
-  },
-  {
     "name": "BALESTA",
     "cp": "31580",
     "dept": "31",
@@ -506,18 +500,6 @@
   {
     "name": "BOUTX",
     "cp": "31160",
-    "dept": "31",
-    "region": ""
-  },
-  {
-    "name": "BOUTX",
-    "cp": "31160",
-    "dept": "31",
-    "region": ""
-  },
-  {
-    "name": "BOUTX",
-    "cp": "31440",
     "dept": "31",
     "region": ""
   },
@@ -860,12 +842,6 @@
   {
     "name": "CIER DE RIVIERE",
     "cp": "31510",
-    "dept": "31",
-    "region": ""
-  },
-  {
-    "name": "CIERP GAUD",
-    "cp": "31440",
     "dept": "31",
     "region": ""
   },
@@ -1646,12 +1622,6 @@
   {
     "name": "LARROQUE",
     "cp": "31580",
-    "dept": "31",
-    "region": ""
-  },
-  {
-    "name": "LASSERRE PRADERE",
-    "cp": "31530",
     "dept": "31",
     "region": ""
   },
@@ -2532,12 +2502,6 @@
     "region": ""
   },
   {
-    "name": "PEGUILHAN",
-    "cp": "31350",
-    "dept": "31",
-    "region": ""
-  },
-  {
     "name": "PELLEPORT",
     "cp": "31480",
     "dept": "31",
@@ -2744,12 +2708,6 @@
   {
     "name": "RENNEVILLE",
     "cp": "31290",
-    "dept": "31",
-    "region": ""
-  },
-  {
-    "name": "REVEL",
-    "cp": "31250",
     "dept": "31",
     "region": ""
   },
@@ -3044,12 +3002,6 @@
   {
     "name": "ST AVENTIN",
     "cp": "31110",
-    "dept": "31",
-    "region": ""
-  },
-  {
-    "name": "ST BEAT LEZ",
-    "cp": "31440",
     "dept": "31",
     "region": ""
   },

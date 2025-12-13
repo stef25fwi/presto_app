@@ -48,12 +48,6 @@
     "region": ""
   },
   {
-    "name": "AIZY JOUY",
-    "cp": "02370",
-    "dept": "02",
-    "region": ""
-  },
-  {
     "name": "ALAINCOURT",
     "cp": "02240",
     "dept": "02",
@@ -114,18 +108,6 @@
     "region": ""
   },
   {
-    "name": "ANIZY LE GRAND",
-    "cp": "02320",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "ANIZY LE GRAND",
-    "cp": "02320",
-    "dept": "02",
-    "region": ""
-  },
-  {
     "name": "ANNOIS",
     "cp": "02480",
     "dept": "02",
@@ -140,12 +122,6 @@
   {
     "name": "ARCHON",
     "cp": "02360",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "ARCY STE RESTITUE",
-    "cp": "02130",
     "dept": "02",
     "region": ""
   },
@@ -324,12 +300,6 @@
     "region": ""
   },
   {
-    "name": "BAZOCHES ET ST THIBAUT",
-    "cp": "02220",
-    "dept": "02",
-    "region": ""
-  },
-  {
     "name": "BEAUME",
     "cp": "02500",
     "dept": "02",
@@ -422,12 +392,6 @@
   {
     "name": "BERNOT",
     "cp": "02120",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "BERNOY LE CHATEAU",
-    "cp": "02200",
     "dept": "02",
     "region": ""
   },
@@ -834,12 +798,6 @@
     "region": ""
   },
   {
-    "name": "CAMELIN",
-    "cp": "02300",
-    "dept": "02",
-    "region": ""
-  },
-  {
     "name": "CASTRES",
     "cp": "02680",
     "dept": "02",
@@ -890,12 +848,6 @@
   {
     "name": "CERSEUIL",
     "cp": "02220",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "CESSIERES SUZY",
-    "cp": "02320",
     "dept": "02",
     "region": ""
   },
@@ -1284,12 +1236,6 @@
     "region": ""
   },
   {
-    "name": "COULONGES COHAN",
-    "cp": "02130",
-    "dept": "02",
-    "region": ""
-  },
-  {
     "name": "COUPRU",
     "cp": "02310",
     "dept": "02",
@@ -1548,18 +1494,6 @@
     "region": ""
   },
   {
-    "name": "DHUYS ET MORIN EN BRIE",
-    "cp": "02540",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "DHUYS ET MORIN EN BRIE",
-    "cp": "02540",
-    "dept": "02",
-    "region": ""
-  },
-  {
     "name": "DIZY LE GROS",
     "cp": "02340",
     "dept": "02",
@@ -1778,12 +1712,6 @@
   {
     "name": "FERE EN TARDENOIS",
     "cp": "02130",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "FESMY LE SART",
-    "cp": "02450",
     "dept": "02",
     "region": ""
   },
@@ -2328,12 +2256,6 @@
     "region": ""
   },
   {
-    "name": "LA FERTE MILON",
-    "cp": "02460",
-    "dept": "02",
-    "region": ""
-  },
-  {
     "name": "LA FLAMENGRIE",
     "cp": "02260",
     "dept": "02",
@@ -2576,48 +2498,6 @@
   {
     "name": "LES AUTELS",
     "cp": "02360",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "LES SEPTVALLONS",
-    "cp": "02160",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "LES SEPTVALLONS",
-    "cp": "02160",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "LES SEPTVALLONS",
-    "cp": "02160",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "LES SEPTVALLONS",
-    "cp": "02160",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "LES SEPTVALLONS",
-    "cp": "02160",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "LES SEPTVALLONS",
-    "cp": "02160",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "LES SEPTVALLONS",
-    "cp": "02160",
     "dept": "02",
     "region": ""
   },
@@ -3396,12 +3276,6 @@
     "region": ""
   },
   {
-    "name": "NOUVION ET CATILLON",
-    "cp": "02270",
-    "dept": "02",
-    "region": ""
-  },
-  {
     "name": "NOUVION LE COMTE",
     "cp": "02800",
     "dept": "02",
@@ -3522,12 +3396,6 @@
     "region": ""
   },
   {
-    "name": "OULCHY LE CHATEAU",
-    "cp": "02210",
-    "dept": "02",
-    "region": ""
-  },
-  {
     "name": "PAARS",
     "cp": "02220",
     "dept": "02",
@@ -3572,12 +3440,6 @@
   {
     "name": "PARGNAN",
     "cp": "02160",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "PARGNY ET FILAIN",
-    "cp": "02000",
     "dept": "02",
     "region": ""
   },
@@ -4404,24 +4266,6 @@
     "region": ""
   },
   {
-    "name": "TERGNIER",
-    "cp": "02700",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "TERGNIER",
-    "cp": "02700",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "TERGNIER",
-    "cp": "02700",
-    "dept": "02",
-    "region": ""
-  },
-  {
     "name": "TERNY SORNY",
     "cp": "02880",
     "dept": "02",
@@ -4530,26 +4374,8 @@
     "region": ""
   },
   {
-    "name": "VADENCOURT",
-    "cp": "02120",
-    "dept": "02",
-    "region": ""
-  },
-  {
     "name": "VAILLY SUR AISNE",
     "cp": "02370",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "VALLEES EN CHAMPAGNE",
-    "cp": "02330",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "VALLEES EN CHAMPAGNE",
-    "cp": "02330",
     "dept": "02",
     "region": ""
   },
@@ -4806,12 +4632,6 @@
     "region": ""
   },
   {
-    "name": "VILLENEUVE SUR AISNE",
-    "cp": "02190",
-    "dept": "02",
-    "region": ""
-  },
-  {
     "name": "VILLENEUVE SUR FERE",
     "cp": "02130",
     "dept": "02",
@@ -4832,12 +4652,6 @@
   {
     "name": "VILLERS AGRON AIGUIZY",
     "cp": "02130",
-    "dept": "02",
-    "region": ""
-  },
-  {
-    "name": "VILLERS COTTERETS",
-    "cp": "02600",
     "dept": "02",
     "region": ""
   },

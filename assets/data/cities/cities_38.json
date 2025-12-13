@@ -54,18 +54,6 @@
     "region": ""
   },
   {
-    "name": "APPRIEU",
-    "cp": "38140",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "ARANDON PASSINS",
-    "cp": "38510",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "ARANDON PASSINS",
     "cp": "38510",
     "dept": "38",
@@ -258,12 +246,6 @@
     "region": ""
   },
   {
-    "name": "BOURGOIN JALLIEU",
-    "cp": "38300",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "BOUVESSE QUIRIEU",
     "cp": "38390",
     "dept": "38",
@@ -336,12 +318,6 @@
     "region": ""
   },
   {
-    "name": "CHAMAGNIEU",
-    "cp": "38460",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "CHAMP SUR DRAC",
     "cp": "38560",
     "dept": "38",
@@ -368,12 +344,6 @@
   {
     "name": "CHANAS",
     "cp": "38150",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "CHANTEPERIER",
-    "cp": "38740",
     "dept": "38",
     "region": ""
   },
@@ -432,12 +402,6 @@
     "region": ""
   },
   {
-    "name": "CHARVIEU CHAVAGNEUX",
-    "cp": "38230",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "CHASSE SUR RHONE",
     "cp": "38670",
     "dept": "38",
@@ -464,12 +428,6 @@
   {
     "name": "CHATEAUVILAIN",
     "cp": "38300",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "CHATEL EN TRIEVES",
-    "cp": "38710",
     "dept": "38",
     "region": ""
   },
@@ -708,18 +666,6 @@
     "region": ""
   },
   {
-    "name": "CREYS MEPIEU",
-    "cp": "38510",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "CREYS MEPIEU",
-    "cp": "38510",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "CROLLES",
     "cp": "38920",
     "dept": "38",
@@ -770,12 +716,6 @@
   {
     "name": "ECHIROLLES",
     "cp": "38130",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "ECLOSE BADINIERES",
-    "cp": "38300",
     "dept": "38",
     "region": ""
   },
@@ -876,12 +816,6 @@
     "region": ""
   },
   {
-    "name": "FRONTONAS",
-    "cp": "38290",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "GIERES",
     "cp": "38610",
     "dept": "38",
@@ -944,12 +878,6 @@
   {
     "name": "HIERES SUR AMBY",
     "cp": "38118",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "HUEZ",
-    "cp": "38750",
     "dept": "38",
     "region": ""
   },
@@ -1278,18 +1206,6 @@
     "region": ""
   },
   {
-    "name": "LE HAUT BREDA",
-    "cp": "38580",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "LE HAUT BREDA",
-    "cp": "38580",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "LE MOUTARET",
     "cp": "38580",
     "dept": "38",
@@ -1356,38 +1272,8 @@
     "region": ""
   },
   {
-    "name": "LES ABRETS EN DAUPHINE",
-    "cp": "38490",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "LES ABRETS EN DAUPHINE",
-    "cp": "38490",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "LES ADRETS",
     "cp": "38190",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "LES ADRETS",
-    "cp": "38190",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "LES AVENIERES VEYRINS THUELLIN",
-    "cp": "38630",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "LES AVENIERES VEYRINS THUELLIN",
-    "cp": "38630",
     "dept": "38",
     "region": ""
   },
@@ -1422,24 +1308,6 @@
     "region": ""
   },
   {
-    "name": "LES DEUX ALPES",
-    "cp": "38860",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "LES DEUX ALPES",
-    "cp": "38860",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "LES DEUX ALPES",
-    "cp": "38860",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "LES EPARRES",
     "cp": "38300",
     "dept": "38",
@@ -1460,24 +1328,6 @@
   {
     "name": "LIEUDIEU",
     "cp": "38440",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "LIVET ET GAVET",
-    "cp": "38220",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "LIVET ET GAVET",
-    "cp": "38220",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "LIVET ET GAVET",
-    "cp": "38220",
     "dept": "38",
     "region": ""
   },
@@ -1550,12 +1400,6 @@
   {
     "name": "MAYRES SAVEL",
     "cp": "38350",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "MENS",
-    "cp": "38710",
     "dept": "38",
     "region": ""
   },
@@ -1830,12 +1674,6 @@
     "region": ""
   },
   {
-    "name": "ORNACIEUX BALBINS",
-    "cp": "38260",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "ORNON",
     "cp": "38520",
     "dept": "38",
@@ -1926,18 +1764,6 @@
     "region": ""
   },
   {
-    "name": "PLATEAU DES PETITES ROCHES",
-    "cp": "38660",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "PLATEAU DES PETITES ROCHES",
-    "cp": "38660",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "POISAT",
     "cp": "38320",
     "dept": "38",
@@ -1988,24 +1814,6 @@
   {
     "name": "PORCIEU AMBLAGNIEU",
     "cp": "38390",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "PORTE DES BONNEVAUX",
-    "cp": "38260",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "PORTE DES BONNEVAUX",
-    "cp": "38260",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "PORTE DES BONNEVAUX",
-    "cp": "38260",
     "dept": "38",
     "region": ""
   },
@@ -2118,12 +1926,6 @@
     "region": ""
   },
   {
-    "name": "ROCHE",
-    "cp": "38090",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "ROCHETOIRIN",
     "cp": "38110",
     "dept": "38",
@@ -2162,12 +1964,6 @@
   {
     "name": "ROYBON",
     "cp": "38940",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "RUY MONTCEAU",
-    "cp": "38300",
     "dept": "38",
     "region": ""
   },
@@ -2220,30 +2016,6 @@
     "region": ""
   },
   {
-    "name": "SATOLAS ET BONCE",
-    "cp": "38290",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "SATOLAS ET BONCE",
-    "cp": "38290",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "SATOLAS ET BONCE",
-    "cp": "38290",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "SATOLAS ET BONCE",
-    "cp": "38290",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "SAVAS MEPIN",
     "cp": "38440",
     "dept": "38",
@@ -2252,18 +2024,6 @@
   {
     "name": "SECHILIENNE",
     "cp": "38220",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "SEPTEME",
-    "cp": "38780",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "SEPTEME",
-    "cp": "38780",
     "dept": "38",
     "region": ""
   },
@@ -2396,12 +2156,6 @@
   {
     "name": "ST ANDRE LE GAZ",
     "cp": "38490",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "ST ANTOINE L ABBAYE",
-    "cp": "38160",
     "dept": "38",
     "region": ""
   },
@@ -2552,12 +2306,6 @@
   {
     "name": "ST GEOIRS",
     "cp": "38590",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "ST GEORGES D ESPERANCHE",
-    "cp": "38790",
     "dept": "38",
     "region": ""
   },
@@ -2880,12 +2628,6 @@
     "region": ""
   },
   {
-    "name": "ST QUENTIN FALLAVIER",
-    "cp": "38070",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "ST QUENTIN SUR ISERE",
     "cp": "38210",
     "dept": "38",
@@ -3054,12 +2796,6 @@
     "region": ""
   },
   {
-    "name": "TIGNIEU JAMEYZIEU",
-    "cp": "38230",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "TORCHEFELON",
     "cp": "38690",
     "dept": "38",
@@ -3092,18 +2828,6 @@
   {
     "name": "TULLINS",
     "cp": "38210",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "TULLINS",
-    "cp": "38210",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "VAL DE VIRIEU",
-    "cp": "38730",
     "dept": "38",
     "region": ""
   },
@@ -3180,12 +2904,6 @@
     "region": ""
   },
   {
-    "name": "VAULNAVEYS LE HAUT",
-    "cp": "38410",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "VAULX MILIEU",
     "cp": "38090",
     "dept": "38",
@@ -3246,12 +2964,6 @@
     "region": ""
   },
   {
-    "name": "VEZERONCE CURTIN",
-    "cp": "38510",
-    "dept": "38",
-    "region": ""
-  },
-  {
     "name": "VIENNE",
     "cp": "38200",
     "dept": "38",
@@ -3278,18 +2990,6 @@
   {
     "name": "VILLAGES DU LAC DE PALADRU",
     "cp": "38850",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "VILLARD BONNOT",
-    "cp": "38190",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "VILLARD BONNOT",
-    "cp": "38190",
     "dept": "38",
     "region": ""
   },
@@ -3350,18 +3050,6 @@
   {
     "name": "VILLENEUVE DE MARC",
     "cp": "38440",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "VILLETTE D ANTHON",
-    "cp": "38280",
-    "dept": "38",
-    "region": ""
-  },
-  {
-    "name": "VILLETTE D ANTHON",
-    "cp": "38280",
     "dept": "38",
     "region": ""
   },

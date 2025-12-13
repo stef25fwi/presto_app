@@ -162,12 +162,6 @@
     "region": ""
   },
   {
-    "name": "AUNEUIL",
-    "cp": "60390",
-    "dept": "60",
-    "region": ""
-  },
-  {
     "name": "AUTEUIL",
     "cp": "60390",
     "dept": "60",
@@ -512,18 +506,6 @@
   {
     "name": "BOREST",
     "cp": "60300",
-    "dept": "60",
-    "region": ""
-  },
-  {
-    "name": "BORNEL",
-    "cp": "60540",
-    "dept": "60",
-    "region": ""
-  },
-  {
-    "name": "BORNEL",
-    "cp": "60540",
     "dept": "60",
     "region": ""
   },
@@ -1416,12 +1398,6 @@
     "region": ""
   },
   {
-    "name": "FORMERIE",
-    "cp": "60220",
-    "dept": "60",
-    "region": ""
-  },
-  {
     "name": "FOUILLEUSE",
     "cp": "60190",
     "dept": "60",
@@ -1878,30 +1854,6 @@
     "region": ""
   },
   {
-    "name": "LA CORNE EN VEXIN",
-    "cp": "60240",
-    "dept": "60",
-    "region": ""
-  },
-  {
-    "name": "LA CORNE EN VEXIN",
-    "cp": "60240",
-    "dept": "60",
-    "region": ""
-  },
-  {
-    "name": "LA DRENNE",
-    "cp": "60790",
-    "dept": "60",
-    "region": ""
-  },
-  {
-    "name": "LA DRENNE",
-    "cp": "60790",
-    "dept": "60",
-    "region": ""
-  },
-  {
     "name": "LA DRENNE",
     "cp": "60790",
     "dept": "60",
@@ -2298,12 +2250,6 @@
     "region": ""
   },
   {
-    "name": "LES HAUTS TALICAN",
-    "cp": "60390",
-    "dept": "60",
-    "region": ""
-  },
-  {
     "name": "LEVIGNEN",
     "cp": "60800",
     "dept": "60",
@@ -2606,12 +2552,6 @@
   {
     "name": "MONTATAIRE",
     "cp": "60160",
-    "dept": "60",
-    "region": ""
-  },
-  {
-    "name": "MONTCHEVREUIL",
-    "cp": "60240",
     "dept": "60",
     "region": ""
   },
@@ -3228,12 +3168,6 @@
     "region": ""
   },
   {
-    "name": "RIBECOURT DRESLINCOURT",
-    "cp": "60170",
-    "dept": "60",
-    "region": ""
-  },
-  {
     "name": "RICQUEBOURG",
     "cp": "60490",
     "dept": "60",
@@ -3512,12 +3446,6 @@
   {
     "name": "ST ARNOULT",
     "cp": "60220",
-    "dept": "60",
-    "region": ""
-  },
-  {
-    "name": "ST AUBIN EN BRAY",
-    "cp": "60650",
     "dept": "60",
     "region": ""
   },
@@ -3840,12 +3768,6 @@
     "region": ""
   },
   {
-    "name": "TRACY LE MONT",
-    "cp": "60170",
-    "dept": "60",
-    "region": ""
-  },
-  {
     "name": "TRACY LE VAL",
     "cp": "60170",
     "dept": "60",
@@ -3854,12 +3776,6 @@
   {
     "name": "TRICOT",
     "cp": "60420",
-    "dept": "60",
-    "region": ""
-  },
-  {
-    "name": "TRIE CHATEAU",
-    "cp": "60590",
     "dept": "60",
     "region": ""
   },
@@ -3996,12 +3912,6 @@
     "region": ""
   },
   {
-    "name": "VERDEREL LES SAUQUEUSE",
-    "cp": "60112",
-    "dept": "60",
-    "region": ""
-  },
-  {
     "name": "VERDERONNE",
     "cp": "60140",
     "dept": "60",
@@ -4076,12 +3986,6 @@
   {
     "name": "VILLERS ST BARTHELEMY",
     "cp": "60650",
-    "dept": "60",
-    "region": ""
-  },
-  {
-    "name": "VILLERS ST FRAMBOURG OGNON",
-    "cp": "60810",
     "dept": "60",
     "region": ""
   },

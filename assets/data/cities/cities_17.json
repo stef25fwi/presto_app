@@ -36,12 +36,6 @@
     "region": ""
   },
   {
-    "name": "ANDILLY",
-    "cp": "17230",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "ANGLIERS",
     "cp": "17540",
     "dept": "17",
@@ -62,12 +56,6 @@
   {
     "name": "ANNEZAY",
     "cp": "17380",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "ANTEZANT LA CHAPELLE",
-    "cp": "17400",
     "dept": "17",
     "region": ""
   },
@@ -138,25 +126,7 @@
     "region": ""
   },
   {
-    "name": "AULNAY",
-    "cp": "17470",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "AUMAGNE",
-    "cp": "17770",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "AUMAGNE",
-    "cp": "17770",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "AUTHON EBEON",
     "cp": "17770",
     "dept": "17",
     "region": ""
@@ -248,12 +218,6 @@
   {
     "name": "BERCLOUX",
     "cp": "17770",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "BERNAY ST MARTIN",
-    "cp": "17330",
     "dept": "17",
     "region": ""
   },
@@ -522,12 +486,6 @@
     "region": ""
   },
   {
-    "name": "CHARRON",
-    "cp": "17230",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "CHARTUZAC",
     "cp": "17130",
     "dept": "17",
@@ -786,20 +744,8 @@
     "region": ""
   },
   {
-    "name": "DOMPIERRE SUR MER",
-    "cp": "17139",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "ECHEBRUNE",
     "cp": "17800",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "ECHILLAIS",
-    "cp": "17620",
     "dept": "17",
     "region": ""
   },
@@ -830,12 +776,6 @@
   {
     "name": "ESNANDES",
     "cp": "17137",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "ESSOUVERT",
-    "cp": "17400",
     "dept": "17",
     "region": ""
   },
@@ -908,12 +848,6 @@
   {
     "name": "FONTENET",
     "cp": "17400",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "FORGES",
-    "cp": "17290",
     "dept": "17",
     "region": ""
   },
@@ -1099,12 +1033,6 @@
   },
   {
     "name": "LA DEVISE",
-    "cp": "17380",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "LA DEVISE",
     "cp": "17700",
     "dept": "17",
     "region": ""
@@ -1170,26 +1098,8 @@
     "region": ""
   },
   {
-    "name": "LA ROCHELLE",
-    "cp": "17000",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "LA ROCHELLE",
-    "cp": "17000",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "LA RONDE",
     "cp": "17170",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "LA TREMBLADE",
-    "cp": "17390",
     "dept": "17",
     "region": ""
   },
@@ -1238,24 +1148,6 @@
   {
     "name": "LE BOIS PLAGE EN RE",
     "cp": "17580",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "LE CHATEAU D OLERON",
-    "cp": "17480",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "LE CHATEAU D OLERON",
-    "cp": "17480",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "LE CHATEAU D OLERON",
-    "cp": "17480",
     "dept": "17",
     "region": ""
   },
@@ -1476,26 +1368,8 @@
     "region": ""
   },
   {
-    "name": "MARENNES HIERS BROUAGE",
-    "cp": "17320",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "MARENNES HIERS BROUAGE",
-    "cp": "17320",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "MARIGNAC",
     "cp": "17800",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "MARSAIS",
-    "cp": "17700",
     "dept": "17",
     "region": ""
   },
@@ -1590,12 +1464,6 @@
     "region": ""
   },
   {
-    "name": "MIRAMBEAU",
-    "cp": "17150",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "MOEZE",
     "cp": "17780",
     "dept": "17",
@@ -1604,18 +1472,6 @@
   {
     "name": "MONS",
     "cp": "17160",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "MONTENDRE",
-    "cp": "17130",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "MONTENDRE",
-    "cp": "17130",
     "dept": "17",
     "region": ""
   },
@@ -1758,12 +1614,6 @@
     "region": ""
   },
   {
-    "name": "NIEUL SUR MER",
-    "cp": "17137",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "NIEULLE SUR SEUDRE",
     "cp": "17600",
     "dept": "17",
@@ -1832,12 +1682,6 @@
   {
     "name": "POLIGNAC",
     "cp": "17210",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "POMMIERS MOULONS",
-    "cp": "17130",
     "dept": "17",
     "region": ""
   },
@@ -1926,18 +1770,6 @@
     "region": ""
   },
   {
-    "name": "REAUX SUR TREFLE",
-    "cp": "17500",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "REAUX SUR TREFLE",
-    "cp": "17500",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "RETAUD",
     "cp": "17460",
     "dept": "17",
@@ -1952,12 +1784,6 @@
   {
     "name": "RIVEDOUX PLAGE",
     "cp": "17940",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "RIVES DE BOUTONNE",
-    "cp": "17470",
     "dept": "17",
     "region": ""
   },
@@ -2178,12 +2004,6 @@
     "region": ""
   },
   {
-    "name": "ST CLEMENT DES BALEINES",
-    "cp": "17590",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "ST COUTANT LE GRAND",
     "cp": "17430",
     "dept": "17",
@@ -2256,42 +2076,6 @@
     "region": ""
   },
   {
-    "name": "ST GEORGES ANTIGNAC",
-    "cp": "17240",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "ST GEORGES D OLERON",
-    "cp": "17190",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "ST GEORGES D OLERON",
-    "cp": "17190",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "ST GEORGES D OLERON",
-    "cp": "17190",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "ST GEORGES D OLERON",
-    "cp": "17190",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "ST GEORGES D OLERON",
-    "cp": "17190",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "ST GEORGES D OLERON",
     "cp": "17190",
     "dept": "17",
@@ -2352,12 +2136,6 @@
     "region": ""
   },
   {
-    "name": "ST HILAIRE DE VILLEFRANCHE",
-    "cp": "17770",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "ST HILAIRE DU BOIS",
     "cp": "17500",
     "dept": "17",
@@ -2390,12 +2168,6 @@
   {
     "name": "ST JULIEN DE L ESCAP",
     "cp": "17400",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "ST JUST LUZAC",
-    "cp": "17320",
     "dept": "17",
     "region": ""
   },
@@ -2538,12 +2310,6 @@
     "region": ""
   },
   {
-    "name": "ST PALAIS SUR MER",
-    "cp": "17420",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "ST PARDOULT",
     "cp": "17400",
     "dept": "17",
@@ -2552,12 +2318,6 @@
   {
     "name": "ST PIERRE D AMILLY",
     "cp": "17700",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "ST PIERRE D OLERON",
-    "cp": "17310",
     "dept": "17",
     "region": ""
   },
@@ -2582,12 +2342,6 @@
   {
     "name": "ST PIERRE DU PALAIS",
     "cp": "17270",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "ST PIERRE LA NOUE",
-    "cp": "17700",
     "dept": "17",
     "region": ""
   },
@@ -2636,18 +2390,6 @@
   {
     "name": "ST SAUVEUR D AUNIS",
     "cp": "17540",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "ST SAVINIEN",
-    "cp": "17350",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "ST SAVINIEN",
-    "cp": "17350",
     "dept": "17",
     "region": ""
   },
@@ -2796,12 +2538,6 @@
     "region": ""
   },
   {
-    "name": "STE SOULLE",
-    "cp": "17220",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "SURGERES",
     "cp": "17700",
     "dept": "17",
@@ -2910,12 +2646,6 @@
     "region": ""
   },
   {
-    "name": "TUGERAS ST MAURICE",
-    "cp": "17130",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "VANZAC",
     "cp": "17500",
     "dept": "17",
@@ -3006,12 +2736,6 @@
     "region": ""
   },
   {
-    "name": "VILLENEUVE LA COMTESSE",
-    "cp": "17330",
-    "dept": "17",
-    "region": ""
-  },
-  {
     "name": "VILLEXAVIER",
     "cp": "17500",
     "dept": "17",
@@ -3050,12 +2774,6 @@
   {
     "name": "VOUHE",
     "cp": "17700",
-    "dept": "17",
-    "region": ""
-  },
-  {
-    "name": "YVES",
-    "cp": "17340",
     "dept": "17",
     "region": ""
   },

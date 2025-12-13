@@ -78,12 +78,6 @@
     "region": ""
   },
   {
-    "name": "ARBOYS EN BUGEY",
-    "cp": "01300",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "ARGIS",
     "cp": "01230",
     "dept": "01",
@@ -114,24 +108,6 @@
     "region": ""
   },
   {
-    "name": "ARVIERE EN VALROMEY",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "ARVIERE EN VALROMEY",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "ARVIERE EN VALROMEY",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "ASNIERES SUR SAONE",
     "cp": "01570",
     "dept": "01",
@@ -140,12 +116,6 @@
   {
     "name": "ATTIGNAT",
     "cp": "01340",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "BAGE DOMMARTIN",
-    "cp": "01380",
     "dept": "01",
     "region": ""
   },
@@ -188,24 +158,6 @@
   {
     "name": "BEAUREGARD",
     "cp": "01480",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "BELIGNEUX",
-    "cp": "01360",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "BELIGNEUX",
-    "cp": "01360",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "BELIGNEUX",
-    "cp": "01360",
     "dept": "01",
     "region": ""
   },
@@ -300,18 +252,6 @@
     "region": ""
   },
   {
-    "name": "BOHAS MEYRIAT RIGNAT",
-    "cp": "01250",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "BOHAS MEYRIAT RIGNAT",
-    "cp": "01250",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "BOISSEY",
     "cp": "01190",
     "dept": "01",
@@ -338,18 +278,6 @@
   {
     "name": "BOURG EN BRESSE",
     "cp": "01000",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "BOURG EN BRESSE",
-    "cp": "01000",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "BOURG ST CHRISTOPHE",
-    "cp": "01800",
     "dept": "01",
     "region": ""
   },
@@ -396,18 +324,6 @@
     "region": ""
   },
   {
-    "name": "BRESSE VALLONS",
-    "cp": "01340",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "BRESSOLLES",
-    "cp": "01360",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "BRESSOLLES",
     "cp": "01360",
     "dept": "01",
@@ -422,12 +338,6 @@
   {
     "name": "BRIORD",
     "cp": "01470",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "BUELLAS",
-    "cp": "01310",
     "dept": "01",
     "region": ""
   },
@@ -506,24 +416,6 @@
   {
     "name": "CHAMPAGNE EN VALROMEY",
     "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "CHAMPAGNE EN VALROMEY",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "CHAMPAGNE EN VALROMEY",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "CHAMPDOR CORCELLES",
-    "cp": "01110",
     "dept": "01",
     "region": ""
   },
@@ -828,12 +720,6 @@
     "region": ""
   },
   {
-    "name": "CULOZ BEON",
-    "cp": "01350",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "CURCIAT DONGALON",
     "cp": "01560",
     "dept": "01",
@@ -978,18 +864,6 @@
     "region": ""
   },
   {
-    "name": "FRANCHELEINS",
-    "cp": "01090",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "FRANCHELEINS",
-    "cp": "01090",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "FRANS",
     "cp": "01480",
     "dept": "01",
@@ -1062,12 +936,6 @@
     "region": ""
   },
   {
-    "name": "GROSLEE ST BENOIT",
-    "cp": "01300",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "GUEREINS",
     "cp": "01090",
     "dept": "01",
@@ -1080,36 +948,6 @@
     "region": ""
   },
   {
-    "name": "HAUT VALROMEY",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "HAUT VALROMEY",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "HAUT VALROMEY",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "HAUT VALROMEY",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "HAUTECOURT ROMANECHE",
-    "cp": "01250",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "HAUTECOURT ROMANECHE",
     "cp": "01250",
     "dept": "01",
@@ -1118,12 +956,6 @@
   {
     "name": "ILLIAT",
     "cp": "01140",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "INJOUX GENISSIAT",
-    "cp": "01200",
     "dept": "01",
     "region": ""
   },
@@ -1296,12 +1128,6 @@
     "region": ""
   },
   {
-    "name": "LE POIZAT LALLEYRIAT",
-    "cp": "01130",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "LEAZ",
     "cp": "01200",
     "dept": "01",
@@ -1364,12 +1190,6 @@
   {
     "name": "LURCY",
     "cp": "01090",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "MAGNIEU",
-    "cp": "01300",
     "dept": "01",
     "region": ""
   },
@@ -1458,12 +1278,6 @@
     "region": ""
   },
   {
-    "name": "MATAFELON GRANGES",
-    "cp": "01580",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "MEILLONNAS",
     "cp": "01370",
     "dept": "01",
@@ -1518,18 +1332,6 @@
     "region": ""
   },
   {
-    "name": "MIRIBEL",
-    "cp": "01700",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "MIRIBEL",
-    "cp": "01700",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "MISERIEUX",
     "cp": "01600",
     "dept": "01",
@@ -1574,18 +1376,6 @@
   {
     "name": "MONTHIEUX",
     "cp": "01390",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "MONTLUEL",
-    "cp": "01120",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "MONTLUEL",
-    "cp": "01120",
     "dept": "01",
     "region": ""
   },
@@ -1668,20 +1458,8 @@
     "region": ""
   },
   {
-    "name": "NIVIGNE ET SURAN",
-    "cp": "01250",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "NIVOLLET MONTGRIFFON",
     "cp": "01230",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "NURIEUX VOLOGNAT",
-    "cp": "01460",
     "dept": "01",
     "region": ""
   },
@@ -1722,18 +1500,6 @@
     "region": ""
   },
   {
-    "name": "OYONNAX",
-    "cp": "01100",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "OYONNAX",
-    "cp": "01100",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "OZAN",
     "cp": "01190",
     "dept": "01",
@@ -1742,12 +1508,6 @@
   {
     "name": "PARCIEUX",
     "cp": "01600",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "PARVES ET NATTAGES",
-    "cp": "01300",
     "dept": "01",
     "region": ""
   },
@@ -1824,24 +1584,6 @@
     "region": ""
   },
   {
-    "name": "PLATEAU D HAUTEVILLE",
-    "cp": "01110",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "PLATEAU D HAUTEVILLE",
-    "cp": "01110",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "PLATEAU D HAUTEVILLE",
-    "cp": "01110",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "POLLIAT",
     "cp": "01310",
     "dept": "01",
@@ -1904,12 +1646,6 @@
   {
     "name": "PREMILLIEU",
     "cp": "01110",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "PREVESSIN MOENS",
-    "cp": "01280",
     "dept": "01",
     "region": ""
   },
@@ -2078,12 +1814,6 @@
   {
     "name": "SIMANDRE SUR SURAN",
     "cp": "01250",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "SONTHONNAX LA MONTAGNE",
-    "cp": "01580",
     "dept": "01",
     "region": ""
   },
@@ -2448,12 +2178,6 @@
     "region": ""
   },
   {
-    "name": "SURJOUX LHOPITAL",
-    "cp": "01420",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "TALISSIEU",
     "cp": "01510",
     "dept": "01",
@@ -2520,18 +2244,6 @@
     "region": ""
   },
   {
-    "name": "VAL REVERMONT",
-    "cp": "01370",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "VAL REVERMONT",
-    "cp": "01370",
-    "dept": "01",
-    "region": ""
-  },
-  {
     "name": "VALEINS",
     "cp": "01140",
     "dept": "01",
@@ -2540,66 +2252,6 @@
   {
     "name": "VALROMEY SUR SERAN",
     "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "VALROMEY SUR SERAN",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "VALROMEY SUR SERAN",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "VALROMEY SUR SERAN",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "VALROMEY SUR SERAN",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "VALROMEY SUR SERAN",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "VALROMEY SUR SERAN",
-    "cp": "01260",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "VALSERHONE",
-    "cp": "01200",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "VALSERHONE",
-    "cp": "01200",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "VALSERHONE",
-    "cp": "01200",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "VALSERHONE",
-    "cp": "01200",
     "dept": "01",
     "region": ""
   },
@@ -2714,18 +2366,6 @@
   {
     "name": "VILLETTE SUR AIN",
     "cp": "01320",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "VILLIEU LOYES MOLLON",
-    "cp": "01800",
-    "dept": "01",
-    "region": ""
-  },
-  {
-    "name": "VILLIEU LOYES MOLLON",
-    "cp": "01800",
     "dept": "01",
     "region": ""
   },

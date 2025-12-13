@@ -102,12 +102,6 @@
     "region": ""
   },
   {
-    "name": "ANNEVILLE AMBOURVILLE",
-    "cp": "76480",
-    "dept": "76",
-    "region": ""
-  },
-  {
     "name": "ANNEVILLE SUR SCIE",
     "cp": "76590",
     "dept": "76",
@@ -134,12 +128,6 @@
   {
     "name": "ARDOUVAL",
     "cp": "76680",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "ARELAUNE EN SEINE",
-    "cp": "76940",
     "dept": "76",
     "region": ""
   },
@@ -738,18 +726,6 @@
     "region": ""
   },
   {
-    "name": "BUCHY",
-    "cp": "76750",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "BUCHY",
-    "cp": "76750",
-    "dept": "76",
-    "region": ""
-  },
-  {
     "name": "BULLY",
     "cp": "76270",
     "dept": "76",
@@ -774,12 +750,6 @@
     "region": ""
   },
   {
-    "name": "BUTOT VENESVILLE",
-    "cp": "76450",
-    "dept": "76",
-    "region": ""
-  },
-  {
     "name": "CAILLEVILLE",
     "cp": "76460",
     "dept": "76",
@@ -788,12 +758,6 @@
   {
     "name": "CAILLY",
     "cp": "76690",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "CALLENGEVILLE",
-    "cp": "76270",
     "dept": "76",
     "region": ""
   },
@@ -824,18 +788,6 @@
   {
     "name": "CANOUVILLE",
     "cp": "76450",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "CANTELEU",
-    "cp": "76380",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "CANTELEU",
-    "cp": "76380",
     "dept": "76",
     "region": ""
   },
@@ -996,12 +948,6 @@
     "region": ""
   },
   {
-    "name": "CRIEL SUR MER",
-    "cp": "76910",
-    "dept": "76",
-    "region": ""
-  },
-  {
     "name": "CRIQUEBEUF EN CAUX",
     "cp": "76111",
     "dept": "76",
@@ -1136,12 +1082,6 @@
   {
     "name": "DIEPPE",
     "cp": "76200",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "DIEPPE",
-    "cp": "76370",
     "dept": "76",
     "region": ""
   },
@@ -1458,12 +1398,6 @@
     "region": ""
   },
   {
-    "name": "FORGES LES EAUX",
-    "cp": "76440",
-    "dept": "76",
-    "region": ""
-  },
-  {
     "name": "FOUCARMONT",
     "cp": "76340",
     "dept": "76",
@@ -1604,18 +1538,6 @@
   {
     "name": "GONFREVILLE CAILLOT",
     "cp": "76110",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "GONFREVILLE L ORCHER",
-    "cp": "76700",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "GONFREVILLE L ORCHER",
-    "cp": "76700",
     "dept": "76",
     "region": ""
   },
@@ -1838,12 +1760,6 @@
   {
     "name": "HAUTOT ST SULPICE",
     "cp": "76190",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "HAUTOT SUR MER",
-    "cp": "76550",
     "dept": "76",
     "region": ""
   },
@@ -2209,12 +2125,6 @@
   },
   {
     "name": "LE HAVRE",
-    "cp": "76610",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "LE HAVRE",
     "cp": "76620",
     "dept": "76",
     "region": ""
@@ -2306,12 +2216,6 @@
   {
     "name": "LES GRANDES VENTES",
     "cp": "76950",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "LES HAUTS DE CAUX",
-    "cp": "76190",
     "dept": "76",
     "region": ""
   },
@@ -2480,12 +2384,6 @@
   {
     "name": "MANNEVILLETTE",
     "cp": "76290",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "MAROMME",
-    "cp": "76150",
     "dept": "76",
     "region": ""
   },
@@ -2736,12 +2634,6 @@
     "region": ""
   },
   {
-    "name": "MORVILLE LE HERON",
-    "cp": "76780",
-    "dept": "76",
-    "region": ""
-  },
-  {
     "name": "MOTTEVILLE",
     "cp": "76970",
     "dept": "76",
@@ -2965,96 +2857,6 @@
   },
   {
     "name": "PETIT CAUX",
-    "cp": "76370",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76370",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76370",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76370",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76630",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76630",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76630",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76630",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76630",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76630",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76630",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76630",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76630",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76630",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
-    "cp": "76630",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PETIT CAUX",
     "cp": "76630",
     "dept": "76",
     "region": ""
@@ -3122,18 +2924,6 @@
   {
     "name": "PONTS ET MARAIS",
     "cp": "76260",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PORT JEROME SUR SEINE",
-    "cp": "76170",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "PORT JEROME SUR SEINE",
-    "cp": "76170",
     "dept": "76",
     "region": ""
   },
@@ -3254,18 +3044,6 @@
   {
     "name": "RIEUX",
     "cp": "76340",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "RIVES EN SEINE",
-    "cp": "76490",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "RIVES EN SEINE",
-    "cp": "76490",
     "dept": "76",
     "region": ""
   },
@@ -3416,18 +3194,6 @@
   {
     "name": "SASSETOT LE MALGARDE",
     "cp": "76730",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "SASSETOT LE MAUCONDUIT",
-    "cp": "76540",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "SASSETOT LE MAUCONDUIT",
-    "cp": "76540",
     "dept": "76",
     "region": ""
   },
@@ -3846,24 +3612,6 @@
     "region": ""
   },
   {
-    "name": "ST MARTIN DE L IF",
-    "cp": "76190",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "ST MARTIN DE L IF",
-    "cp": "76190",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "ST MARTIN DE L IF",
-    "cp": "76190",
-    "dept": "76",
-    "region": ""
-  },
-  {
     "name": "ST MARTIN DU BEC",
     "cp": "76133",
     "dept": "76",
@@ -4188,42 +3936,6 @@
     "region": ""
   },
   {
-    "name": "TERRES DE CAUX",
-    "cp": "76640",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "TERRES DE CAUX",
-    "cp": "76640",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "TERRES DE CAUX",
-    "cp": "76640",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "TERRES DE CAUX",
-    "cp": "76640",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "TERRES DE CAUX",
-    "cp": "76640",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "TERRES DE CAUX",
-    "cp": "76640",
-    "dept": "76",
-    "region": ""
-  },
-  {
     "name": "THEROULDEVILLE",
     "cp": "76540",
     "dept": "76",
@@ -4352,12 +4064,6 @@
   {
     "name": "VAL DE SAANE",
     "cp": "76890",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "VAL DE SCIE",
-    "cp": "76720",
     "dept": "76",
     "region": ""
   },
@@ -4556,12 +4262,6 @@
   {
     "name": "YPORT",
     "cp": "76111",
-    "dept": "76",
-    "region": ""
-  },
-  {
-    "name": "YPREVILLE BIVILLE",
-    "cp": "76540",
     "dept": "76",
     "region": ""
   },

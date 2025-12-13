@@ -666,12 +666,6 @@
     "region": ""
   },
   {
-    "name": "GRATELOUP ST GAYRAND",
-    "cp": "47400",
-    "dept": "47",
-    "region": ""
-  },
-  {
     "name": "GRAYSSAS",
     "cp": "47270",
     "dept": "47",
@@ -818,12 +812,6 @@
   {
     "name": "LAMONTJOIE",
     "cp": "47310",
-    "dept": "47",
-    "region": ""
-  },
-  {
-    "name": "LANNES",
-    "cp": "47170",
     "dept": "47",
     "region": ""
   },
@@ -1254,12 +1242,6 @@
     "region": ""
   },
   {
-    "name": "PINEL HAUTERIVE",
-    "cp": "47380",
-    "dept": "47",
-    "region": ""
-  },
-  {
     "name": "POMPIEY",
     "cp": "47230",
     "dept": "47",
@@ -1340,12 +1322,6 @@
   {
     "name": "RAZIMET",
     "cp": "47160",
-    "dept": "47",
-    "region": ""
-  },
-  {
-    "name": "REAUP LISSE",
-    "cp": "47170",
     "dept": "47",
     "region": ""
   },
@@ -1472,18 +1448,6 @@
   {
     "name": "SEYCHES",
     "cp": "47350",
-    "dept": "47",
-    "region": ""
-  },
-  {
-    "name": "SOS",
-    "cp": "47170",
-    "dept": "47",
-    "region": ""
-  },
-  {
-    "name": "SOS",
-    "cp": "47170",
     "dept": "47",
     "region": ""
   },

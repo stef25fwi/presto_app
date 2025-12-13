@@ -156,12 +156,6 @@
     "region": ""
   },
   {
-    "name": "BELLEGARDE MARSAL",
-    "cp": "81430",
-    "dept": "81",
-    "region": ""
-  },
-  {
     "name": "BELLESERRE",
     "cp": "81540",
     "dept": "81",
@@ -522,18 +516,6 @@
     "region": ""
   },
   {
-    "name": "FONTRIEU",
-    "cp": "81260",
-    "dept": "81",
-    "region": ""
-  },
-  {
-    "name": "FONTRIEU",
-    "cp": "81260",
-    "dept": "81",
-    "region": ""
-  },
-  {
     "name": "FRAISSINES",
     "cp": "81340",
     "dept": "81",
@@ -596,12 +578,6 @@
   {
     "name": "GRAZAC",
     "cp": "81800",
-    "dept": "81",
-    "region": ""
-  },
-  {
-    "name": "GUITALENS L ALBAREDE",
-    "cp": "81220",
     "dept": "81",
     "region": ""
   },
@@ -1560,12 +1536,6 @@
     "region": ""
   },
   {
-    "name": "ST CHRISTOPHE",
-    "cp": "81190",
-    "dept": "81",
-    "region": ""
-  },
-  {
     "name": "ST CIRGUE",
     "cp": "81340",
     "dept": "81",
@@ -1640,12 +1610,6 @@
   {
     "name": "ST LIEUX LES LAVAUR",
     "cp": "81500",
-    "dept": "81",
-    "region": ""
-  },
-  {
-    "name": "ST MARCEL CAMPES",
-    "cp": "81170",
     "dept": "81",
     "region": ""
   },
@@ -1759,36 +1723,6 @@
   },
   {
     "name": "TEILLET",
-    "cp": "81120",
-    "dept": "81",
-    "region": ""
-  },
-  {
-    "name": "TERRE DE BANCALIE",
-    "cp": "81120",
-    "dept": "81",
-    "region": ""
-  },
-  {
-    "name": "TERRE DE BANCALIE",
-    "cp": "81120",
-    "dept": "81",
-    "region": ""
-  },
-  {
-    "name": "TERRE DE BANCALIE",
-    "cp": "81120",
-    "dept": "81",
-    "region": ""
-  },
-  {
-    "name": "TERRE DE BANCALIE",
-    "cp": "81120",
-    "dept": "81",
-    "region": ""
-  },
-  {
-    "name": "TERRE DE BANCALIE",
     "cp": "81120",
     "dept": "81",
     "region": ""

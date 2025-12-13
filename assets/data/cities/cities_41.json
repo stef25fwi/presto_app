@@ -73,36 +73,6 @@
   },
   {
     "name": "BEAUCE LA ROMAINE",
-    "cp": "41160",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "BEAUCE LA ROMAINE",
-    "cp": "41240",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "BEAUCE LA ROMAINE",
-    "cp": "41240",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "BEAUCE LA ROMAINE",
-    "cp": "41240",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "BEAUCE LA ROMAINE",
-    "cp": "41240",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "BEAUCE LA ROMAINE",
     "cp": "41240",
     "dept": "41",
     "region": ""
@@ -320,30 +290,6 @@
   {
     "name": "COUDDES",
     "cp": "41700",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "COUETRON AU PERCHE",
-    "cp": "41170",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "COUETRON AU PERCHE",
-    "cp": "41170",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "COUETRON AU PERCHE",
-    "cp": "41170",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "COUETRON AU PERCHE",
-    "cp": "41170",
     "dept": "41",
     "region": ""
   },
@@ -667,18 +613,6 @@
   },
   {
     "name": "LE CONTROIS EN SOLOGNE",
-    "cp": "41120",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "LE CONTROIS EN SOLOGNE",
-    "cp": "41120",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "LE CONTROIS EN SOLOGNE",
     "cp": "41400",
     "dept": "41",
     "region": ""
@@ -930,18 +864,6 @@
     "region": ""
   },
   {
-    "name": "MONTOIRE SUR LE LOIR",
-    "cp": "41800",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "MONTRICHARD VAL DE CHER",
-    "cp": "41400",
-    "dept": "41",
-    "region": ""
-  },
-  {
     "name": "MONTRICHARD VAL DE CHER",
     "cp": "41400",
     "dept": "41",
@@ -1028,24 +950,6 @@
   {
     "name": "ORCAY",
     "cp": "41300",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "OUCQUES LA NOUVELLE",
-    "cp": "41290",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "OUCQUES LA NOUVELLE",
-    "cp": "41290",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "OUCQUES LA NOUVELLE",
-    "cp": "41290",
     "dept": "41",
     "region": ""
   },
@@ -1392,12 +1296,6 @@
     "region": ""
   },
   {
-    "name": "ST LAURENT NOUAN",
-    "cp": "41220",
-    "dept": "41",
-    "region": ""
-  },
-  {
     "name": "ST LEONARD EN BEAUCE",
     "cp": "41370",
     "dept": "41",
@@ -1536,24 +1434,6 @@
     "region": ""
   },
   {
-    "name": "VALENCISSE",
-    "cp": "41190",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "VALENCISSE",
-    "cp": "41190",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "VALLEE DE RONSARD",
-    "cp": "41800",
-    "dept": "41",
-    "region": ""
-  },
-  {
     "name": "VALLEE DE RONSARD",
     "cp": "41800",
     "dept": "41",
@@ -1562,18 +1442,6 @@
   {
     "name": "VALLIERES LES GRANDES",
     "cp": "41400",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "VALLOIRE SUR CISSE",
-    "cp": "41150",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "VALLOIRE SUR CISSE",
-    "cp": "41150",
     "dept": "41",
     "region": ""
   },
@@ -1604,24 +1472,6 @@
   {
     "name": "VEUZAIN SUR LOIRE",
     "cp": "41150",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "VEUZAIN SUR LOIRE",
-    "cp": "41150",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "VIEVY LE RAYE",
-    "cp": "41290",
-    "dept": "41",
-    "region": ""
-  },
-  {
-    "name": "VIEVY LE RAYE",
-    "cp": "41290",
     "dept": "41",
     "region": ""
   },

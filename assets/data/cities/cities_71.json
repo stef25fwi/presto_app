@@ -72,12 +72,6 @@
     "region": ""
   },
   {
-    "name": "AUTUN",
-    "cp": "71400",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "AUXY",
     "cp": "71400",
     "dept": "71",
@@ -174,12 +168,6 @@
     "region": ""
   },
   {
-    "name": "BERGESSERIN",
-    "cp": "71250",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "BERZE LA VILLE",
     "cp": "71960",
     "dept": "71",
@@ -236,12 +224,6 @@
   {
     "name": "BOIS STE MARIE",
     "cp": "71800",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "BONNAY ST YTHAIRE",
-    "cp": "71460",
     "dept": "71",
     "region": ""
   },
@@ -498,12 +480,6 @@
     "region": ""
   },
   {
-    "name": "CHARETTE VARENNES",
-    "cp": "71270",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "CHARMOY",
     "cp": "71710",
     "dept": "71",
@@ -680,12 +656,6 @@
   {
     "name": "CLUNY",
     "cp": "71250",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "CLUX VILLENEUVE",
-    "cp": "71270",
     "dept": "71",
     "region": ""
   },
@@ -912,20 +882,8 @@
     "region": ""
   },
   {
-    "name": "DIGOIN",
-    "cp": "71160",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "DOMMARTIN LES CUISEAUX",
     "cp": "71480",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "DOMPIERRE LES ORMES",
-    "cp": "71520",
     "dept": "71",
     "region": ""
   },
@@ -1020,12 +978,6 @@
     "region": ""
   },
   {
-    "name": "ETRIGNY",
-    "cp": "71240",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "FARGES LES CHALON",
     "cp": "71150",
     "dept": "71",
@@ -1076,12 +1028,6 @@
   {
     "name": "FONTENAY",
     "cp": "71120",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "FRAGNES LA LOYERE",
-    "cp": "71530",
     "dept": "71",
     "region": ""
   },
@@ -1356,18 +1302,6 @@
     "region": ""
   },
   {
-    "name": "LA CHAPELLE DE GUINCHAY",
-    "cp": "71570",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "LA CHAPELLE DE GUINCHAY",
-    "cp": "71570",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "LA CHAPELLE DU MONT DE FRANCE",
     "cp": "71520",
     "dept": "71",
@@ -1506,24 +1440,6 @@
     "region": ""
   },
   {
-    "name": "LA VINEUSE SUR FREGANDE",
-    "cp": "71250",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "LA VINEUSE SUR FREGANDE",
-    "cp": "71250",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "LA VINEUSE SUR FREGANDE",
-    "cp": "71250",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "LACROST",
     "cp": "71700",
     "dept": "71",
@@ -1598,12 +1514,6 @@
   {
     "name": "LE PULEY",
     "cp": "71460",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "LE ROUSSET MARIZY",
-    "cp": "71220",
     "dept": "71",
     "region": ""
   },
@@ -1692,12 +1602,6 @@
     "region": ""
   },
   {
-    "name": "LOUHANS",
-    "cp": "71500",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "LOURNAND",
     "cp": "71250",
     "dept": "71",
@@ -1724,30 +1628,6 @@
   {
     "name": "LUX",
     "cp": "71100",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "MACON",
-    "cp": "71000",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "MACON",
-    "cp": "71000",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "MACON",
-    "cp": "71000",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "MACON",
-    "cp": "71000",
     "dept": "71",
     "region": ""
   },
@@ -1878,20 +1758,8 @@
     "region": ""
   },
   {
-    "name": "MELLECEY",
-    "cp": "71640",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "MENETREUIL",
     "cp": "71470",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "MERCUREY",
-    "cp": "71640",
     "dept": "71",
     "region": ""
   },
@@ -2094,18 +1962,6 @@
     "region": ""
   },
   {
-    "name": "NAVOUR SUR GROSNE",
-    "cp": "71520",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "NAVOUR SUR GROSNE",
-    "cp": "71520",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "NEUVY GRANDCHAMP",
     "cp": "71130",
     "dept": "71",
@@ -2216,12 +2072,6 @@
   {
     "name": "PERRIGNY SUR LOIRE",
     "cp": "71160",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "PIERRE DE BRESSE",
-    "cp": "71270",
     "dept": "71",
     "region": ""
   },
@@ -2922,12 +2772,6 @@
     "region": ""
   },
   {
-    "name": "ST LOUP GEANGES",
-    "cp": "71350",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "ST MARCEL",
     "cp": "71380",
     "dept": "71",
@@ -3132,12 +2976,6 @@
     "region": ""
   },
   {
-    "name": "ST SYMPHORIEN D ANCELLES",
-    "cp": "71570",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "ST SYMPHORIEN DE MARMAGNE",
     "cp": "71710",
     "dept": "71",
@@ -3168,20 +3006,8 @@
     "region": ""
   },
   {
-    "name": "ST VALLIER",
-    "cp": "71230",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "ST VERAND",
     "cp": "71570",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "ST VINCENT BRAGNY",
-    "cp": "71430",
     "dept": "71",
     "region": ""
   },
@@ -3248,12 +3074,6 @@
   {
     "name": "SULLY",
     "cp": "71360",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "TAIZE",
-    "cp": "71250",
     "dept": "71",
     "region": ""
   },
@@ -3384,12 +3204,6 @@
     "region": ""
   },
   {
-    "name": "VARENNE ST GERMAIN",
-    "cp": "71600",
-    "dept": "71",
-    "region": ""
-  },
-  {
     "name": "VARENNES LE GRAND",
     "cp": "71240",
     "dept": "71",
@@ -3440,12 +3254,6 @@
   {
     "name": "VENDENESSE SUR ARROUX",
     "cp": "71130",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "VERDUN CIEL",
-    "cp": "71350",
     "dept": "71",
     "region": ""
   },
@@ -3524,12 +3332,6 @@
   {
     "name": "VINZELLES",
     "cp": "71680",
-    "dept": "71",
-    "region": ""
-  },
-  {
-    "name": "VIRE",
-    "cp": "71260",
     "dept": "71",
     "region": ""
   },

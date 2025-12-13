@@ -114,12 +114,6 @@
     "region": ""
   },
   {
-    "name": "BEAULIEU SUR DORDOGNE",
-    "cp": "19120",
-    "dept": "19",
-    "region": ""
-  },
-  {
     "name": "BEAUMONT",
     "cp": "19390",
     "dept": "19",
@@ -194,12 +188,6 @@
   {
     "name": "BUGEAT",
     "cp": "19170",
-    "dept": "19",
-    "region": ""
-  },
-  {
-    "name": "CAMPS ST MATHURIN LEOBAZEL",
-    "cp": "19430",
     "dept": "19",
     "region": ""
   },
@@ -594,12 +582,6 @@
     "region": ""
   },
   {
-    "name": "LAGARDE MARC LA TOUR",
-    "cp": "19150",
-    "dept": "19",
-    "region": ""
-  },
-  {
     "name": "LAGLEYGEOLLE",
     "cp": "19500",
     "dept": "19",
@@ -608,12 +590,6 @@
   {
     "name": "LAGRAULIERE",
     "cp": "19700",
-    "dept": "19",
-    "region": ""
-  },
-  {
-    "name": "LAGUENNE SUR AVALOUZE",
-    "cp": "19150",
     "dept": "19",
     "region": ""
   },
@@ -720,12 +696,6 @@
     "region": ""
   },
   {
-    "name": "LES TROIS SAINTS",
-    "cp": "19210",
-    "dept": "19",
-    "region": ""
-  },
-  {
     "name": "LESTARDS",
     "cp": "19170",
     "dept": "19",
@@ -782,12 +752,6 @@
   {
     "name": "MADRANGES",
     "cp": "19470",
-    "dept": "19",
-    "region": ""
-  },
-  {
-    "name": "MALEMORT",
-    "cp": "19360",
     "dept": "19",
     "region": ""
   },
@@ -902,12 +866,6 @@
   {
     "name": "MONESTIER PORT DIEU",
     "cp": "19110",
-    "dept": "19",
-    "region": ""
-  },
-  {
-    "name": "MONTAIGNAC SUR DOUSTRE",
-    "cp": "19300",
     "dept": "19",
     "region": ""
   },
@@ -1124,12 +1082,6 @@
   {
     "name": "SARRAN",
     "cp": "19800",
-    "dept": "19",
-    "region": ""
-  },
-  {
-    "name": "SARROUX ST JULIEN",
-    "cp": "19110",
     "dept": "19",
     "region": ""
   },
@@ -1634,18 +1586,6 @@
   {
     "name": "USSAC",
     "cp": "19270",
-    "dept": "19",
-    "region": ""
-  },
-  {
-    "name": "USSEL",
-    "cp": "19200",
-    "dept": "19",
-    "region": ""
-  },
-  {
-    "name": "USSEL",
-    "cp": "19200",
     "dept": "19",
     "region": ""
   },

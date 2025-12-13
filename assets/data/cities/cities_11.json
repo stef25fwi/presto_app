@@ -390,36 +390,6 @@
     "region": ""
   },
   {
-    "name": "CARCASSONNE",
-    "cp": "11000",
-    "dept": "11",
-    "region": ""
-  },
-  {
-    "name": "CARCASSONNE",
-    "cp": "11000",
-    "dept": "11",
-    "region": ""
-  },
-  {
-    "name": "CARCASSONNE",
-    "cp": "11000",
-    "dept": "11",
-    "region": ""
-  },
-  {
-    "name": "CARCASSONNE",
-    "cp": "11000",
-    "dept": "11",
-    "region": ""
-  },
-  {
-    "name": "CARCASSONNE",
-    "cp": "11000",
-    "dept": "11",
-    "region": ""
-  },
-  {
     "name": "CARLIPA",
     "cp": "11170",
     "dept": "11",
@@ -726,12 +696,6 @@
     "region": ""
   },
   {
-    "name": "ESCUEILLENS ET ST JUST DE BELENGARD",
-    "cp": "11240",
-    "dept": "11",
-    "region": ""
-  },
-  {
     "name": "ESPERAZA",
     "cp": "11260",
     "dept": "11",
@@ -812,18 +776,6 @@
   {
     "name": "FITOU",
     "cp": "11510",
-    "dept": "11",
-    "region": ""
-  },
-  {
-    "name": "FITOU",
-    "cp": "11510",
-    "dept": "11",
-    "region": ""
-  },
-  {
-    "name": "FLEURY",
-    "cp": "11560",
     "dept": "11",
     "region": ""
   },
@@ -968,12 +920,6 @@
   {
     "name": "GREFFEIL",
     "cp": "11250",
-    "dept": "11",
-    "region": ""
-  },
-  {
-    "name": "GRUISSAN",
-    "cp": "11430",
     "dept": "11",
     "region": ""
   },
@@ -1256,18 +1202,6 @@
   {
     "name": "LEUC",
     "cp": "11250",
-    "dept": "11",
-    "region": ""
-  },
-  {
-    "name": "LEUCATE",
-    "cp": "11370",
-    "dept": "11",
-    "region": ""
-  },
-  {
-    "name": "LEUCATE",
-    "cp": "11370",
     "dept": "11",
     "region": ""
   },
@@ -1614,12 +1548,6 @@
     "region": ""
   },
   {
-    "name": "NARBONNE",
-    "cp": "11100",
-    "dept": "11",
-    "region": ""
-  },
-  {
     "name": "NEBIAS",
     "cp": "11500",
     "dept": "11",
@@ -1848,20 +1776,8 @@
     "region": ""
   },
   {
-    "name": "PUILAURENS",
-    "cp": "11140",
-    "dept": "11",
-    "region": ""
-  },
-  {
     "name": "PUIVERT",
     "cp": "11230",
-    "dept": "11",
-    "region": ""
-  },
-  {
-    "name": "QUILLAN",
-    "cp": "11500",
     "dept": "11",
     "region": ""
   },
@@ -2442,26 +2358,8 @@
     "region": ""
   },
   {
-    "name": "VAL DE DAGNE",
-    "cp": "11220",
-    "dept": "11",
-    "region": ""
-  },
-  {
     "name": "VAL DE LAMBRONNE",
     "cp": "11230",
-    "dept": "11",
-    "region": ""
-  },
-  {
-    "name": "VAL DE LAMBRONNE",
-    "cp": "11230",
-    "dept": "11",
-    "region": ""
-  },
-  {
-    "name": "VAL DU FABY",
-    "cp": "11260",
     "dept": "11",
     "region": ""
   },

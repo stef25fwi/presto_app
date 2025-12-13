@@ -36,12 +36,6 @@
     "region": ""
   },
   {
-    "name": "ALLONZIER LA CAILLE",
-    "cp": "74350",
-    "dept": "74",
-    "region": ""
-  },
-  {
     "name": "AMANCY",
     "cp": "74800",
     "dept": "74",
@@ -50,12 +44,6 @@
   {
     "name": "AMBILLY",
     "cp": "74100",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "ANDILLY",
-    "cp": "74350",
     "dept": "74",
     "region": ""
   },
@@ -79,24 +67,6 @@
   },
   {
     "name": "ANNECY",
-    "cp": "74370",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "ANNECY",
-    "cp": "74600",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "ANNECY",
-    "cp": "74600",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "ANNECY",
     "cp": "74600",
     "dept": "74",
     "region": ""
@@ -104,12 +74,6 @@
   {
     "name": "ANNECY",
     "cp": "74940",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "ANNECY",
-    "cp": "74960",
     "dept": "74",
     "region": ""
   },
@@ -128,18 +92,6 @@
   {
     "name": "ANTHY SUR LEMAN",
     "cp": "74200",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "ARACHES LA FRASSE",
-    "cp": "74300",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "ARACHES LA FRASSE",
-    "cp": "74300",
     "dept": "74",
     "region": ""
   },
@@ -252,12 +204,6 @@
     "region": ""
   },
   {
-    "name": "BONNE",
-    "cp": "74380",
-    "dept": "74",
-    "region": ""
-  },
-  {
     "name": "BONNEVAUX",
     "cp": "74360",
     "dept": "74",
@@ -332,24 +278,6 @@
   {
     "name": "CHALLONGES",
     "cp": "74910",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "CHAMONIX MONT BLANC",
-    "cp": "74400",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "CHAMONIX MONT BLANC",
-    "cp": "74400",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "CHAMONIX MONT BLANC",
-    "cp": "74400",
     "dept": "74",
     "region": ""
   },
@@ -468,12 +396,6 @@
     "region": ""
   },
   {
-    "name": "CLARAFOND ARCINE",
-    "cp": "74270",
-    "dept": "74",
-    "region": ""
-  },
-  {
     "name": "CLERMONT",
     "cp": "74270",
     "dept": "74",
@@ -530,12 +452,6 @@
   {
     "name": "CRANVES SALES",
     "cp": "74380",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "CREMPIGNY BONNEGUETE",
-    "cp": "74150",
     "dept": "74",
     "region": ""
   },
@@ -666,12 +582,6 @@
     "region": ""
   },
   {
-    "name": "ETREMBIERES",
-    "cp": "74100",
-    "dept": "74",
-    "region": ""
-  },
-  {
     "name": "EVIAN LES BAINS",
     "cp": "74500",
     "dept": "74",
@@ -686,12 +596,6 @@
   {
     "name": "FAUCIGNY",
     "cp": "74130",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "FAVERGES SEYTHENEX",
-    "cp": "74210",
     "dept": "74",
     "region": ""
   },
@@ -722,24 +626,6 @@
   {
     "name": "FILLIERE",
     "cp": "74370",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "FILLIERE",
-    "cp": "74370",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "FILLIERE",
-    "cp": "74570",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "FILLIERE",
-    "cp": "74570",
     "dept": "74",
     "region": ""
   },
@@ -776,12 +662,6 @@
   {
     "name": "GIEZ",
     "cp": "74210",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "GLIERES VAL DE BORNE",
-    "cp": "74130",
     "dept": "74",
     "region": ""
   },
@@ -1062,12 +942,6 @@
     "region": ""
   },
   {
-    "name": "MAGLAND",
-    "cp": "74300",
-    "dept": "74",
-    "region": ""
-  },
-  {
     "name": "MANIGOD",
     "cp": "74230",
     "dept": "74",
@@ -1194,20 +1068,8 @@
     "region": ""
   },
   {
-    "name": "MIEUSSY",
-    "cp": "74440",
-    "dept": "74",
-    "region": ""
-  },
-  {
     "name": "MINZIER",
     "cp": "74270",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "MONNETIER MORNEX",
-    "cp": "74560",
     "dept": "74",
     "region": ""
   },
@@ -1238,12 +1100,6 @@
   {
     "name": "MORILLON",
     "cp": "74440",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "MORZINE",
-    "cp": "74110",
     "dept": "74",
     "region": ""
   },
@@ -1338,48 +1194,6 @@
     "region": ""
   },
   {
-    "name": "PASSY",
-    "cp": "74190",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "PASSY",
-    "cp": "74190",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "PASSY",
-    "cp": "74190",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "PASSY",
-    "cp": "74190",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "PASSY",
-    "cp": "74190",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "PASSY",
-    "cp": "74190",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "PASSY",
-    "cp": "74190",
-    "dept": "74",
-    "region": ""
-  },
-  {
     "name": "PEILLONNEX",
     "cp": "74250",
     "dept": "74",
@@ -1422,20 +1236,8 @@
     "region": ""
   },
   {
-    "name": "PUBLIER",
-    "cp": "74500",
-    "dept": "74",
-    "region": ""
-  },
-  {
     "name": "QUINTAL",
     "cp": "74600",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "REIGNIER ESERY",
-    "cp": "74930",
     "dept": "74",
     "region": ""
   },
@@ -1460,18 +1262,6 @@
   {
     "name": "SALES",
     "cp": "74150",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "SALLANCHES",
-    "cp": "74700",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "SALLANCHES",
-    "cp": "74700",
     "dept": "74",
     "region": ""
   },
@@ -1620,18 +1410,6 @@
     "region": ""
   },
   {
-    "name": "ST GERVAIS LES BAINS",
-    "cp": "74170",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "ST GERVAIS LES BAINS",
-    "cp": "74170",
-    "dept": "74",
-    "region": ""
-  },
-  {
     "name": "ST GINGOLPH",
     "cp": "74500",
     "dept": "74",
@@ -1728,12 +1506,6 @@
     "region": ""
   },
   {
-    "name": "TANINGES",
-    "cp": "74440",
-    "dept": "74",
-    "region": ""
-  },
-  {
     "name": "THOLLON LES MEMISES",
     "cp": "74500",
     "dept": "74",
@@ -1742,12 +1514,6 @@
   {
     "name": "THONES",
     "cp": "74230",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "THONON LES BAINS",
-    "cp": "74200",
     "dept": "74",
     "region": ""
   },
@@ -1794,32 +1560,8 @@
     "region": ""
   },
   {
-    "name": "VAL DE CHAISE",
-    "cp": "74210",
-    "dept": "74",
-    "region": ""
-  },
-  {
     "name": "VALLEIRY",
     "cp": "74520",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "VALLIERES SUR FIER",
-    "cp": "74150",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "VALLIERES SUR FIER",
-    "cp": "74150",
-    "dept": "74",
-    "region": ""
-  },
-  {
-    "name": "VALLIERES SUR FIER",
-    "cp": "74150",
     "dept": "74",
     "region": ""
   },

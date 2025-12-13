@@ -24,12 +24,6 @@
     "region": ""
   },
   {
-    "name": "ALLY",
-    "cp": "15700",
-    "dept": "15",
-    "region": ""
-  },
-  {
     "name": "ANDELAT",
     "cp": "15100",
     "dept": "15",
@@ -218,12 +212,6 @@
   {
     "name": "CHAMPAGNAC",
     "cp": "15350",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "CHAMPS SUR TARENTAINE MARCHAL",
-    "cp": "15270",
     "dept": "15",
     "region": ""
   },
@@ -528,12 +516,6 @@
     "region": ""
   },
   {
-    "name": "LANOBRE",
-    "cp": "15270",
-    "dept": "15",
-    "region": ""
-  },
-  {
     "name": "LAPEYRUGUE",
     "cp": "15120",
     "dept": "15",
@@ -582,18 +564,6 @@
     "region": ""
   },
   {
-    "name": "LAVEISSIERE",
-    "cp": "15300",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "LAVEISSIERE",
-    "cp": "15300",
-    "dept": "15",
-    "region": ""
-  },
-  {
     "name": "LAVIGERIE",
     "cp": "15300",
     "dept": "15",
@@ -620,12 +590,6 @@
   {
     "name": "LE MONTEIL",
     "cp": "15240",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "LE ROUGET PERS",
-    "cp": "15290",
     "dept": "15",
     "region": ""
   },
@@ -698,12 +662,6 @@
   {
     "name": "MALBO",
     "cp": "15230",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "MANDAILLES ST JULIEN",
-    "cp": "15590",
     "dept": "15",
     "region": ""
   },
@@ -840,12 +798,6 @@
     "region": ""
   },
   {
-    "name": "MURAT",
-    "cp": "15300",
-    "dept": "15",
-    "region": ""
-  },
-  {
     "name": "NARNHAC",
     "cp": "15230",
     "dept": "15",
@@ -866,18 +818,6 @@
   {
     "name": "NEUVEGLISE SUR TRUYERE",
     "cp": "15100",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "NEUVEGLISE SUR TRUYERE",
-    "cp": "15260",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "NEUVEGLISE SUR TRUYERE",
-    "cp": "15260",
     "dept": "15",
     "region": ""
   },
@@ -942,24 +882,6 @@
     "region": ""
   },
   {
-    "name": "PLEAUX",
-    "cp": "15700",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "PLEAUX",
-    "cp": "15700",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "PLEAUX",
-    "cp": "15700",
-    "dept": "15",
-    "region": ""
-  },
-  {
     "name": "POLMINHAC",
     "cp": "15800",
     "dept": "15",
@@ -974,12 +896,6 @@
   {
     "name": "PRUNET",
     "cp": "15130",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "PUYCAPEL",
-    "cp": "15340",
     "dept": "15",
     "region": ""
   },
@@ -1188,12 +1104,6 @@
     "region": ""
   },
   {
-    "name": "ST CONSTANT FOURNOULES",
-    "cp": "15600",
-    "dept": "15",
-    "region": ""
-  },
-  {
     "name": "ST ETIENNE CANTALES",
     "cp": "15150",
     "dept": "15",
@@ -1280,12 +1190,6 @@
   {
     "name": "ST MARTIN SOUS VIGOUROUX",
     "cp": "15230",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "ST MARTIN VALMEROUX",
-    "cp": "15140",
     "dept": "15",
     "region": ""
   },
@@ -1466,30 +1370,6 @@
   {
     "name": "VABRES",
     "cp": "15100",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "VAL D ARCOMIE",
-    "cp": "15320",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "VAL D ARCOMIE",
-    "cp": "15320",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "VAL D ARCOMIE",
-    "cp": "15320",
-    "dept": "15",
-    "region": ""
-  },
-  {
-    "name": "VAL D ARCOMIE",
-    "cp": "15320",
     "dept": "15",
     "region": ""
   },
