@@ -65,13 +65,19 @@ class OfferCard extends StatelessWidget {
     ].join(' · ');
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.all(0),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFFCEEE2),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE7D7C7)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

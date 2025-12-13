@@ -376,8 +376,9 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin, WidgetsBindingObserver {
   int _selectedIndex = 0;
+  late final PageController _pageController;
   final PageController _carouselController = PageController();
   int _currentSlide = 0;
 
@@ -463,6 +464,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    
+    _pageController = PageController(initialPage: 0);
+    WidgetsBinding.instance.addObserver(this);
 
     _categoryController = AnimationController(
       vsync: this,
@@ -516,10 +520,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _pageController.dispose();
     _carouselController.dispose();
     _categoryController.dispose();
     _sloganTimer?.cancel();
     super.dispose();
+  }
+
+  /// Force rebuild quand le clavier apparaît/disparaît
+  @override
+  void didChangeMetrics() {
+    if (mounted) setState(() {});
   }
 
   /// Animation "bump" séquentielle sur les 6 catégories
@@ -535,32 +547,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _onBottomTap(int index) {
+    if (_selectedIndex == index) return;
     setState(() => _selectedIndex = index);
+    _pageController.jumpToPage(index);
+  }
 
-    if (index == 0) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ConsultOffersPage()),
-      );
-      return;
-    }
-    if (index == 1) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const PublishOfferPage()),
-      );
-      return;
-    }
-    if (index == 2) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const MessagesPage()),
-      );
-      return;
-    }
-    if (index == 3) {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const AccountPage()),
-      );
-      return;
-    }
+  void _onPageChanged(int index) {
+    setState(() => _selectedIndex = index);
   }
 
   void _goToSearch(String query) {
@@ -847,7 +840,80 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        extendBody: true,
+        bottomNavigationBar: Offstage(
+          offstage: keyboardOpen,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: kPrestoOrange,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _BottomNavItem(
+                    icon: Icons.home,
+                    label: "Accueil",
+                    selected: _selectedIndex == 0,
+                    onTap: () => _onBottomTap(0),
+                  ),
+                  _BottomNavItem(
+                    icon: Icons.search,
+                    label: "Je consulte\nles offres",
+                    selected: _selectedIndex == 1,
+                    onTap: () => _onBottomTap(1),
+                  ),
+                  _BottomNavItem(
+                    icon: Icons.add_circle_outline,
+                    label: "Publier\nune offre",
+                    isBig: true,
+                    onTap: () => _onBottomTap(2),
+                  ),
+                  _BottomNavItem(
+                    icon: Icons.chat_bubble_outline,
+                    label: "Messages",
+                    selected: _selectedIndex == 3,
+                    onTap: () => _onBottomTap(3),
+                  ),
+                  _BottomNavItem(
+                    icon: Icons.person_outline,
+                    label: "Compte",
+                    selected: _selectedIndex == 4,
+                    onTap: () => _onBottomTap(4),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        body: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          onPageChanged: _onPageChanged,
+          children: [
+            _buildHomeContent(),
+            const ConsultOffersPage(),
+            const PublishOfferPage(),
+            const MessagesPage(),
+            const AccountPage(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomeContent() {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFFF9F2EA),
       body: SafeArea(
         child: Container(
@@ -1407,45 +1473,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 const SizedBox(height: 20),
               ],
             ),
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: kPrestoOrange,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-        child: SafeArea(
-          top: false,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _BottomNavItem(
-                icon: Icons.search,
-                label: "Je consulte\nles offres",
-                selected: _selectedIndex == 0,
-                onTap: () => _onBottomTap(0),
-              ),
-              _BottomNavItem(
-                icon: Icons.add_circle_outline,
-                label: "Publier\nune offre",
-                isBig: true,
-                onTap: () => _onBottomTap(1),
-              ),
-              _BottomNavItem(
-                icon: Icons.chat_bubble_outline,
-                label: "Messages",
-                selected: _selectedIndex == 2,
-                onTap: () => _onBottomTap(2),
-              ),
-              _BottomNavItem(
-                icon: Icons.person_outline,
-                label: "Compte",
-                selected: _selectedIndex == 3,
-                onTap: () => _onBottomTap(3),
-              ),
-            ],
           ),
         ),
       ),
@@ -2185,11 +2212,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         : "Offres : ${widget.categoryFilter!}";
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFE3F2FD),
       appBar: AppBar(
-        title: Text(
-          baseTitle,
-          style: const TextStyle(fontWeight: FontWeight.w700),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            baseTitle,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -2272,10 +2302,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
                 return ListView.separated(
                   controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(4, 8, 4, 120),
                   itemCount: docs.length,
                   separatorBuilder: (context, index) =>
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                   itemBuilder: (context, index) {
                     final doc = docs[index];
                     final offerId = doc.id;
@@ -2703,32 +2733,31 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }
 
   Widget _buildCategoryDropdown() {
-    return Expanded(
-      child: DropdownButtonFormField<String>(
-        value: _filterCategory,
-        decoration: const InputDecoration(
-          labelText: 'Catégorie',
-          border: OutlineInputBorder(),
-          isDense: true,
-        ),
-        items: [
-          const DropdownMenuItem(
-            value: null,
-            child: Text('Toutes les catégories'),
-          ),
-          ...kCategories.map(
-            (c) => DropdownMenuItem(
-              value: c,
-              child: Text(c),
-            ),
-          ),
-        ],
-        onChanged: (value) {
-          setState(() {
-            _filterCategory = value;
-          });
-        },
+    return DropdownButtonFormField<String>(
+      value: _filterCategory,
+      isDense: true,
+      decoration: const InputDecoration(
+        labelText: 'Catégorie',
+        isDense: true,
       ),
+      items: [
+        const DropdownMenuItem(
+          value: null,
+          child: Text('Toutes les catégories'),
+        ),
+        ...kCategories.map(
+          (c) => DropdownMenuItem(
+            value: c,
+            child: Text(c),
+          ),
+        ),
+      ],
+      onChanged: (value) {
+        setState(() {
+          _filterCategory = value;
+        });
+        _onAnyFilterChanged();
+      },
     );
   }
 
@@ -4952,7 +4981,7 @@ class _AccountPageState extends State<AccountPage> {
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 500),
@@ -5219,6 +5248,7 @@ class _AccountPageState extends State<AccountPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 500),
             child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 120),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
