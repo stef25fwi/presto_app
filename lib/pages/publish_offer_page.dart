@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import '../services/audio_service.dart';
+import 'package:path_provider/path_provider.dart' if (dart.library.html) '';
+import 'dart:io' if (dart.library.html) 'dart:html';
 import '../services/city_repo_compact.dart';
 import '../widgets/city_postal_autocomplete_compact.dart';
 
@@ -38,6 +43,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final _cpCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _budgetCtrl = TextEditingController();
+  final _aiHintCtrl = TextEditingController();
 
   String? _category;
 
@@ -52,6 +58,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   late final stt.SpeechToText _stt;
   bool _sttReady = false;
   bool _listening = false;
+  bool _aiLoading = false;
+
+  // Pour l'enregistrement audio premium
+  late final AudioRecorder _audioRecorder;
+  bool _recording = false;
+  String? _audioPath;
 
   final List<String> _categories = const [
     'Jardinage',
@@ -71,6 +83,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _repo = widget.repo ?? CityRepoCompact();
 
     _stt = stt.SpeechToText();
+    _audioRecorder = AudioRecorder();
+    
     if (widget.enableSpeechToText) {
       _initStt();
     } else {
@@ -191,6 +205,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _cpCtrl.dispose();
     _phoneCtrl.dispose();
     _budgetCtrl.dispose();
+    _aiHintCtrl.dispose();
 
     _titleFocus.dispose();
     _descFocus.dispose();
@@ -200,7 +215,192 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _budgetFocus.dispose();
 
     _stt.stop();
+    _audioRecorder.dispose();
     super.dispose();
+  }
+
+  Future<void> _onFillWithAI() async {
+    // ⚠️ adapte ces noms si tes controllers s'appellent autrement
+    // ex: _titleController au lieu de _titleCtrl
+    final titleCtrl = _titleCtrl;
+    final descCtrl  = _descCtrl;
+    final cityCtrl  = _cityCtrl;
+    final cpCtrl    = _cpCtrl;
+
+    // Téléphone + Budget => on ne touche pas :
+    // final phoneCtrl = _phoneCtrl;
+    // final budgetCtrl = _budgetCtrl;
+
+    // Si déjà rempli, on demande si on remplace
+    if (titleCtrl.text.trim().isNotEmpty || descCtrl.text.trim().isNotEmpty) {
+      final replace = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Remplissage IA"),
+          content: const Text("Tu veux remplacer le titre/description actuels ?"),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Non")),
+            ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text("Remplacer")),
+          ],
+        ),
+      );
+
+      if (replace != true) return;
+    }
+
+    setState(() => _aiLoading = true);
+
+    try {
+      final draft = await AiOfferService.generateDraft(
+        hint: _aiHintCtrl.text.trim(),
+        currentCity: cityCtrl.text.trim(),
+        currentCategory: (_category ?? "").toString(),
+      );
+
+      // ✅ Remplissages
+      if ((draft.title ?? "").trim().isNotEmpty) titleCtrl.text = draft.title!.trim();
+      if ((draft.description ?? "").trim().isNotEmpty) descCtrl.text = draft.description!.trim();
+
+      // Catégorie si renvoyée
+      if ((draft.category ?? "").trim().isNotEmpty) {
+        _category = draft.category!.trim();
+      }
+
+      // Ville / CP si renvoyés
+      if ((draft.city ?? "").trim().isNotEmpty) cityCtrl.text = draft.city!.trim();
+      if ((draft.postalCode ?? "").trim().isNotEmpty) cpCtrl.text = draft.postalCode!.trim();
+
+      // ❌ IMPORTANT : on ne modifie pas Téléphone / Budget
+
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Brouillon IA généré ✅")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Erreur IA : $e")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _aiLoading = false);
+    }
+  }
+
+  /// Enregistrement audio Premium avec transcription Chirp 3 EU + Rédaction Gemini
+  Future<void> _togglePremiumRecording() async {
+    if (_recording) {
+      // Arrêter l'enregistrement
+      final path = await _audioRecorder.stop();
+      if (!mounted) return;
+      
+      setState(() {
+        _recording = false;
+        _audioPath = path;
+      });
+
+      if (path != null && path.isNotEmpty) {
+        await _uploadAndTranscribe(path);
+      }
+    } else {
+      // Démarrer l'enregistrement
+      if (await _audioRecorder.hasPermission()) {
+        final directory = await getTemporaryDirectory();
+        final filePath = '${directory.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        
+        await _audioRecorder.start(
+          const RecordConfig(
+            encoder: AudioEncoder.aacLc,
+            sampleRate: 16000,
+            numChannels: 1,
+          ),
+          path: filePath,
+        );
+        
+        if (!mounted) return;
+        setState(() => _recording = true);
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Permission micro requise")),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadAndTranscribe(String audioPath) async {
+    setState(() => _aiLoading = true);
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception("Utilisateur non connecté");
+      }
+
+      // Upload vers Cloud Storage
+      final file = File(audioPath);
+      final fileName = 'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final storageRef = FirebaseStorage.instance.ref().child(fileName);
+      
+      await storageRef.putFile(file);
+      
+      // Construire le gcsUri
+      final bucket = FirebaseStorage.instance.ref().bucket;
+      final gcsUri = 'gs://$bucket/$fileName';
+
+      // Appeler la Cloud Function Premium
+      final result = await AiOfferService.transcribeAndDraft(
+        gcsUri: gcsUri,
+        languageCode: 'fr-FR',
+        category: _category ?? '',
+        city: _cityCtrl.text.trim(),
+      );
+
+      // Remplir les champs
+      if ((result.draft.title ?? '').trim().isNotEmpty) {
+        _titleCtrl.text = result.draft.title!.trim();
+      }
+      if ((result.draft.description ?? '').trim().isNotEmpty) {
+        _descCtrl.text = result.draft.description!.trim();
+      }
+      if ((result.draft.category ?? '').trim().isNotEmpty) {
+        _category = result.draft.category!.trim();
+      }
+      if ((result.draft.city ?? '').trim().isNotEmpty) {
+        _cityCtrl.text = result.draft.city!.trim();
+      }
+      if ((result.draft.postalCode ?? '').trim().isNotEmpty) {
+        _cpCtrl.text = result.draft.postalCode!.trim();
+      }
+
+      // ❌ IMPORTANT : on ne touche pas téléphone/budget
+
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("✅ Transcription Premium réussie!\n${result.transcript.substring(0, result.transcript.length > 50 ? 50 : result.transcript.length)}..."),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+
+      // Nettoyer le fichier temporaire
+      try {
+        await file.delete();
+      } catch (_) {}
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Erreur Premium IA : $e")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _aiLoading = false);
+    }
   }
 
   void _publish() async {
@@ -320,9 +520,75 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       onTap: _toggleMic,
                     ),
                   ],
-              ),
+                ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
+
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0x331A73E8)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text("Assistant IA", style: TextStyle(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _aiHintCtrl,
+                      decoration: const InputDecoration(
+                        labelText: "Décris ton besoin (optionnel)",
+                        hintText: "Ex: Peintre pour salon, urgent demain, Les Abymes…",
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _aiLoading ? null : _onFillWithAI,
+                        icon: _aiLoading
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.auto_awesome),
+                        label: Text(_aiLoading ? "Génération..." : "Remplir automatiquement"),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    // Bouton Premium avec enregistrement audio (Mobile uniquement)
+                    if (!kIsWeb) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: (_aiLoading || _recording) ? null : _togglePremiumRecording,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrestoOrange,
+                            foregroundColor: Colors.white,
+                          ),
+                          icon: _recording
+                              ? const Icon(Icons.stop_circle, color: Colors.white)
+                              : const Icon(Icons.mic, color: Colors.white),
+                          label: Text(_recording ? "Arrêter l'enregistrement" : "🎙️ Premium (Audio)"),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        "Premium : Transcription Chirp 3 + Rédaction IA avancée. Téléphone et budget restent à saisir manuellement.",
+                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
+                    ],
+                    if (kIsWeb) ...[
+                      const SizedBox(height: 6),
+                      const Text(
+                        "📱 L'enregistrement audio Premium est disponible sur l'app mobile. Téléphone et budget restent à saisir manuellement.",
+                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
 
               TextFormField(
                 controller: _titleCtrl,
@@ -437,7 +703,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         ),
       ),
     ),
-  );
+    );
   }
 }
 
@@ -452,23 +718,131 @@ class _MicButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      shape: const CircleBorder(),
-      elevation: 3,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(
-          width: 48,
-          height: 48,
-          child: Icon(
-            listening ? Icons.stop_rounded : Icons.mic_rounded,
-            color: kPrestoBlue,
-            size: 26,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Material(
+          color: listening ? kPrestoOrange : kPrestoBlue,
+          shape: const CircleBorder(),
+          elevation: 4,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: listening 
+                  ? null
+                  : const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [kPrestoBlue, Color(0xFF0D47A1)],
+                    ),
+              ),
+              child: Icon(
+                listening ? Icons.stop_rounded : Icons.mic_rounded,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
           ),
         ),
-      ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: listening ? kPrestoOrange : kPrestoBlue,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            listening ? 'STOP' : 'IA 🎤',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
     );
+  }
+}
+
+// ============================================================================
+// Service IA pour générer un brouillon d'offre
+// ============================================================================
+
+class OfferDraft {
+  final String? title;
+  final String? description;
+  final String? category;
+  final String? city;
+  final String? postalCode;
+  final List<String>? bullets;
+  final List<String>? constraints;
+
+  OfferDraft({
+    this.title,
+    this.description,
+    this.category,
+    this.city,
+    this.postalCode,
+    this.bullets,
+    this.constraints,
+  });
+
+  factory OfferDraft.fromMap(Map<String, dynamic> m) => OfferDraft(
+        title: m['title'] as String?,
+        description: m['description'] as String?,
+        category: m['category'] as String?,
+        city: m['city'] as String?,
+        postalCode: m['postalCode'] as String?,
+        bullets: m['bullets'] != null ? List<String>.from(m['bullets'] as List) : null,
+        constraints: m['constraints'] != null ? List<String>.from(m['constraints'] as List) : null,
+      );
+}
+
+class AiOfferService {
+  /// Génère un brouillon à partir d'un texte (sans audio)
+  static Future<OfferDraft> generateDraft({
+    required String hint,
+    required String currentCity,
+    required String currentCategory,
+  }) async {
+    final callable = FirebaseFunctions.instance.httpsCallable('generateOfferDraft');
+    final res = await callable.call({
+      'hint': hint,
+      'city': currentCity,
+      'category': currentCategory,
+      'lang': 'fr',
+    });
+
+    final data = Map<String, dynamic>.from(res.data as Map);
+    return OfferDraft.fromMap(data);
+  }
+
+  /// Transcription Premium (Chirp 3) + Rédaction IA
+  static Future<({String transcript, OfferDraft draft})> transcribeAndDraft({
+    required String gcsUri,
+    required String languageCode,
+    required String category,
+    required String city,
+  }) async {
+    final callable = FirebaseFunctions.instance.httpsCallable('transcribeAndDraftOffer');
+    final res = await callable.call({
+      'gcsUri': gcsUri,
+      'languageCode': languageCode,
+      'category': category,
+      'city': city,
+    });
+
+    final data = Map<String, dynamic>.from(res.data as Map);
+    final transcript = (data['transcript'] ?? '').toString();
+    final draftMap = Map<String, dynamic>.from(data['draft'] as Map);
+    final draft = OfferDraft.fromMap(draftMap);
+
+    return (transcript: transcript, draft: draft);
   }
 }

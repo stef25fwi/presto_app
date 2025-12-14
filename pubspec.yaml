@@ -21,10 +21,13 @@ dependencies:
   # 🔥 Firebase / Firestore / URL launcher
   firebase_core: ^3.15.2
   cloud_firestore: ^5.6.12
+  cloud_functions: ^5.0.0
   url_launcher: ^6.3.0
   image_picker: ^1.1.2
   firebase_storage: ^12.4.10
   speech_to_text: ^6.6.0
+  record: ^5.0.0
+  path_provider: ^2.1.0
 
 dev_dependencies:
   flutter_test:

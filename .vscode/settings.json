@@ -4,5 +4,6 @@
     "editor.inlineSuggest.enabled": false,
     "github.copilot.enable": {
         "*": true
-    }
+    },
+    "debug.toolbarLocation": "docked"
 }

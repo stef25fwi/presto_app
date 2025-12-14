@@ -1,0 +1,11 @@
+# Fichiers d'environnement
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dépendances
+node_modules/
