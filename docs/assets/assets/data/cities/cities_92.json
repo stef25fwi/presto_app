@@ -1,0 +1,224 @@
+[
+  {
+    "name": "ANTONY",
+    "cp": "92160",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "ASNIERES SUR SEINE",
+    "cp": "92600",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "BAGNEUX",
+    "cp": "92220",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "BOIS COLOMBES",
+    "cp": "92270",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "BOULOGNE BILLANCOURT",
+    "cp": "92100",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "BOURG LA REINE",
+    "cp": "92340",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "CHATENAY MALABRY",
+    "cp": "92290",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "CHATILLON",
+    "cp": "92320",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "CHAVILLE",
+    "cp": "92370",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "CLAMART",
+    "cp": "92140",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "CLICHY",
+    "cp": "92110",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "COLOMBES",
+    "cp": "92700",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "COURBEVOIE",
+    "cp": "92400",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "FONTENAY AUX ROSES",
+    "cp": "92260",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "GARCHES",
+    "cp": "92380",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "GENNEVILLIERS",
+    "cp": "92230",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "ISSY LES MOULINEAUX",
+    "cp": "92130",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "LA GARENNE COLOMBES",
+    "cp": "92250",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "LE PLESSIS ROBINSON",
+    "cp": "92350",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "LEVALLOIS PERRET",
+    "cp": "92300",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "MALAKOFF",
+    "cp": "92240",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "MARNES LA COQUETTE",
+    "cp": "92430",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "MEUDON",
+    "cp": "92190",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "MEUDON",
+    "cp": "92360",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "MONTROUGE",
+    "cp": "92120",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "NANTERRE",
+    "cp": "92000",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "NEUILLY SUR SEINE",
+    "cp": "92200",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "PUTEAUX",
+    "cp": "92800",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "RUEIL MALMAISON",
+    "cp": "92500",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "SCEAUX",
+    "cp": "92330",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "SEVRES",
+    "cp": "92310",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "ST CLOUD",
+    "cp": "92210",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "SURESNES",
+    "cp": "92150",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "VANVES",
+    "cp": "92170",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "VAUCRESSON",
+    "cp": "92420",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "VILLE D AVRAY",
+    "cp": "92410",
+    "dept": "92",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE LA GARENNE",
+    "cp": "92390",
+    "dept": "92",
+    "region": ""
+  }
+]

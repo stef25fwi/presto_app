@@ -1,0 +1,4370 @@
+[
+  {
+    "name": "ABONCOURT",
+    "cp": "57920",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ABONCOURT SUR SEILLE",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ABRESCHVILLER",
+    "cp": "57560",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ACHAIN",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ACHEN",
+    "cp": "57412",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ADAINCOURT",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ADELANGE",
+    "cp": "57380",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "AJONCOURT",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ALAINCOURT LA COTE",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ALBESTROFF",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ALGRANGE",
+    "cp": "57440",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ALSTING",
+    "cp": "57515",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ALTRIPPE",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ALTVILLER",
+    "cp": "57730",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ALZING",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "AMANVILLERS",
+    "cp": "57865",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "AMELECOURT",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "AMNEVILLE",
+    "cp": "57360",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ANCERVILLE",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ANCY DORNOT",
+    "cp": "57130",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ANGEVILLERS",
+    "cp": "57440",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ANTILLY",
+    "cp": "57640",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ANZELING",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "APACH",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ARGANCY",
+    "cp": "57640",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ARRAINCOURT",
+    "cp": "57380",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ARRIANCE",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ARRY",
+    "cp": "57680",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ARS LAQUENEXY",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ARS SUR MOSELLE",
+    "cp": "57130",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ARZVILLER",
+    "cp": "57405",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ASPACH",
+    "cp": "57790",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ASSENONCOURT",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ATTILLONCOURT",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "AUBE",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "AUDUN LE TICHE",
+    "cp": "57390",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "AUGNY",
+    "cp": "57685",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "AULNOIS SUR SEILLE",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "AUMETZ",
+    "cp": "57710",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "AVRICOURT",
+    "cp": "57810",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "AY SUR MOSELLE",
+    "cp": "57300",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "AZOUDANGE",
+    "cp": "57810",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BACOURT",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BAERENTHAL",
+    "cp": "57230",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BAMBIDERSTROFF",
+    "cp": "57690",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BANNAY",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BARCHAIN",
+    "cp": "57830",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BARONVILLE",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BARST",
+    "cp": "57450",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BASSE HAM",
+    "cp": "57970",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BASSE RENTGEN",
+    "cp": "57570",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BASSING",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BAUDRECOURT",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BAZONCOURT",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BEBING",
+    "cp": "57830",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BECHY",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BEHREN LES FORBACH",
+    "cp": "57460",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BELLANGE",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BELLES FORETS",
+    "cp": "57930",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BENESTROFF",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BENING LES ST AVOLD",
+    "cp": "57800",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BERG SUR MOSELLE",
+    "cp": "57570",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BERIG VINTRANGE",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BERLING",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BERMERING",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BERTHELMING",
+    "cp": "57930",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BERTRANGE",
+    "cp": "57310",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BERVILLER EN MOSELLE",
+    "cp": "57550",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BETTANGE",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BETTBORN",
+    "cp": "57930",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BETTELAINVILLE",
+    "cp": "57640",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BETTING",
+    "cp": "57800",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BETTVILLER",
+    "cp": "57410",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BEUX",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BEYREN LES SIERCK",
+    "cp": "57570",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BEZANGE LA PETITE",
+    "cp": "57630",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BIBICHE",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BICKENHOLTZ",
+    "cp": "57635",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BIDESTROFF",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BIDING",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BINING",
+    "cp": "57410",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BIONCOURT",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BIONVILLE SUR NIED",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BISTEN EN LORRAINE",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BISTROFF",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BITCHE",
+    "cp": "57230",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BLANCHE EGLISE",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BLIES EBERSING",
+    "cp": "57200",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BLIES GUERSVILLER",
+    "cp": "57200",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BLIESBRUCK",
+    "cp": "57200",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BOUCHEPORN",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BOULANGE",
+    "cp": "57655",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BOULAY MOSELLE",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BOURDONNAY",
+    "cp": "57810",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BOURGALTROFF",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BOURSCHEID",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BOUSBACH",
+    "cp": "57460",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BOUSSE",
+    "cp": "57310",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BOUSSEVILLER",
+    "cp": "57230",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BOUST",
+    "cp": "57570",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BOUSTROFF",
+    "cp": "57380",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BOUZONVILLE",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BREHAIN",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BREIDENBACH",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BREISTROFF LA GRANDE",
+    "cp": "57570",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BRETTNACH",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BRONVAUX",
+    "cp": "57535",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BROUCK",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BROUDERDORFF",
+    "cp": "57565",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BROUVILLER",
+    "cp": "57635",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BRULANGE",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BUCHY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BUDING",
+    "cp": "57920",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BUDLING",
+    "cp": "57970",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BUHL LORRAINE",
+    "cp": "57400",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BURLIONCOURT",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "BURTONCOURT",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CAPPEL",
+    "cp": "57450",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CARLING",
+    "cp": "57490",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CATTENOM",
+    "cp": "57570",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHAILLY LES ENNERY",
+    "cp": "57365",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHAMBREY",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHANVILLE",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHARLEVILLE SOUS BOIS",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHARLY ORADOUR",
+    "cp": "57640",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU BREHAIN",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU ROUGE",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU SALINS",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU VOUE",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHATEL ST GERMAIN",
+    "cp": "57160",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHEMERY LES DEUX",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHEMINOT",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHENOIS",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHERISEY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHESNY",
+    "cp": "57245",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHICOURT",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CHIEULLES",
+    "cp": "57070",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CLOUANGE",
+    "cp": "57185",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "COCHEREN",
+    "cp": "57800",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "COIN LES CUVRY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "COIN SUR SEILLE",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "COINCY",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "COLLIGNY MAIZERY",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "COLMEN",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CONDE NORTHEN",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CONTHIL",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CONTZ LES BAINS",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CORNY SUR MOSELLE",
+    "cp": "57680",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "COUME",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "COURCELLES CHAUSSY",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "COURCELLES SUR NIED",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CRAINCOURT",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CREHANGE",
+    "cp": "57690",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CREUTZWALD",
+    "cp": "57150",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CUTTING",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "CUVRY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DABO",
+    "cp": "57850",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DALEM",
+    "cp": "57550",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DALHAIN",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DALSTEIN",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DANNE ET QUATRE VENTS",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DANNELBOURG",
+    "cp": "57820",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DELME",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DENTING",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DESSELING",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DESTRY",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DIANE CAPELLE",
+    "cp": "57830",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DIEBLING",
+    "cp": "57980",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DIESEN",
+    "cp": "57890",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DIEUZE",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DIFFEMBACH LES HELLIMER",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DISTROFF",
+    "cp": "57925",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DOLVING",
+    "cp": "57400",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DOMNOM LES DIEUZE",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DONJEUX",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "DONNELAY",
+    "cp": "57810",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "EBERSVILLER",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "EBLANGE",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "EGUELSHARDT",
+    "cp": "57230",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "EINCHEVILLE",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ELVANGE",
+    "cp": "57690",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ELZANGE",
+    "cp": "57970",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ENCHENBERG",
+    "cp": "57415",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ENNERY",
+    "cp": "57365",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ENTRANGE",
+    "cp": "57330",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "EPPING",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ERCHING",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ERNESTVILLER",
+    "cp": "57510",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ERSTROFF",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ESCHERANGE",
+    "cp": "57330",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ETTING",
+    "cp": "57412",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ETZLING",
+    "cp": "57460",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "EVRANGE",
+    "cp": "57570",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FAILLY",
+    "cp": "57640",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FALCK",
+    "cp": "57550",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FAMECK",
+    "cp": "57290",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FAREBERSVILLER",
+    "cp": "57450",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FARSCHVILLER",
+    "cp": "57450",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FAULQUEMONT",
+    "cp": "57380",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FENETRANGE",
+    "cp": "57930",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FEVES",
+    "cp": "57280",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FEY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FILSTROFF",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FIXEM",
+    "cp": "57570",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FLASTROFF",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FLEISHEIM",
+    "cp": "57635",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FLETRANGE",
+    "cp": "57690",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FLEURY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FLEVY",
+    "cp": "57365",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FLOCOURT",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FLORANGE",
+    "cp": "57190",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FOLKLING",
+    "cp": "57600",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FOLSCHVILLER",
+    "cp": "57730",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FONTENY",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FONTOY",
+    "cp": "57650",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FORBACH",
+    "cp": "57600",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FOSSIEUX",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FOULCREY",
+    "cp": "57830",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FOULIGNY",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FOVILLE",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FRANCALTROFF",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FRAQUELFING",
+    "cp": "57790",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FRAUENBERG",
+    "cp": "57200",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FREISTROFF",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FREMERY",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FREMESTROFF",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FRESNES EN SAULNOIS",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FREYBOUSE",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FREYMING MERLEBACH",
+    "cp": "57800",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "FRIBOURG",
+    "cp": "57810",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GANDRANGE",
+    "cp": "57175",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GARREBOURG",
+    "cp": "57820",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GAVISSE",
+    "cp": "57570",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GELUCOURT",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GERBECOURT",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GIVRYCOURT",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GLATIGNY",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GOETZENBRUCK",
+    "cp": "57620",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GOIN",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GOMELANGE",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GONDREXANGE",
+    "cp": "57815",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GORZE",
+    "cp": "57680",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GOSSELMING",
+    "cp": "57930",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GRAVELOTTE",
+    "cp": "57130",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GREMECEY",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GRENING",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GRINDORFF BIZING",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GROS REDERCHING",
+    "cp": "57410",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GROSBLIEDERSTROFF",
+    "cp": "57520",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GROSTENQUIN",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GRUNDVILLER",
+    "cp": "57510",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUEBENHOUSE",
+    "cp": "57510",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUEBESTROFF",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUEBLANGE LES DIEUZE",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUEBLING",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUENANGE",
+    "cp": "57310",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUENVILLER",
+    "cp": "57470",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUERMANGE",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUERSTLING",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUERTING",
+    "cp": "57880",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUESSLING HEMERING",
+    "cp": "57380",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUINGLANGE",
+    "cp": "57690",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUINKIRCHEN",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUINZELING",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "GUNTZVILLER",
+    "cp": "57405",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HABOUDANGE",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAGEN",
+    "cp": "57570",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAGONDANGE",
+    "cp": "57300",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HALLERING",
+    "cp": "57690",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HALSTROFF",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAM SOUS VARSBERG",
+    "cp": "57880",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAMBACH",
+    "cp": "57910",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAMPONT",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAN SUR NIED",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HANGVILLER",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HANNOCOURT",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HANVILLER",
+    "cp": "57230",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HARAUCOURT SUR SEILLE",
+    "cp": "57630",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HARGARTEN AUX MINES",
+    "cp": "57550",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HARPRICH",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HARREBERG",
+    "cp": "57870",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HARTZVILLER",
+    "cp": "57870",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HASELBOURG",
+    "cp": "57850",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HASPELSCHIEDT",
+    "cp": "57230",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HATTIGNY",
+    "cp": "57790",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAUCONCOURT",
+    "cp": "57280",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAUT CLOCHER",
+    "cp": "57400",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAUTE KONTZ",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAUTE VIGNEULLES",
+    "cp": "57690",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAVANGE",
+    "cp": "57650",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAYANGE",
+    "cp": "57700",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAYES",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HAZEMBOURG",
+    "cp": "57430",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HEINING LES BOUZONVILLE",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HELLERING LES FENETRANGE",
+    "cp": "57930",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HELLIMER",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HELSTROFF",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HEMILLY",
+    "cp": "57690",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HEMING",
+    "cp": "57830",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HENRIDORFF",
+    "cp": "57820",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HENRIVILLE",
+    "cp": "57450",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HERANGE",
+    "cp": "57635",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HERMELANGE",
+    "cp": "57790",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HERNY",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HERTZING",
+    "cp": "57830",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HESSE",
+    "cp": "57400",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HESTROFF",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HETTANGE GRANDE",
+    "cp": "57330",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HILBESHEIM",
+    "cp": "57400",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HILSPRICH",
+    "cp": "57510",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HINCKANGE",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HOLACOURT",
+    "cp": "57380",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HOLLING",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HOLVING",
+    "cp": "57510",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HOMBOURG BUDANGE",
+    "cp": "57920",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HOMBOURG HAUT",
+    "cp": "57470",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HOMMARTING",
+    "cp": "57405",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HOMMERT",
+    "cp": "57870",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HONSKIRCH",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HOSTE",
+    "cp": "57510",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HOTTVILLER",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HULTEHOUSE",
+    "cp": "57820",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HUNDLING",
+    "cp": "57990",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "HUNTING",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "IBIGNY",
+    "cp": "57830",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ILLANGE",
+    "cp": "57970",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "IMLING",
+    "cp": "57400",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "INGLANGE",
+    "cp": "57970",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "INSMING",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "INSVILLER",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "IPPLING",
+    "cp": "57990",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "JALLAUCOURT",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "JOUY AUX ARCHES",
+    "cp": "57130",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "JURY",
+    "cp": "57245",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "JUSSY",
+    "cp": "57130",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "JUVELIZE",
+    "cp": "57630",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "JUVILLE",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KALHAUSEN",
+    "cp": "57412",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KANFEN",
+    "cp": "57330",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KAPPELKINGER",
+    "cp": "57430",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KEDANGE SUR CANNER",
+    "cp": "57920",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KEMPLICH",
+    "cp": "57920",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KERBACH",
+    "cp": "57460",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KERLING LES SIERCK",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KERPRICH AUX BOIS",
+    "cp": "57830",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KIRSCH LES SIERCK",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KIRSCHNAUMEN",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KIRVILLER",
+    "cp": "57430",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KLANG",
+    "cp": "57920",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KNUTANGE",
+    "cp": "57240",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KOENIGSMACKER",
+    "cp": "57970",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "KUNTZIG",
+    "cp": "57970",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "L HOPITAL",
+    "cp": "57490",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LA MAXE",
+    "cp": "57140",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LACHAMBRE",
+    "cp": "57730",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LAFRIMBOLLE",
+    "cp": "57560",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LAGARDE",
+    "cp": "57810",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LAMBACH",
+    "cp": "57410",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LANDANGE",
+    "cp": "57830",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LANDROFF",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LANEUVEVILLE EN SAULNOIS",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LANEUVEVILLE LES LORQUIN",
+    "cp": "57790",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LANGATTE",
+    "cp": "57400",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LANGUIMBERG",
+    "cp": "57810",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LANING",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LAQUENEXY",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LAUDREFANG",
+    "cp": "57385",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LAUMESFELD",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LAUNSTROFF",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LE BAN ST MARTIN",
+    "cp": "57050",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LE VAL DE GUEBLANGE",
+    "cp": "57430",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LELLING",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LEMBERG",
+    "cp": "57620",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LEMONCOURT",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LEMUD",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LENGELSHEIM",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LENING",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LES ETANGS",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LESSE",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LESSY",
+    "cp": "57160",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LEY",
+    "cp": "57810",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LEYVILLER",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LEZEY",
+    "cp": "57630",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LHOR",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LIDREZING",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LIEDERSCHIEDT",
+    "cp": "57230",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LIEHON",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LINDRE BASSE",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LINDRE HAUTE",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LIOCOURT",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LIXHEIM",
+    "cp": "57635",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LIXING LES ROUHLING",
+    "cp": "57520",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LIXING LES ST AVOLD",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LOMMERANGE",
+    "cp": "57650",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LONGEVILLE LES METZ",
+    "cp": "57050",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LONGEVILLE LES ST AVOLD",
+    "cp": "57740",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LORQUIN",
+    "cp": "57790",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LORRY LES METZ",
+    "cp": "57050",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LORRY MARDIGNY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LOSTROFF",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LOUDREFING",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LOUPERSHOUSE",
+    "cp": "57510",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LOUTZVILLER",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LOUVIGNY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LUBECOURT",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LUCY",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LUPPY",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LUTTANGE",
+    "cp": "57935",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "LUTZELBOURG",
+    "cp": "57820",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MACHEREN",
+    "cp": "57730",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MAINVILLERS",
+    "cp": "57380",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MAIZEROY",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MAIZIERES LES METZ",
+    "cp": "57280",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MAIZIERES LES VIC",
+    "cp": "57810",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MALAUCOURT SUR SEILLE",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MALLING",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MALROY",
+    "cp": "57640",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MANDEREN RITZING",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MANHOUE",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MANOM",
+    "cp": "57100",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MANY",
+    "cp": "57380",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MARANGE SILVANGE",
+    "cp": "57535",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MARANGE ZONDRANGE",
+    "cp": "57690",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MARIEULLES",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MARIMONT LES BENESTROFF",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MARLY",
+    "cp": "57155",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MARSAL",
+    "cp": "57630",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MARSILLY",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MARTHILLE",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MAXSTADT",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MECLEUVES",
+    "cp": "57245",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MEGANGE",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MEISENTHAL",
+    "cp": "57960",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MENSKIRCH",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MERSCHWEILLER",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MERTEN",
+    "cp": "57550",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "METAIRIES ST QUIRIN",
+    "cp": "57560",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "METTING",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "METZ",
+    "cp": "57000",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "METZ",
+    "cp": "57050",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "METZ",
+    "cp": "57070",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "METZERESCHE",
+    "cp": "57920",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "METZERVISSE",
+    "cp": "57940",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "METZING",
+    "cp": "57980",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MEY",
+    "cp": "57070",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MITTELBRONN",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MITTERSHEIM",
+    "cp": "57930",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MOLRING",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MOMERSTROFF",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MONCHEUX",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MONCOURT",
+    "cp": "57810",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MONDELANGE",
+    "cp": "57300",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MONDORFF",
+    "cp": "57570",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MONNEREN",
+    "cp": "57920",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MONTBRONN",
+    "cp": "57415",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MONTDIDIER",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MONTENACH",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNY LES METZ",
+    "cp": "57950",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MONTOIS LA MONTAGNE",
+    "cp": "57860",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MORHANGE",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MORSBACH",
+    "cp": "57600",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MORVILLE LES VIC",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MORVILLE SUR NIED",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MOULINS LES METZ",
+    "cp": "57160",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MOUSSEY",
+    "cp": "57770",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MOUTERHOUSE",
+    "cp": "57620",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MOYENVIC",
+    "cp": "57630",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MOYEUVRE GRANDE",
+    "cp": "57250",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MOYEUVRE PETITE",
+    "cp": "57250",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MULCEY",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "MUNSTER",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NARBEFONTAINE",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NEBING",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NELLING",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NEUFCHEF",
+    "cp": "57700",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NEUFGRANGE",
+    "cp": "57910",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NEUFMOULINS",
+    "cp": "57830",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NEUFVILLAGE",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NEUNKIRCHEN LES BOUZONVILLE",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NIDERHOFF",
+    "cp": "57560",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NIDERVILLER",
+    "cp": "57565",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NIEDERSTINZEL",
+    "cp": "57930",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NIEDERVISSE",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NILVANGE",
+    "cp": "57240",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NITTING",
+    "cp": "57790",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NOISSEVILLE",
+    "cp": "57645",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NORROY LE VENEUR",
+    "cp": "57140",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NOUILLY",
+    "cp": "57645",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NOUSSEVILLER LES BITCHE",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NOUSSEVILLER ST NABOR",
+    "cp": "57990",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "NOVEANT SUR MOSELLE",
+    "cp": "57680",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "OBERDORFF",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "OBERGAILBACH",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "OBERSTINZEL",
+    "cp": "57930",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "OBERVISSE",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "OBRECK",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "OETING",
+    "cp": "57600",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "OGY MONTOY FLANVILLE",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "OGY MONTOY FLANVILLE",
+    "cp": "57645",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "OMMERAY",
+    "cp": "57810",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ORIOCOURT",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ORMERSVILLER",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ORNY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ORON",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "OTTANGE",
+    "cp": "57840",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "OTTONVILLE",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "OUDRENNE",
+    "cp": "57970",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PAGNY LES GOIN",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PANGE",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PELTRE",
+    "cp": "57245",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PETIT REDERCHING",
+    "cp": "57410",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PETIT TENQUIN",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PETITE ROSSELLE",
+    "cp": "57540",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PETTONCOURT",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PEVANGE",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PHALSBOURG",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PHILIPPSBOURG",
+    "cp": "57230",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PIBLANGE",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PIERREVILLERS",
+    "cp": "57120",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PLAINE DE WALSCH",
+    "cp": "57870",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PLAPPEVILLE",
+    "cp": "57050",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PLESNOIS",
+    "cp": "57140",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "POMMERIEUX",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PONTOY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PONTPIERRE",
+    "cp": "57380",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PORCELETTE",
+    "cp": "57890",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "POSTROFF",
+    "cp": "57930",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "POUILLY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "POURNOY LA CHETIVE",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "POURNOY LA GRASSE",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PREVOCOURT",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PUTTELANGE AUX LACS",
+    "cp": "57510",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PUTTELANGE LES THIONVILLE",
+    "cp": "57570",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PUTTIGNY",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "PUZIEUX",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RACRANGE",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RAHLING",
+    "cp": "57410",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RANGUEVAUX",
+    "cp": "57700",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RAVILLE",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RECHICOURT LE CHATEAU",
+    "cp": "57810",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "REDANGE",
+    "cp": "57390",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "REDING",
+    "cp": "57445",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "REMELFANG",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "REMELFING",
+    "cp": "57200",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "REMELING",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "REMERING",
+    "cp": "57550",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "REMERING LES PUTTELANGE",
+    "cp": "57510",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "REMILLY",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RENING",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RETONFEY",
+    "cp": "57645",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RETTEL",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "REYERSVILLER",
+    "cp": "57230",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "REZONVILLE VIONVILLE",
+    "cp": "57130",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RHODES",
+    "cp": "57810",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RICHE",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RICHELING",
+    "cp": "57510",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RICHEMONT",
+    "cp": "57270",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RICHEVAL",
+    "cp": "57830",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RIMLING",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ROCHONVILLERS",
+    "cp": "57840",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RODALBE",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RODEMACK",
+    "cp": "57570",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ROHRBACH LES BITCHE",
+    "cp": "57410",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ROLBING",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ROMBAS",
+    "cp": "57120",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ROMELFING",
+    "cp": "57930",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RONCOURT",
+    "cp": "57860",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ROPPEVILLER",
+    "cp": "57230",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RORBACH LES DIEUZE",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ROSBRUCK",
+    "cp": "57800",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ROSSELANGE",
+    "cp": "57780",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ROUHLING",
+    "cp": "57520",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ROUPELDANGE",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ROUSSY LE VILLAGE",
+    "cp": "57330",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ROZERIEULLES",
+    "cp": "57160",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RURANGE LES THIONVILLE",
+    "cp": "57310",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RUSSANGE",
+    "cp": "57390",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "RUSTROFF",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SAILLY ACHATEL",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SALONNES",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SANRY LES VIGY",
+    "cp": "57640",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SANRY SUR NIED",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SARRALBE",
+    "cp": "57430",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SARRALTROFF",
+    "cp": "57400",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SARREBOURG",
+    "cp": "57400",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SARREGUEMINES",
+    "cp": "57200",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SARREINSMING",
+    "cp": "57905",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SAULNY",
+    "cp": "57140",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SCHALBACH",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SCHMITTVILLER",
+    "cp": "57412",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SCHNECKENBUSCH",
+    "cp": "57400",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SCHOENECK",
+    "cp": "57350",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SCHORBACH",
+    "cp": "57230",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SCHWERDORFF",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SCHWEYEN",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SCY CHAZELLES",
+    "cp": "57160",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SECOURT",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SEINGBOUSE",
+    "cp": "57455",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SEMECOURT",
+    "cp": "57280",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SEREMANGE ERZANGE",
+    "cp": "57290",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SERVIGNY LES RAVILLE",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SERVIGNY LES STE BARBE",
+    "cp": "57640",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SIERCK LES BAINS",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SIERSTHAL",
+    "cp": "57410",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SILLEGNY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SILLY EN SAULNOIS",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SILLY SUR NIED",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SOLGNE",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SORBEY",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SOTZELING",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SOUCHT",
+    "cp": "57960",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SPICHEREN",
+    "cp": "57350",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST AVOLD",
+    "cp": "57500",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST EPVRE",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST FRANCOIS LACROIX",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES",
+    "cp": "57830",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST HUBERT",
+    "cp": "57640",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DE BASSEL",
+    "cp": "57930",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN KOURTZERODE",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN ROHRBACH",
+    "cp": "57510",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN LES METZ",
+    "cp": "57070",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST JURE",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST LOUIS",
+    "cp": "57820",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST LOUIS LES BITCHE",
+    "cp": "57620",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST MEDARD",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST PRIVAT LA MONTAGNE",
+    "cp": "57855",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ST QUIRIN",
+    "cp": "57560",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "STE BARBE",
+    "cp": "57640",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE AUX CHENES",
+    "cp": "57255",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "STE RUFFINE",
+    "cp": "57130",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "STIRING WENDEL",
+    "cp": "57350",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "STUCKANGE",
+    "cp": "57970",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "STURZELBRONN",
+    "cp": "57230",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "SUISSE",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TALANGE",
+    "cp": "57525",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TARQUIMPOL",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TENTELING",
+    "cp": "57980",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TERVILLE",
+    "cp": "57180",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TETERCHEN",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TETING SUR NIED",
+    "cp": "57385",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "THEDING",
+    "cp": "57450",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "THICOURT",
+    "cp": "57380",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "THIMONVILLE",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "THIONVILLE",
+    "cp": "57100",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "THONVILLE",
+    "cp": "57380",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TINCRY",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TORCHEVILLE",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TRAGNY",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TREMERY",
+    "cp": "57300",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TRESSANGE",
+    "cp": "57710",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TRITTELING REDLACH",
+    "cp": "57385",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TROISFONTAINES",
+    "cp": "57870",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TROMBORN",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "TURQUESTEIN BLANCRUPT",
+    "cp": "57560",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "UCKANGE",
+    "cp": "57270",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VAHL EBERSING",
+    "cp": "57660",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VAHL LES BENESTROFF",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VAHL LES FAULQUEMONT",
+    "cp": "57380",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VAL DE BRIDE",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VALLERANGE",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VALMESTROFF",
+    "cp": "57970",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VALMONT",
+    "cp": "57730",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VALMUNSTER",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VANNECOURT",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VANTOUX",
+    "cp": "57070",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VANY",
+    "cp": "57070",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VARIZE VAUDONCOURT",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VARSBERG",
+    "cp": "57880",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VASPERVILLER",
+    "cp": "57560",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VATIMONT",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VAUDRECHING",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VAUX",
+    "cp": "57130",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VAXY",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VECKERSVILLER",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VECKRING",
+    "cp": "57920",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VELVING",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VERGAVILLE",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VERNEVILLE",
+    "cp": "57130",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VERNY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VESCHEIM",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VIBERSVILLER",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VIC SUR SEILLE",
+    "cp": "57630",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VIEUX LIXHEIM",
+    "cp": "57635",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VIGNY",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VIGY",
+    "cp": "57640",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VILLER",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VILLERS STONCOURT",
+    "cp": "57530",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VILLERS SUR NIED",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VILLING",
+    "cp": "57550",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VILSBERG",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VIRMING",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VITRY SUR ORNE",
+    "cp": "57185",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VITTERSBOURG",
+    "cp": "57670",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VITTONCOURT",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VIVIERS",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VOELFLING LES BOUZONVILLE",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VOIMHAUT",
+    "cp": "57580",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VOLMERANGE LES BOULAY",
+    "cp": "57220",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VOLMERANGE LES MINES",
+    "cp": "57330",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VOLMUNSTER",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VOLSTROFF",
+    "cp": "57940",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VOYER",
+    "cp": "57560",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VRY",
+    "cp": "57640",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "VULMONT",
+    "cp": "57420",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WALDHOUSE",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WALDWEISTROFF",
+    "cp": "57320",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WALDWISSE",
+    "cp": "57480",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WALSCHBRONN",
+    "cp": "57720",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WALSCHEID",
+    "cp": "57870",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WALTEMBOURG",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WIESVILLER",
+    "cp": "57200",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WILLERWALD",
+    "cp": "57430",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WINTERSBOURG",
+    "cp": "57635",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WITTRING",
+    "cp": "57905",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WOELFLING LES SARREGUEMINES",
+    "cp": "57200",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WOIPPY",
+    "cp": "57140",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WOUSTVILLER",
+    "cp": "57915",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "WUISSE",
+    "cp": "57170",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "XANREY",
+    "cp": "57630",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "XOCOURT",
+    "cp": "57590",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "XOUAXANGE",
+    "cp": "57830",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "YUTZ",
+    "cp": "57970",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ZARBELING",
+    "cp": "57340",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ZETTING",
+    "cp": "57905",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ZILLING",
+    "cp": "57370",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ZIMMING",
+    "cp": "57690",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ZOMMANGE",
+    "cp": "57260",
+    "dept": "57",
+    "region": ""
+  },
+  {
+    "name": "ZOUFFTGEN",
+    "cp": "57330",
+    "dept": "57",
+    "region": ""
+  }
+]

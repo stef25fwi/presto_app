@@ -853,7 +853,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
             child: SafeArea(
               top: false,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _BottomNavItem(
                     icon: Icons.home,
@@ -2161,7 +2161,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream: _buildQuery().snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                // ✅ Ne plus afficher le loader si on a déjà des données
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    !snapshot.hasData) {
                   return const Center(
                     child: CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
@@ -4271,12 +4273,68 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const Text(
-                'Détail de votre besoin',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Détail de votre besoin',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  // Bouton IA
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [kPrestoBlue, Color(0xFF0D47A1)],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: kPrestoBlue.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('🎤 IA Speech-to-Text arrive bientôt !'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+                              SizedBox(width: 6),
+                              Text(
+                                'IA',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(Icons.mic_rounded, color: Colors.white, size: 18),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
 

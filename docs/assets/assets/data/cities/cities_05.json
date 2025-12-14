@@ -1,0 +1,1022 @@
+[
+  {
+    "name": "ABRIES RISTOLAS",
+    "cp": "05460",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "AIGUILLES",
+    "cp": "05470",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ANCELLE",
+    "cp": "05260",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ARVIEUX",
+    "cp": "05350",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ASPREMONT",
+    "cp": "05140",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ASPRES LES CORPS",
+    "cp": "05800",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ASPRES SUR BUECH",
+    "cp": "05140",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "AUBESSAGNE",
+    "cp": "05500",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "AUBESSAGNE",
+    "cp": "05800",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "AVANCON",
+    "cp": "05230",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "BARATIER",
+    "cp": "05200",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "BARCILLONNETTE",
+    "cp": "05110",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "BARRET SUR MEOUGE",
+    "cp": "05300",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "BREZIERS",
+    "cp": "05190",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "BRIANCON",
+    "cp": "05100",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "BUISSARD",
+    "cp": "05500",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CEILLAC",
+    "cp": "05600",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CERVIERES",
+    "cp": "05100",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CHABESTAN",
+    "cp": "05400",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CHABOTTES",
+    "cp": "05260",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CHAMPCELLA",
+    "cp": "05310",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CHAMPOLEON",
+    "cp": "05260",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CHANOUSSE",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU VILLE VIEILLE",
+    "cp": "05350",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUNEUF D OZE",
+    "cp": "05400",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUROUX LES ALPES",
+    "cp": "05380",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUVIEUX",
+    "cp": "05000",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CHORGES",
+    "cp": "05230",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CLARET",
+    "cp": "05110",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CREVOUX",
+    "cp": "05200",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CROTS",
+    "cp": "05200",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "CURBANS",
+    "cp": "05110",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "EMBRUN",
+    "cp": "05200",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "EOURRES",
+    "cp": "05300",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ESPARRON",
+    "cp": "05110",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ESPINASSES",
+    "cp": "05190",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ETOILE ST CYRICE",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "EYGLIERS",
+    "cp": "05600",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "FOREST ST JULIEN",
+    "cp": "05260",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "FOUILLOUSE",
+    "cp": "05130",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "FREISSINIERES",
+    "cp": "05310",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "FURMEYER",
+    "cp": "05400",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "GAP",
+    "cp": "05000",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "GARDE COLOMBE",
+    "cp": "05300",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "GUILLESTRE",
+    "cp": "05600",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "JARJAYES",
+    "cp": "05130",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "L ARGENTIERE LA BESSEE",
+    "cp": "05120",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "L EPINE",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA BATIE MONTSALEON",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA BATIE NEUVE",
+    "cp": "05230",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA BATIE VIEILLE",
+    "cp": "05000",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA BEAUME",
+    "cp": "05140",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE EN VALGAUDEMAR",
+    "cp": "05800",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA FARE EN CHAMPSAUR",
+    "cp": "05500",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA FAURIE",
+    "cp": "05140",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA FREISSINOUSE",
+    "cp": "05000",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA GRAVE",
+    "cp": "05320",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA HAUTE BEAUME",
+    "cp": "05140",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA MOTTE EN CHAMPSAUR",
+    "cp": "05500",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA PIARRE",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA ROCHE DE RAME",
+    "cp": "05310",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA ROCHE DES ARNAUDS",
+    "cp": "05400",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA ROCHETTE",
+    "cp": "05000",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA SALLE LES ALPES",
+    "cp": "05240",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LA SAULCE",
+    "cp": "05110",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LARAGNE MONTEGLIN",
+    "cp": "05300",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LARDIER ET VALENCA",
+    "cp": "05110",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LAYE",
+    "cp": "05500",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LAZER",
+    "cp": "05300",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LE BERSAC",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LE DEVOLUY",
+    "cp": "05250",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LE GLAIZIL",
+    "cp": "05800",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LE MONETIER LES BAINS",
+    "cp": "05220",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LE NOYER",
+    "cp": "05500",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LE POET",
+    "cp": "05300",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LE SAIX",
+    "cp": "05400",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LE SAUZE DU LAC",
+    "cp": "05160",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LES ORRES",
+    "cp": "05200",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LES VIGNEAUX",
+    "cp": "05120",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "LETTRET",
+    "cp": "05130",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "MANTEYER",
+    "cp": "05400",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "MEREUIL",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "MOLINES EN QUEYRAS",
+    "cp": "05350",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "MONETIER ALLEMONT",
+    "cp": "05110",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "MONT DAUPHIN",
+    "cp": "05600",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "MONTBRAND",
+    "cp": "05140",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "MONTCLUS",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "MONTGARDIN",
+    "cp": "05230",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "MONTGENEVRE",
+    "cp": "05100",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "MONTJAY",
+    "cp": "05150",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "MONTMAUR",
+    "cp": "05400",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "MONTROND",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "MOYDANS",
+    "cp": "05150",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "NEFFES",
+    "cp": "05000",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "NEVACHE",
+    "cp": "05100",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "NOSSAGE ET BENEVENT",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ORCIERES",
+    "cp": "05170",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ORPIERRE",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "OZE",
+    "cp": "05400",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "PELLEAUTIER",
+    "cp": "05000",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "PIEGUT",
+    "cp": "05130",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "POLIGNY",
+    "cp": "05500",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "PONTIS",
+    "cp": "05160",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "PRUNIERES",
+    "cp": "05230",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "PUY SANIERES",
+    "cp": "05200",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "PUY ST ANDRE",
+    "cp": "05100",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "PUY ST EUSEBE",
+    "cp": "05200",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "PUY ST PIERRE",
+    "cp": "05100",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "PUY ST VINCENT",
+    "cp": "05290",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "RABOU",
+    "cp": "05400",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "RAMBAUD",
+    "cp": "05000",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "REALLON",
+    "cp": "05160",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "REMOLLON",
+    "cp": "05190",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "REOTIER",
+    "cp": "05600",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "RIBEYRET",
+    "cp": "05150",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "RISOUL",
+    "cp": "05600",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ROCHEBRUNE",
+    "cp": "05190",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ROSANS",
+    "cp": "05150",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ROUSSET SERRE PONCON",
+    "cp": "05190",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "SALEON",
+    "cp": "05300",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "SALERANS",
+    "cp": "05300",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "SAVINES LE LAC",
+    "cp": "05160",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "SAVOURNON",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "SERRES",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "SIGOTTIER",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "SIGOYER",
+    "cp": "05130",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "SORBIERS",
+    "cp": "05150",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE D EMBRUN",
+    "cp": "05200",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE DE ROSANS",
+    "cp": "05150",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST APOLLINAIRE",
+    "cp": "05160",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST AUBAN D OZE",
+    "cp": "05400",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET EN CHAMPSAUR",
+    "cp": "05500",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST CHAFFREY",
+    "cp": "05330",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST CLEMENT SUR DURANCE",
+    "cp": "05600",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST CREPIN",
+    "cp": "05600",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE LE LAUS",
+    "cp": "05130",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST FIRMIN",
+    "cp": "05800",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST JACQUES EN VALGODEMARD",
+    "cp": "05800",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN ST NICOLAS",
+    "cp": "05260",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN EN BEAUCHENE",
+    "cp": "05140",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN EN CHAMPSAUR",
+    "cp": "05500",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT DU CROS",
+    "cp": "05500",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER LES MELEZES",
+    "cp": "05260",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DE QUEYRIERES",
+    "cp": "05120",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST MAURICE EN VALGODEMARD",
+    "cp": "05800",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL DE CHAILLOL",
+    "cp": "05260",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE AVEZ",
+    "cp": "05300",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE D ARGENCON",
+    "cp": "05140",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST SAUVEUR",
+    "cp": "05200",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "ST VERAN",
+    "cp": "05350",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "STE COLOMBE",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "TALLARD",
+    "cp": "05130",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "THEUS",
+    "cp": "05190",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "TRESCLEOUX",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "UPAIX",
+    "cp": "05300",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VAL BUECH MEOUGE",
+    "cp": "05300",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VAL DES PRES",
+    "cp": "05100",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VALDOULE",
+    "cp": "05150",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VALLOUISE PELVOUX",
+    "cp": "05290",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VALLOUISE PELVOUX",
+    "cp": "05340",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VALSERRES",
+    "cp": "05130",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VARS",
+    "cp": "05560",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VENTAVON",
+    "cp": "05300",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VENTEROL",
+    "cp": "05130",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VEYNES",
+    "cp": "05400",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VILLAR D ARENE",
+    "cp": "05480",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VILLAR LOUBIERE",
+    "cp": "05800",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VILLAR ST PANCRACE",
+    "cp": "05100",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VILLEBOIS LES PINS",
+    "cp": "05700",
+    "dept": "05",
+    "region": ""
+  },
+  {
+    "name": "VITROLLES",
+    "cp": "05110",
+    "dept": "05",
+    "region": ""
+  }
+]

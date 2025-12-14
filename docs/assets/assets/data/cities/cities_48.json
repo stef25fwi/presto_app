@@ -1,0 +1,968 @@
+[
+  {
+    "name": "ALBARET LE COMTAL",
+    "cp": "48310",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ALBARET STE MARIE",
+    "cp": "48200",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ALLENC",
+    "cp": "48190",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ALTIER",
+    "cp": "48800",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ANTRENAS",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ARZENC D APCHER",
+    "cp": "48310",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ARZENC DE RANDON",
+    "cp": "48170",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "AUROUX",
+    "cp": "48600",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "BADAROUX",
+    "cp": "48000",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "BALSIEGES",
+    "cp": "48000",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "BANASSAC CANILHAC",
+    "cp": "48500",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "BARJAC",
+    "cp": "48000",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "BARRE DES CEVENNES",
+    "cp": "48400",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "BASSURELS",
+    "cp": "48400",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "BEDOUES COCURES",
+    "cp": "48400",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "BEL AIR VAL D ANCE",
+    "cp": "48600",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "BLAVIGNAC",
+    "cp": "48200",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "BOURGS SUR COLAGNE",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "BRENOUX",
+    "cp": "48000",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "BRION",
+    "cp": "48310",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CANS ET CEVENNES",
+    "cp": "48400",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CASSAGNAS",
+    "cp": "48400",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CHADENET",
+    "cp": "48190",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CHANAC",
+    "cp": "48230",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CHASTANIER",
+    "cp": "48300",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CHASTEL NOUVEL",
+    "cp": "48000",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUNEUF DE RANDON",
+    "cp": "48170",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CHAUCHAILLES",
+    "cp": "48310",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CHAUDEYRAC",
+    "cp": "48170",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CHAULHAC",
+    "cp": "48140",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CHEYLARD L EVEQUE",
+    "cp": "48300",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CUBIERES",
+    "cp": "48190",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CUBIERETTES",
+    "cp": "48190",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "CULTURES",
+    "cp": "48230",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ESCLANEDES",
+    "cp": "48230",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "FLORAC TROIS RIVIERES",
+    "cp": "48400",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "FONTANS",
+    "cp": "48700",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "FOURNELS",
+    "cp": "48310",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "FRAISSINET DE FOURQUES",
+    "cp": "48400",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "GABRIAC",
+    "cp": "48110",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "GABRIAS",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "GATUZIERES",
+    "cp": "48150",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "GORGES DU TARN CAUSSES",
+    "cp": "48210",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "GORGES DU TARN CAUSSES",
+    "cp": "48320",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "GRANDRIEU",
+    "cp": "48600",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "GRANDVALS",
+    "cp": "48260",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "GREZES",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "HURES LA PARADE",
+    "cp": "48150",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ISPAGNAC",
+    "cp": "48320",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "JULIANGES",
+    "cp": "48140",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LA BASTIDE PUYLAURENT",
+    "cp": "48250",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LA CANOURGUE",
+    "cp": "48500",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LA FAGE MONTIVERNOUX",
+    "cp": "48310",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LA FAGE ST JULIEN",
+    "cp": "48200",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LA MALENE",
+    "cp": "48210",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LA PANOUSE",
+    "cp": "48600",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LA TIEULE",
+    "cp": "48500",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LACHAMP RIBENNES",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LACHAMP RIBENNES",
+    "cp": "48700",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LAJO",
+    "cp": "48120",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LANGOGNE",
+    "cp": "48300",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LANUEJOLS",
+    "cp": "48000",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LAUBERT",
+    "cp": "48170",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LAVAL DU TARN",
+    "cp": "48500",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LAVEYRUNE",
+    "cp": "48250",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LE BORN",
+    "cp": "48000",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LE BUISSON",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LE COLLET DE DEZE",
+    "cp": "48160",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LE MALZIEU FORAIN",
+    "cp": "48140",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LE MALZIEU VILLE",
+    "cp": "48140",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LE POMPIDOU",
+    "cp": "48110",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LE ROZIER",
+    "cp": "48150",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LES BESSONS",
+    "cp": "48200",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LES BONDONS",
+    "cp": "48400",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LES HERMAUX",
+    "cp": "48340",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LES LAUBIES",
+    "cp": "48700",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LES MONTS VERTS",
+    "cp": "48200",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LES SALCES",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LES SALELLES",
+    "cp": "48230",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "LUC",
+    "cp": "48250",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MARCHASTEL",
+    "cp": "48260",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MARVEJOLS",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MAS ST CHELY",
+    "cp": "48210",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MASSEGROS CAUSSES GORGES",
+    "cp": "48210",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MASSEGROS CAUSSES GORGES",
+    "cp": "48500",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MENDE",
+    "cp": "48000",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MEYRUEIS",
+    "cp": "48150",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MOISSAC VALLEE FRANCAISE",
+    "cp": "48110",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MOLEZON",
+    "cp": "48110",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MONT LOZERE ET GOULET",
+    "cp": "48170",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MONT LOZERE ET GOULET",
+    "cp": "48190",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MONT LOZERE ET GOULET",
+    "cp": "48250",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MONTBEL",
+    "cp": "48170",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MONTRODAT",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MONTS DE RANDON",
+    "cp": "48000",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "MONTS DE RANDON",
+    "cp": "48700",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "NASBINALS",
+    "cp": "48260",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "NAUSSAC FONTANES",
+    "cp": "48300",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "NOALHAC",
+    "cp": "48310",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "PALHERS",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "PAULHAC EN MARGERIDE",
+    "cp": "48140",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "PELOUSE",
+    "cp": "48000",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "PEYRE EN AUBRAC",
+    "cp": "48130",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "PIED DE BORNE",
+    "cp": "48800",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "PIERREFICHE",
+    "cp": "48300",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "PONT DE MONTVERT SUD MONT LOZERE",
+    "cp": "48220",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "POURCHARESSES",
+    "cp": "48800",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "PREVENCHERES",
+    "cp": "48800",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "PRINSUEJOLS MALBOUZON",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "PRINSUEJOLS MALBOUZON",
+    "cp": "48270",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "PRUNIERES",
+    "cp": "48200",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "RECOULES D AUBRAC",
+    "cp": "48260",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "RECOULES DE FUMAS",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "RIMEIZE",
+    "cp": "48200",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ROCLES",
+    "cp": "48300",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ROUSSES",
+    "cp": "48400",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "SERVERETTE",
+    "cp": "48700",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST ALBAN SUR LIMAGNOLE",
+    "cp": "48120",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE CAPCEZE",
+    "cp": "48800",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE DE LANCIZE",
+    "cp": "48240",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST BAUZILE",
+    "cp": "48000",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET DE CHIRAC",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST BONNET LAVAL",
+    "cp": "48600",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST CHELY D APCHER",
+    "cp": "48200",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS EN MARGERIDE",
+    "cp": "48700",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE DU VALDONNEZ",
+    "cp": "48000",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE VALLEE FRANCAISE",
+    "cp": "48330",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST FLOUR DE MERCOIRE",
+    "cp": "48300",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST FREZAL D ALBUGES",
+    "cp": "48170",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST GAL",
+    "cp": "48700",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN DE CALBERTE",
+    "cp": "48370",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN DU TEIL",
+    "cp": "48340",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE DE LAVIT",
+    "cp": "48160",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN LA FOUILLOUSE",
+    "cp": "48170",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST JUERY",
+    "cp": "48310",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN DES POINTS",
+    "cp": "48160",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT DE MURET",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT DE VEYRES",
+    "cp": "48310",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER DE PEYRE",
+    "cp": "48100",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER DU MALZIEU",
+    "cp": "48140",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DE BOUBAUX",
+    "cp": "48160",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DE LANSUSCLE",
+    "cp": "48110",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL DE DEZE",
+    "cp": "48160",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL LE FROID",
+    "cp": "48600",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DE NOGARET",
+    "cp": "48340",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DES TRIPIERS",
+    "cp": "48150",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE LE VIEUX",
+    "cp": "48200",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST PRIVAT DE VALLONGUE",
+    "cp": "48240",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST PRIVAT DU FAU",
+    "cp": "48140",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST SATURNIN",
+    "cp": "48500",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "ST SAUVEUR DE GINESTOUX",
+    "cp": "48170",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "STE CROIX VALLEE FRANCAISE",
+    "cp": "48110",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "STE EULALIE",
+    "cp": "48120",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "STE HELENE",
+    "cp": "48190",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "TERMES",
+    "cp": "48310",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "TRELANS",
+    "cp": "48340",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "VEBRON",
+    "cp": "48400",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "VENTALON EN CEVENNES",
+    "cp": "48160",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "VENTALON EN CEVENNES",
+    "cp": "48240",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "VIALAS",
+    "cp": "48220",
+    "dept": "48",
+    "region": ""
+  },
+  {
+    "name": "VILLEFORT",
+    "cp": "48800",
+    "dept": "48",
+    "region": ""
+  }
+]

@@ -1,0 +1,1532 @@
+[
+  {
+    "name": "AHUN",
+    "cp": "23150",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "AJAIN",
+    "cp": "23380",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ALLEYRAT",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ANZEME",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ARFEUILLE CHATAIN",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ARRENES",
+    "cp": "23210",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ARS",
+    "cp": "23480",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "AUBUSSON",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "AUGE",
+    "cp": "23170",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "AUGERES",
+    "cp": "23210",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "AULON",
+    "cp": "23210",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "AURIAT",
+    "cp": "23400",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "AUZANCES",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "AZAT CHATENET",
+    "cp": "23210",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "AZERABLES",
+    "cp": "23160",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BANIZE",
+    "cp": "23120",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BASVILLE",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BAZELAT",
+    "cp": "23160",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BEISSAT",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BELLEGARDE EN MARCHE",
+    "cp": "23190",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BENEVENT L ABBAYE",
+    "cp": "23210",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BETETE",
+    "cp": "23270",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BLESSAC",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BONNAT",
+    "cp": "23220",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BORD ST GEORGES",
+    "cp": "23230",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BOSMOREAU LES MINES",
+    "cp": "23400",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BOSROGER",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BOURGANEUF",
+    "cp": "23400",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BOUSSAC",
+    "cp": "23600",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BOUSSAC BOURG",
+    "cp": "23600",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BROUSSE",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BUDELIERE",
+    "cp": "23170",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BUSSIERE DUNOISE",
+    "cp": "23320",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BUSSIERE NOUVELLE",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "BUSSIERE ST GEORGES",
+    "cp": "23600",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CEYROUX",
+    "cp": "23210",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHAMBERAUD",
+    "cp": "23480",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHAMBON STE CROIX",
+    "cp": "23220",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHAMBON SUR VOUEIZE",
+    "cp": "23170",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHAMBONCHARD",
+    "cp": "23110",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHAMBORAND",
+    "cp": "23240",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHAMPAGNAT",
+    "cp": "23190",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHAMPSANGLARD",
+    "cp": "23220",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHARD",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHARRON",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHATELARD",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHATELUS LE MARCHEIX",
+    "cp": "23430",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHATELUS MALVALEIX",
+    "cp": "23270",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHAVANAT",
+    "cp": "23250",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHENERAILLES",
+    "cp": "23130",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CHENIERS",
+    "cp": "23220",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CLAIRAVAUX",
+    "cp": "23500",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CLUGNAT",
+    "cp": "23270",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "COLONDANNES",
+    "cp": "23800",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CRESSAT",
+    "cp": "23140",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CROCQ",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CROZANT",
+    "cp": "23160",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "CROZE",
+    "cp": "23500",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "DOMEYROT",
+    "cp": "23140",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "DONTREIX",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "DUN LE PALESTEL",
+    "cp": "23800",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "EVAUX LES BAINS",
+    "cp": "23110",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "FAUX LA MONTAGNE",
+    "cp": "23340",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "FAUX MAZURAS",
+    "cp": "23400",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "FELLETIN",
+    "cp": "23500",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "FENIERS",
+    "cp": "23100",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "FLAYAT",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "FLEURAT",
+    "cp": "23320",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "FONTANIERES",
+    "cp": "23110",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "FRANSECHES",
+    "cp": "23480",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "FRESSELINES",
+    "cp": "23450",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "FURSAC",
+    "cp": "23290",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "GARTEMPE",
+    "cp": "23320",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "GENOUILLAC",
+    "cp": "23350",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "GENTIOUX PIGEROLLES",
+    "cp": "23340",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "GIOUX",
+    "cp": "23500",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "GLENIC",
+    "cp": "23380",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "GOUZON",
+    "cp": "23230",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "GUERET",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ISSOUDUN LETRIEIX",
+    "cp": "23130",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "JALESCHES",
+    "cp": "23270",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "JANAILLAT",
+    "cp": "23250",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "JARNAGES",
+    "cp": "23140",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "JOUILLAT",
+    "cp": "23220",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA BRIONNE",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA CELLE DUNOISE",
+    "cp": "23800",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA CELLE SOUS GOUZON",
+    "cp": "23230",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA CELLETTE",
+    "cp": "23350",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE BALOUE",
+    "cp": "23160",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE ST MARTIAL",
+    "cp": "23250",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE TAILLEFERT",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA CHAUSSADE",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA COURTINE",
+    "cp": "23100",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA FORET DU TEMPLE",
+    "cp": "23360",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA MAZIERE AUX BONS HOMMES",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA NOUAILLE",
+    "cp": "23500",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA POUGE",
+    "cp": "23250",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA SAUNIERE",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA SERRE BUSSIERE VIEILLE",
+    "cp": "23190",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA SOUTERRAINE",
+    "cp": "23300",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA VILLEDIEU",
+    "cp": "23340",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA VILLENEUVE",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LA VILLETELLE",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LADAPEYRE",
+    "cp": "23270",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LAFAT",
+    "cp": "23800",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LAVAUFRANCHE",
+    "cp": "23600",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LAVAVEIX LES MINES",
+    "cp": "23150",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LE BOURG D HEM",
+    "cp": "23220",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LE CHAUCHET",
+    "cp": "23130",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LE COMPAS",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LE DONZEIL",
+    "cp": "23480",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LE GRAND BOURG",
+    "cp": "23240",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LE MAS D ARTIGE",
+    "cp": "23100",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LE MONTEIL AU VICOMTE",
+    "cp": "23460",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LEPAUD",
+    "cp": "23170",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LEPINAS",
+    "cp": "23150",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LES MARS",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LEYRAT",
+    "cp": "23600",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LINARD MALVAL",
+    "cp": "23220",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LIOUX LES MONGES",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LIZIERES",
+    "cp": "23240",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LOURDOUEIX ST PIERRE",
+    "cp": "23360",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LUPERSAT",
+    "cp": "23190",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "LUSSAT",
+    "cp": "23170",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MAGNAT L ETRANGE",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MAINSAT",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MAISON FEYNE",
+    "cp": "23800",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MAISONNISSES",
+    "cp": "23150",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MALLERET",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MALLERET BOUSSAC",
+    "cp": "23600",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MANSAT LA COURRIERE",
+    "cp": "23400",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MARSAC",
+    "cp": "23210",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MAUTES",
+    "cp": "23190",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MAZEIRAT",
+    "cp": "23150",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MEASNES",
+    "cp": "23360",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MERINCHAL",
+    "cp": "23420",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MONTAIGUT LE BLANC",
+    "cp": "23320",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MONTBOUCHER",
+    "cp": "23400",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MORTROUX",
+    "cp": "23220",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MOURIOUX VIEILLEVILLE",
+    "cp": "23210",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MOUTIER D AHUN",
+    "cp": "23150",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MOUTIER MALCARD",
+    "cp": "23220",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "MOUTIER ROZEILLE",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "NAILLAT",
+    "cp": "23800",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "NEOUX",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "NOTH",
+    "cp": "23300",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "NOUHANT",
+    "cp": "23170",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "NOUZERINES",
+    "cp": "23600",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "NOUZEROLLES",
+    "cp": "23360",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "NOUZIERS",
+    "cp": "23350",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "PARSAC RIMONDEIX",
+    "cp": "23140",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "PEYRABOUT",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "PEYRAT LA NONIERE",
+    "cp": "23130",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "PIERREFITTE",
+    "cp": "23130",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "PIONNAT",
+    "cp": "23140",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "PONTARION",
+    "cp": "23250",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "PONTCHARRAUD",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "POUSSANGES",
+    "cp": "23500",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "PUY MALSIGNAT",
+    "cp": "23130",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "RETERRE",
+    "cp": "23110",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ROCHES",
+    "cp": "23270",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ROUGNAT",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ROYERE DE VASSIVIERE",
+    "cp": "23460",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "SAGNAT",
+    "cp": "23800",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "SANNAT",
+    "cp": "23110",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "SARDENT",
+    "cp": "23250",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "SAVENNES",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "SERMUR",
+    "cp": "23700",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "SOUBREBOST",
+    "cp": "23250",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "SOUMANS",
+    "cp": "23600",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "SOUS PARSAT",
+    "cp": "23150",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST AGNANT DE VERSILLAT",
+    "cp": "23300",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST AGNANT PRES CROCQ",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST ALPINIEN",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST AMAND",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST AMAND JARTOUDEIX",
+    "cp": "23400",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST AVIT DE TARDES",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST AVIT LE PAUVRE",
+    "cp": "23480",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST BARD",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST CHABRAIS",
+    "cp": "23130",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST CHRISTOPHE",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST DIZIER LA TOUR",
+    "cp": "23130",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST DIZIER LES DOMAINES",
+    "cp": "23270",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST DIZIER MASBARAUD",
+    "cp": "23400",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST DOMET",
+    "cp": "23190",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST ELOI",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST FIEL",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST FRION",
+    "cp": "23500",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES LA POUGE",
+    "cp": "23250",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES NIGREMONT",
+    "cp": "23500",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN BEAUPRE",
+    "cp": "23160",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST GOUSSAUD",
+    "cp": "23430",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE LA PLAINE",
+    "cp": "23150",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE LE CHATEAU",
+    "cp": "23250",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN LA GENETE",
+    "cp": "23110",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN LE CHATEL",
+    "cp": "23130",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST JUNIEN LA BREGERE",
+    "cp": "23400",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER BRIDEREIX",
+    "cp": "23300",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER LE GUERETOIS",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST LOUP",
+    "cp": "23130",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MAIXANT",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MARC A FRONGIER",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MARC A LOUBAUD",
+    "cp": "23460",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MARIEN",
+    "cp": "23600",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIAL LE MONT",
+    "cp": "23150",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIAL LE VIEUX",
+    "cp": "23100",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN CHATEAU",
+    "cp": "23460",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN STE CATHERINE",
+    "cp": "23430",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MAURICE LA SOUTERRAINE",
+    "cp": "23300",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MAURICE PRES CROCQ",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MEDARD LA ROCHETTE",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MERD LA BREUILLE",
+    "cp": "23100",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL DE VEISSE",
+    "cp": "23480",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST MOREIL",
+    "cp": "23400",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST ORADOUX DE CHIROUZE",
+    "cp": "23100",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST ORADOUX PRES CROCQ",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST PARDOUX D ARNET",
+    "cp": "23260",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST PARDOUX LE NEUF",
+    "cp": "23200",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST PARDOUX LES CARDS",
+    "cp": "23150",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST PARDOUX MORTEROLLES",
+    "cp": "23400",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE BELLEVUE",
+    "cp": "23460",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE CHERIGNAT",
+    "cp": "23430",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE LE BOST",
+    "cp": "23600",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST PRIEST",
+    "cp": "23110",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST PRIEST LA FEUILLE",
+    "cp": "23300",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST PRIEST LA PLAINE",
+    "cp": "23240",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST PRIEST PALUS",
+    "cp": "23400",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST QUENTIN LA CHABANNE",
+    "cp": "23500",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST SEBASTIEN",
+    "cp": "23160",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST SILVAIN BAS LE ROC",
+    "cp": "23600",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST SILVAIN BELLEGARDE",
+    "cp": "23190",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST SILVAIN MONTAIGUT",
+    "cp": "23320",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST SILVAIN SOUS TOULX",
+    "cp": "23140",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST SULPICE LE DUNOIS",
+    "cp": "23800",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST SULPICE LE GUERETOIS",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST SULPICE LES CHAMPS",
+    "cp": "23480",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST VAURY",
+    "cp": "23320",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST VICTOR EN MARCHE",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST YRIEIX LA MONTAGNE",
+    "cp": "23460",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "ST YRIEIX LES BOIS",
+    "cp": "23150",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "STE FEYRE",
+    "cp": "23000",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "STE FEYRE LA MONTAGNE",
+    "cp": "23500",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "TARDES",
+    "cp": "23170",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "TERCILLAT",
+    "cp": "23350",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "THAURON",
+    "cp": "23250",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "TOULX STE CROIX",
+    "cp": "23600",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "TROIS FONDS",
+    "cp": "23230",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "VALLIERE",
+    "cp": "23120",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "VAREILLES",
+    "cp": "23300",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "VERNEIGES",
+    "cp": "23170",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "VIDAILLAT",
+    "cp": "23250",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "VIERSAT",
+    "cp": "23170",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "VIGEVILLE",
+    "cp": "23140",
+    "dept": "23",
+    "region": ""
+  },
+  {
+    "name": "VILLARD",
+    "cp": "23800",
+    "dept": "23",
+    "region": ""
+  }
+]

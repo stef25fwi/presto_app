@@ -1,0 +1,1664 @@
+[
+  {
+    "name": "ABILLY",
+    "cp": "37160",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "AMBILLOU",
+    "cp": "37340",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "AMBOISE",
+    "cp": "37400",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ANCHE",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ANTOGNY LE TILLAC",
+    "cp": "37800",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ARTANNES SUR INDRE",
+    "cp": "37260",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ASSAY",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ATHEE SUR CHER",
+    "cp": "37270",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "AUTRECHE",
+    "cp": "37110",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "AUZOUER EN TOURAINE",
+    "cp": "37110",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "AVOINE",
+    "cp": "37420",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "AVON LES ROCHES",
+    "cp": "37220",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "AVRILLE LES PONCEAUX",
+    "cp": "37340",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "AZAY LE RIDEAU",
+    "cp": "37190",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "AZAY SUR CHER",
+    "cp": "37270",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "AZAY SUR INDRE",
+    "cp": "37310",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BALLAN MIRE",
+    "cp": "37510",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BARROU",
+    "cp": "37350",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BEAULIEU LES LOCHES",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONT EN VERON",
+    "cp": "37420",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONT LOUESTAULT",
+    "cp": "37360",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONT LOUESTAULT",
+    "cp": "37370",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONT VILLAGE",
+    "cp": "37460",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BENAIS",
+    "cp": "37140",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BERTHENAY",
+    "cp": "37510",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BETZ LE CHATEAU",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BLERE",
+    "cp": "37150",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BOSSAY SUR CLAISE",
+    "cp": "37290",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BOSSEE",
+    "cp": "37240",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BOURGUEIL",
+    "cp": "37140",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BOURNAN",
+    "cp": "37240",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BOUSSAY",
+    "cp": "37290",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BRASLOU",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BRAYE SOUS FAYE",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BRAYE SUR MAULNE",
+    "cp": "37330",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BRECHES",
+    "cp": "37330",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BREHEMONT",
+    "cp": "37130",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BRIDORE",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BRIZAY",
+    "cp": "37220",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BUEIL EN TOURAINE",
+    "cp": "37370",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "BUXEUIL",
+    "cp": "37160",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CANDES ST MARTIN",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CANGEY",
+    "cp": "37530",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CERE LA RONDE",
+    "cp": "37460",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CERELLES",
+    "cp": "37390",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHAMBON",
+    "cp": "37290",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHAMBOURG SUR INDRE",
+    "cp": "37310",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHAMBRAY LES TOURS",
+    "cp": "37170",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHAMPIGNY SUR VEUDE",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHANCAY",
+    "cp": "37210",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHANCEAUX PRES LOCHES",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHANCEAUX SUR CHOISILLE",
+    "cp": "37390",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHANNAY SUR LATHAN",
+    "cp": "37330",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHARENTILLY",
+    "cp": "37390",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHARGE",
+    "cp": "37530",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHARNIZAY",
+    "cp": "37290",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU LA VALLIERE",
+    "cp": "37330",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHATEAU RENAULT",
+    "cp": "37110",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHAUMUSSAY",
+    "cp": "37350",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHAVEIGNES",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHEDIGNY",
+    "cp": "37310",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHEILLE",
+    "cp": "37190",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHEMILLE SUR DEME",
+    "cp": "37370",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHEMILLE SUR INDROIS",
+    "cp": "37460",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHENONCEAUX",
+    "cp": "37150",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHEZELLES",
+    "cp": "37220",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHINON",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHISSEAUX",
+    "cp": "37150",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CHOUZE SUR LOIRE",
+    "cp": "37140",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CIGOGNE",
+    "cp": "37310",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CINAIS",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CINQ MARS LA PILE",
+    "cp": "37130",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CIRAN",
+    "cp": "37240",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CIVRAY DE TOURAINE",
+    "cp": "37150",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CIVRAY SUR ESVES",
+    "cp": "37160",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CLERE LES PINS",
+    "cp": "37340",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CONTINVOIR",
+    "cp": "37340",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CORMERY",
+    "cp": "37320",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "COTEAUX SUR LOIRE",
+    "cp": "37130",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "COTEAUX SUR LOIRE",
+    "cp": "37140",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "COUESMES",
+    "cp": "37330",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "COURCAY",
+    "cp": "37310",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "COURCELLES DE TOURAINE",
+    "cp": "37330",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "COURCOUE",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "COUZIERS",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CRAVANT LES COTEAUX",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CRISSAY SUR MANSE",
+    "cp": "37220",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CROTELLES",
+    "cp": "37380",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CROUZILLES",
+    "cp": "37220",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "CUSSAY",
+    "cp": "37240",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "DAME MARIE LES BOIS",
+    "cp": "37110",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "DESCARTES",
+    "cp": "37160",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "DIERRE",
+    "cp": "37150",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "DOLUS LE SEC",
+    "cp": "37310",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "DRACHE",
+    "cp": "37800",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "DRUYE",
+    "cp": "37190",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "EPEIGNE LES BOIS",
+    "cp": "37150",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "EPEIGNE SUR DEME",
+    "cp": "37370",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ESVES LE MOUTIER",
+    "cp": "37240",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ESVRES",
+    "cp": "37320",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "FAYE LA VINEUSE",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "FERRIERE LARCON",
+    "cp": "37350",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "FERRIERE SUR BEAULIEU",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "FONDETTES",
+    "cp": "37230",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "FRANCUEIL",
+    "cp": "37150",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "GENILLE",
+    "cp": "37460",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "GIZEUX",
+    "cp": "37340",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "HOMMES",
+    "cp": "37340",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "HUISMES",
+    "cp": "37420",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "JAULNAY",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "JOUE LES TOURS",
+    "cp": "37300",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "L ILE BOUCHARD",
+    "cp": "37220",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LA CELLE GUENAND",
+    "cp": "37350",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LA CELLE ST AVANT",
+    "cp": "37160",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE AUX NAUX",
+    "cp": "37130",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE BLANCHE ST MARTIN",
+    "cp": "37240",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE SUR LOIRE",
+    "cp": "37140",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LA CROIX EN TOURAINE",
+    "cp": "37150",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LA FERRIERE",
+    "cp": "37110",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LA GUERCHE",
+    "cp": "37350",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LA MEMBROLLE SUR CHOISILLE",
+    "cp": "37390",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LA RICHE",
+    "cp": "37520",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LA ROCHE CLERMAULT",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LA TOUR ST GELIN",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LA VILLE AUX DAMES",
+    "cp": "37700",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LANGEAIS",
+    "cp": "37130",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LARCAY",
+    "cp": "37270",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LE BOULAY",
+    "cp": "37110",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LE GRAND PRESSIGNY",
+    "cp": "37350",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LE LIEGE",
+    "cp": "37460",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LE LOUROUX",
+    "cp": "37240",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LE PETIT PRESSIGNY",
+    "cp": "37350",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LEMERE",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LERNE",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LES HERMITES",
+    "cp": "37110",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LIGNIERES DE TOURAINE",
+    "cp": "37130",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LIGRE",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LIGUEIL",
+    "cp": "37240",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LIMERAY",
+    "cp": "37530",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LOCHE SUR INDROIS",
+    "cp": "37460",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LOCHES",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LOUANS",
+    "cp": "37320",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LUBLE",
+    "cp": "37330",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LUSSAULT SUR LOIRE",
+    "cp": "37400",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LUYNES",
+    "cp": "37230",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LUZE",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "LUZILLE",
+    "cp": "37150",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MAILLE",
+    "cp": "37800",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MANTHELAN",
+    "cp": "37240",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MARCAY",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MARCE SUR ESVES",
+    "cp": "37160",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MARCILLY SUR MAULNE",
+    "cp": "37330",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MARCILLY SUR VIENNE",
+    "cp": "37800",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MARIGNY MARMANDE",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MARRAY",
+    "cp": "37370",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MAZIERES DE TOURAINE",
+    "cp": "37130",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "METTRAY",
+    "cp": "37390",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MONNAIE",
+    "cp": "37380",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MONTBAZON",
+    "cp": "37250",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MONTHODON",
+    "cp": "37110",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MONTLOUIS SUR LOIRE",
+    "cp": "37270",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MONTRESOR",
+    "cp": "37460",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL EN TOURAINE",
+    "cp": "37530",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MONTS",
+    "cp": "37260",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MORAND",
+    "cp": "37110",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MOSNES",
+    "cp": "37530",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "MOUZAY",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "NAZELLES NEGRON",
+    "cp": "37530",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "NEUIL",
+    "cp": "37190",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "NEUILLE LE LIERRE",
+    "cp": "37380",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "NEUILLE PONT PIERRE",
+    "cp": "37360",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "NEUILLY LE BRIGNON",
+    "cp": "37160",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE SUR BRENNE",
+    "cp": "37110",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "NEUVY LE ROI",
+    "cp": "37370",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "NOIZAY",
+    "cp": "37210",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "NOTRE DAME D OE",
+    "cp": "37390",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "NOUANS LES FONTAINES",
+    "cp": "37460",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "NOUATRE",
+    "cp": "37800",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "NOUZILLY",
+    "cp": "37380",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "NOYANT DE TOURAINE",
+    "cp": "37800",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ORBIGNY",
+    "cp": "37460",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "PANZOULT",
+    "cp": "37220",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "PARCAY MESLAY",
+    "cp": "37210",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "PARCAY SUR VIENNE",
+    "cp": "37220",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "PAULMY",
+    "cp": "37350",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "PERNAY",
+    "cp": "37230",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "PERRUSSON",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "POCE SUR CISSE",
+    "cp": "37530",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "PONT DE RUAN",
+    "cp": "37260",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "PORTS SUR VIENNE",
+    "cp": "37800",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "POUZAY",
+    "cp": "37800",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "PREUILLY SUR CLAISE",
+    "cp": "37290",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "PUSSIGNY",
+    "cp": "37800",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "RAZINES",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "REIGNAC SUR INDRE",
+    "cp": "37310",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "RESTIGNE",
+    "cp": "37140",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "REUGNY",
+    "cp": "37380",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "RICHELIEU",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "RIGNY USSE",
+    "cp": "37420",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "RILLE",
+    "cp": "37340",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "RILLY SUR VIENNE",
+    "cp": "37220",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "RIVARENNES",
+    "cp": "37190",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "RIVIERE",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ROCHECORBON",
+    "cp": "37210",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ROUZIERS DE TOURAINE",
+    "cp": "37360",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SACHE",
+    "cp": "37190",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SAUNAY",
+    "cp": "37110",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SAVIGNE SUR LATHAN",
+    "cp": "37340",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SAVIGNY EN VERON",
+    "cp": "37420",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SAVONNIERES",
+    "cp": "37510",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SAZILLY",
+    "cp": "37220",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SEMBLANCAY",
+    "cp": "37360",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SENNEVIERES",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SEPMES",
+    "cp": "37800",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SEUILLY",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SONZAY",
+    "cp": "37360",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SORIGNY",
+    "cp": "37250",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SOUVIGNE",
+    "cp": "37330",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SOUVIGNY DE TOURAINE",
+    "cp": "37530",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST ANTOINE DU ROCHER",
+    "cp": "37360",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST AUBIN LE DEPEINT",
+    "cp": "37370",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST AVERTIN",
+    "cp": "37550",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST BENOIT LA FORET",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST BRANCHS",
+    "cp": "37320",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST CHRISTOPHE SUR LE NAIS",
+    "cp": "37370",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST CYR SUR LOIRE",
+    "cp": "37540",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST EPAIN",
+    "cp": "37800",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE DE CHIGNY",
+    "cp": "37230",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST FLOVIER",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST GENOUPH",
+    "cp": "37510",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN SUR VIENNE",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST HIPPOLYTE",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN ST GERMAIN",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT DE LIN",
+    "cp": "37330",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT EN GATINES",
+    "cp": "37380",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN LE BEAU",
+    "cp": "37270",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST NICOLAS DE BOURGUEIL",
+    "cp": "37140",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST NICOLAS DES MOTETS",
+    "cp": "37110",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST OUEN LES VIGNES",
+    "cp": "37530",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST PATERNE RACAN",
+    "cp": "37370",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DES CORPS",
+    "cp": "37700",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST QUENTIN SUR INDROIS",
+    "cp": "37310",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST REGLE",
+    "cp": "37530",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST ROCH",
+    "cp": "37390",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "ST SENOCH",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "STE CATHERINE DE FIERBOIS",
+    "cp": "37800",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "STE MAURE DE TOURAINE",
+    "cp": "37800",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "SUBLAINES",
+    "cp": "37310",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "TAUXIGNY ST BAULD",
+    "cp": "37310",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "TAVANT",
+    "cp": "37220",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "THENEUIL",
+    "cp": "37220",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "THILOUZE",
+    "cp": "37260",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "THIZAY",
+    "cp": "37500",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "TOURNON ST PIERRE",
+    "cp": "37290",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "TOURS",
+    "cp": "37000",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "TOURS",
+    "cp": "37100",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "TOURS",
+    "cp": "37200",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "TROGUES",
+    "cp": "37220",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "TRUYES",
+    "cp": "37320",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VALLERES",
+    "cp": "37190",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VARENNES",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VEIGNE",
+    "cp": "37250",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VERETZ",
+    "cp": "37270",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VERNEUIL LE CHATEAU",
+    "cp": "37120",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VERNEUIL SUR INDRE",
+    "cp": "37600",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VERNOU SUR BRENNE",
+    "cp": "37210",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VILLAINES LES ROCHERS",
+    "cp": "37190",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VILLANDRY",
+    "cp": "37510",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VILLEBOURG",
+    "cp": "37370",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VILLEDOMAIN",
+    "cp": "37460",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VILLEDOMER",
+    "cp": "37110",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VILLELOIN COULANGE",
+    "cp": "37460",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VILLEPERDUE",
+    "cp": "37260",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VILLIERS AU BOUIN",
+    "cp": "37330",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VOU",
+    "cp": "37240",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "VOUVRAY",
+    "cp": "37210",
+    "dept": "37",
+    "region": ""
+  },
+  {
+    "name": "YZEURES SUR CREUSE",
+    "cp": "37290",
+    "dept": "37",
+    "region": ""
+  }
+]

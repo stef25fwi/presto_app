@@ -1,0 +1,1736 @@
+[
+  {
+    "name": "ACHERES",
+    "cp": "18250",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "AINAY LE VIEIL",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ALLOGNY",
+    "cp": "18110",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ALLOUIS",
+    "cp": "18500",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ANNOIX",
+    "cp": "18340",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "APREMONT SUR ALLIER",
+    "cp": "18150",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ARCAY",
+    "cp": "18340",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ARCOMPS",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ARDENAIS",
+    "cp": "18170",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ARGENT SUR SAULDRE",
+    "cp": "18410",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ARGENVIERES",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ARPHEUILLES",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ASSIGNY",
+    "cp": "18260",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "AUBIGNY SUR NERE",
+    "cp": "18700",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "AUBINGES",
+    "cp": "18220",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "AUGY SUR AUBOIS",
+    "cp": "18600",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "AVORD",
+    "cp": "18520",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "AZY",
+    "cp": "18220",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BANNAY",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BANNEGON",
+    "cp": "18210",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BARLIEU",
+    "cp": "18260",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BAUGY",
+    "cp": "18800",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BEDDES",
+    "cp": "18370",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BEFFES",
+    "cp": "18320",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BELLEVILLE SUR LOIRE",
+    "cp": "18240",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BENGY SUR CRAON",
+    "cp": "18520",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BERRY BOUY",
+    "cp": "18500",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BESSAIS LE FROMENTAL",
+    "cp": "18210",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BLANCAFORT",
+    "cp": "18410",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BLET",
+    "cp": "18350",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BOULLERET",
+    "cp": "18240",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BOURGES",
+    "cp": "18000",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BOUZAIS",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BRECY",
+    "cp": "18220",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BRINAY",
+    "cp": "18120",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BRINON SUR SAULDRE",
+    "cp": "18410",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BRUERE ALLICHAMPS",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BUE",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "BUSSY",
+    "cp": "18130",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CERBOIS",
+    "cp": "18120",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHALIVOY MILON",
+    "cp": "18130",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHAMBON",
+    "cp": "18190",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHARENTON DU CHER",
+    "cp": "18210",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHARENTONNAY",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHARLY",
+    "cp": "18350",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHAROST",
+    "cp": "18290",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHASSY",
+    "cp": "18800",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUMEILLANT",
+    "cp": "18370",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUNEUF SUR CHER",
+    "cp": "18190",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHAUMONT",
+    "cp": "18350",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHAUMOUX MARCILLY",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHAVANNES",
+    "cp": "18190",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHERY",
+    "cp": "18120",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CHEZAL BENOIT",
+    "cp": "18160",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CIVRAY",
+    "cp": "18290",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CLEMONT",
+    "cp": "18410",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "COGNY",
+    "cp": "18130",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "COLOMBIERS",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CONCRESSAULT",
+    "cp": "18260",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CONTRES",
+    "cp": "18130",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CORNUSSE",
+    "cp": "18350",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CORQUOY",
+    "cp": "18190",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CORQUOY",
+    "cp": "18340",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "COUARGUES",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "COURS LES BARRES",
+    "cp": "18320",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "COUST",
+    "cp": "18210",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "COUY",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CREZANCAY SUR CHER",
+    "cp": "18190",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CREZANCY EN SANCERRE",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CROISY",
+    "cp": "18350",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CROSSES",
+    "cp": "18340",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CUFFY",
+    "cp": "18150",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "CULAN",
+    "cp": "18270",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "DAMPIERRE EN CROT",
+    "cp": "18260",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "DAMPIERRE EN GRACAY",
+    "cp": "18310",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "DREVANT",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "DUN SUR AURON",
+    "cp": "18130",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ENNORDRES",
+    "cp": "18380",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "EPINEUIL LE FLEURIEL",
+    "cp": "18360",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ETRECHY",
+    "cp": "18800",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "FARGES ALLICHAMPS",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "FARGES EN SEPTAINE",
+    "cp": "18800",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "FAVERDINES",
+    "cp": "18360",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "FEUX",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "FLAVIGNY",
+    "cp": "18350",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "FOECY",
+    "cp": "18500",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "FUSSY",
+    "cp": "18110",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "GARDEFORT",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "GARIGNY",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "GENOUILLY",
+    "cp": "18310",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "GERMIGNY L EXEMPT",
+    "cp": "18150",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "GIVARDON",
+    "cp": "18600",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "GRACAY",
+    "cp": "18310",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "GROISES",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "GRON",
+    "cp": "18800",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "GROSSOUVRE",
+    "cp": "18600",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "HENRICHEMONT",
+    "cp": "18250",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "HERRY",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "HUMBLIGNY",
+    "cp": "18250",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "IDS ST ROCH",
+    "cp": "18170",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "IGNOL",
+    "cp": "18350",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "INEUIL",
+    "cp": "18160",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "IVOY LE PRE",
+    "cp": "18380",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "JALOGNES",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "JARS",
+    "cp": "18260",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "JOUET SUR L AUBOIS",
+    "cp": "18320",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "JUSSY CHAMPAGNE",
+    "cp": "18130",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "JUSSY LE CHAUDRIER",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LA CELETTE",
+    "cp": "18360",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LA CELLE",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LA CELLE CONDE",
+    "cp": "18160",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE D ANGILLON",
+    "cp": "18380",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE HUGON",
+    "cp": "18150",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE MONTLINARD",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE ST URSIN",
+    "cp": "18570",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELOTTE",
+    "cp": "18250",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LA GROUTTE",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LA GUERCHE SUR L AUBOIS",
+    "cp": "18150",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LA PERCHE",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LANTAN",
+    "cp": "18130",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LAPAN",
+    "cp": "18340",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LAZENAY",
+    "cp": "18120",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LE CHATELET",
+    "cp": "18170",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LE CHAUTAY",
+    "cp": "18150",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LE NOYER",
+    "cp": "18260",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LE PONDY",
+    "cp": "18210",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LE SUBDRAY",
+    "cp": "18570",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LERE",
+    "cp": "18240",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LES AIX D ANGILLON",
+    "cp": "18220",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LEVET",
+    "cp": "18340",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LIGNIERES",
+    "cp": "18160",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LIMEUX",
+    "cp": "18120",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LISSAY LOCHY",
+    "cp": "18340",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LOYE SUR ARNON",
+    "cp": "18170",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LUGNY CHAMPAGNE",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LUNERY",
+    "cp": "18400",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "LURY SUR ARNON",
+    "cp": "18120",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MAISONNAIS",
+    "cp": "18170",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MARCAIS",
+    "cp": "18170",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MAREUIL SUR ARNON",
+    "cp": "18290",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MARMAGNE",
+    "cp": "18500",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MARSEILLES LES AUBIGNY",
+    "cp": "18320",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MASSAY",
+    "cp": "18120",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MEHUN SUR YEVRE",
+    "cp": "18500",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MEILLANT",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MENETOU COUTURE",
+    "cp": "18320",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MENETOU RATEL",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MENETOU SALON",
+    "cp": "18510",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MENETREOL SOUS SANCERRE",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MENETREOL SUR SAULDRE",
+    "cp": "18700",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MEREAU",
+    "cp": "18120",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MERY ES BOIS",
+    "cp": "18380",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MERY SUR CHER",
+    "cp": "18100",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNY",
+    "cp": "18250",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MONTLOUIS",
+    "cp": "18160",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MORLAC",
+    "cp": "18170",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MORNAY BERRY",
+    "cp": "18350",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MORNAY SUR ALLIER",
+    "cp": "18600",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MOROGUES",
+    "cp": "18220",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MORTHOMIERS",
+    "cp": "18570",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "MOULINS SUR YEVRE",
+    "cp": "18390",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "NANCAY",
+    "cp": "18330",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "NERONDES",
+    "cp": "18350",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "NEUILLY EN DUN",
+    "cp": "18600",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "NEUILLY EN SANCERRE",
+    "cp": "18250",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "NEUVY DEUX CLOCHERS",
+    "cp": "18250",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "NEUVY LE BARROIS",
+    "cp": "18600",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "NEUVY SUR BARANGEON",
+    "cp": "18330",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "NOHANT EN GOUT",
+    "cp": "18390",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "NOHANT EN GRACAY",
+    "cp": "18310",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "NOZIERES",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "OIZON",
+    "cp": "18700",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ORCENAIS",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ORVAL",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "OSMERY",
+    "cp": "18130",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "OSMERY",
+    "cp": "18350",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "OSMOY",
+    "cp": "18390",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "OUROUER LES BOURDELINS",
+    "cp": "18350",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "PARASSY",
+    "cp": "18220",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "PARNAY",
+    "cp": "18130",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "PIGNY",
+    "cp": "18110",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "PLAIMPIED GIVAUDINS",
+    "cp": "18340",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "PLOU",
+    "cp": "18290",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "POISIEUX",
+    "cp": "18290",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "PRECY",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "PRESLY",
+    "cp": "18380",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "PREUILLY",
+    "cp": "18120",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "PREVERANGES",
+    "cp": "18370",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "PRIMELLES",
+    "cp": "18400",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "QUANTILLY",
+    "cp": "18110",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "QUINCY",
+    "cp": "18120",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "RAYMOND",
+    "cp": "18130",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "REIGNY",
+    "cp": "18270",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "REZAY",
+    "cp": "18170",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "RIANS",
+    "cp": "18220",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SAGONNE",
+    "cp": "18600",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SANCERGUES",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SANCERRE",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SANCOINS",
+    "cp": "18600",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SANTRANGES",
+    "cp": "18240",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SAUGY",
+    "cp": "18290",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SAULZAIS LE POTIER",
+    "cp": "18360",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SAVIGNY EN SANCERRE",
+    "cp": "18240",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SAVIGNY EN SEPTAINE",
+    "cp": "18390",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SENNECAY",
+    "cp": "18340",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SENS BEAUJEU",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SERRUELLES",
+    "cp": "18190",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SEVRY",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SIDIAILLES",
+    "cp": "18270",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SOULANGIS",
+    "cp": "18220",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SOYE EN SEPTAINE",
+    "cp": "18340",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST AIGNAN DES NOYERS",
+    "cp": "18600",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST AMAND MONTROND",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST AMBROIX",
+    "cp": "18290",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST BAUDEL",
+    "cp": "18160",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST BOUIZE",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST CAPRAIS",
+    "cp": "18400",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST CEOLS",
+    "cp": "18220",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST CHRISTOPHE LE CHAUDRY",
+    "cp": "18270",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST DENIS DE PALIN",
+    "cp": "18130",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST DOULCHARD",
+    "cp": "18230",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST ELOY DE GY",
+    "cp": "18110",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST FLORENT SUR CHER",
+    "cp": "18400",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES DE POISIEUX",
+    "cp": "18200",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES SUR LA PREE",
+    "cp": "18100",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES SUR MOULON",
+    "cp": "18110",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN DES BOIS",
+    "cp": "18340",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN DU PUY",
+    "cp": "18390",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE DE COURT",
+    "cp": "18100",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE DE GONDILLY",
+    "cp": "18320",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE DE GONDILLY",
+    "cp": "18350",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE EN LIGNIERES",
+    "cp": "18160",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST JEANVRIN",
+    "cp": "18370",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST JUST",
+    "cp": "18340",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT",
+    "cp": "18330",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER LE PETIT",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST LOUP DES CHAUMES",
+    "cp": "18190",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN D AUXIGNY",
+    "cp": "18110",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DES CHAMPS",
+    "cp": "18140",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST MAUR",
+    "cp": "18270",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL DE VOLANGIS",
+    "cp": "18390",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST OUTRILLE",
+    "cp": "18310",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST PALAIS",
+    "cp": "18110",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE LES BOIS",
+    "cp": "18170",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE LES ETIEUX",
+    "cp": "18210",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST PRIEST LA MARCHE",
+    "cp": "18370",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST SATUR",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST SATURNIN",
+    "cp": "18370",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST SYMPHORIEN",
+    "cp": "18190",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "ST VITTE",
+    "cp": "18360",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "STE GEMME EN SANCERROIS",
+    "cp": "18240",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "STE MONTAINE",
+    "cp": "18700",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "STE SOLANGE",
+    "cp": "18220",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "STE THORETTE",
+    "cp": "18500",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SUBLIGNY",
+    "cp": "18260",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SURY EN VAUX",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SURY ES BOIS",
+    "cp": "18260",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "SURY PRES LERE",
+    "cp": "18240",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "TENDRON",
+    "cp": "18350",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "THAUMIERS",
+    "cp": "18210",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "THAUVENAY",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "THENIOUX",
+    "cp": "18100",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "THOU",
+    "cp": "18260",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "TORTERON",
+    "cp": "18320",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "TOUCHAY",
+    "cp": "18160",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "TROUY",
+    "cp": "18570",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "UZAY LE VENON",
+    "cp": "18190",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VAILLY SUR SAULDRE",
+    "cp": "18260",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VALLENAY",
+    "cp": "18190",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VASSELAY",
+    "cp": "18110",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VEAUGUES",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VENESMES",
+    "cp": "18190",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VERDIGNY",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VEREAUX",
+    "cp": "18600",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VERNAIS",
+    "cp": "18210",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VERNEUIL",
+    "cp": "18210",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VESDUN",
+    "cp": "18360",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VIERZON",
+    "cp": "18100",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VIGNOUX SOUS LES AIX",
+    "cp": "18110",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VIGNOUX SUR BARANGEON",
+    "cp": "18500",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VILLABON",
+    "cp": "18800",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VILLECELIN",
+    "cp": "18160",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VILLEGENON",
+    "cp": "18260",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VILLENEUVE SUR CHER",
+    "cp": "18400",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VILLEQUIERS",
+    "cp": "18800",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VINON",
+    "cp": "18300",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VORLY",
+    "cp": "18340",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VORNAY",
+    "cp": "18130",
+    "dept": "18",
+    "region": ""
+  },
+  {
+    "name": "VOUZERON",
+    "cp": "18330",
+    "dept": "18",
+    "region": ""
+  }
+]

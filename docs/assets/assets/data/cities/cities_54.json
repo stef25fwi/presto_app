@@ -1,0 +1,3560 @@
+[
+  {
+    "name": "ABAUCOURT",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ABBEVILLE LES CONFLANS",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ABONCOURT",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AFFLEVILLE",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AFFRACOURT",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AGINCOURT",
+    "cp": "54770",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AINGERAY",
+    "cp": "54460",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ALLAIN",
+    "cp": "54170",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ALLAMONT",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ALLAMPS",
+    "cp": "54112",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ALLONDRELLE LA MALMAISON",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AMANCE",
+    "cp": "54770",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AMENONCOURT",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ANCERVILLER",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ANDERNY",
+    "cp": "54560",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ANDILLY",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ANGOMONT",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ANOUX",
+    "cp": "54150",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ANSAUVILLE",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ANTHELUPT",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ARMAUCOURT",
+    "cp": "54760",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ARNAVILLE",
+    "cp": "54530",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ARRACOURT",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ARRAYE ET HAN",
+    "cp": "54760",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ART SUR MEURTHE",
+    "cp": "54510",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ATHIENVILLE",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ATTON",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AUBOUE",
+    "cp": "54580",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AUDUN LE ROMAN",
+    "cp": "54560",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AUTREPIERRE",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AUTREVILLE SUR MOSELLE",
+    "cp": "54380",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AUTREY",
+    "cp": "54160",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AVILLERS",
+    "cp": "54490",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AVRAINVILLE",
+    "cp": "54385",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AVRICOURT",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AVRIL",
+    "cp": "54150",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AZELOT",
+    "cp": "54210",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "AZERAILLES",
+    "cp": "54122",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BACCARAT",
+    "cp": "54120",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BADONVILLER",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BAGNEUX",
+    "cp": "54170",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BAINVILLE AUX MIROIRS",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BAINVILLE SUR MADON",
+    "cp": "54550",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BARBAS",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BARBONVILLE",
+    "cp": "54360",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BARISEY AU PLAIN",
+    "cp": "54170",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BARISEY LA COTE",
+    "cp": "54170",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BASLIEUX",
+    "cp": "54620",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BATHELEMONT",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BATILLY",
+    "cp": "54980",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BATTIGNY",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BAUZEMONT",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BAYON",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BAYONVILLE SUR MAD",
+    "cp": "54890",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BAZAILLES",
+    "cp": "54620",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BEAUMONT",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BECHAMPS",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BELLEAU",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BELLEVILLE",
+    "cp": "54940",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BENAMENIL",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BENNEY",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BERNECOURT",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BERTRAMBOIS",
+    "cp": "54480",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BERTRICHAMPS",
+    "cp": "54120",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BETTAINVILLERS",
+    "cp": "54640",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BEUVEILLE",
+    "cp": "54620",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BEUVEZIN",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BEUVILLERS",
+    "cp": "54560",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BEY SUR SEILLE",
+    "cp": "54760",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BEZANGE LA GRANDE",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BEZAUMONT",
+    "cp": "54380",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BICQUELEY",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BIENVILLE LA PETITE",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BIONVILLE",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BLAINVILLE SUR L EAU",
+    "cp": "54360",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BLAMONT",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BLEMEREY",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BLENOD LES PONT A MOUSSON",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BLENOD LES TOUL",
+    "cp": "54113",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BOIS DE HAYE",
+    "cp": "54840",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BOISMONT",
+    "cp": "54620",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BONCOURT",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BONVILLER",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BORVILLE",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BOUCQ",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BOUILLONVILLE",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BOUVRON",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BOUXIERES AUX CHENES",
+    "cp": "54770",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BOUXIERES AUX DAMES",
+    "cp": "54136",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BOUXIERES SOUS FROIDMONT",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BOUZANVILLE",
+    "cp": "54930",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BRAINVILLE",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BRALLEVILLE",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BRATTE",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BREHAIN LA VILLE",
+    "cp": "54190",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BREMENIL",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BREMONCOURT",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BRIN SUR SEILLE",
+    "cp": "54280",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BROUVILLE",
+    "cp": "54120",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BRULEY",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BRUVILLE",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BUISSONCOURT",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BULLIGNY",
+    "cp": "54113",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BURES",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BURIVILLE",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "BURTHECOURT AUX CHENES",
+    "cp": "54210",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CEINTREY",
+    "cp": "54134",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CERVILLE",
+    "cp": "54420",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHALIGNY",
+    "cp": "54230",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHAMBLEY BUSSIERES",
+    "cp": "54890",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHAMPENOUX",
+    "cp": "54280",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHAMPEY SUR MOSELLE",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHAMPIGNEULLES",
+    "cp": "54250",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHANTEHEUX",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHAOUILLEY",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHARENCY VEZIN",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHAREY",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHARMES LA COTE",
+    "cp": "54113",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHARMOIS",
+    "cp": "54360",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHAUDENEY SUR MOSELLE",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHAVIGNY",
+    "cp": "54230",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHAZELLES SUR ALBE",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHENEVIERES",
+    "cp": "54122",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHENICOURT",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHENIERES",
+    "cp": "54720",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CHOLOY MENILLOT",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CIREY SUR VEZOUZE",
+    "cp": "54480",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CLAYEURES",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CLEMERY",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CLEREY SUR BRENON",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "COINCOURT",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "COLMEY",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "COLOMBEY LES BELLES",
+    "cp": "54170",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CONFLANS EN JARNISY",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CONS LA GRANDVILLE",
+    "cp": "54870",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "COSNES ET ROMAIN",
+    "cp": "54400",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "COURBESSEAUX",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "COURCELLES",
+    "cp": "54930",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "COYVILLER",
+    "cp": "54210",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CRANTENOY",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CREPEY",
+    "cp": "54170",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CREVECHAMPS",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CREVIC",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CREZILLES",
+    "cp": "54113",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CRION",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CROISMARE",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CRUSNES",
+    "cp": "54680",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CUSTINES",
+    "cp": "54670",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "CUTRY",
+    "cp": "54720",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DAMELEVIERES",
+    "cp": "54360",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DAMPVITOUX",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DENEUVRE",
+    "cp": "54120",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DEUXVILLE",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DIARVILLE",
+    "cp": "54930",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DIEULOUARD",
+    "cp": "54380",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DOLCOURT",
+    "cp": "54170",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DOMBASLE SUR MEURTHE",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DOMEVRE EN HAYE",
+    "cp": "54385",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DOMEVRE SUR VEZOUZE",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DOMGERMAIN",
+    "cp": "54119",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DOMJEVIN",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DOMMARIE EULMONT",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DOMMARTEMONT",
+    "cp": "54130",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DOMMARTIN LA CHAUSSEE",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DOMMARTIN LES TOUL",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DOMMARTIN SOUS AMANCE",
+    "cp": "54770",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DOMPRIX",
+    "cp": "54490",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DOMPTAIL EN L AIR",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DONCOURT LES CONFLANS",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DONCOURT LES LONGUYON",
+    "cp": "54620",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "DROUVILLE",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ECROUVES",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "EINVAUX",
+    "cp": "54360",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "EINVILLE AU JARD",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "EMBERMENIL",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "EPIEZ SUR CHIERS",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "EPLY",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ERBEVILLER SUR AMEZULE",
+    "cp": "54280",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ERROUVILLE",
+    "cp": "54680",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ESSEY ET MAIZERAIS",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ESSEY LA COTE",
+    "cp": "54830",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ESSEY LES NANCY",
+    "cp": "54270",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ETREVAL",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "EULMONT",
+    "cp": "54690",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "EUVEZIN",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FAULX",
+    "cp": "54760",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FAVIERES",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FECOCOURT",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FENNEVILLER",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FERRIERES",
+    "cp": "54210",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FEY EN HAYE",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FILLIERES",
+    "cp": "54560",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FLAINVAL",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FLAVIGNY SUR MOSELLE",
+    "cp": "54630",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FLEVILLE DEVANT NANCY",
+    "cp": "54710",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FLEVILLE LIXIERES",
+    "cp": "54150",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FLIN",
+    "cp": "54122",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FLIREY",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FONTENOY LA JOUTE",
+    "cp": "54122",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FONTENOY SUR MOSELLE",
+    "cp": "54840",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FORCELLES SOUS GUGNEY",
+    "cp": "54930",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FORCELLES ST GORGON",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FOUG",
+    "cp": "54570",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FRAIMBOIS",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FRAISNES EN SAINTOIS",
+    "cp": "54930",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FRANCHEVILLE",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FRANCONVILLE",
+    "cp": "54830",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FREMENIL",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FREMONVILLE",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FRESNOIS LA MONTAGNE",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FRIAUVILLE",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FROLOIS",
+    "cp": "54160",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FROUARD",
+    "cp": "54390",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "FROVILLE",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GELACOURT",
+    "cp": "54120",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GELAUCOURT",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GELLENONCOURT",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GEMONVILLE",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GERBECOURT ET HAPLEMONT",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GERBEVILLER",
+    "cp": "54830",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GERMINY",
+    "cp": "54170",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GERMONVILLE",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GEZONCOURT",
+    "cp": "54380",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GIBEAUMEIX",
+    "cp": "54112",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GIRAUMONT",
+    "cp": "54780",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GIRIVILLER",
+    "cp": "54830",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GLONVILLE",
+    "cp": "54122",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GOGNEY",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GONDRECOURT AIX",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GONDREVILLE",
+    "cp": "54840",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GONDREXON",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GORCY",
+    "cp": "54730",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GOVILLER",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GRAND FAILLY",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GRIMONVILLER",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GRIPPORT",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GRISCOURT",
+    "cp": "54380",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GROSROUVRES",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GUGNEY",
+    "cp": "54930",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "GYE",
+    "cp": "54113",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HABLAINVILLE",
+    "cp": "54120",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HAGEVILLE",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HAIGNEVILLE",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HALLOVILLE",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HAMMEVILLE",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HAMONVILLE",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HAN DEVANT PIERREPONT",
+    "cp": "54620",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HANNONVILLE SUZEMONT",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HARAUCOURT",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HARBOUEY",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HAROUE",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HATRIZE",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HAUCOURT MOULAINE",
+    "cp": "54860",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HAUDONVILLE",
+    "cp": "54830",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HAUSSONVILLE",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HEILLECOURT",
+    "cp": "54180",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HENAMENIL",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HERBEVILLER",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HERIMENIL",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HERSERANGE",
+    "cp": "54440",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HOEVILLE",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HOMECOURT",
+    "cp": "54310",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HOUDELMONT",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HOUDEMONT",
+    "cp": "54180",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HOUDREVILLE",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HOUSSEVILLE",
+    "cp": "54930",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HUDIVILLER",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "HUSSIGNY GODBRANGE",
+    "cp": "54590",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "IGNEY",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JAILLON",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JARNY",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JARVILLE LA MALGRANGE",
+    "cp": "54140",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JAULNY",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JEANDELAINCOURT",
+    "cp": "54114",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JEANDELIZE",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JEVONCOURT",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JEZAINVILLE",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JOEUF",
+    "cp": "54240",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JOLIVET",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JOPPECOURT",
+    "cp": "54620",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JOUAVILLE",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JOUDREVILLE",
+    "cp": "54490",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "JUVRECOURT",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LABRY",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LACHAPELLE",
+    "cp": "54120",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LAGNEY",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LAITRE SOUS AMANCE",
+    "cp": "54770",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LAIX",
+    "cp": "54720",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LALOEUF",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LAMATH",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LANDECOURT",
+    "cp": "54360",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LANDREMONT",
+    "cp": "54380",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LANDRES",
+    "cp": "54970",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LANEUVELOTTE",
+    "cp": "54280",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LANEUVEVILLE AUX BOIS",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LANEUVEVILLE DERRIERE FOUG",
+    "cp": "54570",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LANEUVEVILLE DEVANT BAYON",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LANEUVEVILLE DEVANT NANCY",
+    "cp": "54410",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LANFROICOURT",
+    "cp": "54760",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LANTEFONTAINE",
+    "cp": "54150",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LARONXE",
+    "cp": "54950",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LAXOU",
+    "cp": "54520",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LAY ST CHRISTOPHE",
+    "cp": "54690",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LAY ST REMY",
+    "cp": "54570",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LEBEUVILLE",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LEINTREY",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LEMAINVILLE",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LEMENIL MITRY",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LENONCOURT",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LES BAROCHES",
+    "cp": "54150",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LESMENILS",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LETRICOURT",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LEXY",
+    "cp": "54720",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LEYR",
+    "cp": "54760",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LIMEY REMENAUVILLE",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LIRONVILLE",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LIVERDUN",
+    "cp": "54460",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LOISY",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LONGLAVILLE",
+    "cp": "54810",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LONGUYON",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LONGWY",
+    "cp": "54400",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LOREY",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LOROMONTZEY",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LUBEY",
+    "cp": "54150",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LUCEY",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LUDRES",
+    "cp": "54710",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LUNEVILLE",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "LUPCOURT",
+    "cp": "54210",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MAGNIERES",
+    "cp": "54129",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MAIDIERES",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MAILLY SUR SEILLE",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MAIRY MAINVILLE",
+    "cp": "54150",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MAIXE",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MAIZIERES",
+    "cp": "54550",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MALAVILLERS",
+    "cp": "54560",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MALLELOY",
+    "cp": "54670",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MALZEVILLE",
+    "cp": "54220",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MAMEY",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MANDRES AUX QUATRE TOURS",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MANGONVILLE",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MANONCOURT EN VERMOIS",
+    "cp": "54210",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MANONCOURT EN WOEVRE",
+    "cp": "54385",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MANONVILLE",
+    "cp": "54385",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MANONVILLER",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MARAINVILLER",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MARBACHE",
+    "cp": "54820",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MARON",
+    "cp": "54230",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MARS LA TOUR",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MARTHEMONT",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MARTINCOURT",
+    "cp": "54380",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MATTEXEY",
+    "cp": "54830",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MAXEVILLE",
+    "cp": "54320",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MAZERULLES",
+    "cp": "54280",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MEHONCOURT",
+    "cp": "54360",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MENIL LA TOUR",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MERCY LE BAS",
+    "cp": "54960",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MERCY LE HAUT",
+    "cp": "54560",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MEREVILLE",
+    "cp": "54850",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MERVILLER",
+    "cp": "54120",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MESSEIN",
+    "cp": "54850",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MEXY",
+    "cp": "54135",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MIGNEVILLE",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MILLERY",
+    "cp": "54670",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MINORVILLE",
+    "cp": "54385",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MOINEVILLE",
+    "cp": "54580",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MOIVRONS",
+    "cp": "54760",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MONCEL LES LUNEVILLE",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MONCEL SUR SEILLE",
+    "cp": "54280",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MONT BONVILLERS",
+    "cp": "54111",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MONT L ETROIT",
+    "cp": "54170",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MONT LE VIGNOBLE",
+    "cp": "54113",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MONT ST MARTIN",
+    "cp": "54350",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MONT SUR MEURTHE",
+    "cp": "54360",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MONTAUVILLE",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MONTENOY",
+    "cp": "54760",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNY",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNY SUR CHIERS",
+    "cp": "54870",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MONTREUX",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MORFONTAINE",
+    "cp": "54920",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MORIVILLER",
+    "cp": "54830",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MORVILLE SUR SEILLE",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MOUACOURT",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MOUAVILLE",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MOUSSON",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MOUTIERS",
+    "cp": "54660",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MOUTROT",
+    "cp": "54113",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MOYEN",
+    "cp": "54118",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "MURVILLE",
+    "cp": "54490",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "NANCY",
+    "cp": "54000",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "NANCY",
+    "cp": "54100",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "NEUFMAISONS",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "NEUVES MAISONS",
+    "cp": "54230",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLER LES BADONVILLER",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLER SUR MOSELLE",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "NOMENY",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "NONHIGNY",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "NORROY LE SEC",
+    "cp": "54150",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "NORROY LES PONT A MOUSSON",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "NOVIANT AUX PRES",
+    "cp": "54385",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "OCHEY",
+    "cp": "54170",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "OGEVILLER",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "OGNEVILLE",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "OLLEY",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "OMELMONT",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ONVILLE",
+    "cp": "54890",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ORMES ET VILLE",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "OTHE",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "OZERAILLES",
+    "cp": "54150",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PAGNEY DERRIERE BARINE",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PAGNY SUR MOSELLE",
+    "cp": "54530",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PANNES",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PAREY ST CESAIRE",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PARROY",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PARUX",
+    "cp": "54480",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PETIT FAILLY",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PETITMONT",
+    "cp": "54480",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PETTONVILLE",
+    "cp": "54120",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PEXONNE",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PHLIN",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PIENNES",
+    "cp": "54490",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PIERRE LA TREICHE",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PIERRE PERCEE",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PIERREPONT",
+    "cp": "54620",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PIERREVILLE",
+    "cp": "54160",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "POMPEY",
+    "cp": "54340",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PONT A MOUSSON",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PONT ST VINCENT",
+    "cp": "54550",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PORT SUR SEILLE",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PRAYE",
+    "cp": "54116",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PRENY",
+    "cp": "54530",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PREUTIN HIGNY",
+    "cp": "54490",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PULLIGNY",
+    "cp": "54160",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PULNEY",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PULNOY",
+    "cp": "54425",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PUXE",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "PUXIEUX",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "QUEVILLONCOURT",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "RAON LES LEAU",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "RAUCOURT",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "RAVILLE SUR SANON",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "RECHICOURT LA PETITE",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "RECLONVILLE",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "REHAINVILLER",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "REHERREY",
+    "cp": "54120",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "REHON",
+    "cp": "54430",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "REILLON",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "REMBERCOURT SUR MAD",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "REMENOVILLE",
+    "cp": "54830",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "REMEREVILLE",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "REMONCOURT",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "REPAIX",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "RICHARDMENIL",
+    "cp": "54630",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ROGEVILLE",
+    "cp": "54380",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ROMAIN",
+    "cp": "54360",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ROSIERES AUX SALINES",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ROSIERES EN HAYE",
+    "cp": "54385",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ROUVES",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ROVILLE DEVANT BAYON",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ROYAUMEIX",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ROZELIEURES",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SAFFAIS",
+    "cp": "54210",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SAIZERAIS",
+    "cp": "54380",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SANCY",
+    "cp": "54560",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SANZEY",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SAULNES",
+    "cp": "54650",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SAULXEROTTE",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SAULXURES LES NANCY",
+    "cp": "54420",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SAULXURES LES VANNES",
+    "cp": "54170",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SAXON SION",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SEICHAMPS",
+    "cp": "54280",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SEICHEPREY",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SELAINCOURT",
+    "cp": "54170",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SERANVILLE",
+    "cp": "54830",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SERRES",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SERROUVILLE",
+    "cp": "54560",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SEXEY AUX FORGES",
+    "cp": "54550",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SIONVILLER",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SIVRY",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SOMMERVILLER",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SORNEVILLE",
+    "cp": "54280",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "SPONVILLE",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST AIL",
+    "cp": "54580",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST BAUSSANT",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST BOINGT",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST CLEMENT",
+    "cp": "54950",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST FIRMIN",
+    "cp": "54930",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN LES LONGUYON",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN LES GORZE",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST MARCEL",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST MARD",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST MAURICE AUX FORGES",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST MAX",
+    "cp": "54130",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST NICOLAS DE PORT",
+    "cp": "54210",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST PANCRE",
+    "cp": "54730",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST REMIMONT",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST REMY AUX BOIS",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST SAUVEUR",
+    "cp": "54480",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "ST SUPPLET",
+    "cp": "54620",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "STE GENEVIEVE",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "STE POLE",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TANCONVILLE",
+    "cp": "54480",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TANTONVILLE",
+    "cp": "54116",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TELLANCOURT",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "THELOD",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "THEY SOUS VAUDEMONT",
+    "cp": "54930",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "THEZEY ST MARTIN",
+    "cp": "54610",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "THIAUCOURT REGNIEVILLE",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "THIAVILLE SUR MEURTHE",
+    "cp": "54120",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "THIEBAUMENIL",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "THIL",
+    "cp": "54880",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "THOREY LYAUTEY",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "THUILLEY AUX GROSEILLES",
+    "cp": "54170",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "THUMEREVILLE",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TIERCELET",
+    "cp": "54190",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TOMBLAINE",
+    "cp": "54510",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TONNOY",
+    "cp": "54210",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TOUL",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TRAMONT EMY",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TRAMONT LASSUS",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TRAMONT ST ANDRE",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TREMBLECOURT",
+    "cp": "54385",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TRIEUX",
+    "cp": "54750",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TRONDES",
+    "cp": "54570",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TRONVILLE",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "TUCQUEGNIEUX",
+    "cp": "54640",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "UGNY",
+    "cp": "54870",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "URUFFE",
+    "cp": "54112",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VACQUEVILLE",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VAL DE BRIEY",
+    "cp": "54150",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VAL DE BRIEY",
+    "cp": "54790",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VAL ET CHATILLON",
+    "cp": "54480",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VALHEY",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VALLEROY",
+    "cp": "54910",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VALLOIS",
+    "cp": "54830",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VANDELAINVILLE",
+    "cp": "54890",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VANDELEVILLE",
+    "cp": "54115",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VANDIERES",
+    "cp": "54121",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VANDOEUVRE LES NANCY",
+    "cp": "54500",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VANNES LE CHATEL",
+    "cp": "54112",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VARANGEVILLE",
+    "cp": "54110",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VATHIMENIL",
+    "cp": "54122",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VAUCOURT",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VAUDEMONT",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VAUDEVILLE",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VAUDIGNY",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VAXAINVILLE",
+    "cp": "54120",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VEHO",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VELAINE SOUS AMANCE",
+    "cp": "54280",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VELLE SUR MOSELLE",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VENEY",
+    "cp": "54540",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VENNEZEY",
+    "cp": "54830",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VERDENAL",
+    "cp": "54450",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VEZELISE",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VIEVILLE EN HAYE",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VIGNEULLES",
+    "cp": "54360",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILCEY SUR TREY",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLACOURT",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLE AU MONTOIS",
+    "cp": "54620",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLE AU VAL",
+    "cp": "54380",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLE EN VERMOIS",
+    "cp": "54210",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLE HOUDLEMONT",
+    "cp": "54730",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLE SUR YRON",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLECEY SUR MAD",
+    "cp": "54890",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLERS EN HAYE",
+    "cp": "54380",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLERS LA CHEVRE",
+    "cp": "54870",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLERS LA MONTAGNE",
+    "cp": "54920",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLERS LE ROND",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLERS LES MOIVRONS",
+    "cp": "54760",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLERS LES NANCY",
+    "cp": "54600",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLERS SOUS PRENY",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLERUPT",
+    "cp": "54190",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLETTE",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLEY LE SEC",
+    "cp": "54840",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VILLEY ST ETIENNE",
+    "cp": "54200",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VIRECOURT",
+    "cp": "54290",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VITERNE",
+    "cp": "54123",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VITREY",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VITRIMONT",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VITTONVILLE",
+    "cp": "54700",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VIVIERS SUR CHIERS",
+    "cp": "54260",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VOINEMONT",
+    "cp": "54134",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "VRONCOURT",
+    "cp": "54330",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "WAVILLE",
+    "cp": "54890",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "XAMMES",
+    "cp": "54470",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "XERMAMENIL",
+    "cp": "54300",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "XEUILLEY",
+    "cp": "54990",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "XIROCOURT",
+    "cp": "54740",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "XIVRY CIRCOURT",
+    "cp": "54490",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "XONVILLE",
+    "cp": "54800",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "XOUSSE",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  },
+  {
+    "name": "XURES",
+    "cp": "54370",
+    "dept": "54",
+    "region": ""
+  }
+]
