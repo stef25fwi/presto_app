@@ -35,11 +35,21 @@ class _ProfilePageState extends State<ProfilePage> {
   String _language = 'Français';
   String _theme = 'Système';
 
-  final List<String> _favoriteCategories = [
-    'Jardinage',
-    'Peinture',
-    'Aide à domicile',
-  ];
+  // Catégories et sous-catégories
+  final Map<String, List<String>> _allCategories = {
+    'Jardinage': ['Tondeuse', 'Élagage', 'Entretien'],
+    'Peinture': ['Intérieur', 'Extérieur', 'Décoration'],
+    'Aide à domicile': ['Ménage', 'Courses', 'Accompagnement'],
+    'Plomberie': ['Fuite', 'Radiateur', 'Installation'],
+    'Électricité': ['Dépannage', 'Installation', 'Contrôle'],
+    'Menuiserie': ['Meuble', 'Porte', 'Fenêtre'],
+  };
+
+  // Catégories et sous-catégories favorites sélectionnées
+  final Map<String, List<String>> _favoriteCategories = {
+    'Jardinage': ['Tondeuse', 'Élagage'],
+    'Peinture': ['Intérieur'],
+  };
 
   @override
   void dispose() {
@@ -658,22 +668,86 @@ class _ProfilePageState extends State<ProfilePage> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ..._favoriteCategories.map(
-                  (cat) => Chip(
-                    label: Text(cat),
-                    avatar: const Icon(Icons.star, size: 16),
+                if (_favoriteCategories.isEmpty)
+                  Text(
+                    'Aucune catégorie favori sélectionnée',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colorScheme.onSurface.withOpacity(0.6),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  )
+                else
+                  ..._favoriteCategories.entries.map((entry) {
+                    final category = entry.key;
+                    final subcategories = entry.value;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  category,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.close, size: 20, color: colorScheme.error),
+                                onPressed: () {
+                                  setState(() {
+                                    _favoriteCategories.remove(category);
+                                  });
+                                },
+                                tooltip: 'Supprimer',
+                              ),
+                            ],
+                          ),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              ...subcategories.map(
+                                (sub) => Chip(
+                                  label: Text(sub, style: const TextStyle(fontSize: 12)),
+                                  onDeleted: () {
+                                    setState(() {
+                                      _favoriteCategories[category]?.remove(sub);
+                                      if (_favoriteCategories[category]?.isEmpty ?? false) {
+                                        _favoriteCategories.remove(category);
+                                      }
+                                    });
+                                  },
+                                  backgroundColor: colorScheme.primaryContainer.withOpacity(0.3),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _showAddCategoryDialog,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Ajouter une catégorie'),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                   ),
-                ),
-                ActionChip(
-                  label: const Text('Ajouter'),
-                  avatar: const Icon(Icons.add),
-                  onPressed: () {
-                    // TODO: ouvrir un bottom sheet avec la liste des catégories
-                  },
                 ),
               ],
             ),
@@ -768,6 +842,74 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         Switch(value: value, onChanged: onChanged),
       ],
+    );
+  }
+
+  void _showAddCategoryDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Ajouter une catégorie'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ..._allCategories.entries.map((entry) {
+                final category = entry.key;
+                final allSubs = entry.value;
+                final isSelected = _favoriteCategories.containsKey(category);
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12, bottom: 8),
+                      child: Text(
+                        category,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    ...allSubs.map((sub) {
+                      final isFavored =
+                          _favoriteCategories[category]?.contains(sub) ?? false;
+                      return CheckboxListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(sub, style: const TextStyle(fontSize: 13)),
+                        value: isFavored,
+                        onChanged: (val) {
+                          setState(() {
+                            if (val == true) {
+                              if (!_favoriteCategories.containsKey(category)) {
+                                _favoriteCategories[category] = [];
+                              }
+                              _favoriteCategories[category]!.add(sub);
+                            } else {
+                              _favoriteCategories[category]?.remove(sub);
+                              if ((_favoriteCategories[category]?.length ?? 0) == 0) {
+                                _favoriteCategories.remove(category);
+                              }
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ],
+                );
+              }).toList(),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Fermer'),
+          ),
+        ],
+      ),
     );
   }
 }

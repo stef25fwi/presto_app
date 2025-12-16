@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -702,53 +704,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
         );
       },
       optionsViewBuilder: (context, onSelected, options) {
-        if (options.isEmpty) {
-          return const SizedBox.shrink();
-        }
         return Align(
-          alignment: Alignment.topCenter,
+          alignment: Alignment.topLeft,
           child: Material(
             elevation: 4,
             borderRadius: BorderRadius.circular(16),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxHeight: 220,
-                maxWidth: 600,
-              ),
+              constraints: const BoxConstraints(maxHeight: 180),
               child: ListView.builder(
                 padding: EdgeInsets.zero,
+                shrinkWrap: true,
                 itemCount: options.length,
                 itemBuilder: (context, index) {
                   final option = options.elementAt(index);
-                  return InkWell(
-                    onTap: () => onSelected(option),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.bolt_outlined,
-                            size: 18,
-                            color: kPrestoOrange,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              option,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                  return ListTile(
+                    dense: true,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    title: Text(
+                      option,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                    onTap: () => onSelected(option),
                   );
                 },
               ),
@@ -1905,6 +1883,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     // Quand le code postal change, on essaie de déduire la région
     _postalCodeController.addListener(_syncRegionWithPostalCode);
+
+    // Synchroniser la ville sélectionnée (si déjà connue) dans le champ visible
+    _filterCityController.addListener(_syncLocationFieldFromFilter);
+    _syncLocationFieldFromFilter();
   }
 
   @override
@@ -2089,6 +2071,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     _filterCityController.clear();
     _filterPostalCodeController.clear();
 
+    // Assurer que le champ visible est remis à vide
+    _syncLocationFieldFromFilter();
+
     // 3) ferme le clavier si besoin
     FocusScope.of(context).unfocus();
 
@@ -2099,6 +2084,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
+    }
+  }
+
+  // Met à jour le champ "Ville" visible avec la valeur des filtres si présente
+  void _syncLocationFieldFromFilter() {
+    final val = _filterCityController.text.trim();
+    if (val.isNotEmpty && _locationController.text != val) {
+      _locationController.text = val;
     }
   }
 
@@ -2131,7 +2124,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         : "Offres : ${widget.categoryFilter!}";
 
     return Scaffold(
-      backgroundColor: const Color(0xFFE3F2FD),
+      // Fond blanc derrière les annonces pour un look plus clair
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: FittedBox(
           fit: BoxFit.scaleDown,
@@ -2211,8 +2205,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                   controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(4, 16, 4, 120),
                   itemCount: docs.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 4),
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final doc = docs[index];
                     final offerId = doc.id;
@@ -2301,6 +2294,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     onPressed: _applyFilters,
                     icon: const Icon(Icons.search),
                     label: const Text('Rechercher'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrestoBlue,
+                      foregroundColor: Colors.white,
+                    ),
                   ),
                 ),
               ],
@@ -3022,7 +3019,10 @@ class OfferDetailPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          const Text(
+
+                          // ✅ Si photos, on les affiche ; sinon, on affiche une grande pub
+                          if (photos.isNotEmpty) ...[
+                            const Text(
                             "Photos de l’annonce",
                             style: TextStyle(
                               fontSize: 16,
@@ -3051,6 +3051,8 @@ class OfferDetailPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 22),
+                          ],
+
                           const Text(
                             "Publicité",
                             style: TextStyle(
@@ -3061,7 +3063,7 @@ class OfferDetailPage extends StatelessWidget {
                           const SizedBox(height: 8),
                           SizedBox(
                             width: double.infinity,
-                            height: 100, // format type bannière 320x100
+                            height: photos.isEmpty ? 190 : 100, // ✅ Si pas de photos → grande bannière
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(18),
                               child: Container(
@@ -3144,9 +3146,9 @@ class OfferDetailPage extends StatelessWidget {
               : null,
         ),
         child: Icon(
-          Icons.photo_outlined,
+          Icons.add_a_photo_outlined,
           size: primary ? 44 : 36,
-          color: primary ? kPrestoOrange : Colors.black26,
+          color: primary ? Colors.black45 : Colors.black26,
         ),
       );
     }
@@ -3159,7 +3161,7 @@ class OfferDetailPage extends StatelessWidget {
           url,
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => const Center(
-            child: Icon(Icons.image_not_supported),
+            child: Icon(Icons.image, size: 24, color: kPrestoOrange),
           ),
         ),
       ),
@@ -4069,6 +4071,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   List<String> get _categories =>
       kCategorySubcategories.keys.toList(); // Map<String, List<String>>
 
+  // Budget: type (fixe / à négocier)
+  final List<String> _budgetTypes = const ['Fixe', 'À négocier'];
+  String _budgetType = 'Fixe';
+
+  // Photos (max 2)
+  final List<XFile> _selectedPhotos = [];
+  final List<String> _uploadedPhotoUrls = [];
+
   // Autocomplétion villes
   List<CityRecord> _citySuggestions = [];
   int _highlightedIndex = -1;
@@ -4212,7 +4222,70 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
   }
 
+  // --- GESTION DES PHOTOS ---
+
+  Future<void> _pickImage(int photoIndex) async {
+    if (_selectedPhotos.length >= 2 && photoIndex >= _selectedPhotos.length) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Maximum 2 photos autorisées')),
+      );
+      return;
+    }
+
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+      if (image == null) return;
+
+      setState(() {
+        if (photoIndex < _selectedPhotos.length) {
+          _selectedPhotos[photoIndex] = image;
+        } else {
+          _selectedPhotos.add(image);
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la sélection : $e')),
+      );
+    }
+  }
+
+  Future<void> _uploadPhotos() async {
+    if (_selectedPhotos.isEmpty) {
+      _uploadedPhotoUrls.clear();
+      return;
+    }
+
+    try {
+      _uploadedPhotoUrls.clear();
+
+      for (int i = 0; i < _selectedPhotos.length; i++) {
+        final photo = _selectedPhotos[i];
+        final fileName = 'offers/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+
+        final ref = FirebaseStorage.instance.ref().child(fileName);
+        await ref.putFile(
+          File(photo.path),
+          SettableMetadata(contentType: 'image/jpeg'),
+        );
+
+        final url = await ref.getDownloadURL();
+        _uploadedPhotoUrls.add(url);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de l\'upload : $e')),
+      );
+      rethrow;
+    }
+  }
+
   Future<void> _submitForm() async {
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -4220,9 +4293,30 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
 
     try {
-      // TODO: sauvegarde dans Firestore (offre)
-      // Exemple :
-      // await FirebaseFirestore.instance.collection('offers').add({...});
+      // Uploader les photos
+      await _uploadPhotos();
+
+      // Récupérer l'utilisateur actuel
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('Utilisateur non connecté');
+      }
+
+      // Sauvegarder l'offre dans Firestore
+      await FirebaseFirestore.instance.collection('offers').add({
+        'title': _titleController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'category': _category,
+        'subCategory': _selectedSubCategory,
+        'location': _locationController.text.trim(),
+        'postalCode': _postalCodeController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'budget': _budgetController.text.trim(),
+        'budgetType': _budgetType,
+        'imageUrls': _uploadedPhotoUrls.isEmpty ? null : _uploadedPhotoUrls,
+        'userId': user.uid,
+        'createdAt': Timestamp.now(),
+      });
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -4253,11 +4347,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       appBar: AppBar(
         backgroundColor: kPrestoOrange,
         elevation: 0,
-        centerTitle: false,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
+        centerTitle: true,
         title: const Text(
           'Je publie une offre',
           style: TextStyle(
@@ -4428,6 +4518,36 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               ),
               const SizedBox(height: 16),
 
+              // PHOTOS (max 2)
+              const Text(
+                'Photos de l\'offre',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _PhotoSelectorTile(
+                      label: 'Photo 1',
+                      file: _selectedPhotos.isNotEmpty ? _selectedPhotos[0] : null,
+                      onTap: () => _pickImage(0),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _PhotoSelectorTile(
+                      label: 'Photo 2',
+                      file: _selectedPhotos.length > 1 ? _selectedPhotos[1] : null,
+                      onTap: () => _pickImage(1),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
               // VILLE + CP + AUTOCOMPLÉTION
               const Text(
                 'Localisation',
@@ -4468,14 +4588,45 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               const SizedBox(height: 16),
 
               // BUDGET
-              TextFormField(
-                controller: _budgetController,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Budget indicatif (€)',
-                  border: OutlineInputBorder(),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: DropdownButtonFormField<String>(
+                      value: _budgetType,
+                      items: _budgetTypes
+                          .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                          .toList(),
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() {
+                          _budgetType = v;
+                          if (_budgetType == 'À négocier') {
+                            _budgetController.clear();
+                          }
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Budget',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 3,
+                    child: TextFormField(
+                      controller: _budgetController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      decoration: const InputDecoration(
+                        labelText: 'Montant (€)',
+                        border: OutlineInputBorder(),
+                      ),
+                      enabled: _budgetType == 'Fixe',
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
 
@@ -4550,8 +4701,8 @@ class _PhotoSelectorTile extends StatelessWidget {
     } else {
       content = ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: Image.network(
-          localFile.path,
+        child: Image.file(
+          File(localFile.path),
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -4615,6 +4766,8 @@ class _AccountPageState extends State<AccountPage> {
   final TextEditingController _profilePhoneController = TextEditingController();
 
   Set<String> _favoriteCategories = <String>{};
+  Set<String> _selectedFavoriteCategories = <String>{};
+  Set<String> _selectedFavoriteSubcategories = <String>{};
   bool _profileLoaded = false;
   bool _isSavingProfile = false;
 
@@ -4715,11 +4868,25 @@ class _AccountPageState extends State<AccountPage> {
             .map((e) => e.toString())
             .toList();
         _favoriteCategories = favs.toSet();
+        final selectedCats =
+            (data['selectedFavoriteCategories'] as List<dynamic>? ?? [])
+                .map((e) => e.toString())
+                .toList();
+        _selectedFavoriteCategories = selectedCats.toSet();
+        final selectedSubcats =
+            (data['selectedFavoriteSubcategories'] as List<dynamic>? ?? [])
+                .map((e) => e.toString())
+                .toList();
+        _selectedFavoriteSubcategories = selectedSubcats.toSet();
       } else {
         _favoriteCategories = <String>{};
+        _selectedFavoriteCategories = <String>{};
+        _selectedFavoriteSubcategories = <String>{};
       }
     } catch (_) {
       _favoriteCategories = <String>{};
+      _selectedFavoriteCategories = <String>{};
+      _selectedFavoriteSubcategories = <String>{};
     }
 
     if (mounted) {
@@ -4739,6 +4906,8 @@ class _AccountPageState extends State<AccountPage> {
         'city': _profileCityController.text.trim(),
         'phone': _profilePhoneController.text.trim(),
         'favoriteCategories': _favoriteCategories.toList(),
+        'selectedFavoriteCategories': _selectedFavoriteCategories.toList(),
+        'selectedFavoriteSubcategories': _selectedFavoriteSubcategories.toList(),
       }, SetOptions(merge: true));
 
       if (pseudo.isNotEmpty) {
@@ -4766,23 +4935,26 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _toggleFavoriteCategory(User user, String category) async {
-    final newSet = Set<String>.from(_favoriteCategories);
-    if (newSet.contains(category)) {
-      newSet.remove(category);
-    } else {
-      newSet.add(category);
-    }
-
     setState(() {
-      _favoriteCategories = newSet;
+      if (_selectedFavoriteCategories.contains(category)) {
+        _selectedFavoriteCategories.remove(category);
+        _selectedFavoriteSubcategories.clear();
+      } else {
+        _selectedFavoriteCategories.add(category);
+      }
     });
+    await _saveProfile(user);
+  }
 
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-      {
-        'favoriteCategories': newSet.toList(),
-      },
-      SetOptions(merge: true),
-    );
+  Future<void> _toggleFavoriteSubcategory(User user, String subcategory) async {
+    setState(() {
+      if (_selectedFavoriteSubcategories.contains(subcategory)) {
+        _selectedFavoriteSubcategories.remove(subcategory);
+      } else {
+        _selectedFavoriteSubcategories.add(subcategory);
+      }
+    });
+    await _saveProfile(user);
   }
 
   Future<void> _signInWithGoogle() async {
@@ -5373,6 +5545,7 @@ class _AccountPageState extends State<AccountPage> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 24),
                   const Text(
                     "Mes annonces publiées",
                     style: TextStyle(
@@ -5441,7 +5614,7 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          "Plus tard, ces favoris pourront déclencher des notifications push et un badge sur la cloche de l’accueil.",
+                          "Plus tard, ces favoris pourront déclencher des notifications push et un badge sur la cloche de l'accueil.",
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.black45,
@@ -5463,7 +5636,8 @@ class _AccountPageState extends State<AccountPage> {
                       children: [
                         const Text(
                           "Vous êtes une entreprise ?",
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                          style:
+                              TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                         ),
                         const SizedBox(height: 6),
                         const Text(
@@ -5479,7 +5653,8 @@ class _AccountPageState extends State<AccountPage> {
                             onPressed: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (_) => const ProProfilePage()),
+                                MaterialPageRoute(
+                                    builder: (_) => const ProProfilePage()),
                               );
                             },
                             icon: const Icon(Icons.business_center_outlined),
@@ -5489,6 +5664,7 @@ class _AccountPageState extends State<AccountPage> {
                       ],
                     ),
                   ),
+
                   const SizedBox(height: 28),
                   SizedBox(
                     width: double.infinity,
@@ -5510,6 +5686,20 @@ class _AccountPageState extends State<AccountPage> {
         ),
       ),
     );
+  }
+
+  List<String> _getSubcategoriesForCategory(String category) {
+    final subcats = kCategorySubcategories[category] ?? [];
+    return ['', ...subcats];
+  }
+
+  List<String> _getAvailableSubcategories() {
+    final allSubcats = <String>{};
+    for (final cat in _selectedFavoriteCategories) {
+      final subcats = kCategorySubcategories[cat] ?? [];
+      allSubcats.addAll(subcats);
+    }
+    return allSubcats.toList();
   }
 
   @override

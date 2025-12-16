@@ -14,10 +14,10 @@ import '../widgets/city_postal_autocomplete_compact.dart';
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
 
-// Fond "beige" comme sur ta capture
-const kPrestoBeige = Color(0xFFFCEEE2);
-const kFieldFill = Color(0xFFF7F2EB);
-const kBorder = Color(0xFFD9D2C9);
+// Palette alignée avec la page "Je consulte": fond clair neutre + accents Presto
+const kPrestoBeige = Colors.white;
+const kFieldFill = Colors.white;
+const kBorder = Color(0xFFE5E7EB);
 
 class PublishOfferPage extends StatefulWidget {
   final CityRepoCompact? repo;
@@ -44,6 +44,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final _phoneCtrl = TextEditingController();
   final _budgetCtrl = TextEditingController();
   final _aiHintCtrl = TextEditingController();
+
+  // Budget: type (fixe / à négocier)
+  final List<String> _budgetTypes = const ['Fixe', 'À négocier'];
+  String _budgetType = 'Fixe';
 
   String? _category;
 
@@ -430,6 +434,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'cp': cp.isEmpty ? null : cp,
         'postalCode': cp.isEmpty ? null : cp,
         'budget': budget,
+        'budgetType': _budgetType,
         'phone': _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
         'userId': user.uid,
         'createdAt': FieldValue.serverTimestamp(),
@@ -456,7 +461,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kPrestoBeige,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -482,7 +487,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       ),
       body: SafeArea(
         child: Container(
-          color: const Color(0xFFE3F0FF), // Bleu clair
+          color: Colors.white,
           child: Form(
             key: _formKey,
             child: ListView(
@@ -527,9 +532,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0x331A73E8)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -663,11 +674,43 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
               const SizedBox(height: 12),
 
-              TextFormField(
-                controller: _budgetCtrl,
-                focusNode: _budgetFocus,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: _decoration("Budget proposé (€)"),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: DropdownButtonFormField<String>(
+                      value: _budgetType,
+                      items: _budgetTypes
+                          .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                          .toList(),
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() {
+                          _budgetType = v;
+                          if (_budgetType == 'À négocier') {
+                            _budgetCtrl.clear();
+                          }
+                        });
+                      },
+                      decoration: _decoration(
+                        "Budget (fixe ou à négocier)",
+                        suffix: const Icon(Icons.keyboard_arrow_down_rounded),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 3,
+                    child: TextFormField(
+                      controller: _budgetCtrl,
+                      focusNode: _budgetFocus,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: _decoration("Montant (€)"),
+                      enabled: _budgetType == 'Fixe',
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 18),

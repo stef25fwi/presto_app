@@ -78,11 +78,18 @@ class CitySearch {
   /// ====== NORMALISATION POUR IGNORER ACCENTS / TIRETS ======
   String _normalize(String input) {
     final lower = input.toLowerCase();
-    const accents = 'àâäáãåçèéêëìíîïñòóôöõùúûüýÿ\'`^¨ -';
-    const plain = 'aaaaaaceeeeiiiinooooouuuuyy        ';
+    const accents = 'àâäáãåçèéêëìíîïñòóôöõùúûüýÿ\'`^¨';
+    const plain =  'aaaaaaceeeeiiiinooooouuuuyy ';
+
     final buffer = StringBuffer();
     for (int i = 0; i < lower.length; i++) {
       final ch = lower[i];
+
+      // Supprime espaces, tirets et apostrophes pour tolérer "lesabymes" vs "Les Abymes".
+      if (ch == ' ' || ch == '-' || ch == '\'') {
+        continue;
+      }
+
       final idx = accents.indexOf(ch);
       if (idx >= 0) {
         buffer.write(plain[idx]);
