@@ -1,13 +1,12 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
 const { initializeApp } = require('firebase-admin/app');
 const OpenAI = require('openai');
-const { SpeechClient } = require("@google-cloud/speech").v2;
-const { VertexAI } = require("@google-cloud/vertexai");
 
 initializeApp();
 
-// IMPORTANT : endpoint EU pour utiliser locations/eu
-const speech = new SpeechClient({ apiEndpoint: "eu-speech.googleapis.com" });
+// Secrets (Firebase Functions v2)
+const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
 
 /**
  * Cloud Function qui génère un brouillon d'offre avec l'IA
@@ -15,7 +14,7 @@ const speech = new SpeechClient({ apiEndpoint: "eu-speech.googleapis.com" });
  * Entrée : { hint, city, category, lang }
  * Sortie : { title, description, category, city, postalCode }
  */
-exports.generateOfferDraft = onCall(async (request) => {
+exports.generateOfferDraft = onCall({ region: 'europe-west1', secrets: [OPENAI_API_KEY] }, async (request) => {
   const { hint, city, category, lang = 'fr' } = request.data;
 
   // Validation basique
@@ -24,64 +23,88 @@ exports.generateOfferDraft = onCall(async (request) => {
   }
 
   // Initialiser OpenAI ici avec la clé d'environnement
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+  const apiKey = OPENAI_API_KEY.value();
+  if (!apiKey) {
+    throw new HttpsError('failed-precondition', 'OPENAI_API_KEY manquante (configure la secret avec firebase functions:secrets:set OPENAI_API_KEY)');
+  }
+  const openai = new OpenAI({ apiKey });
+  console.log('[generateOfferDraft] start', {
+    hintLength: hint.length,
+    city: city || '',
+    category: category || '',
+    lang,
   });
 
   try {
-    // Prompt pour l'IA
-    const systemPrompt = `Tu es un assistant qui aide à rédiger des annonces de services en Guadeloupe et en Martinique.
-L'utilisateur décrit son besoin et tu dois générer :
-- Un titre court et accrocheur (max 60 caractères)
-- Une description détaillée et professionnelle (150-300 mots)
-- La catégorie parmi : Jardinage, Bricolage, Ménage, Restauration / Extra, DJ / Sono, Baby-sitting, Transport / Livraison, Informatique, Autre
-- La ville (si mentionnée, sinon garde "${city}" ou vide)
-- Le code postal (si possible, sinon vide)
+    // Prompt pour l'IA (style demande "Je recherche…")
+    const systemPrompt = `Tu écris des DEMANDES de services courtes pour des particuliers en Guadeloupe et en Martinique.
+Ton objectif : produire un JSON STRICT (sans markdown) avec un titre et une description courte (1–2 phrases) commençant par "Je recherche…". 
+La description doit mentionner clairement le métier, la tâche et le secteur/ville. Ajoute éventuellement l'urgence et/ou un budget si ces éléments sont présents dans l'indice.
 
-Réponds UNIQUEMENT avec un objet JSON valide (pas de markdown, pas de \`\`\`json) :
+Contraintes et champs :
+- Titre : court, accrocheur, max 60 caractères.
+- Description : 1–2 phrases, commence par "Je recherche…".
+- Catégories autorisées : Jardinage, Bricolage, Ménage, Restauration / Extra, DJ / Sono, Baby-sitting, Transport / Livraison, Informatique, Autre.
+- Ville : si non déduite du texte, conserve "${city || ''}" ou vide.
+- Code postal : si connu, sinon vide.
+
+Réponds UNIQUEMENT avec un objet JSON valide :
 {
-  "title": "...",
-  "description": "...",
-  "category": "...",
-  "city": "...",
-  "postalCode": "..."
+  "title": "…",
+  "description": "Je recherche …",
+  "category": "…",
+  "city": "…",
+  "postalCode": "…"
 }`;
 
-    const userPrompt = `Besoin : ${hint}
-Ville actuelle : ${city || 'non précisée'}
-Catégorie suggérée : ${category || 'non précisée'}`;
+    const userPrompt = `Indice utilisateur (lang=${lang}):\n${hint}\n\nVille fournie: ${city || ''}\nCatégorie fournie: ${category || ''}`;
 
-    // Appel à l'API OpenAI
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini', // ou "gpt-4o" pour une meilleure qualité
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      temperature: 0.7,
-      max_tokens: 800
+      temperature: 0.4,
+      max_tokens: 600
     });
 
-    const responseText = completion.choices[0]?.message?.content?.trim();
-
-    if (!responseText) {
-      throw new Error('Pas de réponse de l\'IA');
+    const aiResponse = completion.choices?.[0]?.message?.content?.trim();
+    if (!aiResponse) {
+      throw new Error('Pas de réponse de OpenAI');
     }
 
-    // Parse le JSON (enlever les éventuels backticks markdown)
-    let cleanedText = responseText;
-    if (cleanedText.startsWith('```json')) {
-      cleanedText = cleanedText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-    } else if (cleanedText.startsWith('```')) {
-      cleanedText = cleanedText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    let draft;
+    try {
+      let cleaned = aiResponse;
+      if (cleaned.startsWith('```json')) {
+        cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      draft = JSON.parse(cleaned);
+    } catch (e) {
+      // Fallback minimal si le JSON est invalide
+      draft = {
+        title: 'Nouvelle demande',
+        description: `Je recherche: ${hint}`,
+        category: category || 'Autre',
+        city: city || '',
+        postalCode: ''
+      };
     }
-
-    const draft = JSON.parse(cleanedText);
 
     // Validation du format
     if (!draft.title || !draft.description) {
       throw new Error('Réponse IA invalide : titre ou description manquant');
     }
+
+    console.log('[generateOfferDraft] success', {
+      titleLen: (draft.title || '').length,
+      descLen: (draft.description || '').length,
+      category: draft.category || category || 'Autre',
+      city: draft.city || city || ''
+    });
 
     // Retourne le brouillon
     return {
@@ -104,20 +127,10 @@ Catégorie suggérée : ${category || 'non précisée'}`;
 });
 
 // ============================================================================
-// Fonction de transcription audio + rédaction avec Gemini
+// Fonction de transcription audio + rédaction avec OpenAI
 // ============================================================================
 
-function safeJsonParse(text) {
-  // Gemini peut parfois entourer de ```json ... ```
-  const cleaned = text
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```$/i, "")
-    .trim();
-  return JSON.parse(cleaned);
-}
-
-exports.transcribeAndDraftOffer = onCall({ timeoutSeconds: 120 }, async (req) => {
+exports.transcribeAndDraftOffer = onCall({ region: 'europe-west1', timeoutSeconds: 120, secrets: [OPENAI_API_KEY] }, async (req) => {
   if (!req.auth) throw new HttpsError("unauthenticated", "Connexion requise.");
 
   const {
@@ -129,85 +142,109 @@ exports.transcribeAndDraftOffer = onCall({ timeoutSeconds: 120 }, async (req) =>
 
   if (!gcsUri) throw new HttpsError("invalid-argument", "gcsUri manquant.");
 
-  // 1) Transcription premium (Speech-to-Text v2 + Chirp 3 + ponctuation)
-  // IMPORTANT : utiliser locations/eu avec l'endpoint EU
-  const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT;
-  const recognizer = `projects/${projectId}/locations/eu/recognizers/presto-default`;
+  try {
+    // 1) Transcription : utiliser l'API Speech-to-Text v1
+    const speech = require("@google-cloud/speech");
+    const speechClient = new speech.SpeechClient();
 
-  const [sttResp] = await speech.recognize({
-    recognizer,
-    config: {
-      languageCodes: [languageCode],
-      model: "chirp_3", // Chirp 3 = "chirp_3", dispo en STT v2
-      features: { enableAutomaticPunctuation: true }, // ponctuation auto
-      autoDecodingConfig: {},
-    },
-    audio: { uri: gcsUri },
-  });
+    console.log("[STT] Starting transcription for:", gcsUri);
 
-  const transcript = (sttResp.results || [])
-    .flatMap(r => (r.alternatives || []).map(a => a.transcript || ""))
-    .join("\n")
-    .trim();
+    const request = {
+      audio: { uri: gcsUri },
+      config: {
+        encoding: "LINEAR16",
+        languageCode: languageCode,
+        enableAutomaticPunctuation: true,
+      },
+    };
 
-  if (!transcript) {
-    throw new HttpsError("failed-precondition", "Transcription vide (audio trop court/bruité ?).");
-  }
+    const [response] = await speechClient.recognize(request);
+    const transcript = (response.results || [])
+      .map(r => (r.alternatives?.[0]?.transcript || ""))
+      .join("\n")
+      .trim();
 
-  // 2) Rédaction IA (Gemini via Vertex AI)
-  const vertexLocation = process.env.PRESTO_VERTEX_LOCATION || "europe-west1";
-  const vertexAI = new VertexAI({
-    project: projectId,
-    location: vertexLocation,
-  });
+    console.log("[STT] Transcript received:", transcript.substring(0, 100));
 
-  const prompt = `
-Tu es un assistant de rédaction d'annonces pour une app de services (type Prestō).
-À partir de la transcription brute, produis un JSON STRICT (pas de markdown) au format :
+    if (!transcript) {
+      throw new HttpsError("failed-precondition", "Transcription vide (audio trop court/bruité ?).");
+    }
+
+    // 2) Rédaction IA avec OpenAI (plus fiable que Vertex AI)
+    const apiKey2 = OPENAI_API_KEY.value();
+    if (!apiKey2) {
+      throw new HttpsError('failed-precondition', 'OPENAI_API_KEY manquante');
+    }
+    const openai = new OpenAI({ apiKey: apiKey2 });
+
+    console.log("[AI] Calling OpenAI for draft generation...");
+
+    const systemPrompt = `Tu es un assistant de rédaction d'annonces pour une app de services.
+À partir d'une transcription brute, génère un JSON STRICT (pas de markdown) :
 
 {
   "title": "…",
-  "description": "…",            // texte propre, clair, pro
-  "bullets": ["…","…","…"],       // 3 à 6 puces utiles
-  "constraints": ["…","…"],       // contraintes / conditions (horaires, urgence, matériel, etc.)
-  "category": "…",               // si tu peux déduire, sinon garde la valeur fournie
-  "city": "…"                    // si tu peux déduire, sinon garde la valeur fournie
+  "description": "…",
+  "category": "…",
+  "city": "…",
+  "postalCode": "…"
 }
 
-Règles IMPORTANTES :
-- N'invente pas de téléphone, budget, prix, ou infos perso.
-- Ne mentionne pas "Téléphone" ni "Budget".
-- Garde la langue en français (fr-FR).
-- Si une info manque, reste générique (ex: "date à préciser").
-- Catégorie fournie: "${category}"
-- Ville fournie: "${city}"
+Règles :
+- Titre court (max 60 caractères)
+- Description pro (150-300 mots)
+- Ne pas inventer de prix, téléphone, infos perso
+- Garder le français
+- Catégorie fournie: ${category}
+- Ville fournie: ${city}`;
 
-Transcription:
-"""${transcript}"""
-`;
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Transcription : ${transcript}` }
+      ],
+      temperature: 0.7,
+      max_tokens: 800
+    });
 
-  const model = vertexAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
-  const gen = await model.generateContent(prompt);
+    const aiResponse = completion.choices[0]?.message?.content?.trim();
+    console.log("[AI] OpenAI response received");
 
-  const response = await gen.response;
-  const text = response.candidates[0]?.content?.parts[0]?.text || "";
-  let draft;
-  try {
-    draft = safeJsonParse(text);
-  } catch (e) {
-    // fallback minimal si JSON pas parseable
-    draft = {
-      title: "Nouvelle offre",
-      description: transcript,
-      bullets: [],
-      constraints: [],
-      category: category || "",
-      city: city || "",
+    if (!aiResponse) {
+      throw new Error('Pas de réponse de OpenAI');
+    }
+
+    // Parse le JSON
+    let draft;
+    try {
+      let cleanedText = aiResponse;
+      if (cleanedText.startsWith('```json')) {
+        cleanedText = cleanedText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanedText.startsWith('```')) {
+        cleanedText = cleanedText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+      draft = JSON.parse(cleanedText);
+    } catch (e) {
+      console.error("[AI] JSON parse error:", e.message);
+      // Fallback
+      draft = {
+        title: "Nouvelle offre",
+        description: transcript,
+        category: category || "Autre",
+        city: city || "",
+        postalCode: ""
+      };
+    }
+
+    console.log("[DONE] Returning transcript + draft");
+    return {
+      transcript,
+      draft,
     };
-  }
 
-  return {
-    transcript,
-    draft,
-  };
+  } catch (error) {
+    console.error('[transcribeAndDraftOffer] Error:', error);
+    throw new HttpsError('internal', `Erreur transcription : ${error.message}`);
+  }
 });
