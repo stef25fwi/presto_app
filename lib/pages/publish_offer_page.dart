@@ -62,12 +62,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   late final stt.SpeechToText _stt;
   bool _sttReady = false;
   bool _listening = false;
+  String _lastTranscript = '';
   bool _aiLoading = false;
 
   // Pour l'enregistrement audio premium
   late final AudioRecorder _audioRecorder;
   bool _recording = false;
-  String? _audioPath;
 
   final List<String> _categories = const [
     'Jardinage',
@@ -143,6 +143,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ),
         ),
       );
+      // Fallback automatique: utiliser l'IA texte pour auto-remplir
+      await _fallbackTextAi();
       return;
     }
 
@@ -168,6 +170,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         final text = res.recognizedWords.trim();
         if (text.isEmpty) return;
 
+        _lastTranscript = text;
         // Remplit / met à jour le champ actif
         ctrl.value = ctrl.value.copyWith(
           text: text,
@@ -175,8 +178,74 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           composing: TextRange.empty,
         );
         setState(() {});
+
+        // Quand la reconnaissance est finale, on enchaîne sur l'IA pour auto-remplir
+        if (res.finalResult) {
+          _runMicAiDraft();
+        }
       },
     );
+  }
+
+  Future<void> _fallbackTextAi() async {
+    // Utilise la description actuelle ou le titre comme indice pour l'IA
+    final seedDesc = _descCtrl.text.trim();
+    final seedTitle = _titleCtrl.text.trim();
+    final hint = seedDesc.isNotEmpty ? seedDesc : seedTitle;
+
+    if (hint.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Ajoute une description ou un titre pour l'IA")),
+      );
+      return;
+    }
+
+    _aiHintCtrl.text = hint;
+    await _onFillWithAI();
+  }
+
+  Future<void> _runMicAiDraft() async {
+    final hint = _lastTranscript.trim();
+    if (hint.isEmpty || _aiLoading) return;
+
+    setState(() => _aiLoading = true);
+    try {
+      final draft = await AiOfferService.generateDraft(
+        hint: hint,
+        currentCity: _cityCtrl.text.trim(),
+        currentCategory: _category ?? '',
+      );
+
+      if ((draft.title ?? '').trim().isNotEmpty) {
+        _titleCtrl.text = draft.title!.trim();
+      }
+      if ((draft.description ?? '').trim().isNotEmpty) {
+        _descCtrl.text = draft.description!.trim();
+      }
+      if ((draft.category ?? '').trim().isNotEmpty) {
+        _category = draft.category!.trim();
+      }
+      if ((draft.city ?? '').trim().isNotEmpty) {
+        _cityCtrl.text = draft.city!.trim();
+      }
+      if ((draft.postalCode ?? '').trim().isNotEmpty) {
+        _cpCtrl.text = draft.postalCode!.trim();
+      }
+
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Texte vocal analysé par l\'IA ✅')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur IA après dictée : $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _aiLoading = false);
+    }
   }
 
   InputDecoration _decoration(String hint, {Widget? suffix}) {
@@ -302,7 +371,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       
       setState(() {
         _recording = false;
-        _audioPath = path;
       });
 
       if (path != null && path.isNotEmpty) {
@@ -854,7 +922,8 @@ class AiOfferService {
     required String currentCity,
     required String currentCategory,
   }) async {
-    final callable = FirebaseFunctions.instance.httpsCallable('generateOfferDraft');
+    final callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
+      .httpsCallable('generateOfferDraft');
     final res = await callable.call({
       'hint': hint,
       'city': currentCity,
@@ -873,7 +942,8 @@ class AiOfferService {
     required String category,
     required String city,
   }) async {
-    final callable = FirebaseFunctions.instance.httpsCallable('transcribeAndDraftOffer');
+    final callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
+      .httpsCallable('transcribeAndDraftOffer');
     final res = await callable.call({
       'gcsUri': gcsUri,
       'languageCode': languageCode,
