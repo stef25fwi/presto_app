@@ -12,12 +12,14 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import 'firebase_options.dart';
 import 'app_core.dart';
 import 'constants.dart';
 import 'widgets/offer_card.dart';
 import 'services/city_search.dart';
+import 'services/ai_draft_service.dart';
 import 'pages/pro_profile_page.dart';
 import 'dev/seed_offers.dart';
 
@@ -373,7 +375,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with TickerProviderStateMixin, WidgetsBindingObserver {
+class _HomePageState extends State<HomePage>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   int _selectedIndex = 0;
   late final PageController _pageController;
   final PageController _carouselController = PageController();
@@ -382,6 +385,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
   late final AnimationController _categoryController;
 
   bool _isSeeding = false;
+  
+  /// Contrôle l'affichage des suggestions de recherche
+  bool _showSearchSuggestions = true;
 
   /// Stream figé pour éviter le clignotement des "Dernières offres"
   late final Stream<QuerySnapshot<Map<String, dynamic>>> _latestOffersStream;
@@ -461,7 +467,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
   @override
   void initState() {
     super.initState();
-    
+
     _pageController = PageController(initialPage: 0);
     WidgetsBinding.instance.addObserver(this);
 
@@ -614,8 +620,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
 
         final needsLocation =
             !(data.containsKey('location')) || (data['location'] == null);
-        final needsPostalCode = !(data.containsKey('postalCode')) ||
-            (data['postalCode'] == null);
+        final needsPostalCode =
+            !(data.containsKey('postalCode')) || (data['postalCode'] == null);
 
         if (!needsLocation && !needsPostalCode) continue;
         if (city.isEmpty && cp.isEmpty) continue;
@@ -665,6 +671,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
   Widget _buildSmartSearchBar() {
     return Autocomplete<String>(
       optionsBuilder: (TextEditingValue value) {
+        if (!_showSearchSuggestions) return const Iterable<String>.empty();
         return _buildSearchSuggestions(value);
       },
       onSelected: (String selection) {
@@ -672,7 +679,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
       },
       fieldViewBuilder:
           (context, textEditingController, focusNode, onFieldSubmitted) {
-        return TextField(
+        return GestureDetector(
+          onTap: () {
+            if (focusNode.hasFocus) {
+              // Si déjà focusé, basculer l'affichage des suggestions
+              setState(() {
+                _showSearchSuggestions = !_showSearchSuggestions;
+              });
+            } else {
+              // Sinon, montrer les suggestions
+              setState(() {
+                _showSearchSuggestions = true;
+              });
+            }
+          },
+          child: TextField(
           controller: textEditingController,
           focusNode: focusNode,
           onSubmitted: _goToSearch,
@@ -701,6 +722,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
               borderSide: BorderSide.none,
             ),
           ),
+        ),
         );
       },
       optionsViewBuilder: (context, onSelected, options) {
@@ -724,7 +746,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
                     ),
                     title: Text(
                       option,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w500),
                     ),
                     onTap: () => onSelected(option),
                   );
@@ -818,55 +841,70 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset: false,
         extendBody: true,
-        bottomNavigationBar: Offstage(
-          offstage: keyboardOpen,
-          child: Container(
-            decoration: const BoxDecoration(
-              color: kPrestoOrange,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-            child: SafeArea(
-              top: false,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _BottomNavItem(
-                    icon: Icons.home,
-                    label: "Accueil",
-                    selected: _selectedIndex == 0,
-                    onTap: () => _onBottomTap(0),
+        bottomNavigationBar: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: keyboardOpen ? 0 : null,
+          child: keyboardOpen
+              ? const SizedBox.shrink()
+              : Container(
+                  decoration: const BoxDecoration(
+                    color: kPrestoOrange,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                   ),
-                  _BottomNavItem(
-                    icon: Icons.search,
-                    label: "Je consulte\nles offres",
-                    selected: _selectedIndex == 1,
-                    onTap: () => _onBottomTap(1),
+                  padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                  child: SafeArea(
+                    top: false,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: _BottomNavItem(
+                            icon: Icons.home,
+                            label: "Accueil",
+                            selected: _selectedIndex == 0,
+                            onTap: () => _onBottomTap(0),
+                          ),
+                        ),
+                        Expanded(
+                          child: _BottomNavItem(
+                            icon: Icons.search,
+                            label: "Je consulte\nles offres",
+                            selected: _selectedIndex == 1,
+                            onTap: () => _onBottomTap(1),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: _BottomNavItem(
+                            icon: Icons.add_circle_outline,
+                            label: "Publier\nune offre",
+                            isBig: true,
+                            onTap: () => _onBottomTap(2),
+                          ),
+                        ),
+                        Expanded(
+                          child: _BottomNavItem(
+                            icon: Icons.chat_bubble_outline,
+                            label: "Messages",
+                            selected: _selectedIndex == 3,
+                            onTap: () => _onBottomTap(3),
+                          ),
+                        ),
+                        Expanded(
+                          child: _BottomNavItem(
+                            icon: Icons.person_outline,
+                            label: "Compte",
+                            selected: _selectedIndex == 4,
+                            onTap: () => _onBottomTap(4),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  _BottomNavItem(
-                    icon: Icons.add_circle_outline,
-                    label: "Publier\nune offre",
-                    isBig: true,
-                    onTap: () => _onBottomTap(2),
-                  ),
-                  _BottomNavItem(
-                    icon: Icons.chat_bubble_outline,
-                    label: "Messages",
-                    selected: _selectedIndex == 3,
-                    onTap: () => _onBottomTap(3),
-                  ),
-                  _BottomNavItem(
-                    icon: Icons.person_outline,
-                    label: "Compte",
-                    selected: _selectedIndex == 4,
-                    onTap: () => _onBottomTap(4),
-                  ),
-                ],
-              ),
-            ),
-          ),
+                ),
         ),
         body: PageView(
           controller: _pageController,
@@ -1130,7 +1168,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          const SizedBox(width: 2),
                           _CategoryChip(
                             icon: Icons.eco_outlined,
                             label: "Jardinage",
@@ -1220,7 +1257,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
                               );
                             },
                           ),
-                          const SizedBox(width: 2),
                         ],
                       ),
                     );
@@ -1236,7 +1272,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
                     color: Color(0xFFE3F2FD),
                     borderRadius: BorderRadius.all(Radius.circular(16)),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
@@ -1258,7 +1295,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
                       SizedBox(height: 6),
                       _HowItWorksStep(
                         stepNumber: 2,
-                        title: "Ils la reçoivent en direct",
+                        title: "Mon offre est diffusée instantanément",
                         description:
                             "Les prestataires proches sont notifiés et voient immédiatement votre offre.",
                       ),
@@ -1363,7 +1400,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin, Widg
                                             ?.map((e) => e.toString())
                                             .toList(),
                                     annonceurId:
-                                      (data['userId'] ?? '') as String,
+                                        (data['userId'] ?? '') as String,
                                   ),
                                 ),
                               );
@@ -1603,8 +1640,8 @@ class _BottomNavItem extends StatelessWidget {
                 boxShadow: isBig
                     ? [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.25),
-                          blurRadius: 12,
+                          color: Colors.black.withOpacity(0.35),
+                          blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
                       ]
@@ -1809,8 +1846,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _keywordCtrl = TextEditingController();
   final TextEditingController _cityCtrl = TextEditingController();
-  
+
   int _filterPanelKey = 0;
+  int _queryKey = 0; // Force le StreamBuilder à se reconstruire
 
   String? _selectedCategory;
   String? _selectedRegionCode;
@@ -1827,6 +1865,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   // Pagination / loading state
   DocumentSnapshot<Map<String, dynamic>>? _lastDoc;
   bool _isLoading = false;
+
+  /// Mot-clé actif appliqué aux résultats (initialisé depuis searchQuery, réinitialisable)
+  String? _activeSearchQuery;
 
   // Variables pour l'autocomplétion de ville dans les filtres
   final TextEditingController _filterCityController = TextEditingController();
@@ -1880,6 +1921,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     }
 
     _selectedRegionCode = null; // Pas de région sélectionnée par défaut
+
+    // ✅ Si un searchQuery est fourni, l'initialiser dans le champ de mot-clé
+    final initialQuery = widget.searchQuery?.trim();
+    if (initialQuery != null && initialQuery.isNotEmpty) {
+      _activeSearchQuery = initialQuery;
+      _keywordCtrl.text = initialQuery;
+    }
 
     // Quand le code postal change, on essaie de déduire la région
     _postalCodeController.addListener(_syncRegionWithPostalCode);
@@ -2018,6 +2066,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }
 
   void _applyFilters() {
+    // Annule le debounce en cours pour éviter les conflits
+    _filterDebounce._t?.cancel();
+    
     // Remonter en haut de la liste
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
@@ -2027,7 +2078,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       );
     }
 
-    _fetchOffers(resetPaging: true);
+    // Force le StreamBuilder à se reconstruire
+    setState(() {
+      _activeSearchQuery = _keywordCtrl.text.trim().isEmpty
+          ? null
+          : _keywordCtrl.text.trim();
+      _queryKey++;
+      _lastDoc = null; // Reset pagination
+    });
   }
 
   void _onAnyFilterChanged() {
@@ -2060,7 +2118,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _filterCityName = null;
       _filterCitySuggestions = [];
       _filterCityHighlightedIndex = -1;
+      _activeSearchQuery = null;
       _filterPanelKey++; // Force la reconstruction du panneau
+      _queryKey++; // Force la reconstruction du StreamBuilder
     });
 
     // 2) reset champs texte
@@ -2085,6 +2145,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         curve: Curves.easeOut,
       );
     }
+
+    // 5) ✅ Pas besoin de _fetchOffers car le StreamBuilder se reconstruit automatiquement
   }
 
   // Met à jour le champ "Ville" visible avec la valeur des filtres si présente
@@ -2124,6 +2186,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         : "Offres : ${widget.categoryFilter!}";
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       // Fond blanc derrière les annonces pour un look plus clair
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -2153,6 +2216,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           _buildFilterPanel(),
           Expanded(
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              key: ValueKey(_queryKey), // Force la reconstruction quand les filtres changent
               stream: _buildQuery().snapshots(),
               builder: (context, snapshot) {
                 // ✅ Ne plus afficher le loader si on a déjà des données
@@ -2184,9 +2248,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                 List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
                     snapshot.data?.docs ?? [];
 
-                if (widget.searchQuery != null &&
-                    widget.searchQuery!.trim().isNotEmpty) {
-                  final q = widget.searchQuery!.trim().toLowerCase();
+                if (_activeSearchQuery != null &&
+                    _activeSearchQuery!.trim().isNotEmpty) {
+                  final q = _activeSearchQuery!.trim().toLowerCase();
                   docs = docs.where((d) {
                     final data = d.data();
                     final title =
@@ -2205,7 +2269,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                   controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(4, 16, 4, 120),
                   itemCount: docs.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final doc = docs[index];
                     final offerId = doc.id;
@@ -2318,36 +2383,36 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           labelText: "Région",
           isDense: true,
         ),
-      items: <DropdownMenuItem<String?>>[
-        const DropdownMenuItem<String?>(
-          value: null,
-          child: Text("Toutes régions"),
-        ),
-        ...kRegionsOrdered.map((r) => DropdownMenuItem<String?>(
-              value: r.code,
-              child: Text(r.name),
-            )),
-      ],
-      onChanged: (code) {
-        setState(() {
-          _filterRegionCode = code;
+        items: <DropdownMenuItem<String?>>[
+          const DropdownMenuItem<String?>(
+            value: null,
+            child: Text("Toutes régions"),
+          ),
+          ...kRegionsOrdered.map((r) => DropdownMenuItem<String?>(
+                value: r.code,
+                child: Text(r.name),
+              )),
+        ],
+        onChanged: (code) {
+          setState(() {
+            _filterRegionCode = code;
 
-          // ✅ Région change => on reset le dept + ville + CP
-          _filterDepartmentCode = null;
-          _filterCityController.clear();
-          _filterPostalCodeController.clear();
-          _filterCityName = null;
-          _filterCitySuggestions = [];
-          _filterCityHighlightedIndex = -1;
-        });
+            // ✅ Région change => on reset le dept + ville + CP
+            _filterDepartmentCode = null;
+            _filterCityController.clear();
+            _filterPostalCodeController.clear();
+            _filterCityName = null;
+            _filterCitySuggestions = [];
+            _filterCityHighlightedIndex = -1;
+          });
 
-        _onAnyFilterChanged(); // ✅ auto-apply
+          _onAnyFilterChanged(); // ✅ auto-apply
 
-        // Passe au champ département
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          FocusScope.of(context).requestFocus(_deptFocus);
-        });
-      },
+          // Passe au champ département
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            FocusScope.of(context).requestFocus(_deptFocus);
+          });
+        },
       ),
     );
   }
@@ -2396,52 +2461,53 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
-      items: [
-        const DropdownMenuItem<String?>(
-          value: null,
-          child: Text('Tous départements'),
-        ),
-        ...deptCodes.map(
-          (code) => DropdownMenuItem<String?>(
-            value: code,
-            child: Text(kDepartments[code] ?? code),
+        items: [
+          const DropdownMenuItem<String?>(
+            value: null,
+            child: Text('Tous départements'),
           ),
-        ),
-      ],
-      onChanged: (code) {
-        setState(() {
-          _filterDepartmentCode = code;
+          ...deptCodes.map(
+            (code) => DropdownMenuItem<String?>(
+              value: code,
+              child: Text(kDepartments[code] ?? code),
+            ),
+          ),
+        ],
+        onChanged: (code) {
+          setState(() {
+            _filterDepartmentCode = code;
 
-          // ✅ Si on choisit un dept, on synchronise la région automatiquement
-          if (code != null) {
-            final regionCode = _deptToRegion[code];
-            if (regionCode != null) _filterRegionCode = regionCode;
+            // ✅ Si on choisit un dept, on synchronise la région automatiquement
+            if (code != null) {
+              final regionCode = _deptToRegion[code];
+              if (regionCode != null) _filterRegionCode = regionCode;
 
-            // ✅ Dept change => reset ville + CP (évite incohérences)
-            _filterCityController.clear();
-            _filterPostalCodeController.clear();
-            _filterCityName = null;
-            _filterCitySuggestions = [];
-            _filterCityHighlightedIndex = -1;
-          } else {
-            // ✅ Tous départements => reset ville + CP
-            _filterCityController.clear();
-            _filterPostalCodeController.clear();
-            _filterCityName = null;
-            _filterCitySuggestions = [];
-            _filterCityHighlightedIndex = -1;
-          }
-        });
+              // ✅ Dept change => reset ville + CP (évite incohérences)
+              _filterCityController.clear();
+              _filterPostalCodeController.clear();
+              _filterCityName = null;
+              _filterCitySuggestions = [];
+              _filterCityHighlightedIndex = -1;
+            } else {
+              // ✅ Tous départements => reset ville + CP
+              _filterCityController.clear();
+              _filterPostalCodeController.clear();
+              _filterCityName = null;
+              _filterCitySuggestions = [];
+              _filterCityHighlightedIndex = -1;
+            }
+          });
 
-        _onAnyFilterChanged(); // ✅ auto-apply
+          _onAnyFilterChanged(); // ✅ auto-apply
 
-        // Passe au champ ville
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          FocusScope.of(context).requestFocus(_filterCityFocusNode);
-        });
-      },
+          // Passe au champ ville
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            FocusScope.of(context).requestFocus(_filterCityFocusNode);
+          });
+        },
       ),
     );
   }
@@ -2843,7 +2909,9 @@ class OfferDetailPage extends StatelessWidget {
                     final annonceurId = this.annonceurId;
                     if (annonceurId.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Impossible de retrouver l'annonceur.")),
+                        const SnackBar(
+                            content:
+                                Text("Impossible de retrouver l'annonceur.")),
                       );
                       return;
                     }
@@ -2855,14 +2923,17 @@ class OfferDetailPage extends StatelessWidget {
                         .get();
                     String? conversationId;
                     for (final doc in convs.docs) {
-                      final parts = List<String>.from(doc['participants'] ?? []);
+                      final parts =
+                          List<String>.from(doc['participants'] ?? []);
                       if (parts.contains(annonceurId)) {
                         conversationId = doc.id;
                         break;
                       }
                     }
                     if (conversationId == null) {
-                      final doc = await FirebaseFirestore.instance.collection('conversations').add({
+                      final doc = await FirebaseFirestore.instance
+                          .collection('conversations')
+                          .add({
                         'participants': [user.uid, annonceurId],
                         'createdAt': FieldValue.serverTimestamp(),
                         'lastMessage': '',
@@ -3023,34 +3094,34 @@ class OfferDetailPage extends StatelessWidget {
                           // ✅ Si photos, on les affiche ; sinon, on affiche une grande pub
                           if (photos.isNotEmpty) ...[
                             const Text(
-                            "Photos de l’annonce",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                              "Photos de l’annonce",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            height: 190,
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: _buildPhotoTile(
-                                    url: photos.isNotEmpty ? photos[0] : null,
-                                    primary: true,
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              height: 190,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildPhotoTile(
+                                      url: photos.isNotEmpty ? photos[0] : null,
+                                      primary: true,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: _buildPhotoTile(
-                                    url: photos.length > 1 ? photos[1] : null,
-                                    primary: false,
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _buildPhotoTile(
+                                      url: photos.length > 1 ? photos[1] : null,
+                                      primary: false,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 22),
+                            const SizedBox(height: 22),
                           ],
 
                           const Text(
@@ -3063,7 +3134,9 @@ class OfferDetailPage extends StatelessWidget {
                           const SizedBox(height: 8),
                           SizedBox(
                             width: double.infinity,
-                            height: photos.isEmpty ? 190 : 100, // ✅ Si pas de photos → grande bannière
+                            height: photos.isEmpty
+                                ? 190
+                                : 100, // ✅ Si pas de photos → grande bannière
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(18),
                               child: Container(
@@ -4090,6 +4163,158 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   String? _selectedDeptCode;
 
   bool _isSubmitting = false;
+  bool _isAnalyzing = false;
+  bool _isListening = false;
+  String _sttTranscript = '';
+
+  // Service IA pour analyser la description
+  final AiDraftService _aiService = AiDraftService();
+  final stt.SpeechToText _stt = stt.SpeechToText();
+
+  Future<void> _startMic() async {
+    if (_isListening) return;
+    final available = await _stt.initialize(
+      onStatus: (s) {},
+      onError: (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur micro: ${e.errorMsg}')),
+        );
+      },
+    );
+    if (!available) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Dictée non disponible sur cet appareil')),
+      );
+      return;
+    }
+    setState(() {
+      _isListening = true;
+      _sttTranscript = '';
+    });
+    await _stt.listen(
+      localeId: 'fr_FR',
+      onResult: (result) {
+        setState(() {
+          _sttTranscript = result.recognizedWords;
+        });
+      },
+    );
+  }
+
+  Future<void> _stopMic() async {
+    if (!_isListening) return;
+    await _stt.stop();
+    setState(() {
+      _isListening = false;
+    });
+    final text = _sttTranscript.trim();
+    if (text.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Aucun texte reconnu')),
+      );
+      return;
+    }
+    // Appel IA avec le texte dicté
+    setState(() => _isAnalyzing = true);
+    try {
+      final draft = await _aiService.generateOfferDraft(text: text);
+      if (!mounted) return;
+      if (draft['success'] == true) {
+        setState(() {
+          if ((draft['title'] as String).isNotEmpty) {
+            _titleController.text = draft['title'] as String;
+          }
+          if ((draft['category'] as String).isNotEmpty) {
+            _category = draft['category'] as String;
+            _selectedSubCategory = null;
+          }
+          if ((draft['description'] as String).isNotEmpty) {
+            _descriptionController.text = draft['description'] as String;
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✨ Dictée analysée et champs remplis'),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur IA: ${draft['error'] ?? 'inconnue'}')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur analyse: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isAnalyzing = false);
+    }
+  }
+
+  /// Appelle la Cloud Function pour analyser la description avec OpenAI
+  Future<void> _onTapAiAnalyze() async {
+    final input = _descriptionController.text.trim();
+    if (input.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez d\'abord saisir une description'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isAnalyzing = true);
+
+    try {
+      final draft = await _aiService.generateOfferDraft(text: input);
+
+      if (!mounted) return;
+
+      if (draft['success'] == true) {
+        setState(() {
+          if ((draft['title'] as String).isNotEmpty) {
+            _titleController.text = draft['title'] as String;
+          }
+          if ((draft['category'] as String).isNotEmpty) {
+            _category = draft['category'] as String;
+            _selectedSubCategory = null;
+          }
+          if ((draft['description'] as String).isNotEmpty) {
+            _descriptionController.text = draft['description'] as String;
+          }
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✨ Analyse IA complétée\nTitre, catégorie et description remplis'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur IA : ${draft['error'] ?? 'Erreur inconnue'}'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de l\'analyse : $e'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isAnalyzing = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -4100,6 +4325,32 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _phoneController.dispose();
     _budgetController.dispose();
     super.dispose();
+  }
+
+  void _resetAllFields() {
+    setState(() {
+      _titleController.clear();
+      _descriptionController.clear();
+      _locationController.clear();
+      _postalCodeController.clear();
+      _phoneController.clear();
+      _budgetController.clear();
+      _category = null;
+      _selectedSubCategory = null;
+      _budgetType = 'Fixe';
+      _selectedPhotos.clear();
+      _uploadedPhotoUrls.clear();
+      _citySuggestions.clear();
+      _highlightedIndex = -1;
+      _selectedRegionCode = null;
+      _selectedDeptCode = null;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('✨ Tous les champs ont été réinitialisés'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   // --- LOGIQUE AUTOCOMPLÉTION VILLE ---
@@ -4264,7 +4515,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       for (int i = 0; i < _selectedPhotos.length; i++) {
         final photo = _selectedPhotos[i];
-        final fileName = 'offers/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+        final fileName =
+            'offers/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
 
         final ref = FirebaseStorage.instance.ref().child(fileName);
         await ref.putFile(
@@ -4285,7 +4537,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _submitForm() async {
-
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -4344,10 +4595,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         backgroundColor: kPrestoOrange,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         title: const Text(
           'Je publie une offre',
           style: TextStyle(
@@ -4356,6 +4609,36 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             fontWeight: FontWeight.w700,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_outlined),
+            tooltip: 'Réinitialiser tous les champs',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text('Réinitialiser ?'),
+                  content: const Text(
+                    'Voulez-vous effacer tous les champs et recommencer ?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Annuler'),
+                    ),
+                    FilledButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _resetAllFields();
+                      },
+                      child: const Text('Réinitialiser'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Form(
@@ -4374,55 +4657,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  // Bouton IA
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [kPrestoBlue, Color(0xFF0D47A1)],
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(_isListening ? Icons.mic_off : Icons.mic_none),
+                        tooltip: _isListening ? 'Arrêter et analyser' : 'Dicter votre besoin',
+                        onPressed: _isListening ? _stopMic : _startMic,
+                        color: kPrestoBlue,
                       ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: kPrestoBlue.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(20),
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('🎤 IA Speech-to-Text arrive bientôt !'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.auto_awesome, color: Colors.white, size: 20),
-                              SizedBox(width: 6),
-                              Text(
-                                'IA',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              SizedBox(width: 4),
-                              Icon(Icons.mic_rounded, color: Colors.white, size: 18),
-                            ],
-                          ),
-                        ),
+                      const SizedBox(width: 6),
+                      IconButton(
+                        icon: const Icon(Icons.auto_awesome),
+                        onPressed: _isAnalyzing ? null : _onTapAiAnalyze,
+                        tooltip: 'Analyser le texte saisi',
+                        color: kPrestoBlue,
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -4448,9 +4698,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               // CATÉGORIE
               DropdownButtonFormField<String>(
                 value: _category,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Catégorie',
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 ),
                 items: _categories
                     .map(
@@ -4479,9 +4735,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               if (_category != null)
                 DropdownButtonFormField<String>(
                   value: _selectedSubCategory,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Sous-catégorie',
-                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 14),
                   ),
                   items: (kCategorySubcategories[_category] ?? [])
                       .map(
@@ -4502,10 +4764,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               // DESCRIPTION
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Description détaillée',
-                  border: OutlineInputBorder(),
                   alignLabelWithHint: true,
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 ),
                 minLines: 4,
                 maxLines: 8,
@@ -4532,7 +4800,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   Expanded(
                     child: _PhotoSelectorTile(
                       label: 'Photo 1',
-                      file: _selectedPhotos.isNotEmpty ? _selectedPhotos[0] : null,
+                      file: _selectedPhotos.isNotEmpty
+                          ? _selectedPhotos[0]
+                          : null,
                       onTap: () => _pickImage(0),
                     ),
                   ),
@@ -4540,7 +4810,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   Expanded(
                     child: _PhotoSelectorTile(
                       label: 'Photo 2',
-                      file: _selectedPhotos.length > 1 ? _selectedPhotos[1] : null,
+                      file: _selectedPhotos.length > 1
+                          ? _selectedPhotos[1]
+                          : null,
                       onTap: () => _pickImage(1),
                     ),
                   ),
@@ -4556,10 +4828,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _locationController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Ville',
-                  border: OutlineInputBorder(),
                   hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 ),
                 onChanged: _onCityChanged,
               ),
@@ -4567,9 +4845,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               TextFormField(
                 controller: _postalCodeController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Code postal',
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 ),
                 onChanged: _onPostalCodeChanged,
               ),
@@ -4580,9 +4864,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Téléphone (pour être rappelé)',
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 ),
               ),
               const SizedBox(height: 16),
@@ -4595,7 +4885,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     child: DropdownButtonFormField<String>(
                       value: _budgetType,
                       items: _budgetTypes
-                          .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                          .map(
+                              (t) => DropdownMenuItem(value: t, child: Text(t)))
                           .toList(),
                       onChanged: (v) {
                         if (v == null) return;
@@ -4606,9 +4897,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           }
                         });
                       },
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Budget',
-                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
                       ),
                     ),
                   ),
@@ -4619,9 +4916,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       controller: _budgetController,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Montant (€)',
-                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
                       ),
                       enabled: _budgetType == 'Fixe',
                     ),
@@ -4907,7 +5210,8 @@ class _AccountPageState extends State<AccountPage> {
         'phone': _profilePhoneController.text.trim(),
         'favoriteCategories': _favoriteCategories.toList(),
         'selectedFavoriteCategories': _selectedFavoriteCategories.toList(),
-        'selectedFavoriteSubcategories': _selectedFavoriteSubcategories.toList(),
+        'selectedFavoriteSubcategories':
+            _selectedFavoriteSubcategories.toList(),
       }, SetOptions(merge: true));
 
       if (pseudo.isNotEmpty) {
@@ -5215,14 +5519,15 @@ class _AccountPageState extends State<AccountPage> {
                       backgroundColor: Colors.white,
                     ),
                     onPressed: _isLoading ? null : _signInWithGoogle,
-                      icon: Image.asset(
-                        'assets/images/google_g.png',
-                        width: 18,
-                        height: 18,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(Icons.login, size: 18, color: Colors.red);
-                        },
-                      ),
+                    icon: Image.asset(
+                      'assets/images/google_g.png',
+                      width: 18,
+                      height: 18,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.login,
+                            size: 18, color: Colors.red);
+                      },
+                    ),
                     label: const Text(
                       "Continuer avec Google",
                       style: TextStyle(
@@ -5254,7 +5559,6 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -5267,7 +5571,8 @@ class _AccountPageState extends State<AccountPage> {
                     children: [
                       const Text(
                         "Vous êtes une entreprise ?",
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 16),
                       ),
                       const SizedBox(height: 6),
                       const Text(
@@ -5283,7 +5588,8 @@ class _AccountPageState extends State<AccountPage> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const ProProfilePage()),
+                              MaterialPageRoute(
+                                  builder: (_) => const ProProfilePage()),
                             );
                           },
                           icon: const Icon(Icons.business_center_outlined),
@@ -5555,7 +5861,6 @@ class _AccountPageState extends State<AccountPage> {
                   ),
                   const SizedBox(height: 8),
                   UserOffersSection(userId: user.uid),
-
                   const SizedBox(height: 24),
                   const Text(
                     "Mes catégories favorites",
@@ -5623,7 +5928,6 @@ class _AccountPageState extends State<AccountPage> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 20),
                   Container(
                     padding: const EdgeInsets.all(14),
@@ -5636,8 +5940,8 @@ class _AccountPageState extends State<AccountPage> {
                       children: [
                         const Text(
                           "Vous êtes une entreprise ?",
-                          style:
-                              TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 16),
                         ),
                         const SizedBox(height: 6),
                         const Text(
@@ -5664,7 +5968,6 @@ class _AccountPageState extends State<AccountPage> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 28),
                   SizedBox(
                     width: double.infinity,
