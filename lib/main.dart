@@ -760,7 +760,7 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  /// Cloche : pastille = nombre de messages non lus
+  /// Cloche : pastille = nombre de messages non lus + notifications d'offres
   Widget _buildNotificationBell() {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
@@ -774,7 +774,7 @@ class _HomePageState extends State<HomePage>
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text(
-                    "Connecte-toi à ton compte pour recevoir les notifications de nouveaux messages.",
+                    "Connecte-toi à ton compte pour recevoir les notifications de nouveaux messages et annonces.",
                   ),
                 ),
               );
@@ -783,14 +783,14 @@ class _HomePageState extends State<HomePage>
           );
         }
 
-        // Connecté → on compte les messages non lus
+        // Connecté → on compte les messages non lus ET les notifications non lues
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance
               .collection('conversations')
               .where('participants', arrayContains: user.uid)
               .snapshots(),
           builder: (context, convSnapshot) {
-            int unreadTotal = 0;
+            int unreadMessagesCount = 0;
 
             if (convSnapshot.hasData) {
               for (final doc in convSnapshot.data!.docs) {
@@ -798,21 +798,145 @@ class _HomePageState extends State<HomePage>
                 final unreadMap =
                     (data['unreadCount'] as Map<String, dynamic>?) ?? {};
                 final v = unreadMap[user.uid];
-                if (v is int) unreadTotal += v;
+                if (v is int) unreadMessagesCount += v;
               }
             }
 
-            return _TapScale(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const MessagesPage()),
+            // On compte aussi les notifications d'offres non lues
+            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('notifications')
+                  .where('userId', isEqualTo: user.uid)
+                  .where('read', isEqualTo: false)
+                  .snapshots(),
+              builder: (context, notifSnapshot) {
+                int unreadNotificationsCount = 0;
+                
+                if (notifSnapshot.hasData) {
+                  unreadNotificationsCount = notifSnapshot.data!.docs.length;
+                }
+
+                final totalUnread = unreadMessagesCount + unreadNotificationsCount;
+
+                return _TapScale(
+                  onTap: () {
+                    // Afficher une page de notifications ou aller aux messages
+                    _showNotificationsDialog(context, user.uid);
+                  },
+                  child: _NotificationBellBase(badgeCount: totalUnread),
                 );
               },
-              child: _NotificationBellBase(badgeCount: unreadTotal),
             );
           },
         );
       },
+    );
+  }
+
+  /// Affiche un dialogue avec les notifications récentes
+  void _showNotificationsDialog(BuildContext context, String userId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Notifications'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance
+                .collection('notifications')
+                .where('userId', isEqualTo: userId)
+                .orderBy('createdAt', descending: true)
+                .limit(20)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final notifications = snapshot.data!.docs;
+
+              if (notifications.isEmpty) {
+                return const Text('Aucune notification pour le moment.');
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                itemCount: notifications.length,
+                itemBuilder: (context, index) {
+                  final notif = notifications[index];
+                  final data = notif.data();
+                  final title = data['title'] as String? ?? '';
+                  final message = data['message'] as String? ?? '';
+                  final isRead = data['read'] as bool? ?? false;
+                  final offerId = data['offerId'] as String?;
+
+                  return ListTile(
+                    leading: Icon(
+                      Icons.announcement,
+                      color: isRead ? Colors.grey : Colors.green,
+                    ),
+                    title: Text(
+                      title,
+                      style: TextStyle(
+                        fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(message),
+                    onTap: () async {
+                      // Marquer comme lue
+                      if (!isRead) {
+                        await FirebaseFirestore.instance
+                            .collection('notifications')
+                            .doc(notif.id)
+                            .update({'read': true});
+                      }
+
+                      // Naviguer vers l'offre si disponible
+                      if (offerId != null && context.mounted) {
+                        Navigator.of(context).pop();
+                        // Ouvrir la page ConsultOffersPage avec un filtre sur cette offre
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const ConsultOffersPage(),
+                          ),
+                        );
+                      }
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              // Marquer toutes comme lues
+              final batch = FirebaseFirestore.instance.batch();
+              final notifs = await FirebaseFirestore.instance
+                  .collection('notifications')
+                  .where('userId', isEqualTo: userId)
+                  .where('read', isEqualTo: false)
+                  .get();
+              
+              for (final doc in notifs.docs) {
+                batch.update(doc.reference, {'read': true});
+              }
+              
+              await batch.commit();
+              
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text('Tout marquer comme lu'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fermer'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -836,26 +960,19 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    final keyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
-
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         extendBody: true,
-        bottomNavigationBar: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: keyboardOpen ? 0 : null,
-          child: keyboardOpen
-              ? const SizedBox.shrink()
-              : Container(
-                  decoration: const BoxDecoration(
-                    color: kPrestoOrange,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                  ),
-                  padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-                  child: SafeArea(
-                    top: false,
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: kPrestoOrange,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+          child: SafeArea(
+            top: false,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -904,7 +1021,6 @@ class _HomePageState extends State<HomePage>
                       ],
                     ),
                   ),
-                ),
         ),
         body: PageView(
           controller: _pageController,
@@ -1720,17 +1836,23 @@ class _NotificationBellBase extends StatelessWidget {
             top: -2,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              decoration: const BoxDecoration(
-                color: kPrestoOrange,
-                shape: BoxShape.rectangle,
-                borderRadius: BorderRadius.all(Radius.circular(999)),
+              decoration: BoxDecoration(
+                color: Colors.green,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
               ),
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 9,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
+              constraints: const BoxConstraints(
+                minWidth: 18,
+                minHeight: 18,
+              ),
+              child: Center(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
@@ -4234,6 +4356,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           if ((draft['description'] as String).isNotEmpty) {
             _descriptionController.text = draft['description'] as String;
           }
+          // Remplir la ville si disponible
+          final location = (draft['location'] as String? ?? '').trim();
+          if (location.isNotEmpty) {
+            _locationController.text = location;
+          }
+          // Remplir le code postal si disponible
+          final postalCode = (draft['postalCode'] as String? ?? '').trim();
+          if (postalCode.isNotEmpty) {
+            _postalCodeController.text = postalCode;
+          }
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -4287,11 +4419,21 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           if ((draft['description'] as String).isNotEmpty) {
             _descriptionController.text = draft['description'] as String;
           }
+          // Remplir la ville si disponible
+          final location = (draft['location'] as String? ?? '').trim();
+          if (location.isNotEmpty) {
+            _locationController.text = location;
+          }
+          // Remplir le code postal si disponible
+          final postalCode = (draft['postalCode'] as String? ?? '').trim();
+          if (postalCode.isNotEmpty) {
+            _postalCodeController.text = postalCode;
+          }
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✨ Analyse IA complétée\nTitre, catégorie et description remplis'),
+            content: Text('✨ Analyse IA complétée\nChamps remplis automatiquement'),
             duration: Duration(seconds: 3),
           ),
         );
@@ -4536,6 +4678,76 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
+  /// Crée des notifications pour les utilisateurs ayant cette catégorie en favori
+  Future<void> _createNotificationsForFavorites(
+    String offerId,
+    String category,
+    String? subCategory,
+    String offerTitle,
+    String publisherUserId,
+  ) async {
+    try {
+      // Récupérer tous les utilisateurs ayant cette catégorie en favori
+      final usersQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .where('favoriteCategories', arrayContains: category)
+          .get();
+
+      final batch = FirebaseFirestore.instance.batch();
+      final now = Timestamp.now();
+
+      for (final userDoc in usersQuery.docs) {
+        // Ne pas notifier l'auteur de l'annonce
+        if (userDoc.id == publisherUserId) continue;
+
+        final userData = userDoc.data();
+        final selectedFavoriteCats =
+            (userData['selectedFavoriteCategories'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
+        final selectedFavoriteSubcats =
+            (userData['selectedFavoriteSubcategories'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
+
+        // Vérifier si la catégorie est sélectionnée
+        bool shouldNotify = selectedFavoriteCats.contains(category);
+
+        // Si une sous-catégorie est spécifiée, vérifier aussi
+        if (subCategory != null && subCategory.isNotEmpty) {
+          shouldNotify = shouldNotify && 
+              (selectedFavoriteSubcats.isEmpty || 
+               selectedFavoriteSubcats.contains(subCategory));
+        }
+
+        if (shouldNotify) {
+          // Créer la notification
+          final notifRef = FirebaseFirestore.instance
+              .collection('notifications')
+              .doc();
+
+          batch.set(notifRef, {
+            'userId': userDoc.id,
+            'offerId': offerId,
+            'title': 'Nouvelle offre : $category',
+            'message': offerTitle,
+            'category': category,
+            'subCategory': subCategory,
+            'read': false,
+            'createdAt': now,
+          });
+        }
+      }
+
+      await batch.commit();
+    } catch (e) {
+      // Erreur silencieuse, ne pas bloquer la publication
+      debugPrint('Erreur lors de la création des notifications : $e');
+    }
+  }
+
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -4554,7 +4766,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
 
       // Sauvegarder l'offre dans Firestore
-      await FirebaseFirestore.instance.collection('offers').add({
+      final docRef = await FirebaseFirestore.instance.collection('offers').add({
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
         'category': _category,
@@ -4568,6 +4780,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'userId': user.uid,
         'createdAt': Timestamp.now(),
       });
+
+      // Créer des notifications pour les utilisateurs ayant cette catégorie en favori
+      await _createNotificationsForFavorites(
+        docRef.id,
+        _category ?? '',
+        _selectedSubCategory,
+        _titleController.text.trim(),
+        user.uid,
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -4600,7 +4821,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       appBar: AppBar(
         backgroundColor: kPrestoOrange,
         elevation: 0,
-        centerTitle: false,
+        centerTitle: true,
         title: const Text(
           'Je publie une offre',
           style: TextStyle(
