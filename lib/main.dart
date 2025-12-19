@@ -2567,6 +2567,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
             color: Colors.grey.shade100,
             borderRadius: BorderRadius.circular(12),
           ),
+          clipBehavior: Clip.antiAlias,
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
