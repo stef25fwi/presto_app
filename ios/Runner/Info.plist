@@ -45,6 +45,8 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Nous avons besoin du micro pour la dictée.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

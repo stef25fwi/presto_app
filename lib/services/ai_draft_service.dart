@@ -17,6 +17,8 @@ class AiDraftService {
         'title': (data['title'] ?? '').toString(),
         'category': (data['category'] ?? '').toString(),
         'description': (data['description'] ?? '').toString(),
+        'location': (data['city'] ?? '').toString(), // Cloud Function retourne 'city'
+        'postalCode': (data['postalCode'] ?? '').toString(),
         'success': true,
       };
     } on FirebaseFunctionsException catch (e) {

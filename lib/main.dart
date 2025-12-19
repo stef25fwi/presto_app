@@ -8,16 +8,20 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'firebase_options.dart';
 import 'app_core.dart';
 import 'constants.dart';
 import 'widgets/offer_card.dart';
+import 'widgets/ad_banner.dart';
 import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'pages/pro_profile_page.dart';
@@ -328,7 +332,7 @@ class _SplashScreenState extends State<SplashScreen>
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
-                    onPressed: () => _navigateTo(const PublishOfferPage()),
+                    onPressed: () => _navigateTo(const HomePage(initialIndex: 2)),
                     child: const Text(
                       "J’offre un job",
                       style:
@@ -369,7 +373,8 @@ class _SplashScreenState extends State<SplashScreen>
 /// HOME ////////////////////////////////////////////////////////////////////
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final int initialIndex;
+  const HomePage({super.key, this.initialIndex = 0});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -377,7 +382,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with TickerProviderStateMixin, WidgetsBindingObserver {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
   late final PageController _pageController;
   final PageController _carouselController = PageController();
   int _currentSlide = 0;
@@ -439,6 +444,12 @@ class _HomePageState extends State<HomePage>
       imageAsset: null,
     ),
     _HomeSlide(
+      title: "Boîte à outils de l’entrepreneur",
+      subtitle: "Liens utiles CCI, Région, aides et infos clés.",
+      badge: "Pro",
+      icon: Icons.business_center_outlined,
+    ),
+    _HomeSlide(
       title: "Besoin d’un extra pour ce soir ?",
       subtitle: "Serveur, plonge, barman… publiez votre offre.",
       badge: "Restauration",
@@ -450,12 +461,7 @@ class _HomePageState extends State<HomePage>
       badge: "Maison",
       icon: Icons.handyman_outlined,
     ),
-    _HomeSlide(
-      title: "Boîte à outils de l’entrepreneur",
-      subtitle: "Liens utiles CCI, Région, aides et infos clés.",
-      badge: "Pro",
-      icon: Icons.business_center_outlined,
-    ),
+    
     _HomeSlide(
       title: "iliprestō 100% gratuit",
       subtitle: "Publiez vos offres, recevez des réponses.",
@@ -468,7 +474,8 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
 
-    _pageController = PageController(initialPage: 0);
+    _selectedIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
     WidgetsBinding.instance.addObserver(this);
 
     _categoryController = AnimationController(
@@ -1721,6 +1728,61 @@ class _CategoryChip extends StatelessWidget {
   }
 }
 
+/// Widget pour l'animation de point pulsant pendant l'enregistrement
+class _PulsingDot extends StatefulWidget {
+  final int delay;
+  
+  const _PulsingDot({required this.delay});
+  
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    
+    _animation = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    
+    Future.delayed(Duration(milliseconds: widget.delay), () {
+      if (mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
+  }
+  
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _animation,
+      child: Container(
+        width: 10,
+        height: 10,
+        decoration: const BoxDecoration(
+          color: Colors.red,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}
+
 class _BottomNavItem extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -1751,7 +1813,11 @@ class _BottomNavItem extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(isBig ? 6 : 4),
               decoration: BoxDecoration(
-                color: isBig ? Colors.white : Colors.transparent,
+                color: isBig
+                    ? Colors.white
+                    : selected
+                        ? Colors.white.withOpacity(0.25)
+                        : Colors.transparent,
                 borderRadius: BorderRadius.circular(999),
                 boxShadow: isBig
                     ? [
@@ -1761,7 +1827,15 @@ class _BottomNavItem extends StatelessWidget {
                           offset: const Offset(0, 4),
                         ),
                       ]
-                    : null,
+                    : selected
+                        ? [
+                            BoxShadow(
+                              color: Colors.white.withOpacity(0.3),
+                              blurRadius: 8,
+                              spreadRadius: 2,
+                            ),
+                          ]
+                        : null,
               ),
               child: Icon(
                 icon,
@@ -1965,6 +2039,7 @@ class _Debouncer {
 class _ConsultOffersPageState extends State<ConsultOffersPage> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
+  // ignore: unused_field
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _keywordCtrl = TextEditingController();
   final TextEditingController _cityCtrl = TextEditingController();
@@ -1998,11 +2073,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   final FocusNode _regionFocus = FocusNode();
   final FocusNode _deptFocus = FocusNode();
   final FocusNode _filterCityFocusNode = FocusNode();
+  // ignore: unused_field
   List<CityRecord> _filterCitySuggestions = [];
+  // ignore: unused_field
   int _filterCityHighlightedIndex = -1;
   Timer? _filterCityDebounce;
 
   final ScrollController _scrollController = ScrollController();
+
+  bool _showFilters = true;
 
   late final Map<String, String> _deptToRegion = _buildDeptToRegion();
 
@@ -2150,6 +2229,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return query;
   }
 
+  // ignore: unused_element
   Future<void> _fetchOffers({bool resetPaging = false}) async {
     if (_isLoading) return;
 
@@ -2271,6 +2351,21 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     // 5) ✅ Pas besoin de _fetchOffers car le StreamBuilder se reconstruit automatiquement
   }
 
+  void _toggleFilters() {
+    setState(() {
+      _showFilters = !_showFilters;
+      _filterPanelKey++; // force rebuild pour éviter états résiduels
+    });
+
+    if (_showFilters && _scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
   // Met à jour le champ "Ville" visible avec la valeur des filtres si présente
   void _syncLocationFieldFromFilter() {
     final val = _filterCityController.text.trim();
@@ -2322,6 +2417,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         actions: [
+            IconButton(
+              icon: Icon(_showFilters ? Icons.filter_list_off : Icons.filter_list),
+              tooltip: _showFilters ? 'Masquer les filtres' : 'Afficher les filtres',
+              onPressed: _toggleFilters,
+            ),
           IconButton(
             icon: const Icon(Icons.home_outlined),
             onPressed: () {
@@ -2387,57 +2487,62 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                   return const _EmptyOffers();
                 }
 
-                return ListView.separated(
+                const int _adsEvery = 8; // Bandeau pub après chaque 8 annonces
+                final int _adSlots = docs.length ~/ _adsEvery;
+                final int _totalItems = docs.length + _adSlots;
+
+                return ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(4, 16, 4, 120),
-                  itemCount: docs.length,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(height: 12),
+                  itemCount: _totalItems,
                   itemBuilder: (context, index) {
-                    final doc = docs[index];
+                    final bool isAd = (index + 1) % (_adsEvery + 1) == 0;
+                    if (isAd) {
+                      return const AdBanner(margin: EdgeInsets.symmetric(vertical: 8));
+                    }
+
+                    final int docIndex = index - (index ~/ (_adsEvery + 1));
+                    final doc = docs[docIndex];
                     final offerId = doc.id;
                     final data = doc.data();
 
                     final title = (data['title'] ?? 'Sans titre') as String;
-                    final location =
-                        (data['location'] ?? 'Lieu non précisé') as String;
-                    final category = (data['category'] ??
-                        'Catégorie non précisée') as String;
+                    final location = (data['location'] ?? 'Lieu non précisé') as String;
+                    final category = (data['category'] ?? 'Catégorie non précisée') as String;
                     final budget = data['budget'];
                     final description = (data['description'] ?? '') as String;
-                    final phone =
-                        data['phone'] == null ? null : data['phone'] as String;
+                    final phone = data['phone'] == null ? null : data['phone'] as String;
 
-                    // 🔥 Récupération des URLs d’images (0, 1 ou 2)
                     final List<String> imageUrls =
                         (data['imageUrls'] as List<dynamic>? ?? [])
                             .map((e) => e.toString())
                             .toList();
 
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => OfferDetailPage(
-                              title: title,
-                              location: location,
-                              category: category,
-                              subcategory:
-                                  (data['subcategory'] ?? '') as String?,
-                              budget: budget is num ? budget : null,
-                              description:
-                                  description.isEmpty ? null : description,
-                              phone: phone,
-                              imageUrls: imageUrls.isEmpty ? null : imageUrls,
-                              annonceurId: (data['userId'] ?? '') as String,
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => OfferDetailPage(
+                                title: title,
+                                location: location,
+                                category: category,
+                                subcategory: (data['subcategory'] ?? '') as String?,
+                                budget: budget is num ? budget : null,
+                                description: description.isEmpty ? null : description,
+                                phone: phone,
+                                imageUrls: imageUrls.isEmpty ? null : imageUrls,
+                                annonceurId: (data['userId'] ?? '') as String,
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                      child: OfferCard(
-                        offerId: offerId,
-                        data: data,
-                        showActionsMenu: false,
+                          );
+                        },
+                        child: OfferCard(
+                          offerId: offerId,
+                          data: data,
+                          showActionsMenu: false,
+                        ),
                       ),
                     );
                   },
@@ -2451,47 +2556,56 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }
 
   Widget _buildFilterPanel() {
-    return Form(
-      key: ValueKey(_filterPanelKey),
-      child: Container(
-        color: Colors.grey.shade100,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildCategoryDropdown(),
-            const SizedBox(height: 12),
-            _buildRegionDropdown(),
-            const SizedBox(height: 12),
-            _buildDepartmentDropdown(),
-            const SizedBox(height: 12),
-            _buildFilterCityField(),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _resetFilters,
-                    child: const Text('Réinitialiser'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _applyFilters,
-                    icon: const Icon(Icons.search),
-                    label: const Text('Rechercher'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrestoBlue,
-                      foregroundColor: Colors.white,
+    return AnimatedCrossFade(
+      duration: const Duration(milliseconds: 220),
+      crossFadeState:
+          _showFilters ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+      firstChild: Form(
+        key: ValueKey(_filterPanelKey),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildCategoryDropdown(),
+              const SizedBox(height: 12),
+              _buildRegionDropdown(),
+              const SizedBox(height: 12),
+              _buildDepartmentDropdown(),
+              const SizedBox(height: 12),
+              _buildFilterCityField(),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _resetFilters,
+                      child: const Text('Réinitialiser'),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _applyFilters,
+                      icon: const Icon(Icons.search),
+                      label: const Text('Rechercher'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrestoBlue,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
+      secondChild: const SizedBox.shrink(),
     );
   }
 
@@ -4288,17 +4402,46 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _isAnalyzing = false;
   bool _isListening = false;
   String _sttTranscript = '';
+  String _sttFinalTranscript = '';
 
   // Service IA pour analyser la description
   final AiDraftService _aiService = AiDraftService();
   final stt.SpeechToText _stt = stt.SpeechToText();
+  final AudioRecorder _recorder = AudioRecorder();
+  String? _recordingPath;
+  // Toujours actif (améliore la qualité via Google STT côté serveur)
+  final bool _useCloudStt = true;
 
   Future<void> _startMic() async {
     if (_isListening) return;
+    // Préparer l'enregistreur haute qualité (WAV)
+    if (!kIsWeb) {
+      try {
+        if (await _recorder.hasPermission()) {
+          final tempDir = await getTemporaryDirectory();
+          final filePath = '${tempDir.path}/presto_${DateTime.now().millisecondsSinceEpoch}.wav';
+          await _recorder.start(
+            RecordConfig(
+              encoder: AudioEncoder.wav,
+              sampleRate: 16000,
+              numChannels: 1,
+              bitRate: 256000,
+            ),
+            path: filePath,
+          );
+          _recordingPath = filePath;
+        }
+      } catch (e) {
+        debugPrint('Recorder start error: $e');
+      }
+    }
     final available = await _stt.initialize(
-      onStatus: (s) {},
+      onStatus: (s) {
+        debugPrint('STT Status: $s');
+      },
       onError: (e) {
         if (!mounted) return;
+        debugPrint('STT Error: ${e.errorMsg}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur micro: ${e.errorMsg}')),
         );
@@ -4314,13 +4457,26 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     setState(() {
       _isListening = true;
       _sttTranscript = '';
+      _sttFinalTranscript = '';
     });
     await _stt.listen(
       localeId: 'fr_FR',
+      // Paramètres pour améliorer la qualité audio sur Android
+      listenMode: stt.ListenMode.confirmation,
+      cancelOnError: false,
+      partialResults: true,
+      listenFor: const Duration(seconds: 60), // Durée max d'écoute
+      pauseFor: const Duration(seconds: 5),   // Durée de pause avant arrêt auto
+      // Optimisation pour Android
+      sampleRate: 16000, // Fréquence d'échantillonnage optimale
       onResult: (result) {
         setState(() {
           _sttTranscript = result.recognizedWords;
+          if (result.finalResult) {
+            _sttFinalTranscript = result.recognizedWords;
+          }
         });
+        debugPrint('STT Result: ${result.recognizedWords} (final: ${result.finalResult})');
       },
     );
   }
@@ -4328,10 +4484,38 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _stopMic() async {
     if (!_isListening) return;
     await _stt.stop();
+    String? recordedPath;
+    if (!kIsWeb) {
+      try {
+        recordedPath = await _recorder.stop();
+        if (recordedPath == null) {
+          recordedPath = _recordingPath;
+        }
+      } catch (e) {
+        debugPrint('Recorder stop error: $e');
+      }
+    }
     setState(() {
       _isListening = false;
     });
-    final text = _sttTranscript.trim();
+    // Si l'audio est disponible et cloud STT activé, on passe par la fonction distante
+    if (_useCloudStt && recordedPath != null && !kIsWeb) {
+      setState(() => _isAnalyzing = true);
+      try {
+        await _uploadAndTranscribe(recordedPath);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur transcription: $e')),
+        );
+      } finally {
+        if (mounted) setState(() => _isAnalyzing = false);
+      }
+      return;
+    }
+
+    // Fallback: utilisation texte local STT
+    final text = (_sttFinalTranscript.isNotEmpty ? _sttFinalTranscript : _sttTranscript).trim();
     if (text.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -4339,7 +4523,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
       return;
     }
-    // Appel IA avec le texte dicté
     setState(() => _isAnalyzing = true);
     try {
       final draft = await _aiService.generateOfferDraft(text: text);
@@ -4387,7 +4570,55 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
+  Future<void> _uploadAndTranscribe(String localPath) async {
+    // Upload vers Firebase Storage puis appel de la Cloud Function transcribeAndDraftOffer
+    final user = FirebaseAuth.instance.currentUser;
+    final uid = user?.uid ?? 'anonymous';
+    final file = File(localPath);
+    if (!await file.exists()) {
+      throw 'Fichier audio introuvable';
+    }
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final storage = FirebaseStorage.instance;
+    final destPath = 'voice_inputs/$uid/$ts.wav';
+    final ref = storage.ref(destPath);
+    await ref.putFile(file, SettableMetadata(contentType: 'audio/wav'));
+    final bucket = ref.bucket; // Reference exposes bucket
+    final gsUri = 'gs://$bucket/${ref.fullPath}';
+
+    final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
+    final callable = functions.httpsCallable('transcribeAndDraftOffer');
+    final res = await callable.call<dynamic>({
+      'gcsUri': gsUri,
+      'languageCode': 'fr-FR',
+    });
+
+    final data = (res.data as Map<dynamic, dynamic>);
+    if (mounted) {
+      setState(() {
+        final title = (data['title'] ?? '').toString();
+        final description = (data['description'] ?? '').toString();
+        final category = (data['category'] ?? '').toString();
+        final city = (data['city'] ?? '').toString();
+        final postal = (data['postalCode'] ?? '').toString();
+
+        if (title.isNotEmpty) _titleController.text = title;
+        if (description.isNotEmpty) _descriptionController.text = description;
+        if (category.isNotEmpty) {
+          _category = category;
+          _selectedSubCategory = null;
+        }
+        if (city.isNotEmpty) _locationController.text = city;
+        if (postal.isNotEmpty) _postalCodeController.text = postal;
+      });
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('✨ Transcription réussie et champs remplis')),
+    );
+  }
+
   /// Appelle la Cloud Function pour analyser la description avec OpenAI
+  // ignore: unused_element
   Future<void> _onTapAiAnalyze() async {
     final input = _descriptionController.text.trim();
     if (input.isEmpty) {
@@ -4867,36 +5098,134 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Détail de votre besoin',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+              const Text(
+                'Détail de votre besoin',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              
+              // Bouton IA pleine largeur avec enregistrement audio
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isListening ? Colors.red : kPrestoBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(_isListening ? Icons.mic_off : Icons.mic_none),
-                        tooltip: _isListening ? 'Arrêter et analyser' : 'Dicter votre besoin',
-                        onPressed: _isListening ? _stopMic : _startMic,
-                        color: kPrestoBlue,
+                  onPressed: _isAnalyzing ? null : (_isListening ? _stopMic : _startMic),
+                  icon: _isListening 
+                    ? const Icon(Icons.stop_circle, size: 28)
+                    : const Icon(Icons.mic),
+                  label: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: Text(
+                      _isListening ? 'Appuyer pour arrêter l\'enregistrement' : 'Décris ton besoin (IA)',
+                      key: ValueKey(_isListening),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
-                      const SizedBox(width: 6),
-                      IconButton(
-                        icon: const Icon(Icons.auto_awesome),
-                        onPressed: _isAnalyzing ? null : _onTapAiAnalyze,
-                        tooltip: 'Analyser le texte saisi',
-                        color: kPrestoBlue,
-                      ),
-                    ],
+                    ),
                   ),
-                ],
+                ),
               ),
+              if (_isListening) ...[
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _PulsingDot(delay: 0),
+                    const SizedBox(width: 8),
+                    _PulsingDot(delay: 200),
+                    const SizedBox(width: 8),
+                    _PulsingDot(delay: 400),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Enregistrement en cours...',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (_useCloudStt && !kIsWeb)
+                  Center(
+                    child: Container
+                      (
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: kPrestoBlue.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: kPrestoBlue.withOpacity(0.25)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.cloud_done, size: 16, color: kPrestoBlue),
+                          SizedBox(width: 6),
+                          Text(
+                            'Qualité audio améliorée (Cloud)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: kPrestoBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+              if (_isAnalyzing) ...[
+                const SizedBox(height: 8),
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: kPrestoBlue.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: kPrestoBlue.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _useCloudStt && !kIsWeb
+                            ? const Icon(Icons.cloud_sync, size: 16, color: kPrestoBlue)
+                            : SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(kPrestoBlue),
+                                ),
+                              ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _useCloudStt && !kIsWeb
+                              ? 'Transcription et analyse (Cloud)…'
+                              : 'Analyse en cours…',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: kPrestoBlue,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
 
               // TITRE
@@ -5292,6 +5621,8 @@ class _AccountPageState extends State<AccountPage> {
   Set<String> _favoriteCategories = <String>{};
   Set<String> _selectedFavoriteCategories = <String>{};
   Set<String> _selectedFavoriteSubcategories = <String>{};
+  String? _selectedCategoryInput;
+  String? _selectedSubCategoryInput;
   bool _profileLoaded = false;
   bool _isSavingProfile = false;
 
@@ -5307,6 +5638,19 @@ class _AccountPageState extends State<AccountPage> {
     'Main-d’œuvre',
     'Autre',
   ];
+
+  static const Map<String, List<String>> _subCategoriesByCategory = {
+    'Restauration / Extra': ['Service', 'Plonge', 'Cuisine', 'Bar'],
+    'Bricolage / Travaux': ['Montage meuble', 'Électricité', 'Plomberie', 'Peinture'],
+    'Aide à domicile': ['Ménage', 'Repassage', 'Courses'],
+    'Garde d’enfants': ['Sortie d’école', 'Soirée', 'Mercredi'],
+    'Événementiel / DJ': ['DJ', 'Sono', 'Lumières'],
+    'Cours & soutien': ['Maths', 'Langues', 'Musique'],
+    'Jardinage': ['Tonte', 'Taille', 'Désherbage'],
+    'Peinture': ['Intérieur', 'Extérieur'],
+    'Main-d’œuvre': ['Manutention', 'Aide chantier'],
+    'Autre': ['Général'],
+  };
 
   @override
   void dispose() {
@@ -5461,16 +5805,23 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<void> _toggleFavoriteCategory(User user, String category) async {
     setState(() {
-      if (_selectedFavoriteCategories.contains(category)) {
+      final exists = _favoriteCategories.contains(category);
+      if (exists) {
+        _favoriteCategories.remove(category);
         _selectedFavoriteCategories.remove(category);
-        _selectedFavoriteSubcategories.clear();
+        _selectedFavoriteSubcategories.remove(category);
       } else {
+        _favoriteCategories.add(category);
         _selectedFavoriteCategories.add(category);
+        if (category.contains('—')) {
+          _selectedFavoriteSubcategories.add(category);
+        }
       }
     });
     await _saveProfile(user);
   }
 
+  // ignore: unused_element
   Future<void> _toggleFavoriteSubcategory(User user, String subcategory) async {
     setState(() {
       if (_selectedFavoriteSubcategories.contains(subcategory)) {
@@ -6115,29 +6466,125 @@ class _AccountPageState extends State<AccountPage> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: _allFavoriteCategories.map((cat) {
+                        // Sélecteur Catégorie
+                        DropdownButtonFormField<String>(
+                          value: _selectedCategoryInput,
+                          hint: const Text('Choisir une catégorie'),
+                          items: _allFavoriteCategories.map((cat) {
                             final selected = _favoriteCategories.contains(cat);
-                            return ChoiceChip(
-                              label: Text(
-                                cat,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color:
-                                      selected ? Colors.white : Colors.black87,
-                                ),
+                            return DropdownMenuItem<String>(
+                              value: cat,
+                              child: Row(
+                                children: [
+                                  Expanded(child: Text(cat)),
+                                  if (selected)
+                                    const Icon(Icons.check, color: kPrestoBlue, size: 18),
+                                ],
                               ),
-                              selected: selected,
-                              selectedColor: kPrestoBlue,
-                              backgroundColor: const Color(0xFFF5F5F5),
-                              onSelected: (_) =>
-                                  _toggleFavoriteCategory(user, cat),
                             );
                           }).toList(),
+                          onChanged: (selectedCat) {
+                            setState(() {
+                              _selectedCategoryInput = selectedCat;
+                              _selectedSubCategoryInput = null;
+                            });
+                            if (selectedCat != null) {
+                              _toggleFavoriteCategory(user, selectedCat);
+                            }
+                          },
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF9F9F9),
+                          ),
                         ),
+                        const SizedBox(height: 10),
+                        // Sélecteur Sous-catégorie (dépend de la catégorie choisie)
+                        DropdownButtonFormField<String>(
+                          value: _selectedSubCategoryInput,
+                          hint: Text(_selectedCategoryInput == null
+                              ? 'Choisis d’abord une catégorie'
+                              : 'Sous-catégorie'),
+                          items: (_selectedCategoryInput == null
+                                  ? <String>[]
+                                  : (_subCategoriesByCategory[_selectedCategoryInput!] ?? []))
+                              .map((sub) {
+                            final label = '${_selectedCategoryInput ?? ''} — $sub';
+                            final selected = _favoriteCategories.contains(label);
+                            return DropdownMenuItem<String>(
+                              value: sub,
+                              child: Row(
+                                children: [
+                                  Expanded(child: Text(sub)),
+                                  if (selected)
+                                    const Icon(Icons.check, color: kPrestoBlue, size: 18),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (selectedSub) {
+                            if (selectedSub == null || _selectedCategoryInput == null) return;
+                            setState(() {
+                              _selectedSubCategoryInput = selectedSub;
+                            });
+                            final label = '${_selectedCategoryInput!} — $selectedSub';
+                            _toggleFavoriteCategory(user, label);
+                          },
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            filled: true,
+                            fillColor: const Color(0xFFF9F9F9),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        // Liste des sélections
+                        if (_favoriteCategories.isNotEmpty)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Sélections :',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Column(
+                                children: _favoriteCategories.map((cat) {
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.check, color: kPrestoBlue, size: 18),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            cat,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.close, size: 18, color: Colors.black54),
+                                          onPressed: () => _toggleFavoriteCategory(user, cat),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
                         const SizedBox(height: 8),
                         const Text(
                           "Plus tard, ces favoris pourront déclencher des notifications push et un badge sur la cloche de l'accueil.",
@@ -6212,11 +6659,13 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
+  // ignore: unused_element
   List<String> _getSubcategoriesForCategory(String category) {
     final subcats = kCategorySubcategories[category] ?? [];
     return ['', ...subcats];
   }
 
+  // ignore: unused_element
   List<String> _getAvailableSubcategories() {
     final allSubcats = <String>{};
     for (final cat in _selectedFavoriteCategories) {

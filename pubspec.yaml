@@ -25,9 +25,11 @@ dependencies:
   url_launcher: ^6.3.0
   image_picker: ^1.1.2
   firebase_storage: ^12.4.10
+  firebase_messaging: ^15.2.10
   speech_to_text: ^6.6.0
   record: ^5.0.0
   path_provider: ^2.1.0
+  google_mobile_ads: ^5.1.0
 
 dev_dependencies:
   flutter_test:
