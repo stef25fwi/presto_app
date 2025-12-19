@@ -495,12 +495,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   Row(
                     children: [
                       Expanded(
-                        child: DropdownButtonFormField<String>(
+                        child: _buildStyledDropdown<String>(
                           value: _accountType,
-                          decoration: const InputDecoration(
-                            labelText: 'Type de compte',
-                            prefixIcon: Icon(Icons.badge_outlined),
-                          ),
+                          labelText: 'Type de compte',
+                          prefixIcon: Icons.badge_outlined,
                           items: const [
                             DropdownMenuItem(
                               value: 'Particulier',
@@ -601,12 +599,10 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                DropdownButtonFormField<String>(
+                _buildStyledDropdown<String>(
                   value: _language,
-                  decoration: const InputDecoration(
-                    labelText: 'Langue',
-                    prefixIcon: Icon(Icons.language),
-                  ),
+                  labelText: 'Langue',
+                  prefixIcon: Icons.language,
                   items: const [
                     DropdownMenuItem(
                       value: 'Français',
@@ -628,12 +624,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   },
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
+                _buildStyledDropdown<String>(
                   value: _theme,
-                  decoration: const InputDecoration(
-                    labelText: 'Thème',
-                    prefixIcon: Icon(Icons.brightness_6_outlined),
-                  ),
+                  labelText: 'Thème',
+                  prefixIcon: Icons.brightness_6_outlined,
                   items: const [
                     DropdownMenuItem(
                       value: 'Système',
@@ -842,6 +836,37 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         Switch(value: value, onChanged: onChanged),
       ],
+    );
+  }
+
+  /// Widget dropdown avec angles arrondis
+  Widget _buildStyledDropdown<T>({
+    required T value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+    String? labelText,
+    IconData? prefixIcon,
+  }) {
+    return DropdownButtonFormField<T>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: labelText,
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.blue, width: 2),
+        ),
+      ),
+      items: items,
+      onChanged: onChanged,
+      menuMaxHeight: 250,
     );
   }
 
