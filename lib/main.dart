@@ -5312,6 +5312,31 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   ),
                 ),
               ],
+                            : SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(kPrestoBlue),
+                                ),
+                              ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _useCloudStt && !kIsWeb
+                              ? 'Transcription et analyse (Cloud)…'
+                              : 'Analyse en cours…',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: kPrestoBlue,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+>>>>>>> 0c755ad (🚀 Mise à jour complète : notifications push, AdMob, amélioration IA vocale)
+              ],
               const SizedBox(height: 16),
 
               // TITRE
