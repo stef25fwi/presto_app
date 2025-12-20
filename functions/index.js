@@ -178,34 +178,51 @@ exports.generateOfferDraft = onCall({ region: 'europe-west1', secrets: [OPENAI_A
   });
 
   try {
-    // Prompt pour l'IA (style demande "Je recherche…")
-    const systemPrompt = `Tu écris des DEMANDES de services courtes pour des particuliers en Guadeloupe et en Martinique.
-Ton objectif : produire un JSON STRICT (sans markdown) avec un titre et une description courte (1–2 phrases) commençant par "Je recherche…". 
-La description doit mentionner clairement le métier, la tâche et le secteur/ville. Ajoute éventuellement l'urgence et/ou un budget si ces éléments sont présents dans l'indice.
+    // Prompt système recommandé avec format JSON riche
+    const systemPrompt = `Tu es un assistant rédactionnel pour l'application Prestō.
+Objectif : transformer une transcription vocale brute en une annonce claire, courte et attractive.
 
-IMPORTANT : Le texte peut contenir des erreurs de transcription vocale (reconnaissance vocale). Interprète intelligemment le sens général, corrige les fautes et déduis l'intention réelle.
-Exemples :
-- "jardinier baie mahault" ou "jardinage à baie ma haut" → Ville: "Baie-Mahault"
-- "serveur fort de France" → Ville: "Fort-de-France", Catégorie: "Restauration / Extra"
-- "je cherche quelqu'un pour tondre mon jardin à petit bourg" → Ville: "Petit-Bourg", Catégorie: "Jardinage"
+Règles :
+- N'invente jamais d'informations (prix, lieu, date, identité, etc.). Si manquant : mets null + ajoute une question dans "questions_a_poser".
+- Français naturel (Guadeloupe/France OK), style simple et professionnel.
+- Corrige les fautes, enlève les hésitations ("euh", répétitions), restructure en phrases.
+- Si le besoin est ambigu, propose 2 formulations de titre dans "suggestions_titres".
+- Respecte STRICTEMENT le format JSON demandé. Aucun texte hors JSON.
 
-Contraintes et champs :
-- Titre : court, accrocheur, max 60 caractères.
-- Description : 1–2 phrases, commence par "Je recherche…".
-- Catégories autorisées : Jardinage, Bricolage, Ménage, Restauration / Extra, DJ / Sono, Baby-sitting, Transport / Livraison, Informatique, Autre.
-- Ville : déduis du texte en corrigeant les erreurs de transcription. Liste des villes principales : Baie-Mahault, Les Abymes, Pointe-à-Pitre, Le Gosier, Petit-Bourg, Fort-de-France, Le Lamentin, Schoelcher, etc.
-- Code postal : si connu dans le texte, sinon vide (sera déduit automatiquement).
-
-Réponds UNIQUEMENT avec un objet JSON valide :
+FORMAT JSON (obligatoire) :
 {
-  "title": "…",
-  "description": "Je recherche …",
-  "category": "…",
-  "city": "…",
-  "postalCode": "…"
+  "titre": string,
+  "suggestions_titres": [string, string],
+  "categorie": string|null,
+  "ville": string|null,
+  "secteur": string|null,
+  "budget": {
+    "type": "fixe"|"horaire"|null,
+    "min": number|null,
+    "max": number|null,
+    "devise": "EUR"
+  },
+  "urgence": "immediat"|"24h"|"7j"|"flexible"|null,
+  "description_courte": string,
+  "details": [string],
+  "competences_requises": [string],
+  "materiel": {
+    "fourni_par_demandeur": [string],
+    "a_prevoir_par_prestataire": [string]
+  },
+  "disponibilites": string|null,
+  "questions_a_poser": [string]
 }`;
 
-    const userPrompt = `Indice utilisateur (lang=${lang}):\n${hint}\n\nVille fournie: ${city || ''}\nCatégorie fournie: ${category || ''}`;
+    const userPrompt = `Voici la transcription brute de l'utilisateur (peut contenir des erreurs) :
+${hint}
+
+Contexte (si dispo) :
+- Ville détectée (si dispo) : ${city || 'Non détectée'}
+- Catégorie choisie (si dispo) : ${category || 'Non spécifiée'}
+- Langue : ${lang}
+
+Génère l'annonce.`;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -232,44 +249,71 @@ Réponds UNIQUEMENT avec un objet JSON valide :
       }
       draft = JSON.parse(cleaned);
     } catch (e) {
-      // Fallback minimal si le JSON est invalide
+      // Fallback minimal si le JSON est invalide - format riche
+      console.warn('[generateOfferDraft] Parsing JSON échoué, utilisation fallback:', e.message);
       draft = {
-        title: 'Nouvelle demande',
-        description: `Je recherche: ${hint}`,
-        category: category || 'Autre',
-        city: city || '',
-        postalCode: ''
+        titre: 'Nouvelle demande',
+        suggestions_titres: [],
+        description_courte: `Je recherche: ${hint}`,
+        categorie: category || null,
+        ville: city || null,
+        secteur: null,
+        budget: { type: null, min: null, max: null, devise: 'EUR' },
+        urgence: null,
+        details: [],
+        competences_requises: [],
+        materiel: { fourni_par_demandeur: [], a_prevoir_par_prestataire: [] },
+        disponibilites: null,
+        questions_a_poser: []
       };
     }
 
-    // Validation du format
-    if (!draft.title || !draft.description) {
-      throw new Error('Réponse IA invalide : titre ou description manquant');
+    // Validation du format (titre obligatoire)
+    if (!draft.titre && !draft.title) {
+      throw new Error('Réponse IA invalide : titre manquant');
     }
 
     console.log('[generateOfferDraft] success', {
-      titleLen: (draft.title || '').length,
-      descLen: (draft.description || '').length,
-      category: draft.category || category || 'Autre',
-      city: draft.city || city || ''
+      titre: draft.titre || draft.title || '',
+      categorie: draft.categorie || category || null,
+      ville: draft.ville || city || null,
+      hasQuestions: (draft.questions_a_poser || []).length
     });
 
     // Déduire le code postal à partir de la ville si non fourni par l'IA
-    const finalCity = draft.city || city || '';
-    let finalPostalCode = draft.postalCode || '';
+    const finalCity = draft.ville || city || '';
+    let finalPostalCode = '';
     
-    if (finalCity && !finalPostalCode) {
+    if (finalCity && !draft.postalCode) {
       finalPostalCode = findPostalCode(finalCity);
       console.log('[generateOfferDraft] Code postal déduit:', { city: finalCity, postalCode: finalPostalCode });
+    } else {
+      finalPostalCode = draft.postalCode || '';
     }
 
-    // Retourne le brouillon
+    // Retourne le brouillon enrichi (nouveau format)
     return {
-      title: draft.title || '',
-      description: draft.description || '',
-      category: draft.category || category || 'Autre',
+      // Compatibilité avec ancien format
+      title: draft.titre || draft.title || '',
+      description: draft.description_courte || draft.description || '',
+      category: draft.categorie || category || 'Autre',
       city: finalCity,
-      postalCode: finalPostalCode
+      postalCode: finalPostalCode,
+      
+      // Nouveau format riche
+      titre: draft.titre || draft.title || '',
+      suggestions_titres: draft.suggestions_titres || [],
+      description_courte: draft.description_courte || draft.description || '',
+      categorie: draft.categorie || category || null,
+      ville: finalCity,
+      secteur: draft.secteur || null,
+      budget: draft.budget || { type: null, min: null, max: null, devise: 'EUR' },
+      urgence: draft.urgence || null,
+      details: draft.details || [],
+      competences_requises: draft.competences_requises || [],
+      materiel: draft.materiel || { fourni_par_demandeur: [], a_prevoir_par_prestataire: [] },
+      disponibilites: draft.disponibilites || null,
+      questions_a_poser: draft.questions_a_poser || []
     };
 
   } catch (error) {
