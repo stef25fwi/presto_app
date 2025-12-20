@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart' if (dart.library.html) '';
 import 'dart:io' if (dart.library.html) 'dart:html';
 import '../services/city_repo_compact.dart';
 import '../widgets/city_postal_autocomplete_compact.dart';
+import '../widgets/phone_input_field.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -44,6 +45,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final _phoneCtrl = TextEditingController();
   final _budgetCtrl = TextEditingController();
   final _aiHintCtrl = TextEditingController();
+
+  String _phoneCountryCode = '+33';
 
   // Budget: type (fixe / à négocier)
   final List<String> _budgetTypes = const ['Fixe', 'À négocier'];
@@ -503,7 +506,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'postalCode': cp.isEmpty ? null : cp,
         'budget': budget,
         'budgetType': _budgetType,
-        'phone': _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+        'phone': _phoneCtrl.text.trim().isEmpty
+            ? null
+            : '${_phoneCountryCode.trim()} ${_phoneCtrl.text.trim()}',
         'userId': user.uid,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -732,12 +737,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
               const SizedBox(height: 12),
 
-              TextFormField(
+              PhoneInputFieldCompact(
                 controller: _phoneCtrl,
+                labelText: 'Téléphone (optionnel)',
+                hintText: '612345678',
                 focusNode: _phoneFocus,
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-                decoration: _decoration("Téléphone (optionnel)"),
+                onCountryCodeChanged: (code) => _phoneCountryCode = code,
               ),
 
               const SizedBox(height: 12),
