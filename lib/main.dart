@@ -23,6 +23,7 @@ import 'constants.dart';
 import 'widgets/offer_card.dart';
 import 'widgets/ad_banner.dart';
 import 'widgets/premium_ai_button.dart';
+import 'widgets/phone_input_field.dart';
 import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
@@ -5496,20 +5497,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               _buildCitySuggestionsOverlay(),
               const SizedBox(height: 16),
 
-              // TÉLÉPHONE
-              TextFormField(
+              // TÉLÉPHONE avec sélection indicatif
+              PhoneInputFieldCompact(
                 controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
-                  labelText: 'Téléphone (pour être rappelé)',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                ),
+                labelText: 'Téléphone (pour être rappelé)',
+                hintText: '612345678',
               ),
               const SizedBox(height: 16),
 
@@ -6409,13 +6401,10 @@ class _AccountPageState extends State<AccountPage> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        TextField(
+                        PhoneInputFieldCompact(
                           controller: _profilePhoneController,
-                          decoration: const InputDecoration(
-                            labelText: "Téléphone",
-                            hintText: "Ex : 0690 12 34 56",
-                          ),
-                          keyboardType: TextInputType.phone,
+                          labelText: 'Téléphone',
+                          hintText: '690123456',
                         ),
                         const SizedBox(height: 14),
                         SizedBox(
