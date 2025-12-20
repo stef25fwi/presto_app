@@ -213,13 +213,13 @@ class _PremiumAiButtonPreviewState extends State<PremiumAiButtonPreview> {
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Text(
+              child: const Text(
                 '''PremiumAiButton(
   onPressed: () => _startMic(),
   label: 'Décrire mon besoin (IA)',
   isLoading: _isLoading,
 )''',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 12,
                   color: Color(0xFFCE9178),
