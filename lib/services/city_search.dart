@@ -102,9 +102,10 @@ class CitySearch {
 
   /// Recherche par nom de ville (auto-complétion synchrone)
   /// ✅ + filtre optionnel par départements autorisés
+  /// ✅ Alias pour "Paris" → tous les arrondissements
   List<CityRecord> search(
     String query, {
-    int limit = 20,
+    int limit = 50, // Augmenté de 20 à 50
     List<String>? allowedDeptCodes, // ✅ AJOUT
   }) {
     final q = _normalize(query);
@@ -116,6 +117,23 @@ class CitySearch {
 
     final results = <CityRecord>[];
 
+    // 🔶 Alias spécial : si l'utilisateur tape "paris" (exact après normalisation),
+    // retourner TOUS les arrondissements de Paris
+    if (q == 'paris') {
+      for (final city in _allCities) {
+        if (allowed != null && !allowed.contains(city.departmentCode)) {
+          continue;
+        }
+        final nameNorm = _normalize(city.name);
+        if (nameNorm.startsWith('paris')) {
+          results.add(city);
+          if (results.length >= limit) break;
+        }
+      }
+      if (results.isNotEmpty) return results;
+    }
+
+    // Recherche normale : startsWith
     for (final city in _allCities) {
       // ✅ Filtrage dept si fourni
       if (allowed != null && !allowed.contains(city.departmentCode)) {
