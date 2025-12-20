@@ -9,12 +9,12 @@ class PremiumAiButton extends StatefulWidget {
   final bool isLoading;
 
   const PremiumAiButton({
-    Key? key,
+    super.key,
     required this.onPressed,
     this.label = 'Décrire mon besoin (IA)',
     this.width = 0.92, // 92% de la largeur
     this.isLoading = false,
-  }) : super(key: key);
+  });
 
   @override
   State<PremiumAiButton> createState() => _PremiumAiButtonState();
@@ -45,7 +45,7 @@ class _PremiumAiButtonState extends State<PremiumAiButton> {
         // Ombre douce
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1A73E8).withOpacity(0.18), // 15-20% opacity
+            color: const Color(0xFF1A73E8).withValues(alpha: 0.18), // 15-20% opacity
             blurRadius: 14, // Entre 12-16
             offset: const Offset(0, 4),
             spreadRadius: 0,
@@ -81,7 +81,7 @@ class _PremiumAiButtonState extends State<PremiumAiButton> {
                   height: 20,
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.white.withOpacity(0.9),
+                      Colors.white.withValues(alpha: 0.9),
                     ),
                     strokeWidth: 2,
                   ),

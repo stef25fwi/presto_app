@@ -132,8 +132,8 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
             hintText: widget.hintText ?? 'Ex: 612345678',
             prefixText: '${_selectedCountry.code} ',
             prefixIcon: const Icon(Icons.phone_outlined),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+            border: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
             ),
           ),
           keyboardType: TextInputType.phone,
