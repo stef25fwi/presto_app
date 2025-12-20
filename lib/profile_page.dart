@@ -146,7 +146,7 @@ class _ProfilePageState extends State<ProfilePage> {
             color: colorScheme.surfaceVariant.withOpacity(isDark ? 0.3 : 1),
             borderRadius: BorderRadius.circular(24),
           ),
-          padding: const EdgeInsets(4),
+          padding: const EdgeInsets.all(4),
           child: Row(
             children: [
               Expanded(
@@ -577,7 +577,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 const Divider(),
                 _buildSwitchRow(
                   title: 'Quand on accepte mon offre',
-                  subtitle: 'Notification dès qu'un prestataire ou un client accepte.',
+                  subtitle: 'Notification dès qu\'un prestataire ou un client accepte.',
                   value: _notifAcceptOffer,
                   onChanged: (v) => setState(() => _notifAcceptOffer = v),
                 ),
@@ -886,7 +886,6 @@ class _ProfilePageState extends State<ProfilePage> {
               ..._allCategories.entries.map((entry) {
                 final category = entry.key;
                 final allSubs = entry.value;
-                final isSelected = _favoriteCategories.containsKey(category);
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
