@@ -68,7 +68,7 @@ class CityPostalService {
     return [cp5.substring(0, 2)];
   }
 
-  List<CityEntry> search(String query, {String? cpHint, int limit = 15}) {
+  List<CityEntry> search(String query, {String? cpHint, int limit = 50}) {
     final all = _all ?? const <CityEntry>[];
     final q = CityEntry._normalize(query);
     if (q.isEmpty) return const [];
@@ -76,14 +76,42 @@ class CityPostalService {
     final cp = cpHint != null ? _cp5(cpHint) : null;
     final deptFilter = cp != null ? _deptCandidatesFromCp(cp) : null;
 
+    final seen = <String>{};
     final out = <CityEntry>[];
+
+    bool addCity(CityEntry c) {
+      final key = '${c.name}|${c.dept}';
+      if (seen.contains(key)) return false;
+      if (deptFilter != null && !deptFilter.contains(c.dept)) return false;
+      out.add(c);
+      seen.add(key);
+      return out.length >= limit;
+    }
+
+    // Alias Paris => retourne tous les arrondissements rapidement
+    if (q == 'paris') {
+      for (final c in all) {
+        if (c.nameNorm.startsWith('paris')) {
+          if (addCity(c)) break;
+        }
+      }
+      if (out.length >= limit) return out;
+    }
+
     for (final c in all) {
-      if (deptFilter != null && !deptFilter.contains(c.dept)) continue;
-      if (c.nameNorm.startsWith(q) || c.nameNorm.contains(q)) {
-        out.add(c);
-        if (out.length >= limit) break;
+      if (c.nameNorm.startsWith(q)) {
+        if (addCity(c)) break;
       }
     }
+
+    if (out.length < limit) {
+      for (final c in all) {
+        if (c.nameNorm.contains(q)) {
+          if (addCity(c)) break;
+        }
+      }
+    }
+
     return out;
   }
 }
@@ -142,7 +170,7 @@ class _CityPostalAutocompleteFieldState extends State<CityPostalAutocompleteFiel
       final res = _service.search(
         q,
         cpHint: widget.postalCodeController.text,
-        limit: 15,
+        limit: 50,
       );
 
       if (!mounted) return;

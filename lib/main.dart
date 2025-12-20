@@ -22,6 +22,7 @@ import 'app_core.dart';
 import 'constants.dart';
 import 'widgets/offer_card.dart';
 import 'widgets/ad_banner.dart';
+import 'widgets/premium_ai_button.dart';
 import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
@@ -1793,7 +1794,7 @@ class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderState
   }
 }
 
-class _BottomNavItem extends StatelessWidget {
+class _BottomNavItem extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool selected;
@@ -1809,55 +1810,98 @@ class _BottomNavItem extends StatelessWidget {
   });
 
   @override
+  State<_BottomNavItem> createState() => _BottomNavItemState();
+}
+
+class _BottomNavItemState extends State<_BottomNavItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.12).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void didUpdateWidget(_BottomNavItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Jouer l'animation quand sélectionné
+    if (widget.selected && !oldWidget.selected) {
+      _controller.forward().then((_) {
+        if (mounted) {
+          _controller.reverse();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     const color = Colors.white;
-    final fontWeight = selected ? FontWeight.w700 : FontWeight.w500;
+    final fontWeight = widget.selected ? FontWeight.w700 : FontWeight.w500;
 
     return _TapScale(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: EdgeInsets.all(isBig ? 6 : 4),
-              decoration: BoxDecoration(
-                color: isBig
-                    ? Colors.white
-                    : selected
-                        ? Colors.white.withOpacity(0.25)
-                        : Colors.transparent,
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: isBig
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.35),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                    : selected
-                        ? [
-                            BoxShadow(
-                              color: Colors.white.withOpacity(0.3),
-                              blurRadius: 8,
-                              spreadRadius: 2,
-                            ),
-                          ]
-                        : null,
-              ),
-              child: Icon(
-                icon,
-                size: isBig ? 26 : 22,
-                color: isBig ? kPrestoOrange : color,
+            ScaleTransition(
+              scale: _scaleAnimation,
+              child: Container(
+                padding: EdgeInsets.all(widget.isBig ? 6 : 4),
+                decoration: BoxDecoration(
+                  color: widget.isBig
+                      ? Colors.white
+                      : widget.selected
+                          ? Colors.white.withOpacity(0.35)
+                          : Colors.transparent,
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: widget.isBig
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.35),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : widget.selected
+                          ? [
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.5),
+                                blurRadius: 12,
+                                spreadRadius: 3,
+                              ),
+                            ]
+                          : null,
+                ),
+                child: Icon(
+                  widget.icon,
+                  size: widget.isBig ? 26 : 22,
+                  color: widget.isBig ? kPrestoOrange : color,
+                ),
               ),
             ),
             const SizedBox(height: 4),
             SizedBox(
               width: 70,
               child: Text(
-                label,
+                widget.label,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 11,
@@ -4581,6 +4625,56 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
+  /// Construire le bouton d'enregistrement au micro avec indicateur visuel
+  Widget _buildMicRecordingButton() {
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.92,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFFE53935), // Rouge plus clair en haut
+            Color(0xFFC62828), // Rouge plus profond en bas
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFC62828).withOpacity(0.18),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _stopMic,
+          borderRadius: BorderRadius.circular(20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.stop_circle, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Text(
+                'Appuyer pour arrêter',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 17,
+                      letterSpacing: 0.3,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _uploadAndTranscribe(String localPath) async {
     // Upload vers Firebase Storage puis appel de la Cloud Function transcribeAndDraftOffer
     final user = FirebaseAuth.instance.currentUser;
@@ -5118,34 +5212,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               ),
               const SizedBox(height: 12),
               
-              // Bouton IA pleine largeur avec enregistrement audio
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isListening ? Colors.red : kPrestoBlue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: _isAnalyzing ? null : (_isListening ? _stopMic : _startMic),
-                  icon: _isListening 
-                    ? const Icon(Icons.stop_circle, size: 28)
-                    : const Icon(Icons.mic),
-                  label: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: Text(
-                      _isListening ? 'Appuyer pour arrêter l\'enregistrement' : 'Décris ton besoin (IA)',
-                      key: ValueKey(_isListening),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+              // Bouton Premium AI avec enregistrement audio
+              Center(
+                child: _isListening
+                    ? _buildMicRecordingButton()
+                    : PremiumAiButton(
+                        onPressed: _isAnalyzing ? null : _startMic,
+                        label: 'Décrire mon besoin (IA)',
+                        isLoading: _isAnalyzing,
                       ),
-                    ),
-                  ),
-                ),
               ),
               if (_isListening) ...[
                 const SizedBox(height: 8),
