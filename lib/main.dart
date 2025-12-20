@@ -24,6 +24,7 @@ import 'widgets/offer_card.dart';
 import 'widgets/ad_banner.dart';
 import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
+import 'services/notification_service.dart';
 import 'pages/pro_profile_page.dart';
 import 'dev/seed_offers.dart';
 
@@ -186,6 +187,15 @@ Future<void> main() async {
   );
 
   await CitySearch.instance.ensureLoaded();
+
+  // Initialisation des notifications push (mobile uniquement)
+  if (!kIsWeb) {
+    try {
+      await NotificationService().initialize();
+    } catch (e) {
+      debugPrint('[Notifications] init error: $e');
+    }
+  }
 
   runApp(const PrestoApp());
 }
