@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/phone_input_field.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBeige  = Color(0xFFFCEEE2);
@@ -130,10 +131,10 @@ class _ProProfilePageState extends State<ProProfilePage> {
               ),
               const SizedBox(height: 10),
 
-              TextFormField(
+              PhoneInputFieldCompact(
                 controller: _phoneCtrl,
-                decoration: _dec("Téléphone"),
-                keyboardType: TextInputType.phone,
+                labelText: 'Téléphone',
+                hintText: '612345678',
               ),
               const SizedBox(height: 10),
 
