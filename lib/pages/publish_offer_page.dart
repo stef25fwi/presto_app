@@ -564,7 +564,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           child: Form(
             key: _formKey,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
               children: [
                 SizedBox(
                   width: double.infinity,
@@ -586,7 +586,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
               Container(
                 padding: const EdgeInsets.all(12),
