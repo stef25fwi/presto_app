@@ -105,6 +105,7 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         title: const Text('Mon profil'),
         centerTitle: true,
+        automaticallyImplyLeading: false,
       ),
       body: Container(
         color: colorScheme.surface,
