@@ -22,6 +22,7 @@ class PhoneInputField extends StatefulWidget {
   final InputDecoration? decoration;
   final ValueChanged<String>? onCountryCodeChanged;
   final ValueChanged<String>? onPhoneChanged;
+  final FocusNode? focusNode;
 
   const PhoneInputField({
     super.key,
@@ -31,6 +32,7 @@ class PhoneInputField extends StatefulWidget {
     this.decoration,
     this.onCountryCodeChanged,
     this.onPhoneChanged,
+    this.focusNode,
   });
 
   @override
@@ -83,6 +85,9 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
   void initState() {
     super.initState();
     _selectedCountry = countryCodes.first; // France par défaut
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onCountryCodeChanged?.call(_selectedCountry.code);
+    });
   }
 
   void _onCountryChanged(CountryCode? newCountry) {
@@ -121,13 +126,14 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
         // Champ téléphone avec préfixe indicatif
         TextFormField(
           controller: widget.controller,
+          focusNode: widget.focusNode,
           decoration: (widget.decoration ?? InputDecoration()).copyWith(
             labelText: widget.labelText ?? 'Téléphone',
             hintText: widget.hintText ?? 'Ex: 612345678',
             prefixText: '${_selectedCountry.code} ',
             prefixIcon: const Icon(Icons.phone_outlined),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+            border: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
             ),
           ),
           keyboardType: TextInputType.phone,
@@ -145,6 +151,7 @@ class PhoneInputFieldCompact extends StatefulWidget {
   final String? hintText;
   final ValueChanged<String>? onCountryCodeChanged;
   final ValueChanged<String>? onPhoneChanged;
+  final FocusNode? focusNode;
 
   const PhoneInputFieldCompact({
     super.key,
@@ -153,6 +160,7 @@ class PhoneInputFieldCompact extends StatefulWidget {
     this.hintText,
     this.onCountryCodeChanged,
     this.onPhoneChanged,
+    this.focusNode,
   });
 
   @override
@@ -177,6 +185,9 @@ class _PhoneInputFieldCompactState extends State<PhoneInputFieldCompact> {
   void initState() {
     super.initState();
     _selectedCountry = countryCodes.first;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onCountryCodeChanged?.call(_selectedCountry.code);
+    });
   }
 
   @override
@@ -221,6 +232,7 @@ class _PhoneInputFieldCompactState extends State<PhoneInputFieldCompact> {
         Expanded(
           child: TextFormField(
             controller: widget.controller,
+            focusNode: widget.focusNode,
             decoration: InputDecoration(
               labelText: widget.labelText ?? 'Téléphone',
               hintText: widget.hintText ?? '612345678',

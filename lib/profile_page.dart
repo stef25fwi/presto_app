@@ -105,6 +105,7 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         title: const Text('Mon profil'),
         centerTitle: true,
+        automaticallyImplyLeading: false,
       ),
       body: Container(
         color: colorScheme.surface,
@@ -135,7 +136,7 @@ class _ProfilePageState extends State<ProfilePage> {
           'Connectez-vous ou créez un compte pour publier et accepter des offres autour de vous.',
           style: TextStyle(
             fontSize: 14,
-            color: colorScheme.onSurface.withOpacity(0.7),
+            color: colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         const SizedBox(height: 24),
@@ -143,7 +144,7 @@ class _ProfilePageState extends State<ProfilePage> {
         // Switch Connexion / Inscription
         Container(
           decoration: BoxDecoration(
-            color: colorScheme.surfaceVariant.withOpacity(isDark ? 0.3 : 1),
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: isDark ? 0.3 : 1),
             borderRadius: BorderRadius.circular(24),
           ),
           padding: const EdgeInsets.all(4),
@@ -217,12 +218,12 @@ class _ProfilePageState extends State<ProfilePage> {
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: Divider(color: colorScheme.outline.withOpacity(0.4))),
+            Expanded(child: Divider(color: colorScheme.outline.withValues(alpha: 0.4))),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 8.0),
               child: Text('ou avec e-mail'),
             ),
-            Expanded(child: Divider(color: colorScheme.outline.withOpacity(0.4))),
+            Expanded(child: Divider(color: colorScheme.outline.withValues(alpha: 0.4))),
           ],
         ),
         const SizedBox(height: 8),
@@ -357,7 +358,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: colorScheme.outline.withOpacity(0.5)),
+          side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.5)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -401,7 +402,7 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             CircleAvatar(
               radius: 32,
-              backgroundColor: colorScheme.primary.withOpacity(0.15),
+              backgroundColor: colorScheme.primary.withValues(alpha: 0.15),
               child: Icon(Icons.person, size: 32, color: colorScheme.primary),
             ),
             const SizedBox(width: 16),
@@ -422,7 +423,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         'Compte non vérifié',
                         style: TextStyle(
                           fontSize: 12,
-                          color: colorScheme.onSurface.withOpacity(0.7),
+                          color: colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -674,7 +675,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     'Aucune catégorie favori sélectionnée',
                     style: TextStyle(
                       fontSize: 14,
-                      color: colorScheme.onSurface.withOpacity(0.6),
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
                       fontStyle: FontStyle.italic,
                     ),
                   )
@@ -724,7 +725,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                       }
                                     });
                                   },
-                                  backgroundColor: colorScheme.primaryContainer.withOpacity(0.3),
+                                  backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
                                 ),
                               ),
                             ],
@@ -852,7 +853,7 @@ class _ProfilePageState extends State<ProfilePage> {
     IconData? prefixIcon,
   }) {
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: labelText,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
@@ -924,10 +925,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           });
                         },
                       );
-                    }).toList(),
+                    }),
                   ],
                 );
-              }).toList(),
+              }),
             ],
           ),
         ),
