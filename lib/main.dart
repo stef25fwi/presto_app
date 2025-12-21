@@ -982,64 +982,71 @@ class _HomePageState extends State<HomePage>
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        resizeToAvoidBottomInset: false,
+        resizeToAvoidBottomInset: true,
         extendBody: true,
-        bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
-            color: kPrestoOrange,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        bottomNavigationBar: AnimatedPadding(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-          child: SafeArea(
-            top: false,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: _BottomNavItem(
-                            icon: Icons.home,
-                            label: "Accueil",
-                            selected: _selectedIndex == 0,
-                            onTap: () => _onBottomTap(0),
-                          ),
-                        ),
-                        Expanded(
-                          child: _BottomNavItem(
-                            icon: Icons.search,
-                            label: "Je consulte\nles offres",
-                            selected: _selectedIndex == 1,
-                            onTap: () => _onBottomTap(1),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 1,
-                          child: _BottomNavItem(
-                            icon: Icons.add_circle_outline,
-                            label: "Publier\nune offre",
-                            isBig: true,
-                            onTap: () => _onBottomTap(2),
-                          ),
-                        ),
-                        Expanded(
-                          child: _BottomNavItem(
-                            icon: Icons.chat_bubble_outline,
-                            label: "Messages",
-                            selected: _selectedIndex == 3,
-                            onTap: () => _onBottomTap(3),
-                          ),
-                        ),
-                        Expanded(
-                          child: _BottomNavItem(
-                            icon: Icons.person_outline,
-                            label: "Compte",
-                            selected: _selectedIndex == 4,
-                            onTap: () => _onBottomTap(4),
-                          ),
-                        ),
-                      ],
+          child: Container(
+            decoration: const BoxDecoration(
+              color: kPrestoOrange,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: _BottomNavItem(
+                      icon: Icons.home,
+                      label: "Accueil",
+                      selected: _selectedIndex == 0,
+                      onTap: () => _onBottomTap(0),
                     ),
                   ),
+                  Expanded(
+                    child: _BottomNavItem(
+                      icon: Icons.search,
+                      label: "Je consulte\nles offres",
+                      selected: _selectedIndex == 1,
+                      onTap: () => _onBottomTap(1),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: _BottomNavItem(
+                      icon: Icons.add_circle_outline,
+                      label: "Publier\nune offre",
+                      isBig: true,
+                      onTap: () => _onBottomTap(2),
+                    ),
+                  ),
+                  Expanded(
+                    child: _BottomNavItem(
+                      icon: Icons.chat_bubble_outline,
+                      label: "Messages",
+                      selected: _selectedIndex == 3,
+                      onTap: () => _onBottomTap(3),
+                    ),
+                  ),
+                  Expanded(
+                    child: _BottomNavItem(
+                      icon: Icons.person_outline,
+                      label: "Compte",
+                      selected: _selectedIndex == 4,
+                      onTap: () => _onBottomTap(4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
         body: PageView(
           controller: _pageController,
