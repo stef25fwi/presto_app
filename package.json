@@ -1,5 +1,8 @@
 {
+  "type": "module",
   "dependencies": {
-    "firebase-admin": "^13.6.0"
+    "@google-cloud/speech": "^7.2.1",
+    "firebase-admin": "^13.6.0",
+    "openai": "^6.15.0"
   }
 }
