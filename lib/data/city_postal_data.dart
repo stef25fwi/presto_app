@@ -53,8 +53,29 @@ const List<CityPostalData> kFrenchCitiesData = [
   CityPostalData(city: "Koungou", postalCode: "97690", region: "Mayotte"),
   CityPostalData(city: "Dzaoudzi", postalCode: "97610", region: "Mayotte"),
   
-  // Île-de-France
-  CityPostalData(city: "Paris", postalCode: "75001", region: "Île-de-France"),
+  // Île-de-France - Paris (20 arrondissements)
+  CityPostalData(city: "Paris 01", postalCode: "75001", region: "Île-de-France"),
+  CityPostalData(city: "Paris 02", postalCode: "75002", region: "Île-de-France"),
+  CityPostalData(city: "Paris 03", postalCode: "75003", region: "Île-de-France"),
+  CityPostalData(city: "Paris 04", postalCode: "75004", region: "Île-de-France"),
+  CityPostalData(city: "Paris 05", postalCode: "75005", region: "Île-de-France"),
+  CityPostalData(city: "Paris 06", postalCode: "75006", region: "Île-de-France"),
+  CityPostalData(city: "Paris 07", postalCode: "75007", region: "Île-de-France"),
+  CityPostalData(city: "Paris 08", postalCode: "75008", region: "Île-de-France"),
+  CityPostalData(city: "Paris 09", postalCode: "75009", region: "Île-de-France"),
+  CityPostalData(city: "Paris 10", postalCode: "75010", region: "Île-de-France"),
+  CityPostalData(city: "Paris 11", postalCode: "75011", region: "Île-de-France"),
+  CityPostalData(city: "Paris 12", postalCode: "75012", region: "Île-de-France"),
+  CityPostalData(city: "Paris 13", postalCode: "75013", region: "Île-de-France"),
+  CityPostalData(city: "Paris 14", postalCode: "75014", region: "Île-de-France"),
+  CityPostalData(city: "Paris 15", postalCode: "75015", region: "Île-de-France"),
+  CityPostalData(city: "Paris 16", postalCode: "75016", region: "Île-de-France"),
+  CityPostalData(city: "Paris 17", postalCode: "75017", region: "Île-de-France"),
+  CityPostalData(city: "Paris 18", postalCode: "75018", region: "Île-de-France"),
+  CityPostalData(city: "Paris 19", postalCode: "75019", region: "Île-de-France"),
+  CityPostalData(city: "Paris 20", postalCode: "75020", region: "Île-de-France"),
+  
+  // Île-de-France - Autres villes
   CityPostalData(city: "Boulogne-Billancourt", postalCode: "92100", region: "Île-de-France"),
   CityPostalData(city: "Argenteuil", postalCode: "95100", region: "Île-de-France"),
   CityPostalData(city: "Montreuil", postalCode: "93100", region: "Île-de-France"),
