@@ -566,12 +566,43 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
               children: [
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: _MicButton(
-                    listening: _listening,
-                    onTap: _toggleMic,
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 44,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrestoBlue,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: _aiLoading ? null : _onFillWithAI,
+                          icon: _aiLoading
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : const Icon(Icons.auto_awesome),
+                          label: Text(_aiLoading ? "Génération..." : "Assistant IA (auto)"),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    _MicButton(
+                      listening: _listening,
+                      onTap: _toggleMic,
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 16),
