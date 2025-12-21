@@ -6297,31 +6297,6 @@ class _AccountPageState extends State<AccountPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kPrestoBlue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const HomePage()),
-                          (route) => false,
-                        );
-                      },
-                      icon: const Icon(Icons.home_outlined),
-                      label: const Text(
-                        "Retour à l’accueil",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
                   Center(
                     child: Column(
                       children: [
