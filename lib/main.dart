@@ -982,23 +982,17 @@ class _HomePageState extends State<HomePage>
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset: false,
         extendBody: true,
-        bottomNavigationBar: AnimatedPadding(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            color: kPrestoOrange,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          child: Container(
-            decoration: const BoxDecoration(
-              color: kPrestoOrange,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-            child: SafeArea(
-              top: false,
-              child: Row(
+          padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+          child: SafeArea(
+            top: false,
+            child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -1045,7 +1039,6 @@ class _HomePageState extends State<HomePage>
                   ),
                 ],
               ),
-            ),
           ),
         ),
         body: PageView(
