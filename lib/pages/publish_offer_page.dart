@@ -566,38 +566,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Décrivez votre besoin à notre IA",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF1B1B1B),
-                            ),
-                          ),
-                          SizedBox(height: 6),
-                          Text(
-                            "Plus votre demande est claire, plus vous aurez de réponses adaptées.",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF7A7A7A),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    _MicButton(
-                      listening: _listening,
-                      onTap: _toggleMic,
-                    ),
-                  ],
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _MicButton(
+                    listening: _listening,
+                    onTap: _toggleMic,
+                  ),
                 ),
 
                 const SizedBox(height: 16),
