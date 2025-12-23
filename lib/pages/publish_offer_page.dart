@@ -547,7 +547,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           "Je publie une offre",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        centerTitle: true,
+        centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.home_outlined),
