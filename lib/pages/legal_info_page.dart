@@ -9,10 +9,9 @@ class LegalInfoPage extends StatefulWidget {
 
 class _LegalInfoPageState extends State<LegalInfoPage> {
   static const Color kOrange = Color(0xFFFF6600);
-  static const Color kBg = Color(0xFFF7EFE8);
+  static const Color kBg = Color(0xFFFFFFFF);
 
   int _tab = 0; // 0=Mentions, 1=Confidentialité, 2=CGU
-  int _bottomIndex = 4; // Compte (comme le mockup)
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +63,7 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
                     const SizedBox(height: 12),
                     _QuestionCard(
                       orange: kOrange,
-                      email: "contact@ilpresto.fr",
+                      email: "contact@iliprestō.fr",
                       onTapEmail: () {},
                     ),
                     const SizedBox(height: 18),
@@ -75,11 +74,7 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
           ],
         ),
       ),
-      bottomNavigationBar: _BottomBar(
-        orange: kOrange,
-        currentIndex: _bottomIndex,
-        onTap: (i) => setState(() => _bottomIndex = i),
-      ),
+      bottomNavigationBar: null,
     );
   }
 
@@ -89,7 +84,7 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
         return [
           _InfoTileCard(
             title: "À propos de nous",
-            subtitle: "Informations sur la société derrière ilprestō.",
+            subtitle: "Informations sur la société derrière iliprestō.",
             onTap: () {},
           ),
           const SizedBox(height: 12),
@@ -434,6 +429,7 @@ class _CardShell extends StatelessWidget {
   }
 }
 
+/*
 class _BottomBar extends StatelessWidget {
   final Color orange;
   final int currentIndex;
@@ -463,6 +459,7 @@ class _BottomBar extends StatelessWidget {
     );
   }
 }
+*/
 /*
 import 'package:flutter/material.dart';
 
@@ -493,8 +490,8 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: const Text(
-          "ilprestō",
-          style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.2),
+          "iliprestō",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 0.2),
         ),
         centerTitle: true,
         actions: [
@@ -533,9 +530,9 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
                     // ✅ UN SEUL bloc "Vous avez une question ?" (doublon supprimé)
                     _QuestionCard(
                       orange: kOrange,
-                      email: "contact@ilpresto.fr",
+                      email: "contact@iliprestō.fr",
                       onTapEmail: () {
-                        // TODO: lancer un mailto: contact@ilpresto.fr
+                        // TODO: lancer un mailto: contact@iliprestō.fr
                       },
                     ),
                     const SizedBox(height: 18),
@@ -560,7 +557,7 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
         return [
           _InfoTileCard(
             title: "À propos de nous",
-            subtitle: "Informations sur la société derrière ilprestō.",
+            subtitle: "Informations sur la société derrière iliprestō.",
             onTap: () {
               // TODO: navigation vers détail "À propos"
             },
