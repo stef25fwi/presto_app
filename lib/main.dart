@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
@@ -3106,6 +3107,45 @@ class OfferDetailPage extends StatelessWidget {
     required this.annonceurId,
   });
 
+  Future<void> _shareOn(BuildContext context, String platform) async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    final shareText =
+        "${title.trim()} – ${location.trim()} | Rejoins Prest'o pour en savoir plus.";
+    final shareUrl = Uri.parse('https://prestoo.app/offers');
+
+    final encodedText = Uri.encodeComponent(shareText);
+    final encodedUrl = Uri.encodeComponent(shareUrl.toString());
+
+    Uri? uri;
+    if (platform == 'whatsapp') {
+      uri = Uri.parse('https://wa.me/?text=$encodedText%20$encodedUrl');
+    } else if (platform == 'facebook') {
+      uri = Uri.parse(
+          'https://www.facebook.com/sharer/sharer.php?u=$encodedUrl&quote=$encodedText');
+    } else if (platform == 'instagram') {
+      // Instagram n'offre pas de partage web direct : on ouvre l'app/web pour laisser l'utilisateur coller le texte.
+      uri = Uri.parse('https://www.instagram.com/?text=$encodedText');
+    }
+
+    if (uri == null) return;
+
+    try {
+      final ok = await canLaunchUrl(uri);
+      if (!ok) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text("Partage indisponible sur cet appareil.")),
+        );
+        return;
+      }
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text("Impossible de lancer le partage.")),
+      );
+    }
+  }
+
   Future<void> _callPhone(BuildContext context) async {
     if (phone == null || phone!.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -3414,6 +3454,39 @@ class OfferDetailPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 22),
                           ],
+
+                          // Boutons de partage juste avant la section Publicité
+                          const Text(
+                            "Partager l’annonce",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              IconButton(
+                                onPressed: () => _shareOn(context, 'whatsapp'),
+                                icon: const FaIcon(FontAwesomeIcons.whatsapp),
+                                color: Colors.green,
+                                tooltip: "Partager sur WhatsApp",
+                              ),
+                              IconButton(
+                                onPressed: () => _shareOn(context, 'facebook'),
+                                icon: const FaIcon(FontAwesomeIcons.facebook),
+                                color: Colors.blueAccent,
+                                tooltip: "Partager sur Facebook",
+                              ),
+                              IconButton(
+                                onPressed: () => _shareOn(context, 'instagram'),
+                                icon: const FaIcon(FontAwesomeIcons.instagram),
+                                color: Colors.purple,
+                                tooltip: "Partager sur Instagram",
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
 
                           const Text(
                             "Publicité",
