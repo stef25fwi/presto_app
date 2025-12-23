@@ -25,8 +25,12 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: const Text(
-          "ilprestō",
-          style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.2),
+          "iliprestō",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.2,
+          ),
         ),
         centerTitle: true,
         actions: [

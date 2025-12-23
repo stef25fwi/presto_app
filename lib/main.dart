@@ -5440,7 +5440,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       appBar: AppBar(
         backgroundColor: kPrestoOrange,
         elevation: 0,
-        centerTitle: true,
         title: const Text(
           'Je publie une offre',
           style: TextStyle(
