@@ -401,6 +401,9 @@ class _HomePageState extends State<HomePage>
 
   late final AnimationController _categoryController;
 
+  // Taille de police de référence pour les titres des slides (alignée sur le slide 1)
+  static const double _homeSlideTitleFontSize = 24;
+
   bool _isSeeding = false;
   
   /// Contrôle l'affichage des suggestions de recherche
@@ -1163,7 +1166,7 @@ class _HomePageState extends State<HomePage>
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 24, // taille bien grosse
+                                        fontSize: _homeSlideTitleFontSize, // taille bien grosse
                                         fontWeight: FontWeight.w900,
                                         height: 1.25,
                                       ),
@@ -1225,18 +1228,14 @@ class _HomePageState extends State<HomePage>
                                         ),
                                         const SizedBox(height: 6),
                                         Text(
-                                          index == 0
-                                              ? "Trouvez immédiatement quelqu'un pour faire le job."
-                                              : slide.title,
+                                          slide.title,
                                           maxLines: 3,
                                           overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             color: Colors.white,
-                                            fontSize: index == 0
-                                                ? 22
-                                                : 16, // 🔥 plus gros sur le slide 1
-                                            fontWeight: FontWeight.w800,
-                                            height: 1.3,
+                                            fontSize: _homeSlideTitleFontSize,
+                                            fontWeight: FontWeight.w900,
+                                            height: 1.25,
                                           ),
                                         ),
                                         const SizedBox(height: 6),
