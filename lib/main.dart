@@ -1273,9 +1273,11 @@ class _HomePageState extends State<HomePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Ligne du haut : logo + cloche
+                // Ligne du haut : info + logo + cloche
                 Row(
                   children: [
+                    _buildInfoIcon(),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: GestureDetector(
                         onLongPress: _seedSampleOffers,
@@ -1293,8 +1295,6 @@ class _HomePageState extends State<HomePage>
                       ),
                     ),
                     _buildNotificationBell(),
-                    const SizedBox(width: 8),
-                    _buildInfoIcon(),
                   ],
                 ),
 

@@ -21,15 +21,18 @@ class LegalInfoPageClean extends StatelessWidget {
           ),
           iconTheme: const IconThemeData(color: Colors.white),
           actionsIconTheme: const IconThemeData(color: Colors.white),
-          bottom: const TabBar(
-            tabs: [
+          bottom: TabBar(
+            tabs: const [
               Tab(text: 'Mentions légales'),
               Tab(text: 'Confidentialité'),
               Tab(text: 'CGU'),
             ],
             indicatorColor: Colors.white,
+            indicatorWeight: 3,
             labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
+            unselectedLabelColor: Colors.white.withOpacity(0.5),
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
           ),
         ),
         body: const TabBarView(
@@ -220,5 +223,7 @@ class _CGUView extends StatelessWidget {
 }
 
 Future<void> _launchUrl(Uri uri) async {
-  await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 }
