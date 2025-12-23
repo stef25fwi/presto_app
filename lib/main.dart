@@ -28,7 +28,7 @@ import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
 import 'pages/pro_profile_page.dart';
-import 'pages/legal_info_page.dart';
+import 'pages/legal_info_page_clean.dart';
 import 'dev/seed_offers.dart';
 
 import 'package:image_picker/image_picker.dart';
@@ -1131,7 +1131,7 @@ class _HomePageState extends State<HomePage>
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => const LegalInfoPage(),
+            builder: (_) => const LegalInfoPageClean(),
           ),
         );
       },
