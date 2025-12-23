@@ -3829,7 +3829,7 @@ class OfferDetailPage extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _ShareButton(
-                      icon: Icons.whatsapp,
+                      icon: FontAwesomeIcons.whatsapp,
                       label: "WhatsApp",
                       onPressed: () => _shareOn(context, 'whatsapp'),
                     ),
@@ -3837,7 +3837,7 @@ class OfferDetailPage extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _ShareButton(
-                      icon: Icons.facebook,
+                      icon: FontAwesomeIcons.facebook,
                       label: "Facebook",
                       onPressed: () => _shareOn(context, 'facebook'),
                     ),
@@ -3862,7 +3862,8 @@ class OfferDetailPage extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildPhotoTile({String? url, bool primary = false}) {
