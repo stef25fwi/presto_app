@@ -28,6 +28,7 @@ import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
 import 'pages/pro_profile_page.dart';
+import 'pages/legal_info_page.dart';
 import 'dev/seed_offers.dart';
 
 import 'package:image_picker/image_picker.dart';
@@ -1130,7 +1131,7 @@ class _HomePageState extends State<HomePage>
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => const InfoLegalPage(),
+            builder: (_) => const LegalInfoPage(),
           ),
         );
       },
@@ -1156,7 +1157,6 @@ class _HomePageState extends State<HomePage>
       ),
     );
   }
-
   /// Illustration à droite du slide (plus de chrono image)
   Widget _buildSlideIllustration(_HomeSlide slide, int index) {
     // On ignore complètement slide.imageAsset, on affiche juste une icône
@@ -7391,185 +7391,6 @@ class _RecapRow extends StatelessWidget {
             value,
             style: const TextStyle(
               fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// PAGE D'INFORMATIONS LÉGALES ////////////////////////////////////////////
-
-class InfoLegalPage extends StatelessWidget {
-  const InfoLegalPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Informations',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black87,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildSection(
-            context,
-            icon: Icons.info_outline,
-            title: 'Qui sommes-nous ?',
-            content: '''
-Prest'o est une plateforme de mise en relation entre particuliers et professionnels pour des services de proximité.
-
-Notre mission est de faciliter l'accès aux services locaux tout en valorisant les compétences de chacun.
-
-Développée avec passion en Guadeloupe et Martinique, Prest'o s'engage à créer des liens durables dans nos communautés.
-''',
-          ),
-          const SizedBox(height: 16),
-          _buildSection(
-            context,
-            icon: Icons.description_outlined,
-            title: 'Mentions légales',
-            content: '''
-Éditeur de l'application :
-Prest'o
-Email : contact@presto.app
-
-Hébergement :
-Firebase (Google Cloud Platform)
-1600 Amphitheatre Parkway
-Mountain View, CA 94043, USA
-
-Directeur de publication :
-[Nom du responsable]
-
-RCS : [Numéro d'immatriculation]
-SIRET : [Numéro SIRET]
-''',
-          ),
-          const SizedBox(height: 16),
-          _buildSection(
-            context,
-            icon: Icons.gavel_outlined,
-            title: 'Conditions Générales d\'Utilisation (CGU)',
-            content: '''
-1. OBJET
-Les présentes CGU régissent l'utilisation de l'application Prest'o.
-
-2. ACCEPTATION
-En utilisant l'application, vous acceptez sans réserve les présentes CGU.
-
-3. SERVICES
-Prest'o permet la mise en relation entre utilisateurs pour des services de proximité.
-
-4. INSCRIPTION
-L'inscription nécessite la création d'un compte avec des informations exactes.
-
-5. RESPONSABILITÉS
-- L'utilisateur est responsable de la véracité des informations publiées
-- Prest'o agit en tant qu'intermédiaire et n'est pas partie aux transactions
-
-6. CONTENU
-Les utilisateurs s'engagent à publier du contenu licite, non contraire aux bonnes mœurs.
-
-7. MODIFICATION
-Prest'o se réserve le droit de modifier les CGU à tout moment.
-
-8. LOI APPLICABLE
-Les présentes CGU sont soumises au droit français.
-''',
-          ),
-          const SizedBox(height: 16),
-          _buildSection(
-            context,
-            icon: Icons.privacy_tip_outlined,
-            title: 'Politique de Confidentialité',
-            content: '''
-1. DONNÉES COLLECTÉES
-Nous collectons les informations que vous nous fournissez :
-- Nom, prénom
-- Email
-- Numéro de téléphone
-- Localisation (ville)
-- Photos des annonces
-
-2. UTILISATION DES DONNÉES
-Vos données sont utilisées pour :
-- Faciliter la mise en relation
-- Améliorer nos services
-- Vous envoyer des notifications
-
-3. PARTAGE DES DONNÉES
-Vos coordonnées sont partagées uniquement avec les utilisateurs qui contactent vos annonces.
-
-4. SÉCURITÉ
-Nous utilisons Firebase pour sécuriser vos données avec un chiffrement de niveau entreprise.
-
-5. DROITS
-Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données.
-
-Pour exercer vos droits : contact@presto.app
-
-6. COOKIES
-L'application utilise des cookies pour améliorer l'expérience utilisateur.
-
-7. MODIFICATION
-Cette politique peut être modifiée. Nous vous informerons des changements importants.
-
-Dernière mise à jour : Décembre 2025
-''',
-          ),
-          const SizedBox(height: 32),
-          Center(
-            child: Text(
-              '© 2025 Prest\'o - Tous droits réservés',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSection(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String content,
-  }) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ExpansionTile(
-        leading: Icon(icon, color: kPrestoOrange),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              content.trim(),
-              style: TextStyle(
-                color: Colors.grey.shade800,
-                height: 1.5,
-              ),
             ),
           ),
         ],
