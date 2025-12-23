@@ -28,7 +28,7 @@ import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
 import 'pages/pro_profile_page.dart';
-import 'pages/legal_info_page_fixed.dart';
+import 'pages/legal_info_page.dart';
 import 'dev/seed_offers.dart';
 
 import 'package:image_picker/image_picker.dart';
@@ -1276,6 +1276,8 @@ class _HomePageState extends State<HomePage>
                 // Ligne du haut : logo + cloche
                 Row(
                   children: [
+                    _buildInfoIcon(),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: GestureDetector(
                         onLongPress: _seedSampleOffers,
@@ -1293,8 +1295,6 @@ class _HomePageState extends State<HomePage>
                       ),
                     ),
                     _buildNotificationBell(),
-                    const SizedBox(width: 8),
-                    _buildInfoIcon(),
                   ],
                 ),
 
