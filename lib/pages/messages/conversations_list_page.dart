@@ -389,7 +389,7 @@ List<Conversation> _seedConversations() {
       id: 'conv-1',
       contactName: 'Camille',
       unreadCount: 2,
-      messages: const [
+      messages: [
         Message(
           text: 'Hello ! Merci pour ton dernier retour.',
           sentAt: DateTime(2025, 1, 20, 9, 30),
@@ -406,7 +406,7 @@ List<Conversation> _seedConversations() {
       id: 'conv-2',
       contactName: 'Alexandre',
       unreadCount: 1,
-      messages: const [
+      messages: [
         Message(
           text: 'Parfait, je passe demain matin.',
           sentAt: DateTime(2025, 1, 19, 18, 12),
@@ -423,7 +423,7 @@ List<Conversation> _seedConversations() {
       id: 'conv-3',
       contactName: 'Sophie',
       unreadCount: 0,
-      messages: const [
+      messages: [
         Message(
           text: 'Merci pour la prestation, à bientôt !',
           sentAt: DateTime(2025, 1, 18, 14, 42),

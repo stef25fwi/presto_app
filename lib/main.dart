@@ -13,7 +13,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
@@ -3491,12 +3490,10 @@ class OfferDetailPage extends StatelessWidget {
     final theme = Theme.of(context);
 
     // --- helpers format / extraction ---
-    String formatBudget(num? b) {
-      if (b == null) return "À définir";
-      // 40,00 € => sur le mockup on affiche "40 €"
+    String formatPrice(num? b) {
+      if (b == null) return "—";
       final v = b.toDouble();
-      if ((v - v.roundToDouble()).abs() < 0.0001) return "${v.toInt()} €";
-      return "${v.toStringAsFixed(2)} €";
+      return "${v.toStringAsFixed(0)} €";
     }
 
     String extractDuration(String title) {
@@ -3506,18 +3503,27 @@ class OfferDetailPage extends StatelessWidget {
       return m?.group(1)?.replaceAll(' ', '') ?? "—";
     }
 
-    final String budgetText = formatBudget(budget);
+    final String priceText = formatPrice(budget);
     final String durationText = extractDuration(title);
+    final String city = location;
 
     final bool hasPhone = phone != null && phone!.trim().isNotEmpty;
-    final List<String> photos = imageUrls ?? const [];
+    final String phoneText = hasPhone ? phone!.trim() : "Numéro non renseigné";
+    final String rawDescription = (description ?? '').trim();
+    final String descriptionText = rawDescription.isEmpty
+      ? "Aucune description détaillée fournie."
+      : rawDescription;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
 
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
         title: const Text(
-          "Détail de l'offre",
+          "Détail de l’offre",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
         centerTitle: true,
@@ -3547,7 +3553,7 @@ class OfferDetailPage extends StatelessWidget {
               Text(
                 "Réponse rapide • Paiement selon accord",
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 6),
@@ -3560,7 +3566,7 @@ class OfferDetailPage extends StatelessWidget {
                     "Récemment en ligne",
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: Colors.grey.shade700,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -3584,7 +3590,7 @@ class OfferDetailPage extends StatelessWidget {
                   ),
                   // ✅ garde ta logique : action sheet (message/appel)
                   onPressed: () => _showActionSheet(context),
-                  child: const Text("Accepter l'offre"),
+                  child: const Text("Accepter l’offre"),
                 ),
               ),
             ],
@@ -3594,7 +3600,7 @@ class OfferDetailPage extends StatelessWidget {
 
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 170), // espace pour bottomSheet
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 160), // espace pour bottomSheet
         child: Column(
           children: [
             // ✅ HERO CARD : titre + chips
@@ -3603,7 +3609,7 @@ class OfferDetailPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "$title – $location",
+                    "$title – $city",
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -3617,7 +3623,7 @@ class OfferDetailPage extends StatelessWidget {
                         icon: Icons.place,
                         iconBg: kPrestoOrange.withOpacity(0.15),
                         iconColor: kPrestoOrange,
-                        label: location,
+                        label: city,
                       ),
                       _InfoChip(
                         icon: Icons.access_time,
@@ -3629,7 +3635,7 @@ class OfferDetailPage extends StatelessWidget {
                         icon: Icons.euro,
                         iconBg: kPrestoOrange.withOpacity(0.15),
                         iconColor: kPrestoOrange,
-                        label: budgetText,
+                        label: priceText,
                         bold: true,
                       ),
                       _InfoChip(
@@ -3650,9 +3656,7 @@ class OfferDetailPage extends StatelessWidget {
             _SectionCard(
               title: "Description",
               child: Text(
-                (description == null || description!.trim().isEmpty)
-                    ? "Aucune description détaillée fournie."
-                    : description!,
+                  descriptionText,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: Colors.grey.shade800,
                   height: 1.35,
@@ -3660,34 +3664,6 @@ class OfferDetailPage extends StatelessWidget {
                 ),
               ),
             ),
-
-            const SizedBox(height: 14),
-
-            // ✅ PHOTOS entre Description et Publicité
-            if (photos.isNotEmpty)
-              _SectionCard(
-                title: "Photos de l’annonce",
-                child: SizedBox(
-                  height: 190,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildPhotoTile(
-                          url: photos.isNotEmpty ? photos[0] : null,
-                          primary: true,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _buildPhotoTile(
-                          url: photos.length > 1 ? photos[1] : null,
-                          primary: false,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
 
             const SizedBox(height: 14),
 
@@ -3711,9 +3687,9 @@ class OfferDetailPage extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          hasPhone ? "Numéro disponible" : "Numéro non renseigné",
+                          phoneText,
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
@@ -3739,7 +3715,7 @@ class OfferDetailPage extends StatelessWidget {
                         "Contact via messagerie Prestō",
                         style: TextStyle(
                           color: kPrestoBlue,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -3823,13 +3799,13 @@ class OfferDetailPage extends StatelessWidget {
 
             // ✅ PARTAGER (carte) -> boutons comme mockup
             _SectionCard(
-              title: "Partager l'annonce",
+              title: "Partager l’annonce",
               trailing: const Icon(Icons.chevron_right),
               child: Row(
                 children: [
                   Expanded(
                     child: _ShareButton(
-                      icon: FontAwesomeIcons.whatsapp,
+                      icon: Icons.chat_bubble_outline,
                       label: "WhatsApp",
                       onPressed: () => _shareOn(context, 'whatsapp'),
                     ),
@@ -3837,7 +3813,7 @@ class OfferDetailPage extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _ShareButton(
-                      icon: FontAwesomeIcons.facebook,
+                      icon: Icons.facebook,
                       label: "Facebook",
                       onPressed: () => _shareOn(context, 'facebook'),
                     ),
@@ -3866,46 +3842,8 @@ class OfferDetailPage extends StatelessWidget {
   );
   }
 
-  Widget _buildPhotoTile({String? url, bool primary = false}) {
-    if (url == null || url.isEmpty) {
-      return Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          color: primary ? const Color(0xFFFFF3E0) : Colors.white,
-          boxShadow: primary
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ]
-              : null,
-        ),
-        child: Icon(
-          Icons.add_a_photo_outlined,
-          size: primary ? 44 : 36,
-          color: primary ? Colors.black45 : Colors.black26,
-        ),
-      );
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        color: Colors.grey[200],
-        child: Image.network(
-          url,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const Center(
-            child: Icon(Icons.image, size: 24, color: kPrestoOrange),
-          ),
-        ),
-      ),
-    );
-  }
 }
-
+// ignore: unused_element
 /// Ligne méta avec icône dans un rond orange premium
 class _OfferMetaRow extends StatelessWidget {
   final IconData icon;
