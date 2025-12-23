@@ -28,7 +28,7 @@ import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
 import 'pages/pro_profile_page.dart';
-import 'pages/legal_info_page_clean.dart';
+import 'pages/legal_info_page_fixed.dart';
 import 'dev/seed_offers.dart';
 
 import 'package:image_picker/image_picker.dart';
@@ -1131,7 +1131,7 @@ class _HomePageState extends State<HomePage>
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => const LegalInfoPageClean(),
+            builder: (_) => const LegalInfoPage(),
           ),
         );
       },
@@ -3865,57 +3865,7 @@ class OfferDetailPage extends StatelessWidget {
   }
 
 }
-// ignore: unused_element
-/// Ligne méta avec icône dans un rond orange premium
-class _OfferMetaRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _OfferMetaRow({
-    required this.icon,
-    required this.text,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: kPrestoOrange,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.10),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Icon(
-              icon,
-              size: 18,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
+// (supprimé) `_OfferMetaRow` était non référencé et générait un avertissement.
 
 /// Utilitaire : format d'heure pour la liste de conversations
 String formatTimeLabel(Timestamp? ts) {
