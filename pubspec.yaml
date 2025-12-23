@@ -30,6 +30,7 @@ dependencies:
   record: ^5.0.0
   path_provider: ^2.1.0
   google_mobile_ads: ^5.1.0
+  font_awesome_flutter: ^10.7.0
 
 dev_dependencies:
   flutter_test:
