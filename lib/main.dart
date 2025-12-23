@@ -178,6 +178,163 @@ String? inferRegionFromPostalCode(String cp) {
   return null;
 }
 
+/// ============= WIDGETS HELPER POUR OfferDetailPage =============
+
+class _CardShell extends StatelessWidget {
+  final Widget child;
+  const _CardShell({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final Widget child;
+  final Widget? trailing;
+
+  const _SectionCard({
+    required this.title,
+    required this.child,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return _CardShell(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              if (trailing != null)
+                IconTheme(
+                  data: IconThemeData(color: Colors.grey.shade500),
+                  child: trailing!,
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final Color iconBg;
+  final Color iconColor;
+  final String label;
+  final bool bold;
+
+  const _InfoChip({
+    required this.icon,
+    required this.iconBg,
+    required this.iconColor,
+    required this.label,
+    this.bold = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, size: 16, color: iconColor),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: bold ? FontWeight.w900 : FontWeight.w800,
+              color: Colors.grey.shade900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShareButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  const _ShareButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.white,
+          side: BorderSide(color: Colors.black.withOpacity(0.06)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18, color: Colors.grey.shade800),
+        label: Text(
+          label,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Colors.grey.shade900,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Petit état de session (user connecté ou non)
 class SessionState {
   static String? userId;
@@ -375,6 +532,8 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
               ],
+
+            
             ),
           ),
         ),
@@ -3329,235 +3488,375 @@ class OfferDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final budgetText =
-        budget == null ? "À définir" : "${budget!.toStringAsFixed(2)} €";
-    final bool hasPhone = phone != null && phone!.trim().isNotEmpty;
+    final theme = Theme.of(context);
 
-    // 🔥 Photos (0, 1 ou 2)
+    // --- helpers format / extraction ---
+    String formatBudget(num? b) {
+      if (b == null) return "À définir";
+      // 40,00 € => sur le mockup on affiche "40 €"
+      final v = b.toDouble();
+      if ((v - v.roundToDouble()).abs() < 0.0001) return "${v.toInt()} €";
+      return "${v.toStringAsFixed(2)} €";
+    }
+
+    String extractDuration(String title) {
+      // Ex: "Ménage 2h" => "2h" | "DJ 90 min" => "90 min"
+      final reg = RegExp(r'(\d+\s*(h|min))', caseSensitive: false);
+      final m = reg.firstMatch(title);
+      return m?.group(1)?.replaceAll(' ', '') ?? "—";
+    }
+
+    final String budgetText = formatBudget(budget);
+    final String durationText = extractDuration(title);
+
+    final bool hasPhone = phone != null && phone!.trim().isNotEmpty;
     final List<String> photos = imageUrls ?? const [];
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF6F7F9),
+
       appBar: AppBar(
         title: const Text(
-          "Détail de l’offre",
+          "Détail de l'offre",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
+        centerTitle: true,
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Titre de l’offre
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 16),
 
-            // Métadonnées (lieu / catégorie / budget / téléphone)
-            _OfferMetaRow(
-              icon: Icons.place_outlined,
-              text: location,
-            ),
-            const SizedBox(height: 8),
-            _OfferMetaRow(
-              icon: Icons.category_outlined,
-              text: category,
-            ),
-            if (subcategory != null && subcategory!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              _OfferMetaRow(
-                icon: Icons.label_outline,
-                text: subcategory!,
+      // ✅ CTA sticky comme le mockup
+      bottomSheet: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 14,
+                offset: const Offset(0, -4),
               ),
             ],
-            const SizedBox(height: 8),
-            _OfferMetaRow(
-              icon: Icons.euro_outlined,
-              text: budgetText,
-            ),
-            const SizedBox(height: 8),
-            _OfferMetaRow(
-              icon: Icons.phone_android_outlined,
-              text: hasPhone ? "Numéro disponible" : "Numéro non renseigné",
-            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Réponse rapide • Paiement selon accord",
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.schedule, size: 16, color: Colors.grey.shade600),
+                  const SizedBox(width: 6),
+                  Text(
+                    "Récemment en ligne",
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrestoOrange,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  // ✅ garde ta logique : action sheet (message/appel)
+                  onPressed: () => _showActionSheet(context),
+                  child: const Text("Accepter l'offre"),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
 
-            const SizedBox(height: 22),
-
-            const Text(
-              "Description",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 170), // espace pour bottomSheet
+        child: Column(
+          children: [
+            // ✅ HERO CARD : titre + chips
+            _CardShell(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "$title – $location",
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      _InfoChip(
+                        icon: Icons.place,
+                        iconBg: kPrestoOrange.withOpacity(0.15),
+                        iconColor: kPrestoOrange,
+                        label: location,
+                      ),
+                      _InfoChip(
+                        icon: Icons.access_time,
+                        iconBg: kPrestoOrange.withOpacity(0.15),
+                        iconColor: kPrestoOrange,
+                        label: durationText,
+                      ),
+                      _InfoChip(
+                        icon: Icons.euro,
+                        iconBg: kPrestoOrange.withOpacity(0.15),
+                        iconColor: kPrestoOrange,
+                        label: budgetText,
+                        bold: true,
+                      ),
+                      _InfoChip(
+                        icon: Icons.cleaning_services,
+                        iconBg: kPrestoBlue.withOpacity(0.12),
+                        iconColor: kPrestoBlue,
+                        label: category,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
 
-            // Bloc central scrollable : description + photos + pub
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints:
-                          BoxConstraints(minHeight: constraints.maxHeight),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            (description == null || description!.trim().isEmpty)
-                                ? "Aucune description détaillée fournie."
-                                : description!,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              height: 1.4,
-                            ),
+            const SizedBox(height: 14),
+
+            // ✅ DESCRIPTION (carte)
+            _SectionCard(
+              title: "Description",
+              child: Text(
+                (description == null || description!.trim().isEmpty)
+                    ? "Aucune description détaillée fournie."
+                    : description!,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: Colors.grey.shade800,
+                  height: 1.35,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            // ✅ PHOTOS entre Description et Publicité
+            if (photos.isNotEmpty)
+              _SectionCard(
+                title: "Photos de l’annonce",
+                child: SizedBox(
+                  height: 190,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildPhotoTile(
+                          url: photos.isNotEmpty ? photos[0] : null,
+                          primary: true,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _buildPhotoTile(
+                          url: photos.length > 1 ? photos[1] : null,
+                          primary: false,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 14),
+
+            // ✅ CONTACT (carte)
+            _SectionCard(
+              title: "Contact",
+              trailing: const Icon(Icons.chevron_right),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: const Color(0xFFFFF3E8),
+                        child: Icon(
+                          Icons.call,
+                          size: 18,
+                          color: Colors.orange.shade800,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          hasPhone ? "Numéro disponible" : "Numéro non renseigné",
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
                           ),
-                          const SizedBox(height: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
 
-                          // ✅ Si photos, on les affiche ; sinon, on affiche une grande pub
-                          if (photos.isNotEmpty) ...[
-                            const Text(
-                              "Photos de l’annonce",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            SizedBox(
-                              height: 190,
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildPhotoTile(
-                                      url: photos.isNotEmpty ? photos[0] : null,
-                                      primary: true,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: _buildPhotoTile(
-                                      url: photos.length > 1 ? photos[1] : null,
-                                      primary: false,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 22),
-                          ],
+                  // ✅ Bouton bleu "messagerie Prestō" comme mockup
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: kPrestoBlue.withOpacity(0.20)),
+                        backgroundColor: kPrestoBlue.withOpacity(0.07),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () => _showActionSheet(context),
+                      icon: const Icon(Icons.chat_bubble_outline, color: kPrestoBlue),
+                      label: const Text(
+                        "Contact via messagerie Prestō",
+                        style: TextStyle(
+                          color: kPrestoBlue,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-                          // Boutons de partage juste avant la section Publicité
-                          const Text(
-                            "Partager l’annonce",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
+            const SizedBox(height: 14),
+
+            // ✅ PUBLICITÉ (carte)
+            _SectionCard(
+              title: "Publicité",
+              trailing: const Icon(Icons.chevron_right),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.black.withOpacity(0.06)),
+                ),
+                child: Column(
+                  children: [
+                    // petit "skeleton" en haut (comme le mockup)
+                    Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.06),
+                            borderRadius: BorderRadius.circular(24),
                           ),
-                          const SizedBox(height: 8),
-                          Row(
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              IconButton(
-                                onPressed: () => _shareOn(context, 'whatsapp'),
-                                icon: const FaIcon(FontAwesomeIcons.whatsapp),
-                                color: Colors.green,
-                                tooltip: "Partager sur WhatsApp",
+                              Container(
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.06),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
                               ),
-                              IconButton(
-                                onPressed: () => _shareOn(context, 'facebook'),
-                                icon: const FaIcon(FontAwesomeIcons.facebook),
-                                color: Colors.blueAccent,
-                                tooltip: "Partager sur Facebook",
-                              ),
-                              IconButton(
-                                onPressed: () => _shareOn(context, 'instagram'),
-                                icon: const FaIcon(FontAwesomeIcons.instagram),
-                                color: Colors.purple,
-                                tooltip: "Partager sur Instagram",
+                              const SizedBox(height: 8),
+                              Container(
+                                height: 10,
+                                width: 140,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.06),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
-
-                          const Text(
-                            "Publicité",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            width: double.infinity,
-                            height: photos.isEmpty
-                                ? 190
-                                : 100, // ✅ Si pas de photos → grande bannière
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(18),
-                              child: Container(
-                                color: Colors.white,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: Colors.black12,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: const Center(
-                                    child: Text(
-                                      "Espace Google Ads\nBannière 320x100",
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                        ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      "Espace Google Ads\nBannière 320x100",
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  );
-                },
+
+                    // ✅ Ici tu remplaces par ton widget AdMob si tu en as un
+                    // const SizedBox(height: 10),
+                    // AdBanner(),
+                  ],
+                ),
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            // Bouton principal
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrestoOrange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(22),
+            // ✅ PARTAGER (carte) -> boutons comme mockup
+            _SectionCard(
+              title: "Partager l'annonce",
+              trailing: const Icon(Icons.chevron_right),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _ShareButton(
+                      icon: Icons.whatsapp,
+                      label: "WhatsApp",
+                      onPressed: () => _shareOn(context, 'whatsapp'),
+                    ),
                   ),
-                ),
-                onPressed: () => _showActionSheet(context),
-                child: const Text(
-                  "J’accepte l’offre",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ShareButton(
+                      icon: Icons.facebook,
+                      label: "Facebook",
+                      onPressed: () => _shareOn(context, 'facebook'),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ShareButton(
+                      icon: Icons.link,
+                      label: "Copier le lien",
+                      onPressed: () {
+                        // si tu veux, tu peux faire Clipboard.setData(...)
+                        // mais pour rester simple, on peut réutiliser un share "instagram" ou snackbar
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Lien copié (à brancher).")),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
