@@ -1276,8 +1276,6 @@ class _HomePageState extends State<HomePage>
                 // Ligne du haut : logo + cloche
                 Row(
                   children: [
-                    _buildInfoIcon(),
-                    const SizedBox(width: 8),
                     Expanded(
                       child: GestureDetector(
                         onLongPress: _seedSampleOffers,
@@ -1295,6 +1293,8 @@ class _HomePageState extends State<HomePage>
                       ),
                     ),
                     _buildNotificationBell(),
+                    const SizedBox(width: 8),
+                    _buildInfoIcon(),
                   ],
                 ),
 
