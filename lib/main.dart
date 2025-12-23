@@ -31,6 +31,7 @@ import 'pages/pro_profile_page.dart';
 import 'dev/seed_offers.dart';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -299,7 +300,7 @@ class _InfoChip extends StatelessWidget {
 }
 
 class _ShareButton extends StatelessWidget {
-  final IconData icon;
+  final Widget icon;
   final String label;
   final VoidCallback onPressed;
 
@@ -320,10 +321,12 @@ class _ShareButton extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
         onPressed: onPressed,
-        icon: Icon(icon, size: 18, color: Colors.grey.shade800),
+        icon: icon,
         label: Text(
           label,
-          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.fade,
           style: TextStyle(
             fontWeight: FontWeight.w800,
             color: Colors.grey.shade900,
@@ -3600,7 +3603,7 @@ class OfferDetailPage extends StatelessWidget {
 
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 160), // espace pour bottomSheet
+          padding: const EdgeInsets.fromLTRB(0, 16, 0, 160), // espace pour bottomSheet, marges latérales à 0
         child: Column(
           children: [
             // ✅ HERO CARD : titre + chips
@@ -3695,41 +3698,15 @@ class OfferDetailPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-
-                  // ✅ Bouton bleu "messagerie Prestō" comme mockup
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: kPrestoBlue.withOpacity(0.20)),
-                        backgroundColor: kPrestoBlue.withOpacity(0.07),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () => _showActionSheet(context),
-                      icon: const Icon(Icons.chat_bubble_outline, color: kPrestoBlue),
-                      label: const Text(
-                        "Contact via messagerie Prestō",
-                        style: TextStyle(
-                          color: kPrestoBlue,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
+                  // Bouton messagerie retiré
                 ],
               ),
             ),
 
             const SizedBox(height: 14),
 
-            // ✅ PUBLICITÉ (carte)
-            _SectionCard(
-              title: "Publicité",
-              trailing: const Icon(Icons.chevron_right),
+            // ✅ PUBLICITÉ (carte) sans entête
+            _CardShell(
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
@@ -3805,7 +3782,12 @@ class OfferDetailPage extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _ShareButton(
-                      icon: Icons.chat_bubble_outline,
+                      icon: SvgPicture.network(
+                        'https://cdn.simpleicons.org/whatsapp',
+                        width: 18,
+                        height: 18,
+                        placeholderBuilder: (context) => Icon(Icons.chat_bubble_outline, size: 18, color: Colors.grey.shade800),
+                      ),
                       label: "WhatsApp",
                       onPressed: () => _shareOn(context, 'whatsapp'),
                     ),
@@ -3813,7 +3795,12 @@ class OfferDetailPage extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _ShareButton(
-                      icon: Icons.facebook,
+                      icon: SvgPicture.network(
+                        'https://cdn.simpleicons.org/facebook',
+                        width: 18,
+                        height: 18,
+                        placeholderBuilder: (context) => Icon(Icons.facebook, size: 18, color: Colors.grey.shade800),
+                      ),
                       label: "Facebook",
                       onPressed: () => _shareOn(context, 'facebook'),
                     ),
@@ -3821,7 +3808,7 @@ class OfferDetailPage extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: _ShareButton(
-                      icon: Icons.link,
+                      icon: const Icon(Icons.link, size: 18, color: Colors.grey),
                       label: "Copier le lien",
                       onPressed: () {
                         // si tu veux, tu peux faire Clipboard.setData(...)
