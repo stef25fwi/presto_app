@@ -26,7 +26,7 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
         ),
         title: const Text(
           "ilprestō",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 0.2),
+          style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.2),
         ),
         centerTitle: true,
         actions: [
