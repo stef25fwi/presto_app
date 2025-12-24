@@ -3920,7 +3920,7 @@ Motif du signalement :
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Prix + "pour X heures"
+            // Prix + "pour X heures" (conditionnellement)
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -3932,17 +3932,19 @@ Motif du signalement :
                     height: 1,
                   ),
                 ),
-                const SizedBox(width: 10),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 3),
-                  child: Text(
-                    "pour $durationText",
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.w700,
+                if (durationText != "—") ...[
+                  const SizedBox(width: 10),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
+                    child: Text(
+                      "pour $durationText",
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
             const SizedBox(height: 14),
