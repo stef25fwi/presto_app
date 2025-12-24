@@ -15,6 +15,21 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
 
   int _tab = 0; // 0=Mentions, 1=Confidentialité, 2=CGU
 
+  void _openSection({
+    required String title,
+    required String content,
+  }) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _LegalSectionPage(
+          title: title,
+          content: content,
+          orange: kOrange,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,13 +76,13 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
                 child: Column(
                   children: [
                     const SizedBox(height: 4),
-                    ..._buildTabContent(context),
+                    ..._buildTabContent(),
                     const SizedBox(height: 12),
                     _QuestionCard(
                       orange: kOrange,
-                      email: "contact@iliprestō.fr",
+                      email: "contact@ilipresto.fr",
                       onTapEmail: () {
-                        _launchUrl(Uri.parse('mailto:contact@iliprestō.fr'));
+                        _launchUrl(Uri.parse('mailto:contact@ilipresto.fr'));
                       },
                     ),
                     const SizedBox(height: 18),
@@ -82,74 +97,215 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
     );
   }
 
-  List<Widget> _buildTabContent(BuildContext context) {
+  List<Widget> _buildTabContent() {
     switch (_tab) {
       case 0:
         return [
           _InfoTileCard(
             title: "À propos de nous",
             subtitle: "Informations sur la société derrière iliprestō.",
-            onTap: () {},
+            onTap: () => _openSection(
+              title: "À propos de nous",
+              content: """
+Éditeur du site / de l'application
+• Raison sociale / Nom : [à compléter]
+• Forme juridique : [à compléter]
+• Siège social : [à compléter]
+• SIREN/SIRET : [à compléter]
+• Email : contact@ilipresto.fr
+
+(Replace ce contenu par ton texte final.)
+""",
+            ),
           ),
           const SizedBox(height: 12),
           _InfoTileCard(
             title: "Responsable de publication",
             subtitle: "Coordonnées du responsable de la publication.",
-            onTap: () {},
+            onTap: () => _openSection(
+              title: "Responsable de publication",
+              content: """
+Directeur / responsable de la publication
+• Nom / Prénom : [à compléter]
+• Fonction : [à compléter]
+• Contact : contact@ilipresto.fr
+""",
+            ),
           ),
           const SizedBox(height: 12),
           _HostingCard(
             orange: kOrange,
-            onTap: () {},
+            onTap: () => _openSection(
+              title: "Hébergement",
+              content: """
+Hébergement
+• Hébergeur : [GitHub Pages / Firebase / autre]
+• Coordonnées : [à compléter]
+• Site : [à compléter]
+
+Remarque : garde uniquement l'hébergeur réellement utilisé.
+""",
+            ),
             onDownloadPdf: () {
-              _launchUrl(Uri.parse('https://ilipreto.fr/mentions-legales.pdf'));
+              _launchUrl(Uri.parse('https://ilipresto.fr/mentions-legales.pdf'));
             },
             lastUpdateText: "Dernière mise à jour : 15 avril 2024",
           ),
         ];
+
       case 1:
         return [
           _InfoTileCard(
             title: "Données collectées",
             subtitle: "Quelles données nous collectons et pourquoi.",
-            onTap: () {},
+            onTap: () => _openSection(
+              title: "Données collectées",
+              content: """
+Exemples de données collectées
+• Compte (email, téléphone, nom…)
+• Annonces publiées
+• Messages / conversations
+• Données techniques (logs, appareil…)
+
+Finalité
+• Fournir le service, sécuriser, prévenir la fraude, améliorer l'expérience.
+""",
+            ),
           ),
           const SizedBox(height: 12),
           _InfoTileCard(
             title: "Durée de conservation",
             subtitle: "Combien de temps nous gardons vos données.",
-            onTap: () {},
+            onTap: () => _openSection(
+              title: "Durée de conservation",
+              content: """
+Conservation
+• Données de compte : tant que le compte est actif
+• Données d'annonces : [à préciser]
+• Logs techniques : [à préciser]
+
+(À ajuster selon ta politique réelle.)
+""",
+            ),
           ),
           const SizedBox(height: 12),
           _InfoTileCard(
             title: "Vos droits (RGPD)",
             subtitle: "Accès, rectification, suppression, opposition…",
-            onTap: () {},
+            onTap: () => _openSection(
+              title: "Vos droits (RGPD)",
+              content: """
+Conformément au RGPD, vous pouvez exercer :
+• Droit d'accès
+• Rectification
+• Effacement
+• Opposition
+• Portabilité
+
+Contact : contact@ilipresto.fr
+""",
+            ),
           ),
         ];
+
       case 2:
         return [
           _InfoTileCard(
             title: "Objet des CGU",
             subtitle: "Règles d'utilisation de la plateforme.",
-            onTap: () {},
+            onTap: () => _openSection(
+              title: "Objet des CGU",
+              content: """
+Les présentes CGU définissent les règles d'utilisation de la plateforme iliprestō,
+les droits et obligations des utilisateurs et de l'éditeur.
+""",
+            ),
           ),
           const SizedBox(height: 12),
           _InfoTileCard(
             title: "Comptes & sécurité",
             subtitle: "Création de compte, responsabilités, accès.",
-            onTap: () {},
+            onTap: () => _openSection(
+              title: "Comptes & sécurité",
+              content: """
+Comptes
+• Informations exactes lors de l'inscription
+• Confidentialité des identifiants
+• Responsabilité en cas d'usage non autorisé
+
+Sécurité
+• Mesures techniques raisonnables
+• Signalement en cas de suspicion
+""",
+            ),
           ),
           const SizedBox(height: 12),
           _InfoTileCard(
             title: "Publication d'annonces",
             subtitle: "Contenus autorisés, modération, signalements.",
-            onTap: () {},
+            onTap: () => _openSection(
+              title: "Publication d'annonces",
+              content: """
+Publications
+• Contenus licites uniquement
+• Interdiction de contenus frauduleux / illégaux
+• Modération et suppression possible
+• Signalement par les utilisateurs
+""",
+            ),
           ),
         ];
+
       default:
         return [];
     }
+  }
+}
+
+class _LegalSectionPage extends StatelessWidget {
+  final String title;
+  final String content;
+  final Color orange;
+
+  const _LegalSectionPage({
+    required this.title,
+    required this.content,
+    required this.orange,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white, // ✅ fond blanc
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0.6,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          child: SelectableText(
+            content.trim(),
+            style: const TextStyle(
+              fontSize: 15,
+              height: 1.45,
+              color: Color(0xFF2B2623),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
