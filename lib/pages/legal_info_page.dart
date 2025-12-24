@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class LegalInfoPage extends StatefulWidget {
@@ -20,6 +21,10 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kOrange,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        systemOverlayStyle: SystemUiOverlayStyle.light,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -34,14 +39,6 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search_rounded),
-            onPressed: () {
-              // TODO: ouvrir une recherche interne si tu veux
-            },
-          ),
-        ],
       ),
       body: SafeArea(
         top: false,
