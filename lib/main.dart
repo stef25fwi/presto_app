@@ -854,16 +854,34 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildSmartSearchBar() {
+    TextEditingController? searchController;
+    FocusNode? searchFocusNode;
+
+    void selectSuggestion(String value) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) return;
+
+      searchController?.text = trimmed;
+      searchController?.selection =
+          TextSelection.collapsed(offset: trimmed.length);
+
+      setState(() => _showSearchSuggestions = false);
+      searchFocusNode?.unfocus();
+
+      _goToSearch(trimmed);
+    }
+
     return Autocomplete<String>(
       optionsBuilder: (TextEditingValue value) {
         if (!_showSearchSuggestions) return const Iterable<String>.empty();
         return _buildSearchSuggestions(value);
       },
-      onSelected: (String selection) {
-        _goToSearch(selection);
-      },
+      onSelected: selectSuggestion,
       fieldViewBuilder:
           (context, textEditingController, focusNode, onFieldSubmitted) {
+        searchController = textEditingController;
+        searchFocusNode = focusNode;
+
         return GestureDetector(
           onTap: () {
             if (focusNode.hasFocus) {
@@ -881,7 +899,7 @@ class _HomePageState extends State<HomePage>
           child: TextField(
           controller: textEditingController,
           focusNode: focusNode,
-          onSubmitted: _goToSearch,
+          onSubmitted: selectSuggestion,
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
             filled: true,
@@ -924,6 +942,9 @@ class _HomePageState extends State<HomePage>
                 itemCount: options.length,
                 itemBuilder: (context, index) {
                   final option = options.elementAt(index);
+                  final highlightedIndex =
+                      AutocompleteHighlightedOption.of(context) ?? 0;
+                  final isHighlighted = index == highlightedIndex;
                   return ListTile(
                     dense: true,
                     shape: RoundedRectangleBorder(
@@ -934,6 +955,8 @@ class _HomePageState extends State<HomePage>
                       style: const TextStyle(
                           fontSize: 13, fontWeight: FontWeight.w500),
                     ),
+                    tileColor:
+                        isHighlighted ? kPrestoBlue.withOpacity(0.08) : null,
                     onTap: () => onSelected(option),
                   );
                 },
@@ -1715,6 +1738,7 @@ class _HomePageState extends State<HomePage>
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (_) => OfferDetailPage(
+                                    offerId: d.id,
                                     title: title,
                                     location: location,
                                     category: (data['category'] ??
@@ -2776,6 +2800,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => OfferDetailPage(
+                                offerId: offerId,
                                 title: title,
                                 location: location,
                                 category: category,
@@ -3289,6 +3314,7 @@ class OfferDetailPage extends StatelessWidget {
   final String? phone;
   final List<String>? imageUrls;
   final String annonceurId;
+  final String offerId;
 
   const OfferDetailPage({
     super.key,
@@ -3301,6 +3327,7 @@ class OfferDetailPage extends StatelessWidget {
     this.phone,
     this.imageUrls,
     required this.annonceurId,
+    required this.offerId,
   });
 
   Future<void> _shareOn(BuildContext context, String platform) async {
@@ -3523,6 +3550,43 @@ class OfferDetailPage extends StatelessWidget {
     );
   }
 
+  Future<void> _reportOffer(BuildContext context) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final subject = Uri.encodeComponent("Annonce signalée – ID $offerId");
+    final reportLink = 'https://prestoo.app/offers/$offerId';
+    final bodyText = """
+Bonjour,
+
+Je souhaite signaler l'annonce suivante.
+
+ID Firebase : $offerId
+Titre : ${title.trim()}
+Lieu : ${location.trim()}
+Catégorie : $category
+
+Lien : $reportLink
+
+Motif du signalement :
+- 
+""";
+    final body = Uri.encodeComponent(bodyText);
+    final uri = Uri.parse('mailto:contact@ilipresto.fr?subject=$subject&body=$body');
+
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        messenger.showSnackBar(
+          const SnackBar(content: Text("Impossible d'ouvrir l'e-mail.")),
+        );
+      }
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text("Une erreur est survenue.")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -3568,6 +3632,22 @@ class OfferDetailPage extends StatelessWidget {
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.menu),
+            onSelected: (value) {
+              if (value == 'report') {
+                _reportOffer(context);
+              }
+            },
+            itemBuilder: (ctx) => const [
+              PopupMenuItem<String>(
+                value: 'report',
+                child: Text('Signaler'),
+              ),
+            ],
+          ),
+        ],
       ),
 
       // ✅ CTA sticky comme le mockup
@@ -7152,6 +7232,7 @@ class UserOffersSection extends StatelessWidget {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => OfferDetailPage(
+                        offerId: offerId,
                         title: title,
                         location: location,
                         category: category,
