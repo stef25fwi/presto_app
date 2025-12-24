@@ -3673,31 +3673,8 @@ Motif du signalement :
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ✅ Les 2 sections fusionnées avec layout responsive
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth >= 860; // vue "tablette / web"
-                
-                if (isWide) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(child: _headerCard(context, theme, city, durationText)),
-                      const SizedBox(width: 14),
-                      Expanded(child: _keyInfoCard(context, theme, city, priceText, category, durationText)),
-                    ],
-                  );
-                } else {
-                  return Column(
-                    children: [
-                      _headerCard(context, theme, city, durationText),
-                      const SizedBox(height: 14),
-                      _keyInfoCard(context, theme, city, priceText, category, durationText),
-                    ],
-                  );
-                }
-              },
-            ),
+            // ✅ Section principale avec infos clés
+            _keyInfoCard(context, theme, city, priceText, category, durationText),
 
             const SizedBox(height: 16),
 
@@ -3886,16 +3863,6 @@ Motif du signalement :
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              title.trim(),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                height: 1.15,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
               "$city • $durationText",
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: Colors.grey.shade700,
@@ -3920,6 +3887,17 @@ Motif du signalement :
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Titre
+            Text(
+              title.trim(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                height: 1.15,
+              ),
+            ),
+            const SizedBox(height: 14),
             // Prix + "pour X heures" (conditionnellement)
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
