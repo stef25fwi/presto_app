@@ -250,55 +250,6 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  final IconData icon;
-  final Color iconBg;
-  final Color iconColor;
-  final String label;
-  final bool bold;
-
-  const _InfoChip({
-    required this.icon,
-    required this.iconBg,
-    required this.iconColor,
-    required this.label,
-    this.bold = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, size: 16, color: iconColor),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: bold ? FontWeight.w900 : FontWeight.w800,
-              color: Colors.grey.shade900,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _ShareButton extends StatelessWidget {
   final Widget icon;
@@ -3718,57 +3669,37 @@ Motif du signalement :
 
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(0, 16, 0, 160), // espace pour bottomSheet, marges latérales à 0
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 160), // espace pour bottomSheet + marges latérales
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ✅ HERO CARD : titre + chips
-            _CardShell(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "$title – $city",
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
+            // ✅ Les 2 sections fusionnées avec layout responsive
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth >= 860; // vue "tablette / web"
+                
+                if (isWide) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _InfoChip(
-                        icon: Icons.place,
-                        iconBg: kPrestoOrange.withOpacity(0.15),
-                        iconColor: kPrestoOrange,
-                        label: city,
-                      ),
-                      _InfoChip(
-                        icon: Icons.access_time,
-                        iconBg: kPrestoOrange.withOpacity(0.15),
-                        iconColor: kPrestoOrange,
-                        label: durationText,
-                      ),
-                      _InfoChip(
-                        icon: Icons.euro,
-                        iconBg: kPrestoOrange.withOpacity(0.15),
-                        iconColor: kPrestoOrange,
-                        label: priceText,
-                        bold: true,
-                      ),
-                      _InfoChip(
-                        icon: Icons.cleaning_services,
-                        iconBg: kPrestoBlue.withOpacity(0.12),
-                        iconColor: kPrestoBlue,
-                        label: category,
-                      ),
+                      Expanded(child: _headerCard(context, theme, city, durationText)),
+                      const SizedBox(width: 14),
+                      Expanded(child: _keyInfoCard(context, theme, city, priceText, category, durationText)),
                     ],
-                  ),
-                ],
-              ),
+                  );
+                } else {
+                  return Column(
+                    children: [
+                      _headerCard(context, theme, city, durationText),
+                      const SizedBox(height: 14),
+                      _keyInfoCard(context, theme, city, priceText, category, durationText),
+                    ],
+                  );
+                }
+              },
             ),
 
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
 
             // ✅ DESCRIPTION (carte)
             _SectionCard(
@@ -3942,6 +3873,133 @@ Motif du signalement :
       ),
     ),
   );
+  }
+
+  // -------------------------
+  // SECTION 1 – En-tête ultra lisible
+  // -------------------------
+  Widget _headerCard(BuildContext context, ThemeData theme, String city, String durationText) {
+    return _CardShell(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title.trim(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                height: 1.15,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "$city • $durationText",
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 14),
+            _pill(label: "Styles conseillés", icon: Icons.local_offer_outlined),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // -------------------------
+  // SECTION 2 – Bloc infos clés
+  // -------------------------
+  Widget _keyInfoCard(BuildContext context, ThemeData theme, String city, String priceText, String categoryText, String durationText) {
+    return _CardShell(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Prix + "pour X heures"
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  priceText,
+                  style: theme.textTheme.displaySmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: kPrestoOrange,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Text(
+                    "pour $durationText",
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            const Divider(height: 1),
+            const SizedBox(height: 14),
+
+            // Infos secondaires avec icônes
+            _infoRow(Icons.place_outlined, city, theme),
+            const SizedBox(height: 12),
+            _infoRow(Icons.local_shipping_outlined, categoryText, theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String text, ThemeData theme) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.grey.shade600, size: 22),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: Colors.black87,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _pill({required String label, required IconData icon}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F3F5),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: Colors.grey.shade700),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
 }
