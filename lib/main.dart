@@ -24,6 +24,7 @@ import 'widgets/offer_card.dart';
 import 'widgets/ad_banner.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/phone_input_field.dart';
+import 'package:presto_app/widgets/random_asset_ticker.dart';
 import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
@@ -1352,6 +1353,99 @@ class _HomePageState extends State<HomePage>
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
                                         height: 1.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+
+                          // ✅ SLIDE 3 (index 2) : carousel/ticker d'images aléatoire
+                          if (index == 2) {
+                            final slide = _slides[index];
+
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 0),
+                              decoration: BoxDecoration(
+                                color: kPrestoOrange,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.10),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      slide.badge.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      slide.title,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: _homeSlideTitleFontSize,
+                                        fontWeight: FontWeight.w900,
+                                        height: 1.25,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+
+                                    // Zone image (qui change toutes les 3s)
+                                    Expanded(
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Stack(
+                                          fit: StackFit.expand,
+                                          children: const [
+                                            // 👇 change d'image toutes les 3 sec, random, anti-répétition
+                                            RandomAssetTicker(
+                                              folderPrefix: 'assets/carousel_home/',
+                                              interval: Duration(seconds: 3),
+                                            ),
+                                            // Petit voile pour garder le style
+                                            // (tu peux enlever si tu veux des images plus “flash”)
+                                            // ignore: prefer_const_constructors
+                                            DecoratedBox(
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.bottomCenter,
+                                                  end: Alignment.topCenter,
+                                                  colors: [
+                                                    Color(0x55000000),
+                                                    Color(0x00000000),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      slide.subtitle,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ],
