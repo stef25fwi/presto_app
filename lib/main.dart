@@ -895,7 +895,7 @@ class _HomePageState extends State<HomePage>
                 itemBuilder: (context, index) {
                   final option = options.elementAt(index);
                   final highlightedIndex =
-                      AutocompleteHighlightedOption.of(context) ?? 0;
+                      AutocompleteHighlightedOption.of(context) ?? -1;
                   final isHighlighted = index == highlightedIndex;
                   return ListTile(
                     dense: true,
@@ -3930,7 +3930,7 @@ Motif du signalement :
   // -------------------------
   // SECTION 1 – En-tête ultra lisible
   // -------------------------
-  Widget _headerCard(BuildContext context, ThemeData theme, String city, String durationText) {
+  // Widget _headerCard(BuildContext context, ThemeData theme, String city, String durationText) {
     return _CardShell(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
