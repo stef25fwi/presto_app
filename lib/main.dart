@@ -894,8 +894,7 @@ class _HomePageState extends State<HomePage>
                 itemCount: options.length,
                 itemBuilder: (context, index) {
                   final option = options.elementAt(index);
-                  final highlightedIndex =
-                      AutocompleteHighlightedOption.of(context) ?? -1;
+                    final highlightedIndex = AutocompleteHighlightedOption.of(context);
                   final isHighlighted = index == highlightedIndex;
                   return ListTile(
                     dense: true,
@@ -2799,7 +2798,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                   itemBuilder: (context, index) {
                     final bool isAd = (index + 1) % (_adsEvery + 1) == 0;
                     if (isAd) {
-                      return const AdBanner(margin: EdgeInsets.symmetric(vertical: 8));
+                      return AdBanner(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        placeholderHeight: kIsWeb ? 90.0 : 50.0,
+                        placeholderFolderPrefix: 'assets/carousel_home/',
+                      );
                     }
 
                     final int docIndex = index - (index ~/ (_adsEvery + 1));
@@ -3853,18 +3856,12 @@ Motif du signalement :
                       ],
                     ),
                     const SizedBox(height: 14),
-                    Text(
-                      "Espace Google Ads\nBannière 320x100",
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    // Espace pub: afficher bannière
+                    AdBanner(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      placeholderHeight: kIsWeb ? 90.0 : 50.0,
+                      placeholderFolderPrefix: 'assets/carousel_home/',
                     ),
-
-                    // ✅ Ici tu remplaces par ton widget AdMob si tu en as un
-                    // const SizedBox(height: 10),
-                    // AdBanner(),
                   ],
                 ),
               ),
@@ -3930,27 +3927,7 @@ Motif du signalement :
   // -------------------------
   // SECTION 1 – En-tête ultra lisible
   // -------------------------
-  // Widget _headerCard(BuildContext context, ThemeData theme, String city, String durationText) {
-    return _CardShell(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "$city • $durationText",
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: Colors.grey.shade700,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 14),
-            _pill(label: "Styles conseillés", icon: Icons.local_offer_outlined),
-          ],
-        ),
-      ),
-    );
-  }
+  // (supprimé) _headerCard inactif : bloc retiré pour éviter erreurs de compilation.
 
   // -------------------------
   // SECTION 2 – Bloc infos clés
@@ -4032,30 +4009,7 @@ Motif du signalement :
     );
   }
 
-  Widget _pill({required String label, required IconData icon}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F3F5),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: Colors.grey.shade700),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // (supprimé) _pill inactif : retiré car non référencé.
 
 }
 // (supprimé) `_OfferMetaRow` était non référencé et générait un avertissement.
