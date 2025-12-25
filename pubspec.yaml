@@ -46,3 +46,4 @@ flutter:
     - assets/images/
     - assets/data/cities/
     - assets/data/cities_compact.json
+    - assets/carousel_home/
