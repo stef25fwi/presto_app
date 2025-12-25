@@ -36,6 +36,8 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
 
   // garde les N dernières images affichées (fenêtre)
   final Queue<String> _lastShown = Queue<String>();
+  // garde trace des assets qui échouent au chargement
+  final Set<String> _failedAssets = <String>{};
 
   @override
   void initState() {
@@ -103,10 +105,13 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
 
     // Si pas assez d’images, on fait au mieux
     // Ex: 1 image => toujours la même
-    if (_assets.length == 1) return _assets.first;
+    if (_assets.length == 1) {
+      final only = _assets.first;
+      return only;
+    }
 
     // Construire la liste des "candidates" en excluant la fenêtre
-    final excluded = Set<String>.from(_lastShown);
+    final excluded = Set<String>.from(_lastShown)..addAll(_failedAssets);
 
     // Cas où l’exclusion vide tout (ex: 2-3 images seulement)
     // => on relâche la contrainte progressivement.
@@ -115,10 +120,12 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
     if (candidates.isEmpty) {
       // relâchement 1 : on exclut seulement l’actuelle (anti répétition immédiate)
       final current = _current;
-      candidates = _assets.where((a) => a != current).toList();
+      candidates = _assets.where((a) => a != current && !_failedAssets.contains(a)).toList();
 
       // si encore vide (normalement jamais sauf assets=1), fallback
-      if (candidates.isEmpty) candidates = List<String>.from(_assets);
+      if (candidates.isEmpty) {
+        candidates = _assets.where((a) => !_failedAssets.contains(a)).toList();
+      }
     }
 
     return candidates[_rnd.nextInt(candidates.length)];
@@ -140,6 +147,19 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
 
       _pushLastShown(next);
     });
+  }
+
+  void _advanceToNext({String? failed}) {
+    if (failed != null) {
+      _failedAssets.add(failed);
+    }
+    final next = _pickNext();
+    if (!mounted) return;
+    if (next.isEmpty || next == _current) return;
+    setState(() {
+      _current = next;
+    });
+    _pushLastShown(next);
   }
 
   @override
@@ -166,6 +186,18 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
         _current!,
         key: ValueKey(_current),
         fit: widget.fit,
+        errorBuilder: (context, error, stackTrace) {
+          // marque l'asset comme KO et avance automatiquement
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _advanceToNext(failed: _current);
+          });
+          return const Center(
+            child: Text(
+              "Image indisponible, passage à la suivante…",
+              textAlign: TextAlign.center,
+            ),
+          );
+        },
       ),
     );
   }
