@@ -1352,8 +1352,7 @@ class _HomePageState extends State<HomePage>
 
                           // ✅ SLIDE 3 (index 2) : carousel/ticker d'images aléatoire
                           if (index == 2) {
-                            final slide = _slides[index];
-
+                            // Slide carousel: image pleine surface, sans texte
                             return Container(
                               margin: const EdgeInsets.symmetric(horizontal: 0),
                               decoration: BoxDecoration(
@@ -1367,46 +1366,15 @@ class _HomePageState extends State<HomePage>
                                   ),
                                 ],
                               ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      slide.badge.toUpperCase(),
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      slide.title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: _homeSlideTitleFontSize,
-                                        fontWeight: FontWeight.w900,
-                                        height: 1.25,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-
-                                    // Zone image plein espace
-                                    Expanded(
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(16),
-                                        child: const RandomAssetTicker(
-                                          folderPrefix: 'assets/carousel_home/',
-                                          interval: Duration(seconds: 3),
-                                          antiRepeatWindow: 3,
-                                          fit: BoxFit.cover, // remplit / recadre sans déformer
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: const SizedBox.expand(
+                                  child: RandomAssetTicker(
+                                    folderPrefix: 'assets/carousel_home/',
+                                    interval: Duration(seconds: 3),
+                                    antiRepeatWindow: 3,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
                             );
