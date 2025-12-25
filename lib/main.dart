@@ -2746,7 +2746,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     if (isAd) {
                       return AdBanner(
                         margin: const EdgeInsets.symmetric(vertical: 8),
-                        placeholderHeight: kIsWeb ? 90.0 : 50.0,
+                        placeholderHeight: kIsWeb ? 180.0 : 100.0,
                         placeholderFolderPrefix: 'assets/carousel_home/',
                       );
                     }
