@@ -221,3 +221,4 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
       ),
     );
   }
+}
