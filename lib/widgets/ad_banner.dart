@@ -25,6 +25,7 @@ class AdBanner extends StatefulWidget {
   final bool enabled;
   final double? placeholderHeight; // hauteur placeholder (mobile/web)
   final String? placeholderFolderPrefix; // dossier images placeholder
+  final bool flat; // placeholder sans rebords
 
   const AdBanner({
     super.key,
@@ -32,6 +33,7 @@ class AdBanner extends StatefulWidget {
     this.enabled = true,
     this.placeholderHeight,
     this.placeholderFolderPrefix,
+    this.flat = false,
   });
 
   @override
@@ -122,6 +124,26 @@ class _AdBannerState extends State<AdBanner> {
     Widget placeholderBanner() {
       final ph = widget.placeholderHeight ?? (kIsWeb ? 90.0 : 60.0);
       final folder = widget.placeholderFolderPrefix ?? 'assets/carousel_home/';
+
+      if (widget.flat) {
+        // Mode sans rebords: aucune décoration ni padding, l'image remplit 100% de l'espace
+        return Container(
+          margin: margin,
+          child: SizedBox(
+            height: ph,
+            width: double.infinity,
+            child: ClipRect(
+              child: RandomAssetTicker(
+                folderPrefix: folder,
+                fit: BoxFit.cover,
+                interval: const Duration(seconds: 4),
+                antiRepeatWindow: 3,
+              ),
+            ),
+          ),
+        );
+      }
+
       return Container(
         margin: margin,
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),

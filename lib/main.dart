@@ -2745,9 +2745,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     final bool isAd = (index + 1) % (_adsEvery + 1) == 0;
                     if (isAd) {
                       return AdBanner(
-                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        margin: EdgeInsets.zero,
                         placeholderHeight: kIsWeb ? 180.0 : 100.0,
                         placeholderFolderPrefix: 'assets/carousel_home/',
+                        flat: true,
                       );
                     }
 
@@ -3804,9 +3805,10 @@ Motif du signalement :
                     const SizedBox(height: 14),
                     // Espace pub: afficher bannière
                     AdBanner(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      placeholderHeight: kIsWeb ? 90.0 : 50.0,
+                      margin: EdgeInsets.zero,
+                      placeholderHeight: kIsWeb ? 180.0 : 100.0,
                       placeholderFolderPrefix: 'assets/carousel_home/',
+                      flat: true,
                     ),
                   ],
                 ),
