@@ -1402,9 +1402,9 @@ class _HomePageState extends State<HomePage>
                                         height: 1.25,
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 12),
 
-                                    // Zone image (qui change toutes les 3s)
+                                    // Zone image plein espace
                                     Expanded(
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(16),
@@ -1412,20 +1412,8 @@ class _HomePageState extends State<HomePage>
                                           folderPrefix: 'assets/carousel_home/',
                                           interval: Duration(seconds: 3),
                                           antiRepeatWindow: 3,
-                                          fit: BoxFit.cover, // ✅ remplit / recadre sans déformer
+                                          fit: BoxFit.cover, // remplit / recadre sans déformer
                                         ),
-                                      ),
-                                    ),
-
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      slide.subtitle,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ],
