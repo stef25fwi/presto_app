@@ -1409,30 +1409,11 @@ class _HomePageState extends State<HomePage>
                                     Expanded(
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(16),
-                                        child: Stack(
-                                          fit: StackFit.expand,
-                                          children: const [
-                                            // 👇 change d'image toutes les 3 sec, random, anti-répétition
-                                            RandomAssetTicker(
-                                              folderPrefix: 'assets/carousel_home/',
-                                              interval: Duration(seconds: 3),
-                                            ),
-                                            // Petit voile pour garder le style
-                                            // (tu peux enlever si tu veux des images plus “flash”)
-                                            // ignore: prefer_const_constructors
-                                            DecoratedBox(
-                                              decoration: BoxDecoration(
-                                                gradient: LinearGradient(
-                                                  begin: Alignment.bottomCenter,
-                                                  end: Alignment.topCenter,
-                                                  colors: [
-                                                    Color(0x55000000),
-                                                    Color(0x00000000),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
+                                        child: const RandomAssetTicker(
+                                          folderPrefix: 'assets/carousel_home/',
+                                          interval: Duration(seconds: 3),
+                                          antiRepeatWindow: 3,
+                                          fit: BoxFit.cover, // ✅ remplit / recadre sans déformer
                                         ),
                                       ),
                                     ),
