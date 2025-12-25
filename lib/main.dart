@@ -510,7 +510,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   late int _selectedIndex;
-  late final PageController _pageController;
   final PageController _carouselController = PageController();
   int _currentSlide = 0;
 
@@ -605,7 +604,6 @@ class _HomePageState extends State<HomePage>
     super.initState();
 
     _selectedIndex = widget.initialIndex;
-    _pageController = PageController(initialPage: widget.initialIndex);
     WidgetsBinding.instance.addObserver(this);
 
     _categoryController = AnimationController(
@@ -661,7 +659,6 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _pageController.dispose();
     _carouselController.dispose();
     _categoryController.dispose();
     _sloganTimer?.cancel();
@@ -688,11 +685,6 @@ class _HomePageState extends State<HomePage>
 
   void _onBottomTap(int index) {
     if (_selectedIndex == index) return;
-    setState(() => _selectedIndex = index);
-    _pageController.jumpToPage(index);
-  }
-
-  void _onPageChanged(int index) {
     setState(() => _selectedIndex = index);
   }
 
@@ -1213,10 +1205,8 @@ class _HomePageState extends State<HomePage>
               ),
           ),
         ),
-        body: PageView(
-          controller: _pageController,
-          physics: const NeverScrollableScrollPhysics(),
-          onPageChanged: _onPageChanged,
+        body: IndexedStack(
+          index: _selectedIndex,
           children: [
             _buildHomeContent(),
             const ConsultOffersPage(),

@@ -1,18 +1,15 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart';
 
 class RandomAssetTicker extends StatefulWidget {
   final String folderPrefix; // ex: 'assets/carousel_home/'
   final Duration interval;   // ex: 3s
   final BoxFit fit;
-
-  /// Anti-répétition sur N dernières images (fenêtre)
   final int antiRepeatWindow;
 
   const RandomAssetTicker({
@@ -20,7 +17,7 @@ class RandomAssetTicker extends StatefulWidget {
     required this.folderPrefix,
     this.interval = const Duration(seconds: 3),
     this.fit = BoxFit.cover,
-    this.antiRepeatWindow = 3, // ✅ fenêtre 3 par défaut
+    this.antiRepeatWindow = 3,
   });
 
   @override
@@ -35,35 +32,38 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
   String? _current;
   bool _loading = true;
 
-  // garde les N dernières images affichées (fenêtre)
   final Queue<String> _lastShown = Queue<String>();
-  // garde trace des assets qui échouent au chargement
   final Set<String> _failedAssets = <String>{};
 
   @override
   void initState() {
     super.initState();
-    _loadAssets();
+    _loadCarouselImages();
   }
 
-  Future<void> _loadAssets() async {
+  Future<void> _loadCarouselImages() async {
     try {
-      final manifestStr = await rootBundle.loadString('AssetManifest.json');
-      final Map<String, dynamic> manifest = json.decode(manifestStr);
+      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      final allAssets = await manifest.listAssets();
 
-      final assets = manifest.keys
-          .where((k) => k.startsWith(widget.folderPrefix))
-          .where((k) {
-            final low = k.toLowerCase();
-            return low.endsWith('.png') ||
-                low.endsWith('.jpg') ||
-                low.endsWith('.jpeg') ||
-                low.endsWith('.webp');
+      final images = allAssets
+          .where((p) => p.startsWith('assets/carousel_home/'))
+          .where((p) {
+            final x = p.toLowerCase();
+            return x.endsWith('.png') || x.endsWith('.jpg') || x.endsWith('.jpeg') || x.endsWith('.webp');
           })
           .toList();
 
-      if (assets.isEmpty) {
-        if (!mounted) return;
+      images.shuffle();
+
+      debugPrint('carousel : ${images.length} image(s) trouvée(s)');
+      if (images.isNotEmpty) {
+        debugPrint(images.take(20).join('\n'));
+      }
+
+      if (!mounted) return;
+
+      if (images.isEmpty) {
         setState(() {
           _assets = [];
           _loading = false;
@@ -71,33 +71,22 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
         return;
       }
 
-      assets.shuffle(_rnd);
-
-      if (!mounted) return;
       setState(() {
-        _assets = assets;
-        _current = assets.first;
+        _assets = images;
+        _current = images.first;
         _loading = false;
       });
 
-      if (kDebugMode) {
-        debugPrint('[RandomAssetTicker] ${assets.length} asset(s) trouvés sous "${widget.folderPrefix}". Exemple: ${assets.take(3).toList()}');
-      }
-
-      // initialise la fenêtre
       _lastShown.clear();
       _pushLastShown(_current!);
-
       _startTicker();
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
+      debugPrint('[RandomAssetTicker] Erreur chargement carousel: $e');
       setState(() {
         _assets = [];
         _loading = false;
       });
-      if (kDebugMode) {
-        debugPrint('[RandomAssetTicker] AssetManifest introuvable ou invalide.');
-      }
     }
   }
 
@@ -110,34 +99,20 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
 
   String _pickNext() {
     if (_assets.isEmpty) return _current ?? '';
+    if (_assets.length == 1) return _assets.first;
 
-    // Si pas assez d’images, on fait au mieux
-    // Ex: 1 image => toujours la même
-    if (_assets.length == 1) {
-      final only = _assets.first;
-      return only;
-    }
-
-    // Construire la liste des "candidates" en excluant la fenêtre
     final excluded = Set<String>.from(_lastShown)..addAll(_failedAssets);
-
-    // Cas où l’exclusion vide tout (ex: 2-3 images seulement)
-    // => on relâche la contrainte progressivement.
     List<String> candidates = _assets.where((a) => !excluded.contains(a)).toList();
 
     if (candidates.isEmpty) {
-      // relâchement 1 : on exclut seulement l’actuelle (anti répétition immédiate)
       final current = _current;
       candidates = _assets.where((a) => a != current && !_failedAssets.contains(a)).toList();
-
-      // si encore vide (normalement jamais sauf assets=1), fallback
       if (candidates.isEmpty) {
         candidates = _assets.where((a) => !_failedAssets.contains(a)).toList();
       }
     }
 
     if (candidates.isEmpty) return '';
-
     return candidates[_rnd.nextInt(candidates.length)];
   }
 
@@ -150,11 +125,9 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
       if (_assets.isEmpty) return;
 
       final next = _pickNext();
-
       setState(() {
         _current = next;
       });
-
       _pushLastShown(next);
     });
   }
@@ -162,9 +135,7 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
   void _advanceToNext({String? failed}) {
     if (failed != null) {
       _failedAssets.add(failed);
-      if (kDebugMode) {
-        debugPrint('[RandomAssetTicker] Asset KO: $failed');
-      }
+      if (kDebugMode) debugPrint('[RandomAssetTicker] Asset KO: $failed');
     }
     final next = _pickNext();
     if (!mounted) return;
@@ -194,12 +165,8 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
     }
 
     if (_assets.isEmpty || _current == null) {
-      // Fallback visuel si aucune image exploitable
       final bool allFailed = _assets.isNotEmpty && _failedAssets.length == _assets.length;
-      final String message = allFailed
-          ? "Toutes les images sont indisponibles."
-          : "Aucune image trouvée.";
-
+      final String message = allFailed ? 'Toutes les images sont indisponibles.' : 'Aucune image trouvée.';
       return Container(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -223,7 +190,7 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
             ),
             const SizedBox(height: 6),
             const Text(
-              "Vérifie pubspec.yaml puis fais un hot restart",
+              'Vérifie pubspec.yaml puis fais un hot restart',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white54, fontSize: 12),
             ),
@@ -241,13 +208,12 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
         key: ValueKey(_current),
         fit: widget.fit,
         errorBuilder: (context, error, stackTrace) {
-          // marque l'asset comme KO et avance automatiquement
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _advanceToNext(failed: _current);
           });
           return const Center(
             child: Text(
-              "Image indisponible, passage à la suivante…",
+              'Image indisponible, passage à la suivante…',
               textAlign: TextAlign.center,
             ),
           );
@@ -255,4 +221,3 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
       ),
     );
   }
-}
