@@ -23,8 +23,16 @@ class AdConfig {
 class AdBanner extends StatefulWidget {
   final EdgeInsetsGeometry? margin;
   final bool enabled;
+  final double? placeholderHeight; // hauteur placeholder (mobile/web)
+  final String? placeholderFolderPrefix; // dossier images placeholder
 
-  const AdBanner({super.key, this.margin, this.enabled = true});
+  const AdBanner({
+    super.key,
+    this.margin,
+    this.enabled = true,
+    this.placeholderHeight,
+    this.placeholderFolderPrefix,
+  });
 
   @override
   State<AdBanner> createState() => _AdBannerState();
@@ -108,27 +116,29 @@ class _AdBannerState extends State<AdBanner> {
   @override
   Widget build(BuildContext context) {
     // Placeholder margin commun
-    final margin = widget.margin ?? const EdgeInsets.symmetric(vertical: 12, horizontal: 4);
+    final margin = widget.margin ?? const EdgeInsets.symmetric(vertical: 8, horizontal: 4);
 
     // Fonction helper: placeholder image (ticker) tant que pub non active
     Widget placeholderBanner() {
+      final ph = widget.placeholderHeight ?? (kIsWeb ? 90.0 : 60.0);
+      final folder = widget.placeholderFolderPrefix ?? 'assets/carousel_home/';
       return Container(
         margin: margin,
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
         decoration: BoxDecoration(
           color: const Color(0xFFFAFAFA),
-          border: Border.all(color: const Color(0xFFDCDCDC), width: 0.5),
-          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFE0E0E0), width: 0.75),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: SizedBox(
-          height: kIsWeb ? 90 : 50,
+          height: ph,
           width: double.infinity,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: const RandomAssetTicker(
-              folderPrefix: 'assets/carousel_home/',
+            borderRadius: BorderRadius.circular(6),
+            child: RandomAssetTicker(
+              folderPrefix: folder,
               fit: BoxFit.cover,
-              interval: Duration(seconds: 4),
+              interval: const Duration(seconds: 4),
               antiRepeatWindow: 3,
             ),
           ),
