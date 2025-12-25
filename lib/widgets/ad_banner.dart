@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:presto_app/widgets/random_asset_ticker.dart';
 
 /// Config pour les IDs pub (remplacer par vos vrais IDs AdMob/AdSense)
 class AdConfig {
@@ -106,40 +107,48 @@ class _AdBannerState extends State<AdBanner> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.enabled) {
-      return const SizedBox.shrink();
-    }
-
+    // Placeholder margin commun
     final margin = widget.margin ?? const EdgeInsets.symmetric(vertical: 12, horizontal: 4);
 
-    if (kIsWeb) {
-      // Web: placeholder pour AdSense (intégré côté HTML/hosting)
+    // Fonction helper: placeholder image (ticker) tant que pub non active
+    Widget placeholderBanner() {
       return Container(
         margin: margin,
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
         decoration: BoxDecoration(
           color: const Color(0xFFFAFAFA),
           border: Border.all(color: const Color(0xFFDCDCDC), width: 0.5),
           borderRadius: BorderRadius.circular(6),
         ),
-        alignment: Alignment.center,
-        height: 90,
-        child: const Text(
-          'Publicité – Google Ads',
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.black38,
-            fontWeight: FontWeight.w500,
+        child: SizedBox(
+          height: kIsWeb ? 90 : 50,
+          width: double.infinity,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: const RandomAssetTicker(
+              folderPrefix: 'assets/carousel_home/',
+              fit: BoxFit.cover,
+              interval: Duration(seconds: 4),
+              antiRepeatWindow: 3,
+            ),
           ),
         ),
       );
     }
 
+    // Si explicitement désactivé: affichage placeholder images
+    if (!widget.enabled) {
+      return placeholderBanner();
+    }
+
+    if (kIsWeb) {
+      // Web: afficher aussi placeholder images tant qu'AdSense n'est pas branché
+      return placeholderBanner();
+    }
+
     if (!_isLoaded || _bannerAd == null) {
-      return SizedBox(
-        height: 50,
-        child: Container(color: Colors.transparent),
-      );
+      // Mobile: pub non chargée => afficher placeholder images
+      return placeholderBanner();
     }
 
     return Container(
