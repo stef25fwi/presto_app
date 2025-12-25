@@ -128,6 +128,8 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
       }
     }
 
+    if (candidates.isEmpty) return '';
+
     return candidates[_rnd.nextInt(candidates.length)];
   }
 
@@ -155,7 +157,13 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
     }
     final next = _pickNext();
     if (!mounted) return;
-    if (next.isEmpty || next == _current) return;
+    if (next.isEmpty) {
+      setState(() {
+        _current = null;
+      });
+      return;
+    }
+    if (next == _current) return;
     setState(() {
       _current = next;
     });
@@ -175,7 +183,42 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
     }
 
     if (_assets.isEmpty || _current == null) {
-      return const Center(child: Text("Aucune image trouvée."));
+      // Fallback visuel si aucune image exploitable
+      final bool allFailed = _assets.isNotEmpty && _failedAssets.length == _assets.length;
+      final String message = allFailed
+          ? "Toutes les images sont indisponibles."
+          : "Aucune image trouvée.";
+
+      return Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF121212), Color(0xFF2C2C2C)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.image_not_supported_outlined, color: Colors.white70, size: 36),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              "Vérifie pubspec.yaml puis fais un hot restart",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white54, fontSize: 12),
+            ),
+          ],
+        ),
+      );
     }
 
     return AnimatedSwitcher(
