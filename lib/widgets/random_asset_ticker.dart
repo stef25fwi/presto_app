@@ -5,6 +5,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 class RandomAssetTicker extends StatefulWidget {
   final String folderPrefix; // ex: 'assets/carousel_home/'
@@ -79,6 +80,10 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
         _loading = false;
       });
 
+      if (kDebugMode) {
+        debugPrint('[RandomAssetTicker] ${assets.length} asset(s) trouvés sous "${widget.folderPrefix}". Exemple: ${assets.take(3).toList()}');
+      }
+
       // initialise la fenêtre
       _lastShown.clear();
       _pushLastShown(_current!);
@@ -90,6 +95,9 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
         _assets = [];
         _loading = false;
       });
+      if (kDebugMode) {
+        debugPrint('[RandomAssetTicker] AssetManifest introuvable ou invalide.');
+      }
     }
   }
 
@@ -154,6 +162,9 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
   void _advanceToNext({String? failed}) {
     if (failed != null) {
       _failedAssets.add(failed);
+      if (kDebugMode) {
+        debugPrint('[RandomAssetTicker] Asset KO: $failed');
+      }
     }
     final next = _pickNext();
     if (!mounted) return;
