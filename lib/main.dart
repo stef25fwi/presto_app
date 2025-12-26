@@ -1304,7 +1304,6 @@ class _HomePageState extends State<HomePage>
                         },
                         itemBuilder: (context, index) {
                           final slide = _slides[index];
-                          final bool isEntrepreneurSlide = index == 1;
 
                           // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
                           if (index == 0) {
