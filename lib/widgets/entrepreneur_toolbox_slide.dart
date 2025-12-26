@@ -29,8 +29,9 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
         children: [
           // TEXTES
           Padding(
-            padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
