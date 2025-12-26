@@ -30,6 +30,7 @@ import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
 import 'pages/pro_profile_page.dart';
 import 'pages/legal_info_page.dart';
+import 'pages/entrepreneur_toolbox_page.dart';
 import 'dev/seed_offers.dart';
 
 import 'package:image_picker/image_picker.dart';
@@ -698,6 +699,14 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  void _openEntrepreneurToolbox() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const EntrepreneurToolboxPage(),
+      ),
+    );
+  }
+
   Iterable<String> _buildSearchSuggestions(TextEditingValue value) {
     final text = value.text.trim().toLowerCase();
 
@@ -1124,9 +1133,13 @@ class _HomePageState extends State<HomePage>
     );
   }
   /// Illustration à droite du slide (plus de chrono image)
-  Widget _buildSlideIllustration(_HomeSlide slide, int index) {
+  Widget _buildSlideIllustration(
+    _HomeSlide slide,
+    int index, {
+    VoidCallback? onTap,
+  }) {
     // On ignore complètement slide.imageAsset, on affiche juste une icône
-    return Container(
+    final child = Container(
       width: 70,
       height: 70,
       decoration: const BoxDecoration(
@@ -1138,6 +1151,14 @@ class _HomePageState extends State<HomePage>
         color: kPrestoBlue,
         size: 32,
       ),
+    );
+
+    if (onTap == null) return child;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: child,
     );
   }
 
@@ -1282,6 +1303,7 @@ class _HomePageState extends State<HomePage>
                         },
                         itemBuilder: (context, index) {
                           final slide = _slides[index];
+                          final bool isEntrepreneurSlide = index == 1;
 
                           // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
                           if (index == 0) {
@@ -1447,7 +1469,13 @@ class _HomePageState extends State<HomePage>
                                   // 👉 Illustration uniquement à partir du slide 2
                                   if (index != 0) ...[
                                     const SizedBox(width: 8),
-                                    _buildSlideIllustration(slide, index),
+                                    _buildSlideIllustration(
+                                      slide,
+                                      index,
+                                      onTap: isEntrepreneurSlide
+                                          ? _openEntrepreneurToolbox
+                                          : null,
+                                    ),
                                   ],
                                 ],
                               ),
