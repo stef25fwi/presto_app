@@ -25,6 +25,7 @@ import 'widgets/ad_banner.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/phone_input_field.dart';
 import 'package:presto_app/widgets/random_asset_ticker.dart';
+import 'widgets/entrepreneur_toolbox_slide.dart';
 import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
@@ -1402,7 +1403,14 @@ class _HomePageState extends State<HomePage>
                             );
                           }
 
-                          // 🔁 SLIDES 2, 3, 4, 5 : on garde le layout texte + icône / image
+                          // ✅ SLIDE 2 (index 1) : design custom "Boîte à outils"
+                          if (index == 1) {
+                            return EntrepreneurToolboxSlide(
+                              onTap: _openEntrepreneurToolbox,
+                            );
+                          }
+
+                          // 🔁 SLIDES 4, 5 : layout texte + icône / image
                           return Container(
                             margin: const EdgeInsets.symmetric(horizontal: 0),
                             decoration: BoxDecoration(
@@ -1472,9 +1480,6 @@ class _HomePageState extends State<HomePage>
                                     _buildSlideIllustration(
                                       slide,
                                       index,
-                                      onTap: isEntrepreneurSlide
-                                          ? _openEntrepreneurToolbox
-                                          : null,
                                     ),
                                   ],
                                 ],
