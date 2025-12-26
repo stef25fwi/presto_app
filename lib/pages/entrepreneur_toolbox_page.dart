@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/keyword_suggester.dart';
+
 class EntrepreneurToolboxPage extends StatefulWidget {
   const EntrepreneurToolboxPage({super.key});
 
@@ -20,13 +22,176 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
   String? _situation; // "Salarié" / "Demandeur d’emploi" / ...
   String? _objective; // optional (can be inferred later)
 
-  // Suggestions (simple demo)
-  final List<String> _projectSuggestions = const [
-    "Créer une entreprise de vente de gâteaux",
-    "Ouvrir une pâtisserie",
-    "Se lancer en micro-entrepreneur",
-    "Créer une activité de prestation de services",
+  // Suggestions enrichies avec mots-clés/poids
+  final List<SuggestionItem> _suggestionItems = const [
+    SuggestionItem(
+      label: "Créer une entreprise de vente de gâteaux",
+      keywords: ["gateau", "patisserie", "boulangerie", "sucre", "dessert"],
+      tags: ["food", "artisanat"],
+      popularity: 90,
+      weight: 10,
+    ),
+    SuggestionItem(
+      label: "Ouvrir une pâtisserie",
+      keywords: ["patisserie", "gateau", "dessert", "sucre"],
+      tags: ["food", "artisanat"],
+      popularity: 85,
+      weight: 8,
+    ),
+    SuggestionItem(
+      label: "Se lancer en micro-entrepreneur",
+      keywords: ["micro", "autoentrepreneur", "statut", "activite"],
+      tags: ["administratif"],
+      popularity: 75,
+      weight: 6,
+    ),
+    SuggestionItem(
+      label: "Créer une activité de prestation de services",
+      keywords: ["service", "prestation", "client", "facturation"],
+      tags: ["services"],
+      popularity: 70,
+      weight: 5,
+    ),
+    SuggestionItem(
+      label: "Lancer un service de livraison locale",
+      keywords: ["livraison", "transport", "colis", "coursier"],
+      tags: ["logistique"],
+      popularity: 65,
+      weight: 5,
+    ),
+    SuggestionItem(
+      label: "Ouvrir un salon de coiffure / barber",
+      keywords: ["coiffure", "barbier", "salon", "beaute"],
+      tags: ["beauté"],
+      popularity: 80,
+      weight: 7,
+    ),
+    SuggestionItem(
+      label: "Créer un site vitrine ou e-commerce",
+      keywords: ["site", "vitrine", "ecommerce", "web", "internet"],
+      tags: ["digital"],
+      popularity: 72,
+      weight: 6,
+    ),
+    SuggestionItem(
+      label: "Lancer une activité de ménage / nettoyage",
+      keywords: ["menage", "nettoyage", "proprete"],
+      tags: ["services"],
+      popularity: 60,
+      weight: 4,
+    ),
+    SuggestionItem(
+      label: "Se lancer en bricolage / petits travaux",
+      keywords: ["bricolage", "travaux", "renovation", "reparation"],
+      tags: ["batiment"],
+      popularity: 62,
+      weight: 4,
+    ),
+    SuggestionItem(
+      label: "Ouvrir un food truck / snack",
+      keywords: ["food", "truck", "snack", "restauration", "streetfood"],
+      tags: ["food", "restauration"],
+      popularity: 82,
+      weight: 7,
+    ),
+    SuggestionItem(
+      label: "Lancer un service de coaching sportif",
+      keywords: ["coach", "sport", "fitness", "entrainement", "bienetre"],
+      tags: ["sport", "bien-etre"],
+      popularity: 73,
+      weight: 6,
+    ),
+    SuggestionItem(
+      label: "Atelier d'onglerie / esthétique à domicile",
+      keywords: ["onglerie", "esthetique", "beaute", "manucure", "pedicure"],
+      tags: ["beaute"],
+      popularity: 57,
+      weight: 4,
+    ),
+    SuggestionItem(
+      label: "Studio photo / créateur de contenu",
+      keywords: ["photo", "photographe", "shooting", "video", "contenu"],
+      tags: ["digital", "crea"],
+      popularity: 63,
+      weight: 5,
+    ),
+    SuggestionItem(
+      label: "Social media manager pour TPE",
+      keywords: ["social", "media", "reseaux", "instagram", "facebook", "tiktok", "community"],
+      tags: ["digital", "marketing"],
+      popularity: 61,
+      weight: 5,
+    ),
+    SuggestionItem(
+      label: "Formations en ligne / cours particuliers",
+      keywords: ["formation", "cours", "coaching", "elearning", "enligne"],
+      tags: ["education"],
+      popularity: 59,
+      weight: 4,
+    ),
+    SuggestionItem(
+      label: "Location de matériel (sono, outils, voitures)",
+      keywords: ["location", "materiel", "sono", "outil", "voiture", "equipement"],
+      tags: ["services", "location"],
+      popularity: 56,
+      weight: 4,
+    ),
+    SuggestionItem(
+      label: "Service de jardinage / paysagiste",
+      keywords: ["jardinage", "paysage", "tonte", "elagage", "debro"],
+      tags: ["services", "exterieur"],
+      popularity: 88,
+      weight: 8,
+    ),
+    SuggestionItem(
+      label: "Réparation smartphones / petits appareils",
+      keywords: ["reparation", "smartphone", "telephone", "tablette", "electronique"],
+      tags: ["tech", "service"],
+      popularity: 76,
+      weight: 6,
+    ),
+    SuggestionItem(
+      label: "Menuiserie / agencement sur mesure",
+      keywords: ["menuiserie", "bois", "agencement", "meuble", "surmesure"],
+      tags: ["artisanat", "batiment"],
+      popularity: 60,
+      weight: 4,
+    ),
+    SuggestionItem(
+      label: "Organisation d'événements / DJ / sono",
+      keywords: ["evenement", "dj", "sono", "animation", "mariage"],
+      tags: ["event", "music"],
+      popularity: 84,
+      weight: 7,
+    ),
+    SuggestionItem(
+      label: "Services à domicile seniors (aide, courses)",
+      keywords: ["senior", "aide", "domicile", "courses", "accompagnement"],
+      tags: ["services", "social"],
+      popularity: 71,
+      weight: 6,
+    ),
   ];
+
+  List<String> get _chipSuggestions {
+    final computed = KeywordSuggester.compute(
+      query: _projectCtrl.text,
+      items: _suggestionItems,
+      region: _region,
+      situation: _situation,
+      limit: 8,
+    );
+
+    if (computed.isNotEmpty) {
+      return computed.map((e) => e.label).toList(growable: false);
+    }
+
+    // Fallback : top popularités si rien ne matche
+    return _suggestionItems
+        .take(6)
+        .map((e) => e.label)
+        .toList(growable: false);
+  }
 
   final List<String> _regions = const [
     "Guadeloupe (971)",
@@ -119,7 +284,7 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBg,
+      backgroundColor: kPrestoBlue,
       appBar: AppBar(
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -167,8 +332,16 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
                   ),
                 ),
                 const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Suggestions basées sur votre saisie",
+                    style: TextStyle(color: Colors.black.withOpacity(.55), fontSize: 12),
+                  ),
+                ),
+                const SizedBox(height: 6),
                 _SuggestionChips(
-                  items: _projectSuggestions,
+                  items: _chipSuggestions,
                   onTap: (s) {
                     _projectCtrl.text = s;
                     setState(() {});
