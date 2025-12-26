@@ -4,12 +4,14 @@ class PrestoInfoIconAnimated extends StatefulWidget {
   final VoidCallback onTap;
   final bool showBadge;
   final String badgeText;
+   final double size;
 
   const PrestoInfoIconAnimated({
     super.key,
     required this.onTap,
     this.showBadge = true,
     this.badgeText = "Nouveau",
+     this.size = 56,
   });
 
   @override
@@ -65,8 +67,8 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                 children: [
                   // Halo + icône
                   Container(
-                    width: 56,
-                    height: 56,
+                     width: widget.size,
+                     height: widget.size,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       boxShadow: [
@@ -106,7 +108,7 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                             child: Icon(
                               Icons.info_rounded,
                               color: kBlue,
-                              size: 30,
+                               size: widget.size * 0.54,
                             ),
                           ),
                         ),
@@ -121,7 +123,7 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                       right: -10,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                             horizontal: widget.size * 0.18, vertical: widget.size * 0.11),
                         decoration: BoxDecoration(
                           color: kOrange,
                           borderRadius: BorderRadius.circular(999),
@@ -137,7 +139,7 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                           widget.badgeText,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                             fontSize: widget.size * 0.21,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.2,
                           ),
