@@ -10,7 +10,7 @@ class EntrepreneurToolboxSlide extends StatefulWidget {
 
 class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
     with SingleTickerProviderStateMixin {
-  // Couleurs Prestō (à aligner sur tes constantes si tu en as déjà)
+  // Couleurs Prestō
   static const Color kOrange = Color(0xFFFF6600);
   static const Color kPrestoBlue = Color(0xFF1A73E8);
 
@@ -77,7 +77,7 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
                 ),
                 const SizedBox(height: 14),
                 const Text(
-                  "Boîte à outils de\nl’entrepreneur",
+                  "Boîte à outils de\nl'entrepreneur",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 38,
@@ -224,7 +224,7 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
       );
 }
 
-/// Icône info avec effet “3D” (ombre + léger relief)
+/// Icône info avec effet "3D" (ombre + léger relief)
 class _InfoIcon3D extends StatelessWidget {
   final double size;
   final Color blue;
@@ -249,7 +249,7 @@ class _InfoIcon3D extends StatelessWidget {
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
-          // Mini “liseré” de relief
+          // Mini "liseré" de relief
           BoxShadow(
             color: Colors.white.withOpacity(0.6),
             blurRadius: 2,
@@ -280,7 +280,7 @@ class _InfoIcon3D extends StatelessWidget {
   }
 }
 
-/// Flèche “institutionnelle” (pleine, propre) – TOUTES IDENTIQUES
+/// Flèche "institutionnelle" (pleine, propre) – TOUTES IDENTIQUES
 class _InstitutionalArrow extends StatelessWidget {
   final double size;
   final Color color;
@@ -314,7 +314,7 @@ class _ArrowPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // Flèche propre type “institutionnel”
+    // Flèche propre type "institutionnel"
     // - tige rectangulaire + pointe triangulaire
     final shaftH = h * 0.40;
     final shaftY = (h - shaftH) / 2;
