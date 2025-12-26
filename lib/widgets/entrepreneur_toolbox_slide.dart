@@ -1,66 +1,36 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-class EntrepreneurToolboxSlide extends StatefulWidget {
+class EntrepreneurToolboxSlide extends StatelessWidget {
   const EntrepreneurToolboxSlide({super.key});
 
-  @override
-  State<EntrepreneurToolboxSlide> createState() => _EntrepreneurToolboxSlideState();
-}
-
-class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
-    with SingleTickerProviderStateMixin {
-  // Couleurs Prestō
-  static const Color kOrange = Color(0xFFFF6600);
+  // Couleurs Prestō (ajuste si tu as déjà des constantes)
+  static const Color kPrestoOrange = Color(0xFFFF6600);
   static const Color kPrestoBlue = Color(0xFF1A73E8);
-
-  late final AnimationController _ctl;
-  late final Animation<double> _opacity;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _ctl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-
-    _opacity = Tween<double>(begin: 0.65, end: 1.0).animate(
-      CurvedAnimation(parent: _ctl, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _ctl.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    // Ajuste facilement la taille/position en un seul endroit
-    const double iconSize = 112;      // cercle blanc
-    const double arrowSize = 58;      // longueur visuelle de la flèche
-    const double gap = 14;            // distance flèche ↔ icône
-    const double topArrowAngleDeg = -35;
-    const double bottomArrowAngleDeg = 35;
+    // Paramètres (proportions propres)
+    const double iconSize = 112;
+    const double arrowSize = 62; // toutes identiques
+    const double gap = 14;
 
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 0),
       decoration: BoxDecoration(
-        color: kOrange,
-        borderRadius: BorderRadius.circular(22),
+        color: kPrestoOrange,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.10),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Stack(
         children: [
-          // TEXTES
+          // TEXTES (mêmes tailles que ton slide 1 "marketing")
           Padding(
             padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
             child: Column(
@@ -69,7 +39,7 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
                 Text(
                   "PRO",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.75),
+                    color: Colors.white.withOpacity(0.70),
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
@@ -80,7 +50,7 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
                   "Boîte à outils de\nl'entrepreneur",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 38,
+                    fontSize: 40, // gros titre (proche de ton rendu)
                     height: 1.05,
                     fontWeight: FontWeight.w800,
                   ),
@@ -89,8 +59,8 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
                 Text(
                   "Liens utiles CCI, Région, aides et infos clés.",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.70),
-                    fontSize: 18,
+                    color: Colors.white.withOpacity(0.65),
+                    fontSize: 19,
                     height: 1.35,
                     fontWeight: FontWeight.w500,
                   ),
@@ -99,77 +69,69 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
             ),
           ),
 
-          // ZONE ICONE + FLÈCHES
+          // ICON + FLÈCHES
           Positioned(
             right: 18,
             top: 86,
             child: SizedBox(
-              width: 170,
+              width: 190,
               height: 240,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // ICONE "i" + OMBRE (effet 3D)
+                  // Icône "i" cliquable -> page EntrepreneurToolboxPage
                   Positioned(
                     right: 0,
                     top: 56,
-                    child: _InfoIcon3D(
-                      size: iconSize,
-                      blue: kPrestoBlue,
-                    ),
-                  ),
-
-                  // FLÈCHES (toutes identiques) + micro pulsation opacity
-                  // 1) flèche TOP (diagonale)
-                  Positioned(
-                    right: iconSize * 0.55,
-                    top: 10,
-                    child: AnimatedBuilder(
-                      animation: _opacity,
-                      builder: (_, __) => Opacity(
-                        opacity: _opacity.value,
-                        child: Transform.rotate(
-                          angle: _degToRad(topArrowAngleDeg),
-                          child: _InstitutionalArrow(
-                            size: arrowSize,
-                            color: kPrestoBlue,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(999),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const EntrepreneurToolboxPage(),
                           ),
-                        ),
+                        );
+                      },
+                      child: _InfoIcon3D(
+                        size: iconSize,
+                        blue: kPrestoBlue,
                       ),
                     ),
                   ),
 
-                  // 2) flèche LEFT (horizontale)
+                  // 3 flèches identiques (institutionnelles)
+                  // Top (diagonale)
+                  Positioned(
+                    right: iconSize * 0.55,
+                    top: 8,
+                    child: Transform.rotate(
+                      angle: _degToRad(-35),
+                      child: const _InstitutionalArrow(
+                        size: arrowSize,
+                        color: kPrestoBlue,
+                      ),
+                    ),
+                  ),
+
+                  // Gauche (horizontale)
                   Positioned(
                     right: iconSize + gap,
                     top: 100,
-                    child: AnimatedBuilder(
-                      animation: _opacity,
-                      builder: (_, __) => Opacity(
-                        opacity: _opacity.value,
-                        child: _InstitutionalArrow(
-                          size: arrowSize,
-                          color: kPrestoBlue,
-                        ),
-                      ),
+                    child: const _InstitutionalArrow(
+                      size: arrowSize,
+                      color: kPrestoBlue,
                     ),
                   ),
 
-                  // 3) flèche BOTTOM (diagonale)
+                  // Bas (diagonale)
                   Positioned(
                     right: iconSize * 0.55,
                     top: 176,
-                    child: AnimatedBuilder(
-                      animation: _opacity,
-                      builder: (_, __) => Opacity(
-                        opacity: _opacity.value,
-                        child: Transform.rotate(
-                          angle: _degToRad(bottomArrowAngleDeg),
-                          child: _InstitutionalArrow(
-                            size: arrowSize,
-                            color: kPrestoBlue,
-                          ),
-                        ),
+                    child: Transform.rotate(
+                      angle: _degToRad(35),
+                      child: const _InstitutionalArrow(
+                        size: arrowSize,
+                        color: kPrestoBlue,
                       ),
                     ),
                   ),
@@ -178,61 +140,21 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
             ),
           ),
 
-          // DOTS (optionnel)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 12,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _dot(false),
-                const SizedBox(width: 8),
-                _pill(true),
-                const SizedBox(width: 8),
-                _dot(false),
-                const SizedBox(width: 8),
-                _dot(false),
-                const SizedBox(width: 8),
-                _dot(false),
-              ],
-            ),
-          ),
+          // ❌ Pas de points en bas (supprimés)
         ],
       ),
     );
   }
 
   static double _degToRad(double deg) => deg * math.pi / 180.0;
-
-  Widget _dot(bool active) => Container(
-        width: 10,
-        height: 10,
-        decoration: BoxDecoration(
-          color: active ? Colors.white : Colors.white.withOpacity(0.35),
-          shape: BoxShape.circle,
-        ),
-      );
-
-  Widget _pill(bool active) => Container(
-        width: 26,
-        height: 10,
-        decoration: BoxDecoration(
-          color: active ? Colors.white : Colors.white.withOpacity(0.35),
-          borderRadius: BorderRadius.circular(999),
-        ),
-      );
 }
 
-/// Icône info avec effet "3D" (ombre + léger relief)
+/// Icône info avec effet 3D (ombre)
 class _InfoIcon3D extends StatelessWidget {
   final double size;
   final Color blue;
 
-  const _InfoIcon3D({
-    required this.size,
-    required this.blue,
-  });
+  const _InfoIcon3D({required this.size, required this.blue});
 
   @override
   Widget build(BuildContext context) {
@@ -243,15 +165,13 @@ class _InfoIcon3D extends StatelessWidget {
         color: Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
-          // Ombre douce pour effet 3D
           BoxShadow(
             color: Colors.black.withOpacity(0.18),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
-          // Mini "liseré" de relief
           BoxShadow(
-            color: Colors.white.withOpacity(0.6),
+            color: Colors.white.withOpacity(0.65),
             blurRadius: 2,
             offset: const Offset(0, -1),
           ),
@@ -266,7 +186,6 @@ class _InfoIcon3D extends StatelessWidget {
             height: 1.0,
             fontWeight: FontWeight.w800,
             shadows: [
-              // léger relief sur la lettre
               Shadow(
                 color: Colors.black.withOpacity(0.12),
                 blurRadius: 6,
@@ -280,29 +199,25 @@ class _InfoIcon3D extends StatelessWidget {
   }
 }
 
-/// Flèche "institutionnelle" (pleine, propre) – TOUTES IDENTIQUES
+/// Flèche "institutionnelle" (pleine et propre) – toutes identiques
 class _InstitutionalArrow extends StatelessWidget {
   final double size;
   final Color color;
 
-  const _InstitutionalArrow({
-    required this.size,
-    required this.color,
-  });
+  const _InstitutionalArrow({required this.size, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    // Une flèche simple, propre, et scalable
     return CustomPaint(
       size: Size(size, size * 0.55),
-      painter: _ArrowPainter(color: color),
+      painter: _ArrowPainter(color),
     );
   }
 }
 
 class _ArrowPainter extends CustomPainter {
   final Color color;
-  _ArrowPainter({required this.color});
+  _ArrowPainter(this.color);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -314,19 +229,17 @@ class _ArrowPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // Flèche propre type "institutionnel"
-    // - tige rectangulaire + pointe triangulaire
     final shaftH = h * 0.40;
     final shaftY = (h - shaftH) / 2;
     final headW = w * 0.34;
 
     final path = Path()
-      // tige
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, shaftY, w - headW, shaftH),
-        Radius.circular(shaftH * 0.22),
-      ))
-      // pointe
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, shaftY, w - headW, shaftH),
+          Radius.circular(shaftH * 0.22),
+        ),
+      )
       ..moveTo(w - headW, 0)
       ..lineTo(w, h / 2)
       ..lineTo(w - headW, h)
@@ -338,4 +251,18 @@ class _ArrowPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ArrowPainter oldDelegate) =>
       oldDelegate.color != color;
+}
+
+/// ✅ Remplace par TON import réel
+/// Exemple:
+/// import 'package:presto_app/pages/entrepreneur_toolbox_page.dart';
+class EntrepreneurToolboxPage extends StatelessWidget {
+  const EntrepreneurToolboxPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(child: Text("EntrepreneurToolboxPage")),
+    );
+  }
 }
