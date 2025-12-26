@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:presto_app/pages/entrepreneur_toolbox_page.dart';
+import 'package:presto_app/widgets/presto_info_icon_animated.dart';
 
 class EntrepreneurToolboxSlide extends StatelessWidget {
   const EntrepreneurToolboxSlide({super.key});
@@ -67,12 +68,11 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
             ),
           ),
 
-          // ICÔNE SEULE (sans flèches)
+          // ICÔNE ANIMÉE
           Positioned(
             right: 18,
             top: 42,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(999),
+            child: PrestoInfoIconAnimated(
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -80,69 +80,11 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
                   ),
                 );
               },
-              child: _InfoIcon3D(
-                size: iconSize,
-                blue: kPrestoBlue,
-              ),
+              showBadge: true,
+              badgeText: "Nouveau",
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Icône info avec effet 3D (ombre)
-class _InfoIcon3D extends StatelessWidget {
-  final double size;
-  final Color blue;
-
-  const _InfoIcon3D({required this.size, required this.blue});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: blue, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.18),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(0.65),
-            blurRadius: 2,
-            offset: const Offset(0, -1),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          "i",
-          style: TextStyle(
-            color: blue,
-            fontSize: size * 0.62,
-            height: 1.0,
-            fontWeight: FontWeight.w800,
-            shadows: [
-              Shadow(
-                color: Colors.black.withOpacity(0.12),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-              Shadow(
-                color: Colors.white.withOpacity(0.7),
-                blurRadius: 2,
-                offset: const Offset(0, -1),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
