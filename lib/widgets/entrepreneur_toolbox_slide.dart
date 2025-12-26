@@ -49,26 +49,13 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
         final iconSize = containerWidth * 0.28;
         final arrowSize = containerWidth * 0.145;
         
-        // Fonts responsives
-        final titleFontSize = containerWidth * 0.095;
-        final subtitleFontSize = containerWidth * 0.045;
-        final badgeFontSize = containerWidth * 0.04;
-        
-        // Paddings responsifs
-        final horizontalPad = containerWidth * 0.055;
-        final topPad = containerHeight * 0.08;
-        final bottomPad = containerHeight * 0.06;
-        final gapVertical = containerHeight * 0.04;
-        final gapVerticalLarge = containerHeight * 0.05;
-        final borderRadius = containerWidth * 0.055;
-        
         const double topArrowAngleDeg = -35;
         const double bottomArrowAngleDeg = 35;
 
         return Container(
           decoration: BoxDecoration(
             color: kOrange,
-            borderRadius: BorderRadius.circular(borderRadius),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.10),
@@ -81,42 +68,41 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
             children: [
               // TEXTES
               Padding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontalPad,
-                  topPad,
-                  horizontalPad,
-                  bottomPad,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 18,
                 ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
                 Text(
                   "PRO",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.75),
-                    fontSize: badgeFontSize,
+                    color: Colors.white70,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
+                    letterSpacing: 1.2,
                   ),
                 ),
-                SizedBox(height: gapVertical),
+                SizedBox(height: 10),
                 Text(
                   "Boîte à outils de\nl’entrepreneur",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: titleFontSize,
-                    height: 1.05,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 24,
+                    height: 1.25,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-                SizedBox(height: gapVerticalLarge),
+                SizedBox(height: 12),
                 Text(
                   "Liens utiles CCI, Région, aides et infos clés.",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.70),
-                    fontSize: subtitleFontSize,
-                    height: 1.35,
+                    color: Colors.white70,
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
+                    height: 1.3,
                   ),
                 ),
               ],
