@@ -2,8 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 class EntrepreneurToolboxSlide extends StatefulWidget {
-  final VoidCallback? onTap;
-  const EntrepreneurToolboxSlide({super.key, this.onTap});
+  const EntrepreneurToolboxSlide({super.key});
 
   @override
   State<EntrepreneurToolboxSlide> createState() => _EntrepreneurToolboxSlideState();
@@ -40,104 +39,91 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final containerWidth = constraints.maxWidth;
-        final containerHeight = constraints.maxHeight;
-        
-        // Tailles basées sur la largeur du container
-        final iconSize = containerWidth * 0.28;
-        final arrowSize = containerWidth * 0.145;
-        
-        const double topArrowAngleDeg = -35;
-        const double bottomArrowAngleDeg = 35;
+    // Ajuste facilement la taille/position en un seul endroit
+    const double iconSize = 112;      // cercle blanc
+    const double arrowSize = 58;      // longueur visuelle de la flèche
+    const double gap = 14;            // distance flèche ↔ icône
+    const double topArrowAngleDeg = -35;
+    const double bottomArrowAngleDeg = 35;
 
-        return Container(
-          decoration: BoxDecoration(
-            color: kOrange,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.10),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        color: kOrange,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.10),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
-          child: Stack(
-            children: [
-              // TEXTES
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 18,
-                ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // TEXTES
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 Text(
                   "PRO",
                   style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.75),
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
+                    letterSpacing: 0.8,
                   ),
                 ),
-                SizedBox(height: 10),
-                Text(
+                const SizedBox(height: 14),
+                const Text(
                   "Boîte à outils de\nl’entrepreneur",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
-                    height: 1.25,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 38,
+                    height: 1.05,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 18),
                 Text(
                   "Liens utiles CCI, Région, aides et infos clés.",
                   style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.70),
+                    fontSize: 18,
+                    height: 1.35,
                     fontWeight: FontWeight.w500,
-                    height: 1.3,
                   ),
                 ),
               ],
             ),
           ),
 
-              // ZONE ICONE + FLÈCHES
-              Positioned(
-                right: containerWidth * 0.045,
-                top: containerHeight * 0.25,
-                child: SizedBox(
-                  width: containerWidth * 0.38,
-                  height: containerHeight * 0.7,
+          // ZONE ICONE + FLÈCHES
+          Positioned(
+            right: 18,
+            top: 86,
+            child: SizedBox(
+              width: 170,
+              height: 240,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // ICONE "i" + OMBRE (effet 3D) + TAP
+                  // ICONE "i" + OMBRE (effet 3D)
                   Positioned(
                     right: 0,
-                    top: containerHeight * 0.15,
-                    child: GestureDetector(
-                      onTap: widget.onTap,
-                      behavior: HitTestBehavior.opaque,
-                      child: _InfoIcon3D(
-                        size: iconSize,
-                        blue: kPrestoBlue,
-                      ),
+                    top: 56,
+                    child: _InfoIcon3D(
+                      size: iconSize,
+                      blue: kPrestoBlue,
                     ),
                   ),
 
                   // FLÈCHES (toutes identiques) + micro pulsation opacity
                   // 1) flèche TOP (diagonale)
                   Positioned(
-                    right: containerWidth * 0.18,
-                    top: containerHeight * 0.02,
+                    right: iconSize * 0.55,
+                    top: 10,
                     child: AnimatedBuilder(
                       animation: _opacity,
                       builder: (_, __) => Opacity(
@@ -155,8 +141,8 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
 
                   // 2) flèche LEFT (horizontale)
                   Positioned(
-                    right: containerWidth * 0.195,
-                    top: containerHeight * 0.32,
+                    right: iconSize + gap,
+                    top: 100,
                     child: AnimatedBuilder(
                       animation: _opacity,
                       builder: (_, __) => Opacity(
@@ -171,8 +157,8 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
 
                   // 3) flèche BOTTOM (diagonale)
                   Positioned(
-                    right: containerWidth * 0.18,
-                    top: containerHeight * 0.55,
+                    right: iconSize * 0.55,
+                    top: 176,
                     child: AnimatedBuilder(
                       animation: _opacity,
                       builder: (_, __) => Opacity(
@@ -192,47 +178,45 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
             ),
           ),
 
-              // DOTS (responsif)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: containerHeight * 0.04,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _dot(containerWidth * 0.025, false),
-                    SizedBox(width: containerWidth * 0.02),
-                    _pill(containerWidth * 0.065, containerWidth * 0.025, true),
-                    SizedBox(width: containerWidth * 0.02),
-                    _dot(containerWidth * 0.025, false),
-                    SizedBox(width: containerWidth * 0.02),
-                    _dot(containerWidth * 0.025, false),
-                    SizedBox(width: containerWidth * 0.02),
-                    _dot(containerWidth * 0.025, false),
-                  ],
-                ),
-              ),
-            ],
+          // DOTS (optionnel)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 12,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _dot(false),
+                const SizedBox(width: 8),
+                _pill(true),
+                const SizedBox(width: 8),
+                _dot(false),
+                const SizedBox(width: 8),
+                _dot(false),
+                const SizedBox(width: 8),
+                _dot(false),
+              ],
+            ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
   static double _degToRad(double deg) => deg * math.pi / 180.0;
 
-  Widget _dot(double size, bool active) => Container(
-        width: size,
-        height: size,
+  Widget _dot(bool active) => Container(
+        width: 10,
+        height: 10,
         decoration: BoxDecoration(
           color: active ? Colors.white : Colors.white.withOpacity(0.35),
           shape: BoxShape.circle,
         ),
       );
 
-  Widget _pill(double width, double height, bool active) => Container(
-        width: width,
-        height: height,
+  Widget _pill(bool active) => Container(
+        width: 26,
+        height: 10,
         decoration: BoxDecoration(
           color: active ? Colors.white : Colors.white.withOpacity(0.35),
           borderRadius: BorderRadius.circular(999),
@@ -259,11 +243,13 @@ class _InfoIcon3D extends StatelessWidget {
         color: Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
+          // Ombre douce pour effet 3D
           BoxShadow(
             color: Colors.black.withOpacity(0.18),
-            blurRadius: size * 0.16,
-            offset: Offset(0, size * 0.09),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
+          // Mini “liseré” de relief
           BoxShadow(
             color: Colors.white.withOpacity(0.6),
             blurRadius: 2,
@@ -280,10 +266,11 @@ class _InfoIcon3D extends StatelessWidget {
             height: 1.0,
             fontWeight: FontWeight.w800,
             shadows: [
+              // léger relief sur la lettre
               Shadow(
                 color: Colors.black.withOpacity(0.12),
-                blurRadius: size * 0.054,
-                offset: Offset(0, size * 0.018),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
