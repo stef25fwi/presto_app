@@ -40,10 +40,23 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide>
 
   @override
   Widget build(BuildContext context) {
-    // Ajuste facilement la taille/position en un seul endroit
-    const double iconSize = 112;      // cercle blanc
-    const double arrowSize = 58;      // longueur visuelle de la flèche
-    const double gap = 14;            // distance flèche ↔ icône
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    // Calcul responsif basé sur la largeur d'écran
+    // Pour un slide de carousel typique, on utilise ~90% de la largeur disponible
+    final slideWidth = screenWidth * 0.85;
+    
+    // Ratios pour garder les proportions
+    final iconSize = slideWidth * 0.28;      // ~112px sur 400px
+    final arrowSize = slideWidth * 0.145;    // ~58px sur 400px
+    final gap = slideWidth * 0.035;          // ~14px sur 400px
+    
+    // Fonts responsives
+    final titleFontSize = slideWidth * 0.095; // ~38px sur 400px
+    final subtitleFontSize = slideWidth * 0.045; // ~18px sur 400px
+    final badgeFontSize = slideWidth * 0.04;  // ~16px sur 400px
+    
     const double topArrowAngleDeg = -35;
     const double bottomArrowAngleDeg = 35;
 
