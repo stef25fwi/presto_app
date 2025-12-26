@@ -1,20 +1,16 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:presto_app/pages/entrepreneur_toolbox_page.dart';
 
 class EntrepreneurToolboxSlide extends StatelessWidget {
   const EntrepreneurToolboxSlide({super.key});
 
-  // Couleurs Prestō (ajuste si tu as déjà des constantes)
+  // Couleurs Prestō
   static const Color kPrestoOrange = Color(0xFFFF6600);
   static const Color kPrestoBlue = Color(0xFF1A73E8);
 
   @override
   Widget build(BuildContext context) {
-    // Paramètres (proportions propres)
     const double iconSize = 112;
-    const double arrowSize = 62; // toutes identiques
-    const double gap = 14;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 0),
@@ -31,7 +27,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // TEXTES (mêmes tailles que ton slide 1 "marketing")
+          // TEXTES
           Padding(
             padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
             child: Column(
@@ -41,28 +37,28 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
                   "PRO",
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.70),
-                    fontSize: 16,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 const Text(
                   "Boîte à outils de\nl'entrepreneur",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 40, // gros titre (proche de ton rendu)
-                    height: 1.05,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 24,
+                    height: 1.25,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 12),
                 Text(
                   "Liens utiles CCI, Région, aides et infos clés.",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.65),
-                    fontSize: 19,
-                    height: 1.35,
+                    color: Colors.white.withOpacity(0.70),
+                    fontSize: 14,
+                    height: 1.3,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -70,84 +66,29 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
             ),
           ),
 
-          // ICON + FLÈCHES
+          // ICÔNE SEULE (sans flèches)
           Positioned(
             right: 18,
-            top: 86,
-            child: SizedBox(
-              width: 190,
-              height: 240,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Icône "i" cliquable -> page EntrepreneurToolboxPage
-                  Positioned(
-                    right: 0,
-                    top: 56,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(999),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => EntrepreneurToolboxPage(),
-                          ),
-                        );
-                      },
-                      child: _InfoIcon3D(
-                        size: iconSize,
-                        blue: kPrestoBlue,
-                      ),
-                    ),
+            top: 56,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const EntrepreneurToolboxPage(),
                   ),
-
-                  // 3 flèches identiques (institutionnelles)
-                  // Top (diagonale)
-                  Positioned(
-                    right: iconSize * 0.55,
-                    top: 8,
-                    child: Transform.rotate(
-                      angle: _degToRad(-35),
-                      child: const _InstitutionalArrow(
-                        size: arrowSize,
-                        color: kPrestoBlue,
-                      ),
-                    ),
-                  ),
-
-                  // Gauche (horizontale)
-                  Positioned(
-                    right: iconSize + gap,
-                    top: 100,
-                    child: const _InstitutionalArrow(
-                      size: arrowSize,
-                      color: kPrestoBlue,
-                    ),
-                  ),
-
-                  // Bas (diagonale)
-                  Positioned(
-                    right: iconSize * 0.55,
-                    top: 176,
-                    child: Transform.rotate(
-                      angle: _degToRad(35),
-                      child: const _InstitutionalArrow(
-                        size: arrowSize,
-                        color: kPrestoBlue,
-                      ),
-                    ),
-                  ),
-                ],
+                );
+              },
+              child: _InfoIcon3D(
+                size: iconSize,
+                blue: kPrestoBlue,
               ),
             ),
           ),
-
-          // ❌ Pas de points en bas (supprimés)
         ],
       ),
     );
   }
-
-  static double _degToRad(double deg) => deg * math.pi / 180.0;
 }
 
 /// Icône info avec effet 3D (ombre)
@@ -198,58 +139,4 @@ class _InfoIcon3D extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Flèche "institutionnelle" (pleine et propre) – toutes identiques
-class _InstitutionalArrow extends StatelessWidget {
-  final double size;
-  final Color color;
-
-  const _InstitutionalArrow({required this.size, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size * 0.55),
-      painter: _ArrowPainter(color),
-    );
-  }
-}
-
-class _ArrowPainter extends CustomPainter {
-  final Color color;
-  _ArrowPainter(this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill
-      ..isAntiAlias = true;
-
-    final w = size.width;
-    final h = size.height;
-
-    final shaftH = h * 0.40;
-    final shaftY = (h - shaftH) / 2;
-    final headW = w * 0.34;
-
-    final path = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(0, shaftY, w - headW, shaftH),
-          Radius.circular(shaftH * 0.22),
-        ),
-      )
-      ..moveTo(w - headW, 0)
-      ..lineTo(w, h / 2)
-      ..lineTo(w - headW, h)
-      ..close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _ArrowPainter oldDelegate) =>
-      oldDelegate.color != color;
 }
