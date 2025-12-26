@@ -284,7 +284,7 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kPrestoBlue,
+      backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -305,14 +305,24 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
             step: 1,
             title: "Que souhaitez-vous faire ?",
             subtitle: "Décrivez votre projet en une phrase.",
+            trailing: const Text("Étape 1/3", style: TextStyle(color: Colors.black45)),
             child: Column(
               children: [
                 TextField(
                   controller: _projectCtrl,
                   textInputAction: TextInputAction.done,
                   onChanged: (_) => setState(() {}),
+                  onTap: () {
+                    // Sélectionne tout le texte au clic pour faciliter la réécriture
+                    _projectCtrl.selection = TextSelection(
+                      baseOffset: 0,
+                      extentOffset: _projectCtrl.text.length,
+                    );
+                  },
+                  style: const TextStyle(fontSize: 16),
                   decoration: InputDecoration(
                     hintText: "Ex : Créer une entreprise de vente de gâteaux",
+                    hintStyle: const TextStyle(fontSize: 16),
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
                     fillColor: Colors.white,
@@ -351,7 +361,7 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
 
           // STEP 2 - Situation
           _StepCard(
@@ -376,7 +386,7 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
 
           // STEP 3 - Region
           _StepCard(
@@ -386,47 +396,26 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
             trailing: const Text("Étape 3/3", style: TextStyle(color: Colors.black45)),
             child: Column(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _region,
-                        items: _regions
-                            .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                            .toList(),
-                        onChanged: (v) => setState(() => _region = v),
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.place_outlined),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: Colors.black.withOpacity(.08)),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: Colors.black.withOpacity(.08)),
-                          ),
-                        ),
-                      ),
+                DropdownButtonFormField<String>(
+                  value: _region,
+                  items: _regions
+                      .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _region = v),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.place_outlined),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: Colors.black.withOpacity(.08)),
                     ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kPrestoOrange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      onPressed: () {
-                        // Placeholder: here you'd call geolocator / places API.
-                        // For demo we set Guadeloupe.
-                        setState(() => _region = "Guadeloupe (971)");
-                      },
-                      child: const Text("Géolocaliser"),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: Colors.black.withOpacity(.08)),
                     ),
-                  ],
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Container(
