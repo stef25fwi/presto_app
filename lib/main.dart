@@ -31,7 +31,6 @@ import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
 import 'pages/pro_profile_page.dart';
 import 'pages/legal_info_page.dart';
-import 'pages/entrepreneur_toolbox_page.dart';
 import 'dev/seed_offers.dart';
 
 import 'package:image_picker/image_picker.dart';
@@ -575,7 +574,7 @@ class _HomePageState extends State<HomePage>
       imageAsset: null,
     ),
     _HomeSlide(
-      title: "Boîte à outils de l’entrepreneur",
+      title: "Boîte à outils de l'entrepreneur",
       subtitle: "Liens utiles CCI, Région, aides et infos clés.",
       badge: "Pro",
       icon: Icons.business_center_outlined,
@@ -696,14 +695,6 @@ class _HomePageState extends State<HomePage>
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ConsultOffersPage(searchQuery: q),
-      ),
-    );
-  }
-
-  void _openEntrepreneurToolbox() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const EntrepreneurToolboxPage(),
       ),
     );
   }
@@ -1304,7 +1295,6 @@ class _HomePageState extends State<HomePage>
                         },
                         itemBuilder: (context, index) {
                           final slide = _slides[index];
-                          final bool isEntrepreneurSlide = index == 1;
 
                           // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
                           if (index == 0) {
@@ -1373,6 +1363,11 @@ class _HomePageState extends State<HomePage>
                             );
                           }
 
+                          // ✅ SLIDE 2 (index 1) : Boîte à outils de l'entrepreneur
+                          if (index == 1) {
+                            return const EntrepreneurToolboxSlide();
+                          }
+
                           // ✅ SLIDE 3 (index 2) : carousel/ticker d'images aléatoire
                           if (index == 2) {
                             // Slide carousel: image pleine surface, sans texte
@@ -1403,15 +1398,7 @@ class _HomePageState extends State<HomePage>
                             );
                           }
 
-                          // ✅ SLIDE 2 (index 1) : design custom "Boîte à outils"
-                          if (index == 1) {
-                            return GestureDetector(
-                              onTap: _openEntrepreneurToolbox,
-                              child: const EntrepreneurToolboxSlide(),
-                            );
-                          }
-
-                          // 🔁 SLIDES 4, 5 : layout texte + icône / image
+                          // 🔁 SLIDES 2, 3, 4 : layout texte + icône / image
                           return Container(
                             margin: const EdgeInsets.symmetric(horizontal: 0),
                             decoration: BoxDecoration(

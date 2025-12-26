@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:presto_app/pages/entrepreneur_toolbox_page.dart';
 
 class EntrepreneurToolboxSlide extends StatelessWidget {
   const EntrepreneurToolboxSlide({super.key});
@@ -88,7 +89,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const EntrepreneurToolboxPage(),
+                            builder: (_) => EntrepreneurToolboxPage(),
                           ),
                         );
                       },
@@ -251,18 +252,4 @@ class _ArrowPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ArrowPainter oldDelegate) =>
       oldDelegate.color != color;
-}
-
-/// ✅ Remplace par TON import réel
-/// Exemple:
-/// import 'package:presto_app/pages/entrepreneur_toolbox_page.dart';
-class EntrepreneurToolboxPage extends StatelessWidget {
-  const EntrepreneurToolboxPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text("EntrepreneurToolboxPage")),
-    );
-  }
 }
