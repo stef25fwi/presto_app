@@ -70,7 +70,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
           // ICÔNE SEULE (sans flèches)
           Positioned(
             right: 18,
-            top: 56,
+            top: 42,
             child: InkWell(
               borderRadius: BorderRadius.circular(999),
               onTap: () {
@@ -107,6 +107,7 @@ class _InfoIcon3D extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,
+        border: Border.all(color: blue, width: 2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.18),
@@ -133,6 +134,11 @@ class _InfoIcon3D extends StatelessWidget {
                 color: Colors.black.withOpacity(0.12),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
+              ),
+              Shadow(
+                color: Colors.white.withOpacity(0.7),
+                blurRadius: 2,
+                offset: const Offset(0, -1),
               ),
             ],
           ),
