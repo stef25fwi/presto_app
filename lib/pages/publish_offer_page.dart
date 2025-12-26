@@ -543,9 +543,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.maybePop(context),
         ),
-        title: const Text(
-          "Je publie une offre",
-          style: TextStyle(fontWeight: FontWeight.w700),
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            "Je publie une offre",
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
         centerTitle: false,
         actions: [
