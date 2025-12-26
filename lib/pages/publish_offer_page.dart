@@ -547,7 +547,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           fit: BoxFit.scaleDown,
           child: Text(
             "Je publie une offre",
-            style: TextStyle(fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
           ),
         ),
         centerTitle: false,

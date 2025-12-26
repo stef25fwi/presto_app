@@ -2678,7 +2678,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           fit: BoxFit.scaleDown,
           child: Text(
             baseTitle,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
           ),
         ),
         backgroundColor: kPrestoOrange,
