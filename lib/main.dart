@@ -6412,6 +6412,7 @@ class _AccountPageState extends State<AccountPage> {
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
       ),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
         child: Center(
@@ -6676,6 +6677,7 @@ class _AccountPageState extends State<AccountPage> {
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
       ),
+      backgroundColor: Colors.white,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
