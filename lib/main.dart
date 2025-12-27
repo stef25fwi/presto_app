@@ -1302,7 +1302,7 @@ class _HomePageState extends State<HomePage>
                                 child: SizedBox.expand(
                                   child: RandomAssetTicker(
                                     folderPrefix: 'assets/carousel_home/',
-                                    interval: const Duration(seconds: 4),
+                                    interval: const Duration(seconds: 3),
                                     antiRepeatWindow: 3,
                                     fit: BoxFit.cover,
                                     enabled: _carouselEnabled,
