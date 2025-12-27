@@ -11,6 +11,7 @@ class RandomAssetTicker extends StatefulWidget {
   final Duration interval;   // ex: 3s
   final BoxFit fit;
   final int antiRepeatWindow;
+  final bool enabled;
 
   const RandomAssetTicker({
     super.key,
@@ -18,6 +19,7 @@ class RandomAssetTicker extends StatefulWidget {
     this.interval = const Duration(seconds: 3),
     this.fit = BoxFit.cover,
     this.antiRepeatWindow = 3,
+    this.enabled = true,
   });
 
   @override
@@ -39,6 +41,18 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
   void initState() {
     super.initState();
     _loadCarouselImages();
+  }
+
+  @override
+  void didUpdateWidget(covariant RandomAssetTicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.enabled != widget.enabled) {
+      if (widget.enabled) {
+        _startTicker();
+      } else {
+        _timer?.cancel();
+      }
+    }
   }
 
   Future<void> _loadCarouselImages() async {
@@ -85,7 +99,9 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
 
       _lastShown.clear();
       _pushLastShown(_current!);
-      _startTicker();
+      if (widget.enabled) {
+        _startTicker();
+      }
     } catch (e) {
       if (!mounted) return;
       debugPrint('[RandomAssetTicker] Erreur chargement carousel: $e');
@@ -124,6 +140,7 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
 
   void _startTicker() {
     _timer?.cancel();
+    if (!widget.enabled) return;
     if (_assets.length <= 1) return;
 
     _timer = Timer.periodic(widget.interval, (_) {
