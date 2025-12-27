@@ -512,6 +512,9 @@ class _HomePageState extends State<HomePage>
   final PageController _carouselController = PageController();
   int _currentSlide = 0;
 
+  Timer? _homeAutoSlideTimer;
+  bool _carouselEnabled = false;
+
   late final AnimationController _categoryController;
 
   // Taille de police de référence pour les titres des slides (alignée sur le slide 1)
@@ -605,6 +608,23 @@ class _HomePageState extends State<HomePage>
     _selectedIndex = widget.initialIndex;
     WidgetsBinding.instance.addObserver(this);
 
+    // À l'arrivée sur l'accueil: on laisse le slide texte visible 4s,
+    // puis on lance le carousel et sa rotation.
+    if (_selectedIndex == 0) {
+      _homeAutoSlideTimer = Timer(const Duration(seconds: 4), () {
+        if (!mounted) return;
+        if (!_carouselController.hasClients) return;
+        setState(() {
+          _carouselEnabled = true;
+        });
+        _carouselController.animateToPage(
+          1,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+        );
+      });
+    }
+
     _categoryController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
@@ -661,6 +681,7 @@ class _HomePageState extends State<HomePage>
     _carouselController.dispose();
     _categoryController.dispose();
     _sloganTimer?.cancel();
+    _homeAutoSlideTimer?.cancel();
     super.dispose();
   }
 
@@ -1289,11 +1310,20 @@ class _HomePageState extends State<HomePage>
                         controller: _carouselController,
                         itemCount: _slides.length + 1,
                         onPageChanged: (index) {
-                          setState(() => _currentSlide = index);
+                          setState(() {
+                            _currentSlide = index;
+                            if (index == 1) {
+                              _carouselEnabled = true;
+                            }
+                          });
                         },
                         itemBuilder: (context, index) {
-                          // ✅ Slide 0 : carousel d’images (1ère position)
-                          if (index == 0) {
+                          // Ordre voulu:
+                          // 0 = slide texte (fixe 4s)
+                          // 1 = carousel d'images (démarre après 4s)
+                          // 2.. = slides existants
+
+                          if (index == 1) {
                             return Container(
                               margin: const EdgeInsets.symmetric(horizontal: 0),
                               decoration: BoxDecoration(
@@ -1309,25 +1339,26 @@ class _HomePageState extends State<HomePage>
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(20),
-                                child: const SizedBox.expand(
+                                child: SizedBox.expand(
                                   child: RandomAssetTicker(
                                     folderPrefix: 'assets/carousel_home/',
-                                    interval: Duration(seconds: 4),
+                                    interval: const Duration(seconds: 4),
                                     antiRepeatWindow: 3,
                                     fit: BoxFit.cover,
+                                    enabled: _carouselEnabled,
                                   ),
                                 ),
                               ),
                             );
                           }
 
-                          final slideIndex = index - 1;
+                          final slideIndex = index == 0 ? 0 : index - 1;
                           final slide = _slides[slideIndex];
 
                           // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
                           if (slideIndex == 0) {
                             const String bigText =
-                                "Trouvez immédiatement quelqu'un pour faire le job.";
+                                "Trouvez immédiatement quelqu'un pour faire le job !";
 
                             return Container(
                               margin: const EdgeInsets.symmetric(horizontal: 0),
