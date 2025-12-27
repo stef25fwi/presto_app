@@ -5,13 +5,14 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import '../services/audio_service.dart';
 import '../services/micro_ia_service.dart';
+import '../features/publish_offer/ai_offer_service.dart';
 import 'package:path_provider/path_provider.dart' if (dart.library.html) '';
 import 'dart:io' if (dart.library.html) 'dart:html';
 import '../utils/crashlytics_context.dart';
 import '../utils/retry.dart';
+import '../utils/friendly_snackbar.dart';
 import '../services/city_repo_compact.dart';
 import '../widgets/city_postal_autocomplete_compact.dart';
 import '../widgets/phone_input_field.dart';
@@ -75,24 +76,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // Pour l'enregistrement audio premium
   late final AudioRecorder _audioRecorder;
   bool _recording = false;
-
-  bool _isTimeoutError(Object e) {
-    if (e is TimeoutException) return true;
-    if (e is FirebaseFunctionsException && e.code == 'deadline-exceeded') {
-      return true;
-    }
-    return false;
-  }
-
-  void _showTimeoutSnackBar() {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Connexion lente, réessaie.'),
-        duration: Duration(seconds: 3),
-      ),
-    );
-  }
 
   final List<String> _categories = const [
     'Jardinage',
@@ -266,8 +249,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      if (_isTimeoutError(e)) {
-        _showTimeoutSnackBar();
+      if (isTimeoutError(e)) {
+        showTimeoutSnackBar(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur IA après dictée : $e')),
@@ -386,8 +369,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
     } catch (e) {
       if (mounted) {
-        if (_isTimeoutError(e)) {
-          _showTimeoutSnackBar();
+        if (isTimeoutError(e)) {
+          showTimeoutSnackBar(context);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Erreur IA : $e")),
@@ -535,8 +518,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         },
       );
       if (mounted) {
-        if (_isTimeoutError(e)) {
-          _showTimeoutSnackBar();
+        if (isTimeoutError(e)) {
+          showTimeoutSnackBar(context);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Erreur Premium IA : $e")),
@@ -672,7 +655,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withAlpha(15),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -738,7 +721,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               const SizedBox(height: 12),
 
               DropdownButtonFormField<String>(
-                value: _category,
+                initialValue: _category,
                 items: _categories
                     .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                     .toList(),
@@ -804,7 +787,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   Expanded(
                     flex: 2,
                     child: DropdownButtonFormField<String>(
-                      value: _budgetType,
+                        initialValue: _budgetType,
                       items: _budgetTypes
                           .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                           .toList(),
@@ -936,88 +919,5 @@ class _MicButton extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-// ============================================================================
-// Service IA pour générer un brouillon d'offre
-// ============================================================================
-
-class OfferDraft {
-  final String? title;
-  final String? description;
-  final String? category;
-  final String? city;
-  final String? postalCode;
-  final List<String>? bullets;
-  final List<String>? constraints;
-
-  OfferDraft({
-    this.title,
-    this.description,
-    this.category,
-    this.city,
-    this.postalCode,
-    this.bullets,
-    this.constraints,
-  });
-
-  factory OfferDraft.fromMap(Map<String, dynamic> m) => OfferDraft(
-        title: m['title'] as String?,
-        description: m['description'] as String?,
-        category: m['category'] as String?,
-        city: m['city'] as String?,
-        postalCode: m['postalCode'] as String?,
-        bullets: m['bullets'] != null ? List<String>.from(m['bullets'] as List) : null,
-        constraints: m['constraints'] != null ? List<String>.from(m['constraints'] as List) : null,
-      );
-}
-
-class AiOfferService {
-  /// Génère un brouillon à partir d'un texte (sans audio)
-  static Future<OfferDraft> generateDraft({
-    required String hint,
-    required String currentCity,
-    required String currentCategory,
-  }) async {
-    final callable = FirebaseFunctions.instanceFor(region: 'europe-west1').httpsCallable(
-      'generateOfferDraft',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
-    );
-    final res = await callable.call({
-      'hint': hint,
-      'city': currentCity,
-      'category': currentCategory,
-      'lang': 'fr',
-    });
-
-    final data = Map<String, dynamic>.from(res.data as Map);
-    return OfferDraft.fromMap(data);
-  }
-
-  /// Transcription Premium (Chirp 3) + Rédaction IA
-  static Future<({String transcript, OfferDraft draft})> transcribeAndDraft({
-    required String gcsUri,
-    required String languageCode,
-    required String category,
-    required String city,
-  }) async {
-    final callable = FirebaseFunctions.instanceFor(region: 'europe-west1').httpsCallable(
-      'transcribeAndDraftOffer',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 90)),
-    );
-    final res = await callable.call({
-      'gcsUri': gcsUri,
-      'languageCode': languageCode,
-      'category': category,
-      'city': city,
-    });
-
-    final data = Map<String, dynamic>.from(res.data as Map);
-    final transcript = (data['transcript'] ?? '').toString();
-    final draftMap = Map<String, dynamic>.from(data['draft'] as Map);
-    final draft = OfferDraft.fromMap(draftMap);
-
-    return (transcript: transcript, draft: draft);
   }
 }

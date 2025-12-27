@@ -22,6 +22,7 @@ import 'firebase_options.dart';
 import 'app_core.dart';
 import 'constants.dart';
 import 'utils/crashlytics_context.dart';
+import 'utils/friendly_snackbar.dart';
 import 'widgets/offer_card.dart';
 import 'widgets/ad_banner.dart';
 import 'widgets/premium_ai_button.dart';
@@ -4960,15 +4961,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         await _uploadAndTranscribe(recordedPath);
       } catch (e) {
         if (!mounted) return;
-        final isTimeout =
-            e is TimeoutException || (e is FirebaseFunctionsException && e.code == 'deadline-exceeded');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              isTimeout ? 'Connexion lente, réessaie.' : 'Erreur transcription: $e',
-            ),
-          ),
-        );
+        if (isTimeoutError(e)) {
+          showTimeoutSnackBar(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur transcription: $e')),
+          );
+        }
       } finally {
         if (mounted) setState(() => _isAnalyzing = false);
       }
@@ -5030,13 +5029,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      final isTimeout =
-          e is TimeoutException || (e is FirebaseFunctionsException && e.code == 'deadline-exceeded');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(isTimeout ? 'Connexion lente, réessaie.' : 'Erreur analyse: $e'),
-        ),
-      );
+      if (isTimeoutError(e)) {
+        showTimeoutSnackBar(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur analyse: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isAnalyzing = false);
     }
