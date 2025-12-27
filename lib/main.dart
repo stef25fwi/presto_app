@@ -594,10 +594,10 @@ class _HomePageState extends State<HomePage>
     ),
     
     _HomeSlide(
-      title: "iliprestō 100% gratuit",
-      subtitle: "Publiez vos offres, recevez des réponses.",
-      badge: "Gratuit",
-      icon: Icons.favorite_border,
+      title: "iliprestō",
+      subtitle: "Qui sommes-nous ? Mentions légales, confidentialité, CGU.",
+      badge: "Infos",
+      icon: Icons.info_outline,
     ),
   ];
 
@@ -1113,35 +1113,8 @@ class _HomePageState extends State<HomePage>
 
   /// Icône d'information pour accéder aux pages légales
   Widget _buildInfoIcon() {
-    return _TapScale(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const LegalInfoPage(),
-          ),
-        );
-      },
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: const Icon(
-          Icons.info_outline,
-          color: kPrestoBlue,
-          size: 22,
-        ),
-      ),
-    );
+    // Icône supprimée sur la page d'accueil (on garde juste l'espace pour l'alignement).
+    return const SizedBox(width: 40, height: 40);
   }
   /// Illustration à droite du slide (plus de chrono image)
   Widget _buildSlideIllustration(
@@ -1428,7 +1401,17 @@ class _HomePageState extends State<HomePage>
                           }
 
                           // 🔁 SLIDES 2, 3, 4 : layout texte + icône / image
-                          return Container(
+                          final VoidCallback? onSlideTap = slideIndex == 4
+                              ? () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const LegalInfoPage(),
+                                    ),
+                                  );
+                                }
+                              : null;
+
+                          final slideBody = Container(
                             margin: const EdgeInsets.symmetric(horizontal: 0),
                             decoration: BoxDecoration(
                               color: kPrestoOrange,
@@ -1502,6 +1485,13 @@ class _HomePageState extends State<HomePage>
                                 ],
                               ),
                             ),
+                          );
+
+                          if (onSlideTap == null) return slideBody;
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: onSlideTap,
+                            child: slideBody,
                           );
                         },
                       ),
