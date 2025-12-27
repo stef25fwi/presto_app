@@ -11,8 +11,6 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const double iconSize = 112;
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 0),
       decoration: BoxDecoration(
@@ -71,7 +69,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
           // ICÔNE ANIMÉE
           Positioned(
             right: 18,
-            top: 42,
+            top: 36,
             child: PrestoInfoIconAnimated(
                size: 130,
               onTap: () {
