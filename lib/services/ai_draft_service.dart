@@ -1,5 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../utils/crashlytics_context.dart';
+
 class AiDraftService {
   final FirebaseFunctions _functions =
       FirebaseFunctions.instanceFor(region: 'europe-west1');
@@ -22,13 +24,34 @@ class AiDraftService {
         'postalCode': (data['postalCode'] ?? '').toString(),
         'success': true,
       };
-    } on FirebaseFunctionsException catch (e) {
+    } on FirebaseFunctionsException catch (e, st) {
+      await CrashlyticsContext.recordError(
+        e,
+        st,
+        reason: 'generateOfferDraft failed',
+        fatal: false,
+        keys: {
+          'component': 'AiDraftService',
+          'function': 'generateOfferDraft',
+          'code': e.code,
+        },
+      );
       return {
         'success': false,
         'error': e.message ?? 'Erreur lors de l\'appel à la fonction',
         'code': e.code,
       };
-    } catch (e) {
+    } catch (e, st) {
+      await CrashlyticsContext.recordError(
+        e is Exception ? e : Exception(e.toString()),
+        st,
+        reason: 'generateOfferDraft failed (unknown)',
+        fatal: false,
+        keys: {
+          'component': 'AiDraftService',
+          'function': 'generateOfferDraft',
+        },
+      );
       return {
         'success': false,
         'error': e.toString(),
@@ -77,13 +100,34 @@ class AiDraftService {
         
         'success': true,
       };
-    } on FirebaseFunctionsException catch (e) {
+    } on FirebaseFunctionsException catch (e, st) {
+      await CrashlyticsContext.recordError(
+        e,
+        st,
+        reason: 'generateOfferDraftV2 failed',
+        fatal: false,
+        keys: {
+          'component': 'AiDraftService',
+          'function': 'generateOfferDraft',
+          'code': e.code,
+        },
+      );
       return {
         'success': false,
         'error': e.message ?? 'Erreur lors de l\'appel à la fonction',
         'code': e.code,
       };
-    } catch (e) {
+    } catch (e, st) {
+      await CrashlyticsContext.recordError(
+        e is Exception ? e : Exception(e.toString()),
+        st,
+        reason: 'generateOfferDraftV2 failed (unknown)',
+        fatal: false,
+        keys: {
+          'component': 'AiDraftService',
+          'function': 'generateOfferDraft',
+        },
+      );
       return {
         'success': false,
         'error': e.toString(),

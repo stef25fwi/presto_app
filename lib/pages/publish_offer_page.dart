@@ -9,6 +9,7 @@ import '../services/audio_service.dart';
 import '../services/micro_ia_service.dart';
 import 'package:path_provider/path_provider.dart' if (dart.library.html) '';
 import 'dart:io' if (dart.library.html) 'dart:html';
+import '../utils/crashlytics_context.dart';
 import '../services/city_repo_compact.dart';
 import '../widgets/city_postal_autocomplete_compact.dart';
 import '../widgets/phone_input_field.dart';
@@ -136,6 +137,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return _descCtrl;
   }
 
+  // ignore: unused_element
   Future<void> _toggleMic() async {
     if (!_sttReady) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -414,6 +416,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         throw Exception("Utilisateur non connecté");
       }
 
+      await CrashlyticsContext.setUserId(user.uid);
+      await CrashlyticsContext.setKey('flow', 'uploadAndTranscribe');
+
         // Upload vers Cloud Storage
       final file = File(audioPath);
 
@@ -433,6 +438,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       // Construire le gcsUri
       final bucket = FirebaseStorage.instance.ref().bucket;
       final gcsUri = 'gs://$bucket/$fileName';
+
+      await CrashlyticsContext.setKeys({
+        'storagePath': fileName,
+        'gcsUri': gcsUri,
+      });
 
       // Appeler le nouveau service Micro-IA
       final out = await MicroIaService.processAudio(
@@ -466,7 +476,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         await file.delete();
       } catch (_) {}
 
-    } catch (e) {
+    } catch (e, st) {
+      await CrashlyticsContext.recordError(
+        e is Exception ? e : Exception(e.toString()),
+        st,
+        reason: 'Upload/transcribe failed',
+        fatal: false,
+        keys: {
+          'component': 'PublishOfferPage',
+          'flow': 'uploadAndTranscribe',
+        },
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Erreur Premium IA : $e")),
@@ -804,6 +824,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 }
 
+// ignore: unused_element
 class _MicButton extends StatelessWidget {
   final bool listening;
   final VoidCallback onTap;
