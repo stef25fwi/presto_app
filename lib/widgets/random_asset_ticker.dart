@@ -37,6 +37,8 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
   final Queue<String> _lastShown = Queue<String>();
   final Set<String> _failedAssets = <String>{};
 
+  bool _precachingAll = false;
+
   @override
   void initState() {
     super.initState();
@@ -91,6 +93,15 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
         return;
       }
 
+      // Précharge au minimum la 1ère image pour éviter une "première transition" plus lente.
+      try {
+        await precacheImage(AssetImage(ordered.first), context);
+      } catch (_) {
+        _failedAssets.add(ordered.first);
+      }
+
+      if (!mounted) return;
+
       setState(() {
         _assets = ordered;
         _current = ordered.first;
@@ -99,6 +110,10 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
 
       _lastShown.clear();
       _pushLastShown(_current!);
+
+      // Précharge le reste en arrière-plan pour uniformiser les transitions.
+      _precacheAllAssets();
+
       if (widget.enabled) {
         _startTicker();
       }
@@ -110,6 +125,27 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
         _loading = false;
       });
     }
+  }
+
+  void _precacheAllAssets() {
+    if (_precachingAll) return;
+    if (_assets.isEmpty) return;
+    _precachingAll = true;
+
+    // Pas await ici: on ne veut pas bloquer l'UI.
+    Future<void>(() async {
+      for (final asset in _assets) {
+        if (!mounted) return;
+        if (_failedAssets.contains(asset)) continue;
+        try {
+          await precacheImage(AssetImage(asset), context);
+        } catch (_) {
+          _failedAssets.add(asset);
+        }
+      }
+    }).whenComplete(() {
+      _precachingAll = false;
+    });
   }
 
   void _pushLastShown(String asset) {
@@ -249,6 +285,7 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
         _current!,
         key: ValueKey(_current),
         fit: widget.fit,
+        gaplessPlayback: true,
         errorBuilder: (context, error, stackTrace) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _advanceToNext(failed: _current);
