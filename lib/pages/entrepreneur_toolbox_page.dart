@@ -242,7 +242,15 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
             orange: kPrestoOrange,
             blue: kPrestoBlue,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
+          
+          // Horizontal Progress Stepper
+          _HorizontalStepper(
+            totalSteps: 3,
+            currentStep: _getCurrentStep(),
+            orange: kPrestoOrange,
+          ),
+          const SizedBox(height: 20),
 
           // STEP 1 - Project
           _StepCard(
@@ -636,7 +644,112 @@ class _ChoiceChipCard extends StatelessWidget {
       ),
     );
   }
+
+  // Determine current step based on filled fields
+  int _getCurrentStep() {
+    if (_projectCtrl.text.isNotEmpty && _situation != null && _region != null) {
+      return 3;
+    } else if (_projectCtrl.text.isNotEmpty && _situation != null) {
+      return 2;
+    } else if (_projectCtrl.text.isNotEmpty) {
+      return 1;
+    }
+    return 0;
+  }
 }
+
+// Horizontal Stepper Widget
+class _HorizontalStepper extends StatelessWidget {
+  final int totalSteps;
+  final int currentStep;
+  final Color orange;
+
+  const _HorizontalStepper({
+    required this.totalSteps,
+    required this.currentStep,
+    required this.orange,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(totalSteps, (index) {
+        final stepNum = index + 1;
+        final isCompleted = currentStep > stepNum;
+        final isCurrent = currentStep == stepNum;
+        
+        return Expanded(
+          child: Column(
+            children: [
+              // Step circle and connector
+              Row(
+                children: [
+                  // Step circle
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isCompleted || isCurrent ? orange : Colors.white,
+                      border: Border.all(
+                        color: isCompleted || isCurrent ? orange : Colors.grey.shade300,
+                        width: 2,
+                      ),
+                    ),
+                    child: Center(
+                      child: isCompleted
+                          ? Icon(Icons.check, color: Colors.white, size: 18)
+                          : Text(
+                              '$stepNum',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: isCompleted || isCurrent ? Colors.white : Colors.grey.shade600,
+                                fontSize: 14,
+                              ),
+                            ),
+                    ),
+                  ),
+                  // Connector line (except for last step)
+                  if (index < totalSteps - 1)
+                    Expanded(
+                      child: Container(
+                        height: 2,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        color: isCompleted ? orange : Colors.grey.shade300,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Step label
+              Text(
+                _getStepLabel(stepNum),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isCompleted || isCurrent ? FontWeight.w600 : FontWeight.normal,
+                  color: isCompleted || isCurrent ? orange : Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  String _getStepLabel(int step) {
+    switch (step) {
+      case 1:
+        return "Projet";
+      case 2:
+        return "Situation";
+      case 3:
+        return "Région";
+      default:
+        return "";
+    }
+  }
 
 class _Choice {
   final String label;
