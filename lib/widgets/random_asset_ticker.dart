@@ -44,7 +44,7 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
   Future<void> _loadCarouselImages() async {
     try {
       final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-      final allAssets = await manifest.listAssets();
+      final allAssets = manifest.listAssets();
 
       final images = allAssets
           .where((p) => p.startsWith('assets/carousel_home/'))
