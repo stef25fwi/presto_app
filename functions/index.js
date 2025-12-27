@@ -566,14 +566,79 @@ async function loadAudioBufferFromStorage(storagePath) {
   return buf;
 }
 
-async function providerGoogleSTT({ audioBuffer, languageCode }) {
+function parseWavHeader(buf) {
+  try {
+    if (!Buffer.isBuffer(buf) || buf.length < 44) return { isWav: false };
+
+    // RIFF header
+    if (buf.toString('ascii', 0, 4) !== 'RIFF') return { isWav: false };
+    if (buf.toString('ascii', 8, 12) !== 'WAVE') return { isWav: false };
+
+    // Walk chunks to find "fmt "
+    let offset = 12;
+    while (offset + 8 <= buf.length) {
+      const chunkId = buf.toString('ascii', offset, offset + 4);
+      const chunkSize = buf.readUInt32LE(offset + 4);
+      const chunkDataStart = offset + 8;
+      const next = chunkDataStart + chunkSize;
+
+      if (chunkId === 'fmt ') {
+        if (chunkDataStart + 16 > buf.length) break;
+        const audioFormat = buf.readUInt16LE(chunkDataStart + 0);
+        const numChannels = buf.readUInt16LE(chunkDataStart + 2);
+        const sampleRate = buf.readUInt32LE(chunkDataStart + 4);
+        const bitsPerSample = buf.readUInt16LE(chunkDataStart + 14);
+        return {
+          isWav: true,
+          audioFormat,
+          numChannels,
+          sampleRate,
+          bitsPerSample,
+        };
+      }
+
+      // chunk sizes are padded to even
+      offset = next + (chunkSize % 2);
+    }
+
+    return { isWav: true };
+  } catch (_) {
+    return { isWav: false };
+  }
+}
+
+function canUseGoogleStt(audioInfo) {
+  if (!audioInfo || !audioInfo.isWav) return true; // may be raw PCM or other; let Google try
+  // Google STT here is configured for LINEAR16. Only safe if PCM (format 1) + 16-bit.
+  if (audioInfo.audioFormat == null || audioInfo.bitsPerSample == null) return true;
+  return audioInfo.audioFormat === 1 && audioInfo.bitsPerSample === 16;
+}
+
+async function providerGoogleSTT({ audioBuffer, languageCode, audioInfo }) {
   const speechClient = new speech.SpeechClient();
+
+  if (!canUseGoogleStt(audioInfo)) {
+    return {
+      text: '',
+      googleConfidence: null,
+      raw: { skipped: true, reason: 'unsupported_audio_for_google_stt', audioInfo },
+    };
+  }
+
+  const sampleRateHertz =
+    typeof audioInfo?.sampleRate === 'number' && audioInfo.sampleRate > 0
+      ? audioInfo.sampleRate
+      : 16000;
+  const audioChannelCount =
+    typeof audioInfo?.numChannels === 'number' && audioInfo.numChannels > 0
+      ? audioInfo.numChannels
+      : 1;
 
   const request = {
     config: {
       encoding: "LINEAR16",
-      sampleRateHertz: 16000,
-      audioChannelCount: 1,
+      sampleRateHertz,
+      audioChannelCount,
       languageCode,
       enableAutomaticPunctuation: true,
     },
@@ -600,8 +665,8 @@ async function providerWhisper({ audioBuffer, languageCode, openai }) {
   return { text: res?.text || "", raw: res };
 }
 
-async function providerHybrid({ audioBuffer, languageCode, openai }) {
-  const g = await providerGoogleSTT({ audioBuffer, languageCode });
+async function providerHybrid({ audioBuffer, languageCode, openai, audioInfo }) {
+  const g = await providerGoogleSTT({ audioBuffer, languageCode, audioInfo });
 
   const prompt = `
 Tu es un assistant de transcription FR.
@@ -653,6 +718,7 @@ exports.microIaProcessAudio = onCall(
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
       const audioBuffer = await loadAudioBufferFromStorage(storagePath);
+      const audioInfo = parseWavHeader(audioBuffer);
 
       const tryOrder = buildTryOrder(cfg.mode);
       const threshold = cfg.qualityThreshold;
@@ -665,11 +731,11 @@ exports.microIaProcessAudio = onCall(
 
         let out;
         if (attemptMode === "GOOGLE_ONLY") {
-          out = await providerGoogleSTT({ audioBuffer, languageCode: lang });
+          out = await providerGoogleSTT({ audioBuffer, languageCode: lang, audioInfo });
         } else if (attemptMode === "WHISPER_ONLY") {
           out = await providerWhisper({ audioBuffer, languageCode: lang, openai });
         } else {
-          out = await providerHybrid({ audioBuffer, languageCode: lang, openai });
+          out = await providerHybrid({ audioBuffer, languageCode: lang, openai, audioInfo });
         }
 
         const quality = evaluateQuality({ text: out.text, googleConfidence: out.googleConfidence });
@@ -678,7 +744,7 @@ exports.microIaProcessAudio = onCall(
           modeUsed: attemptMode,
           text: out.text,
           quality,
-          meta: { language: lang },
+          meta: { language: lang, audioInfo },
         };
 
         if (quality.score >= threshold) break;
