@@ -25,22 +25,39 @@ async function runModeration(text) {
 }
 
 async function sendFlagEmail({ to, subject, text }) {
+  // Best-effort: si SMTP n'est pas configuré, on skip sans erreur.
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  const from = process.env.SMTP_FROM;
+  if (!host || !user || !pass || !from) {
+    console.warn('[moderation] SMTP non configuré, email ignoré', {
+      hasHost: Boolean(host),
+      hasUser: Boolean(user),
+      hasPass: Boolean(pass),
+      hasFrom: Boolean(from),
+    });
+    return { sent: false, skipped: true };
+  }
+
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
+    host,
     port: Number(process.env.SMTP_PORT || "587"),
     secure: false,
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
+      user,
+      pass,
     },
   });
 
   await transporter.sendMail({
-    from: process.env.SMTP_FROM,
+    from,
     to,
     subject,
     text,
   });
+
+  return { sent: true, skipped: false };
 }
 
 async function notifyUser(admin, uid, payload) {
@@ -141,17 +158,26 @@ function createModerateNewOffer({ admin, onDocumentCreated, region = 'europe-wes
         });
 
         const to = process.env.FLAGGED_OFFERS_MAILBOX || "annonces-signalees@tondomaine.com";
-        await sendFlagEmail({
-          to,
-          subject: `Annonce rejetée (${offerId}) - ${offer.title || "Sans titre"}`,
-          text:
-            `Annonce rejetée\n\n` +
-            `offerId: ${offerId}\nuid: ${uid}\n\n` +
-            `Titre: ${offer.title || ""}\nVille: ${offer.city || ""}\nPrix: ${offer.price || ""}\n\n` +
-            `Raison: ${res.reasonInternal || "Non conforme"}\n` +
-            `Catégories: ${JSON.stringify(res.categories || {}, null, 2)}\n\n` +
-            `Contenu:\n${content}\n`,
-        });
+        try {
+          await sendFlagEmail({
+            to,
+            subject: `Annonce rejetée (${offerId}) - ${offer.title || "Sans titre"}`,
+            text:
+              `Annonce rejetée\n\n` +
+              `offerId: ${offerId}\nuid: ${uid}\n\n` +
+              `Titre: ${offer.title || ""}\nVille: ${offer.city || ""}\nPrix: ${offer.price || ""}\n\n` +
+              `Raison: ${res.reasonInternal || "Non conforme"}\n` +
+              `Catégories: ${JSON.stringify(res.categories || {}, null, 2)}\n\n` +
+              `Contenu:\n${content}\n`,
+          });
+        } catch (emailErr) {
+          // Best-effort: ne bloque jamais la modération si l'email échoue
+          console.warn('[moderation] Email flagged offers échoué', {
+            offerId,
+            uid,
+            message: emailErr?.message || String(emailErr),
+          });
+        }
       } catch (e) {
         await snap.ref.set(
           {
