@@ -25,4 +25,6 @@ class RecordConfig {
   });
 }
 
-enum AudioEncoder { aacLc }
+// Inclure `wav` pour compatibilité compilation avec le code partagé.
+// L'enregistrement web reste non supporté et lève UnsupportedError dans start().
+enum AudioEncoder { aacLc, wav }

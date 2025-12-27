@@ -21,6 +21,7 @@ import 'package:path_provider/path_provider.dart';
 import 'firebase_options.dart';
 import 'app_core.dart';
 import 'constants.dart';
+import 'utils/crashlytics_context.dart';
 import 'widgets/offer_card.dart';
 import 'widgets/ad_banner.dart';
 import 'widgets/premium_ai_button.dart';
@@ -6426,6 +6427,7 @@ class _AccountPageState extends State<AccountPage> {
         await googleSignIn.signOut();
       }
       SessionState.userId = null;
+      await CrashlyticsContext.setUserId(null);
     } catch (_) {}
   }
 
@@ -6684,6 +6686,8 @@ class _AccountPageState extends State<AccountPage> {
 
   Widget _buildProfile(User user) {
     SessionState.userId = user.uid;
+    // Lier les crash reports à l'utilisateur connecté
+    CrashlyticsContext.setUserId(user.uid);
 
     if (!_profileLoaded) {
       _profileLoaded = true;
@@ -7159,6 +7163,7 @@ class _AccountPageState extends State<AccountPage> {
         final user = snapshot.data;
         if (user == null) {
           SessionState.userId = null;
+          CrashlyticsContext.setUserId(null);
           return _buildAuthForm();
         } else {
           return _buildProfile(user);
