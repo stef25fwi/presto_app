@@ -619,8 +619,8 @@ class _HomePageState extends State<HomePage>
         });
         _carouselController.animateToPage(
           1,
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOut,
+          duration: const Duration(milliseconds: 550),
+          curve: Curves.easeInOutCubic,
         );
       });
     }
