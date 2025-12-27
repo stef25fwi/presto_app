@@ -4,7 +4,7 @@ import 'dart:async';
 class AudioRecorder {
   Future<bool> hasPermission() async => false;
   
-  Future<void> start(config, {String? path}) async {
+  Future<void> start(RecordConfig config, {String? path}) async {
     throw UnsupportedError('Audio recording not supported on web');
   }
   
