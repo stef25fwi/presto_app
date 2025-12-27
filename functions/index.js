@@ -482,20 +482,45 @@ function normalizeMode(mode) {
   return "HYBRID";
 }
 
-async function getMicroIaConfig() {
-  try {
-    const snap = await admin.firestore().doc("settings/microia").get();
-    const data = snap.exists ? snap.data() : {};
-    return {
-      mode: normalizeMode(data?.mode || "HYBRID"),
-      fallbackEnabled: data?.fallbackEnabled !== false,
-      qualityThreshold: typeof data?.qualityThreshold === "number" ? data.qualityThreshold : 0.62,
-      languageCode: data?.languageCode || "fr-FR",
-    };
-  } catch (_) {
-    return { mode: "HYBRID", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR" };
-  }
+// ---------- Remote Config cache (évite de fetch à chaque appel) ----------
+let _microIaCfgCache = null;
+let _microIaCfgCacheAt = 0;
+const MICROIA_RC_CACHE_MS = 60 * 1000; // 60s
+
+function asBool(v, def) {
+  if (typeof v === "boolean") return v;
+  if (typeof v === "string") return v.toLowerCase() === "true";
+  return def;
 }
+function asNum(v, def) {
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : def;
+}
+
+async function getMicroIaConfig() {
+  const now = Date.now();
+  if (_microIaCfgCache && (now - _microIaCfgCacheAt) < MICROIA_RC_CACHE_MS) {
+    return _microIaCfgCache;
+  }
+
+  try {
+    const tpl = await admin.remoteConfig().getTemplate();
+    const p = tpl.parameters || {};
+
+    const mode = normalizeMode(p.microia_mode?.defaultValue?.value || "HYBRID");
+    const fallbackEnabled = asBool(p.microia_fallback_enabled?.defaultValue?.value, true);
+    const qualityThreshold = asNum(p.microia_quality_threshold?.defaultValue?.value, 0.62);
+    const languageCode = p.microia_language_code?.defaultValue?.value || "fr-FR";
+
+    _microIaCfgCache = { mode, fallbackEnabled, qualityThreshold, languageCode };
+    _microIaCfgCacheAt = now;
+    return _microIaCfgCache;
+  } catch (e) {
+    console.warn("[getMicroIaConfig] Remote Config fetch failed, using defaults:", e?.message || e);
+    _microIaCfgCache = { mode: "HYBRID", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR" };
+    _microIaCfgCacheAt = now;
+    return _microIaCfgCache;
+  }
 
 function evaluateQuality({ text, googleConfidence }) {
   const t = (text || "").trim();
