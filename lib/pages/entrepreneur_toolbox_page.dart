@@ -501,8 +501,13 @@ class _HeaderCard extends StatelessWidget {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              "Décrivez votre projet et on vous guide\navec les bons organismes et démarches.",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, height: 1.2),
+              "Décrivez votre projet : nous vous guidons vers les organismes adaptés et les démarches à suivre",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+                fontSize: 16,
+              ),
             ),
           ),
         ],
