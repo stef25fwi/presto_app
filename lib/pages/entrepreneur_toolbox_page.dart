@@ -495,22 +495,15 @@ class _HeaderCard extends StatelessWidget {
           BoxShadow(color: Colors.black.withOpacity(.10), blurRadius: 14, offset: const Offset(0, 6)),
         ],
       ),
-      child: Row(
-        children: const [
-          Icon(Icons.construction, color: Colors.white, size: 28),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              "Décrivez votre projet : nous vous guidons vers les organismes adaptés et les démarches à suivre",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                height: 1.2,
-                fontSize: 16,
-              ),
-            ),
-          ),
-        ],
+      child: const Text(
+        "Décrivez votre projet : nous vous guidons vers les organismes adaptés\n"
+        "et les démarches à suivre.",
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+          height: 1.25,
+          fontSize: 16,
+        ),
       ),
     );
   }
