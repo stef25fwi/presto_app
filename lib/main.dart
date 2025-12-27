@@ -3494,6 +3494,8 @@ class OfferDetailPage extends StatelessWidget {
                       conversationId = doc.id;
                     }
 
+                    if (!context.mounted) return;
+
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => ConversationPage(
@@ -5118,24 +5120,25 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
 
     final data = (res.data as Map<dynamic, dynamic>);
-    if (mounted) {
-      setState(() {
-        final title = (data['title'] ?? '').toString();
-        final description = (data['description'] ?? '').toString();
-        final category = (data['category'] ?? '').toString();
-        final city = (data['city'] ?? '').toString();
-        final postal = (data['postalCode'] ?? '').toString();
+    if (!mounted) return;
 
-        if (title.isNotEmpty) _titleController.text = title;
-        if (description.isNotEmpty) _descriptionController.text = description;
-        if (category.isNotEmpty) {
-          _category = category;
-          _selectedSubCategory = null;
-        }
-        if (city.isNotEmpty) _locationController.text = city;
-        if (postal.isNotEmpty) _postalCodeController.text = postal;
-      });
-    }
+    setState(() {
+      final title = (data['title'] ?? '').toString();
+      final description = (data['description'] ?? '').toString();
+      final category = (data['category'] ?? '').toString();
+      final city = (data['city'] ?? '').toString();
+      final postal = (data['postalCode'] ?? '').toString();
+
+      if (title.isNotEmpty) _titleController.text = title;
+      if (description.isNotEmpty) _descriptionController.text = description;
+      if (category.isNotEmpty) {
+        _category = category;
+        _selectedSubCategory = null;
+      }
+      if (city.isNotEmpty) _locationController.text = city;
+      if (postal.isNotEmpty) _postalCodeController.text = postal;
+    });
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('✨ Transcription réussie et champs remplis')),
     );

@@ -1,5 +1,24 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
+List<String>? _stringListOrNull(Object? value) {
+  if (value == null) return null;
+  if (value is List) {
+    final out = <String>[];
+    for (final item in value) {
+      if (item == null) continue;
+      out.add(item.toString());
+    }
+    return out;
+  }
+  return null;
+}
+
+Map<String, dynamic> _mapStringDynamic(Object? value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is Map) return Map<String, dynamic>.from(value);
+  throw const FormatException('Expected a Map payload from Cloud Functions');
+}
+
 class OfferDraft {
   final String? title;
   final String? description;
@@ -20,15 +39,13 @@ class OfferDraft {
   });
 
   factory OfferDraft.fromMap(Map<String, dynamic> m) => OfferDraft(
-        title: m['title'] as String?,
-        description: m['description'] as String?,
-        category: m['category'] as String?,
-        city: m['city'] as String?,
-        postalCode: m['postalCode'] as String?,
-        bullets: m['bullets'] != null ? List<String>.from(m['bullets'] as List) : null,
-        constraints: m['constraints'] != null
-            ? List<String>.from(m['constraints'] as List)
-            : null,
+        title: m['title']?.toString(),
+        description: m['description']?.toString(),
+        category: m['category']?.toString(),
+        city: m['city']?.toString(),
+        postalCode: m['postalCode']?.toString(),
+        bullets: _stringListOrNull(m['bullets']),
+        constraints: _stringListOrNull(m['constraints']),
       );
 }
 
@@ -38,8 +55,10 @@ class AiOfferService {
     required String hint,
     required String currentCity,
     required String currentCategory,
+    FirebaseFunctions? functions,
   }) async {
-    final callable = FirebaseFunctions.instanceFor(region: 'europe-west1').httpsCallable(
+    final callable = (functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'))
+        .httpsCallable(
       'generateOfferDraft',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
     );
@@ -50,7 +69,7 @@ class AiOfferService {
       'lang': 'fr',
     });
 
-    final data = Map<String, dynamic>.from(res.data as Map);
+    final data = _mapStringDynamic(res.data);
     return OfferDraft.fromMap(data);
   }
 
@@ -60,8 +79,10 @@ class AiOfferService {
     required String languageCode,
     required String category,
     required String city,
+    FirebaseFunctions? functions,
   }) async {
-    final callable = FirebaseFunctions.instanceFor(region: 'europe-west1').httpsCallable(
+    final callable = (functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'))
+        .httpsCallable(
       'transcribeAndDraftOffer',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 90)),
     );
@@ -72,9 +93,9 @@ class AiOfferService {
       'city': city,
     });
 
-    final data = Map<String, dynamic>.from(res.data as Map);
+    final data = _mapStringDynamic(res.data);
     final transcript = (data['transcript'] ?? '').toString();
-    final draftMap = Map<String, dynamic>.from(data['draft'] as Map);
+    final draftMap = _mapStringDynamic(data['draft']);
     final draft = OfferDraft.fromMap(draftMap);
 
     return (transcript: transcript, draft: draft);

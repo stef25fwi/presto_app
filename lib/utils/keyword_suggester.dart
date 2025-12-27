@@ -203,8 +203,11 @@ class KeywordSuggester {
       // 2) matching label global
       final label = it.normLabel;
       if (qNorm.isNotEmpty) {
-        if (label.startsWith(qNorm)) score += 6;
-        else if (label.contains(qNorm)) score += 3;
+        if (label.startsWith(qNorm)) {
+          score += 6;
+        } else if (label.contains(qNorm)) {
+          score += 3;
+        }
       }
 
       // 3) matching tokens sur keywords/tags
