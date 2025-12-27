@@ -581,19 +581,6 @@ class _HomePageState extends State<HomePage>
       icon: Icons.business_center_outlined,
     ),
     _HomeSlide(
-      title: "Besoin d’un extra pour ce soir ?",
-      subtitle: "Serveur, plonge, barman… publiez votre offre.",
-      badge: "Restauration",
-      icon: Icons.restaurant_outlined,
-    ),
-    _HomeSlide(
-      title: "Jardin, peinture, déménagement",
-      subtitle: "Des dizaines de prestataires prêts à accepter.",
-      badge: "Maison",
-      icon: Icons.handyman_outlined,
-    ),
-    
-    _HomeSlide(
       title: "iliprestō",
       subtitle: "Qui sommes-nous ? Mentions légales, confidentialité, CGU.",
       badge: "Infos",
@@ -1401,7 +1388,8 @@ class _HomePageState extends State<HomePage>
                           }
 
                           // 🔁 SLIDES 2, 3, 4 : layout texte + icône / image
-                          final VoidCallback? onSlideTap = slideIndex == 4
+                          final VoidCallback? onSlideTap =
+                              slideIndex == (_slides.length - 1)
                               ? () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
