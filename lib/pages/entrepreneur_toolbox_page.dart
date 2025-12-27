@@ -225,6 +225,17 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
     );
   }
 
+  // Détermine l'étape actuelle en fonction des champs remplis
+  int _getCurrentStep() {
+    final hasProject = _projectCtrl.text.trim().isNotEmpty;
+    final hasSituation = _situation != null;
+    final hasRegion = _region != null;
+    if (hasProject && hasSituation && hasRegion) return 3;
+    if (hasProject && hasSituation) return 2;
+    if (hasProject) return 1;
+    return 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -644,18 +655,6 @@ class _ChoiceChipCard extends StatelessWidget {
       ),
     );
   }
-
-  // Determine current step based on filled fields
-  int _getCurrentStep() {
-    if (_projectCtrl.text.isNotEmpty && _situation != null && _region != null) {
-      return 3;
-    } else if (_projectCtrl.text.isNotEmpty && _situation != null) {
-      return 2;
-    } else if (_projectCtrl.text.isNotEmpty) {
-      return 1;
-    }
-    return 0;
-  }
 }
 
 // Horizontal Stepper Widget
@@ -750,6 +749,8 @@ class _HorizontalStepper extends StatelessWidget {
         return "";
     }
   }
+
+}
 
 class _Choice {
   final String label;
