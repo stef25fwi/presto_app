@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,6 +11,7 @@ import '../services/micro_ia_service.dart';
 import 'package:path_provider/path_provider.dart' if (dart.library.html) '';
 import 'dart:io' if (dart.library.html) 'dart:html';
 import '../utils/crashlytics_context.dart';
+import '../utils/retry.dart';
 import '../services/city_repo_compact.dart';
 import '../widgets/city_postal_autocomplete_compact.dart';
 import '../widgets/phone_input_field.dart';
@@ -73,6 +75,24 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // Pour l'enregistrement audio premium
   late final AudioRecorder _audioRecorder;
   bool _recording = false;
+
+  bool _isTimeoutError(Object e) {
+    if (e is TimeoutException) return true;
+    if (e is FirebaseFunctionsException && e.code == 'deadline-exceeded') {
+      return true;
+    }
+    return false;
+  }
+
+  void _showTimeoutSnackBar() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Connexion lente, réessaie.'),
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
 
   final List<String> _categories = const [
     'Jardinage',
@@ -246,9 +266,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur IA après dictée : $e')),
-      );
+      if (_isTimeoutError(e)) {
+        _showTimeoutSnackBar();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur IA après dictée : $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _aiLoading = false);
     }
@@ -299,6 +323,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _onFillWithAI() async {
+    if (_aiLoading) return;
     // ⚠️ adapte ces noms si tes controllers s'appellent autrement
     // ex: _titleController au lieu de _titleCtrl
     final titleCtrl = _titleCtrl;
@@ -326,6 +351,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       if (replace != true) return;
     }
+
+    if (_aiLoading) return;
 
     setState(() => _aiLoading = true);
 
@@ -359,9 +386,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur IA : $e")),
-        );
+        if (_isTimeoutError(e)) {
+          _showTimeoutSnackBar();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Erreur IA : $e")),
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _aiLoading = false);
@@ -370,6 +401,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   /// Enregistrement audio Premium avec transcription Chirp 3 EU + Rédaction Gemini
   Future<void> _togglePremiumRecording() async {
+    if (_aiLoading) return;
     if (_recording) {
       // Arrêter l'enregistrement
       final path = await _audioRecorder.stop();
@@ -408,6 +440,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _uploadAndTranscribe(String audioPath) async {
+    if (_aiLoading) return;
     setState(() => _aiLoading = true);
 
     try {
@@ -427,12 +460,26 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       final storageRef = FirebaseStorage.instance.ref().child(fileName);
 
-      await storageRef.putFile(
-        file,
-        SettableMetadata(
-          contentType: 'audio/wav',
-          cacheControl: 'private, max-age=3600',
-        ),
+      await retry(
+        () => storageRef
+            .putFile(
+              file,
+              SettableMetadata(
+                contentType: 'audio/wav',
+                cacheControl: 'private, max-age=3600',
+              ),
+            )
+            .timeout(const Duration(seconds: 60)),
+        maxAttempts: 3,
+        retryIf: (e) {
+          if (e is TimeoutException) return true;
+          if (e is FirebaseException) {
+            return e.code == 'network-error' ||
+                e.code == 'retry-limit-exceeded' ||
+                e.code == 'unknown';
+          }
+          return false;
+        },
       );
       
       // Construire le gcsUri
@@ -488,9 +535,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         },
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur Premium IA : $e")),
-        );
+        if (_isTimeoutError(e)) {
+          _showTimeoutSnackBar();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Erreur Premium IA : $e")),
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _aiLoading = false);
@@ -929,8 +980,10 @@ class AiOfferService {
     required String currentCity,
     required String currentCategory,
   }) async {
-    final callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
-      .httpsCallable('generateOfferDraft');
+    final callable = FirebaseFunctions.instanceFor(region: 'europe-west1').httpsCallable(
+      'generateOfferDraft',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
+    );
     final res = await callable.call({
       'hint': hint,
       'city': currentCity,
@@ -949,8 +1002,10 @@ class AiOfferService {
     required String category,
     required String city,
   }) async {
-    final callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
-      .httpsCallable('transcribeAndDraftOffer');
+    final callable = FirebaseFunctions.instanceFor(region: 'europe-west1').httpsCallable(
+      'transcribeAndDraftOffer',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 90)),
+    );
     final res = await callable.call({
       'gcsUri': gcsUri,
       'languageCode': languageCode,
