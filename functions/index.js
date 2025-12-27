@@ -1,9 +1,11 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
-const { initializeApp } = require('firebase-admin/app');
+const admin = require('firebase-admin');
 const OpenAI = require('openai');
+const { createModerateNewOffer } = require('./moderation');
 
-initializeApp();
+admin.initializeApp();
 
 // Secrets (Firebase Functions v2)
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
@@ -469,9 +471,14 @@ Règles :
 // StoragePath in Firebase Storage: "stt/uid_timestamp.wav"
 // =====================================================
 
-const admin = require("firebase-admin");
 const speech = require("@google-cloud/speech");
 const { toFile } = require("openai");
+
+exports.moderateNewOffer = createModerateNewOffer({
+  admin,
+  onDocumentCreated,
+  region: 'europe-west1',
+});
 
 // Assure-toi que initializeApp est appelé une seule fois dans ton fichier
 // if (admin.apps.length === 0) admin.initializeApp();
