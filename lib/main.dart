@@ -1287,15 +1287,45 @@ class _HomePageState extends State<HomePage>
                     children: [
                       PageView.builder(
                         controller: _carouselController,
-                        itemCount: _slides.length,
+                        itemCount: _slides.length + 1,
                         onPageChanged: (index) {
                           setState(() => _currentSlide = index);
                         },
                         itemBuilder: (context, index) {
-                          final slide = _slides[index];
+                          // ✅ Slide 0 : carousel d’images (1ère position)
+                          if (index == 0) {
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 0),
+                              decoration: BoxDecoration(
+                                color: kPrestoOrange,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.10),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: const SizedBox.expand(
+                                  child: RandomAssetTicker(
+                                    folderPrefix: 'assets/carousel_home/',
+                                    interval: Duration(seconds: 4),
+                                    antiRepeatWindow: 3,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+
+                          final slideIndex = index - 1;
+                          final slide = _slides[slideIndex];
 
                           // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
-                          if (index == 0) {
+                          if (slideIndex == 0) {
                             const String bigText =
                                 "Trouvez immédiatement quelqu'un pour faire le job.";
 
@@ -1362,38 +1392,8 @@ class _HomePageState extends State<HomePage>
                           }
 
                           // ✅ SLIDE 2 (index 1) : Boîte à outils de l'entrepreneur
-                          if (index == 1) {
+                          if (slideIndex == 1) {
                             return const EntrepreneurToolboxSlide();
-                          }
-
-                          // ✅ SLIDE 3 (index 2) : carousel/ticker d'images aléatoire
-                          if (index == 2) {
-                            // Slide carousel: image pleine surface, sans texte
-                            return Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 0),
-                              decoration: BoxDecoration(
-                                color: kPrestoOrange,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.10),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: const SizedBox.expand(
-                                  child: RandomAssetTicker(
-                                    folderPrefix: 'assets/carousel_home/',
-                                    interval: Duration(seconds: 3),
-                                    antiRepeatWindow: 3,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                            );
                           }
 
                           // 🔁 SLIDES 2, 3, 4 : layout texte + icône / image
@@ -1460,8 +1460,8 @@ class _HomePageState extends State<HomePage>
                                     ),
                                   ),
 
-                                  // 👉 Illustration uniquement à partir du slide 2
-                                  if (index != 0) ...[
+                                  // 👉 Illustration (icône) sur les slides texte
+                                  if (slideIndex != 0) ...[
                                     const SizedBox(width: 8),
                                     _buildSlideIllustration(
                                       slide,
@@ -1482,7 +1482,7 @@ class _HomePageState extends State<HomePage>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(
-                            _slides.length,
+                            _slides.length + 1,
                             (index) => AnimatedContainer(
                               duration: const Duration(milliseconds: 250),
                               margin: const EdgeInsets.symmetric(horizontal: 3),
