@@ -498,79 +498,35 @@ class _StepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Stepper column on the left
-        Column(
-          children: [
-            // Circle with number
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isCompleted ? orange : Colors.white,
-                border: Border.all(
-                  color: isCompleted ? orange : Colors.black.withOpacity(.2),
-                  width: 2,
-                ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.black.withOpacity(.06)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(.05), blurRadius: 14, offset: const Offset(0, 6)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
               ),
-              child: Center(
-                child: Text(
-                  "$step",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: isCompleted ? Colors.white : Colors.black87,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ),
-            // Connector line
-            if (showConnector)
-              Container(
-                width: 2,
-                height: 60,
-                color: orange.withOpacity(0.3),
-              ),
-          ],
-        ),
-        const SizedBox(width: 12),
-        // Card content
-        Expanded(
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 20),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.black.withOpacity(.06)),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(.05), blurRadius: 14, offset: const Offset(0, 6)),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                    ),
-                    if (trailing != null) trailing!,
-                    if (trailing != null) trailing!,
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(subtitle, style: const TextStyle(color: Colors.black54)),
-                const SizedBox(height: 12),
-                child,
-              ],
-            ),
+              if (trailing != null) trailing!,
+              if (trailing != null) trailing!,
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 6),
+          Text(subtitle, style: const TextStyle(color: Colors.black54)),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
     );
   }
 }
