@@ -73,7 +73,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
             right: 18,
             top: 42,
             child: PrestoInfoIconAnimated(
-               size: 90,
+               size: 130,
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
