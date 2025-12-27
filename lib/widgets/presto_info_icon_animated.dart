@@ -74,14 +74,14 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                       boxShadow: [
                         // Halo bleu léger
                         BoxShadow(
-                          color: kBlue.withOpacity(0.20),
+                          color: kBlue.withValues(alpha: 0.20),
                           blurRadius: 26,
                           spreadRadius: 2,
                           offset: const Offset(0, 0),
                         ),
                         // Ombre "card"
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.18),
+                          color: Colors.black.withValues(alpha: 0.18),
                           blurRadius: 16,
                           offset: const Offset(0, 8),
                         ),
@@ -100,11 +100,11 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                             shape: BoxShape.circle,
                             color: Colors.white,
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.95),
+                              color: Colors.white.withValues(alpha: 0.95),
                               width: 2.0,
                             ),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Icon(
                               Icons.info_rounded,
                               color: kBlue,
@@ -122,14 +122,14 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                       top: -6,
                       right: -10,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                              horizontal: widget.size * 0.18, vertical: widget.size * 0.11),
                         decoration: BoxDecoration(
                           color: kOrange,
                           borderRadius: BorderRadius.circular(999),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.18),
+                              color: Colors.black.withValues(alpha: 0.18),
                               blurRadius: 12,
                               offset: const Offset(0, 6),
                             ),
@@ -137,7 +137,7 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                         ),
                         child: Text(
                           widget.badgeText,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                              fontSize: widget.size * 0.21,
                             fontWeight: FontWeight.w800,
