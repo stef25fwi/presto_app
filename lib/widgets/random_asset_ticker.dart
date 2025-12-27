@@ -47,23 +47,29 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
       final allAssets = manifest.listAssets();
 
       final images = allAssets
-          .where((p) => p.startsWith('assets/carousel_home/'))
+          .where((p) => p.startsWith(widget.folderPrefix))
           .where((p) {
             final x = p.toLowerCase();
             return x.endsWith('.png') || x.endsWith('.jpg') || x.endsWith('.jpeg') || x.endsWith('.webp');
           })
           .toList();
 
-      images.shuffle();
+      // Affiche toujours le "slide 1" en premier si présent (ex: 01.png),
+      // puis garde un ordre aléatoire pour le reste.
+      images.sort();
+      final first = images.isNotEmpty ? images.first : null;
+      final rest = images.length > 1 ? images.sublist(1) : <String>[];
+      rest.shuffle();
+      final ordered = first == null ? <String>[] : <String>[first, ...rest];
 
-      debugPrint('carousel : ${images.length} image(s) trouvée(s)');
-      if (images.isNotEmpty) {
-        debugPrint(images.take(20).join('\n'));
+      debugPrint('carousel : ${ordered.length} image(s) trouvée(s)');
+      if (ordered.isNotEmpty) {
+        debugPrint(ordered.take(20).join('\n'));
       }
 
       if (!mounted) return;
 
-      if (images.isEmpty) {
+      if (ordered.isEmpty) {
         setState(() {
           _assets = [];
           _loading = false;
@@ -72,8 +78,8 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
       }
 
       setState(() {
-        _assets = images;
-        _current = images.first;
+        _assets = ordered;
+        _current = ordered.first;
         _loading = false;
       });
 
