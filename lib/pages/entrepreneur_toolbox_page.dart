@@ -375,17 +375,31 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
                       .toList(),
                   onChanged: (v) => setState(() => _region = v),
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.place_outlined),
+                    prefixIcon: Icon(
+                      Icons.place_outlined,
+                      color: _region != null ? kPrestoOrange : null,
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: Colors.black.withOpacity(.08)),
+                      borderSide: BorderSide(
+                        color: _region != null ? kPrestoOrange : Colors.black.withOpacity(.08),
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: Colors.black.withOpacity(.08)),
+                      borderSide: BorderSide(
+                        color: _region != null ? kPrestoOrange : Colors.black.withOpacity(.08),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(
+                        color: _region != null ? kPrestoOrange : kPrestoBlue,
+                        width: 1.4,
+                      ),
                     ),
                   ),
                 ),
@@ -518,7 +532,6 @@ class _StepCard extends StatelessWidget {
                 child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
               ),
               if (trailing != null) trailing!,
-              if (trailing != null) trailing!,
             ],
           ),
           const SizedBox(height: 6),
@@ -627,69 +640,93 @@ class _HorizontalStepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: List.generate(totalSteps, (index) {
-        final stepNum = index + 1;
-        final isCompleted = currentStep > stepNum;
-        final isCurrent = currentStep == stepNum;
-        
-        return Expanded(
-          child: Column(
-            children: [
-              // Step circle and connector
-              Row(
-                children: [
-                  // Step circle
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isCompleted || isCurrent ? orange : Colors.white,
-                      border: Border.all(
-                        color: isCompleted || isCurrent ? orange : Colors.grey.shade300,
-                        width: 2,
-                      ),
-                    ),
-                    child: Center(
-                      child: isCompleted
-                          ? Icon(Icons.check, color: Colors.white, size: 18)
-                          : Text(
-                              '$stepNum',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: isCompleted || isCurrent ? Colors.white : Colors.grey.shade600,
-                                fontSize: 14,
-                              ),
-                            ),
-                    ),
-                  ),
-                  // Connector line (except for last step)
-                  if (index < totalSteps - 1)
-                    Expanded(
-                      child: Container(
-                        height: 2,
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        color: isCompleted ? orange : Colors.grey.shade300,
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Step label
-              Text(
-                _getStepLabel(stepNum),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isCompleted || isCurrent ? FontWeight.w600 : FontWeight.normal,
-                  color: isCompleted || isCurrent ? orange : Colors.grey.shade600,
-                ),
-              ),
-            ],
+    // UX attendu: labels centrés sous chaque rond + texte "Mon parcours" après le 3e rond.
+    // Ici on garde un rendu simple et stable pour 3 étapes.
+    if (totalSteps != 3) {
+      return const SizedBox.shrink();
+    }
+
+    const double circleSize = 36;
+    const double connectorWidth = 20;
+
+    Widget buildCircle(int stepNum) {
+      final isCompleted = currentStep > stepNum;
+      final isCurrent = currentStep == stepNum;
+      final active = isCompleted || isCurrent;
+
+      return Container(
+        width: circleSize,
+        height: circleSize,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: active ? orange : Colors.white,
+          border: Border.all(
+            color: active ? orange : Colors.grey.shade300,
+            width: 2,
           ),
-        );
-      }),
+        ),
+        child: Center(
+          child: isCompleted
+              ? const Icon(Icons.check, color: Colors.white, size: 18)
+              : Text(
+                  '$stepNum',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: active ? Colors.white : Colors.grey.shade600,
+                    fontSize: 14,
+                  ),
+                ),
+        ),
+      );
+    }
+
+    Color connectorColor(int leftStep) {
+      // Le segment est considéré "actif" si on a dépassé le step de gauche.
+      return currentStep > leftStep ? orange : Colors.grey.shade300;
+    }
+
+    TextStyle labelStyle(int stepNum) {
+      final isCompleted = currentStep > stepNum;
+      final isCurrent = currentStep == stepNum;
+      final active = isCompleted || isCurrent;
+      return TextStyle(
+        fontSize: 11,
+        fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+        color: active ? orange : Colors.grey.shade600,
+      );
+    }
+
+    final parcoursColor = currentStep >= 3 ? orange : Colors.grey.shade600;
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: Center(child: buildCircle(1))),
+            Container(width: connectorWidth, height: 2, color: connectorColor(1)),
+            Expanded(child: Center(child: buildCircle(2))),
+            Container(width: connectorWidth, height: 2, color: connectorColor(2)),
+            Expanded(child: Center(child: buildCircle(3))),
+            const SizedBox(width: 10),
+            Text(
+              'Mon parcours',
+              style: TextStyle(fontWeight: FontWeight.w700, color: parcoursColor, fontSize: 12),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(child: Center(child: Text(_getStepLabel(1), textAlign: TextAlign.center, style: labelStyle(1)))),
+            const SizedBox(width: connectorWidth),
+            Expanded(child: Center(child: Text(_getStepLabel(2), textAlign: TextAlign.center, style: labelStyle(2)))),
+            const SizedBox(width: connectorWidth),
+            Expanded(child: Center(child: Text(_getStepLabel(3), textAlign: TextAlign.center, style: labelStyle(3)))),
+            const SizedBox(width: 10),
+            const SizedBox(width: 92),
+          ],
+        ),
+      ],
     );
   }
 
