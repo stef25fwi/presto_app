@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../services/audio_service.dart';
+import '../services/micro_ia_service.dart';
 import 'package:path_provider/path_provider.dart' if (dart.library.html) '';
 import 'dart:io' if (dart.library.html) 'dart:html';
 import '../services/city_repo_compact.dart';
@@ -382,12 +383,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     } else {
       // Démarrer l'enregistrement
       if (await _audioRecorder.hasPermission()) {
-        final directory = await getTemporaryDirectory();
-        final filePath = '${directory.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        final filePath = '${(await getTemporaryDirectory()).path}/presto_audio_${DateTime.now().millisecondsSinceEpoch}.wav';
         
         await _audioRecorder.start(
           const RecordConfig(
-            encoder: AudioEncoder.aacLc,
+            encoder: AudioEncoder.wav,
             sampleRate: 16000,
             numChannels: 1,
           ),
@@ -414,49 +414,48 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         throw Exception("Utilisateur non connecté");
       }
 
-      // Upload vers Cloud Storage
+        // Upload vers Cloud Storage
       final file = File(audioPath);
-      final fileName = 'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+      // ✅ extension cohérente avec RecordConfig encoder: AudioEncoder.wav
+      final fileName = 'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.wav';
+
       final storageRef = FirebaseStorage.instance.ref().child(fileName);
-      
-      await storageRef.putFile(file);
+
+      await storageRef.putFile(
+        file,
+        SettableMetadata(
+          contentType: 'audio/wav',
+          cacheControl: 'private, max-age=3600',
+        ),
+      );
       
       // Construire le gcsUri
       final bucket = FirebaseStorage.instance.ref().bucket;
       final gcsUri = 'gs://$bucket/$fileName';
 
-      // Appeler la Cloud Function Premium
-      final result = await AiOfferService.transcribeAndDraft(
-        gcsUri: gcsUri,
+      // Appeler le nouveau service Micro-IA
+      final out = await MicroIaService.processAudio(
+        storagePath: fileName, // le path dans le bucket
         languageCode: 'fr-FR',
-        category: _category ?? '',
-        city: _cityCtrl.text.trim(),
       );
 
-      // Remplir les champs
-      if ((result.draft.title ?? '').trim().isNotEmpty) {
-        _titleCtrl.text = result.draft.title!.trim();
-      }
-      if ((result.draft.description ?? '').trim().isNotEmpty) {
-        _descCtrl.text = result.draft.description!.trim();
-      }
-      if ((result.draft.category ?? '').trim().isNotEmpty) {
-        _category = result.draft.category!.trim();
-      }
-      if ((result.draft.city ?? '').trim().isNotEmpty) {
-        _cityCtrl.text = result.draft.city!.trim();
-      }
-      if ((result.draft.postalCode ?? '').trim().isNotEmpty) {
-        _cpCtrl.text = result.draft.postalCode!.trim();
-      }
+      final transcript = (out['text'] ?? '').toString();
+      // Info qualité (optionnel)
+      final score = (out['quality']?['score'] ?? 0.0) as num;
+      final modeUsed = (out['modeUsed'] ?? '').toString();
 
-      // ❌ IMPORTANT : on ne touche pas téléphone/budget
+      // Pour l'instant, on met le transcript dans la description
+      // Tu peux ensuite rappeler un autre callable pour générer le draft si besoin
+      if (transcript.trim().isNotEmpty) {
+        _descCtrl.text = transcript.trim();
+      }
 
       if (mounted) {
         setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("✅ Transcription Premium réussie!\n${result.transcript.substring(0, result.transcript.length > 50 ? 50 : result.transcript.length)}..."),
+            content: Text("✅ Transcription [$modeUsed] réussie! Qualité: ${(score.toDouble() * 100).toStringAsFixed(0)}%\n${transcript.substring(0, transcript.length > 50 ? 50 : transcript.length)}..."),
             duration: const Duration(seconds: 4),
           ),
         );

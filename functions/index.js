@@ -463,3 +463,200 @@ Règles :
     throw new HttpsError('internal', `Erreur transcription : ${error.message}`);
   }
 });
+
+// =====================================================
+// Micro-IA Router: HYBRID / GOOGLE_ONLY / WHISPER_ONLY
+// StoragePath in Firebase Storage: "stt/uid_timestamp.wav"
+// =====================================================
+
+const admin = require("firebase-admin");
+const speech = require("@google-cloud/speech");
+const { toFile } = require("openai");
+
+// Assure-toi que initializeApp est appelé une seule fois dans ton fichier
+// if (admin.apps.length === 0) admin.initializeApp();
+
+function normalizeMode(mode) {
+  const m = (mode || "").toUpperCase();
+  if (["HYBRID", "GOOGLE_ONLY", "WHISPER_ONLY"].includes(m)) return m;
+  return "HYBRID";
+}
+
+async function getMicroIaConfig() {
+  try {
+    const snap = await admin.firestore().doc("settings/microia").get();
+    const data = snap.exists ? snap.data() : {};
+    return {
+      mode: normalizeMode(data?.mode || "HYBRID"),
+      fallbackEnabled: data?.fallbackEnabled !== false,
+      qualityThreshold: typeof data?.qualityThreshold === "number" ? data.qualityThreshold : 0.62,
+      languageCode: data?.languageCode || "fr-FR",
+    };
+  } catch (_) {
+    return { mode: "HYBRID", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR" };
+  }
+}
+
+function evaluateQuality({ text, googleConfidence }) {
+  const t = (text || "").trim();
+  const reasons = [];
+
+  if (!t) reasons.push("empty");
+  if (t.length < 12) reasons.push("too_short");
+  if (/\b(inaudible|incompréhensible|\.\.\.)\b/i.test(t)) reasons.push("noisy_tokens");
+
+  let score = 0.0;
+  if (t.length >= 12) score += 0.25;
+  if (t.length >= 30) score += 0.25;
+  if (t.length >= 80) score += 0.15;
+
+  if (typeof googleConfidence === "number") {
+    if (googleConfidence >= 0.75) score += 0.25;
+    else if (googleConfidence >= 0.60) score += 0.15;
+    else reasons.push("low_confidence");
+  } else {
+    score += 0.10;
+  }
+
+  if (reasons.includes("noisy_tokens")) score -= 0.20;
+  if (reasons.includes("too_short")) score -= 0.15;
+  if (reasons.includes("empty")) score = 0.0;
+
+  score = Math.max(0, Math.min(1, score));
+  return { score, reasons };
+}
+
+async function loadAudioBufferFromStorage(storagePath) {
+  const bucket = admin.storage().bucket();
+  const file = bucket.file(storagePath);
+  const [buf] = await file.download();
+  return buf;
+}
+
+async function providerGoogleSTT({ audioBuffer, languageCode }) {
+  const speechClient = new speech.SpeechClient();
+
+  const request = {
+    config: {
+      encoding: "LINEAR16",
+      sampleRateHertz: 16000,
+      audioChannelCount: 1,
+      languageCode,
+      enableAutomaticPunctuation: true,
+    },
+    audio: { content: audioBuffer.toString("base64") },
+  };
+
+  const [response] = await speechClient.recognize(request);
+
+  const alternatives = response?.results?.flatMap((r) => r.alternatives || []) || [];
+  const best = alternatives[0] || {};
+  const text = best.transcript || "";
+  const confidence = typeof best.confidence === "number" ? best.confidence : null;
+
+  return { text, googleConfidence: confidence, raw: response };
+}
+
+async function providerWhisper({ audioBuffer, languageCode, openai }) {
+  const file = await toFile(audioBuffer, "audio.wav");
+  const res = await openai.audio.transcriptions.create({
+    file,
+    model: "whisper-1",
+    language: languageCode?.startsWith("fr") ? "fr" : undefined,
+  });
+  return { text: res?.text || "", raw: res };
+}
+
+async function providerHybrid({ audioBuffer, languageCode, openai }) {
+  const g = await providerGoogleSTT({ audioBuffer, languageCode });
+
+  const prompt = `
+Tu es un assistant de transcription FR.
+Nettoie la transcription (corrige fautes, supprime répétitions, garde le sens).
+Ne rajoute aucune information.
+Rends un texte fluide en 1 paragraphe.
+
+TRANSCRIPTION BRUTE:
+${g.text}
+`.trim();
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0.2,
+    messages: [
+      { role: "system", content: "Tu produis uniquement le texte nettoyé, sans guillemets." },
+      { role: "user", content: prompt },
+    ],
+  });
+
+  const cleaned = completion?.choices?.[0]?.message?.content?.trim() || g.text;
+
+  return { text: cleaned, googleConfidence: g.googleConfidence, raw: { google: g.raw, openai: completion } };
+}
+
+function buildTryOrder(mode) {
+  if (mode === "GOOGLE_ONLY") return ["GOOGLE_ONLY"];
+  if (mode === "WHISPER_ONLY") return ["WHISPER_ONLY"];
+  return ["HYBRID", "WHISPER_ONLY", "GOOGLE_ONLY"];
+}
+
+// ✅ Callable: microIaProcessAudio (1 seul endpoint pour ta page)
+exports.microIaProcessAudio = onCall(
+  {
+    region: "europe-west1",
+    timeoutSeconds: 120,
+    secrets: [OPENAI_API_KEY], // ⚠️ garde EXACTEMENT ta constante existante
+  },
+  async (req) => {
+    try {
+      const { storagePath, languageCode } = req.data || {};
+      if (!storagePath || typeof storagePath !== "string") {
+        throw new HttpsError("invalid-argument", "storagePath is required (Firebase Storage path).");
+      }
+
+      const cfg = await getMicroIaConfig();
+      const lang = languageCode || cfg.languageCode;
+
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+      const audioBuffer = await loadAudioBufferFromStorage(storagePath);
+
+      const tryOrder = buildTryOrder(cfg.mode);
+      const threshold = cfg.qualityThreshold;
+      const fallbackEnabled = cfg.fallbackEnabled;
+
+      let best = null;
+
+      for (let i = 0; i < tryOrder.length; i++) {
+        const attemptMode = tryOrder[i];
+
+        let out;
+        if (attemptMode === "GOOGLE_ONLY") {
+          out = await providerGoogleSTT({ audioBuffer, languageCode: lang });
+        } else if (attemptMode === "WHISPER_ONLY") {
+          out = await providerWhisper({ audioBuffer, languageCode: lang, openai });
+        } else {
+          out = await providerHybrid({ audioBuffer, languageCode: lang, openai });
+        }
+
+        const quality = evaluateQuality({ text: out.text, googleConfidence: out.googleConfidence });
+
+        best = {
+          modeUsed: attemptMode,
+          text: out.text,
+          quality,
+          meta: { language: lang },
+        };
+
+        if (quality.score >= threshold) break;
+        if (!fallbackEnabled) break;
+      }
+
+      return best;
+    } catch (error) {
+      console.error("[microIaProcessAudio] Error:", error);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", error?.message || "microIaProcessAudio failed");
+    }
+  }
+);
