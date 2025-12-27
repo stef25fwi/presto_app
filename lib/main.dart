@@ -9,7 +9,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -23,6 +22,8 @@ import 'app_core.dart';
 import 'constants.dart';
 import 'utils/crashlytics_context.dart';
 import 'utils/friendly_snackbar.dart';
+import 'features/transcription/transcribe_and_draft_offer_service.dart';
+import 'features/messaging/conversation_service.dart';
 import 'widgets/offer_card.dart';
 import 'widgets/ad_banner.dart';
 import 'widgets/premium_ai_button.dart';
@@ -3469,37 +3470,18 @@ class OfferDetailPage extends StatelessWidget {
                     }
 
                     // Cherche ou crée la conversation entre l'utilisateur courant et l'annonceur
-                    final convs = await FirebaseFirestore.instance
-                        .collection('conversations')
-                        .where('participants', arrayContains: user.uid)
-                        .get();
-                    String? conversationId;
-                    for (final doc in convs.docs) {
-                      final parts =
-                          List<String>.from(doc['participants'] ?? []);
-                      if (parts.contains(annonceurId)) {
-                        conversationId = doc.id;
-                        break;
-                      }
-                    }
-                    if (conversationId == null) {
-                      final doc = await FirebaseFirestore.instance
-                          .collection('conversations')
-                          .add({
-                        'participants': [user.uid, annonceurId],
-                        'createdAt': FieldValue.serverTimestamp(),
-                        'lastMessage': '',
-                        'unreadCount': {user.uid: 0, annonceurId: 0},
-                      });
-                      conversationId = doc.id;
-                    }
+                    final conversationId =
+                        await ConversationService().getOrCreateConversationId(
+                      currentUserId: user.uid,
+                      otherUserId: annonceurId,
+                    );
 
                     if (!context.mounted) return;
 
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => ConversationPage(
-                          conversationId: conversationId!,
+                          conversationId: conversationId,
                           offerTitle: title,
                         ),
                       ),
@@ -5109,34 +5091,21 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final bucket = ref.bucket; // Reference exposes bucket
     final gsUri = 'gs://$bucket/${ref.fullPath}';
 
-    final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
-    final callable = functions.httpsCallable(
-      'transcribeAndDraftOffer',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 90)),
+    final result = await TranscribeAndDraftOfferService().transcribeAndDraftOffer(
+      gcsUri: gsUri,
+      languageCode: 'fr-FR',
     );
-    final res = await callable.call<dynamic>({
-      'gcsUri': gsUri,
-      'languageCode': 'fr-FR',
-    });
-
-    final data = (res.data as Map<dynamic, dynamic>);
     if (!mounted) return;
 
     setState(() {
-      final title = (data['title'] ?? '').toString();
-      final description = (data['description'] ?? '').toString();
-      final category = (data['category'] ?? '').toString();
-      final city = (data['city'] ?? '').toString();
-      final postal = (data['postalCode'] ?? '').toString();
-
-      if (title.isNotEmpty) _titleController.text = title;
-      if (description.isNotEmpty) _descriptionController.text = description;
-      if (category.isNotEmpty) {
-        _category = category;
+      if (result.title.isNotEmpty) _titleController.text = result.title;
+      if (result.description.isNotEmpty) _descriptionController.text = result.description;
+      if (result.category.isNotEmpty) {
+        _category = result.category;
         _selectedSubCategory = null;
       }
-      if (city.isNotEmpty) _locationController.text = city;
-      if (postal.isNotEmpty) _postalCodeController.text = postal;
+      if (result.city.isNotEmpty) _locationController.text = result.city;
+      if (result.postalCode.isNotEmpty) _postalCodeController.text = result.postalCode;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
