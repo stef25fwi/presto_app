@@ -35,6 +35,8 @@ import 'pages/pro_profile_page.dart';
 import 'pages/legal_info_page.dart';
 import 'dev/seed_offers.dart';
 
+import 'app/theme.dart';
+
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -351,37 +353,7 @@ class PrestoApp extends StatelessWidget {
       routes: {
         '/publish': (_) => const PublishOfferPage(),
       },
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: kPrestoOrange,
-          brightness: Brightness.light,
-        ),
-        scaffoldBackgroundColor: const Color(0xFFFDF4EC),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Colors.black26),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: kPrestoBlue, width: 1.4),
-          ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          labelStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-          hintStyle: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
+      theme: buildPrestoTheme(),
       home: const SplashScreen(),
     );
   }
@@ -4965,6 +4937,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<void> _stopMic() async {
     if (!_isListening) return;
+    if (_isAnalyzing) return;
     await _stt.stop();
     String? recordedPath;
     if (!kIsWeb) {
@@ -4987,8 +4960,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         await _uploadAndTranscribe(recordedPath);
       } catch (e) {
         if (!mounted) return;
+        final isTimeout =
+            e is TimeoutException || (e is FirebaseFunctionsException && e.code == 'deadline-exceeded');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur transcription: $e')),
+          SnackBar(
+            content: Text(
+              isTimeout ? 'Connexion lente, réessaie.' : 'Erreur transcription: $e',
+            ),
+          ),
         );
       } finally {
         if (mounted) setState(() => _isAnalyzing = false);
@@ -5038,14 +5017,25 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ),
         );
       } else {
+        final code = (draft['code'] ?? '').toString();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur IA: ${draft['error'] ?? 'inconnue'}')),
+          SnackBar(
+            content: Text(
+              code == 'deadline-exceeded'
+                  ? 'Connexion lente, réessaie.'
+                  : 'Erreur IA: ${draft['error'] ?? 'inconnue'}',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (!mounted) return;
+      final isTimeout =
+          e is TimeoutException || (e is FirebaseFunctionsException && e.code == 'deadline-exceeded');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur analyse: $e')),
+        SnackBar(
+          content: Text(isTimeout ? 'Connexion lente, réessaie.' : 'Erreur analyse: $e'),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isAnalyzing = false);
@@ -5119,7 +5109,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final gsUri = 'gs://$bucket/${ref.fullPath}';
 
     final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
-    final callable = functions.httpsCallable('transcribeAndDraftOffer');
+    final callable = functions.httpsCallable(
+      'transcribeAndDraftOffer',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 90)),
+    );
     final res = await callable.call<dynamic>({
       'gcsUri': gsUri,
       'languageCode': 'fr-FR',

@@ -1,6 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
 import '../utils/crashlytics_context.dart';
+import '../utils/retry.dart';
 
 class AiDraftService {
   final FirebaseFunctions _functions =
@@ -9,10 +10,25 @@ class AiDraftService {
   /// Génère un brouillon simple (compatible ancien format)
   Future<Map<String, dynamic>> generateOfferDraft({required String text}) async {
     try {
-      final callable = _functions.httpsCallable('generateOfferDraft');
-      final res = await callable.call<dynamic>(<String, dynamic>{
-        'hint': text, // Cloud Function attend 'hint'
-      });
+      final callable = _functions.httpsCallable(
+        'generateOfferDraft',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
+      );
+      final res = await retry(
+        () => callable.call<dynamic>(<String, dynamic>{
+          'hint': text, // Cloud Function attend 'hint'
+        }),
+        maxAttempts: 3,
+        retryIf: (e) {
+          if (e is FirebaseFunctionsException) {
+            return e.code == 'unavailable' ||
+                e.code == 'deadline-exceeded' ||
+                e.code == 'internal' ||
+                e.code == 'resource-exhausted';
+          }
+          return false;
+        },
+      );
 
       final data = (res.data as Map<dynamic, dynamic>);
       
@@ -66,12 +82,27 @@ class AiDraftService {
     String? category,
   }) async {
     try {
-      final callable = _functions.httpsCallable('generateOfferDraft');
-      final res = await callable.call<dynamic>(<String, dynamic>{
-        'hint': text,
-        if (city != null) 'city': city,
-        if (category != null) 'category': category,
-      });
+      final callable = _functions.httpsCallable(
+        'generateOfferDraft',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
+      );
+      final res = await retry(
+        () => callable.call<dynamic>(<String, dynamic>{
+          'hint': text,
+          if (city != null) 'city': city,
+          if (category != null) 'category': category,
+        }),
+        maxAttempts: 3,
+        retryIf: (e) {
+          if (e is FirebaseFunctionsException) {
+            return e.code == 'unavailable' ||
+                e.code == 'deadline-exceeded' ||
+                e.code == 'internal' ||
+                e.code == 'resource-exhausted';
+          }
+          return false;
+        },
+      );
 
       final data = (res.data as Map<dynamic, dynamic>);
       

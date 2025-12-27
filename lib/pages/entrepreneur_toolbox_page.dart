@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../utils/keyword_suggester.dart';
@@ -16,6 +18,9 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
   static const Color kBg = Color(0xFFF6F7FB);
 
   final TextEditingController _projectCtrl = TextEditingController();
+
+  Timer? _projectDebounce;
+  String _projectQuery = '';
 
   // Step data
   String? _region; // e.g. "Guadeloupe (971)"
@@ -119,7 +124,7 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
 
   List<String> get _chipSuggestions {
     final computed = KeywordSuggester.compute(
-      query: _projectCtrl.text,
+      query: _projectQuery,
       items: _suggestionItems,
       region: _region,
       situation: _situation,
@@ -159,8 +164,19 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
 
   @override
   void dispose() {
+    _projectDebounce?.cancel();
     _projectCtrl.dispose();
     super.dispose();
+  }
+
+  void _onProjectChanged(String value) {
+    _projectDebounce?.cancel();
+    _projectDebounce = Timer(const Duration(milliseconds: 180), () {
+      if (!mounted) return;
+      setState(() {
+        _projectQuery = value;
+      });
+    });
   }
 
   void _onSubmit() {
@@ -277,7 +293,12 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
                 TextField(
                   controller: _projectCtrl,
                   textInputAction: TextInputAction.done,
-                  onChanged: (_) => setState(() {}),
+                  onChanged: _onProjectChanged,
+                  onEditingComplete: () {
+                    _projectDebounce?.cancel();
+                    setState(() => _projectQuery = _projectCtrl.text);
+                    FocusScope.of(context).unfocus();
+                  },
                   onTap: () {
                     // Sélectionne tout le texte au clic pour faciliter la réécriture
                     _projectCtrl.selection = TextSelection(
@@ -320,7 +341,8 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
                   items: _chipSuggestions,
                   onTap: (s) {
                     _projectCtrl.text = s;
-                    setState(() {});
+                    _projectDebounce?.cancel();
+                    setState(() => _projectQuery = s);
                   },
                 ),
               ],
