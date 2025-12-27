@@ -521,6 +521,7 @@ async function getMicroIaConfig() {
     _microIaCfgCacheAt = now;
     return _microIaCfgCache;
   }
+}
 
 function evaluateQuality({ text, googleConfidence }) {
   const t = (text || "").trim();
