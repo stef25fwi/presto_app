@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -297,23 +298,45 @@ class SessionState {
 }
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  await CitySearch.instance.ensureLoaded();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
-  // Initialisation des notifications push (mobile uniquement)
-  if (!kIsWeb) {
-    try {
-      await NotificationService().initialize();
-    } catch (e) {
-      debugPrint('[Notifications] init error: $e');
+    // Crashlytics n'est pas supporté sur le web
+    if (!kIsWeb) {
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
+
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.presentError(details);
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      };
+
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
     }
-  }
 
-  runApp(const PrestoApp());
+    await CitySearch.instance.ensureLoaded();
+
+    // Initialisation des notifications push (mobile uniquement)
+    if (!kIsWeb) {
+      try {
+        await NotificationService().initialize();
+      } catch (e) {
+        debugPrint('[Notifications] init error: $e');
+      }
+    }
+
+    runApp(const PrestoApp());
+  }, (error, stack) {
+    if (!kIsWeb) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    }
+  });
 }
 
 class PrestoApp extends StatelessWidget {

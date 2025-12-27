@@ -20,6 +20,7 @@ dependencies:
 
   # 🔥 Firebase / Firestore / URL launcher
   firebase_core: ^4.3.0
+  firebase_crashlytics:
   cloud_firestore: ^6.1.1
   cloud_functions: ^6.0.5
   url_launcher: ^6.3.0
