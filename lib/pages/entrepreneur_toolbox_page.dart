@@ -46,20 +46,6 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
       weight: 6,
     ),
     SuggestionItem(
-      label: "Créer une activité de prestation de services",
-      keywords: ["service", "prestation", "client", "facturation"],
-      tags: ["services"],
-      popularity: 70,
-      weight: 5,
-    ),
-    SuggestionItem(
-      label: "Lancer un service de livraison locale",
-      keywords: ["livraison", "transport", "colis", "coursier"],
-      tags: ["logistique"],
-      popularity: 65,
-      weight: 5,
-    ),
-    SuggestionItem(
       label: "Ouvrir un salon de coiffure / barber",
       keywords: ["coiffure", "barbier", "salon", "beaute"],
       tags: ["beauté"],
@@ -67,53 +53,11 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
       weight: 7,
     ),
     SuggestionItem(
-      label: "Créer un site vitrine ou e-commerce",
-      keywords: ["site", "vitrine", "ecommerce", "web", "internet"],
-      tags: ["digital"],
-      popularity: 72,
-      weight: 6,
-    ),
-    SuggestionItem(
-      label: "Lancer une activité de ménage / nettoyage",
-      keywords: ["menage", "nettoyage", "proprete"],
-      tags: ["services"],
-      popularity: 60,
-      weight: 4,
-    ),
-    SuggestionItem(
-      label: "Se lancer en bricolage / petits travaux",
-      keywords: ["bricolage", "travaux", "renovation", "reparation"],
-      tags: ["batiment"],
-      popularity: 62,
-      weight: 4,
-    ),
-    SuggestionItem(
       label: "Ouvrir un food truck / snack",
       keywords: ["food", "truck", "snack", "restauration", "streetfood"],
       tags: ["food", "restauration"],
       popularity: 82,
       weight: 7,
-    ),
-    SuggestionItem(
-      label: "Lancer un service de coaching sportif",
-      keywords: ["coach", "sport", "fitness", "entrainement", "bienetre"],
-      tags: ["sport", "bien-etre"],
-      popularity: 73,
-      weight: 6,
-    ),
-    SuggestionItem(
-      label: "Atelier d'onglerie / esthétique à domicile",
-      keywords: ["onglerie", "esthetique", "beaute", "manucure", "pedicure"],
-      tags: ["beaute"],
-      popularity: 57,
-      weight: 4,
-    ),
-    SuggestionItem(
-      label: "Studio photo / créateur de contenu",
-      keywords: ["photo", "photographe", "shooting", "video", "contenu"],
-      tags: ["digital", "crea"],
-      popularity: 63,
-      weight: 5,
     ),
     SuggestionItem(
       label: "Social media manager pour TPE",
@@ -306,6 +250,9 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
             title: "Que souhaitez-vous faire ?",
             subtitle: "Décrivez votre projet en une phrase.",
             trailing: const Text("Étape 1/3", style: TextStyle(color: Colors.black45)),
+            isCompleted: _projectCtrl.text.trim().isNotEmpty,
+            showConnector: true,
+            orange: kPrestoOrange,
             child: Column(
               children: [
                 TextField(
@@ -361,14 +308,17 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 0),
 
           // STEP 2 - Situation
           _StepCard(
             step: 2,
             title: "Votre situation actuelle",
-            subtitle: "Choisissez l’option qui vous correspond.",
+            subtitle: "Choisissez l'option qui vous correspond.",
             trailing: const Text("Étape 2/3", style: TextStyle(color: Colors.black45)),
+            isCompleted: _situation != null,
+            showConnector: true,
+            orange: kPrestoOrange,
             child: Wrap(
               spacing: 10,
               runSpacing: 10,
@@ -386,14 +336,17 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 0),
 
           // STEP 3 - Region
           _StepCard(
             step: 3,
             title: "Votre territoire",
-            subtitle: "Les organismes locaux s’adaptent à votre région.",
+            subtitle: "Les organismes locaux s'adaptent à votre région.",
             trailing: const Text("Étape 3/3", style: TextStyle(color: Colors.black45)),
+            isCompleted: _region != null,
+            showConnector: false,
+            orange: kPrestoOrange,
             child: Column(
               children: [
                 DropdownButtonFormField<String>(
@@ -509,53 +462,96 @@ class _StepCard extends StatelessWidget {
   final String subtitle;
   final Widget child;
   final Widget? trailing;
+  final bool isCompleted;
+  final bool showConnector;
+  final Color orange;
 
   const _StepCard({
     required this.step,
     required this.title,
     required this.subtitle,
     required this.child,
+    required this.isCompleted,
+    required this.showConnector,
+    required this.orange,
     this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(.06)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(.05), blurRadius: 14, offset: const Offset(0, 6)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 14,
-                backgroundColor: Colors.black.withOpacity(.06),
-                child: Text(
-                  "$step",
-                  style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.black87),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Stepper column on the left
+        Column(
+          children: [
+            // Circle with number
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isCompleted ? orange : Colors.white,
+                border: Border.all(
+                  color: isCompleted ? orange : Colors.black.withOpacity(.2),
+                  width: 2,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+              child: Center(
+                child: Text(
+                  "$step",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: isCompleted ? Colors.white : Colors.black87,
+                    fontSize: 16,
+                  ),
+                ),
               ),
-              if (trailing != null) trailing!,
-            ],
+            ),
+            // Connector line
+            if (showConnector)
+              Container(
+                width: 2,
+                height: 60,
+                color: orange.withOpacity(0.3),
+              ),
+          ],
+        ),
+        const SizedBox(width: 12),
+        // Card content
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.black.withOpacity(.06)),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(.05), blurRadius: 14, offset: const Offset(0, 6)),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                    ),
+                    if (trailing != null) trailing!,
+                    if (trailing != null) trailing!,
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(subtitle, style: const TextStyle(color: Colors.black54)),
+                const SizedBox(height: 12),
+                child,
+              ],
+            ),
           ),
-          const SizedBox(height: 6),
-          Text(subtitle, style: const TextStyle(color: Colors.black54)),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
