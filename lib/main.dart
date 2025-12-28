@@ -4109,11 +4109,12 @@ class MessagesPage extends StatelessWidget {
         ],
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        // ⚠️ Suppression de orderBy pour éviter l'exigence d'index composite.
+        // On trie côté client sur 'lastMessageAt' pour garantir l'affichage.
         stream: FirebaseFirestore.instance
-            .collection('conversations')
-            .where('participants', arrayContains: userId)
-            .orderBy('lastMessageAt', descending: true)
-            .snapshots(),
+          .collection('conversations')
+          .where('participants', arrayContains: userId)
+          .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -4139,7 +4140,25 @@ class MessagesPage extends StatelessWidget {
             );
           }
 
-          final docs = snapshot.data?.docs ?? [];
+          List<QueryDocumentSnapshot<Map<String, dynamic>>> docs = snapshot.data?.docs ?? [];
+
+          // Tri côté client par 'lastMessageAt' (desc), en gérant les valeurs nulles.
+          docs.sort((a, b) {
+            final ta = a.data()['lastMessageAt'];
+            final tb = b.data()['lastMessageAt'];
+
+            DateTime? da;
+            DateTime? db;
+            try {
+              if (ta is Timestamp) da = ta.toDate();
+              if (tb is Timestamp) db = tb.toDate();
+            } catch (_) {}
+
+            if (da == null && db == null) return 0;
+            if (da == null) return 1; // nulls en bas
+            if (db == null) return -1;
+            return db.compareTo(da); // desc
+          });
 
           if (docs.isEmpty) {
             return const Center(
@@ -4454,20 +4473,36 @@ class _ConversationPageState extends State<ConversationPage> {
 
     try {
       await _firestore.runTransaction((txn) async {
-        await messagesRef.add({
+        // Lire la conversation pour obtenir la liste des participants à jour
+        final convSnap = await txn.get(convRef);
+        List<String> parts = [];
+        if (convSnap.exists) {
+          final convData = convSnap.data() as Map<String, dynamic>;
+          parts = (convData['participants'] as List<dynamic>? ?? [])
+              .map((e) => e.toString())
+              .toList();
+        } else {
+          // Fallback: utilise l'état courant si le doc n'existe pas encore
+          parts = [..._participants];
+        }
+
+        // Créer le message dans la transaction pour assurer l'atomicité
+        final newMsgRef = messagesRef.doc();
+        txn.set(newMsgRef, {
           'text': text,
           'senderId': userId,
           'senderName': senderName,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
+        // Mettre à jour les champs de conversation (dernier message + unread)
         final Map<String, dynamic> update = {
           'lastMessage': text,
           'lastMessageAt': FieldValue.serverTimestamp(),
           'lastSenderId': userId,
         };
 
-        for (final p in _participants) {
+        for (final p in parts) {
           if (p == userId) {
             update['unreadCount.$p'] = 0;
           } else {
@@ -4475,7 +4510,11 @@ class _ConversationPageState extends State<ConversationPage> {
           }
         }
 
-        txn.update(convRef, update);
+        if (convSnap.exists) {
+          txn.update(convRef, update);
+        } else {
+          txn.set(convRef, update, SetOptions(merge: true));
+        }
       });
 
       _markAsRead();
