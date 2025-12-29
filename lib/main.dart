@@ -28,14 +28,13 @@ import 'widgets/offer_card.dart';
 import 'widgets/ad_banner.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/phone_input_field.dart';
-import 'package:presto_app/widgets/random_asset_ticker.dart';
-import 'widgets/entrepreneur_toolbox_slide.dart';
 import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
 import 'pages/pro_profile_page.dart';
-import 'pages/legal_info_page.dart';
 import 'dev/seed_offers.dart';
+
+import 'home_hero_section.dart';
 
 import 'app/theme.dart';
 
@@ -509,16 +508,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   late int _selectedIndex;
-  final PageController _carouselController = PageController();
-  int _currentSlide = 0;
-
-  Timer? _homeAutoSlideTimer;
-  bool _carouselEnabled = false;
 
   late final AnimationController _categoryController;
-
-  // Taille de police de référence pour les titres des slides (alignée sur le slide 1)
-  static const double _homeSlideTitleFontSize = 24;
 
   bool _isSeeding = false;
   
@@ -528,14 +519,6 @@ class _HomePageState extends State<HomePage>
   /// Stream figé pour éviter le clignotement des "Dernières offres"
   late final Stream<QuerySnapshot<Map<String, dynamic>>> _latestOffersStream;
 
-  /// Slogans animés (fade + slide) pour le 1er slide
-  final List<String> _firstSlideSlogans = const [
-    "Trouvez immédiatement quelqu’un pour faire le job.",
-    "Une personne disponible près de chez vous.",
-    "Publiez… ils arrivent aussitôt.",
-  ];
-  int _sloganIndex = 0;
-  Timer? _sloganTimer;
 
   /// Mots-clés statiques
   final List<String> _baseSearchKeywords = const [
@@ -565,28 +548,6 @@ class _HomePageState extends State<HomePage>
     "Jardinage Petit-Bourg demain",
   ];
 
-  /// Slides d’accueil
-  final List<_HomeSlide> _slides = const [
-    _HomeSlide(
-      title: "Trouvez immédiatement quelqu’un pour faire le job.",
-      subtitle: "Carte des personnes disponibles en quelques secondes.",
-      badge: "Disponible",
-      // plus d'image chrono ici
-      imageAsset: null,
-    ),
-    _HomeSlide(
-      title: "Boîte à outils de l'entrepreneur",
-      subtitle: "Liens utiles CCI, Région, aides et infos clés.",
-      badge: "Pro",
-      icon: Icons.business_center_outlined,
-    ),
-    _HomeSlide(
-      title: "iliprestō",
-      subtitle: "Qui sommes-nous ? Mentions légales, confidentialité, CGU.",
-      badge: "Infos",
-      icon: Icons.info_outline,
-    ),
-  ];
 
   @override
   void initState() {
@@ -595,36 +556,10 @@ class _HomePageState extends State<HomePage>
     _selectedIndex = widget.initialIndex;
     WidgetsBinding.instance.addObserver(this);
 
-    // À l'arrivée sur l'accueil: on laisse le slide texte visible 4s,
-    // puis on lance le carousel et sa rotation.
-    if (_selectedIndex == 0) {
-      _homeAutoSlideTimer = Timer(const Duration(seconds: 4), () {
-        if (!mounted) return;
-        if (!_carouselController.hasClients) return;
-        setState(() {
-          _carouselEnabled = true;
-        });
-        _carouselController.animateToPage(
-          1,
-          duration: const Duration(milliseconds: 550),
-          curve: Curves.easeInOutCubic,
-        );
-      });
-    }
-
     _categoryController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     )..repeat();
-
-    if (_firstSlideSlogans.length > 1) {
-      _sloganTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-        if (!mounted) return;
-        setState(() {
-          _sloganIndex = (_sloganIndex + 1) % _firstSlideSlogans.length;
-        });
-      });
-    }
 
     _listenDynamicKeywords();
 
@@ -665,10 +600,7 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _carouselController.dispose();
     _categoryController.dispose();
-    _sloganTimer?.cancel();
-    _homeAutoSlideTimer?.cancel();
     super.dispose();
   }
 
@@ -703,6 +635,44 @@ class _HomePageState extends State<HomePage>
         builder: (_) => ConsultOffersPage(searchQuery: q),
       ),
     );
+  }
+
+  Future<void> _openOfferDetailFromHero(String offerId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('offers')
+          .doc(offerId)
+          .get();
+      final data = doc.data();
+      if (!mounted || data == null) return;
+
+      final title = (data['title'] ?? 'Sans titre').toString();
+      final location =
+          (data['location'] ?? data['city'] ?? 'Lieu non précisé').toString();
+      final category =
+          (data['category'] ?? 'Catégorie non précisée').toString();
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => OfferDetailPage(
+            offerId: offerId,
+            title: title,
+            location: location,
+            category: category,
+            subcategory: data['subcategory'] as String?,
+            budget: data['budget'] is num ? data['budget'] as num : null,
+            description: (data['description'] ?? '') as String?,
+            phone: data['phone'] as String?,
+            imageUrls: (data['imageUrls'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList(),
+            annonceurId: (data['userId'] ?? '').toString(),
+          ),
+        ),
+      );
+    } catch (_) {
+      // Pas de bruit en prod; on ignore silencieusement.
+    }
   }
 
   Iterable<String> _buildSearchSuggestions(TextEditingValue value) {
@@ -1103,35 +1073,6 @@ class _HomePageState extends State<HomePage>
     // Icône supprimée sur la page d'accueil (on garde juste l'espace pour l'alignement).
     return const SizedBox(width: 40, height: 40);
   }
-  /// Illustration à droite du slide (plus de chrono image)
-  Widget _buildSlideIllustration(
-    _HomeSlide slide,
-    int index, {
-    VoidCallback? onTap,
-  }) {
-    // On ignore complètement slide.imageAsset, on affiche juste une icône
-    final child = Container(
-      width: 70,
-      height: 70,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        slide.icon ?? Icons.flash_on,
-        color: kPrestoBlue,
-        size: 32,
-      ),
-    );
-
-    if (onTap == null) return child;
-
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: child,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1260,255 +1201,14 @@ class _HomePageState extends State<HomePage>
 
                 const SizedBox(height: 14),
 
-                // SLIDER
-                SizedBox(
-                  height: 260,
-                  width: double.infinity,
-                  child: Stack(
-                    children: [
-                      PageView.builder(
-                        controller: _carouselController,
-                        itemCount: _slides.length + 1,
-                        onPageChanged: (index) {
-                          setState(() {
-                            _currentSlide = index;
-                            if (index == 1) {
-                              _carouselEnabled = true;
-                            }
-                          });
-                        },
-                        itemBuilder: (context, index) {
-                          // Ordre voulu:
-                          // 0 = slide texte (fixe 4s)
-                          // 1 = carousel d'images (démarre après 4s)
-                          // 2.. = slides existants
-
-                          if (index == 1) {
-                            return Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 0),
-                              decoration: BoxDecoration(
-                                color: kPrestoOrange,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.10),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
-                                child: SizedBox.expand(
-                                  child: RandomAssetTicker(
-                                    folderPrefix: 'assets/carousel_home/',
-                                    interval: const Duration(seconds: 3),
-                                    antiRepeatWindow: 3,
-                                    fit: BoxFit.cover,
-                                    enabled: _carouselEnabled,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
-
-                          final slideIndex = index == 0 ? 0 : index - 1;
-                          final slide = _slides[slideIndex];
-
-                          // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
-                          if (slideIndex == 0) {
-                            const String bigText =
-                                "Trouvez immédiatement quelqu'un pour faire le job !";
-
-                            return Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 0),
-                              decoration: BoxDecoration(
-                                color: kPrestoOrange,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.10),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 18,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
-                                    Text(
-                                      "DISPONIBLE",
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 1.2,
-                                      ),
-                                    ),
-                                    SizedBox(height: 10),
-                                    // ✅ Phrase principale en très gros sur toute la largeur
-                                    Text(
-                                      bigText,
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: _homeSlideTitleFontSize, // taille bien grosse
-                                        fontWeight: FontWeight.w900,
-                                        height: 1.25,
-                                      ),
-                                    ),
-                                    SizedBox(height: 12),
-                                    Text(
-                                      "Une personne disponible près de chez vous, en quelques minutes.",
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }
-
-                          // ✅ SLIDE 2 (index 1) : Boîte à outils de l'entrepreneur
-                          if (slideIndex == 1) {
-                            return const EntrepreneurToolboxSlide();
-                          }
-
-                          // 🔁 SLIDES 2, 3, 4 : layout texte + icône / image
-                          final VoidCallback? onSlideTap =
-                              slideIndex == (_slides.length - 1)
-                              ? () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => const LegalInfoPage(),
-                                    ),
-                                  );
-                                }
-                              : null;
-
-                          final slideBody = Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 0),
-                            decoration: BoxDecoration(
-                              color: kPrestoOrange,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.10),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              child: Row(
-                                children: [
-                                  // Texte
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          slide.badge.toUpperCase(),
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          slide.title,
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: _homeSlideTitleFontSize,
-                                            fontWeight: FontWeight.w900,
-                                            height: 1.25,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          slide.subtitle,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  // 👉 Illustration (icône) sur les slides texte
-                                  if (slideIndex != 0) ...[
-                                    const SizedBox(width: 8),
-                                    _buildSlideIllustration(
-                                      slide,
-                                      index,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          );
-
-                          if (onSlideTap == null) return slideBody;
-                          return GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: onSlideTap,
-                            child: slideBody,
-                          );
-                        },
-                      ),
-                      // Indicateurs
-                      Positioned(
-                        bottom: 8,
-                        left: 0,
-                        right: 0,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(
-                            _slides.length + 1,
-                            (index) => AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
-                              width: _currentSlide == index ? 16 : 8,
-                              height: 7,
-                              decoration: BoxDecoration(
-                                color: _currentSlide == index
-                                    ? Colors.white
-                                    : Colors.white.withOpacity(0.4),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                // HERO (remplace l'ancien slider)
+                HomeHeroSection(
+                  offersCollection: 'offers',
+                  offersOrderField: 'createdAt',
+                  limit: 5,
+                  onTapOffer: (offerId) =>
+                      unawaited(_openOfferDetailFromHero(offerId)),
+                  onCtaPressed: () => _onBottomTap(2),
                 ),
 
                 const SizedBox(height: 12),
@@ -1843,23 +1543,6 @@ class _HomePageState extends State<HomePage>
       ),
     );
   }
-}
-
-/// SLIDE MODEL
-class _HomeSlide {
-  final String title;
-  final String subtitle;
-  final String badge;
-  final IconData? icon;
-  final String? imageAsset;
-
-  const _HomeSlide({
-    required this.title,
-    required this.subtitle,
-    required this.badge,
-    this.icon,
-    this.imageAsset,
-  });
 }
 
 /// EFFET SCALE SUR TAP
