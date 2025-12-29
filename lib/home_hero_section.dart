@@ -76,33 +76,43 @@ class _HomeHeroSectionState extends State<HomeHeroSection> {
     _loadSlidesFromAssets();
   }
 
+  static List<String> _extractImageAssets(
+    Map<String, dynamic> manifest, {
+    required String prefix,
+  }) {
+    final paths = manifest.keys
+        .where((k) => k.startsWith(prefix))
+        .where((k) {
+          final lower = k.toLowerCase();
+          if (lower.endsWith('/')) return false;
+          if (lower.endsWith('.gitkeep')) return false;
+          return lower.endsWith('.png') ||
+              lower.endsWith('.jpg') ||
+              lower.endsWith('.jpeg') ||
+              lower.endsWith('.webp');
+        })
+        .toList();
+    paths.sort();
+    return paths;
+  }
+
   Future<void> _loadSlidesFromAssets() async {
     try {
       final manifestJson = await rootBundle.loadString('AssetManifest.json');
       final Map<String, dynamic> manifest =
           json.decode(manifestJson) as Map<String, dynamic>;
 
-      List<String> paths = manifest.keys
-          .where((k) => k.startsWith('assets/slides/'))
-          .where((k) {
-            final lower = k.toLowerCase();
-            if (lower.endsWith('/')) return false;
-            if (lower.endsWith('.gitkeep')) return false;
-            return lower.endsWith('.png') ||
-                lower.endsWith('.jpg') ||
-                lower.endsWith('.jpeg') ||
-                lower.endsWith('.webp');
-          })
-          .toList()
-        ..sort();
+      List<String> paths = _extractImageAssets(
+        manifest,
+        prefix: 'assets/slides/',
+      );
 
-      // Fallback: si assets/slides est vide, on réutilise les 3 premières images du carousel.
+      // Fallback: si assets/slides est vide, on réutilise TOUTES les images du carousel.
       if (paths.isEmpty) {
-        paths = const [
-          'assets/carousel_home/01.png',
-          'assets/carousel_home/02.png',
-          'assets/carousel_home/03.png',
-        ];
+        paths = _extractImageAssets(
+          manifest,
+          prefix: 'assets/carousel_home/',
+        );
       }
 
       final slides = <_HeroSlideData>[];
@@ -467,7 +477,7 @@ class _LatestOffersTiles extends StatelessWidget {
           stream: query.snapshots(),
           builder: (context, snap) {
             if (snap.connectionState == ConnectionState.waiting) {
-              return const _TilesSkeleton(count: 5);
+              return _TilesSkeleton(count: limit);
             }
             if (snap.hasError) {
               return _ErrorBox(
@@ -502,11 +512,6 @@ class _LatestOffersTiles extends StatelessWidget {
                 final priceRaw = data['price'] ?? data['prix'];
                 final priceText =
                     priceRaw == null ? '' : '${priceRaw.toString()}€';
-
-                final meta = [
-                  if (city.isNotEmpty) city,
-                  if (category.isNotEmpty) category,
-                ].join(' • ');
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
@@ -560,9 +565,9 @@ class _LatestOffersTiles extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  meta.isEmpty
+                                  city.isEmpty
                                       ? 'Localisation non précisée'
-                                      : meta,
+                                      : city,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
