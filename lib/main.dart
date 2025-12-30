@@ -24,9 +24,9 @@ import 'utils/crashlytics_context.dart';
 import 'utils/friendly_snackbar.dart';
 import 'features/transcription/transcribe_and_draft_offer_service.dart';
 import 'features/messaging/conversation_service.dart';
-import 'widgets/offer_card.dart';
-import 'widgets/ad_banner.dart';
 import 'widgets/premium_ai_button.dart';
+import 'widgets/ad_banner.dart';
+import 'widgets/offer_card.dart';
 import 'widgets/phone_input_field.dart';
 import 'package:presto_app/widgets/random_asset_ticker.dart';
 import 'widgets/entrepreneur_toolbox_slide.dart';
@@ -44,6 +44,18 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
+
+SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
+  final estimated = ThemeData.estimateBrightnessForColor(backgroundColor);
+  final isDarkBackground = estimated == Brightness.dark;
+  return SystemUiOverlayStyle(
+    statusBarColor: backgroundColor,
+    statusBarIconBrightness:
+        isDarkBackground ? Brightness.light : Brightness.dark,
+    // iOS: Brightness.dark => icônes claires
+    statusBarBrightness: isDarkBackground ? Brightness.dark : Brightness.light,
+  );
+}
 
 /// Villes + codes postaux (exemples Guadeloupe / Martinique)
 const Map<String, String> kCityPostalMap = {
@@ -258,7 +270,6 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-
 class _ShareButton extends StatelessWidget {
   final Widget icon;
   final String label;
@@ -278,7 +289,8 @@ class _ShareButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: Colors.white,
           side: BorderSide(color: Colors.black.withOpacity(0.06)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
         onPressed: onPressed,
         icon: icon,
@@ -312,7 +324,8 @@ Future<void> main() async {
 
     // Crashlytics n'est pas supporté sur le web
     if (!kIsWeb) {
-      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
+      await FirebaseCrashlytics.instance
+          .setCrashlyticsCollectionEnabled(!kDebugMode);
 
       FlutterError.onError = (FlutterErrorDetails details) {
         FlutterError.presentError(details);
@@ -352,29 +365,6 @@ class PrestoApp extends StatelessWidget {
     return MaterialApp(
       title: 'iliprestō',
       debugShowCheckedModeBanner: false,
-      builder: (context, child) {
-        final safeTop = MediaQuery.of(context).padding.top;
-        return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: const SystemUiOverlayStyle(
-            statusBarColor: kPrestoBlue,
-            statusBarIconBrightness: Brightness.light,
-            statusBarBrightness: Brightness.dark,
-          ),
-          child: Stack(
-            children: [
-              if (safeTop > 0)
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: safeTop,
-                  child: const ColoredBox(color: kPrestoBlue),
-                ),
-              Positioned.fill(child: child ?? const SizedBox.shrink()),
-            ],
-          ),
-        );
-      },
       routes: {
         '/publish': (_) => const PublishOfferPage(),
       },
@@ -489,8 +479,8 @@ class _SplashScreenState extends State<SplashScreen>
                           _navigateTo(const HomePage(initialIndex: 2)),
                       child: const Text(
                         "J’offre un job",
-                        style:
-                            TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -510,8 +500,8 @@ class _SplashScreenState extends State<SplashScreen>
                       onPressed: () => _navigateTo(const ConsultOffersPage()),
                       child: const Text(
                         "Je consulte les offres",
-                        style:
-                            TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -550,7 +540,7 @@ class _HomePageState extends State<HomePage>
   static const double _homeSlideTitleFontSize = 24;
 
   bool _isSeeding = false;
-  
+
   /// Contrôle l'affichage des suggestions de recherche
   bool _showSearchSuggestions = true;
 
@@ -877,35 +867,35 @@ class _HomePageState extends State<HomePage>
             }
           },
           child: TextField(
-          controller: textEditingController,
-          focusNode: focusNode,
-          onSubmitted: selectSuggestion,
-          textInputAction: TextInputAction.search,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white,
-            hintText: "Que cherchez-vous ? (ex: jardinage aujourd’hui)",
-            hintStyle: const TextStyle(
-              fontSize: 13,
-              color: Colors.black45,
-            ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            prefixIcon: const Icon(
-              Icons.search,
-              color: kPrestoBlue,
-            ),
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.arrow_forward_ios, size: 18),
-              color: kPrestoOrange,
-              onPressed: () => _goToSearch(textEditingController.text),
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
+            controller: textEditingController,
+            focusNode: focusNode,
+            onSubmitted: selectSuggestion,
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              hintText: "Que cherchez-vous ? (ex: jardinage aujourd’hui)",
+              hintStyle: const TextStyle(
+                fontSize: 13,
+                color: Colors.black45,
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: kPrestoBlue,
+              ),
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.arrow_forward_ios, size: 18),
+                color: kPrestoOrange,
+                onPressed: () => _goToSearch(textEditingController.text),
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
             ),
           ),
-        ),
         );
       },
       optionsViewBuilder: (context, onSelected, options) {
@@ -925,7 +915,8 @@ class _HomePageState extends State<HomePage>
                 itemCount: options.length,
                 itemBuilder: (context, index) {
                   final option = options.elementAt(index);
-                    final highlightedIndex = AutocompleteHighlightedOption.of(context);
+                  final highlightedIndex =
+                      AutocompleteHighlightedOption.of(context);
                   final isHighlighted = index == highlightedIndex;
                   return ListTile(
                     dense: true,
@@ -1001,12 +992,13 @@ class _HomePageState extends State<HomePage>
                   .snapshots(),
               builder: (context, notifSnapshot) {
                 int unreadNotificationsCount = 0;
-                
+
                 if (notifSnapshot.hasData) {
                   unreadNotificationsCount = notifSnapshot.data!.docs.length;
                 }
 
-                final totalUnread = unreadMessagesCount + unreadNotificationsCount;
+                final totalUnread =
+                    unreadMessagesCount + unreadNotificationsCount;
 
                 return _TapScale(
                   onTap: () {
@@ -1068,7 +1060,8 @@ class _HomePageState extends State<HomePage>
                     title: Text(
                       title,
                       style: TextStyle(
-                        fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+                        fontWeight:
+                            isRead ? FontWeight.normal : FontWeight.bold,
                       ),
                     ),
                     subtitle: Text(message),
@@ -1108,13 +1101,13 @@ class _HomePageState extends State<HomePage>
                   .where('userId', isEqualTo: userId)
                   .where('read', isEqualTo: false)
                   .get();
-              
+
               for (final doc in notifs.docs) {
                 batch.update(doc.reference, {'read': true});
               }
-              
+
               await batch.commit();
-              
+
               if (context.mounted) {
                 Navigator.of(context).pop();
               }
@@ -1135,6 +1128,7 @@ class _HomePageState extends State<HomePage>
     // Icône supprimée sur la page d'accueil (on garde juste l'espace pour l'alignement).
     return const SizedBox(width: 40, height: 40);
   }
+
   /// Illustration à droite du slide (plus de chrono image)
   Widget _buildSlideIllustration(
     _HomeSlide slide,
@@ -1168,81 +1162,87 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+    final topBackground = Theme.of(context).scaffoldBackgroundColor;
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        extendBody: true,
-        bottomNavigationBar: isKeyboardVisible
-            ? null
-            : Container(
-                decoration: const BoxDecoration(
-                  color: kPrestoOrange,
-                  borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(24)),
-                ),
-                padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-                child: SafeArea(
-                  top: false,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: _BottomNavItem(
-                          icon: Icons.home,
-                          label: "Accueil",
-                          selected: _selectedIndex == 0,
-                          onTap: () => _onBottomTap(0),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: prestoOverlayStyleFor(topBackground),
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          // Quand le clavier est visible, on masque la bottom bar et on autorise
+          // le resize pour éviter que les champs soient cachés par le clavier.
+          resizeToAvoidBottomInset: isKeyboardVisible,
+          extendBody: !isKeyboardVisible,
+          bottomNavigationBar: isKeyboardVisible
+              ? null
+              : Container(
+                  decoration: const BoxDecoration(
+                    color: kPrestoOrange,
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                  child: SafeArea(
+                    top: false,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: _BottomNavItem(
+                            icon: Icons.home,
+                            label: "Accueil",
+                            selected: _selectedIndex == 0,
+                            onTap: () => _onBottomTap(0),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: _BottomNavItem(
-                          icon: Icons.search,
-                          label: "Je consulte\nles offres",
-                          selected: _selectedIndex == 1,
-                          onTap: () => _onBottomTap(1),
+                        Expanded(
+                          child: _BottomNavItem(
+                            icon: Icons.search,
+                            label: "Je consulte\nles offres",
+                            selected: _selectedIndex == 1,
+                            onTap: () => _onBottomTap(1),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: _BottomNavItem(
-                          icon: Icons.add_circle_outline,
-                          label: "Publier\nune offre",
-                          isBig: true,
-                          onTap: () => _onBottomTap(2),
+                        Expanded(
+                          flex: 1,
+                          child: _BottomNavItem(
+                            icon: Icons.add_circle_outline,
+                            label: "Publier\nune offre",
+                            isBig: true,
+                            onTap: () => _onBottomTap(2),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: _BottomNavItem(
-                          icon: Icons.chat_bubble_outline,
-                          label: "Messages",
-                          selected: _selectedIndex == 3,
-                          onTap: () => _onBottomTap(3),
+                        Expanded(
+                          child: _BottomNavItem(
+                            icon: Icons.chat_bubble_outline,
+                            label: "Messages",
+                            selected: _selectedIndex == 3,
+                            onTap: () => _onBottomTap(3),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: _BottomNavItem(
-                          icon: Icons.person_outline,
-                          label: "Compte",
-                          selected: _selectedIndex == 4,
-                          onTap: () => _onBottomTap(4),
+                        Expanded(
+                          child: _BottomNavItem(
+                            icon: Icons.person_outline,
+                            label: "Compte",
+                            selected: _selectedIndex == 4,
+                            onTap: () => _onBottomTap(4),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-        body: IndexedStack(
-          index: _selectedIndex,
-          children: [
-            _buildHomeContent(),
-            const ConsultOffersPage(),
-            const PublishOfferPage(),
-            const MessagesPage(),
-            const AccountPage(),
-          ],
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: [
+              _buildHomeContent(),
+              const ConsultOffersPage(),
+              const PublishOfferPage(),
+              const MessagesPage(),
+              const AccountPage(),
+            ],
+          ),
         ),
       ),
     );
@@ -1396,7 +1396,8 @@ class _HomePageState extends State<HomePage>
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: _homeSlideTitleFontSize, // taille bien grosse
+                                        fontSize:
+                                            _homeSlideTitleFontSize, // taille bien grosse
                                         fontWeight: FontWeight.w900,
                                         height: 1.25,
                                       ),
@@ -1427,14 +1428,14 @@ class _HomePageState extends State<HomePage>
                           // 🔁 SLIDES 2, 3, 4 : layout texte + icône / image
                           final VoidCallback? onSlideTap =
                               slideIndex == (_slides.length - 1)
-                              ? () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => const LegalInfoPage(),
-                                    ),
-                                  );
-                                }
-                              : null;
+                                  ? () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => const LegalInfoPage(),
+                                        ),
+                                      );
+                                    }
+                                  : null;
 
                           final slideBody = Container(
                             margin: const EdgeInsets.symmetric(horizontal: 0),
@@ -1999,17 +2000,18 @@ class _CategoryChip extends StatelessWidget {
 /// Widget pour l'animation de point pulsant pendant l'enregistrement
 class _PulsingDot extends StatefulWidget {
   final int delay;
-  
+
   const _PulsingDot({required this.delay});
-  
+
   @override
   State<_PulsingDot> createState() => _PulsingDotState();
 }
 
-class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderStateMixin {
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-  
+
   @override
   void initState() {
     super.initState();
@@ -2017,24 +2019,24 @@ class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderState
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
+
     _animation = Tween<double>(begin: 0.3, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
-    
+
     Future.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) {
         _controller.repeat(reverse: true);
       }
     });
   }
-  
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
@@ -2654,7 +2656,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   void _applyFilters() {
     // Annule le debounce en cours pour éviter les conflits
     _filterDebounce._t?.cancel();
-    
+
     // Remonter en haut de la liste
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
@@ -2666,9 +2668,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     // Force le StreamBuilder à se reconstruire
     setState(() {
-      _activeSearchQuery = _keywordCtrl.text.trim().isEmpty
-          ? null
-          : _keywordCtrl.text.trim();
+      _activeSearchQuery =
+          _keywordCtrl.text.trim().isEmpty ? null : _keywordCtrl.text.trim();
       _queryKey++;
       _lastDoc = null; // Reset pagination
     });
@@ -2791,6 +2792,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       // Fond blanc derrière les annonces pour un look plus clair
       backgroundColor: Colors.white,
       appBar: AppBar(
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
         title: FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
@@ -2805,11 +2807,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         actions: [
-            IconButton(
-              icon: Icon(_showFilters ? Icons.filter_list_off : Icons.filter_list),
-              tooltip: _showFilters ? 'Masquer les filtres' : 'Afficher les filtres',
-              onPressed: _toggleFilters,
-            ),
+          IconButton(
+            icon:
+                Icon(_showFilters ? Icons.filter_list_off : Icons.filter_list),
+            tooltip:
+                _showFilters ? 'Masquer les filtres' : 'Afficher les filtres',
+            onPressed: _toggleFilters,
+          ),
           IconButton(
             icon: const Icon(Icons.home_outlined),
             onPressed: () {
@@ -2826,7 +2830,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           _buildFilterPanel(),
           Expanded(
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              key: ValueKey(_queryKey), // Force la reconstruction quand les filtres changent
+              key: ValueKey(
+                  _queryKey), // Force la reconstruction quand les filtres changent
               stream: _buildQuery().snapshots(),
               builder: (context, snapshot) {
                 // ✅ Ne plus afficher le loader si on a déjà des données
@@ -2900,11 +2905,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     final data = doc.data();
 
                     final title = (data['title'] ?? 'Sans titre') as String;
-                    final location = (data['location'] ?? 'Lieu non précisé') as String;
-                    final category = (data['category'] ?? 'Catégorie non précisée') as String;
+                    final location =
+                        (data['location'] ?? 'Lieu non précisé') as String;
+                    final category = (data['category'] ??
+                        'Catégorie non précisée') as String;
                     final budget = data['budget'];
                     final description = (data['description'] ?? '') as String;
-                    final phone = data['phone'] == null ? null : data['phone'] as String;
+                    final phone =
+                        data['phone'] == null ? null : data['phone'] as String;
 
                     final List<String> imageUrls =
                         (data['imageUrls'] as List<dynamic>? ?? [])
@@ -2922,9 +2930,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                 title: title,
                                 location: location,
                                 category: category,
-                                subcategory: (data['subcategory'] ?? '') as String?,
+                                subcategory:
+                                    (data['subcategory'] ?? '') as String?,
                                 budget: budget is num ? budget : null,
-                                description: description.isEmpty ? null : description,
+                                description:
+                                    description.isEmpty ? null : description,
                                 phone: phone,
                                 imageUrls: imageUrls.isEmpty ? null : imageUrls,
                                 annonceurId: (data['userId'] ?? '') as String,
@@ -3525,7 +3535,8 @@ class OfferDetailPage extends StatelessWidget {
       final ok = await canLaunchUrl(uri);
       if (!ok) {
         messenger.showSnackBar(
-          const SnackBar(content: Text("Partage indisponible sur cet appareil.")),
+          const SnackBar(
+              content: Text("Partage indisponible sur cet appareil.")),
         );
         return;
       }
@@ -3721,7 +3732,8 @@ Motif du signalement :
 - 
 """;
     final body = Uri.encodeComponent(bodyText);
-    final uri = Uri.parse('mailto:contact@ilipresto.fr?subject=$subject&body=$body');
+    final uri =
+        Uri.parse('mailto:contact@ilipresto.fr?subject=$subject&body=$body');
 
     try {
       if (await canLaunchUrl(uri)) {
@@ -3764,13 +3776,14 @@ Motif du signalement :
     final String phoneText = hasPhone ? phone!.trim() : "Numéro non renseigné";
     final String rawDescription = (description ?? '').trim();
     final String descriptionText = rawDescription.isEmpty
-      ? "Aucune description détaillée fournie."
-      : rawDescription;
+        ? "Aucune description détaillée fournie."
+        : rawDescription;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
 
       appBar: AppBar(
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).maybePop(),
@@ -3869,182 +3882,190 @@ Motif du signalement :
 
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 160), // espace pour bottomSheet + marges latérales
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ✅ Section principale avec infos clés
-            _keyInfoCard(context, theme, city, priceText, category, durationText),
+          padding: const EdgeInsets.fromLTRB(
+              16, 14, 16, 160), // espace pour bottomSheet + marges latérales
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ✅ Section principale avec infos clés
+              _keyInfoCard(
+                  context, theme, city, priceText, category, durationText),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // ✅ DESCRIPTION (carte)
-            _SectionCard(
-              title: "Description",
-              child: Text(
+              // ✅ DESCRIPTION (carte)
+              _SectionCard(
+                title: "Description",
+                child: Text(
                   descriptionText,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: Colors.grey.shade800,
-                  height: 1.35,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // ✅ CONTACT (carte)
-            _SectionCard(
-              title: "Contact",
-              trailing: const Icon(Icons.chevron_right),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: const Color(0xFFFFF3E8),
-                        child: Icon(
-                          Icons.call,
-                          size: 18,
-                          color: Colors.orange.shade800,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          phoneText,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: Colors.grey.shade800,
+                    height: 1.35,
+                    fontWeight: FontWeight.w500,
                   ),
-                  // Bouton messagerie retiré
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // ✅ PUBLICITÉ (carte) sans entête
-            _CardShell(
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4F6),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.black.withOpacity(0.06)),
                 ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // ✅ CONTACT (carte)
+              _SectionCard(
+                title: "Contact",
+                trailing: const Icon(Icons.chevron_right),
                 child: Column(
                   children: [
-                    // petit "skeleton" en haut (comme le mockup)
                     Row(
                       children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.06),
-                            borderRadius: BorderRadius.circular(24),
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: const Color(0xFFFFF3E8),
+                          child: Icon(
+                            Icons.call,
+                            size: 18,
+                            color: Colors.orange.shade800,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                height: 10,
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.06),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                height: 10,
-                                width: 140,
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.06),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            phoneText,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 14),
-                    // Espace pub: afficher bannière
-                    AdBanner(
-                      margin: EdgeInsets.zero,
-                      placeholderHeight: kIsWeb ? 180.0 : 100.0,
-                      placeholderFolderPrefix: 'assets/carousel_home/',
-                      flat: true,
+                    // Bouton messagerie retiré
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // ✅ PUBLICITÉ (carte) sans entête
+              _CardShell(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.black.withOpacity(0.06)),
+                  ),
+                  child: Column(
+                    children: [
+                      // petit "skeleton" en haut (comme le mockup)
+                      Row(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.06),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  height: 10,
+                                  width: 140,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.06),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      // Espace pub: afficher bannière
+                      AdBanner(
+                        margin: EdgeInsets.zero,
+                        placeholderHeight: kIsWeb ? 180.0 : 100.0,
+                        placeholderFolderPrefix: 'assets/carousel_home/',
+                        flat: true,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // ✅ PARTAGER (carte) -> boutons comme mockup
+              _SectionCard(
+                title: "Partager l’annonce",
+                trailing: const Icon(Icons.chevron_right),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _ShareButton(
+                        icon: SvgPicture.network(
+                          'https://cdn.simpleicons.org/whatsapp',
+                          width: 18,
+                          height: 18,
+                          placeholderBuilder: (context) => Icon(
+                              Icons.chat_bubble_outline,
+                              size: 18,
+                              color: Colors.grey.shade800),
+                        ),
+                        label: "WhatsApp",
+                        onPressed: () => _shareOn(context, 'whatsapp'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _ShareButton(
+                        icon: SvgPicture.network(
+                          'https://cdn.simpleicons.org/facebook',
+                          width: 18,
+                          height: 18,
+                          placeholderBuilder: (context) => Icon(Icons.facebook,
+                              size: 18, color: Colors.grey.shade800),
+                        ),
+                        label: "Facebook",
+                        onPressed: () => _shareOn(context, 'facebook'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _ShareButton(
+                        icon: const Icon(Icons.link,
+                            size: 18, color: Colors.grey),
+                        label: "Copier le lien",
+                        onPressed: () {
+                          // si tu veux, tu peux faire Clipboard.setData(...)
+                          // mais pour rester simple, on peut réutiliser un share "instagram" ou snackbar
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text("Lien copié (à brancher).")),
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-
-            const SizedBox(height: 14),
-
-            // ✅ PARTAGER (carte) -> boutons comme mockup
-            _SectionCard(
-              title: "Partager l’annonce",
-              trailing: const Icon(Icons.chevron_right),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _ShareButton(
-                      icon: SvgPicture.network(
-                        'https://cdn.simpleicons.org/whatsapp',
-                        width: 18,
-                        height: 18,
-                        placeholderBuilder: (context) => Icon(Icons.chat_bubble_outline, size: 18, color: Colors.grey.shade800),
-                      ),
-                      label: "WhatsApp",
-                      onPressed: () => _shareOn(context, 'whatsapp'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _ShareButton(
-                      icon: SvgPicture.network(
-                        'https://cdn.simpleicons.org/facebook',
-                        width: 18,
-                        height: 18,
-                        placeholderBuilder: (context) => Icon(Icons.facebook, size: 18, color: Colors.grey.shade800),
-                      ),
-                      label: "Facebook",
-                      onPressed: () => _shareOn(context, 'facebook'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _ShareButton(
-                      icon: const Icon(Icons.link, size: 18, color: Colors.grey),
-                      label: "Copier le lien",
-                      onPressed: () {
-                        // si tu veux, tu peux faire Clipboard.setData(...)
-                        // mais pour rester simple, on peut réutiliser un share "instagram" ou snackbar
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Lien copié (à brancher).")),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   // -------------------------
@@ -4055,7 +4076,8 @@ Motif du signalement :
   // -------------------------
   // SECTION 2 – Bloc infos clés
   // -------------------------
-  Widget _keyInfoCard(BuildContext context, ThemeData theme, String city, String priceText, String categoryText, String durationText) {
+  Widget _keyInfoCard(BuildContext context, ThemeData theme, String city,
+      String priceText, String categoryText, String durationText) {
     return _CardShell(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
@@ -4133,7 +4155,6 @@ Motif du signalement :
   }
 
   // (supprimé) _pill inactif : retiré car non référencé.
-
 }
 // (supprimé) `_OfferMetaRow` était non référencé et générait un avertissement.
 
@@ -4186,6 +4207,7 @@ class MessagesPage extends StatelessWidget {
   Widget _buildNeedAccount(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
         title: const Text(
           "Mes messages",
           style: TextStyle(fontWeight: FontWeight.w700),
@@ -4250,6 +4272,7 @@ class MessagesPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
         title: const Text(
           "Mes messages",
           style: TextStyle(fontWeight: FontWeight.w700),
@@ -4756,6 +4779,7 @@ class _ConversationPageState extends State<ConversationPage> {
 
     return Scaffold(
       appBar: AppBar(
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         titleSpacing: 0,
@@ -5027,7 +5051,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       try {
         if (await _recorder.hasPermission()) {
           final tempDir = await getTemporaryDirectory();
-          final filePath = '${tempDir.path}/presto_${DateTime.now().millisecondsSinceEpoch}.wav';
+          final filePath =
+              '${tempDir.path}/presto_${DateTime.now().millisecondsSinceEpoch}.wav';
           await _recorder.start(
             RecordConfig(
               encoder: AudioEncoder.wav,
@@ -5074,7 +5099,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       cancelOnError: false,
       partialResults: true,
       listenFor: const Duration(seconds: 60), // Durée max d'écoute
-      pauseFor: const Duration(seconds: 5),   // Durée de pause avant arrêt auto
+      pauseFor: const Duration(seconds: 5), // Durée de pause avant arrêt auto
       // Optimisation pour Android
       sampleRate: 16000, // Fréquence d'échantillonnage optimale
       onResult: (result) {
@@ -5084,7 +5109,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             _sttFinalTranscript = result.recognizedWords;
           }
         });
-        debugPrint('STT Result: ${result.recognizedWords} (final: ${result.finalResult})');
+        debugPrint(
+            'STT Result: ${result.recognizedWords} (final: ${result.finalResult})');
       },
     );
   }
@@ -5128,7 +5154,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     // Fallback: utilisation texte local STT
-    final text = (_sttFinalTranscript.isNotEmpty ? _sttFinalTranscript : _sttTranscript).trim();
+    final text =
+        (_sttFinalTranscript.isNotEmpty ? _sttFinalTranscript : _sttTranscript)
+            .trim();
     if (text.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -5260,7 +5288,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final bucket = ref.bucket; // Reference exposes bucket
     final gsUri = 'gs://$bucket/${ref.fullPath}';
 
-    final result = await TranscribeAndDraftOfferService().transcribeAndDraftOffer(
+    final result =
+        await TranscribeAndDraftOfferService().transcribeAndDraftOffer(
       gcsUri: gsUri,
       languageCode: 'fr-FR',
     );
@@ -5268,17 +5297,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     setState(() {
       if (result.title.isNotEmpty) _titleController.text = result.title;
-      if (result.description.isNotEmpty) _descriptionController.text = result.description;
+      if (result.description.isNotEmpty)
+        _descriptionController.text = result.description;
       if (result.category.isNotEmpty) {
         _category = result.category;
         _selectedSubCategory = null;
       }
       if (result.city.isNotEmpty) _locationController.text = result.city;
-      if (result.postalCode.isNotEmpty) _postalCodeController.text = result.postalCode;
+      if (result.postalCode.isNotEmpty)
+        _postalCodeController.text = result.postalCode;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('✨ Transcription réussie et champs remplis')),
+      const SnackBar(
+          content: Text('✨ Transcription réussie et champs remplis')),
     );
   }
 
@@ -5329,7 +5361,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✨ Analyse IA complétée\nChamps remplis automatiquement'),
+            content:
+                Text('✨ Analyse IA complétée\nChamps remplis automatiquement'),
             duration: Duration(seconds: 3),
           ),
         );
@@ -5599,30 +5632,29 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         final userData = userDoc.data();
         final selectedFavoriteCats =
             (userData['selectedFavoriteCategories'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [];
+                    ?.map((e) => e.toString())
+                    .toList() ??
+                [];
         final selectedFavoriteSubcats =
             (userData['selectedFavoriteSubcategories'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [];
+                    ?.map((e) => e.toString())
+                    .toList() ??
+                [];
 
         // Vérifier si la catégorie est sélectionnée
         bool shouldNotify = selectedFavoriteCats.contains(category);
 
         // Si une sous-catégorie est spécifiée, vérifier aussi
         if (subCategory != null && subCategory.isNotEmpty) {
-          shouldNotify = shouldNotify && 
-              (selectedFavoriteSubcats.isEmpty || 
-               selectedFavoriteSubcats.contains(subCategory));
+          shouldNotify = shouldNotify &&
+              (selectedFavoriteSubcats.isEmpty ||
+                  selectedFavoriteSubcats.contains(subCategory));
         }
 
         if (shouldNotify) {
           // Créer la notification
-          final notifRef = FirebaseFirestore.instance
-              .collection('notifications')
-              .doc();
+          final notifRef =
+              FirebaseFirestore.instance.collection('notifications').doc();
 
           batch.set(notifRef, {
             'userId': userDoc.id,
@@ -5715,6 +5747,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
         backgroundColor: kPrestoOrange,
         elevation: 0,
         title: const Text(
@@ -5770,7 +5803,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               // Bouton Premium AI avec enregistrement audio
               Center(
                 child: _isListening
@@ -5806,13 +5839,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 const SizedBox(height: 8),
                 if (_useCloudStt && !kIsWeb)
                   Center(
-                    child: Container
-                      (
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: kPrestoBlue.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: kPrestoBlue.withOpacity(0.25)),
+                        border:
+                            Border.all(color: kPrestoBlue.withOpacity(0.25)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -5836,7 +5870,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 const SizedBox(height: 8),
                 Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: kPrestoBlue.withOpacity(0.06),
                       borderRadius: BorderRadius.circular(999),
@@ -5846,13 +5881,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _useCloudStt && !kIsWeb
-                            ? const Icon(Icons.cloud_sync, size: 16, color: kPrestoBlue)
+                            ? const Icon(Icons.cloud_sync,
+                                size: 16, color: kPrestoBlue)
                             : SizedBox(
                                 width: 14,
                                 height: 14,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(kPrestoBlue),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      kPrestoBlue),
                                 ),
                               ),
                         const SizedBox(width: 8),
@@ -6283,7 +6320,12 @@ class _AccountPageState extends State<AccountPage> {
 
   static const Map<String, List<String>> _subCategoriesByCategory = {
     'Restauration / Extra': ['Service', 'Plonge', 'Cuisine', 'Bar'],
-    'Bricolage / Travaux': ['Montage meuble', 'Électricité', 'Plomberie', 'Peinture'],
+    'Bricolage / Travaux': [
+      'Montage meuble',
+      'Électricité',
+      'Plomberie',
+      'Peinture'
+    ],
     'Aide à domicile': ['Ménage', 'Repassage', 'Courses'],
     'Garde d’enfants': ['Sortie d’école', 'Soirée', 'Mercredi'],
     'Événementiel / DJ': ['DJ', 'Sono', 'Lumières'],
@@ -6573,6 +6615,7 @@ class _AccountPageState extends State<AccountPage> {
   Widget _buildAuthForm() {
     return Scaffold(
       appBar: AppBar(
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
         title: const Text(
           "Mon compte iliprestō",
           style: TextStyle(fontWeight: FontWeight.w700),
@@ -6840,6 +6883,7 @@ class _AccountPageState extends State<AccountPage> {
 
     return Scaffold(
       appBar: AppBar(
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
         title: const Text(
           "Mon compte iliprestō",
           style: TextStyle(fontWeight: FontWeight.w700),
@@ -7099,7 +7143,8 @@ class _AccountPageState extends State<AccountPage> {
                                 children: [
                                   Expanded(child: Text(cat)),
                                   if (selected)
-                                    const Icon(Icons.check, color: kPrestoBlue, size: 18),
+                                    const Icon(Icons.check,
+                                        color: kPrestoBlue, size: 18),
                                 ],
                               ),
                             );
@@ -7114,7 +7159,8 @@ class _AccountPageState extends State<AccountPage> {
                             }
                           },
                           decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -7133,31 +7179,39 @@ class _AccountPageState extends State<AccountPage> {
                           borderRadius: BorderRadius.circular(14),
                           items: (_selectedCategoryInput == null
                                   ? <String>[]
-                                  : (_subCategoriesByCategory[_selectedCategoryInput!] ?? []))
+                                  : (_subCategoriesByCategory[
+                                          _selectedCategoryInput!] ??
+                                      []))
                               .map((sub) {
-                            final label = '${_selectedCategoryInput ?? ''} — $sub';
-                            final selected = _favoriteCategories.contains(label);
+                            final label =
+                                '${_selectedCategoryInput ?? ''} — $sub';
+                            final selected =
+                                _favoriteCategories.contains(label);
                             return DropdownMenuItem<String>(
                               value: sub,
                               child: Row(
                                 children: [
                                   Expanded(child: Text(sub)),
                                   if (selected)
-                                    const Icon(Icons.check, color: kPrestoBlue, size: 18),
+                                    const Icon(Icons.check,
+                                        color: kPrestoBlue, size: 18),
                                 ],
                               ),
                             );
                           }).toList(),
                           onChanged: (selectedSub) {
-                            if (selectedSub == null || _selectedCategoryInput == null) return;
+                            if (selectedSub == null ||
+                                _selectedCategoryInput == null) return;
                             setState(() {
                               _selectedSubCategoryInput = selectedSub;
                             });
-                            final label = '${_selectedCategoryInput!} — $selectedSub';
+                            final label =
+                                '${_selectedCategoryInput!} — $selectedSub';
                             _toggleFavoriteCategory(user, label);
                           },
                           decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -7183,10 +7237,12 @@ class _AccountPageState extends State<AccountPage> {
                               Column(
                                 children: _favoriteCategories.map((cat) {
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 4),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 4),
                                     child: Row(
                                       children: [
-                                        const Icon(Icons.check, color: kPrestoBlue, size: 18),
+                                        const Icon(Icons.check,
+                                            color: kPrestoBlue, size: 18),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
@@ -7198,8 +7254,11 @@ class _AccountPageState extends State<AccountPage> {
                                           ),
                                         ),
                                         IconButton(
-                                          icon: const Icon(Icons.close, size: 18, color: Colors.black54),
-                                          onPressed: () => _toggleFavoriteCategory(user, cat),
+                                          icon: const Icon(Icons.close,
+                                              size: 18, color: Colors.black54),
+                                          onPressed: () =>
+                                              _toggleFavoriteCategory(
+                                                  user, cat),
                                         ),
                                       ],
                                     ),

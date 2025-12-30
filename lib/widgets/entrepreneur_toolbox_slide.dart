@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:presto_app/pages/entrepreneur_toolbox_page.dart';
-import 'package:presto_app/widgets/presto_info_icon_animated.dart';
+import 'package:presto_app/widgets/premium_info_button.dart';
 
 class EntrepreneurToolboxSlide extends StatelessWidget {
   const EntrepreneurToolboxSlide({super.key});
@@ -70,8 +70,9 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
           Positioned(
             right: 18,
             top: 36,
-            child: PrestoInfoIconAnimated(
-               size: 130,
+            child: PremiumInfoButton(
+              size: 130,
+              chipText: 'Nouveau',
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -79,8 +80,6 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
                   ),
                 );
               },
-              showBadge: true,
-              badgeText: "Nouveau",
             ),
           ),
         ],

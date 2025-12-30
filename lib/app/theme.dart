@@ -4,20 +4,12 @@ import 'package:flutter/services.dart';
 ThemeData buildPrestoTheme() {
   const prestoOrange = Color(0xFFFF6600);
   const prestoBlue = Color(0xFF1A73E8);
-  const prestoStatusBarStyle = SystemUiOverlayStyle(
-    statusBarColor: prestoBlue,
-    statusBarIconBrightness: Brightness.light,
-    statusBarBrightness: Brightness.dark,
-  );
 
   return ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
       seedColor: prestoOrange,
       brightness: Brightness.light,
-    ),
-    appBarTheme: const AppBarTheme(
-      systemOverlayStyle: prestoStatusBarStyle,
     ),
     snackBarTheme: SnackBarThemeData(
       shape: RoundedRectangleBorder(
