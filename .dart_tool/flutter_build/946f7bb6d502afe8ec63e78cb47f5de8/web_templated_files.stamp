@@ -1,0 +1,1 @@
+{"inputs":["/workspaces/presto_app/web/*/index.html","/workspaces/presto_app/web/flutter_bootstrap.js","/sdks/flutter/bin/cache/engine.stamp"],"outputs":["/workspaces/presto_app/build/web/*/index.html","/workspaces/presto_app/build/web/flutter_bootstrap.js"],"buildKey":"[{\"compileTarget\":\"dart2js\",\"renderer\":\"canvaskit\",\"mainJsPath\":\"main.dart.js\"},{}]"}
