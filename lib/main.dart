@@ -1162,10 +1162,9 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-    final topBackground = Theme.of(context).scaffoldBackgroundColor;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: prestoOverlayStyleFor(topBackground),
+      value: prestoOverlayStyleFor(kPrestoBlue),
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
@@ -3783,7 +3782,7 @@ Motif du signalement :
       backgroundColor: const Color(0xFFF6F7F9),
 
       appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).maybePop(),
@@ -4212,7 +4211,7 @@ class MessagesPage extends StatelessWidget {
           "Mes messages",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        backgroundColor: kPrestoBlue,
+        backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
       ),
       body: Padding(
