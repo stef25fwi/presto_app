@@ -2804,7 +2804,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
             ),
           ),
         ),
-        backgroundColor: kPrestoBlue,
+        backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -4277,7 +4277,7 @@ class MessagesPage extends StatelessWidget {
           "Mes messages",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        backgroundColor: kPrestoBlue,
+        backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -4780,7 +4780,7 @@ class _ConversationPageState extends State<ConversationPage> {
     return Scaffold(
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-        backgroundColor: kPrestoBlue,
+        backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         titleSpacing: 0,
         title: Row(
@@ -5748,7 +5748,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-        backgroundColor: kPrestoBlue,
+        backgroundColor: kPrestoOrange,
         elevation: 0,
         title: const Text(
           'Je publie une offre',
@@ -6620,7 +6620,7 @@ class _AccountPageState extends State<AccountPage> {
           "Mon compte iliprestō",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        backgroundColor: kPrestoBlue,
+        backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
       ),
       backgroundColor: Colors.white,
@@ -6888,7 +6888,7 @@ class _AccountPageState extends State<AccountPage> {
           "Mon compte iliprestō",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        backgroundColor: kPrestoBlue,
+        backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
       ),
       backgroundColor: Colors.white,
