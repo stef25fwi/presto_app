@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../utils/keyword_suggester.dart';
 
@@ -257,6 +258,11 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: kPrestoBlue,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         title: const Text("Boîte à Outils"),
@@ -496,8 +502,8 @@ class _HeaderCard extends StatelessWidget {
         ],
       ),
       child: const Text(
-        "Décrivez votre projet : nous vous guidons vers les organismes adaptés\n"
-        "et les démarches à suivre.",
+        "Lancez vous : décrivez votre projet, iliprestō vous guide vers les organismes adaptés et les démarches à suivre.",
+        textAlign: TextAlign.justify,
         style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w800,
