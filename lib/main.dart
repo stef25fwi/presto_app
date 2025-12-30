@@ -909,11 +909,14 @@ class _HomePageState extends State<HomePage>
         );
       },
       optionsViewBuilder: (context, onSelected, options) {
+        final surface = Theme.of(context).colorScheme.surface;
         return Align(
           alignment: Alignment.topLeft,
           child: Material(
+            color: surface,
             elevation: 4,
             borderRadius: BorderRadius.circular(16),
+            clipBehavior: Clip.antiAlias,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 180),
               child: ListView.builder(
@@ -3007,6 +3010,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       child: DropdownButtonFormField<String?>(
         value: _filterRegionCode,
         isDense: true,
+        dropdownColor: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
         decoration: const InputDecoration(
           labelText: "Région",
           isDense: true,
@@ -3084,6 +3089,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       child: DropdownButtonFormField<String?>(
         value: safeValue,
         isDense: true,
+        dropdownColor: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
         decoration: InputDecoration(
           labelText: 'Département',
           border: OutlineInputBorder(
@@ -3157,6 +3164,50 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         final q = v.text.trim();
         if (q.length < 2) return const Iterable<CityRecord>.empty();
         return _searchCities(q);
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        final surface = Theme.of(context).colorScheme.surface;
+
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            color: surface,
+            elevation: 4,
+            borderRadius: BorderRadius.circular(16),
+            clipBehavior: Clip.antiAlias,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  final option = options.elementAt(index);
+                  final highlightedIndex =
+                      AutocompleteHighlightedOption.of(context);
+                  final isHighlighted = index == highlightedIndex;
+
+                  return ListTile(
+                    dense: true,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    title: Text(
+                      '${option.name} (${option.cp})',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    tileColor:
+                        isHighlighted ? kPrestoBlue.withOpacity(0.08) : null,
+                    onTap: () => onSelected(option),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
       },
       onSelected: (CityRecord c) {
         final dept = (c.departmentCode.trim().isNotEmpty)
@@ -3235,6 +3286,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return DropdownButtonFormField<String>(
       value: _filterCategory,
       isDense: true,
+      dropdownColor: Theme.of(context).colorScheme.surface,
+      borderRadius: BorderRadius.circular(14),
       decoration: const InputDecoration(
         labelText: 'Catégorie',
         isDense: true,
@@ -5840,6 +5893,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               // CATÉGORIE
               DropdownButtonFormField<String>(
                 value: _category,
+                dropdownColor: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(14),
                 decoration: InputDecoration(
                   labelText: 'Catégorie',
                   filled: true,
@@ -5877,6 +5932,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               if (_category != null)
                 DropdownButtonFormField<String>(
                   value: _selectedSubCategory,
+                  dropdownColor: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(14),
                   decoration: InputDecoration(
                     labelText: 'Sous-catégorie',
                     filled: true,
@@ -6017,6 +6074,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     flex: 2,
                     child: DropdownButtonFormField<String>(
                       value: _budgetType,
+                      dropdownColor: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(14),
                       items: _budgetTypes
                           .map(
                               (t) => DropdownMenuItem(value: t, child: Text(t)))
@@ -7030,6 +7089,8 @@ class _AccountPageState extends State<AccountPage> {
                         DropdownButtonFormField<String>(
                           value: _selectedCategoryInput,
                           hint: const Text('Choisir une catégorie'),
+                          dropdownColor: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(14),
                           items: _allFavoriteCategories.map((cat) {
                             final selected = _favoriteCategories.contains(cat);
                             return DropdownMenuItem<String>(
@@ -7068,6 +7129,8 @@ class _AccountPageState extends State<AccountPage> {
                           hint: Text(_selectedCategoryInput == null
                               ? 'Choisis d’abord une catégorie'
                               : 'Sous-catégorie'),
+                          dropdownColor: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(14),
                           items: (_selectedCategoryInput == null
                                   ? <String>[]
                                   : (_subCategoriesByCategory[_selectedCategoryInput!] ?? []))
