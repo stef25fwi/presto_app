@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:presto_app/pages/entrepreneur_toolbox_page.dart';
-import 'package:presto_app/widgets/premium_info_button.dart';
 
 class EntrepreneurToolboxSlide extends StatelessWidget {
   const EntrepreneurToolboxSlide({super.key});
@@ -70,9 +69,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
           Positioned(
             right: 18,
             top: 36,
-            child: PremiumInfoButton(
-              size: 130,
-              chipText: 'Nouveau',
+            child: GestureDetector(
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -80,6 +77,26 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
                   ),
                 );
               },
+              child: Container(
+                width: 74,
+                height: 74,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.10),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.business_center_outlined,
+                  color: kPrestoBlue,
+                  size: 32,
+                ),
+              ),
             ),
           ),
         ],
