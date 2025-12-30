@@ -2792,7 +2792,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       // Fond blanc derrière les annonces pour un look plus clair
       backgroundColor: Colors.white,
       appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: FittedBox(
           fit: BoxFit.scaleDown,
           child: Text(
@@ -2804,7 +2804,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
             ),
           ),
         ),
-        backgroundColor: kPrestoOrange,
+        backgroundColor: kPrestoBlue,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -4207,12 +4207,12 @@ class MessagesPage extends StatelessWidget {
   Widget _buildNeedAccount(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: const Text(
           "Mes messages",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        backgroundColor: kPrestoOrange,
+        backgroundColor: kPrestoBlue,
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -4272,12 +4272,12 @@ class MessagesPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: const Text(
           "Mes messages",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        backgroundColor: kPrestoOrange,
+        backgroundColor: kPrestoBlue,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -4779,8 +4779,8 @@ class _ConversationPageState extends State<ConversationPage> {
 
     return Scaffold(
       appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
-        backgroundColor: kPrestoOrange,
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
+        backgroundColor: kPrestoBlue,
         foregroundColor: Colors.white,
         titleSpacing: 0,
         title: Row(
@@ -5747,8 +5747,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
-        backgroundColor: kPrestoOrange,
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
+        backgroundColor: kPrestoBlue,
         elevation: 0,
         title: const Text(
           'Je publie une offre',
@@ -6615,12 +6615,12 @@ class _AccountPageState extends State<AccountPage> {
   Widget _buildAuthForm() {
     return Scaffold(
       appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: const Text(
           "Mon compte iliprestō",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        backgroundColor: kPrestoOrange,
+        backgroundColor: kPrestoBlue,
         foregroundColor: Colors.white,
       ),
       backgroundColor: Colors.white,
@@ -6883,12 +6883,12 @@ class _AccountPageState extends State<AccountPage> {
 
     return Scaffold(
       appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoOrange),
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: const Text(
           "Mon compte iliprestō",
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
-        backgroundColor: kPrestoOrange,
+        backgroundColor: kPrestoBlue,
         foregroundColor: Colors.white,
       ),
       backgroundColor: Colors.white,
