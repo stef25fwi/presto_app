@@ -1164,68 +1164,73 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
+    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         extendBody: true,
-        bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
-            color: kPrestoOrange,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-          child: SafeArea(
-            top: false,
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: _BottomNavItem(
-                      icon: Icons.home,
-                      label: "Accueil",
-                      selected: _selectedIndex == 0,
-                      onTap: () => _onBottomTap(0),
-                    ),
+        bottomNavigationBar: isKeyboardVisible
+            ? null
+            : Container(
+                decoration: const BoxDecoration(
+                  color: kPrestoOrange,
+                  borderRadius:
+                      BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                child: SafeArea(
+                  top: false,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: _BottomNavItem(
+                          icon: Icons.home,
+                          label: "Accueil",
+                          selected: _selectedIndex == 0,
+                          onTap: () => _onBottomTap(0),
+                        ),
+                      ),
+                      Expanded(
+                        child: _BottomNavItem(
+                          icon: Icons.search,
+                          label: "Je consulte\nles offres",
+                          selected: _selectedIndex == 1,
+                          onTap: () => _onBottomTap(1),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 1,
+                        child: _BottomNavItem(
+                          icon: Icons.add_circle_outline,
+                          label: "Publier\nune offre",
+                          isBig: true,
+                          onTap: () => _onBottomTap(2),
+                        ),
+                      ),
+                      Expanded(
+                        child: _BottomNavItem(
+                          icon: Icons.chat_bubble_outline,
+                          label: "Messages",
+                          selected: _selectedIndex == 3,
+                          onTap: () => _onBottomTap(3),
+                        ),
+                      ),
+                      Expanded(
+                        child: _BottomNavItem(
+                          icon: Icons.person_outline,
+                          label: "Compte",
+                          selected: _selectedIndex == 4,
+                          onTap: () => _onBottomTap(4),
+                        ),
+                      ),
+                    ],
                   ),
-                  Expanded(
-                    child: _BottomNavItem(
-                      icon: Icons.search,
-                      label: "Je consulte\nles offres",
-                      selected: _selectedIndex == 1,
-                      onTap: () => _onBottomTap(1),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: _BottomNavItem(
-                      icon: Icons.add_circle_outline,
-                      label: "Publier\nune offre",
-                      isBig: true,
-                      onTap: () => _onBottomTap(2),
-                    ),
-                  ),
-                  Expanded(
-                    child: _BottomNavItem(
-                      icon: Icons.chat_bubble_outline,
-                      label: "Messages",
-                      selected: _selectedIndex == 3,
-                      onTap: () => _onBottomTap(3),
-                    ),
-                  ),
-                  Expanded(
-                    child: _BottomNavItem(
-                      icon: Icons.person_outline,
-                      label: "Compte",
-                      selected: _selectedIndex == 4,
-                      onTap: () => _onBottomTap(4),
-                    ),
-                  ),
-                ],
+                ),
               ),
-          ),
-        ),
         body: IndexedStack(
           index: _selectedIndex,
           children: [
@@ -2388,6 +2393,63 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   late final Map<String, String> _deptToRegion = _buildDeptToRegion();
 
+  String _normalizeForCategoryMatch(String input) {
+    return input
+        .trim()
+        .toLowerCase()
+        // diacritiques courants FR
+        .replaceAll('à', 'a')
+        .replaceAll('â', 'a')
+        .replaceAll('ä', 'a')
+        .replaceAll('ç', 'c')
+        .replaceAll('é', 'e')
+        .replaceAll('è', 'e')
+        .replaceAll('ê', 'e')
+        .replaceAll('ë', 'e')
+        .replaceAll('î', 'i')
+        .replaceAll('ï', 'i')
+        .replaceAll('ô', 'o')
+        .replaceAll('ö', 'o')
+        .replaceAll('ù', 'u')
+        .replaceAll('û', 'u')
+        .replaceAll('ü', 'u')
+        .replaceAll('œ', 'oe')
+        // séparateurs usuels
+        .replaceAll('/', ' ')
+        .replaceAll('-', ' ')
+        .replaceAll('’', ' ')
+        .replaceAll("'", ' ')
+        .replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  String? _matchKnownCategory(String input) {
+    final q = _normalizeForCategoryMatch(input);
+    if (q.isEmpty) return null;
+
+    String? best;
+    int bestScore = -1;
+
+    for (final c in kCategories) {
+      final cn = _normalizeForCategoryMatch(c);
+      int score = -1;
+
+      if (cn == q) {
+        score = 10000;
+      } else if (cn.contains(q) && q.length >= 2) {
+        score = 5000 + q.length;
+      } else if (q.contains(cn) && cn.length >= 2) {
+        score = 3000 + cn.length;
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        best = c;
+      }
+    }
+
+    return bestScore > 0 ? best : null;
+  }
+
   Map<String, String> _buildDeptToRegion() {
     final out = <String, String>{};
     for (final entry in kRegionDepartments.entries) {
@@ -2418,19 +2480,35 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   void initState() {
     super.initState();
 
-    if (widget.categoryFilter != null && widget.categoryFilter!.isNotEmpty) {
-      _selectedCategory = widget.categoryFilter;
+    final initialCategoryFilter = widget.categoryFilter?.trim();
+    if (initialCategoryFilter != null && initialCategoryFilter.isNotEmpty) {
+      _selectedCategory = initialCategoryFilter;
+      final matched = _matchKnownCategory(initialCategoryFilter);
+      if (matched != null) {
+        _filterCategory = matched;
+        _selectedCategory = matched;
+      }
     } else {
       _selectedCategory = 'Toutes catégories';
     }
 
     _selectedRegionCode = null; // Pas de région sélectionnée par défaut
 
-    // ✅ Si un searchQuery est fourni, l'initialiser dans le champ de mot-clé
+    // ✅ Si un searchQuery est fourni (barre de recherche Accueil),
+    // on essaie d'abord de le refléter dans le filtre Catégorie.
+    // Si aucune catégorie ne correspond, on garde le comportement "mot-clé".
     final initialQuery = widget.searchQuery?.trim();
     if (initialQuery != null && initialQuery.isNotEmpty) {
-      _activeSearchQuery = initialQuery;
-      _keywordCtrl.text = initialQuery;
+      final matchedCategory = _matchKnownCategory(initialQuery);
+      if (matchedCategory != null) {
+        _filterCategory = matchedCategory;
+        _selectedCategory = matchedCategory;
+        _activeSearchQuery = null;
+        _keywordCtrl.clear();
+      } else {
+        _activeSearchQuery = initialQuery;
+        _keywordCtrl.text = initialQuery;
+      }
     }
 
     // Quand le code postal change, on essaie de déduire la région
