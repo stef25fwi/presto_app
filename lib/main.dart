@@ -675,6 +675,18 @@ class _HomePageState extends State<HomePage>
     _lastScrollPosition = currentPosition;
   }
 
+  void _onPageScroll(double offset) {
+    final isScrollingDown = offset > _lastScrollPosition;
+
+    if (isScrollingDown && _showBottomBar) {
+      setState(() => _showBottomBar = false);
+    } else if (!isScrollingDown && !_showBottomBar) {
+      setState(() => _showBottomBar = true);
+    }
+
+    _lastScrollPosition = offset;
+  }
+
   void _listenDynamicKeywords() {
     FirebaseFirestore.instance.collection('offers').snapshots().listen(
       (snapshot) {
@@ -1194,63 +1206,68 @@ class _HomePageState extends State<HomePage>
           // le resize pour éviter que les champs soient cachés par le clavier.
           resizeToAvoidBottomInset: isKeyboardVisible,
           extendBody: !isKeyboardVisible,
-          bottomNavigationBar: (isKeyboardVisible || !_showBottomBar)
+          bottomNavigationBar: isKeyboardVisible
               ? null
-              : Container(
-                  decoration: const BoxDecoration(
-                    color: kPrestoOrange,
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(24)),
-                  ),
-                  padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-                  child: SafeArea(
-                    top: false,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: _BottomNavItem(
-                            icon: Icons.home,
-                            label: "Accueil",
-                            selected: _selectedIndex == 0,
-                            onTap: () => _onBottomTap(0),
+              : AnimatedSlide(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  offset: _showBottomBar ? Offset.zero : const Offset(0, 1),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: kPrestoOrange,
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(24)),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                    child: SafeArea(
+                      top: false,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: _BottomNavItem(
+                              icon: Icons.home,
+                              label: "Accueil",
+                              selected: _selectedIndex == 0,
+                              onTap: () => _onBottomTap(0),
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: _BottomNavItem(
-                            icon: Icons.search,
-                            label: "Je consulte\nles offres",
-                            selected: _selectedIndex == 1,
-                            onTap: () => _onBottomTap(1),
+                          Expanded(
+                            child: _BottomNavItem(
+                              icon: Icons.search,
+                              label: "Je consulte\nles offres",
+                              selected: _selectedIndex == 1,
+                              onTap: () => _onBottomTap(1),
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          flex: 1,
-                          child: _BottomNavItem(
-                            icon: Icons.add_circle_outline,
-                            label: "Publier\nune offre",
-                            isBig: true,
-                            onTap: () => _onBottomTap(2),
+                          Expanded(
+                            flex: 1,
+                            child: _BottomNavItem(
+                              icon: Icons.add_circle_outline,
+                              label: "Publier\nune offre",
+                              isBig: true,
+                              onTap: () => _onBottomTap(2),
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: _BottomNavItem(
-                            icon: Icons.chat_bubble_outline,
-                            label: "Messages",
-                            selected: _selectedIndex == 3,
-                            onTap: () => _onBottomTap(3),
+                          Expanded(
+                            child: _BottomNavItem(
+                              icon: Icons.chat_bubble_outline,
+                              label: "Messages",
+                              selected: _selectedIndex == 3,
+                              onTap: () => _onBottomTap(3),
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: _BottomNavItem(
-                            icon: Icons.person_outline,
-                            label: "Compte",
-                            selected: _selectedIndex == 4,
-                            onTap: () => _onBottomTap(4),
+                          Expanded(
+                            child: _BottomNavItem(
+                              icon: Icons.person_outline,
+                              label: "Compte",
+                              selected: _selectedIndex == 4,
+                              onTap: () => _onBottomTap(4),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -1258,10 +1275,10 @@ class _HomePageState extends State<HomePage>
             index: _selectedIndex,
             children: [
               _buildHomeContent(),
-              const ConsultOffersPage(),
-              const PublishOfferPage(),
+              ConsultOffersPage(onScroll: _onPageScroll),
+              PublishOfferPage(onScroll: _onPageScroll),
               const MessagesPage(),
-              const AccountPage(),
+              AccountPage(onScroll: _onPageScroll),
             ],
           ),
         ),
@@ -2351,11 +2368,13 @@ class _HowItWorksStep extends StatelessWidget {
 class ConsultOffersPage extends StatefulWidget {
   final String? categoryFilter;
   final String? searchQuery;
+  final Function(double)? onScroll;
 
   const ConsultOffersPage({
     super.key,
     this.categoryFilter,
     this.searchQuery,
+    this.onScroll,
   });
 
   @override
@@ -2510,6 +2529,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   @override
   void initState() {
     super.initState();
+
+    _scrollController.addListener(() {
+      widget.onScroll?.call(_scrollController.offset);
+    });
 
     final initialCategoryFilter = widget.categoryFilter?.trim();
     if (initialCategoryFilter != null && initialCategoryFilter.isNotEmpty) {
@@ -5014,7 +5037,9 @@ class _ConversationPageState extends State<ConversationPage> {
 /// PAGE PUBLIER UNE OFFRE //////////////////////////////////////////////////
 
 class PublishOfferPage extends StatefulWidget {
-  const PublishOfferPage({super.key});
+  final Function(double)? onScroll;
+
+  const PublishOfferPage({super.key, this.onScroll});
 
   @override
   State<PublishOfferPage> createState() => _PublishOfferPageState();
@@ -5022,6 +5047,7 @@ class PublishOfferPage extends StatefulWidget {
 
 class _PublishOfferPageState extends State<PublishOfferPage> {
   final _formKey = GlobalKey<FormState>();
+  final ScrollController _scrollController = ScrollController();
 
   // Champs texte
   final TextEditingController _titleController = TextEditingController();
@@ -5069,6 +5095,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   String? _recordingPath;
   // Toujours actif (améliore la qualité via Google STT côté serveur)
   final bool _useCloudStt = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      widget.onScroll?.call(_scrollController.offset);
+    });
+  }
 
   Future<void> _startMic() async {
     if (_isListening) return;
@@ -5421,6 +5455,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _postalCodeController.dispose();
     _phoneController.dispose();
     _budgetController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -5819,6 +5854,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         child: Form(
           key: _formKey,
           child: ListView(
+            controller: _scrollController,
             padding: const EdgeInsets.all(16),
             children: [
               const Text(
@@ -6299,7 +6335,9 @@ class _PhotoSelectorTile extends StatelessWidget {
 /// PAGE COMPTE (Firebase Auth : email / Google / Apple) ////////////////////
 
 class AccountPage extends StatefulWidget {
-  const AccountPage({super.key});
+  final Function(double)? onScroll;
+
+  const AccountPage({super.key, this.onScroll});
 
   @override
   State<AccountPage> createState() => _AccountPageState();
@@ -6307,6 +6345,7 @@ class AccountPage extends StatefulWidget {
 
 class _AccountPageState extends State<AccountPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final ScrollController _scrollController = ScrollController();
 
   final _formKey = GlobalKey<FormState>();
   bool _isLoginMode = true;
@@ -6363,6 +6402,14 @@ class _AccountPageState extends State<AccountPage> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      widget.onScroll?.call(_scrollController.offset);
+    });
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -6370,6 +6417,7 @@ class _AccountPageState extends State<AccountPage> {
     _profilePseudoController.dispose();
     _profileCityController.dispose();
     _profilePhoneController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -6651,6 +6699,7 @@ class _AccountPageState extends State<AccountPage> {
       ),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
+        controller: _scrollController,
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
         child: Center(
           child: ConstrainedBox(
@@ -6924,6 +6973,7 @@ class _AccountPageState extends State<AccountPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 500),
             child: SingleChildScrollView(
+              controller: _scrollController,
               padding: const EdgeInsets.only(bottom: 120),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
