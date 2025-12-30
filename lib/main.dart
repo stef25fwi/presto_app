@@ -1344,6 +1344,7 @@ class _HomePageState extends State<HomePage>
 
                           if (index == 1) {
                             return Container(
+                              height: double.infinity,
                               margin: const EdgeInsets.symmetric(horizontal: 0),
                               padding: const EdgeInsets.symmetric(vertical: 0),
                               decoration: BoxDecoration(
@@ -1381,6 +1382,7 @@ class _HomePageState extends State<HomePage>
                                 "Trouvez immédiatement quelqu'un pour faire le job !";
 
                             return Container(
+                              height: double.infinity,
                               margin: const EdgeInsets.symmetric(horizontal: 0),
                               decoration: BoxDecoration(
                                 color: kPrestoOrange,
@@ -1461,6 +1463,7 @@ class _HomePageState extends State<HomePage>
                                   : null;
 
                           final slideBody = Container(
+                            height: double.infinity,
                             margin: const EdgeInsets.symmetric(horizontal: 0),
                             decoration: BoxDecoration(
                               color: kPrestoOrange,
