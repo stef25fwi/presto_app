@@ -12,6 +12,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 0),
       decoration: BoxDecoration(
         color: kPrestoOrange,
