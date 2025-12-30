@@ -1322,6 +1322,7 @@ class _HomePageState extends State<HomePage>
                           if (index == 1) {
                             return Container(
                               margin: const EdgeInsets.symmetric(horizontal: 0),
+                              padding: const EdgeInsets.symmetric(vertical: 0),
                               decoration: BoxDecoration(
                                 color: kPrestoOrange,
                                 borderRadius: BorderRadius.circular(20),
