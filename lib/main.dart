@@ -529,10 +529,13 @@ class _HomePageState extends State<HomePage>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   late int _selectedIndex;
   final PageController _carouselController = PageController();
+  final ScrollController _scrollController = ScrollController();
   int _currentSlide = 0;
 
   Timer? _homeAutoSlideTimer;
   bool _carouselEnabled = false;
+  bool _showBottomBar = true;
+  double _lastScrollPosition = 0;
 
   late final AnimationController _categoryController;
 
@@ -652,6 +655,24 @@ class _HomePageState extends State<HomePage>
         .orderBy('createdAt', descending: true)
         .limit(3)
         .snapshots();
+
+    // Listener pour hide/show bottom bar au scroll
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    final currentPosition = _scrollController.offset;
+    final isScrollingDown = currentPosition > _lastScrollPosition;
+
+    if (isScrollingDown && _showBottomBar) {
+      // Scrolling down: hide bottom bar
+      setState(() => _showBottomBar = false);
+    } else if (!isScrollingDown && !_showBottomBar) {
+      // Scrolling up: show bottom bar
+      setState(() => _showBottomBar = true);
+    }
+
+    _lastScrollPosition = currentPosition;
   }
 
   void _listenDynamicKeywords() {
@@ -685,6 +706,7 @@ class _HomePageState extends State<HomePage>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _carouselController.dispose();
+    _scrollController.dispose();
     _categoryController.dispose();
     _sloganTimer?.cancel();
     _homeAutoSlideTimer?.cancel();
@@ -1172,7 +1194,7 @@ class _HomePageState extends State<HomePage>
           // le resize pour éviter que les champs soient cachés par le clavier.
           resizeToAvoidBottomInset: isKeyboardVisible,
           extendBody: !isKeyboardVisible,
-          bottomNavigationBar: isKeyboardVisible
+          bottomNavigationBar: (isKeyboardVisible || !_showBottomBar)
               ? null
               : Container(
                   decoration: const BoxDecoration(
@@ -1261,6 +1283,7 @@ class _HomePageState extends State<HomePage>
             ),
           ),
           child: SingleChildScrollView(
+            controller: _scrollController,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
