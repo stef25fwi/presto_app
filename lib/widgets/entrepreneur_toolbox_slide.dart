@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:presto_app/pages/entrepreneur_toolbox_page.dart';
-import 'package:presto_app/widgets/premium_info_button.dart';
+import 'package:presto_app/widgets/presto_info_icon_animated.dart';
 
 class EntrepreneurToolboxSlide extends StatelessWidget {
   const EntrepreneurToolboxSlide({super.key});
@@ -66,13 +66,14 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
             ),
           ),
 
-          // BOUTON INFO PREMIUM
+          // BOUTON INFO ANIMÉ AVEC BUMP ET VIBRATION
           Positioned(
             right: 18,
             top: 36,
-            child: PremiumInfoButton(
+            child: PrestoInfoIconAnimated(
               size: 130,
-              chipText: 'Nouveau',
+              badgeText: 'Nouveau',
+              showBadge: true,
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
