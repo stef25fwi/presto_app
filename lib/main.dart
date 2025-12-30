@@ -352,6 +352,29 @@ class PrestoApp extends StatelessWidget {
     return MaterialApp(
       title: 'iliprestō',
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        final safeTop = MediaQuery.of(context).padding.top;
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: kPrestoBlue,
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.dark,
+          ),
+          child: Stack(
+            children: [
+              if (safeTop > 0)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: safeTop,
+                  child: const ColoredBox(color: kPrestoBlue),
+                ),
+              Positioned.fill(child: child ?? const SizedBox.shrink()),
+            ],
+          ),
+        );
+      },
       routes: {
         '/publish': (_) => const PublishOfferPage(),
       },
@@ -411,83 +434,89 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kPrestoOrange,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: const Text(
-                    'iliprestō',
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: kPrestoOrange,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: kPrestoOrange,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: const Text(
+                      'iliprestō',
+                      style: TextStyle(
+                        fontSize: 54,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 1.3,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  const Text(
+                    'Trouvez un prestataire\nillico presto!',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 54,
-                      fontWeight: FontWeight.w900,
+                      fontSize: 24,
+                      height: 1.25,
+                      fontWeight: FontWeight.w700,
                       color: Colors.white,
-                      letterSpacing: 1.3,
                     ),
                   ),
-                ),
-                const SizedBox(height: 28),
-                const Text(
-                  'Trouvez un prestataire\nillico presto!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    height: 1.25,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 46),
-                SizedBox(
-                  width: 260,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white, width: 2),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 8),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
+                  const SizedBox(height: 46),
+                  SizedBox(
+                    width: 260,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white, width: 2),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 8),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      onPressed: () =>
+                          _navigateTo(const HomePage(initialIndex: 2)),
+                      child: const Text(
+                        "J’offre un job",
+                        style:
+                            TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                       ),
                     ),
-                    onPressed: () => _navigateTo(const HomePage(initialIndex: 2)),
-                    child: const Text(
-                      "J’offre un job",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                    ),
                   ),
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: 260,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 8),
-                      backgroundColor: kPrestoBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: 260,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 8),
+                        backgroundColor: kPrestoBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      onPressed: () => _navigateTo(const ConsultOffersPage()),
+                      child: const Text(
+                        "Je consulte les offres",
+                        style:
+                            TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                       ),
                     ),
-                    onPressed: () => _navigateTo(const ConsultOffersPage()),
-                    child: const Text(
-                      "Je consulte les offres",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                    ),
                   ),
-                ),
-              ],
-
-            
+                ],
+              ),
             ),
           ),
         ),
