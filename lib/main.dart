@@ -14,7 +14,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -23,7 +22,7 @@ import 'app_core.dart';
 import 'constants.dart';
 import 'utils/crashlytics_context.dart';
 import 'utils/friendly_snackbar.dart';
-import 'features/transcription/transcribe_and_draft_offer_service.dart';
+import 'features/micro_ia/micro_ia_service.dart';
 import 'features/messaging/conversation_service.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/ad_banner.dart';
@@ -5352,12 +5351,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _isSubmitting = false;
   bool _isAnalyzing = false;
   bool _isListening = false;
-  String _sttTranscript = '';
-  String _sttFinalTranscript = '';
 
   // Service IA pour analyser la description
   final AiDraftService _aiService = AiDraftService();
-  final stt.SpeechToText _stt = stt.SpeechToText();
   final AudioRecorder _recorder = AudioRecorder();
   String? _recordingPath;
   // Toujours actif (améliore la qualité via Google STT côté serveur)
@@ -5373,94 +5369,66 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<void> _startMic() async {
     if (_isListening) return;
-    // Préparer l'enregistreur haute qualité (WAV)
-    if (!kIsWeb) {
-      try {
-        if (await _recorder.hasPermission()) {
-          final tempDir = await getTemporaryDirectory();
-          final filePath =
-              '${tempDir.path}/presto_${DateTime.now().millisecondsSinceEpoch}.wav';
-          await _recorder.start(
-            RecordConfig(
-              encoder: AudioEncoder.wav,
-              sampleRate: 16000,
-              numChannels: 1,
-            ),
-            path: filePath,
-          );
-          _recordingPath = filePath;
-        }
-      } catch (e) {
-        debugPrint('Recorder start error: $e');
-      }
-    }
-    final available = await _stt.initialize(
-      onStatus: (s) {
-        debugPrint('STT Status: $s');
-      },
-      onError: (e) {
-        if (!mounted) return;
-        debugPrint('STT Error: ${e.errorMsg}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur micro: ${e.errorMsg}')),
-        );
-      },
-    );
-    if (!available) {
+
+    // ✅ Micro global: on ne fait PLUS speech_to_text (trop variable)
+    // On enregistre uniquement en WAV 16k mono, puis _stopMic() déclenchera _uploadAndTranscribe() (MicroIA).
+    if (kIsWeb) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Dictée non disponible sur cet appareil')),
+        const SnackBar(content: Text('Dictée non disponible sur le web')),
       );
       return;
     }
+
+    // Préparer l'enregistreur haute qualité (WAV)
+    try {
+      if (await _recorder.hasPermission()) {
+        final tempDir = await getTemporaryDirectory();
+        final filePath =
+            '${tempDir.path}/presto_${DateTime.now().millisecondsSinceEpoch}.wav';
+        await _recorder.start(
+          RecordConfig(
+            encoder: AudioEncoder.wav,
+            sampleRate: 16000,
+            numChannels: 1,
+          ),
+          path: filePath,
+        );
+        _recordingPath = filePath;
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Permission micro requise')),
+        );
+        return;
+      }
+    } catch (e) {
+      debugPrint('Recorder start error: $e');
+    }
+
     setState(() {
       _isListening = true;
-      _sttTranscript = '';
-      _sttFinalTranscript = '';
     });
-    await _stt.listen(
-      localeId: 'fr_FR',
-      // Paramètres pour améliorer la qualité audio sur Android
-      listenMode: stt.ListenMode.confirmation,
-      cancelOnError: false,
-      partialResults: true,
-      listenFor: const Duration(seconds: 60), // Durée max d'écoute
-      pauseFor: const Duration(seconds: 5), // Durée de pause avant arrêt auto
-      // Optimisation pour Android
-      sampleRate: 16000, // Fréquence d'échantillonnage optimale
-      onResult: (result) {
-        setState(() {
-          _sttTranscript = result.recognizedWords;
-          if (result.finalResult) {
-            _sttFinalTranscript = result.recognizedWords;
-          }
-        });
-        debugPrint(
-            'STT Result: ${result.recognizedWords} (final: ${result.finalResult})');
-      },
-    );
   }
 
   Future<void> _stopMic() async {
     if (!_isListening) return;
     if (_isAnalyzing) return;
-    await _stt.stop();
+
     String? recordedPath;
-    if (!kIsWeb) {
-      try {
-        recordedPath = await _recorder.stop();
-        if (recordedPath == null) {
-          recordedPath = _recordingPath;
-        }
-      } catch (e) {
-        debugPrint('Recorder stop error: $e');
+    try {
+      recordedPath = await _recorder.stop();
+      if (recordedPath == null) {
+        recordedPath = _recordingPath;
       }
+    } catch (e) {
+      debugPrint('Recorder stop error: $e');
     }
     setState(() {
       _isListening = false;
     });
     // Si l'audio est disponible et cloud STT activé, on passe par la fonction distante
-    if (_useCloudStt && recordedPath != null && !kIsWeb) {
+    if (_useCloudStt && recordedPath != null) {
       setState(() => _isAnalyzing = true);
       try {
         await _uploadAndTranscribe(recordedPath);
@@ -5479,73 +5447,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return;
     }
 
-    // Fallback: utilisation texte local STT
-    final text =
-        (_sttFinalTranscript.isNotEmpty ? _sttFinalTranscript : _sttTranscript)
-            .trim();
-    if (text.isEmpty) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Aucun texte reconnu')),
-      );
-      return;
-    }
-    setState(() => _isAnalyzing = true);
-    try {
-      final draft = await _aiService.generateOfferDraft(text: text);
-      if (!mounted) return;
-      if (draft['success'] == true) {
-        setState(() {
-          if ((draft['title'] as String).isNotEmpty) {
-            _titleController.text = draft['title'] as String;
-          }
-          if ((draft['category'] as String).isNotEmpty) {
-            _category = draft['category'] as String;
-            _selectedSubCategory = null;
-          }
-          if ((draft['description'] as String).isNotEmpty) {
-            _descriptionController.text = draft['description'] as String;
-          }
-          // Remplir la ville si disponible
-          final location = (draft['location'] as String? ?? '').trim();
-          if (location.isNotEmpty) {
-            _locationController.text = location;
-          }
-          // Remplir le code postal si disponible
-          final postalCode = (draft['postalCode'] as String? ?? '').trim();
-          if (postalCode.isNotEmpty) {
-            _postalCodeController.text = postalCode;
-          }
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✨ Dictée analysée et champs remplis'),
-          ),
-        );
-      } else {
-        final code = (draft['code'] ?? '').toString();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              code == 'deadline-exceeded'
-                  ? 'Connexion lente, réessaie.'
-                  : 'Erreur IA: ${draft['error'] ?? 'inconnue'}',
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      if (isTimeoutError(e)) {
-        showTimeoutSnackBar(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur analyse: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isAnalyzing = false);
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Aucun audio disponible')),
+    );
   }
 
   /// Construire le bouton d'enregistrement au micro avec indicateur visuel
@@ -5599,7 +5504,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _uploadAndTranscribe(String localPath) async {
-    // Upload vers Firebase Storage puis appel de la Cloud Function transcribeAndDraftOffer
+    // Upload vers Firebase Storage puis appel de la Cloud Function.
+    // ✅ Forcer le pipeline MicroIA (WAV 16k mono) + génération de draft.
     final user = FirebaseAuth.instance.currentUser;
     final uid = user?.uid ?? 'anonymous';
     final file = File(localPath);
@@ -5608,33 +5514,54 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     final ts = DateTime.now().millisecondsSinceEpoch;
     final storage = FirebaseStorage.instance;
-    final destPath = 'voice_inputs/$uid/$ts.wav';
+    final destPath = 'stt/${uid}_$ts.wav';
     final ref = storage.ref(destPath);
     await ref.putFile(file, SettableMetadata(contentType: 'audio/wav'));
-    final bucket = ref.bucket; // Reference exposes bucket
-    final gsUri = 'gs://$bucket/${ref.fullPath}';
 
-    final result =
-        await TranscribeAndDraftOfferService().transcribeAndDraftOffer(
-      gcsUri: gsUri,
+    final out = await MicroIaService.processAudio(
+      storagePath: destPath,
       languageCode: 'fr-FR',
     );
+
+    final transcript = (out['text'] ?? '').toString().trim();
+    if (transcript.isEmpty) {
+      throw Exception('Aucun texte reconnu');
+    }
+
+    final draft = await _aiService.generateOfferDraft(text: transcript);
     if (!mounted) return;
 
-    setState(() {
-      if (result.title.isNotEmpty) _titleController.text = result.title;
-      if (result.description.isNotEmpty)
-        _descriptionController.text = result.description;
-      if (result.category.isNotEmpty) {
-        _category = result.category;
-        _selectedSubCategory = null;
-      }
-      if (result.city.isNotEmpty) _locationController.text = result.city;
-      if (result.postalCode.isNotEmpty)
-        _postalCodeController.text = result.postalCode;
-    });
+    if (draft['success'] == true) {
+      setState(() {
+        final title = (draft['title'] as String? ?? '').trim();
+        final category = (draft['category'] as String? ?? '').trim();
+        final description = (draft['description'] as String? ?? '').trim();
+        final location = (draft['location'] as String? ?? '').trim();
+        final postalCode = (draft['postalCode'] as String? ?? '').trim();
 
-    showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
+        if (title.isNotEmpty) _titleController.text = title;
+        if (description.isNotEmpty) _descriptionController.text = description;
+        if (category.isNotEmpty) {
+          _category = category;
+          _selectedSubCategory = null;
+        }
+        if (location.isNotEmpty) _locationController.text = location;
+        if (postalCode.isNotEmpty) _postalCodeController.text = postalCode;
+      });
+
+      showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
+    } else {
+      final code = (draft['code'] ?? '').toString();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            code == 'deadline-exceeded'
+                ? 'Connexion lente, réessaie.'
+                : 'Erreur IA: ${draft['error'] ?? 'inconnue'}',
+          ),
+        ),
+      );
+    }
     
   }
 
