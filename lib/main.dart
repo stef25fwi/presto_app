@@ -6597,6 +6597,9 @@ class _AccountPageState extends State<AccountPage> {
   final FirebaseFunctions _functions =
       FirebaseFunctions.instanceFor(region: 'europe-west1');
 
+  final TextEditingController _adminMicroIaLanguageController =
+      TextEditingController();
+
   final _formKey = GlobalKey<FormState>();
   bool _isLoginMode = true;
   bool _isLoading = false;
@@ -6628,6 +6631,8 @@ class _AccountPageState extends State<AccountPage> {
   bool _adminMicroIaFallbackEnabled = true;
   double _adminMicroIaQualityThreshold = 0.62;
   String _adminMicroIaLanguageCode = 'fr-FR';
+
+  Future<Map<String, dynamic>>? _adminCfgFuture;
 
   Stream<bool> _isAdminStream(String uid) {
     return FirebaseFirestore.instance
@@ -6691,8 +6696,10 @@ class _AccountPageState extends State<AccountPage> {
         final isAdmin = snap.data == true;
         if (!isAdmin) return const SizedBox.shrink();
 
+        _adminCfgFuture ??= _adminGetMicroIaConfig();
+
         return FutureBuilder<Map<String, dynamic>>(
-          future: _adminGetMicroIaConfig(),
+          future: _adminCfgFuture,
           builder: (context, cfgSnap) {
             if (cfgSnap.connectionState == ConnectionState.waiting && !_adminConfigLoaded) {
               return const Padding(
@@ -6700,6 +6707,20 @@ class _AccountPageState extends State<AccountPage> {
                 child: Center(
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                  ),
+                ),
+              );
+            }
+
+            if (cfgSnap.hasError && !_adminConfigLoaded) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  "Erreur chargement Admin (Remote Config).\n${cfgSnap.error}",
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               );
@@ -6716,6 +6737,7 @@ class _AccountPageState extends State<AccountPage> {
               _adminMicroIaFallbackEnabled = fallback;
               _adminMicroIaQualityThreshold = threshold;
               _adminMicroIaLanguageCode = lang;
+              _adminMicroIaLanguageController.text = lang;
               _adminConfigLoaded = true;
             }
 
@@ -6810,10 +6832,7 @@ class _AccountPageState extends State<AccountPage> {
                         },
                       ),
                       TextField(
-                        controller: TextEditingController(text: _adminMicroIaLanguageCode)
-                          ..selection = TextSelection.fromPosition(
-                            TextPosition(offset: _adminMicroIaLanguageCode.length),
-                          ),
+                        controller: _adminMicroIaLanguageController,
                         decoration: const InputDecoration(
                           labelText: 'Language code',
                           hintText: 'fr-FR',
@@ -6910,6 +6929,7 @@ class _AccountPageState extends State<AccountPage> {
     _profilePseudoController.dispose();
     _profileCityController.dispose();
     _profilePhoneController.dispose();
+    _adminMicroIaLanguageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
