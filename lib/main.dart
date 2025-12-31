@@ -4116,15 +4116,36 @@ Motif du signalement :
           PopupMenuButton<String>(
             icon: const Icon(Icons.menu),
             color: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             onSelected: (value) {
               if (value == 'report') {
                 _reportOffer(context);
               }
             },
-            itemBuilder: (ctx) => const [
+            itemBuilder: (ctx) => [
               PopupMenuItem<String>(
                 value: 'report',
-                child: Text('Signaler'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade300, width: 1),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.flag_outlined, color: Colors.red.shade700, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Signaler',
+                        style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
