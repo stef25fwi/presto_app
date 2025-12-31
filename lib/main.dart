@@ -7488,7 +7488,9 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  UserOffersSection(userId: user.uid),
+                  RepaintBoundary(
+                    child: UserOffersSection(userId: user.uid),
+                  ),
                   const SizedBox(height: 24),
                   const Text(
                     "Mes catégories favorites",
@@ -7498,18 +7500,19 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
+                  RepaintBoundary(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
                     padding: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -7671,32 +7674,85 @@ class _AccountPageState extends State<AccountPage> {
                       ],
                     ),
                   ),
+                  ),
                   const SizedBox(height: 20),
                   Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+                      gradient: LinearGradient(
+                        colors: [
+                          kPrestoOrange.withOpacity(0.15),
+                          kPrestoBlue.withOpacity(0.1),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: kPrestoOrange.withOpacity(0.3),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: kPrestoOrange.withOpacity(0.15),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          "Vous êtes une entreprise ?",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 16),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: kPrestoOrange,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.business_center,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                "Vous êtes une entreprise ?",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 17,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 12),
                         const Text(
                           "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
                           "Abonnement bientôt disponible.",
-                          style: TextStyle(color: Colors.black54),
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 14),
                         SizedBox(
                           width: double.infinity,
                           height: 48,
-                          child: OutlinedButton.icon(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrestoOrange,
+                              foregroundColor: Colors.white,
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                             onPressed: () {
                               Navigator.push(
                                 context,
@@ -7704,8 +7760,14 @@ class _AccountPageState extends State<AccountPage> {
                                     builder: (_) => const ProProfilePage()),
                               );
                             },
-                            icon: const Icon(Icons.business_center_outlined),
-                            label: const Text("Créer un compte Pro"),
+                            icon: const Icon(Icons.business_center_outlined, size: 20),
+                            label: const Text(
+                              "Créer un compte Pro",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                            ),
                           ),
                         ),
                       ],
