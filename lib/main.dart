@@ -5385,7 +5385,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               encoder: AudioEncoder.wav,
               sampleRate: 16000,
               numChannels: 1,
-              bitRate: 256000,
             ),
             path: filePath,
           );
