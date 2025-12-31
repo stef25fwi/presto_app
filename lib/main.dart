@@ -1323,79 +1323,87 @@ class _HomePageState extends State<HomePage>
           resizeToAvoidBottomInset: true,
           extendBody: true, // Permettre au contenu de s'étendre sous la bottom bar
           backgroundColor: Colors.white, // Fond blanc pour éviter le bandeau beige
-          bottomNavigationBar: isKeyboardVisible
-              ? null
-              : AnimatedSlide(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  offset: _showBottomBar ? Offset.zero : const Offset(0, 1),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: kPrestoOrange,
-                      borderRadius:
-                          BorderRadius.vertical(top: Radius.circular(24)),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-                    child: SafeArea(
-                      top: false,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: _BottomNavItem(
-                              icon: Icons.home,
-                              label: "Accueil",
-                              selected: _selectedIndex == 0,
-                              onTap: () => _onBottomTap(0),
+          body: Stack(
+            children: [
+              IndexedStack(
+                index: _selectedIndex,
+                children: [
+                  _buildHomeContent(),
+                  ConsultOffersPage(onScroll: _onPageScroll),
+                  PublishOfferPage(onScroll: _onPageScroll),
+                  const MessagesPage(),
+                  AccountPage(onScroll: _onPageScroll),
+                ],
+              ),
+              if (!isKeyboardVisible)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: AnimatedSlide(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    offset: _showBottomBar ? Offset.zero : const Offset(0, 1),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: kPrestoOrange,
+                        borderRadius:
+                            BorderRadius.vertical(top: Radius.circular(24)),
+                      ),
+                      padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+                      child: SafeArea(
+                        top: false,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: _BottomNavItem(
+                                icon: Icons.home,
+                                label: "Accueil",
+                                selected: _selectedIndex == 0,
+                                onTap: () => _onBottomTap(0),
+                              ),
                             ),
-                          ),
-                          Expanded(
-                            child: _BottomNavItem(
-                              icon: Icons.search,
-                              label: "Je consulte\nles offres",
-                              selected: _selectedIndex == 1,
-                              onTap: () => _onBottomTap(1),
+                            Expanded(
+                              child: _BottomNavItem(
+                                icon: Icons.search,
+                                label: "Je consulte\nles offres",
+                                selected: _selectedIndex == 1,
+                                onTap: () => _onBottomTap(1),
+                              ),
                             ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: _BottomNavItem(
-                              icon: Icons.add_circle_outline,
-                              label: "Publier\nune offre",
-                              isBig: true,
-                              onTap: () => _onBottomTap(2),
+                            Expanded(
+                              flex: 1,
+                              child: _BottomNavItem(
+                                icon: Icons.add_circle_outline,
+                                label: "Publier\nune offre",
+                                isBig: true,
+                                onTap: () => _onBottomTap(2),
+                              ),
                             ),
-                          ),
-                          Expanded(
-                            child: _BottomNavItem(
-                              icon: Icons.chat_bubble_outline,
-                              label: "Messages",
-                              selected: _selectedIndex == 3,
-                              onTap: () => _onBottomTap(3),
+                            Expanded(
+                              child: _BottomNavItem(
+                                icon: Icons.chat_bubble_outline,
+                                label: "Messages",
+                                selected: _selectedIndex == 3,
+                                onTap: () => _onBottomTap(3),
+                              ),
                             ),
-                          ),
-                          Expanded(
-                            child: _BottomNavItem(
-                              icon: Icons.person_outline,
-                              label: "Compte",
-                              selected: _selectedIndex == 4,
-                              onTap: () => _onBottomTap(4),
+                            Expanded(
+                              child: _BottomNavItem(
+                                icon: Icons.person_outline,
+                                label: "Compte",
+                                selected: _selectedIndex == 4,
+                                onTap: () => _onBottomTap(4),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-          body: IndexedStack(
-            index: _selectedIndex,
-            children: [
-              _buildHomeContent(),
-              ConsultOffersPage(onScroll: _onPageScroll),
-              PublishOfferPage(onScroll: _onPageScroll),
-              const MessagesPage(),
-              AccountPage(onScroll: _onPageScroll),
             ],
           ),
         ),
