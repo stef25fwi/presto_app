@@ -447,6 +447,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         // Upload vers Cloud Storage
       final file = File(audioPath);
 
+      final exists = await file.exists();
+      final bytes = exists ? await file.length() : 0;
+      debugPrint('[IA AUDIO] exists=$exists bytes=$bytes path=$audioPath');
+
       // ✅ extension cohérente avec RecordConfig encoder: AudioEncoder.wav
       final fileName = 'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.wav';
 
