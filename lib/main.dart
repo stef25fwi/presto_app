@@ -3295,7 +3295,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       child: DropdownButtonFormField<String?>(
         value: _filterRegionCode,
         isDense: true,
-        dropdownColor: Theme.of(context).colorScheme.surface,
+        dropdownColor: Colors.white,
         borderRadius: BorderRadius.circular(14),
         decoration: const InputDecoration(
           labelText: "Région",
@@ -3374,7 +3374,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       child: DropdownButtonFormField<String?>(
         value: safeValue,
         isDense: true,
-        dropdownColor: Theme.of(context).colorScheme.surface,
+        dropdownColor: Colors.white,
         borderRadius: BorderRadius.circular(14),
         decoration: InputDecoration(
           labelText: 'Département',
@@ -3571,7 +3571,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return DropdownButtonFormField<String>(
       value: _filterCategory,
       isDense: true,
-      dropdownColor: Theme.of(context).colorScheme.surface,
+      dropdownColor: Colors.white,
       borderRadius: BorderRadius.circular(14),
       decoration: const InputDecoration(
         labelText: 'Catégorie',
@@ -6035,15 +6035,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             controller: _scrollController,
             padding: const EdgeInsets.all(16),
             children: [
-              const Text(
-                'Détail de votre besoin',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-
               // Bouton Premium AI avec enregistrement audio
               Center(
                 child: _isListening
@@ -6170,7 +6161,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               // CATÉGORIE
               DropdownButtonFormField<String>(
                 value: _category,
-                dropdownColor: Theme.of(context).colorScheme.surface,
+                dropdownColor: Colors.white,
                 borderRadius: BorderRadius.circular(14),
                 decoration: InputDecoration(
                   labelText: 'Catégorie',
@@ -6209,7 +6200,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               if (_category != null)
                 DropdownButtonFormField<String>(
                   value: _selectedSubCategory,
-                  dropdownColor: Theme.of(context).colorScheme.surface,
+                  dropdownColor: Colors.white,
                   borderRadius: BorderRadius.circular(14),
                   decoration: InputDecoration(
                     labelText: 'Sous-catégorie',
@@ -6351,7 +6342,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     flex: 2,
                     child: DropdownButtonFormField<String>(
                       value: _budgetType,
-                      dropdownColor: Theme.of(context).colorScheme.surface,
+                      dropdownColor: Colors.white,
                       borderRadius: BorderRadius.circular(14),
                       items: _budgetTypes
                           .map(
@@ -7246,14 +7237,73 @@ class _AccountPageState extends State<AccountPage> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        TextField(
-                          controller: _profileCityController,
-                          enabled: _isEditingProfile,
-                          decoration: InputDecoration(
-                            labelText: "Ville",
-                            hintText: "Ex : Baie-Mahault",
-                            filled: !_isEditingProfile,
-                            fillColor: !_isEditingProfile ? Colors.grey.shade100 : null,
+                        AbsorbPointer(
+                          absorbing: !_isEditingProfile,
+                          child: Opacity(
+                            opacity: _isEditingProfile ? 1.0 : 0.6,
+                            child: Autocomplete<CityRecord>(
+                              displayStringForOption: (city) => '${city.name} (${city.cp})',
+                              optionsBuilder: (TextEditingValue value) {
+                                final query = value.text.trim();
+                                if (query.length < 2) {
+                                  return const Iterable<CityRecord>.empty();
+                                }
+                                return CitySearch.instance.search(query, limit: 10);
+                              },
+                              onSelected: (CityRecord city) {
+                                setState(() {
+                                  _profileCityController.text = '${city.name} (${city.cp})';
+                                });
+                              },
+                              fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+                                // Synchroniser avec le controller principal
+                                if (_profileCityController.text.isNotEmpty && 
+                                    textController.text != _profileCityController.text) {
+                                  textController.text = _profileCityController.text;
+                                }
+                                
+                                return TextField(
+                                  controller: textController,
+                                  focusNode: focusNode,
+                                  enabled: _isEditingProfile,
+                                  decoration: InputDecoration(
+                                    labelText: "Ville",
+                                    hintText: "Ex : Baie-Mahault",
+                                    filled: !_isEditingProfile,
+                                    fillColor: !_isEditingProfile ? Colors.grey.shade100 : null,
+                                  ),
+                                  onChanged: (value) {
+                                    _profileCityController.text = value;
+                                  },
+                                );
+                              },
+                              optionsViewBuilder: (context, onSelected, options) {
+                                return Align(
+                                  alignment: Alignment.topLeft,
+                                  child: Material(
+                                    elevation: 4.0,
+                                    child: Container(
+                                      constraints: const BoxConstraints(maxHeight: 200),
+                                      width: MediaQuery.of(context).size.width - 80,
+                                      child: ListView.builder(
+                                        padding: EdgeInsets.zero,
+                                        shrinkWrap: true,
+                                        itemCount: options.length,
+                                        itemBuilder: (context, index) {
+                                          final city = options.elementAt(index);
+                                          return ListTile(
+                                            dense: true,
+                                            title: Text('${city.name} (${city.cp})'),
+                                            subtitle: Text('Dept ${city.dept}'),
+                                            onTap: () => onSelected(city),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -7415,7 +7465,7 @@ class _AccountPageState extends State<AccountPage> {
                         DropdownButtonFormField<String>(
                           value: _selectedCategoryInput,
                           hint: const Text('Choisir une catégorie'),
-                          dropdownColor: Theme.of(context).colorScheme.surface,
+                          dropdownColor: Colors.white,
                           borderRadius: BorderRadius.circular(14),
                           items: _allFavoriteCategories.map((cat) {
                             final selected = _favoriteCategories.contains(cat);
@@ -7457,7 +7507,7 @@ class _AccountPageState extends State<AccountPage> {
                           hint: Text(_selectedCategoryInput == null
                               ? 'Choisis d’abord une catégorie'
                               : 'Sous-catégorie'),
-                          dropdownColor: Theme.of(context).colorScheme.surface,
+                          dropdownColor: Colors.white,
                           borderRadius: BorderRadius.circular(14),
                           items: (_selectedCategoryInput == null
                                   ? <String>[]
