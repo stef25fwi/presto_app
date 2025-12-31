@@ -45,6 +45,48 @@ import 'package:flutter_svg/flutter_svg.dart';
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
 
+/// Helper pour afficher un SnackBar de succès avec checkmark
+void showSuccessSnackBar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: kPrestoBlue,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.grey.shade800,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      margin: const EdgeInsets.all(16),
+      duration: const Duration(seconds: 3),
+    ),
+  );
+}
+
 SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
   final estimated = ThemeData.estimateBrightnessForColor(backgroundColor);
   final isDarkBackground = estimated == Brightness.dark;
@@ -5490,10 +5532,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _postalCodeController.text = result.postalCode;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-          content: Text('✨ Transcription réussie et champs remplis')),
-    );
+    showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
+    
   }
 
   /// Appelle la Cloud Function pour analyser la description avec OpenAI
@@ -5902,11 +5942,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Votre offre a été publiée 🎉'),
-        ),
-      );
+      showSuccessSnackBar(context, 'Votre offre a été publiée avec succès');
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -6494,6 +6530,7 @@ class _AccountPageState extends State<AccountPage> {
   String? _selectedSubCategoryInput;
   bool _profileLoaded = false;
   bool _isSavingProfile = false;
+  bool _isEditingProfile = false; // ✅ Mode édition du profil
 
   static const List<String> _allFavoriteCategories = [
     'Restauration / Extra',
@@ -6556,9 +6593,7 @@ class _AccountPageState extends State<AccountPage> {
         password: _passwordController.text.trim(),
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Connexion réussie ✅")),
-      );
+      showSuccessSnackBar(context, "Connexion réussie");
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -6588,9 +6623,7 @@ class _AccountPageState extends State<AccountPage> {
         password: _passwordController.text.trim(),
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Compte créé et connecté ✅")),
-      );
+      showSuccessSnackBar(context, "Compte créé et connecté avec succès");
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -6629,6 +6662,12 @@ class _AccountPageState extends State<AccountPage> {
                 .map((e) => e.toString())
                 .toList();
         _selectedFavoriteSubcategories = selectedSubcats.toSet();
+        
+        // ✅ Si les champs sont remplis, ne pas être en mode édition par défaut
+        final hasProfile = _profilePseudoController.text.isNotEmpty ||
+            _profileCityController.text.isNotEmpty ||
+            _profilePhoneController.text.isNotEmpty;
+        _isEditingProfile = !hasProfile;
       } else {
         _favoriteCategories = <String>{};
         _selectedFavoriteCategories = <String>{};
@@ -6667,9 +6706,10 @@ class _AccountPageState extends State<AccountPage> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Profil mis à jour ✅")),
-        );
+        // ✅ Passer en mode lecture après enregistrement
+        setState(() => _isEditingProfile = false);
+        
+        showSuccessSnackBar(context, "Profil mis à jour avec succès");
       }
     } catch (e) {
       if (mounted) {
@@ -6737,9 +6777,7 @@ class _AccountPageState extends State<AccountPage> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Connecté avec Google ✅")),
-      );
+      showSuccessSnackBar(context, "Connecté avec Google");
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -6782,9 +6820,7 @@ class _AccountPageState extends State<AccountPage> {
       await _auth.signInWithCredential(oauthCredential);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Connecté avec Apple ✅")),
-      );
+      showSuccessSnackBar(context, "Connecté avec Apple");
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -7183,37 +7219,55 @@ class _AccountPageState extends State<AccountPage> {
                       children: [
                         TextField(
                           controller: _profilePseudoController,
-                          decoration: const InputDecoration(
+                          enabled: _isEditingProfile,
+                          decoration: InputDecoration(
                             labelText: "Pseudo",
                             hintText: "Ex : DJ Heat, Stef971...",
+                            filled: !_isEditingProfile,
+                            fillColor: !_isEditingProfile ? Colors.grey.shade100 : null,
                           ),
                         ),
                         const SizedBox(height: 10),
                         TextField(
                           controller: _profileCityController,
-                          decoration: const InputDecoration(
+                          enabled: _isEditingProfile,
+                          decoration: InputDecoration(
                             labelText: "Ville",
                             hintText: "Ex : Baie-Mahault",
+                            filled: !_isEditingProfile,
+                            fillColor: !_isEditingProfile ? Colors.grey.shade100 : null,
                           ),
                         ),
                         const SizedBox(height: 10),
-                        PhoneInputFieldCompact(
-                          controller: _profilePhoneController,
-                          labelText: 'Téléphone',
-                          hintText: '690123456',
+                        AbsorbPointer(
+                          absorbing: !_isEditingProfile,
+                          child: Opacity(
+                            opacity: _isEditingProfile ? 1.0 : 0.6,
+                            child: PhoneInputFieldCompact(
+                              controller: _profilePhoneController,
+                              labelText: 'Téléphone',
+                              hintText: '690123456',
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 14),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: kPrestoOrange,
+                              backgroundColor: _isEditingProfile ? kPrestoOrange : kPrestoBlue,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 10),
                             ),
                             onPressed: _isSavingProfile
                                 ? null
-                                : () => _saveProfile(user),
+                                : () {
+                                    if (_isEditingProfile) {
+                                      _saveProfile(user);
+                                    } else {
+                                      setState(() => _isEditingProfile = true);
+                                    }
+                                  },
                             icon: _isSavingProfile
                                 ? const SizedBox(
                                     width: 16,
@@ -7224,11 +7278,13 @@ class _AccountPageState extends State<AccountPage> {
                                           Colors.white),
                                     ),
                                   )
-                                : const Icon(Icons.save_outlined),
+                                : Icon(_isEditingProfile ? Icons.save_outlined : Icons.edit_outlined),
                             label: Text(
                               _isSavingProfile
                                   ? "Enregistrement..."
-                                  : "Enregistrer mon profil",
+                                  : _isEditingProfile 
+                                      ? "Enregistrer mon profil"
+                                      : "Modifier mon profil",
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 14,
