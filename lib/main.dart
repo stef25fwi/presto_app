@@ -1309,7 +1309,7 @@ class _HomePageState extends State<HomePage>
           // Toujours autoriser le resize pour gérer correctement le clavier
           resizeToAvoidBottomInset: true,
           extendBody: false, // Désactiver pour éviter les problèmes de layout
-          backgroundColor: const Color(0xFFF9F2EA), // Éviter l'écran blanc
+          backgroundColor: Colors.white, // Fond blanc pour éviter le bandeau beige
           bottomNavigationBar: isKeyboardVisible
               ? null
               : AnimatedSlide(
