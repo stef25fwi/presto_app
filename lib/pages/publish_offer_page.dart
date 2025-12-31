@@ -646,10 +646,21 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: _togglePremiumRecording,
-                    icon: Icon(_recording ? Icons.stop_circle : Icons.mic_rounded),
+                    onPressed: _aiLoading ? null : _togglePremiumRecording,
+                    icon: _aiLoading 
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Icon(_recording ? Icons.stop_circle : Icons.mic_rounded),
                     label: Text(
-                      _recording ? "Arrêter l'enregistrement" : "Décrivez votre besoin",
+                      _aiLoading 
+                          ? "Analyse en cours..." 
+                          : (_recording ? "Arrêter l'enregistrement" : "Décrivez votre besoin"),
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
