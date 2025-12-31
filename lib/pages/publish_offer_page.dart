@@ -1,15 +1,14 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, debugPrint;
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io' show File;
 import '../services/audio_service.dart';
 import '../services/micro_ia_service.dart';
 import '../features/publish_offer/ai_offer_service.dart';
 import 'package:path_provider/path_provider.dart' if (dart.library.html) '';
-import 'dart:io' if (dart.library.html) 'dart:html';
 import '../utils/crashlytics_context.dart';
 import '../utils/retry.dart';
 import '../utils/friendly_snackbar.dart';
@@ -67,10 +66,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final _phoneFocus = FocusNode();
   final _budgetFocus = FocusNode();
 
-  late final stt.SpeechToText _stt;
-  bool _sttReady = false;
-  bool _listening = false;
-  String _lastTranscript = '';
+  // STT (speech_to_text) désactivé: Android trop variable, et la page utilise le pipeline Premium Audio.
   bool _aiLoading = false;
 
   // Pour l'enregistrement audio premium
@@ -93,42 +89,25 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   void initState() {
     super.initState();
     _repo = widget.repo ?? CityRepoCompact();
-
-    _stt = stt.SpeechToText();
     _audioRecorder = AudioRecorder();
-    
-    if (widget.enableSpeechToText) {
-      _initStt();
-    } else {
-      _sttReady = false;
-    }
   }
 
-  Future<void> _initStt() async {
+  Future<void> trace(String step, Map<String, dynamic> data) async {
     try {
-      final ok = await _stt.initialize(
-        onStatus: (s) {
-          if (!mounted) return;
-          if (s == 'done' || s == 'notListening') {
-            setState(() => _listening = false);
-          }
-        },
-        onError: (e) {
-          if (!mounted) return;
-          setState(() => _listening = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Micro indisponible : ${e.errorMsg}')),
-          );
-        },
-      );
-      if (!mounted) return;
-      setState(() => _sttReady = ok);
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _sttReady = false);
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+      await FirebaseFirestore.instance.collection('debug_microia').add({
+        'uid': uid,
+        'step': step,
+        'data': data,
+        'ts': FieldValue.serverTimestamp(),
+        'platform': kIsWeb ? 'web' : defaultTargetPlatform.toString(),
+      });
+    } catch (e) {
+      debugPrint('[debug_microia] trace failed: $e');
     }
   }
 
+  // ignore: unused_element
   TextEditingController _activeController() {
     if (_titleFocus.hasFocus) return _titleCtrl;
     if (_descFocus.hasFocus) return _descCtrl;
@@ -142,123 +121,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // ignore: unused_element
   Future<void> _toggleMic() async {
-    if (!_sttReady) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            kIsWeb
-                ? "La dictée n'est pas disponible sur ce navigateur (essaie Chrome en HTTPS)."
-                : "La dictée n'est pas disponible (permission micro ?).",
-          ),
-        ),
-      );
-      // Fallback automatique: utiliser l'IA texte pour auto-remplir
-      await _fallbackTextAi();
-      return;
-    }
-
-    if (_listening) {
-      await _stt.stop();
-      if (!mounted) return;
-      setState(() => _listening = false);
-      return;
-    }
-
-    final ctrl = _activeController();
-
-    setState(() => _listening = true);
-
-    await _stt.listen(
-      localeId: 'fr_FR',
-      listenOptions: stt.SpeechListenOptions(
-        listenMode: stt.ListenMode.dictation,
-        partialResults: true,
-      ),
-      onResult: (res) {
-        if (!mounted) return;
-        final text = res.recognizedWords.trim();
-        if (text.isEmpty) return;
-
-        _lastTranscript = text;
-        // Remplit / met à jour le champ actif
-        ctrl.value = ctrl.value.copyWith(
-          text: text,
-          selection: TextSelection.collapsed(offset: text.length),
-          composing: TextRange.empty,
-        );
-        setState(() {});
-
-        // Quand la reconnaissance est finale, on enchaîne sur l'IA pour auto-remplir
-        if (res.finalResult) {
-          _runMicAiDraft();
-        }
-      },
-    );
-  }
-
-  Future<void> _fallbackTextAi() async {
-    // Utilise la description actuelle ou le titre comme indice pour l'IA
-    final seedDesc = _descCtrl.text.trim();
-    final seedTitle = _titleCtrl.text.trim();
-    final hint = seedDesc.isNotEmpty ? seedDesc : seedTitle;
-
-    if (hint.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Ajoute une description ou un titre pour l'IA")),
-      );
-      return;
-    }
-
-    _aiHintCtrl.text = hint;
-    await _onFillWithAI();
-  }
-
-  Future<void> _runMicAiDraft() async {
-    final hint = _lastTranscript.trim();
-    if (hint.isEmpty || _aiLoading) return;
-
-    setState(() => _aiLoading = true);
-    try {
-      final draft = await AiOfferService.generateDraft(
-        hint: hint,
-        currentCity: _cityCtrl.text.trim(),
-        currentCategory: _category ?? '',
-      );
-
-      if ((draft.title ?? '').trim().isNotEmpty) {
-        _titleCtrl.text = draft.title!.trim();
-      }
-      if ((draft.description ?? '').trim().isNotEmpty) {
-        _descCtrl.text = draft.description!.trim();
-      }
-      if ((draft.category ?? '').trim().isNotEmpty) {
-        _category = draft.category!.trim();
-      }
-      if ((draft.city ?? '').trim().isNotEmpty) {
-        _cityCtrl.text = draft.city!.trim();
-      }
-      if ((draft.postalCode ?? '').trim().isNotEmpty) {
-        _cpCtrl.text = draft.postalCode!.trim();
-      }
-
-      if (mounted) {
-        setState(() {});
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Texte vocal analysé par l\'IA ✅')),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      if (isTimeoutError(e)) {
-        showTimeoutSnackBar(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur IA après dictée : $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _aiLoading = false);
-    }
+    // STT désactivé : on force MicroIA
+    await _togglePremiumRecording();
   }
 
   InputDecoration _decoration(String hint, {Widget? suffix}) {
@@ -300,11 +164,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _phoneFocus.dispose();
     _budgetFocus.dispose();
 
-    _stt.stop();
     _audioRecorder.dispose();
     super.dispose();
   }
 
+  // ignore: unused_element
   Future<void> _onFillWithAI() async {
     if (_aiLoading) return;
     // ⚠️ adapte ces noms si tes controllers s'appellent autrement
@@ -451,6 +315,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final bytes = exists ? await file.length() : 0;
       debugPrint('[IA AUDIO] exists=$exists bytes=$bytes path=$audioPath');
 
+      await trace('before_upload', {
+        'path': audioPath,
+        'exists': exists,
+        'bytes': bytes,
+      });
+
       if (!exists || bytes < 30000) {
         throw Exception(
           "Audio invalide (fichier trop petit: $bytes bytes). Réessaie en parlant plus près du micro.",
@@ -488,6 +358,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       debugPrint(
         '[IA AUDIO] uploaded size=${meta.size} bytes contentType=${meta.contentType}',
       );
+
+      await trace('after_upload', {
+        'storagePath': fileName,
+        'bytes': bytes,
+      });
       
       // Construire le gcsUri
       final bucket = FirebaseStorage.instance.ref().bucket;
@@ -499,15 +374,29 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
 
       // Appeler le nouveau service Micro-IA
+      debugPrint("[IA AUDIO] calling microIaProcessAudio storagePath=$fileName");
       final out = await MicroIaService.processAudio(
         storagePath: fileName, // le path dans le bucket
         languageCode: 'fr-FR',
       );
 
+      debugPrint(
+        "[IA AUDIO] microIaProcessAudio OK mode=${out['modeUsed']} score=${out['quality']?['score']}",
+      );
+
+      final modeUsed = (out['modeUsed'] ?? '').toString();
+      final score = ((out['quality']?['score'] ?? 0.0) as num).toDouble();
+      final reasons = (out['quality']?['reasons'] ?? []).toString();
+
+      await trace('after_process', {
+        'storagePath': fileName,
+        'modeUsed': modeUsed,
+        'score': score,
+        'reasons': reasons,
+      });
+
       final transcript = (out['text'] ?? '').toString();
       // Info qualité (optionnel)
-      final score = (out['quality']?['score'] ?? 0.0) as num;
-      final modeUsed = (out['modeUsed'] ?? '').toString();
 
       // Pour l'instant, on met le transcript dans la description
       // Tu peux ensuite rappeler un autre callable pour générer le draft si besoin
@@ -519,7 +408,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("✅ Transcription [$modeUsed] réussie! Qualité: ${(score.toDouble() * 100).toStringAsFixed(0)}%\n${transcript.substring(0, transcript.length > 50 ? 50 : transcript.length)}..."),
+            content: Text(
+              "IA: $modeUsed score=${(score * 100).toStringAsFixed(0)}% reasons=$reasons",
+            ),
             duration: const Duration(seconds: 4),
           ),
         );
@@ -531,6 +422,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       } catch (_) {}
 
     } catch (e, st) {
+      await trace('error', {
+        'path': audioPath,
+        'error': e.toString(),
+      });
       await CrashlyticsContext.recordError(
         e is Exception ? e : Exception(e.toString()),
         st,
