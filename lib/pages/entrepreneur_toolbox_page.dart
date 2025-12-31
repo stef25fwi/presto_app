@@ -262,6 +262,8 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
           statusBarColor: kPrestoBlue,
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
+          systemNavigationBarColor: kPrestoOrange,
+          systemNavigationBarIconBrightness: Brightness.light,
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,

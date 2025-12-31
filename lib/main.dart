@@ -54,6 +54,8 @@ SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
         isDarkBackground ? Brightness.light : Brightness.dark,
     // iOS: Brightness.dark => icônes claires
     statusBarBrightness: isDarkBackground ? Brightness.dark : Brightness.light,
+    systemNavigationBarColor: kPrestoOrange,
+    systemNavigationBarIconBrightness: Brightness.light,
   );
 }
 
@@ -429,6 +431,8 @@ class _SplashScreenState extends State<SplashScreen>
         statusBarColor: kPrestoOrange,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
+        systemNavigationBarColor: kPrestoOrange,
+        systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: kPrestoOrange,
@@ -1218,7 +1222,7 @@ class _HomePageState extends State<HomePage>
                       borderRadius:
                           BorderRadius.vertical(top: Radius.circular(24)),
                     ),
-                    padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                    padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
                     child: SafeArea(
                       top: false,
                       child: Row(
@@ -1362,6 +1366,7 @@ class _HomePageState extends State<HomePage>
                           if (index == 1) {
                             return Container(
                               height: double.infinity,
+                              width: double.infinity,
                               margin: const EdgeInsets.symmetric(horizontal: 0),
                               padding: const EdgeInsets.symmetric(vertical: 0),
                               decoration: BoxDecoration(
@@ -1746,174 +1751,194 @@ class _HomePageState extends State<HomePage>
 
                 const SizedBox(height: 18),
 
-                // DERNIÈRES OFFRES
-                Row(
-                  children: [
-                    const Text(
-                      "Dernières offres",
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
+                // DERNIÈRES OFFRES - Section avec fond blanc
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
                       ),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => _onBottomTap(1),
-                      child: const Text(
-                        "Voir tout",
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: kPrestoBlue,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: _latestOffersStream,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting &&
-                        !snapshot.hasData) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 10),
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            "Dernières offres",
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
-                      );
-                    }
-
-                    if (snapshot.hasError) {
-                      return const SizedBox.shrink();
-                    }
-
-                    final docs = snapshot.data?.docs ?? [];
-                    if (docs.isEmpty) {
-                      return const Text(
-                        "Aucune offre publiée pour le moment.",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      );
-                    }
-
-                    return Column(
-                      children: docs.map((d) {
-                        final data = d.data();
-                        final title = (data['title'] ?? 'Sans titre') as String;
-                        final location =
-                            (data['location'] ?? 'Lieu non précisé') as String;
-                        final whenLabel = _labelWhenFromTitle(title);
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: _TapScale(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => OfferDetailPage(
-                                    offerId: d.id,
-                                    title: title,
-                                    location: location,
-                                    category: (data['category'] ??
-                                        'Catégorie non précisée') as String,
-                                    subcategory: data['subcategory'] as String?,
-                                    budget: data['budget'] is num
-                                        ? data['budget'] as num
-                                        : null,
-                                    description:
-                                        (data['description'] ?? '') as String?,
-                                    phone: data['phone'] as String?,
-                                    imageUrls:
-                                        (data['imageUrls'] as List<dynamic>?)
-                                            ?.map((e) => e.toString())
-                                            .toList(),
-                                    annonceurId:
-                                        (data['userId'] ?? '') as String,
-                                  ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () => _onBottomTap(1),
+                            child: const Text(
+                              "Voir tout",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: kPrestoBlue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                        stream: _latestOffersStream,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting &&
+                              !snapshot.hasData) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 10),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(kPrestoOrange),
                                 ),
-                              );
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.06),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
                               ),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
+                            );
+                          }
+
+                          if (snapshot.hasError) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final docs = snapshot.data?.docs ?? [];
+                          if (docs.isEmpty) {
+                            return const Text(
+                              "Aucune offre publiée pour le moment.",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
                               ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 36,
-                                    height: 36,
+                            );
+                          }
+
+                          return Column(
+                            children: docs.map((d) {
+                              final data = d.data();
+                              final title = (data['title'] ?? 'Sans titre') as String;
+                              final location =
+                                  (data['location'] ?? 'Lieu non précisé') as String;
+                              final whenLabel = _labelWhenFromTitle(title);
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: _TapScale(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => OfferDetailPage(
+                                          offerId: d.id,
+                                          title: title,
+                                          location: location,
+                                          category: (data['category'] ??
+                                              'Catégorie non précisée') as String,
+                                          subcategory: data['subcategory'] as String?,
+                                          budget: data['budget'] is num
+                                              ? data['budget'] as num
+                                              : null,
+                                          description:
+                                              (data['description'] ?? '') as String?,
+                                          phone: data['phone'] as String?,
+                                          imageUrls:
+                                              (data['imageUrls'] as List<dynamic>?)
+                                                  ?.map((e) => e.toString())
+                                                  .toList(),
+                                          annonceurId:
+                                              (data['userId'] ?? '') as String,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFFFF3E0),
-                                      borderRadius: BorderRadius.circular(12),
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.06),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
                                     ),
-                                    child: const Icon(
-                                      Icons.flash_on_outlined,
-                                      color: kPrestoOrange,
-                                      size: 20,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    child: Row(
                                       children: [
-                                        Text(
-                                          title,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w700,
+                                        Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFFFF3E0),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: const Icon(
+                                            Icons.flash_on_outlined,
+                                            color: kPrestoOrange,
+                                            size: 20,
                                           ),
                                         ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          "$location — $whenLabel",
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.black54,
-                                            fontWeight: FontWeight.w500,
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                title,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                "$location — $whenLabel",
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.black54,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
                                           ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.chevron_right,
+                                          size: 18,
+                                          color: Colors.black38,
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.chevron_right,
-                                    size: 18,
-                                    color: Colors.black38,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  },
+                                ),
+                              );
+                            }).toList(),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 20),
@@ -2159,7 +2184,7 @@ class _BottomNavItemState extends State<_BottomNavItem>
     return _TapScale(
       onTap: widget.onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -2199,7 +2224,7 @@ class _BottomNavItemState extends State<_BottomNavItem>
                 ),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             SizedBox(
               width: 70,
               child: Text(
@@ -2935,7 +2960,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
                 return ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.fromLTRB(4, 16, 4, 120),
+                  padding: const EdgeInsets.fromLTRB(2, 16, 2, 120),
                   itemCount: _totalItems,
                   itemBuilder: (context, index) {
                     final bool isAd = (index + 1) % (_adsEvery + 1) == 0;
