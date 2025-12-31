@@ -562,11 +562,18 @@ function evaluateQuality({ text, googleConfidence, audioInfo }) {
   if (t.length >= 80) score += 0.15;
 
   if (typeof googleConfidence === "number") {
-    if (googleConfidence >= 0.75) score += 0.25;
-    else if (googleConfidence >= 0.60) score += 0.15;
-    else reasons.push("low_confidence");
+    if (googleConfidence >= 0.75) {
+      score += 0.25;
+    } else if (googleConfidence >= 0.60) {
+      score += 0.15;
+    } else {
+      reasons.push("low_confidence");
+      // ✅ pénalité : sinon du texte long mais faux peut "passer"
+      score -= 0.15;
+    }
   } else {
-    score += 0.10;
+    // Whisper-only n'a souvent pas de confidence → on reste prudent
+    score += 0.05;
   }
 
   if (reasons.includes("noisy_tokens")) score -= 0.20;
