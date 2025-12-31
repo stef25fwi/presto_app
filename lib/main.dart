@@ -2563,7 +2563,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   final ScrollController _scrollController = ScrollController();
 
-  bool _showFilters = true;
+  bool _showFilters = false; // Panneau de filtres rétracté au départ
 
   late final Map<String, String> _deptToRegion = _buildDeptToRegion();
 
@@ -3115,6 +3115,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                 List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
                     snapshot.data?.docs ?? [];
 
+                // Nombre total avant filtrage par recherche
+                final int totalBeforeSearch = docs.length;
+
                 if (_activeSearchQuery != null &&
                     _activeSearchQuery!.trim().isNotEmpty) {
                   final q = _activeSearchQuery!.trim().toLowerCase();
@@ -3128,56 +3131,112 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                   }).toList();
                 }
 
+                // Nombre après filtrage
+                final int resultCount = docs.length;
+
                 if (docs.isEmpty) {
-                  return const _EmptyOffers();
+                  return Column(
+                    children: [
+                      // Compteur d'annonces
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.list_alt, size: 18, color: Colors.grey.shade600),
+                            const SizedBox(width: 8),
+                            Text(
+                              '0 annonce',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Expanded(child: _EmptyOffers()),
+                    ],
+                  );
                 }
 
                 const int _adsEvery = 8; // Bandeau pub après chaque 8 annonces
                 final int _adSlots = docs.length ~/ _adsEvery;
                 final int _totalItems = docs.length + _adSlots;
 
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.fromLTRB(2, 16, 2, 120),
-                  itemCount: _totalItems,
-                  itemBuilder: (context, index) {
-                    final bool isAd = (index + 1) % (_adsEvery + 1) == 0;
-                    if (isAd) {
-                      return AdBanner(
-                        margin: EdgeInsets.zero,
-                        placeholderHeight: kIsWeb ? 180.0 : 100.0,
-                        placeholderFolderPrefix: 'assets/carousel_home/',
-                        flat: true,
-                      );
-                    }
+                return Column(
+                  children: [
+                    // Compteur d'annonces
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.list_alt, size: 18, color: kPrestoOrange),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$resultCount annonce${resultCount > 1 ? 's' : ''}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.fromLTRB(2, 16, 2, 120),
+                        itemCount: _totalItems,
+                        itemBuilder: (context, index) {
+                          final bool isAd = (index + 1) % (_adsEvery + 1) == 0;
+                          if (isAd) {
+                            return AdBanner(
+                              margin: EdgeInsets.zero,
+                              placeholderHeight: kIsWeb ? 180.0 : 100.0,
+                              placeholderFolderPrefix: 'assets/carousel_home/',
+                              flat: true,
+                            );
+                          }
 
-                    final int docIndex = index - (index ~/ (_adsEvery + 1));
-                    final doc = docs[docIndex];
-                    final offerId = doc.id;
-                    final data = doc.data();
+                          final int docIndex = index - (index ~/ (_adsEvery + 1));
+                          final doc = docs[docIndex];
+                          final offerId = doc.id;
+                          final data = doc.data();
 
-                    final title = (data['title'] ?? 'Sans titre') as String;
-                    final location =
-                        (data['location'] ?? 'Lieu non précisé') as String;
-                    final category = (data['category'] ??
-                        'Catégorie non précisée') as String;
-                    final budget = data['budget'];
-                    final description = (data['description'] ?? '') as String;
-                    final phone =
-                        data['phone'] == null ? null : data['phone'] as String;
+                          final title = (data['title'] ?? 'Sans titre') as String;
+                          final location =
+                              (data['location'] ?? 'Lieu non précisé') as String;
+                          final category = (data['category'] ??
+                              'Catégorie non précisée') as String;
+                          final budget = data['budget'];
+                          final description = (data['description'] ?? '') as String;
+                          final phone =
+                              data['phone'] == null ? null : data['phone'] as String;
 
-                    final List<String> imageUrls =
-                        (data['imageUrls'] as List<dynamic>? ?? [])
-                            .map((e) => e.toString())
-                            .toList();
+                          final List<String> imageUrls =
+                              (data['imageUrls'] as List<dynamic>? ?? [])
+                                  .map((e) => e.toString())
+                                  .toList();
 
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => OfferDetailPage(
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => OfferDetailPage(
                                 offerId: offerId,
                                 title: title,
                                 location: location,
@@ -3202,6 +3261,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       ),
                     );
                   },
+                ),
+                    ),
+                  ],
                 );
               },
             ),
@@ -4053,6 +4115,7 @@ Motif du signalement :
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.menu),
+            color: Colors.white,
             onSelected: (value) {
               if (value == 'report') {
                 _reportOffer(context);
