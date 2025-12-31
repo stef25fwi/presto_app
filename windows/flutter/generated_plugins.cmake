@@ -9,7 +9,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_core
   firebase_storage
   record_windows
-  speech_to_text_windows
   url_launcher_windows
 )
 

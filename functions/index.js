@@ -805,6 +805,12 @@ exports.microIaProcessAudio = onCall(
       const requestId = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
       const { storagePath, languageCode } = req.data || {};
 
+      console.log("[microIaProcessAudio] CALL", {
+        uid: req.auth?.uid || null,
+        storagePath,
+        languageCode,
+      });
+
       const uid = req.auth?.uid || null;
       const storagePathRedacted = redactStoragePath(storagePath);
 
@@ -868,6 +874,15 @@ exports.microIaProcessAudio = onCall(
 
       const audioBuffer = await loadAudioBufferFromStorage(storagePath);
       const audioInfo = parseWavHeader(audioBuffer);
+
+      console.log("[microIaProcessAudio] AUDIO", {
+        isWav: audioInfo?.isWav,
+        sampleRate: audioInfo?.sampleRate,
+        numChannels: audioInfo?.numChannels,
+        bitsPerSample: audioInfo?.bitsPerSample,
+        dataBytes: audioInfo?.dataBytes,
+      });
+      console.log("[microIaProcessAudio] audioInfo=", audioInfo, "bufBytes=", audioBuffer?.length);
 
       if (audioBuffer?.length && objectBytes && audioBuffer.length !== objectBytes) {
         console.warn("[microIaProcessAudio] SIZE_MISMATCH", {
@@ -957,6 +972,12 @@ exports.microIaProcessAudio = onCall(
           });
 
           console.log("[microIaProcessAudio] TRY", {
+            attemptMode,
+            score: quality?.score,
+            reasons: quality?.reasons,
+          });
+
+          console.log("[microIaProcessAudio] TRY", {
             requestId,
             attemptMode,
             score: quality.score,
@@ -992,6 +1013,20 @@ exports.microIaProcessAudio = onCall(
           `All STT providers failed (requestId=${requestId}): ${lastErr?.message || 'unknown'}`
         );
       }
+
+      console.log(
+        "[microIaProcessAudio] modeUsed=",
+        best?.modeUsed,
+        "score=",
+        best?.quality?.score,
+        "reasons=",
+        best?.quality?.reasons
+      );
+
+      console.log("[microIaProcessAudio] DONE", {
+        modeUsed: best?.modeUsed,
+        score: best?.quality?.score,
+      });
 
       return best;
     } catch (error) {
