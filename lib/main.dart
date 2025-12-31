@@ -1482,12 +1482,14 @@ class _HomePageState extends State<HomePage>
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(20),
                                 child: SizedBox.expand(
-                                  child: RandomAssetTicker(
-                                    folderPrefix: 'assets/carousel_home/',
-                                    interval: const Duration(seconds: 3),
-                                    antiRepeatWindow: 3,
-                                    fit: BoxFit.cover,
-                                    enabled: _carouselEnabled,
+                                  child: RepaintBoundary(
+                                    child: RandomAssetTicker(
+                                      folderPrefix: 'assets/carousel_home/',
+                                      interval: const Duration(seconds: 3),
+                                      antiRepeatWindow: 3,
+                                      fit: BoxFit.cover,
+                                      enabled: _carouselEnabled,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -3114,9 +3116,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
                 List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
                     snapshot.data?.docs ?? [];
-
-                // Nombre total avant filtrage par recherche
-                final int totalBeforeSearch = docs.length;
 
                 if (_activeSearchQuery != null &&
                     _activeSearchQuery!.trim().isNotEmpty) {
