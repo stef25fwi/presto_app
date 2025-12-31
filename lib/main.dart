@@ -540,6 +540,7 @@ class _HomePageState extends State<HomePage>
   bool _carouselEnabled = false;
   bool _showBottomBar = true;
   double _lastScrollPosition = 0;
+  bool _wasKeyboardVisible = false;
 
   late final AnimationController _categoryController;
 
@@ -732,7 +733,18 @@ class _HomePageState extends State<HomePage>
   /// Force rebuild quand le clavier apparaît/disparaît
   @override
   void didChangeMetrics() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    
+    final isKeyboardVisible = WidgetsBinding.instance.window.viewInsets.bottom > 0;
+    
+    // Détecter quand le clavier se ferme
+    if (_wasKeyboardVisible && !isKeyboardVisible) {
+      // Le clavier vient de se fermer, on enlève le focus
+      FocusScope.of(context).unfocus();
+    }
+    
+    _wasKeyboardVisible = isKeyboardVisible;
+    setState(() {});
   }
 
   /// Animation "bump" séquentielle sur les 6 catégories
@@ -2862,7 +2874,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         : "Offres : ${widget.categoryFilter!}";
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       // Fond blanc derrière les annonces pour un look plus clair
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -3854,6 +3866,7 @@ Motif du signalement :
         : rawDescription;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: const Color(0xFFF6F7F9),
 
       appBar: AppBar(
@@ -4290,6 +4303,7 @@ class MessagesPage extends StatelessWidget {
     }
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: const Text(
@@ -4797,6 +4811,7 @@ class _ConversationPageState extends State<ConversationPage> {
     final userId = user?.uid ?? SessionState.userId;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         backgroundColor: kPrestoOrange,
@@ -5775,7 +5790,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
@@ -6658,6 +6673,7 @@ class _AccountPageState extends State<AccountPage> {
 
   Widget _buildAuthForm() {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: const Text(
@@ -6927,6 +6943,7 @@ class _AccountPageState extends State<AccountPage> {
         : (user.displayName ?? "Utilisateur iliprestō");
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: const Text(
