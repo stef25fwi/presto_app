@@ -716,22 +716,9 @@ class _HomePageState extends State<HomePage>
         .snapshots();
 
     // Listener pour hide/show bottom bar au scroll
-    _scrollController.addListener(_onScroll);
-  }
-
-  void _onScroll() {
-    final currentPosition = _scrollController.offset;
-    final isScrollingDown = currentPosition > _lastScrollPosition;
-
-    if (isScrollingDown && _showBottomBar) {
-      // Scrolling down: hide bottom bar
-      setState(() => _showBottomBar = false);
-    } else if (!isScrollingDown && !_showBottomBar) {
-      // Scrolling up: show bottom bar
-      setState(() => _showBottomBar = true);
-    }
-
-    _lastScrollPosition = currentPosition;
+    _scrollController.addListener(() {
+      _onPageScroll(_scrollController.offset);
+    });
   }
 
   void _onPageScroll(double offset) {
@@ -7832,7 +7819,7 @@ class _AccountPageState extends State<AccountPage> {
 }
 
 // 🔥 SECTION "Mes annonces publiées" dans Mon compte
-class UserOffersSection extends StatelessWidget {
+class UserOffersSection extends StatefulWidget {
   final String userId;
 
   const UserOffersSection({
@@ -7841,44 +7828,85 @@ class UserOffersSection extends StatelessWidget {
   });
 
   @override
+  State<UserOffersSection> createState() => _UserOffersSectionState();
+}
+
+class _UserOffersSectionState extends State<UserOffersSection> {
+  List<QueryDocumentSnapshot<Map<String, dynamic>>>? _offers;
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOffers();
+  }
+
+  Future<void> _loadOffers() async {
+    if (widget.userId.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _offers = [];
+        });
+      }
+      return;
+    }
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('offers')
+          .where('ownerId', isEqualTo: widget.userId)
+          .orderBy('createdAt', descending: true)
+          .get();
+      
+      if (!mounted) return;
+      
+      setState(() {
+        _offers = snapshot.docs;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (userId.isEmpty) {
+    if (widget.userId.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('offers')
-          .where('ownerId', isEqualTo: userId)
-          .orderBy('createdAt', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
-              ),
-            ),
-          );
-        }
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+          ),
+        ),
+      );
+    }
 
-        if (snapshot.hasError) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              "Erreur lors du chargement de vos annonces.\n${snapshot.error}",
-              style: const TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          );
-        }
+    if (_error != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          "Erreur lors du chargement de vos annonces.\n$_error",
+          style: const TextStyle(
+            color: Colors.red,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
 
-        final docs = snapshot.data?.docs ?? [];
+    final docs = _offers ?? [];
 
         if (docs.isEmpty) {
           return const Padding(
@@ -7981,8 +8009,6 @@ class UserOffersSection extends StatelessWidget {
             );
           }).toList(),
         );
-      },
-    );
   }
 
   Future<void> _showEditOfferDialog(
