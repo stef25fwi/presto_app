@@ -559,6 +559,26 @@ function evaluateQuality({ text, googleConfidence }) {
   return { score, reasons };
 }
 
+async function assertIsAdmin(req) {
+  const uid = req.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Authentication required.');
+  }
+
+  const snap = await admin.firestore().collection('admins').doc(uid).get();
+  const data = snap.data() || {};
+  const enabled = data.enabled !== false; // défaut: true si doc existe
+
+  if (!snap.exists || !enabled) {
+    throw new HttpsError('permission-denied', 'Admin only.');
+  }
+}
+
+function asString(v, def = '') {
+  if (typeof v === 'string') return v;
+  return def;
+}
+
 async function loadAudioBufferFromStorage(storagePath) {
   const bucket = admin.storage().bucket();
   const file = bucket.file(storagePath);
@@ -757,5 +777,70 @@ exports.microIaProcessAudio = onCall(
       if (error instanceof HttpsError) throw error;
       throw new HttpsError("internal", error?.message || "microIaProcessAudio failed");
     }
+  }
+);
+
+// ✅ Admin: lire la config Micro-IA effective (Remote Config)
+exports.adminGetMicroIaConfig = onCall(
+  {
+    region: 'europe-west1',
+    timeoutSeconds: 30,
+  },
+  async (req) => {
+    await assertIsAdmin(req);
+    const cfg = await getMicroIaConfig();
+    return cfg;
+  }
+);
+
+// ✅ Admin: mettre à jour la config Micro-IA via Remote Config
+exports.adminSetMicroIaConfig = onCall(
+  {
+    region: 'europe-west1',
+    timeoutSeconds: 60,
+  },
+  async (req) => {
+    await assertIsAdmin(req);
+
+    const {
+      mode,
+      fallbackEnabled,
+      qualityThreshold,
+      languageCode,
+    } = req.data || {};
+
+    const nextMode = normalizeMode(mode);
+    const nextFallback = asBool(fallbackEnabled, true);
+    const nextThreshold = Math.max(0, Math.min(1, asNum(qualityThreshold, 0.62)));
+    const nextLanguage = asString(languageCode, 'fr-FR') || 'fr-FR';
+
+    const tpl = await admin.remoteConfig().getTemplate();
+    tpl.parameters = tpl.parameters || {};
+
+    tpl.parameters.microia_mode = tpl.parameters.microia_mode || {};
+    tpl.parameters.microia_mode.defaultValue = { value: nextMode };
+
+    tpl.parameters.microia_fallback_enabled = tpl.parameters.microia_fallback_enabled || {};
+    tpl.parameters.microia_fallback_enabled.defaultValue = { value: nextFallback ? 'true' : 'false' };
+
+    tpl.parameters.microia_quality_threshold = tpl.parameters.microia_quality_threshold || {};
+    tpl.parameters.microia_quality_threshold.defaultValue = { value: String(nextThreshold) };
+
+    tpl.parameters.microia_language_code = tpl.parameters.microia_language_code || {};
+    tpl.parameters.microia_language_code.defaultValue = { value: nextLanguage };
+
+    await admin.remoteConfig().publishTemplate(tpl);
+
+    // Invalider le cache local pour accélérer la prise en compte côté Functions.
+    _microIaCfgCache = null;
+    _microIaCfgCacheAt = 0;
+
+    return {
+      ok: true,
+      mode: nextMode,
+      fallbackEnabled: nextFallback,
+      qualityThreshold: nextThreshold,
+      languageCode: nextLanguage,
+    };
   }
 );
