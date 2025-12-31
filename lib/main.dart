@@ -1403,20 +1403,23 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildHomeContent() {
+    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+    final double bottomPadding = (isKeyboardVisible || !_showBottomBar) ? 16 : 100;
+
     return Container(
-      color: const Color(0xFFF9F2EA),
+      color: Colors.white,
       child: SafeArea(
         child: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.white, Color(0xFFFDF4EC)],
+              colors: [Colors.white, Colors.white],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
           ),
           child: SingleChildScrollView(
             controller: _scrollController,
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 100),
+            padding: EdgeInsets.fromLTRB(10, 8, 10, bottomPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
