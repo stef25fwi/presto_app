@@ -2785,6 +2785,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           _keywordCtrl.text.trim().isEmpty ? null : _keywordCtrl.text.trim();
       _queryKey++;
       _lastDoc = null; // Reset pagination
+      _showFilters = false; // ✅ Rétracter le panneau après application des filtres
     });
   }
 
@@ -2894,6 +2895,102 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     }
   }
 
+  /// ✅ Tuile unique cliquable pour afficher/masquer les filtres
+  Widget _buildActiveFilterChips() {
+    // Compter les filtres actifs
+    int activeFiltersCount = 0;
+    if (_filterCategory != null && _filterCategory!.isNotEmpty) activeFiltersCount++;
+    if (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) activeFiltersCount++;
+    if (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) activeFiltersCount++;
+    if (_filterCityName != null && _filterCityName!.isNotEmpty) activeFiltersCount++;
+    if (_activeSearchQuery != null && _activeSearchQuery!.isNotEmpty) activeFiltersCount++;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: () {
+                setState(() => _showFilters = !_showFilters);
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: activeFiltersCount > 0 
+                      ? kPrestoOrange.withOpacity(0.1)
+                      : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: activeFiltersCount > 0 ? kPrestoOrange : Colors.grey.shade300,
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _showFilters ? Icons.filter_list_off : Icons.filter_list,
+                      size: 22,
+                      color: activeFiltersCount > 0 ? kPrestoOrange : Colors.grey.shade700,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _showFilters ? 'Masquer les filtres' : 'Filtres',
+                        style: TextStyle(
+                          color: activeFiltersCount > 0 ? kPrestoOrange : Colors.grey.shade700,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                    if (activeFiltersCount > 0) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: kPrestoOrange,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '$activeFiltersCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () {
+                          _resetFilters();
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          child: Icon(
+                            Icons.close,
+                            size: 18,
+                            color: kPrestoOrange,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final baseTitle = widget.categoryFilter == null
@@ -2942,6 +3039,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       ),
         body: Column(
           children: [
+            // ✅ Tuiles cliquables pour filtres actifs
+            _buildActiveFilterChips(),
             _buildFilterPanel(),
             Expanded(
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
