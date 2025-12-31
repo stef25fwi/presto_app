@@ -26,12 +26,10 @@ const kBorder = Color(0xFFE5E7EB);
 
 class PublishOfferPage extends StatefulWidget {
   final CityRepoCompact? repo;
-  final bool enableSpeechToText;
 
   const PublishOfferPage({
     super.key,
     this.repo,
-    this.enableSpeechToText = true,
   });
 
   @override
