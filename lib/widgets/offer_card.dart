@@ -71,6 +71,12 @@ class OfferCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
+          border: Border(
+            left: BorderSide(
+              color: const Color(0xFF2196F3), // Bleu
+              width: 4,
+            ),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
