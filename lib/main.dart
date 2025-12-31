@@ -638,6 +638,9 @@ class _HomePageState extends State<HomePage>
   /// Mots-clés dynamiques basés sur les offres Firestore
   List<String> _dynamicKeywords = [];
 
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+      _dynamicKeywordsSubscription;
+
   /// Suggestions “smart” par défaut
   final List<String> _trendingSuggestions = const [
     "Jardinage aujourd’hui",
@@ -734,7 +737,21 @@ class _HomePageState extends State<HomePage>
   }
 
   void _listenDynamicKeywords() {
-    FirebaseFirestore.instance.collection('offers').snapshots().listen(
+    _dynamicKeywordsSubscription?.cancel();
+
+    // Important perf: ne pas écouter toute la collection `offers`.
+    // On se limite aux dernières offres pour alimenter des suggestions utiles,
+    // sans déclencher des rebuilds massifs quand la collection grossit.
+    _dynamicKeywordsSubscription = FirebaseFirestore.instance
+        .collection('offers')
+        .where(
+          'createdAt',
+          isGreaterThan: Timestamp.fromMillisecondsSinceEpoch(0),
+        )
+        .orderBy('createdAt', descending: true)
+        .limit(200)
+        .snapshots()
+        .listen(
       (snapshot) {
         final words = <String>{};
         for (final doc in snapshot.docs) {
@@ -751,11 +768,18 @@ class _HomePageState extends State<HomePage>
             }
           }
         }
-        if (mounted) {
-          setState(() {
-            _dynamicKeywords = words.toList()..sort();
-          });
-        }
+
+        final next = words.toList()..sort();
+
+        if (!mounted) return;
+        if (listEquals(_dynamicKeywords, next)) return;
+
+        setState(() {
+          _dynamicKeywords = next;
+        });
+      },
+      onError: (e) {
+        debugPrint('Dynamic keywords stream error: $e');
       },
     );
   }
@@ -768,6 +792,7 @@ class _HomePageState extends State<HomePage>
     _categoryController.dispose();
     _sloganTimer?.cancel();
     _homeAutoSlideTimer?.cancel();
+    _dynamicKeywordsSubscription?.cancel();
     super.dispose();
   }
 
