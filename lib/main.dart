@@ -324,6 +324,18 @@ Future<void> main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
+    // Configuration de la barre de navigation système orange
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: kPrestoOrange,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+        systemNavigationBarColor: kPrestoOrange,
+        systemNavigationBarIconBrightness: Brightness.light,
+        systemNavigationBarDividerColor: kPrestoOrange,
+      ),
+    );
+
     // Crashlytics n'est pas supporté sur le web
     if (!kIsWeb) {
       await FirebaseCrashlytics.instance
