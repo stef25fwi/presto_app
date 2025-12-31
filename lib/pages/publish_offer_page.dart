@@ -451,6 +451,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final bytes = exists ? await file.length() : 0;
       debugPrint('[IA AUDIO] exists=$exists bytes=$bytes path=$audioPath');
 
+      if (!exists || bytes < 30000) {
+        throw Exception(
+          "Audio invalide (fichier trop petit: $bytes bytes). Réessaie en parlant plus près du micro.",
+        );
+      }
+
       // ✅ extension cohérente avec RecordConfig encoder: AudioEncoder.wav
       final fileName = 'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.wav';
 
@@ -476,6 +482,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           }
           return false;
         },
+      );
+
+      final meta = await storageRef.getMetadata();
+      debugPrint(
+        '[IA AUDIO] uploaded size=${meta.size} bytes contentType=${meta.contentType}',
       );
       
       // Construire le gcsUri
