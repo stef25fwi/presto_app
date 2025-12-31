@@ -1308,7 +1308,7 @@ class _HomePageState extends State<HomePage>
         child: Scaffold(
           // Toujours autoriser le resize pour gérer correctement le clavier
           resizeToAvoidBottomInset: true,
-          extendBody: false, // Désactiver pour éviter les problèmes de layout
+          extendBody: true, // Permettre au contenu de s'étendre sous la bottom bar
           backgroundColor: Colors.white, // Fond blanc pour éviter le bandeau beige
           bottomNavigationBar: isKeyboardVisible
               ? null
@@ -1404,7 +1404,7 @@ class _HomePageState extends State<HomePage>
           ),
           child: SingleChildScrollView(
             controller: _scrollController,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
