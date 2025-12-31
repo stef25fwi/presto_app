@@ -6742,10 +6742,19 @@ class _AccountPageState extends State<AccountPage> {
           children: [
             const SizedBox(height: 24),
             const Text(
-              'Admin',
+              'PANNEAU ADMIN',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Réglages et outils de gestion (fonctions à venir).',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 8),
@@ -6765,6 +6774,15 @@ class _AccountPageState extends State<AccountPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Text(
+                    'Espace admin',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   const Text(
                     'Micro-IA (transcription audio)',
                     style: TextStyle(
