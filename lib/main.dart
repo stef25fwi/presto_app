@@ -1140,7 +1140,15 @@ class _HomePageState extends State<HomePage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Notifications'),
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Notifications',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
         content: SizedBox(
           width: double.maxFinite,
           child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -1158,7 +1166,10 @@ class _HomePageState extends State<HomePage>
               final notifications = snapshot.data!.docs;
 
               if (notifications.isEmpty) {
-                return const Text('Aucune notification pour le moment.');
+                return const Text(
+                  'Aucune notification pour le moment.',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                );
               }
 
               return ListView.builder(
@@ -1180,11 +1191,18 @@ class _HomePageState extends State<HomePage>
                     title: Text(
                       title,
                       style: TextStyle(
-                        fontWeight:
-                            isRead ? FontWeight.normal : FontWeight.bold,
+                        fontWeight: FontWeight.bold,
+                        color: isRead ? Colors.grey.shade700 : Colors.black,
                       ),
                     ),
-                    subtitle: Text(message),
+                    subtitle: Text(
+                      message,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: isRead ? Colors.grey.shade600 : Colors.grey.shade800,
+                      ),
+                    ),
                     onTap: () async {
                       // Marquer comme lue
                       if (!isRead) {
