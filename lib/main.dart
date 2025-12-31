@@ -733,18 +733,25 @@ class _HomePageState extends State<HomePage>
   /// Force rebuild quand le clavier apparaît/disparaît
   @override
   void didChangeMetrics() {
+    super.didChangeMetrics();
     if (!mounted) return;
     
-    final isKeyboardVisible = WidgetsBinding.instance.window.viewInsets.bottom > 0;
-    
-    // Détecter quand le clavier se ferme
-    if (_wasKeyboardVisible && !isKeyboardVisible) {
-      // Le clavier vient de se fermer, on enlève le focus
-      FocusScope.of(context).unfocus();
-    }
-    
-    _wasKeyboardVisible = isKeyboardVisible;
-    setState(() {});
+    // Utiliser View.of(context) au lieu de l'API window deprecated
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      
+      final isKeyboardVisible = View.of(context).viewInsets.bottom > 0;
+      
+      // Détecter quand le clavier se ferme
+      if (_wasKeyboardVisible && !isKeyboardVisible) {
+        // Forcer un rebuild pour restaurer la bottomBar
+        setState(() {
+          _showBottomBar = true;
+        });
+      }
+      
+      _wasKeyboardVisible = isKeyboardVisible;
+    });
   }
 
   /// Animation "bump" séquentielle sur les 6 catégories
@@ -1218,9 +1225,8 @@ class _HomePageState extends State<HomePage>
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
-          // Quand le clavier est visible, on masque la bottom bar et on autorise
-          // le resize pour éviter que les champs soient cachés par le clavier.
-          resizeToAvoidBottomInset: isKeyboardVisible,
+          // Toujours autoriser le resize pour gérer correctement le clavier
+          resizeToAvoidBottomInset: true,
           extendBody: !isKeyboardVisible,
           bottomNavigationBar: isKeyboardVisible
               ? null
@@ -1303,10 +1309,9 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildHomeContent() {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: const Color(0xFFF9F2EA),
-      body: SafeArea(
+    return Container(
+      color: const Color(0xFFF9F2EA),
+      child: SafeArea(
         child: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
