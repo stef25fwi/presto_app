@@ -323,8 +323,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final replace = await showDialog<bool>(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text("Remplissage IA"),
-          content: const Text("Tu veux remplacer le titre/description actuels ?"),
+          backgroundColor: Colors.white,
+          title: const Text(
+            "Remplissage IA",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          content: const Text(
+            "Tu veux remplacer le titre/description actuels ?",
+            textAlign: TextAlign.center,
+          ),
+          actionsAlignment: MainAxisAlignment.center,
           actions: [
             TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Non")),
             ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text("Remplacer")),
