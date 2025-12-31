@@ -530,13 +530,31 @@ async function getMicroIaConfig() {
   }
 }
 
-function evaluateQuality({ text, googleConfidence }) {
+function evaluateQuality({ text, googleConfidence, audioInfo }) {
   const t = (text || "").trim();
   const reasons = [];
 
   if (!t) reasons.push("empty");
   if (t.length < 12) reasons.push("too_short");
   if (/\b(inaudible|incompréhensible|\.\.\.)\b/i.test(t)) reasons.push("noisy_tokens");
+
+  // Si l'audio est "long" mais le texte est très court, la qualité est probablement mauvaise.
+  const dataBytes = typeof audioInfo?.dataBytes === 'number' ? audioInfo.dataBytes : null;
+  if (dataBytes != null && dataBytes > 0) {
+    const sampleRate = typeof audioInfo?.sampleRate === 'number' && audioInfo.sampleRate > 0 ? audioInfo.sampleRate : 16000;
+    const numChannels = typeof audioInfo?.numChannels === 'number' && audioInfo.numChannels > 0 ? audioInfo.numChannels : 1;
+    const bitsPerSample = typeof audioInfo?.bitsPerSample === 'number' && audioInfo.bitsPerSample > 0 ? audioInfo.bitsPerSample : 16;
+    const bytesPerSecond = sampleRate * numChannels * (bitsPerSample / 8);
+    const durationSec = bytesPerSecond > 0 ? (dataBytes / bytesPerSecond) : null;
+
+    if (typeof durationSec === 'number' && Number.isFinite(durationSec)) {
+      const shortForAudio =
+        (durationSec >= 2 && t.length < 8) ||
+        (durationSec >= 4 && t.length < 20) ||
+        (durationSec >= 8 && t.length < 50);
+      if (shortForAudio) reasons.push('short_text_for_audio');
+    }
+  }
 
   let score = 0.0;
   if (t.length >= 12) score += 0.25;
@@ -553,6 +571,7 @@ function evaluateQuality({ text, googleConfidence }) {
 
   if (reasons.includes("noisy_tokens")) score -= 0.20;
   if (reasons.includes("too_short")) score -= 0.15;
+  if (reasons.includes('short_text_for_audio')) score -= 0.25;
   if (reasons.includes("empty")) score = 0.0;
 
   score = Math.max(0, Math.min(1, score));
@@ -588,13 +607,16 @@ async function loadAudioBufferFromStorage(storagePath) {
 
 function parseWavHeader(buf) {
   try {
-    if (!Buffer.isBuffer(buf) || buf.length < 44) return { isWav: false };
+    if (!Buffer.isBuffer(buf)) return { isWav: false, dataBytes: 0 };
+    if (buf.length < 44) return { isWav: false, dataBytes: buf.length };
 
     // RIFF header
-    if (buf.toString('ascii', 0, 4) !== 'RIFF') return { isWav: false };
-    if (buf.toString('ascii', 8, 12) !== 'WAVE') return { isWav: false };
+    if (buf.toString('ascii', 0, 4) !== 'RIFF') return { isWav: false, dataBytes: buf.length };
+    if (buf.toString('ascii', 8, 12) !== 'WAVE') return { isWav: false, dataBytes: buf.length };
 
-    // Walk chunks to find "fmt "
+    // Walk chunks to find "fmt " and "data"
+    let fmt = null;
+    let dataBytes = null;
     let offset = 12;
     while (offset + 8 <= buf.length) {
       const chunkId = buf.toString('ascii', offset, offset + 4);
@@ -608,22 +630,26 @@ function parseWavHeader(buf) {
         const numChannels = buf.readUInt16LE(chunkDataStart + 2);
         const sampleRate = buf.readUInt32LE(chunkDataStart + 4);
         const bitsPerSample = buf.readUInt16LE(chunkDataStart + 14);
-        return {
-          isWav: true,
-          audioFormat,
-          numChannels,
-          sampleRate,
-          bitsPerSample,
-        };
+        fmt = { audioFormat, numChannels, sampleRate, bitsPerSample };
       }
+
+      if (chunkId === 'data') {
+        dataBytes = chunkSize;
+      }
+
+      if (fmt && typeof dataBytes === 'number') break;
 
       // chunk sizes are padded to even
       offset = next + (chunkSize % 2);
     }
 
-    return { isWav: true };
+    return {
+      isWav: true,
+      ...(fmt || {}),
+      dataBytes: typeof dataBytes === 'number' ? dataBytes : buf.length,
+    };
   } catch (_) {
-    return { isWav: false };
+    return { isWav: false, dataBytes: Buffer.isBuffer(buf) ? buf.length : 0 };
   }
 }
 
@@ -740,6 +766,15 @@ exports.microIaProcessAudio = onCall(
       const audioBuffer = await loadAudioBufferFromStorage(storagePath);
       const audioInfo = parseWavHeader(audioBuffer);
 
+      // Garde-fou: audio trop petit = transcription forcément mauvaise
+      const minBytes = 30_000; // ~1s+ de WAV 16k mono 16-bit
+      if (!audioInfo || audioInfo.dataBytes < minBytes) {
+        throw new HttpsError(
+          "failed-precondition",
+          `Audio trop court/faible (dataBytes=${audioInfo?.dataBytes || 0}). Réessaie en parlant plus près du micro.`
+        );
+      }
+
       const tryOrder = buildTryOrder(cfg.mode);
       const threshold = cfg.qualityThreshold;
       const fallbackEnabled = cfg.fallbackEnabled;
@@ -758,7 +793,11 @@ exports.microIaProcessAudio = onCall(
           out = await providerHybrid({ audioBuffer, languageCode: lang, openai, audioInfo });
         }
 
-        const quality = evaluateQuality({ text: out.text, googleConfidence: out.googleConfidence });
+        const quality = evaluateQuality({
+          text: out.text,
+          googleConfidence: out.googleConfidence,
+          audioInfo,
+        });
 
         best = {
           modeUsed: attemptMode,
