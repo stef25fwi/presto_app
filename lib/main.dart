@@ -3932,7 +3932,7 @@ Motif du signalement :
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
-              16, 14, 16, 160), // espace pour bottomSheet + marges latérales
+              0, 14, 0, 160), // espace pour bottomSheet, cartes pleine largeur
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -3960,7 +3960,6 @@ Motif du signalement :
               // ✅ CONTACT (carte)
               _SectionCard(
                 title: "Contact",
-                trailing: const Icon(Icons.chevron_right),
                 child: Column(
                   children: [
                     Row(
@@ -3992,66 +3991,12 @@ Motif du signalement :
 
               const SizedBox(height: 14),
 
-              // ✅ PUBLICITÉ (carte) sans entête
-              _CardShell(
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.black.withOpacity(0.06)),
-                  ),
-                  child: Column(
-                    children: [
-                      // petit "skeleton" en haut (comme le mockup)
-                      Row(
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.06),
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.06),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  height: 10,
-                                  width: 140,
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.06),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      // Espace pub: afficher bannière
-                      AdBanner(
-                        margin: EdgeInsets.zero,
-                        placeholderHeight: kIsWeb ? 180.0 : 100.0,
-                        placeholderFolderPrefix: 'assets/carousel_home/',
-                        flat: true,
-                      ),
-                    ],
-                  ),
-                ),
+              // ✅ PUBLICITÉ - Carrousel pleine largeur sans rebord
+              AdBanner(
+                margin: EdgeInsets.zero,
+                placeholderHeight: kIsWeb ? 220.0 : 140.0,
+                placeholderFolderPrefix: 'assets/carousel_home/',
+                flat: true,
               ),
 
               const SizedBox(height: 14),
