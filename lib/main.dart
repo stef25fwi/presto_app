@@ -752,17 +752,22 @@ class _HomePageState extends State<HomePage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       
-      final isKeyboardVisible = View.of(context).viewInsets.bottom > 0;
-      
-      // Détecter quand le clavier se ferme
-      if (_wasKeyboardVisible && !isKeyboardVisible) {
-        // Forcer un rebuild pour restaurer la bottomBar
-        setState(() {
-          _showBottomBar = true;
-        });
+      try {
+        final isKeyboardVisible = View.of(context).viewInsets.bottom > 0;
+        
+        // Détecter quand le clavier se ferme
+        if (_wasKeyboardVisible && !isKeyboardVisible) {
+          // Forcer un rebuild pour restaurer la bottomBar
+          setState(() {
+            _showBottomBar = true;
+          });
+        }
+        
+        _wasKeyboardVisible = isKeyboardVisible;
+      } catch (e) {
+        // Fallback si View.of(context) n'est pas disponible
+        debugPrint('didChangeMetrics error: $e');
       }
-      
-      _wasKeyboardVisible = isKeyboardVisible;
     });
   }
 
@@ -2890,11 +2895,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         ? "Je consulte les offres"
         : "Offres : ${widget.categoryFilter!}";
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      // Fond blanc derrière les annonces pour un look plus clair
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        // Fond blanc derrière les annonces pour un look plus clair
+        backgroundColor: Colors.white,
+        appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: FittedBox(
           fit: BoxFit.scaleDown,
@@ -2928,10 +2935,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildFilterPanel(),
-          Expanded(
+        body: Column(
+          children: [
+            _buildFilterPanel(),
+            Expanded(
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               key: ValueKey(
                   _queryKey), // Force la reconstruction quand les filtres changent
@@ -3058,6 +3065,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -4319,15 +4327,17 @@ class MessagesPage extends StatelessWidget {
       return _buildNeedAccount(context);
     }
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-        title: const Text(
-          "Mes messages",
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        backgroundColor: kPrestoOrange,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
+          title: const Text(
+            "Mes messages",
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -4538,6 +4548,7 @@ class MessagesPage extends StatelessWidget {
             },
           );
         },
+      ),
       ),
     );
   }
@@ -4827,11 +4838,13 @@ class _ConversationPageState extends State<ConversationPage> {
     final user = _auth.currentUser;
     final userId = user?.uid ?? SessionState.userId;
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-        backgroundColor: kPrestoOrange,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
+          backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         titleSpacing: 0,
         title: Row(
@@ -5031,6 +5044,7 @@ class _ConversationPageState extends State<ConversationPage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -5806,11 +5820,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        backgroundColor: Colors.grey.shade100,
+        appBar: AppBar(
+          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         backgroundColor: kPrestoOrange,
         elevation: 0,
         title: const Text(
@@ -6254,6 +6270,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -6689,10 +6706,12 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildAuthForm() {
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: const Text(
           "Mon compte iliprestō",
           style: TextStyle(fontWeight: FontWeight.w700),
@@ -6941,6 +6960,7 @@ class _AccountPageState extends State<AccountPage> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -6959,15 +6979,17 @@ class _AccountPageState extends State<AccountPage> {
         ? pseudo
         : (user.displayName ?? "Utilisateur iliprestō");
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-        title: const Text(
-          "Mon compte iliprestō",
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        backgroundColor: kPrestoOrange,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
+          title: const Text(
+            "Mon compte iliprestō",
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
       ),
       backgroundColor: Colors.white,
@@ -7417,6 +7439,7 @@ class _AccountPageState extends State<AccountPage> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
