@@ -6642,19 +6642,6 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<Map<String, dynamic>>? _adminCfgFuture;
 
-  Stream<bool> _isAdminStream(String uid) {
-    return FirebaseFirestore.instance
-        .collection('admins')
-        .doc(uid)
-        .snapshots()
-        .map((doc) {
-      if (!doc.exists) return false;
-      final data = doc.data() ?? <String, dynamic>{};
-      if (data['enabled'] == false) return false;
-      return true;
-    });
-  }
-
   Future<Map<String, dynamic>> _adminGetMicroIaConfig() async {
     final callable = _functions.httpsCallable(
       'adminGetMicroIaConfig',
@@ -6698,193 +6685,192 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildAdminMicroIaPanel(User user) {
-    return StreamBuilder<bool>(
-      stream: _isAdminStream(user.uid),
-      builder: (context, snap) {
-        final isAdmin = snap.data == true;
-        if (!isAdmin) return const SizedBox.shrink();
+    _adminCfgFuture ??= _adminGetMicroIaConfig();
 
-        _adminCfgFuture ??= _adminGetMicroIaConfig();
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _adminCfgFuture,
+      builder: (context, cfgSnap) {
+        if (cfgSnap.connectionState == ConnectionState.waiting && !_adminConfigLoaded) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+              ),
+            ),
+          );
+        }
 
-        return FutureBuilder<Map<String, dynamic>>(
-          future: _adminCfgFuture,
-          builder: (context, cfgSnap) {
-            if (cfgSnap.connectionState == ConnectionState.waiting && !_adminConfigLoaded) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                  ),
-                ),
-              );
+        if (cfgSnap.hasError && !_adminConfigLoaded) {
+          final err = cfgSnap.error;
+          if (err is FirebaseFunctionsException) {
+            if (err.code == 'permission-denied' || err.code == 'unauthenticated') {
+              return const SizedBox.shrink();
             }
+          }
 
-            if (cfgSnap.hasError && !_adminConfigLoaded) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  "Erreur chargement Admin (Remote Config).\n${cfgSnap.error}",
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              "Erreur chargement Admin.\n$err",
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          );
+        }
+
+        if (cfgSnap.hasData && !_adminConfigLoaded) {
+          final cfg = cfgSnap.data!;
+          final mode = (cfg['mode'] ?? 'HYBRID').toString();
+          final fallback = cfg['fallbackEnabled'] == true;
+          final threshold = (cfg['qualityThreshold'] as num?)?.toDouble() ?? 0.62;
+          final lang = (cfg['languageCode'] ?? 'fr-FR').toString();
+
+          _adminMicroIaMode = mode;
+          _adminMicroIaFallbackEnabled = fallback;
+          _adminMicroIaQualityThreshold = threshold;
+          _adminMicroIaLanguageCode = lang;
+          _adminMicroIaLanguageController.text = lang;
+          _adminConfigLoaded = true;
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 24),
+            const Text(
+              'Admin',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
                   ),
-                ),
-              );
-            }
-
-            if (cfgSnap.hasData && !_adminConfigLoaded) {
-              final cfg = cfgSnap.data!;
-              final mode = (cfg['mode'] ?? 'HYBRID').toString();
-              final fallback = cfg['fallbackEnabled'] == true;
-              final threshold = (cfg['qualityThreshold'] as num?)?.toDouble() ?? 0.62;
-              final lang = (cfg['languageCode'] ?? 'fr-FR').toString();
-
-              _adminMicroIaMode = mode;
-              _adminMicroIaFallbackEnabled = fallback;
-              _adminMicroIaQualityThreshold = threshold;
-              _adminMicroIaLanguageCode = lang;
-              _adminMicroIaLanguageController.text = lang;
-              _adminConfigLoaded = true;
-            }
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 24),
-                const Text(
-                  'Admin',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                ],
+              ),
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Micro-IA (transcription audio)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: _adminMicroIaMode,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'HYBRID',
+                        child: Text('Hybrid (recommandé)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'GOOGLE_ONLY',
+                        child: Text('Google STT uniquement'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'WHISPER_ONLY',
+                        child: Text('Whisper uniquement'),
                       ),
                     ],
+                    onChanged: (v) {
+                      if (v == null) return;
+                      setState(() => _adminMicroIaMode = v);
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Mode',
+                    ),
                   ),
-                  padding: const EdgeInsets.all(14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Micro-IA (transcription audio)',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        value: _adminMicroIaMode,
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'HYBRID',
-                            child: Text('Hybrid (recommandé)'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'GOOGLE_ONLY',
-                            child: Text('Google STT uniquement'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'WHISPER_ONLY',
-                            child: Text('Whisper uniquement'),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          if (v == null) return;
-                          setState(() => _adminMicroIaMode = v);
-                        },
-                        decoration: const InputDecoration(
-                          labelText: 'Mode',
-                        ),
-                      ),
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Fallback activé'),
-                        subtitle: const Text(
-                          'Si la qualité est faible, tente un autre provider.',
-                          style: TextStyle(fontSize: 12),
-                        ),
-                        value: _adminMicroIaFallbackEnabled,
-                        onChanged: (v) {
-                          setState(() => _adminMicroIaFallbackEnabled = v);
-                        },
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Seuil qualité: ${_adminMicroIaQualityThreshold.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Slider(
-                        value: _adminMicroIaQualityThreshold,
-                        min: 0.40,
-                        max: 0.95,
-                        divisions: 55,
-                        onChanged: (v) {
-                          setState(() => _adminMicroIaQualityThreshold = v);
-                        },
-                      ),
-                      TextField(
-                        controller: _adminMicroIaLanguageController,
-                        decoration: const InputDecoration(
-                          labelText: 'Language code',
-                          hintText: 'fr-FR',
-                        ),
-                        onChanged: (v) {
-                          _adminMicroIaLanguageCode = v.trim();
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPrestoBlue,
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: _adminSaving ? null : _adminSetMicroIaConfig,
-                          icon: _adminSaving
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  ),
-                                )
-                              : const Icon(Icons.admin_panel_settings_outlined),
-                          label: Text(
-                            _adminSaving ? 'Application…' : 'Appliquer',
-                            style: const TextStyle(fontWeight: FontWeight.w800),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Ces réglages modifient Firebase Remote Config (impact côté Functions).',
-                        style: TextStyle(fontSize: 11, color: Colors.black45),
-                      ),
-                    ],
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Fallback activé'),
+                    subtitle: const Text(
+                      'Si la qualité est faible, tente un autre provider.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    value: _adminMicroIaFallbackEnabled,
+                    onChanged: (v) {
+                      setState(() => _adminMicroIaFallbackEnabled = v);
+                    },
                   ),
-                ),
-              ],
-            );
-          },
+                  const SizedBox(height: 6),
+                  Text(
+                    'Seuil qualité: ${_adminMicroIaQualityThreshold.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Slider(
+                    value: _adminMicroIaQualityThreshold,
+                    min: 0.40,
+                    max: 0.95,
+                    divisions: 55,
+                    onChanged: (v) {
+                      setState(() => _adminMicroIaQualityThreshold = v);
+                    },
+                  ),
+                  TextField(
+                    controller: _adminMicroIaLanguageController,
+                    decoration: const InputDecoration(
+                      labelText: 'Language code',
+                      hintText: 'fr-FR',
+                    ),
+                    onChanged: (v) {
+                      _adminMicroIaLanguageCode = v.trim();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrestoBlue,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: _adminSaving ? null : _adminSetMicroIaConfig,
+                      icon: _adminSaving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Icon(Icons.admin_panel_settings_outlined),
+                      label: Text(
+                        _adminSaving ? 'Application…' : 'Appliquer',
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Ces réglages modifient Firebase Remote Config (impact côté Functions).',
+                    style: TextStyle(fontSize: 11, color: Colors.black45),
+                  ),
+                ],
+              ),
+            ),
+          ],
         );
       },
     );
