@@ -2910,21 +2910,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     // 5) ✅ Pas besoin de _fetchOffers car le StreamBuilder se reconstruit automatiquement
   }
 
-  void _toggleFilters() {
-    setState(() {
-      _showFilters = !_showFilters;
-      _filterPanelKey++; // force rebuild pour éviter états résiduels
-    });
-
-    if (_showFilters && _scrollController.hasClients) {
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
-    }
-  }
-
   // Met à jour le champ "Ville" visible avec la valeur des filtres si présente
   void _syncLocationFieldFromFilter() {
     final val = _filterCityController.text.trim();
@@ -3079,13 +3064,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon:
-                Icon(_showFilters ? Icons.filter_list_off : Icons.filter_list),
-            tooltip:
-                _showFilters ? 'Masquer les filtres' : 'Afficher les filtres',
-            onPressed: _toggleFilters,
-          ),
           IconButton(
             icon: const Icon(Icons.home_outlined),
             onPressed: () {
