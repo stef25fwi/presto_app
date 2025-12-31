@@ -751,6 +751,48 @@ function buildTryOrder(mode) {
   return ["HYBRID", "WHISPER_ONLY", "GOOGLE_ONLY"];
 }
 
+function redactStoragePath(p) {
+  if (typeof p !== 'string' || !p) return null;
+  if (p.length <= 18) return p;
+  return `${p.slice(0, 8)}…${p.slice(-8)}`;
+}
+
+function isAllowedAudioContentType(ct) {
+  if (ct == null) return false;
+  const v = String(ct).toLowerCase();
+  return (
+    v === 'audio/wav' ||
+    v === 'audio/x-wav' ||
+    v === 'audio/wave' ||
+    v === 'audio/vnd.wave' ||
+    v === 'application/octet-stream'
+  );
+}
+
+function estimateDurationSec(audioInfo) {
+  const dataBytes = typeof audioInfo?.dataBytes === 'number' ? audioInfo.dataBytes : null;
+  if (dataBytes == null || dataBytes <= 0) return null;
+  const sampleRate = typeof audioInfo?.sampleRate === 'number' && audioInfo.sampleRate > 0 ? audioInfo.sampleRate : 16000;
+  const numChannels = typeof audioInfo?.numChannels === 'number' && audioInfo.numChannels > 0 ? audioInfo.numChannels : 1;
+  const bitsPerSample = typeof audioInfo?.bitsPerSample === 'number' && audioInfo.bitsPerSample > 0 ? audioInfo.bitsPerSample : 16;
+  const bytesPerSecond = sampleRate * numChannels * (bitsPerSample / 8);
+  if (!(bytesPerSecond > 0)) return null;
+  const sec = dataBytes / bytesPerSecond;
+  return Number.isFinite(sec) ? sec : null;
+}
+
+async function withTimeout(promise, ms, label) {
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`timeout:${label}`)), ms);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 // ✅ Callable: microIaProcessAudio (1 seul endpoint pour ta page)
 exports.microIaProcessAudio = onCall(
   {
@@ -760,18 +802,98 @@ exports.microIaProcessAudio = onCall(
   },
   async (req) => {
     try {
+      const requestId = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
       const { storagePath, languageCode } = req.data || {};
+
+      const uid = req.auth?.uid || null;
+      const storagePathRedacted = redactStoragePath(storagePath);
+
+      console.log("[microIaProcessAudio] CALL", {
+        requestId,
+        storagePath: storagePathRedacted,
+        languageCode,
+        uid,
+      });
+
+      if (!uid) {
+        throw new HttpsError("unauthenticated", "Authentication required.");
+      }
+
       if (!storagePath || typeof storagePath !== "string") {
         throw new HttpsError("invalid-argument", "storagePath is required (Firebase Storage path).");
+      }
+
+      // Empêche chemins bizarres / traversal
+      if (storagePath.includes('..') || storagePath.startsWith('/') || storagePath.includes('\\')) {
+        throw new HttpsError("invalid-argument", "Invalid storagePath.");
+      }
+
+      // Ownership strict: la page client upload sous stt/${uid}_${timestamp}.wav
+      const expectedPrefix = `stt/${uid}_`;
+      if (!storagePath.startsWith(expectedPrefix) || !storagePath.endsWith('.wav')) {
+        throw new HttpsError("permission-denied", "storagePath does not belong to authenticated user.");
       }
 
       const cfg = await getMicroIaConfig();
       const lang = languageCode || cfg.languageCode;
 
-      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      // Garde-fous via metadata Storage AVANT download (coûts + RAM)
+      const bucket = admin.storage().bucket();
+      const file = bucket.file(storagePath);
+      let meta;
+      try {
+        const [m] = await file.getMetadata();
+        meta = m || null;
+      } catch (e) {
+        console.warn("[microIaProcessAudio] META", { requestId, storagePath: storagePathRedacted, err: e?.message || String(e) });
+        throw new HttpsError("not-found", "Audio file not found.");
+      }
+
+      const objectBytes = Number(meta?.size || 0);
+      const contentType = meta?.contentType || null;
+      const maxBytes = 20_000_000; // 20MB hard limit
+      if (!Number.isFinite(objectBytes) || objectBytes <= 0) {
+        throw new HttpsError("failed-precondition", "Audio file is empty.");
+      }
+      if (objectBytes > maxBytes) {
+        throw new HttpsError("failed-precondition", `Audio trop gros (${objectBytes} bytes).`);
+      }
+
+      if (!isAllowedAudioContentType(contentType)) {
+        throw new HttpsError(
+          "failed-precondition",
+          `Type audio invalide (contentType=${contentType || 'null'}). Envoie un WAV (audio/wav).`
+        );
+      }
 
       const audioBuffer = await loadAudioBufferFromStorage(storagePath);
       const audioInfo = parseWavHeader(audioBuffer);
+
+      if (audioBuffer?.length && objectBytes && audioBuffer.length !== objectBytes) {
+        console.warn("[microIaProcessAudio] SIZE_MISMATCH", {
+          requestId,
+          storagePath: storagePathRedacted,
+          metaBytes: objectBytes,
+          downloadedBytes: audioBuffer.length,
+        });
+      }
+
+      console.log("[microIaProcessAudio] AUDIO", {
+        requestId,
+        bytes: audioBuffer?.length || 0,
+        audioInfo,
+      });
+
+      // Hardening: on attend un WAV PCM 16-bit (cohérent avec l'app)
+      if (!audioInfo?.isWav) {
+        throw new HttpsError("failed-precondition", "Audio invalide: WAV requis.");
+      }
+      if (audioInfo.audioFormat !== 1 || audioInfo.bitsPerSample !== 16) {
+        throw new HttpsError(
+          "failed-precondition",
+          `Audio invalide: WAV PCM 16-bit requis (format=${audioInfo.audioFormat}, bps=${audioInfo.bitsPerSample}).`
+        );
+      }
 
       // Garde-fou: audio trop petit = transcription forcément mauvaise
       const minBytes = 30_000; // ~1s+ de WAV 16k mono 16-bit
@@ -782,44 +904,101 @@ exports.microIaProcessAudio = onCall(
         );
       }
 
+      const durationSec = estimateDurationSec(audioInfo);
+      const maxDurationSec = 120; // cohérent avec timeoutSeconds=120
+      if (typeof durationSec === 'number' && durationSec > maxDurationSec) {
+        throw new HttpsError(
+          "failed-precondition",
+          `Audio trop long (~${durationSec.toFixed(1)}s). Max ${maxDurationSec}s.`
+        );
+      }
+
       const tryOrder = buildTryOrder(cfg.mode);
       const threshold = cfg.qualityThreshold;
       const fallbackEnabled = cfg.fallbackEnabled;
 
+      const needsOpenAI = tryOrder.some((m) => m !== "GOOGLE_ONLY");
+      const openai = needsOpenAI ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+
       let best = null;
+      let lastErr = null;
 
       for (let i = 0; i < tryOrder.length; i++) {
         const attemptMode = tryOrder[i];
 
-        let out;
-        if (attemptMode === "GOOGLE_ONLY") {
-          out = await providerGoogleSTT({ audioBuffer, languageCode: lang, audioInfo });
-        } else if (attemptMode === "WHISPER_ONLY") {
-          out = await providerWhisper({ audioBuffer, languageCode: lang, openai });
-        } else {
-          out = await providerHybrid({ audioBuffer, languageCode: lang, openai, audioInfo });
+        try {
+          let out;
+          if (attemptMode === "GOOGLE_ONLY") {
+            out = await withTimeout(
+              providerGoogleSTT({ audioBuffer, languageCode: lang, audioInfo }),
+              25_000,
+              'google_stt'
+            );
+          } else if (attemptMode === "WHISPER_ONLY") {
+            if (!openai) throw new Error("OpenAI client not initialized");
+            out = await withTimeout(
+              providerWhisper({ audioBuffer, languageCode: lang, openai }),
+              60_000,
+              'whisper'
+            );
+          } else {
+            if (!openai) throw new Error("OpenAI client not initialized");
+            out = await withTimeout(
+              providerHybrid({ audioBuffer, languageCode: lang, openai, audioInfo }),
+              80_000,
+              'hybrid'
+            );
+          }
+
+          const quality = evaluateQuality({
+            text: out.text,
+            googleConfidence: out.googleConfidence,
+            audioInfo,
+          });
+
+          console.log("[microIaProcessAudio] TRY", {
+            requestId,
+            attemptMode,
+            score: quality.score,
+            reasons: quality.reasons,
+            googleConfidence: out.googleConfidence ?? null,
+          });
+
+          best = {
+            modeUsed: attemptMode,
+            text: out.text,
+            quality,
+            meta: { language: lang, audioInfo },
+          };
+
+          if (quality.score >= threshold) break;
+          if (!fallbackEnabled) break;
+        } catch (e) {
+          lastErr = e;
+          console.warn("[microIaProcessAudio] TRY_ERROR", {
+            requestId,
+            attemptMode,
+            err: e?.message || String(e),
+          });
+
+          // Continue uniquement si fallback activé et qu'il reste des tentatives
+          if (!fallbackEnabled) break;
         }
+      }
 
-        const quality = evaluateQuality({
-          text: out.text,
-          googleConfidence: out.googleConfidence,
-          audioInfo,
-        });
-
-        best = {
-          modeUsed: attemptMode,
-          text: out.text,
-          quality,
-          meta: { language: lang, audioInfo },
-        };
-
-        if (quality.score >= threshold) break;
-        if (!fallbackEnabled) break;
+      if (!best) {
+        throw new HttpsError(
+          "internal",
+          `All STT providers failed (requestId=${requestId}): ${lastErr?.message || 'unknown'}`
+        );
       }
 
       return best;
     } catch (error) {
-      console.error("[microIaProcessAudio] Error:", error);
+      console.error("[microIaProcessAudio] Error:", {
+        code: error?.code || null,
+        message: error?.message || String(error),
+      });
       if (error instanceof HttpsError) throw error;
       throw new HttpsError("internal", error?.message || "microIaProcessAudio failed");
     }
