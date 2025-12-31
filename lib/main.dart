@@ -755,12 +755,16 @@ class _HomePageState extends State<HomePage>
       try {
         final isKeyboardVisible = View.of(context).viewInsets.bottom > 0;
         
-        // Détecter quand le clavier se ferme
-        if (_wasKeyboardVisible && !isKeyboardVisible) {
-          // Forcer un rebuild pour restaurer la bottomBar
-          setState(() {
-            _showBottomBar = true;
-          });
+        // Détecter les changements de visibilité du clavier
+        if (_wasKeyboardVisible != isKeyboardVisible) {
+          // Le clavier vient de se fermer : restaurer la bottomBar
+          if (!isKeyboardVisible) {
+            setState(() {
+              _showBottomBar = true;
+            });
+          }
+          // Le clavier vient de s'ouvrir : on peut optionnellement cacher la bottom bar
+          // (actuellement géré par isKeyboardVisible dans le build)
         }
         
         _wasKeyboardVisible = isKeyboardVisible;
@@ -1244,11 +1248,12 @@ class _HomePageState extends State<HomePage>
         child: Scaffold(
           // Toujours autoriser le resize pour gérer correctement le clavier
           resizeToAvoidBottomInset: true,
-          extendBody: !isKeyboardVisible,
+          extendBody: false, // Désactiver pour éviter les problèmes de layout
+          backgroundColor: const Color(0xFFF9F2EA), // Éviter l'écran blanc
           bottomNavigationBar: isKeyboardVisible
               ? null
               : AnimatedSlide(
-                  duration: const Duration(milliseconds: 300),
+                  duration: const Duration(milliseconds: 250),
                   curve: Curves.easeInOut,
                   offset: _showBottomBar ? Offset.zero : const Offset(0, 1),
                   child: Container(
@@ -4331,6 +4336,7 @@ class MessagesPage extends StatelessWidget {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         resizeToAvoidBottomInset: true,
+        backgroundColor: Colors.white,
         appBar: AppBar(
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
           title: const Text(
@@ -4842,6 +4848,7 @@ class _ConversationPageState extends State<ConversationPage> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         resizeToAvoidBottomInset: true,
+        backgroundColor: Colors.white,
         appBar: AppBar(
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
           backgroundColor: kPrestoOrange,
