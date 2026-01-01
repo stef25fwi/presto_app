@@ -5351,6 +5351,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _isAnalyzing = false;
   bool _isListening = false;
 
+  bool _attemptedSubmit = false; // affiche erreurs après tentative
+  bool _publishLocked = false; // lock après tentative invalide
+  bool _canPublish = false;
+
   // Service IA pour analyser la description
   final AiDraftService _aiService = AiDraftService();
   final AudioRecorder _recorder = AudioRecorder();
@@ -5365,6 +5369,78 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
     });
+
+    _titleController.addListener(_recompute);
+    _descriptionController.addListener(_recompute);
+    _locationController.addListener(_recompute);
+    _phoneController.addListener(_recompute);
+    _budgetController.addListener(_recompute);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
+  }
+
+  bool _isValidPhoneFR(String raw) {
+    final s = raw.replaceAll(RegExp(r'\s+'), '');
+    if (s.isEmpty) return false;
+
+    // Accepte : 612345678, 06XXXXXXXX, 07XXXXXXXX, +336XXXXXXXX, +337XXXXXXXX
+    final fr9 = RegExp(r'^[67]\d{8}$');
+    final fr10 = RegExp(r'^0[67]\d{8}$');
+    final intl = RegExp(r'^\+33[67]\d{8}$');
+    return fr9.hasMatch(s) || fr10.hasMatch(s) || intl.hasMatch(s);
+  }
+
+  double? _parseBudget(String raw) {
+    final cleaned = raw.trim().replaceAll(' ', '').replaceAll(',', '.');
+    return double.tryParse(cleaned);
+  }
+
+  bool _requiredOk() {
+    final titleOk = _titleController.text.trim().isNotEmpty;
+    final descOk = _descriptionController.text.trim().isNotEmpty;
+    final cityOk = _locationController.text.trim().isNotEmpty;
+    final catOk = (_category ?? '').trim().isNotEmpty;
+    final subOk = (_selectedSubCategory ?? '').trim().isNotEmpty;
+    final phoneOk = _isValidPhoneFR(_phoneController.text);
+
+    final budgetOk = _budgetType == 'À négocier'
+        ? true
+        : () {
+            final b = _parseBudget(_budgetController.text);
+            return b != null && b > 0;
+          }();
+
+    return titleOk && descOk && cityOk && catOk && subOk && phoneOk && budgetOk;
+  }
+
+  void _recompute() {
+    final ok = _requiredOk();
+    if (!mounted) return;
+    if (_canPublish == ok && !(_publishLocked && ok)) return;
+    setState(() {
+      _canPublish = ok;
+      if (_publishLocked && ok) _publishLocked = false; // délock auto
+    });
+  }
+
+  Future<void> _onPublishPressed() async {
+    setState(() => _attemptedSubmit = true);
+
+    final valid = _formKey.currentState?.validate() ?? false;
+    if (!valid || !_requiredOk()) {
+      setState(() {
+        _publishLocked = true;
+        _canPublish = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Complète les champs obligatoires pour publier.'),
+        ),
+      );
+      return;
+    }
+
+    await _submitForm();
   }
 
   Future<void> _startMic() async {
@@ -5786,7 +5862,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _highlightedIndex = -1;
       _selectedRegionCode = null;
       _selectedDeptCode = null;
+
+      _attemptedSubmit = false;
+      _publishLocked = false;
+      _canPublish = false;
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('✨ Tous les champs ont été réinitialisés'),
@@ -6108,6 +6189,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   Widget build(BuildContext context) {
+    final publishDisabled = _publishLocked || !_canPublish || _isSubmitting;
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -6155,6 +6238,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       body: SafeArea(
         child: Form(
           key: _formKey,
+          autovalidateMode:
+              _attemptedSubmit ? AutovalidateMode.always : AutovalidateMode.disabled,
           child: ListView(
             controller: _scrollController,
             padding: const EdgeInsets.all(16),
@@ -6310,6 +6395,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     _category = value;
                     _selectedSubCategory = null;
                   });
+                  _recompute();
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -6348,6 +6434,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     setState(() {
                       _selectedSubCategory = value;
                     });
+                    _recompute();
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Merci de choisir une sous-catégorie';
+                    }
+                    return null;
                   },
                 ),
               if (_category != null) const SizedBox(height: 16),
@@ -6431,6 +6524,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                 ),
                 onChanged: _onCityChanged,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Merci de saisir une ville';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -6456,6 +6555,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 controller: _phoneController,
                 labelText: 'Téléphone (pour être rappelé)',
                 hintText: '612345678',
+                onPhoneChanged: (_) => _recompute(),
+                validator: (value) {
+                  return _isValidPhoneFR(value ?? '')
+                      ? null
+                      : 'Téléphone invalide';
+                },
               ),
               const SizedBox(height: 16),
 
@@ -6480,6 +6585,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             _budgetController.clear();
                           }
                         });
+                        _recompute();
                       },
                       decoration: InputDecoration(
                         labelText: 'Budget',
@@ -6499,7 +6605,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     child: TextFormField(
                       controller: _budgetController,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9., ]'))],
                       decoration: InputDecoration(
                         labelText: 'Montant (€)',
                         filled: true,
@@ -6511,6 +6617,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             horizontal: 12, vertical: 14),
                       ),
                       enabled: _budgetType == 'Fixe',
+                      validator: (value) {
+                        if (_budgetType == 'À négocier') return null;
+                        final b = _parseBudget(value ?? '');
+                        if (b == null) return 'Montant invalide';
+                        if (b <= 0) return 'Le montant doit être > 0';
+                        return null;
+                      },
                     ),
                   ),
                 ],
@@ -6521,7 +6634,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _isSubmitting ? null : _submitForm,
+                  onPressed: publishDisabled ? null : _onPublishPressed,
                   icon: _isSubmitting
                       ? const SizedBox(
                           width: 18,
