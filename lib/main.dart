@@ -5395,6 +5395,27 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return double.tryParse(cleaned);
   }
 
+  Widget _requiredLabel(String text) {
+    final theme = Theme.of(context);
+    final base = theme.inputDecorationTheme.labelStyle ??
+        theme.textTheme.bodyLarge ??
+        const TextStyle(fontSize: 16, color: Colors.black87);
+    final baseColor = base.color ?? Colors.black87;
+
+    return RichText(
+      text: TextSpan(
+        style: base.copyWith(color: baseColor),
+        children: [
+          TextSpan(text: text),
+          const TextSpan(
+            text: ' *',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
+  }
+
   bool _requiredOk() {
     final titleOk = _titleController.text.trim().isNotEmpty;
     final descOk = _descriptionController.text.trim().isNotEmpty;
@@ -6362,9 +6383,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               // TITRE
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Titre de l’offre',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  label: _requiredLabel('Titre de l’offre'),
+                  border: const OutlineInputBorder(),
                   hintText: 'Ex : Monter un meuble IKEA',
                 ),
                 validator: (value) {
@@ -6382,7 +6403,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 dropdownColor: Colors.white,
                 borderRadius: BorderRadius.circular(14),
                 decoration: InputDecoration(
-                  labelText: 'Catégorie',
+                  label: _requiredLabel('Catégorie'),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -6422,7 +6443,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   dropdownColor: Colors.white,
                   borderRadius: BorderRadius.circular(14),
                   decoration: InputDecoration(
-                    labelText: 'Sous-catégorie',
+                    label: _requiredLabel('Sous-catégorie'),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -6458,7 +6479,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               TextFormField(
                 controller: _descriptionController,
                 decoration: InputDecoration(
-                  labelText: 'Description détaillée',
+                  label: _requiredLabel('Description détaillée'),
                   alignLabelWithHint: true,
                   filled: true,
                   fillColor: Colors.white,
@@ -6522,7 +6543,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               TextFormField(
                 controller: _locationController,
                 decoration: InputDecoration(
-                  labelText: 'Ville',
+                  label: _requiredLabel('Ville'),
                   hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
                   filled: true,
                   fillColor: Colors.white,
@@ -6562,7 +6583,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               // TÉLÉPHONE avec sélection indicatif
               PhoneInputFieldCompact(
                 controller: _phoneController,
-                labelText: 'Téléphone (pour être rappelé)',
+                label: _requiredLabel('Téléphone (pour être rappelé)'),
                 hintText: '612345678',
                 onPhoneChanged: (_) => _recompute(),
                 validator: (value) {
@@ -6616,7 +6637,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       keyboardType: TextInputType.number,
                         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9., ]'))],
                       decoration: InputDecoration(
-                        labelText: 'Montant (€)',
+                        label: _budgetType == 'Fixe'
+                            ? _requiredLabel('Montant (€)')
+                            : null,
+                        labelText: _budgetType == 'Fixe' ? null : 'Montant (€)',
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
@@ -6638,6 +6662,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 ],
               ),
               const SizedBox(height: 24),
+
+              const Text(
+                '* Champs obligatoires',
+                style: TextStyle(color: Colors.black54),
+              ),
+              const SizedBox(height: 10),
 
               // BOUTON PUBLIER
               SizedBox(
