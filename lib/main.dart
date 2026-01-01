@@ -36,6 +36,7 @@ import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
 import 'pages/pro_profile_page.dart';
 import 'pages/legal_info_page.dart';
+import 'pages/admin_space_page.dart';
 import 'dev/seed_offers.dart';
 
 import 'app/theme.dart';
@@ -6765,6 +6766,7 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
+  // ignore: unused_element
   Widget _buildAdminMicroIaPanel(User user) {
     _adminCfgFuture ??= _adminGetMicroIaConfig();
 
@@ -8213,7 +8215,7 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                   ),
                   const SizedBox(height: 28),
-                  _buildAdminMicroIaPanel(user),
+                  _buildAdminSpaceEntry(user),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -8234,6 +8236,93 @@ class _AccountPageState extends State<AccountPage> {
         ),
       ),
       ),
+    );
+  }
+
+  Widget _buildAdminSpaceEntry(User user) {
+    _adminCfgFuture ??= _adminGetMicroIaConfig();
+
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _adminCfgFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+
+        if (snapshot.hasError) {
+          // Non-admin => on masque.
+          final errStr = snapshot.error.toString();
+          if (errStr.contains('permission-denied') ||
+              errStr.contains('unauthenticated')) {
+            return const SizedBox.shrink();
+          }
+          return const SizedBox.shrink();
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 18),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: kPrestoBlue.withOpacity(0.25)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.admin_panel_settings,
+                      color: kPrestoBlue.withOpacity(0.95)),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'Espace admin',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "Outils d’administration et réglages Micro-IA.",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AdminSpacePage(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  label: const Text("Ouvrir l'espace admin"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kPrestoOrange,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
