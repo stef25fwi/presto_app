@@ -23,6 +23,8 @@ import 'utils/crashlytics_context.dart';
 import 'utils/friendly_snackbar.dart';
 import 'utils/recording_path.dart';
 import 'features/micro_ia/micro_ia_service.dart';
+import 'features/micro_ia/web_audio_recorder_stub.dart'
+  if (dart.library.html) 'features/micro_ia/web_audio_recorder.dart';
 import 'features/messaging/conversation_service.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/ad_banner.dart';
@@ -5355,6 +5357,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // Service IA pour analyser la description
   final AiDraftService _aiService = AiDraftService();
   final AudioRecorder _recorder = AudioRecorder();
+  final WebAudioRecorder _webRec = WebAudioRecorder();
   String? _recordingPath;
   // Toujours actif (améliore la qualité via Google STT côté serveur)
   final bool _useCloudStt = true;
@@ -5373,10 +5376,39 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // ✅ Micro global: on ne fait PLUS speech_to_text (trop variable)
     // On enregistre uniquement en WAV 16k mono, puis _stopMic() déclenchera _uploadAndTranscribe() (MicroIA).
     if (kIsWeb) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Dictée non disponible sur le web')),
-      );
+      try {
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid == null) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Connecte-toi pour utiliser la dictée')),
+          );
+          return;
+        }
+
+        await CrashlyticsContext.setUserId(uid);
+        await CrashlyticsContext.setKey('flow', 'webMic');
+
+        await _webRec.start();
+        if (!mounted) return;
+        setState(() => _isListening = true);
+      } catch (e, st) {
+        await CrashlyticsContext.recordError(
+          e is Exception ? e : Exception(e.toString()),
+          st,
+          reason: 'Web mic start failed',
+          fatal: false,
+          keys: {
+            'component': 'Main',
+            'flow': 'webMic',
+            'step': 'start',
+          },
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Micro web indisponible: $e')),
+        );
+      }
       return;
     }
 
@@ -5412,6 +5444,97 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _stopMic() async {
     if (!_isListening) return;
     if (_isAnalyzing) return;
+
+    if (kIsWeb) {
+      if (!mounted) return;
+      setState(() {
+        _isListening = false;
+        _isAnalyzing = true;
+      });
+
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        final uid = user?.uid;
+        if (uid == null) throw Exception('Not authenticated');
+
+        final blob = await _webRec.stopToBlob();
+        final webmBytes = await webBlobToBytes(blob);
+        if (webmBytes.length < 30000) {
+          throw Exception('Audio invalide (blob trop petit: ${webmBytes.length} bytes).');
+        }
+
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final destPath = 'stt/${uid}_$ts.webm';
+        final ref = FirebaseStorage.instance.ref(destPath);
+        await ref.putData(webmBytes, SettableMetadata(contentType: 'audio/webm'));
+
+        final out = await MicroIaService.processAudio(
+          storagePath: destPath,
+          languageCode: 'fr-FR',
+        );
+
+        final transcript = (out['text'] ?? '').toString().trim();
+        if (transcript.isEmpty) throw Exception('Aucun texte reconnu');
+
+        final draft = await _aiService.generateOfferDraft(text: transcript);
+        if (!mounted) return;
+
+        if (draft['success'] == true) {
+          setState(() {
+            final title = (draft['title'] as String? ?? '').trim();
+            final category = (draft['category'] as String? ?? '').trim();
+            final description = (draft['description'] as String? ?? '').trim();
+            final location = (draft['location'] as String? ?? '').trim();
+            final postalCode = (draft['postalCode'] as String? ?? '').trim();
+
+            if (title.isNotEmpty) _titleController.text = title;
+            if (description.isNotEmpty) _descriptionController.text = description;
+            if (category.isNotEmpty) {
+              _category = category;
+              _selectedSubCategory = null;
+            }
+            if (location.isNotEmpty) _locationController.text = location;
+            if (postalCode.isNotEmpty) _postalCodeController.text = postalCode;
+          });
+
+          showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
+        } else {
+          final code = (draft['code'] ?? '').toString();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                code == 'deadline-exceeded'
+                    ? 'Connexion lente, réessaie.'
+                    : 'Erreur IA: ${draft['error'] ?? 'inconnue'}',
+              ),
+            ),
+          );
+        }
+      } catch (e, st) {
+        await CrashlyticsContext.recordError(
+          e is Exception ? e : Exception(e.toString()),
+          st,
+          reason: 'Web mic stop/process failed',
+          fatal: false,
+          keys: {
+            'component': 'Main',
+            'flow': 'webMic',
+            'step': 'stop',
+          },
+        );
+        if (!mounted) return;
+        if (isTimeoutError(e)) {
+          showTimeoutSnackBar(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur transcription (web): $e')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isAnalyzing = false);
+      }
+      return;
+    }
 
     String? recordedPath;
     try {
