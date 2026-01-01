@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../constants.dart';
 import 'package:flutter/services.dart';
 
 import '../utils/keyword_suggester.dart';
@@ -267,7 +268,10 @@ class _EntrepreneurToolboxPageState extends State<EntrepreneurToolboxPage> {
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
-        title: const Text("Boîte à Outils"),
+        title: const Text(
+          "Boîte à Outils",
+          style: kPrestoAppBarTitleStyle,
+        ),
         centerTitle: true,
       ),
       body: ListView(

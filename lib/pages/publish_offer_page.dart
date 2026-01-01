@@ -18,6 +18,7 @@ import '../utils/recording_path.dart';
 import '../services/city_repo_compact.dart';
 import '../widgets/city_postal_autocomplete_compact.dart';
 import '../widgets/phone_input_field.dart';
+import '../constants.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -631,11 +632,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           fit: BoxFit.scaleDown,
           child: Text(
             "Je publie une offre",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
+            style: kPrestoAppBarTitleStyle,
           ),
         ),
         centerTitle: false,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants.dart';
 
 /// On redéfinit juste la couleur orange Prestō ici
 const kPrestoOrange = Color(0xFFFF6600);
@@ -95,7 +96,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         foregroundColor: Colors.white,
         title: const Text(
           "Mes messages",
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: kPrestoAppBarTitleStyle,
         ),
         actions: [
           Padding(
@@ -264,7 +265,10 @@ class ConversationPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
-        title: Text(conversation.contactName),
+        title: Text(
+          conversation.contactName,
+          style: kPrestoAppBarTitleStyle,
+        ),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
