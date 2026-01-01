@@ -6198,43 +6198,52 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         backgroundColor: Colors.grey.shade100,
         appBar: AppBar(
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-        backgroundColor: kPrestoOrange,
-        elevation: 0,
-        title: const Text(
-          'Je publie une offre',
-          style: kPrestoAppBarTitleStyle,
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_outlined, color: Colors.white),
-            tooltip: 'Réinitialiser tous les champs',
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  title: const Text('Réinitialiser ?'),
-                  content: const Text(
-                    'Voulez-vous effacer tous les champs et recommencer ?',
+          backgroundColor: kPrestoOrange,
+          foregroundColor: Colors.white,
+          iconTheme: const IconThemeData(color: Colors.white),
+          actionsIconTheme: const IconThemeData(color: Colors.white),
+          titleTextStyle: kPrestoAppBarTitleStyle.copyWith(color: Colors.white),
+          elevation: 0,
+          title: const Text('Je publie une offre'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_outlined),
+              tooltip: 'Réinitialiser tous les champs',
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    backgroundColor: Colors.white,
+                    title: const Text('Réinitialiser ?'),
+                    content: const Text(
+                      'Voulez-vous effacer tous les champs et recommencer ?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          foregroundColor: kPrestoBlue,
+                        ),
+                        child: const Text('Annuler'),
+                      ),
+                      FilledButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _resetAllFields();
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: kPrestoOrange,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Réinitialiser'),
+                      ),
+                    ],
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Annuler'),
-                    ),
-                    FilledButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _resetAllFields();
-                      },
-                      child: const Text('Réinitialiser'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+                );
+              },
+            ),
+          ],
+        ),
       body: SafeArea(
         child: Form(
           key: _formKey,
