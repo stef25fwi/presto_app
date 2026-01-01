@@ -1,5 +1,5 @@
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
+import 'package:flutter/foundation.dart'
+  show kIsWeb, kDebugMode, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:presto_app/widgets/random_asset_ticker.dart';
@@ -56,9 +56,10 @@ class _AdBannerState extends State<AdBanner> {
   }
 
   String get _adUnitId {
-    if (Platform.isAndroid) {
+    if (kIsWeb) return 'unsupported';
+    if (defaultTargetPlatform == TargetPlatform.android) {
       return AdConfig.androidBannerId;
-    } else if (Platform.isIOS) {
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
       return AdConfig.iosBannerId;
     }
     return 'unsupported';

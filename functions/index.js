@@ -5,6 +5,12 @@ const admin = require('firebase-admin');
 const OpenAI = require('openai');
 const { createModerateNewOffer } = require('./moderation');
 
+const os = require('os');
+const path = require('path');
+const fs = require('fs/promises');
+const { spawn } = require('child_process');
+const ffmpegPath = require('ffmpeg-static');
+
 admin.initializeApp();
 
 // Secrets (Firebase Functions v2)
@@ -765,8 +771,40 @@ function isAllowedAudioContentType(ct) {
     v === 'audio/x-wav' ||
     v === 'audio/wave' ||
     v === 'audio/vnd.wave' ||
+    v === 'audio/webm' ||
+    v === 'video/webm' ||
     v === 'application/octet-stream'
   );
+}
+
+async function runFfmpegToWav16kMono({ inputPath, outputPath }) {
+  if (!ffmpegPath) {
+    throw new Error('ffmpeg-static not available (ffmpegPath is null). Did you install ffmpeg-static in functions/?');
+  }
+
+  // WAV PCM16 (s16le), 16kHz, mono
+  const args = [
+    '-y',
+    '-i',
+    inputPath,
+    '-ac',
+    '1',
+    '-ar',
+    '16000',
+    '-acodec',
+    'pcm_s16le',
+    outputPath,
+  ];
+
+  await new Promise((resolve, reject) => {
+    const p = spawn(ffmpegPath, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    let err = '';
+    p.stderr.on('data', (d) => (err += d.toString()));
+    p.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`ffmpeg failed code=${code}\n${err}`));
+    });
+  });
 }
 
 function estimateDurationSec(audioInfo) {
@@ -801,6 +839,7 @@ exports.microIaProcessAudio = onCall(
     secrets: [OPENAI_API_KEY], // ⚠️ garde EXACTEMENT ta constante existante
   },
   async (req) => {
+    console.log("[microIaProcessAudio] version=2026-01-01-ffmpeg-webm-1");
     try {
       const requestId = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
       const { storagePath, languageCode } = req.data || {};
@@ -836,7 +875,9 @@ exports.microIaProcessAudio = onCall(
 
       // Ownership strict: la page client upload sous stt/${uid}_${timestamp}.wav
       const expectedPrefix = `stt/${uid}_`;
-      if (!storagePath.startsWith(expectedPrefix) || !storagePath.endsWith('.wav')) {
+      const isWavPath = storagePath.endsWith('.wav');
+      const isWebmPath = storagePath.endsWith('.webm');
+      if (!storagePath.startsWith(expectedPrefix) || (!isWavPath && !isWebmPath)) {
         throw new HttpsError("permission-denied", "storagePath does not belong to authenticated user.");
       }
 
@@ -868,12 +909,40 @@ exports.microIaProcessAudio = onCall(
       if (!isAllowedAudioContentType(contentType)) {
         throw new HttpsError(
           "failed-precondition",
-          `Type audio invalide (contentType=${contentType || 'null'}). Envoie un WAV (audio/wav).`
+          `Type audio invalide (contentType=${contentType || 'null'}). Envoie un WAV (audio/wav) ou WEBM (audio/webm).`
         );
       }
 
-      const audioBuffer = await loadAudioBufferFromStorage(storagePath);
-      const audioInfo = parseWavHeader(audioBuffer);
+      let audioBuffer = await loadAudioBufferFromStorage(storagePath);
+      let audioInfo = parseWavHeader(audioBuffer);
+
+      // Si ce n'est pas un WAV PCM16 exploitable (ex: WEBM/OPUS), on convertit côté serveur.
+      const shouldConvertToWav = !audioInfo?.isWav || audioInfo.audioFormat !== 1 || audioInfo.bitsPerSample !== 16;
+      if (shouldConvertToWav) {
+        const tmpDir = path.join(os.tmpdir(), 'presto_microia');
+        const ext = isWebmPath ? '.webm' : '.bin';
+        const inputPath = path.join(tmpDir, `in_${requestId}${ext}`);
+        const outputPath = path.join(tmpDir, `out_${requestId}.wav`);
+
+        try {
+          await fs.mkdir(tmpDir, { recursive: true });
+          await fs.writeFile(inputPath, audioBuffer);
+
+          console.log('[microIaProcessAudio] FFMPEG_CONVERT', {
+            requestId,
+            from: ext,
+            bytes: audioBuffer?.length || 0,
+          });
+
+          await runFfmpegToWav16kMono({ inputPath, outputPath });
+          audioBuffer = await fs.readFile(outputPath);
+          audioInfo = parseWavHeader(audioBuffer);
+        } finally {
+          // Best-effort cleanup
+          await fs.unlink(inputPath).catch(() => {});
+          await fs.unlink(outputPath).catch(() => {});
+        }
+      }
 
       console.log("[microIaProcessAudio] AUDIO", {
         isWav: audioInfo?.isWav,
