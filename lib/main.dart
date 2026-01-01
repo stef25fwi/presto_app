@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -15,13 +15,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:record/record.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'firebase_options.dart';
 import 'app_core.dart';
 import 'constants.dart';
 import 'utils/crashlytics_context.dart';
 import 'utils/friendly_snackbar.dart';
+import 'utils/recording_path.dart';
 import 'features/micro_ia/micro_ia_service.dart';
 import 'features/messaging/conversation_service.dart';
 import 'widgets/premium_ai_button.dart';
@@ -5383,9 +5383,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // Préparer l'enregistreur haute qualité (WAV)
     try {
       if (await _recorder.hasPermission()) {
-        final tempDir = await getTemporaryDirectory();
-        final filePath =
-            '${tempDir.path}/presto_${DateTime.now().millisecondsSinceEpoch}.wav';
+        final filePath = await createTempWavPath(prefix: 'presto');
         await _recorder.start(
           RecordConfig(
             encoder: AudioEncoder.wav,
@@ -5508,15 +5506,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // ✅ Forcer le pipeline MicroIA (WAV 16k mono) + génération de draft.
     final user = FirebaseAuth.instance.currentUser;
     final uid = user?.uid ?? 'anonymous';
-    final file = File(localPath);
-    if (!await file.exists()) {
+    final xfile = XFile(localPath);
+    final wavBytes = await xfile.readAsBytes();
+    if (wavBytes.isEmpty) {
       throw 'Fichier audio introuvable';
     }
     final ts = DateTime.now().millisecondsSinceEpoch;
     final storage = FirebaseStorage.instance;
     final destPath = 'stt/${uid}_$ts.wav';
     final ref = storage.ref(destPath);
-    await ref.putFile(file, SettableMetadata(contentType: 'audio/wav'));
+    await ref.putData(wavBytes, SettableMetadata(contentType: 'audio/wav'));
 
     final out = await MicroIaService.processAudio(
       storagePath: destPath,
@@ -5842,10 +5841,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             'offers/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
 
         final ref = FirebaseStorage.instance.ref().child(fileName);
-        await ref.putFile(
-          File(photo.path),
-          SettableMetadata(contentType: 'image/jpeg'),
-        );
+        final bytes = await photo.readAsBytes();
+        await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
 
         final url = await ref.getDownloadURL();
         _uploadedPhotoUrls.add(url);
@@ -6476,23 +6473,49 @@ class _PhotoSelectorTile extends StatelessWidget {
     } else {
       content = ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: Image.file(
-          File(localFile.path),
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.image, size: 24, color: kPrestoOrange),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+        child: FutureBuilder<Uint8List>(
+          future: localFile.readAsBytes(),
+          builder: (context, snap) {
+            if (snap.hasData) {
+              return Image.memory(
+                snap.data!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.image, size: 24, color: kPrestoOrange),
+                    const SizedBox(height: 4),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
+              );
+            }
+
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       );
     }

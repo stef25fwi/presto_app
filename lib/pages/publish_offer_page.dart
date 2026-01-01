@@ -1,17 +1,20 @@
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, debugPrint;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, debugPrint;
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'dart:io' show File;
+import 'package:cross_file/cross_file.dart';
 import '../services/audio_service.dart';
 import '../services/micro_ia_service.dart';
 import '../features/publish_offer/ai_offer_service.dart';
-import 'package:path_provider/path_provider.dart' if (dart.library.html) '';
+import '../features/micro_ia/web_audio_recorder_stub.dart'
+    if (dart.library.html) '../features/micro_ia/web_audio_recorder.dart';
 import '../utils/crashlytics_context.dart';
 import '../utils/retry.dart';
 import '../utils/friendly_snackbar.dart';
+import '../utils/recording_path.dart';
 import '../services/city_repo_compact.dart';
 import '../widgets/city_postal_autocomplete_compact.dart';
 import '../widgets/phone_input_field.dart';
@@ -39,6 +42,8 @@ class PublishOfferPage extends StatefulWidget {
 class _PublishOfferPageState extends State<PublishOfferPage> {
   final _formKey = GlobalKey<FormState>();
   late final CityRepoCompact _repo;
+
+  final WebAudioRecorder _webRec = WebAudioRecorder();
 
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
@@ -172,9 +177,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // ⚠️ adapte ces noms si tes controllers s'appellent autrement
     // ex: _titleController au lieu de _titleCtrl
     final titleCtrl = _titleCtrl;
-    final descCtrl  = _descCtrl;
-    final cityCtrl  = _cityCtrl;
-    final cpCtrl    = _cpCtrl;
+    final descCtrl = _descCtrl;
+    final cityCtrl = _cityCtrl;
+    final cpCtrl = _cpCtrl;
 
     // Téléphone + Budget => on ne touche pas :
     // final phoneCtrl = _phoneCtrl;
@@ -197,8 +202,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Non")),
-            ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text("Remplacer")),
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("Non")),
+            ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text("Remplacer")),
           ],
         ),
       );
@@ -218,8 +227,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
 
       // ✅ Remplissages
-      if ((draft.title ?? "").trim().isNotEmpty) titleCtrl.text = draft.title!.trim();
-      if ((draft.description ?? "").trim().isNotEmpty) descCtrl.text = draft.description!.trim();
+      if ((draft.title ?? "").trim().isNotEmpty)
+        titleCtrl.text = draft.title!.trim();
+      if ((draft.description ?? "").trim().isNotEmpty)
+        descCtrl.text = draft.description!.trim();
 
       // Catégorie si renvoyée
       if ((draft.category ?? "").trim().isNotEmpty) {
@@ -227,8 +238,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
 
       // Ville / CP si renvoyés
-      if ((draft.city ?? "").trim().isNotEmpty) cityCtrl.text = draft.city!.trim();
-      if ((draft.postalCode ?? "").trim().isNotEmpty) cpCtrl.text = draft.postalCode!.trim();
+      if ((draft.city ?? "").trim().isNotEmpty)
+        cityCtrl.text = draft.city!.trim();
+      if ((draft.postalCode ?? "").trim().isNotEmpty)
+        cpCtrl.text = draft.postalCode!.trim();
 
       // ❌ IMPORTANT : on ne modifie pas Téléphone / Budget
 
@@ -256,11 +269,33 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   /// Enregistrement audio Premium avec transcription Chirp 3 EU + Rédaction Gemini
   Future<void> _togglePremiumRecording() async {
     if (_aiLoading) return;
+
+    if (kIsWeb) {
+      if (_recording) {
+        if (!mounted) return;
+        setState(() => _recording = false);
+
+        await _stopWebMicAndProcess();
+      } else {
+        try {
+          await _webRec.start();
+          if (!mounted) return;
+          setState(() => _recording = true);
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Micro web indisponible: $e')),
+          );
+        }
+      }
+      return;
+    }
+
     if (_recording) {
       // Arrêter l'enregistrement
       final path = await _audioRecorder.stop();
       if (!mounted) return;
-      
+
       setState(() {
         _recording = false;
       });
@@ -271,8 +306,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     } else {
       // Démarrer l'enregistrement
       if (await _audioRecorder.hasPermission()) {
-        final filePath = '${(await getTemporaryDirectory()).path}/presto_audio_${DateTime.now().millisecondsSinceEpoch}.wav';
-        
+        final filePath = await createTempWavPath(prefix: 'presto_audio');
         await _audioRecorder.start(
           const RecordConfig(
             encoder: AudioEncoder.wav,
@@ -281,7 +315,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ),
           path: filePath,
         );
-        
+
         if (!mounted) return;
         setState(() => _recording = true);
       } else {
@@ -290,6 +324,89 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           const SnackBar(content: Text("Permission micro requise")),
         );
       }
+    }
+  }
+
+  Future<void> _stopWebMicAndProcess() async {
+    if (_aiLoading) return;
+    setState(() => _aiLoading = true);
+
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) throw Exception('Not authenticated');
+
+      await CrashlyticsContext.setUserId(uid);
+      await CrashlyticsContext.setKey('flow', 'webMic');
+
+      final blob = await _webRec.stopToBlob();
+      final webmBytes = await webBlobToBytes(blob);
+
+      final bytes = webmBytes.length;
+      debugPrint('[IA AUDIO WEB] webmBytes=$bytes');
+
+      await trace('web_before_upload', {
+        'bytes': bytes,
+      });
+
+      if (bytes < 30000) {
+        throw Exception(
+          'Audio invalide (blob trop petit: $bytes bytes). Réessaie en parlant plus près du micro.',
+        );
+      }
+
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final storagePath = 'stt/${uid}_$ts.webm';
+
+      final ref = FirebaseStorage.instance.ref(storagePath);
+      await ref.putData(
+        webmBytes,
+        SettableMetadata(contentType: 'audio/webm'),
+      );
+
+      await trace('web_after_upload', {
+        'storagePath': storagePath,
+        'bytes': bytes,
+      });
+
+      final out = await MicroIaService.processAudio(
+        storagePath: storagePath,
+        languageCode: 'fr-FR',
+      );
+
+      final transcript = (out['text'] ?? '').toString();
+      if (transcript.trim().isNotEmpty) {
+        _descCtrl.text = transcript.trim();
+      }
+
+      if (mounted) {
+        setState(() {});
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transcription web OK ✅')),
+        );
+      }
+    } catch (e, st) {
+      await CrashlyticsContext.recordError(
+        e is Exception ? e : Exception(e.toString()),
+        st,
+        reason: 'Web mic record/process failed',
+        fatal: false,
+        keys: {
+          'component': 'PublishOfferPage',
+          'flow': 'webMic',
+        },
+      );
+
+      if (mounted) {
+        if (isTimeoutError(e)) {
+          showTimeoutSnackBar(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur Premium IA (web) : $e')),
+          );
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _aiLoading = false);
     }
   }
 
@@ -306,34 +423,34 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       await CrashlyticsContext.setUserId(user.uid);
       await CrashlyticsContext.setKey('flow', 'uploadAndTranscribe');
 
-        // Upload vers Cloud Storage
-      final file = File(audioPath);
+      // Upload vers Cloud Storage (compatible Web: pas de dart:io / putFile)
+      final xfile = XFile(audioPath);
+      final wavBytes = await xfile.readAsBytes();
+      final bytes = wavBytes.length;
 
-      final exists = await file.exists();
-      final bytes = exists ? await file.length() : 0;
-      debugPrint('[IA AUDIO] exists=$exists bytes=$bytes path=$audioPath');
+      debugPrint('[IA AUDIO] bytes=$bytes path=$audioPath');
 
       await trace('before_upload', {
         'path': audioPath,
-        'exists': exists,
         'bytes': bytes,
       });
 
-      if (!exists || bytes < 30000) {
+      if (bytes < 30000) {
         throw Exception(
           "Audio invalide (fichier trop petit: $bytes bytes). Réessaie en parlant plus près du micro.",
         );
       }
 
       // ✅ extension cohérente avec RecordConfig encoder: AudioEncoder.wav
-      final fileName = 'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.wav';
+      final fileName =
+          'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.wav';
 
       final storageRef = FirebaseStorage.instance.ref().child(fileName);
 
       await retry(
         () => storageRef
-            .putFile(
-              file,
+            .putData(
+              wavBytes,
               SettableMetadata(
                 contentType: 'audio/wav',
                 cacheControl: 'private, max-age=3600',
@@ -361,7 +478,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'storagePath': fileName,
         'bytes': bytes,
       });
-      
+
       // Construire le gcsUri
       final bucket = FirebaseStorage.instance.ref().bucket;
       final gcsUri = 'gs://$bucket/$fileName';
@@ -372,7 +489,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
 
       // Appeler le nouveau service Micro-IA
-      debugPrint("[IA AUDIO] calling microIaProcessAudio storagePath=$fileName");
+      debugPrint(
+          "[IA AUDIO] calling microIaProcessAudio storagePath=$fileName");
       final out = await MicroIaService.processAudio(
         storagePath: fileName, // le path dans le bucket
         languageCode: 'fr-FR',
@@ -414,11 +532,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         );
       }
 
-      // Nettoyer le fichier temporaire
-      try {
-        await file.delete();
-      } catch (_) {}
-
+      // Note: nettoyage local non applicable ici (XFile)
     } catch (e, st) {
       await trace('error', {
         'path': audioPath,
@@ -486,15 +600,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
 
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Offre publiée avec succès ✅")),
       );
-      
+
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Erreur lors de la publication : $e")),
       );
@@ -555,233 +669,230 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       ),
                     ),
                     onPressed: _aiLoading ? null : _togglePremiumRecording,
-                    icon: _aiLoading 
+                    icon: _aiLoading
                         ? const SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                        : Icon(_recording ? Icons.stop_circle : Icons.mic_rounded),
+                        : Icon(
+                            _recording ? Icons.stop_circle : Icons.mic_rounded),
                     label: Text(
-                      _aiLoading 
-                          ? "Analyse en cours..." 
-                          : (_recording ? "Arrêter l'enregistrement" : "Décrivez votre besoin"),
+                      _aiLoading
+                          ? "Analyse en cours..."
+                          : (_recording
+                              ? "Arrêter l'enregistrement"
+                              : "Décrivez votre besoin"),
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 12),
-
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text("Assistant IA", style: TextStyle(fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _aiHintCtrl,
-                      decoration: const InputDecoration(
-                        labelText: "Décris ton besoin (optionnel)",
-                        hintText: "Ex: Peintre pour salon, urgent demain, Les Abymes…",
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(15),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    // Bouton Premium avec enregistrement audio (Mobile uniquement)
-                    if (!kIsWeb) ...[
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: (_aiLoading || _recording) ? null : _togglePremiumRecording,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPrestoOrange,
-                            foregroundColor: Colors.white,
-                          ),
-                          icon: _recording
-                              ? const Icon(Icons.stop_circle, color: Colors.white)
-                              : const Icon(Icons.mic, color: Colors.white),
-                          label: Text(_recording ? "Arrêter l'enregistrement" : "🎙️ Premium (Audio)"),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text("Assistant IA",
+                          style: TextStyle(fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _aiHintCtrl,
+                        decoration: const InputDecoration(
+                          labelText: "Décris ton besoin (optionnel)",
+                          hintText:
+                              "Ex: Peintre pour salon, urgent demain, Les Abymes…",
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        "Premium : Transcription Chirp 3 + Rédaction IA avancée. Téléphone et budget restent à saisir manuellement.",
-                        style: TextStyle(fontSize: 12, color: Colors.black54),
-                      ),
+                      const SizedBox(height: 10),
+                      // Bouton Premium avec enregistrement audio (Mobile uniquement)
+                      if (!kIsWeb) ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: (_aiLoading || _recording)
+                                ? null
+                                : _togglePremiumRecording,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrestoOrange,
+                              foregroundColor: Colors.white,
+                            ),
+                            icon: _recording
+                                ? const Icon(Icons.stop_circle,
+                                    color: Colors.white)
+                                : const Icon(Icons.mic, color: Colors.white),
+                            label: Text(_recording
+                                ? "Arrêter l'enregistrement"
+                                : "🎙️ Premium (Audio)"),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          "Premium : Transcription Chirp 3 + Rédaction IA avancée. Téléphone et budget restent à saisir manuellement.",
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                      ],
+                      if (kIsWeb) ...[
+                        const SizedBox(height: 6),
+                        const Text(
+                          "📱 L'enregistrement audio Premium est disponible sur l'app mobile. Téléphone et budget restent à saisir manuellement.",
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                      ],
                     ],
-                    if (kIsWeb) ...[
-                      const SizedBox(height: 6),
-                      const Text(
-                        "📱 L'enregistrement audio Premium est disponible sur l'app mobile. Téléphone et budget restent à saisir manuellement.",
-                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _titleCtrl,
+                  focusNode: _titleFocus,
+                  textInputAction: TextInputAction.next,
+                  decoration: _decoration("Titre de l'offre *"),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? "Titre obligatoire"
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _category,
+                  items: _categories
+                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _category = v),
+                  decoration: _decoration("Catégorie",
+                      suffix: const Icon(Icons.keyboard_arrow_down_rounded)),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _descCtrl,
+                  focusNode: _descFocus,
+                  minLines: 5,
+                  maxLines: 8,
+                  decoration: _decoration("Description détaillée *"),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? "Description obligatoire"
+                      : null,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: CityPostalAutocompleteCompact(
+                        repo: _repo,
+                        cityCtrl: _cityCtrl,
+                        cpCtrl: _cpCtrl,
+                        decoration: _decoration("Lieu / Ville *"),
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 1,
+                      child: TextFormField(
+                        controller: _cpCtrl,
+                        focusNode: _cpFocus,
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        decoration: _decoration("C/P"),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: _titleCtrl,
-                focusNode: _titleFocus,
-                textInputAction: TextInputAction.next,
-                decoration: _decoration("Titre de l'offre *"),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? "Titre obligatoire" : null,
-              ),
-
-              const SizedBox(height: 12),
-
-              DropdownButtonFormField<String>(
-                initialValue: _category,
-                items: _categories
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
-                onChanged: (v) => setState(() => _category = v),
-                decoration: _decoration("Catégorie",
-                    suffix: const Icon(Icons.keyboard_arrow_down_rounded)),
-              ),
-
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: _descCtrl,
-                focusNode: _descFocus,
-                minLines: 5,
-                maxLines: 8,
-                decoration: _decoration("Description détaillée *"),
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? "Description obligatoire"
-                    : null,
-              ),
-
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: CityPostalAutocompleteCompact(
-                      repo: _repo,
-                      cityCtrl: _cityCtrl,
-                      cpCtrl: _cpCtrl,
-                      decoration: _decoration("Lieu / Ville *"),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    flex: 1,
-                    child: TextFormField(
-                      controller: _cpCtrl,
-                      focusNode: _cpFocus,
-                      keyboardType: TextInputType.number,
-                      textInputAction: TextInputAction.next,
-                      decoration: _decoration("C/P"),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              PhoneInputFieldCompact(
-                controller: _phoneCtrl,
-                labelText: 'Téléphone (optionnel)',
-                hintText: '612345678',
-                focusNode: _phoneFocus,
-                onCountryCodeChanged: (code) => _phoneCountryCode = code,
-              ),
-
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: DropdownButtonFormField<String>(
+                const SizedBox(height: 12),
+                PhoneInputFieldCompact(
+                  controller: _phoneCtrl,
+                  labelText: 'Téléphone (optionnel)',
+                  hintText: '612345678',
+                  focusNode: _phoneFocus,
+                  onCountryCodeChanged: (code) => _phoneCountryCode = code,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: DropdownButtonFormField<String>(
                         initialValue: _budgetType,
-                      items: _budgetTypes
-                          .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                          .toList(),
-                      onChanged: (v) {
-                        if (v == null) return;
-                        setState(() {
-                          _budgetType = v;
-                          if (_budgetType == 'À négocier') {
-                            _budgetCtrl.clear();
-                          }
-                        });
-                      },
-                      decoration: _decoration(
-                        "Budget (fixe ou à négocier)",
-                        suffix: const Icon(Icons.keyboard_arrow_down_rounded),
+                        items: _budgetTypes
+                            .map((t) =>
+                                DropdownMenuItem(value: t, child: Text(t)))
+                            .toList(),
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setState(() {
+                            _budgetType = v;
+                            if (_budgetType == 'À négocier') {
+                              _budgetCtrl.clear();
+                            }
+                          });
+                        },
+                        decoration: _decoration(
+                          "Budget (fixe ou à négocier)",
+                          suffix: const Icon(Icons.keyboard_arrow_down_rounded),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    flex: 3,
-                    child: TextFormField(
-                      controller: _budgetCtrl,
-                      focusNode: _budgetFocus,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      decoration: _decoration("Montant (€)"),
-                      enabled: _budgetType == 'Fixe',
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 3,
+                      child: TextFormField(
+                        controller: _budgetCtrl,
+                        focusNode: _budgetFocus,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration: _decoration("Montant (€)"),
+                        enabled: _budgetType == 'Fixe',
+                      ),
                     ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 18),
-
-              SizedBox(
-                height: 54,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrestoOrange,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrestoOrange,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                      elevation: 0,
                     ),
-                    elevation: 0,
-                  ),
-                  onPressed: _publish,
-                  icon: const Icon(Icons.send_rounded),
-                  label: const Text(
-                    "Publier l'offre",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    onPressed: _publish,
+                    icon: const Icon(Icons.send_rounded),
+                    label: const Text(
+                      "Publier l'offre",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 10),
-
-              const Text(
-                "* Champs obligatoires",
-                style: TextStyle(fontSize: 12, color: Color(0xFF7A7A7A)),
-              ),
-            ],
+                const SizedBox(height: 10),
+                const Text(
+                  "* Champs obligatoires",
+                  style: TextStyle(fontSize: 12, color: Color(0xFF7A7A7A)),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 }
@@ -813,13 +924,13 @@ class _MicButton extends StatelessWidget {
               height: 60,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: listening 
-                  ? null
-                  : const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [kPrestoBlue, Color(0xFF0D47A1)],
-                    ),
+                gradient: listening
+                    ? null
+                    : const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [kPrestoBlue, Color(0xFF0D47A1)],
+                      ),
               ),
               child: Icon(
                 listening ? Icons.stop_rounded : Icons.mic_rounded,
