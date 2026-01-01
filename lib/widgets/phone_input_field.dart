@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Modèle pour représenter les indicatifs téléphoniques
 class CountryCode {
@@ -17,6 +18,7 @@ class CountryCode {
 /// France métropolitaine + DROM
 class PhoneInputField extends StatefulWidget {
   final TextEditingController controller;
+  final Widget? label;
   final String? labelText;
   final String? hintText;
   final InputDecoration? decoration;
@@ -28,6 +30,7 @@ class PhoneInputField extends StatefulWidget {
   const PhoneInputField({
     super.key,
     required this.controller,
+    this.label,
     this.labelText,
     this.hintText,
     this.decoration,
@@ -130,7 +133,10 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
           controller: widget.controller,
           focusNode: widget.focusNode,
           decoration: (widget.decoration ?? InputDecoration()).copyWith(
-            labelText: widget.labelText ?? 'Téléphone',
+            label: widget.label,
+            labelText: widget.label == null
+                ? (widget.labelText ?? 'Téléphone')
+                : null,
             hintText: widget.hintText ?? 'Ex: 612345678',
             prefixText: '${_selectedCountry.code} ',
             prefixIcon: const Icon(Icons.phone_outlined),
@@ -139,6 +145,9 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
             ),
           ),
           keyboardType: TextInputType.phone,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]')),
+          ],
           validator: widget.validator,
           onChanged: widget.onPhoneChanged,
         ),
@@ -150,6 +159,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
 /// Version compacte : sélecteur d'indicatif + champ sur la même ligne
 class PhoneInputFieldCompact extends StatefulWidget {
   final TextEditingController controller;
+  final Widget? label;
   final String? labelText;
   final String? hintText;
   final ValueChanged<String>? onCountryCodeChanged;
@@ -160,6 +170,7 @@ class PhoneInputFieldCompact extends StatefulWidget {
   const PhoneInputFieldCompact({
     super.key,
     required this.controller,
+    this.label,
     this.labelText,
     this.hintText,
     this.onCountryCodeChanged,
@@ -239,7 +250,9 @@ class _PhoneInputFieldCompactState extends State<PhoneInputFieldCompact> {
             controller: widget.controller,
             focusNode: widget.focusNode,
             decoration: InputDecoration(
-              labelText: widget.labelText ?? 'Téléphone',
+              label: widget.label,
+              labelText:
+                  widget.label == null ? (widget.labelText ?? 'Téléphone') : null,
               hintText: widget.hintText ?? '612345678',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -248,6 +261,9 @@ class _PhoneInputFieldCompactState extends State<PhoneInputFieldCompact> {
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
             keyboardType: TextInputType.phone,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]')),
+            ],
             validator: widget.validator,
             onChanged: widget.onPhoneChanged,
           ),
