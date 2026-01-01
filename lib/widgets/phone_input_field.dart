@@ -23,6 +23,7 @@ class PhoneInputField extends StatefulWidget {
   final ValueChanged<String>? onCountryCodeChanged;
   final ValueChanged<String>? onPhoneChanged;
   final FocusNode? focusNode;
+  final FormFieldValidator<String>? validator;
 
   const PhoneInputField({
     super.key,
@@ -33,6 +34,7 @@ class PhoneInputField extends StatefulWidget {
     this.onCountryCodeChanged,
     this.onPhoneChanged,
     this.focusNode,
+    this.validator,
   });
 
   @override
@@ -137,6 +139,7 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
             ),
           ),
           keyboardType: TextInputType.phone,
+          validator: widget.validator,
           onChanged: widget.onPhoneChanged,
         ),
       ],
@@ -152,6 +155,7 @@ class PhoneInputFieldCompact extends StatefulWidget {
   final ValueChanged<String>? onCountryCodeChanged;
   final ValueChanged<String>? onPhoneChanged;
   final FocusNode? focusNode;
+  final FormFieldValidator<String>? validator;
 
   const PhoneInputFieldCompact({
     super.key,
@@ -161,6 +165,7 @@ class PhoneInputFieldCompact extends StatefulWidget {
     this.onCountryCodeChanged,
     this.onPhoneChanged,
     this.focusNode,
+    this.validator,
   });
 
   @override
@@ -243,6 +248,7 @@ class _PhoneInputFieldCompactState extends State<PhoneInputFieldCompact> {
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
             keyboardType: TextInputType.phone,
+            validator: widget.validator,
             onChanged: widget.onPhoneChanged,
           ),
         ),
