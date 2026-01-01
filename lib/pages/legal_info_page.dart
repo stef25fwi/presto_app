@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../constants.dart';
 
 class LegalInfoPage extends StatefulWidget {
   const LegalInfoPage({super.key});
@@ -53,11 +54,7 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
         ),
         title: const Text(
           "iliprestō",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.2,
-          ),
+          style: kPrestoAppBarTitleStyle,
         ),
         centerTitle: true,
       ),
@@ -459,7 +456,7 @@ class _LegalSectionPage extends StatelessWidget {
         ),
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.w800),
+          style: kPrestoAppBarTitleStyle,
         ),
         centerTitle: true,
       ),

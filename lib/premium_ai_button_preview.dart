@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'widgets/premium_ai_button.dart';
+import 'constants.dart';
 
 /// Page de démonstration du bouton Premium AI
 class PremiumAiButtonPreview extends StatefulWidget {
@@ -14,7 +15,10 @@ class _PremiumAiButtonPreviewState extends State<PremiumAiButtonPreview> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bouton Premium AI - Preview'),
+        title: const Text(
+          'Bouton Premium AI - Preview',
+          style: kPrestoAppBarTitleStyle,
+        ),
         backgroundColor: const Color(0xFF1A73E8),
         foregroundColor: Colors.white,
       ),

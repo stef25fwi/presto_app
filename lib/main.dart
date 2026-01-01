@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -3081,11 +3080,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           fit: BoxFit.scaleDown,
           child: Text(
             baseTitle,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
+            style: kPrestoAppBarTitleStyle,
           ),
         ),
         backgroundColor: kPrestoOrange,
@@ -4130,7 +4125,7 @@ Motif du signalement :
         ),
         title: const Text(
           "Détail de l’offre",
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: kPrestoAppBarTitleStyle,
         ),
         centerTitle: true,
         backgroundColor: kPrestoOrange,
@@ -4517,7 +4512,7 @@ class MessagesPage extends StatelessWidget {
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: const Text(
           "Mes messages",
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: kPrestoAppBarTitleStyle,
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -4586,7 +4581,7 @@ class MessagesPage extends StatelessWidget {
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
           title: const Text(
             "Mes messages",
-            style: TextStyle(fontWeight: FontWeight.w700),
+            style: kPrestoAppBarTitleStyle,
           ),
           backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -5116,13 +5111,14 @@ class _ConversationPageState extends State<ConversationPage> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                widget.offerTitle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  widget.offerTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: kPrestoAppBarTitleStyle,
                 ),
               ),
             ),
@@ -6122,15 +6118,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         elevation: 0,
         title: const Text(
           'Je publie une offre',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-          ),
+          style: kPrestoAppBarTitleStyle,
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_outlined),
+            icon: const Icon(Icons.refresh_outlined, color: Colors.white),
             tooltip: 'Réinitialiser tous les champs',
             onPressed: () {
               showDialog(
@@ -6707,6 +6699,7 @@ class _AccountPageState extends State<AccountPage> {
   // Admin: paramètres Micro-IA (Remote Config)
   bool _adminConfigLoaded = false;
   bool _adminSaving = false;
+  bool _adminMicroIaEditing = false;
   String _adminMicroIaMode = 'HYBRID';
   bool _adminMicroIaFallbackEnabled = true;
   double _adminMicroIaQualityThreshold = 0.62;
@@ -6732,14 +6725,30 @@ class _AccountPageState extends State<AccountPage> {
         options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
       );
 
-      await callable.call<dynamic>({
+      final res = await callable.call<dynamic>({
         'mode': _adminMicroIaMode,
         'fallbackEnabled': _adminMicroIaFallbackEnabled,
         'qualityThreshold': _adminMicroIaQualityThreshold,
         'languageCode': _adminMicroIaLanguageCode,
       });
 
+      // ✅ Re-synchronise l'UI avec la config effectivement publiée.
+      final data = (res.data is Map) ? Map<String, dynamic>.from(res.data as Map) : <String, dynamic>{};
+      final mode = (data['mode'] ?? _adminMicroIaMode).toString();
+      final fallback = data['fallbackEnabled'] == true;
+      final threshold = (data['qualityThreshold'] as num?)?.toDouble() ?? _adminMicroIaQualityThreshold;
+      final lang = (data['languageCode'] ?? _adminMicroIaLanguageCode).toString();
+
       if (!mounted) return;
+
+      setState(() {
+        _adminMicroIaMode = mode;
+        _adminMicroIaFallbackEnabled = fallback;
+        _adminMicroIaQualityThreshold = threshold;
+        _adminMicroIaLanguageCode = lang;
+        _adminMicroIaLanguageController.text = lang;
+        _adminMicroIaEditing = false; // ✅ re-griser les champs
+      });
       showSuccessSnackBar(context, 'Paramètres Micro-IA mis à jour');
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
@@ -6809,6 +6818,21 @@ class _AccountPageState extends State<AccountPage> {
           _adminConfigLoaded = true;
         }
 
+        final canEdit = _adminMicroIaEditing && !_adminSaving;
+        final disabledHintStyle = TextStyle(
+          color: kPrestoBlue.withOpacity(0.65),
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        );
+
+        final techLines = <String>[
+          'uid: ${user.uid}',
+          'email: ${user.email ?? "(null)"}',
+          'providers: ${user.providerData.map((p) => p.providerId).join(', ')}',
+          'createdAt: ${user.metadata.creationTime?.toIso8601String() ?? "(null)"}',
+          'lastSignIn: ${user.metadata.lastSignInTime?.toIso8601String() ?? "(null)"}',
+        ];
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -6817,7 +6841,8 @@ class _AccountPageState extends State<AccountPage> {
               'PANNEAU ADMIN',
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900,
+                color: kPrestoBlue,
               ),
             ),
             const SizedBox(height: 4),
@@ -6834,9 +6859,10 @@ class _AccountPageState extends State<AccountPage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: kPrestoBlue.withOpacity(0.18)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: kPrestoBlue.withOpacity(0.08),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
@@ -6850,16 +6876,50 @@ class _AccountPageState extends State<AccountPage> {
                     'Espace admin',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w700,
+                      color: kPrestoBlue,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                   const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: kPrestoBlue.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: kPrestoBlue.withOpacity(0.18)),
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Profil admin (technique)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                            color: kPrestoBlue,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        SelectableText(
+                          techLines.join('\n'),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            height: 1.25,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   const Text(
                     'Micro-IA (transcription audio)',
                     style: TextStyle(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w900,
                       fontSize: 14,
+                      color: kPrestoOrange,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -6879,12 +6939,16 @@ class _AccountPageState extends State<AccountPage> {
                         child: Text('Whisper uniquement'),
                       ),
                     ],
-                    onChanged: (v) {
-                      if (v == null) return;
-                      setState(() => _adminMicroIaMode = v);
-                    },
-                    decoration: const InputDecoration(
+                    onChanged: canEdit
+                        ? (v) {
+                            if (v == null) return;
+                            setState(() => _adminMicroIaMode = v);
+                          }
+                        : null,
+                    decoration: InputDecoration(
                       labelText: 'Mode',
+                      helperText: canEdit ? null : 'Lecture seule (appuie sur “Modifier”)',
+                      helperStyle: disabledHintStyle,
                     ),
                   ),
                   SwitchListTile(
@@ -6895,9 +6959,7 @@ class _AccountPageState extends State<AccountPage> {
                       style: TextStyle(fontSize: 12),
                     ),
                     value: _adminMicroIaFallbackEnabled,
-                    onChanged: (v) {
-                      setState(() => _adminMicroIaFallbackEnabled = v);
-                    },
+                    onChanged: canEdit ? (v) => setState(() => _adminMicroIaFallbackEnabled = v) : null,
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -6913,9 +6975,7 @@ class _AccountPageState extends State<AccountPage> {
                     min: 0.40,
                     max: 0.95,
                     divisions: 55,
-                    onChanged: (v) {
-                      setState(() => _adminMicroIaQualityThreshold = v);
-                    },
+                    onChanged: canEdit ? (v) => setState(() => _adminMicroIaQualityThreshold = v) : null,
                   ),
                   TextField(
                     controller: _adminMicroIaLanguageController,
@@ -6923,6 +6983,7 @@ class _AccountPageState extends State<AccountPage> {
                       labelText: 'Language code',
                       hintText: 'fr-FR',
                     ),
+                    enabled: canEdit,
                     onChanged: (v) {
                       _adminMicroIaLanguageCode = v.trim();
                     },
@@ -6930,27 +6991,40 @@ class _AccountPageState extends State<AccountPage> {
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: kPrestoBlue,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: _adminSaving ? null : _adminSetMicroIaConfig,
-                      icon: _adminSaving
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            )
-                          : const Icon(Icons.admin_panel_settings_outlined),
-                      label: Text(
-                        _adminSaving ? 'Application…' : 'Appliquer',
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                    ),
+                    child: _adminMicroIaEditing
+                        ? ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrestoBlue,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: _adminSaving ? null : _adminSetMicroIaConfig,
+                            icon: _adminSaving
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : const Icon(Icons.check_circle_outline),
+                            label: Text(
+                              _adminSaving ? 'Application…' : 'Appliquer',
+                              style: const TextStyle(fontWeight: FontWeight.w800),
+                            ),
+                          )
+                        : OutlinedButton.icon(
+                            onPressed: _adminSaving
+                                ? null
+                                : () {
+                                    setState(() => _adminMicroIaEditing = true);
+                                  },
+                            icon: const Icon(Icons.edit_outlined),
+                            label: const Text(
+                              'Modifier',
+                              style: TextStyle(fontWeight: FontWeight.w800),
+                            ),
+                          ),
                   ),
                   const SizedBox(height: 6),
                   const Text(
@@ -7291,7 +7365,7 @@ class _AccountPageState extends State<AccountPage> {
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: const Text(
           "Mon compte iliprestō",
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: kPrestoAppBarTitleStyle,
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -7564,7 +7638,7 @@ class _AccountPageState extends State<AccountPage> {
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
           title: const Text(
             "Mon compte iliprestō",
-            style: TextStyle(fontWeight: FontWeight.w700),
+            style: kPrestoAppBarTitleStyle,
           ),
           backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'constants.dart';
 import 'widgets/phone_input_field.dart';
 
 enum AuthMode { login, signup }
@@ -103,7 +104,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mon profil'),
+        title: const Text(
+          'Mon profil',
+          style: kPrestoAppBarTitleStyle,
+        ),
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),

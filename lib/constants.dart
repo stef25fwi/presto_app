@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+/// Style de titre des headers (AppBar) — référence: "Mes messages"
+const TextStyle kPrestoAppBarTitleStyle = TextStyle(
+  fontWeight: FontWeight.w700,
+);
+
 /// Constantes de l'application Presto
 
 /// Infos région (code officiel + nom)

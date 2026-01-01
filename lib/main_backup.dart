@@ -9,6 +9,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'firebase_options.dart';
+import 'constants.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -2058,7 +2059,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       appBar: AppBar(
         title: Text(
           baseTitle,
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: kPrestoAppBarTitleStyle,
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -2565,7 +2566,7 @@ class OfferDetailPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           "Détail de l’offre",
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: kPrestoAppBarTitleStyle,
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -2923,7 +2924,7 @@ class MessagesPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           "Mes messages",
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: kPrestoAppBarTitleStyle,
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -2987,7 +2988,7 @@ class MessagesPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           "Mes messages",
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: kPrestoAppBarTitleStyle,
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -3526,13 +3527,14 @@ class _ConversationPageState extends State<ConversationPage> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                widget.offerTitle,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  widget.offerTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: kPrestoAppBarTitleStyle,
                 ),
               ),
             ),
@@ -3956,7 +3958,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       appBar: AppBar(
         title: const Text(
           "Je publie une offre",
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: kPrestoAppBarTitleStyle,
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -4610,7 +4612,7 @@ class _AccountPageState extends State<AccountPage> {
       appBar: AppBar(
         title: const Text(
           "Mon compte Prestō",
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: kPrestoAppBarTitleStyle,
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
@@ -4833,7 +4835,7 @@ class _AccountPageState extends State<AccountPage> {
     appBar: AppBar(
       title: const Text(
         "Mon compte Prestō",
-        style: TextStyle(fontWeight: FontWeight.w700),
+        style: kPrestoAppBarTitleStyle,
       ),
       backgroundColor: kPrestoOrange,
       foregroundColor: Colors.white,

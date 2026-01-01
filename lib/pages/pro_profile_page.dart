@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/phone_input_field.dart';
+import '../constants.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBeige  = Color(0xFFFCEEE2);
@@ -74,7 +75,10 @@ class _ProProfilePageState extends State<ProProfilePage> {
       appBar: AppBar(
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
-        title: const Text("Profil Pro"),
+        title: const Text(
+          "Profil Pro",
+          style: kPrestoAppBarTitleStyle,
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
