@@ -13,8 +13,11 @@ const ffmpegPath = require('ffmpeg-static');
 
 admin.initializeApp();
 
+const ENFORCE_APP_CHECK = String(process.env.ENFORCE_APP_CHECK || '').toLowerCase() === 'true';
+
 // Secrets (Firebase Functions v2)
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
+const GOOGLE_PLACES_API_KEY = defineSecret('GOOGLE_PLACES_API_KEY');
 
 // Carte des villes et codes postaux (Guadeloupe et Martinique)
 const CITY_POSTAL_MAP = {
@@ -150,13 +153,186 @@ function preprocessTranscript(text) {
   return cleaned;
 }
 
+function parseGsUri(gcsUri) {
+  if (typeof gcsUri !== 'string') return null;
+  const s = gcsUri.trim();
+  if (!s.startsWith('gs://')) return null;
+  const rest = s.slice('gs://'.length);
+  const slash = rest.indexOf('/');
+  if (slash <= 0) return null;
+  const bucket = rest.slice(0, slash);
+  const object = rest.slice(slash + 1);
+  if (!bucket || !object) return null;
+  if (object.includes('..') || object.startsWith('/') || object.includes('\\')) return null;
+  return { bucket, object };
+}
+
+// ============================================================================
+// Google Places proxy (évite d'exposer la clé côté client)
+// ============================================================================
+
+function assertAuthenticated(req) {
+  const uid = req.auth?.uid;
+  if (!uid) {
+    throw new HttpsError('unauthenticated', 'Authentication required.');
+  }
+  return uid;
+}
+
+function asNonEmptyString(v) {
+  if (typeof v !== 'string') return null;
+  const s = v.trim();
+  return s ? s : null;
+}
+
+async function rateLimitOrThrow({ uid, action, limit, windowSec }) {
+  const now = Date.now();
+  const bucket = Math.floor(now / (windowSec * 1000));
+  const id = `${action}_${uid}_${bucket}`;
+
+  const ref = admin.firestore().collection('_rate_limits').doc(id);
+  await admin.firestore().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const prev = snap.exists ? Number(snap.data()?.count || 0) : 0;
+    const next = prev + 1;
+    if (next > limit) {
+      throw new HttpsError('resource-exhausted', 'Trop de requêtes. Réessaie dans quelques instants.');
+    }
+
+    const expiresAtMs = (bucket + 1) * windowSec * 1000;
+    tx.set(
+      ref,
+      {
+        uid,
+        action,
+        bucket,
+        count: next,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        expiresAt: admin.firestore.Timestamp.fromMillis(expiresAtMs),
+      },
+      { merge: true }
+    );
+  });
+}
+
+exports.placesAutocomplete = onCall(
+  {
+    region: 'europe-west1',
+    timeoutSeconds: 15,
+    secrets: [GOOGLE_PLACES_API_KEY],
+    enforceAppCheck: ENFORCE_APP_CHECK,
+  },
+  async (req) => {
+    const uid = assertAuthenticated(req);
+    await rateLimitOrThrow({ uid, action: 'places_autocomplete', limit: 30, windowSec: 60 });
+
+    const input = asNonEmptyString(req.data?.input);
+    if (!input) throw new HttpsError('invalid-argument', 'input manquant');
+    if (input.length > 120) throw new HttpsError('invalid-argument', 'input trop long');
+
+    const language = asNonEmptyString(req.data?.language) || 'fr';
+    const types = asNonEmptyString(req.data?.types);
+
+    // componentRestrictions: { country: 'fr' } etc.
+    const componentRestrictions = req.data?.componentRestrictions;
+    let components = null;
+    if (componentRestrictions && typeof componentRestrictions === 'object') {
+      const entries = Object.entries(componentRestrictions)
+        .filter(([k, v]) => typeof k === 'string' && typeof v === 'string' && k.trim() && v.trim())
+        .slice(0, 5)
+        .map(([k, v]) => `${k}:${v}`)
+        .join('|');
+      components = entries || null;
+    }
+
+    const apiKey = GOOGLE_PLACES_API_KEY.value();
+    if (!apiKey) throw new HttpsError('failed-precondition', 'GOOGLE_PLACES_API_KEY manquante');
+
+    const url = new URL('https://maps.googleapis.com/maps/api/place/autocomplete/json');
+    url.searchParams.set('input', input);
+    url.searchParams.set('language', language);
+    url.searchParams.set('key', apiKey);
+    if (types) url.searchParams.set('types', types);
+    if (components) url.searchParams.set('components', components);
+
+    const resp = await fetch(url.toString(), { method: 'GET' });
+    const data = await resp.json().catch(() => null);
+    if (!resp.ok || !data) {
+      throw new HttpsError('internal', 'Erreur Google Places (autocomplete)');
+    }
+
+    const status = String(data.status || '');
+    if (status !== 'OK' && status !== 'ZERO_RESULTS') {
+      console.warn('[placesAutocomplete] non-OK status', { status, uid });
+      throw new HttpsError('failed-precondition', `Places: ${status}`);
+    }
+
+    const predictions = Array.isArray(data.predictions) ? data.predictions : [];
+    return {
+      status,
+      predictions: predictions.slice(0, 10).map((p) => ({
+        description: String(p?.description || ''),
+        placeId: String(p?.place_id || ''),
+      })),
+    };
+  }
+);
+
+exports.placesDetails = onCall(
+  {
+    region: 'europe-west1',
+    timeoutSeconds: 15,
+    secrets: [GOOGLE_PLACES_API_KEY],
+    enforceAppCheck: ENFORCE_APP_CHECK,
+  },
+  async (req) => {
+    const uid = assertAuthenticated(req);
+    await rateLimitOrThrow({ uid, action: 'places_details', limit: 30, windowSec: 60 });
+
+    const placeId = asNonEmptyString(req.data?.placeId);
+    if (!placeId) throw new HttpsError('invalid-argument', 'placeId manquant');
+    if (placeId.length > 200) throw new HttpsError('invalid-argument', 'placeId trop long');
+
+    const language = asNonEmptyString(req.data?.language) || 'fr';
+
+    const apiKey = GOOGLE_PLACES_API_KEY.value();
+    if (!apiKey) throw new HttpsError('failed-precondition', 'GOOGLE_PLACES_API_KEY manquante');
+
+    const url = new URL('https://maps.googleapis.com/maps/api/place/details/json');
+    url.searchParams.set('place_id', placeId);
+    url.searchParams.set('fields', 'address_components');
+    url.searchParams.set('language', language);
+    url.searchParams.set('key', apiKey);
+
+    const resp = await fetch(url.toString(), { method: 'GET' });
+    const data = await resp.json().catch(() => null);
+    if (!resp.ok || !data) {
+      throw new HttpsError('internal', 'Erreur Google Places (details)');
+    }
+
+    const status = String(data.status || '');
+    if (status !== 'OK') {
+      console.warn('[placesDetails] non-OK status', { status, uid });
+      throw new HttpsError('failed-precondition', `Places: ${status}`);
+    }
+
+    return {
+      status,
+      result: data.result || null,
+    };
+  }
+);
+
 /**
  * Cloud Function qui génère un brouillon d'offre avec l'IA
  * 
  * Entrée : { hint, city, category, lang }
  * Sortie : { title, description, category, city, postalCode }
  */
-exports.generateOfferDraft = onCall({ region: 'europe-west1', secrets: [OPENAI_API_KEY] }, async (request) => {
+exports.generateOfferDraft = onCall({ region: 'europe-west1', secrets: [OPENAI_API_KEY], enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+  // 🔒 Auth requise (y compris auth anonyme côté app)
+  assertAuthenticated(request);
+
   let { hint, city, category, lang = 'fr' } = request.data;
 
   // Prétraiter le texte transcrit
@@ -339,8 +515,9 @@ Génère l'annonce.`;
 // Fonction de transcription audio + rédaction avec OpenAI
 // ============================================================================
 
-exports.transcribeAndDraftOffer = onCall({ region: 'europe-west1', timeoutSeconds: 120, secrets: [OPENAI_API_KEY] }, async (req) => {
-  // Auth non obligatoire pour la transcription
+exports.transcribeAndDraftOffer = onCall({ region: 'europe-west1', timeoutSeconds: 120, secrets: [OPENAI_API_KEY], enforceAppCheck: ENFORCE_APP_CHECK }, async (req) => {
+  // 🔒 Auth requise (y compris auth anonyme côté app)
+  const uid = assertAuthenticated(req);
 
   const {
     gcsUri,               // ex: "gs://bucket/stt/xxx.wav"
@@ -350,6 +527,60 @@ exports.transcribeAndDraftOffer = onCall({ region: 'europe-west1', timeoutSecond
   } = req.data || {};
 
   if (!gcsUri) throw new HttpsError("invalid-argument", "gcsUri manquant.");
+
+  // 🔒 Validation stricte de l'URI + ownership
+  const parsed = parseGsUri(gcsUri);
+  if (!parsed) throw new HttpsError('invalid-argument', 'gcsUri invalide (format gs://bucket/object requis).');
+
+  // Bucket doit être le bucket Firebase du projet
+  const defaultBucket = admin.storage().bucket();
+  const defaultBucketName = defaultBucket?.name;
+  if (defaultBucketName && parsed.bucket !== defaultBucketName) {
+    throw new HttpsError('permission-denied', 'gcsUri bucket non autorisé.');
+  }
+
+  // Doit provenir du dossier stt/ et appartenir à l'utilisateur
+  const expectedPrefix = `stt/${uid}_`;
+  const objectPath = parsed.object;
+  const isWav = objectPath.endsWith('.wav');
+  if (!objectPath.startsWith(expectedPrefix) || !isWav) {
+    throw new HttpsError('permission-denied', 'gcsUri non autorisé (stt/${uid}_*.wav requis).');
+  }
+
+  // Garde-fous taille + durée (approx) via metadata Storage
+  const file = defaultBucket.file(objectPath);
+  let meta;
+  try {
+    const [m] = await file.getMetadata();
+    meta = m || null;
+  } catch (_) {
+    throw new HttpsError('not-found', 'Fichier audio introuvable.');
+  }
+
+  const objectBytes = Number(meta?.size || 0);
+  const maxBytes = 20_000_000; // 20MB
+  if (!Number.isFinite(objectBytes) || objectBytes <= 0) {
+    throw new HttpsError('failed-precondition', 'Audio vide.');
+  }
+  if (objectBytes > maxBytes) {
+    throw new HttpsError('failed-precondition', `Audio trop gros (${objectBytes} bytes).`);
+  }
+
+  const ct = String(meta?.contentType || '').toLowerCase();
+  if (ct && !isAllowedAudioContentType(ct)) {
+    throw new HttpsError('failed-precondition', `Type audio invalide (contentType=${ct}).`);
+  }
+
+  // Approx: WAV PCM16 16kHz mono ≈ 32000 bytes/sec. On accepte un peu de marge.
+  const approxBytesPerSec = 32_000;
+  const approxDurationSec = objectBytes / approxBytesPerSec;
+  const maxDurationSec = 120;
+  if (Number.isFinite(approxDurationSec) && approxDurationSec > (maxDurationSec + 10)) {
+    throw new HttpsError('failed-precondition', `Audio trop long (~${approxDurationSec.toFixed(1)}s). Max ${maxDurationSec}s.`);
+  }
+
+  // Anti-abus: limite d'appels par utilisateur
+  await rateLimitOrThrow({ uid, action: 'transcribe_and_draft', limit: 10, windowSec: 60 });
 
   try {
     // 1) Transcription : utiliser l'API Speech-to-Text v1
@@ -837,6 +1068,7 @@ exports.microIaProcessAudio = onCall(
     region: "europe-west1",
     timeoutSeconds: 120,
     secrets: [OPENAI_API_KEY], // ⚠️ garde EXACTEMENT ta constante existante
+    enforceAppCheck: ENFORCE_APP_CHECK,
   },
   async (req) => {
     console.log("[microIaProcessAudio] version=2026-01-01-ffmpeg-webm-1");
@@ -1002,7 +1234,7 @@ exports.microIaProcessAudio = onCall(
       const fallbackEnabled = cfg.fallbackEnabled;
 
       const needsOpenAI = tryOrder.some((m) => m !== "GOOGLE_ONLY");
-      const openai = needsOpenAI ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+      const openai = needsOpenAI ? new OpenAI({ apiKey: OPENAI_API_KEY.value() }) : null;
 
       let best = null;
       let lastErr = null;
@@ -1114,6 +1346,7 @@ exports.adminGetMicroIaConfig = onCall(
   {
     region: 'europe-west1',
     timeoutSeconds: 30,
+    enforceAppCheck: ENFORCE_APP_CHECK,
   },
   async (req) => {
     await assertIsAdmin(req);
@@ -1127,6 +1360,7 @@ exports.adminSetMicroIaConfig = onCall(
   {
     region: 'europe-west1',
     timeoutSeconds: 60,
+    enforceAppCheck: ENFORCE_APP_CHECK,
   },
   async (req) => {
     await assertIsAdmin(req);

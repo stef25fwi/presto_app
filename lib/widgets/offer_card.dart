@@ -7,6 +7,8 @@ class OfferCard extends StatelessWidget {
   final String offerId;
   final Map<String, dynamic> data;
 
+  static const Color _kPrestoOrange = Color(0xFFFF6600);
+
   /// ✅ Mettre false dans "Je consulte les offres"
   /// ✅ Mettre true dans Profil / "Mes messages"
   final bool showActionsMenu;
@@ -54,6 +56,7 @@ class OfferCard extends StatelessWidget {
     final city = (data['city'] ?? '').toString().trim();
     final category = (data['category'] ?? '').toString().trim();
     final price = data['price'];
+    final bool isUrgent = data['urgent'] == true;
 
     final createdAt = data['createdAt'] ?? data['created_at'];
     final ageLabel = _ageLabelFromCreatedAt(createdAt);
@@ -120,6 +123,29 @@ class OfferCard extends StatelessWidget {
                 ],
               ),
             ),
+
+            if (isUrgent) ...[
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _kPrestoOrange.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: _kPrestoOrange.withValues(alpha: 0.35),
+                    width: 1,
+                  ),
+                ),
+                child: const Text(
+                  'Urgent',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: _kPrestoOrange,
+                  ),
+                ),
+              ),
+            ],
 
             // ✅ Menu "..." : uniquement si showActionsMenu = true
             if (showActionsMenu)

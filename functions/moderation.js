@@ -82,7 +82,7 @@ function createModerateNewOffer({ admin, onDocumentCreated, region = 'europe-wes
 
       const offerId = event.params.offerId;
       const offer = snap.data() || {};
-      const uid = offer.uid;
+      const uid = offer.uid || offer.userId;
       if (!uid) return;
 
       // Force un état safe dès la création
@@ -126,6 +126,63 @@ function createModerateNewOffer({ admin, onDocumentCreated, region = 'europe-wes
             },
             { merge: true }
           );
+
+          // Notifications favoris (server-side)
+          try {
+            const category = offer.category || null;
+            const subCategory = offer.subCategory || null;
+            const title = offer.title || '';
+
+            if (category) {
+              const usersQuery = await admin
+                .firestore()
+                .collection('users')
+                .where('favoriteCategories', 'array-contains', category)
+                .get();
+
+              const batch = admin.firestore().batch();
+              const now = admin.firestore.Timestamp.now();
+
+              for (const userDoc of usersQuery.docs) {
+                if (userDoc.id === uid) continue;
+
+                const userData = userDoc.data() || {};
+                const selectedCats = Array.isArray(userData.selectedFavoriteCategories)
+                  ? userData.selectedFavoriteCategories.map(String)
+                  : [];
+                const selectedSubcats = Array.isArray(userData.selectedFavoriteSubcategories)
+                  ? userData.selectedFavoriteSubcategories.map(String)
+                  : [];
+
+                let shouldNotify = selectedCats.includes(String(category));
+                if (subCategory) {
+                  shouldNotify = shouldNotify && (selectedSubcats.length === 0 || selectedSubcats.includes(String(subCategory)));
+                }
+
+                if (!shouldNotify) continue;
+
+                const notifRef = admin.firestore().collection('notifications').doc();
+                batch.set(notifRef, {
+                  userId: userDoc.id,
+                  offerId,
+                  title: `Nouvelle offre : ${category}`,
+                  message: title,
+                  category,
+                  subCategory,
+                  read: false,
+                  createdAt: now,
+                });
+              }
+
+              await batch.commit();
+            }
+          } catch (e) {
+            console.warn('[moderation] Notifications favoris échouées', {
+              offerId,
+              uid,
+              message: e?.message || String(e),
+            });
+          }
           return;
         }
 
