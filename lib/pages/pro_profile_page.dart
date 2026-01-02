@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/friendly_snackbar.dart';
 import '../widgets/phone_input_field.dart';
 import '../constants.dart';
 
@@ -54,17 +55,13 @@ class _ProProfilePageState extends State<ProProfilePage> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     if (!_acceptTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Veuillez accepter les conditions.")),
-      );
+      showSuccessSnackBar(context, "Veuillez accepter les conditions.");
       return;
     }
 
     // TODO plus tard: enregistrer dans Firestore:
     // pros/{uid}/profile + status "pending" + plan "free_pro_trial" etc.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Profil Pro enregistré ✅ (abonnement bientôt)")),
-    );
+    showSuccessSnackBar(context, "Profil Pro enregistré ✅ (abonnement bientôt)");
     Navigator.pop(context);
   }
 

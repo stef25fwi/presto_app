@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'utils/friendly_snackbar.dart';
 import 'constants.dart';
 import 'widgets/phone_input_field.dart';
 
@@ -540,9 +541,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       onPressed: () {
                         if (_formKeyProfile.currentState?.validate() ?? false) {
                           // TODO: sauvegarde profil vers Firestore
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Profil mis à jour.')),
-                          );
+                          showSuccessSnackBar(context, 'Profil mis à jour.');
                         }
                       },
                       icon: const Icon(Icons.save_outlined),

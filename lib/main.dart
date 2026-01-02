@@ -47,48 +47,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
 
-/// Helper pour afficher un SnackBar de succès avec checkmark
-void showSuccessSnackBar(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: kPrestoBlue,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.check,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-      backgroundColor: Colors.grey.shade800,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      margin: const EdgeInsets.all(16),
-      duration: const Duration(seconds: 3),
-    ),
-  );
-}
-
 SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
   final estimated = ThemeData.estimateBrightnessForColor(backgroundColor);
   final isDarkBackground = estimated == Brightness.dark;
@@ -880,9 +838,7 @@ class _HomePageState extends State<HomePage>
 
     try {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Reset + seed des offres en cours…")),
-        );
+        showSuccessSnackBar(context, "Reset + seed des offres en cours…");
       }
 
       await resetAndSeedOffers();
@@ -930,19 +886,11 @@ class _HomePageState extends State<HomePage>
       await commitIfNeeded();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Offres de test réinitialisées et injectées ✅"),
-          ),
-        );
+        showSuccessSnackBar(context, "Offres de test réinitialisées et injectées ✅");
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Erreur lors du seed des offres : $e"),
-          ),
-        );
+        showSuccessSnackBar(context, "Erreur lors du seed des offres : $e");
       }
     } finally {
       if (mounted) setState(() => _isSeeding = false);
@@ -1086,12 +1034,9 @@ class _HomePageState extends State<HomePage>
         if (user == null) {
           return _TapScale(
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    "Connecte-toi à ton compte pour recevoir les notifications de nouveaux messages et annonces.",
-                  ),
-                ),
+              showSuccessSnackBar(
+                context,
+                "Connecte-toi à ton compte pour recevoir les notifications de nouveaux messages et annonces.",
               );
             },
             child: const _NotificationBellBase(badgeCount: 0),
@@ -2135,10 +2080,9 @@ class _CategoryChip extends StatelessWidget {
     return _TapScale(
       onTap: onTap ??
           () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Catégorie "$label" : bientôt disponible'),
-              ),
+            showSuccessSnackBar(
+              context,
+              'Catégorie "$label" : bientôt disponible',
             );
           },
       child: Column(
@@ -3844,8 +3788,6 @@ class OfferDetailPage extends StatelessWidget {
   });
 
   Future<void> _shareOn(BuildContext context, String platform) async {
-    final messenger = ScaffoldMessenger.of(context);
-
     final shareText =
         "${title.trim()} – ${location.trim()} | Rejoins Prest'o pour en savoir plus.";
     final shareUrl = Uri.parse('https://prestoo.app/offers');
@@ -3869,29 +3811,20 @@ class OfferDetailPage extends StatelessWidget {
     try {
       final ok = await canLaunchUrl(uri);
       if (!ok) {
-        messenger.showSnackBar(
-          const SnackBar(
-              content: Text("Partage indisponible sur cet appareil.")),
-        );
+        showSuccessSnackBar(context, "Partage indisponible sur cet appareil.");
         return;
       }
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text("Impossible de lancer le partage.")),
-      );
+      showSuccessSnackBar(context, "Impossible de lancer le partage.");
     }
   }
 
   Future<void> _callPhone(BuildContext context) async {
     if (phone == null || phone!.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Aucun numéro disponible.")),
-      );
+      showSuccessSnackBar(context, "Aucun numéro disponible.");
       return;
     }
-
-    final messenger = ScaffoldMessenger.of(context);
 
     final uri = Uri(
       scheme: 'tel',
@@ -3902,18 +3835,10 @@ class OfferDetailPage extends StatelessWidget {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri);
       } else {
-        messenger.showSnackBar(
-          const SnackBar(
-            content: Text("Impossible de lancer l’appel sur cet appareil."),
-          ),
-        );
+        showSuccessSnackBar(context, "Impossible de lancer l’appel sur cet appareil.");
       }
     } catch (_) {
-      messenger.showSnackBar(
-        const SnackBar(
-          content: Text("Une erreur est survenue lors de l’appel."),
-        ),
-      );
+      showSuccessSnackBar(context, "Une erreur est survenue lors de l’appel.");
     }
   }
 
@@ -3976,10 +3901,9 @@ class OfferDetailPage extends StatelessWidget {
                     // Utilise l'identifiant de l'annonceur passé au détail de l'offre
                     final annonceurId = this.annonceurId;
                     if (annonceurId.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content:
-                                Text("Impossible de retrouver l'annonceur.")),
+                      showSuccessSnackBar(
+                        context,
+                        "Impossible de retrouver l'annonceur.",
                       );
                       return;
                     }
@@ -4048,7 +3972,6 @@ class OfferDetailPage extends StatelessWidget {
   }
 
   Future<void> _reportOffer(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
     final subject = Uri.encodeComponent("Annonce signalée – ID $offerId");
     final reportLink = 'https://prestoo.app/offers/$offerId';
     final bodyText = """
@@ -4074,14 +3997,10 @@ Motif du signalement :
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        messenger.showSnackBar(
-          const SnackBar(content: Text("Impossible d'ouvrir l'e-mail.")),
-        );
+        showSuccessSnackBar(context, "Impossible d'ouvrir l'e-mail.");
       }
     } catch (_) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text("Une erreur est survenue.")),
-      );
+      showSuccessSnackBar(context, "Une erreur est survenue.");
     }
   }
 
@@ -4354,10 +4273,7 @@ Motif du signalement :
                         onPressed: () {
                           // si tu veux, tu peux faire Clipboard.setData(...)
                           // mais pour rester simple, on peut réutiliser un share "instagram" ou snackbar
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text("Lien copié (à brancher).")),
-                          );
+                          showSuccessSnackBar(context, "Lien copié (à brancher).");
                         },
                       ),
                     ),
@@ -4917,11 +4833,9 @@ class _ConversationPageState extends State<ConversationPage> {
     final userId = user?.uid ?? SessionState.userId;
 
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              "Connecte-toi à ton compte pour envoyer des messages iliprestō."),
-        ),
+      showSuccessSnackBar(
+        context,
+        "Connecte-toi à ton compte pour envoyer des messages iliprestō.",
       );
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const AccountPage()),
@@ -4972,11 +4886,7 @@ class _ConversationPageState extends State<ConversationPage> {
       _markAsRead();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Erreur lors de l’envoi du message : $e"),
-        ),
-      );
+      showSuccessSnackBar(context, "Erreur lors de l’envoi du message : $e");
     }
   }
 
@@ -4992,7 +4902,6 @@ class _ConversationPageState extends State<ConversationPage> {
   }
 
   Future<void> _shareByEmail() async {
-    final messenger = ScaffoldMessenger.of(context);
     final messages = await _fetchMessagesOnce();
     final buffer = StringBuffer();
 
@@ -5013,11 +4922,9 @@ class _ConversationPageState extends State<ConversationPage> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
-      messenger.showSnackBar(
-        const SnackBar(
-          content:
-              Text("Impossible d’ouvrir le client email sur cet appareil."),
-        ),
+      showSuccessSnackBar(
+        context,
+        "Impossible d’ouvrir le client email sur cet appareil.",
       );
     }
   }
@@ -5453,11 +5360,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _publishLocked = true;
         _canPublish = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Complète les champs obligatoires pour publier.'),
-        ),
-      );
+      showSuccessSnackBar(context, 'Complète les champs obligatoires pour publier.');
       return;
     }
 
@@ -5474,9 +5377,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         final uid = FirebaseAuth.instance.currentUser?.uid;
         if (uid == null) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Connecte-toi pour utiliser la dictée')),
-          );
+          showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
           return;
         }
 
@@ -5499,9 +5400,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           },
         );
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Micro web indisponible: $e')),
-        );
+        showSuccessSnackBar(context, 'Micro web indisponible: $e');
       }
       return;
     }
@@ -5521,9 +5420,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _recordingPath = filePath;
       } else {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Permission micro requise')),
-        );
+        showSuccessSnackBar(context, 'Permission micro requise');
         return;
       }
     } catch (e) {
@@ -5594,14 +5491,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
         } else {
           final code = (draft['code'] ?? '').toString();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                code == 'deadline-exceeded'
-                    ? 'Connexion lente, réessaie.'
-                    : 'Erreur IA: ${draft['error'] ?? 'inconnue'}',
-              ),
-            ),
+          showSuccessSnackBar(
+            context,
+            code == 'deadline-exceeded'
+                ? 'Connexion lente, réessaie.'
+                : 'Erreur IA: ${draft['error'] ?? 'inconnue'}',
           );
         }
       } catch (e, st) {
@@ -5620,9 +5514,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur transcription (web): $e')),
-          );
+          showSuccessSnackBar(context, 'Erreur transcription (web): $e');
         }
       } finally {
         if (mounted) setState(() => _isAnalyzing = false);
@@ -5652,9 +5544,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur transcription: $e')),
-          );
+          showSuccessSnackBar(context, 'Erreur transcription: $e');
         }
       } finally {
         if (mounted) setState(() => _isAnalyzing = false);
@@ -5663,9 +5553,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Aucun audio disponible')),
-    );
+    showSuccessSnackBar(context, 'Aucun audio disponible');
   }
 
   /// Construire le bouton d'enregistrement au micro avec indicateur visuel
@@ -5768,14 +5656,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
     } else {
       final code = (draft['code'] ?? '').toString();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            code == 'deadline-exceeded'
-                ? 'Connexion lente, réessaie.'
-                : 'Erreur IA: ${draft['error'] ?? 'inconnue'}',
-          ),
-        ),
+      showSuccessSnackBar(
+        context,
+        code == 'deadline-exceeded'
+            ? 'Connexion lente, réessaie.'
+            : 'Erreur IA: ${draft['error'] ?? 'inconnue'}',
       );
     }
     
@@ -5786,12 +5671,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _onTapAiAnalyze() async {
     final input = _descriptionController.text.trim();
     if (input.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez d\'abord saisir une description'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      showSuccessSnackBar(context, "Veuillez d'abord saisir une description");
       return;
     }
 
@@ -5826,29 +5706,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           }
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text('✨ Analyse IA complétée\nChamps remplis automatiquement'),
-            duration: Duration(seconds: 3),
-          ),
+        showSuccessSnackBar(
+          context,
+          '✨ Analyse IA complétée\nChamps remplis automatiquement',
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur IA : ${draft['error'] ?? 'Erreur inconnue'}'),
-            duration: const Duration(seconds: 3),
-          ),
+        showSuccessSnackBar(
+          context,
+          "Erreur IA : ${draft['error'] ?? 'Erreur inconnue'}",
         );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur lors de l\'analyse : $e'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      showSuccessSnackBar(context, "Erreur lors de l'analyse : $e");
     } finally {
       if (mounted) setState(() => _isAnalyzing = false);
     }
@@ -5889,12 +5759,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _canPublish = false;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✨ Tous les champs ont été réinitialisés'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    showSuccessSnackBar(context, 'Tous les champs ont été réinitialisés');
   }
 
   // --- LOGIQUE AUTOCOMPLÉTION VILLE ---
@@ -6021,9 +5886,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<void> _pickImage(int photoIndex) async {
     if (_selectedPhotos.length >= 2 && photoIndex >= _selectedPhotos.length) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maximum 2 photos autorisées')),
-      );
+      showSuccessSnackBar(context, 'Maximum 2 photos autorisées');
       return;
     }
 
@@ -6042,9 +5905,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la sélection : $e')),
-      );
+      showSuccessSnackBar(context, 'Erreur lors de la sélection : $e');
     }
   }
 
@@ -6071,9 +5932,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de l\'upload : $e')),
-      );
+      showSuccessSnackBar(context, "Erreur lors de l'upload : $e");
       rethrow;
     }
   }
@@ -6194,11 +6053,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur lors de la publication : $e'),
-        ),
-      );
+      showSuccessSnackBar(context, 'Erreur lors de la publication : $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -6223,9 +6078,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           foregroundColor: Colors.white,
           iconTheme: const IconThemeData(color: Colors.white),
           actionsIconTheme: const IconThemeData(color: Colors.white),
-          titleTextStyle: kPrestoAppBarTitleStyle.copyWith(color: Colors.white),
           elevation: 0,
-          title: const Text('Je publie une offre'),
+          title: const Text(
+            'Je publie une offre',
+            style: kPrestoAppBarTitleStyle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           actions: [
             IconButton(
               icon: const Icon(Icons.refresh_outlined),
@@ -6905,14 +6764,10 @@ class _AccountPageState extends State<AccountPage> {
       showSuccessSnackBar(context, 'Paramètres Micro-IA mis à jour');
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Erreur admin')),
-      );
+      showSuccessSnackBar(context, e.message ?? 'Erreur admin');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur admin: $e')),
-      );
+      showSuccessSnackBar(context, 'Erreur admin: $e');
     } finally {
       if (mounted) setState(() => _adminSaving = false);
     }
@@ -7259,9 +7114,7 @@ class _AccountPageState extends State<AccountPage> {
       showSuccessSnackBar(context, "Connexion réussie");
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? "Erreur de connexion.")),
-      );
+      showSuccessSnackBar(context, e.message ?? "Erreur de connexion.");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -7272,10 +7125,7 @@ class _AccountPageState extends State<AccountPage> {
 
     if (_passwordController.text.trim() !=
         _passwordConfirmController.text.trim()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Les mots de passe ne correspondent pas.")),
-      );
+      showSuccessSnackBar(context, "Les mots de passe ne correspondent pas.");
       return;
     }
 
@@ -7289,11 +7139,7 @@ class _AccountPageState extends State<AccountPage> {
       showSuccessSnackBar(context, "Compte créé et connecté avec succès");
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message ?? "Erreur lors de l’inscription."),
-        ),
-      );
+      showSuccessSnackBar(context, e.message ?? "Erreur lors de l’inscription.");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -7376,11 +7222,7 @@ class _AccountPageState extends State<AccountPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Erreur lors de la sauvegarde du profil : $e"),
-          ),
-        );
+        showSuccessSnackBar(context, "Erreur lors de la sauvegarde du profil : $e");
       }
     } finally {
       if (mounted) {
@@ -7443,9 +7285,7 @@ class _AccountPageState extends State<AccountPage> {
       showSuccessSnackBar(context, "Connecté avec Google");
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur Google : $e")),
-      );
+      showSuccessSnackBar(context, "Erreur Google : $e");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -7456,13 +7296,7 @@ class _AccountPageState extends State<AccountPage> {
         !(defaultTargetPlatform == TargetPlatform.iOS ||
             defaultTargetPlatform == TargetPlatform.macOS)) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Connexion Apple dispo uniquement sur iOS / macOS.",
-          ),
-        ),
-      );
+      showSuccessSnackBar(context, "Connexion Apple dispo uniquement sur iOS / macOS.");
       return;
     }
 
@@ -7486,13 +7320,7 @@ class _AccountPageState extends State<AccountPage> {
       showSuccessSnackBar(context, "Connecté avec Apple");
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Connexion Apple indisponible ou erreur : $e",
-          ),
-        ),
-      );
+      showSuccessSnackBar(context, "Connexion Apple indisponible ou erreur : $e");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -8781,11 +8609,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
                 if (ctx.mounted) {
                   Navigator.of(ctx).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Annonce mise à jour ✅"),
-                    ),
-                  );
+                  showSuccessSnackBar(context, "Annonce mise à jour ✅");
                 }
               },
               child: const Text("Enregistrer"),
@@ -8801,8 +8625,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     String offerId,
     String title,
   ) async {
-    final messenger = ScaffoldMessenger.of(context);
-
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
@@ -8835,9 +8657,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
           .doc(offerId)
           .delete();
 
-      messenger.showSnackBar(
-        const SnackBar(content: Text("Annonce supprimée ✅")),
-      );
+      showSuccessSnackBar(context, "Annonce supprimée ✅");
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'widgets/premium_ai_button.dart';
 import 'constants.dart';
+import 'utils/friendly_snackbar.dart';
 
 /// Page de démonstration du bouton Premium AI
 class PremiumAiButtonPreview extends StatefulWidget {
@@ -238,12 +239,7 @@ class _PremiumAiButtonPreviewState extends State<PremiumAiButtonPreview> {
   }
 
   void _simulateAction() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✨ Bouton premium cliqué!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    showSuccessSnackBar(context, '✨ Bouton premium cliqué!');
     await Future.delayed(const Duration(seconds: 1));
   }
 }
