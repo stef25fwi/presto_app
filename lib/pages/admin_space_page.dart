@@ -1,6 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../utils/friendly_snackbar.dart';
 
 import '../constants.dart';
 
@@ -145,9 +146,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
 
   void _snack(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
-    );
+    showSuccessSnackBar(context, msg);
   }
 
   @override

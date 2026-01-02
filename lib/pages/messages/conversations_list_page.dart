@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants.dart';
+import '../../utils/friendly_snackbar.dart';
 
 /// On redéfinit juste la couleur orange Prestō ici
 const kPrestoOrange = Color(0xFFFF6600);
@@ -280,9 +281,7 @@ class ConversationPage extends StatelessWidget {
                 message = 'Signalement transmis. Merci pour votre alerte.';
               }
               if (message != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(message)),
-                );
+                showSuccessSnackBar(context, message);
               }
             },
             itemBuilder: (context) => const [

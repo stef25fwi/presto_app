@@ -248,18 +248,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       if (mounted) {
         setState(() {});
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Brouillon IA généré ✅")),
-        );
+        showSuccessSnackBar(context, "Brouillon IA généré ✅");
       }
     } catch (e) {
       if (mounted) {
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Erreur IA : $e")),
-          );
+          showSuccessSnackBar(context, "Erreur IA : $e");
         }
       }
     } finally {
@@ -284,9 +280,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           setState(() => _recording = true);
         } catch (e) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Micro web indisponible: $e')),
-          );
+          showSuccessSnackBar(context, 'Micro web indisponible: $e');
         }
       }
       return;
@@ -321,9 +315,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         setState(() => _recording = true);
       } else {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Permission micro requise")),
-        );
+        showSuccessSnackBar(context, "Permission micro requise");
       }
     }
   }
@@ -381,9 +373,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       if (mounted) {
         setState(() {});
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Transcription web OK ✅')),
-        );
+        showSuccessSnackBar(context, 'Transcription web OK ✅');
       }
     } catch (e, st) {
       await CrashlyticsContext.recordError(
@@ -401,9 +391,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur Premium IA (web) : $e')),
-          );
+          showSuccessSnackBar(context, 'Erreur Premium IA (web) : $e');
         }
       }
     } finally {
@@ -523,13 +511,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       if (mounted) {
         setState(() {});
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "IA: $modeUsed score=${(score * 100).toStringAsFixed(0)}% reasons=$reasons",
-            ),
-            duration: const Duration(seconds: 4),
-          ),
+        showSuccessSnackBar(
+          context,
+          "IA: $modeUsed score=${(score * 100).toStringAsFixed(0)}% reasons=$reasons",
         );
       }
 
@@ -553,9 +537,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Erreur Premium IA : $e")),
-          );
+          showSuccessSnackBar(context, "Erreur Premium IA : $e");
         }
       }
     } finally {
@@ -568,9 +550,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Vous devez être connecté")),
-      );
+      showSuccessSnackBar(context, "Vous devez être connecté");
       return;
     }
 
@@ -602,17 +582,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Offre publiée avec succès ✅")),
-      );
+      showSuccessSnackBar(context, "Offre publiée avec succès ✅");
 
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur lors de la publication : $e")),
-      );
+      showSuccessSnackBar(context, "Erreur lors de la publication : $e");
     }
   }
 
@@ -628,12 +604,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.maybePop(context),
         ),
-        title: const FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            "Je publie une offre",
-            style: kPrestoAppBarTitleStyle,
-          ),
+        title: const Text(
+          "Je publie une offre",
+          style: kPrestoAppBarTitleStyle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         centerTitle: false,
         actions: [
