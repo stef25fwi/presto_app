@@ -11,6 +11,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:record/record.dart';
@@ -325,6 +326,32 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+
+    // 🔒 App Check
+    // - En debug: provider debug (nécessite d'ajouter le debug token dans la console App Check)
+    // - En release: Play Integrity (Android) + App Attest (iOS)
+    // Note: Web non activé ici (reCAPTCHA v3) car nécessite une siteKey.
+    if (!kIsWeb) {
+      try {
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+          appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+        );
+      } catch (e) {
+        debugPrint('[AppCheck] activation failed: $e');
+      }
+    }
+
+    // 🔒 Auth minimale requise pour les Cloud Functions (même en anonyme)
+    try {
+      final auth = FirebaseAuth.instance;
+      if (auth.currentUser == null) {
+        await auth.signInAnonymously();
+      }
+    } catch (e) {
+      // Si l'auth anonyme n'est pas activée côté Firebase, les appels Functions échoueront.
+      debugPrint('[Auth] anonymous sign-in failed: $e');
+    }
 
     // Configuration de la barre de navigation système orange
     SystemChrome.setSystemUIOverlayStyle(
@@ -1265,92 +1292,102 @@ class _HomePageState extends State<HomePage>
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
-          // Toujours autoriser le resize pour gérer correctement le clavier
-          resizeToAvoidBottomInset: true,
+          resizeToAvoidBottomInset: false,
           extendBody: true, // Permettre au contenu de s'étendre sous la bottom bar
           backgroundColor: Colors.white, // Fond blanc pour éviter le bandeau beige
-          body: Stack(
-            children: [
-              IndexedStack(
-                index: _selectedIndex,
-                children: [
-                  _buildHomeContent(),
-                  ConsultOffersPage(onScroll: _onPageScroll),
-                  PublishOfferPage(onScroll: _onPageScroll),
-                  const MessagesPage(),
-                  AccountPage(onScroll: _onPageScroll),
-                ],
+          body: SafeArea(
+            bottom: false,
+            child: AnimatedPadding(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
               ),
-              if (!isKeyboardVisible)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: AnimatedSlide(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeInOut,
-                    offset: _showBottomBar ? Offset.zero : const Offset(0, 1),
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: kPrestoOrange,
-                        borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(24)),
-                      ),
-                      padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-                      child: SafeArea(
-                        top: false,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: _BottomNavItem(
-                                icon: Icons.home,
-                                label: "Accueil",
-                                selected: _selectedIndex == 0,
-                                onTap: () => _onBottomTap(0),
-                              ),
+              child: Stack(
+                children: [
+                  IndexedStack(
+                    index: _selectedIndex,
+                    children: [
+                      _buildHomeContent(),
+                      ConsultOffersPage(onScroll: _onPageScroll),
+                      PublishOfferPage(onScroll: _onPageScroll),
+                      const MessagesPage(),
+                      AccountPage(onScroll: _onPageScroll),
+                    ],
+                  ),
+                  if (!isKeyboardVisible)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: AnimatedSlide(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        offset:
+                            _showBottomBar ? Offset.zero : const Offset(0, 1),
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: kPrestoOrange,
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(24)),
+                          ),
+                          padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+                          child: SafeArea(
+                            top: false,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: _BottomNavItem(
+                                    icon: Icons.home,
+                                    label: "Accueil",
+                                    selected: _selectedIndex == 0,
+                                    onTap: () => _onBottomTap(0),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _BottomNavItem(
+                                    icon: Icons.search,
+                                    label: "Je consulte\nles offres",
+                                    selected: _selectedIndex == 1,
+                                    onTap: () => _onBottomTap(1),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: _BottomNavItem(
+                                    icon: Icons.add_circle_outline,
+                                    label: "Publier\nune offre",
+                                    isBig: true,
+                                    onTap: () => _onBottomTap(2),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _BottomNavItem(
+                                    icon: Icons.chat_bubble_outline,
+                                    label: "Messages",
+                                    selected: _selectedIndex == 3,
+                                    onTap: () => _onBottomTap(3),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _BottomNavItem(
+                                    icon: Icons.person_outline,
+                                    label: "Compte",
+                                    selected: _selectedIndex == 4,
+                                    onTap: () => _onBottomTap(4),
+                                  ),
+                                ),
+                              ],
                             ),
-                            Expanded(
-                              child: _BottomNavItem(
-                                icon: Icons.search,
-                                label: "Je consulte\nles offres",
-                                selected: _selectedIndex == 1,
-                                onTap: () => _onBottomTap(1),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: _BottomNavItem(
-                                icon: Icons.add_circle_outline,
-                                label: "Publier\nune offre",
-                                isBig: true,
-                                onTap: () => _onBottomTap(2),
-                              ),
-                            ),
-                            Expanded(
-                              child: _BottomNavItem(
-                                icon: Icons.chat_bubble_outline,
-                                label: "Messages",
-                                selected: _selectedIndex == 3,
-                                onTap: () => _onBottomTap(3),
-                              ),
-                            ),
-                            Expanded(
-                              child: _BottomNavItem(
-                                icon: Icons.person_outline,
-                                label: "Compte",
-                                selected: _selectedIndex == 4,
-                                onTap: () => _onBottomTap(4),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-            ],
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -2289,7 +2326,7 @@ class _BottomNavItemState extends State<_BottomNavItem>
                 ),
                 child: Icon(
                   widget.icon,
-                  size: widget.isBig ? 26 : 22,
+                  size: widget.isBig ? 28 : 24,
                   color: widget.isBig ? kPrestoOrange : color,
                 ),
               ),
@@ -3761,7 +3798,7 @@ class _EmptyOffers extends StatelessWidget {
   }
 }
 
-class OfferDetailPage extends StatelessWidget {
+class OfferDetailPage extends StatefulWidget {
   final String title;
   final String location;
   final String category;
@@ -3787,9 +3824,43 @@ class OfferDetailPage extends StatelessWidget {
     required this.offerId,
   });
 
+  @override
+  State<OfferDetailPage> createState() => _OfferDetailPageState();
+}
+
+class _OfferDetailPageState extends State<OfferDetailPage> {
+  bool _isPhoneVisible = false;
+
+  String _extractUserPseudo(Map<String, dynamic>? data) {
+    if (data == null) return 'Profil';
+    final candidates = <String?>[
+      data['pseudo']?.toString(),
+      data['username']?.toString(),
+      data['displayName']?.toString(),
+      data['name']?.toString(),
+    ];
+    for (final v in candidates) {
+      final s = (v ?? '').trim();
+      if (s.isNotEmpty) return s;
+    }
+    return 'Profil';
+  }
+
+  String _maskPhone(String value) {
+    final raw = value.trim();
+    if (raw.isEmpty) return raw;
+
+    final digits = raw.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return '••••••••••';
+
+    // Masquage simple: on conserve les 2 premiers chiffres si possible.
+    final keep = digits.length >= 2 ? digits.substring(0, 2) : digits;
+    return '$keep •• •• •• ••';
+  }
+
   Future<void> _shareOn(BuildContext context, String platform) async {
     final shareText =
-        "${title.trim()} – ${location.trim()} | Rejoins Prest'o pour en savoir plus.";
+        "${widget.title.trim()} – ${widget.location.trim()} | Rejoins Prest'o pour en savoir plus.";
     final shareUrl = Uri.parse('https://prestoo.app/offers');
 
     final encodedText = Uri.encodeComponent(shareText);
@@ -3810,34 +3881,41 @@ class OfferDetailPage extends StatelessWidget {
 
     try {
       final ok = await canLaunchUrl(uri);
+      if (!context.mounted) return;
       if (!ok) {
         showSuccessSnackBar(context, "Partage indisponible sur cet appareil.");
         return;
       }
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
+      if (!context.mounted) return;
       showSuccessSnackBar(context, "Impossible de lancer le partage.");
     }
   }
 
   Future<void> _callPhone(BuildContext context) async {
-    if (phone == null || phone!.trim().isEmpty) {
+    if (widget.phone == null || widget.phone!.trim().isEmpty) {
       showSuccessSnackBar(context, "Aucun numéro disponible.");
       return;
     }
 
     final uri = Uri(
       scheme: 'tel',
-      path: phone!.trim(),
+      path: widget.phone!.trim(),
     );
 
     try {
-      if (await canLaunchUrl(uri)) {
+      final ok = await canLaunchUrl(uri);
+      if (!context.mounted) return;
+
+      if (ok) {
         await launchUrl(uri);
-      } else {
-        showSuccessSnackBar(context, "Impossible de lancer l’appel sur cet appareil.");
+        return;
       }
+
+      showSuccessSnackBar(context, "Impossible de lancer l’appel sur cet appareil.");
     } catch (_) {
+      if (!context.mounted) return;
       showSuccessSnackBar(context, "Une erreur est survenue lors de l’appel.");
     }
   }
@@ -3899,7 +3977,7 @@ class OfferDetailPage extends StatelessWidget {
                     }
 
                     // Utilise l'identifiant de l'annonceur passé au détail de l'offre
-                    final annonceurId = this.annonceurId;
+                    final annonceurId = widget.annonceurId;
                     if (annonceurId.isEmpty) {
                       showSuccessSnackBar(
                         context,
@@ -3921,7 +3999,7 @@ class OfferDetailPage extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (_) => ConversationPage(
                           conversationId: conversationId,
-                          offerTitle: title,
+                          offerTitle: widget.title,
                         ),
                       ),
                     );
@@ -3972,17 +4050,17 @@ class OfferDetailPage extends StatelessWidget {
   }
 
   Future<void> _reportOffer(BuildContext context) async {
-    final subject = Uri.encodeComponent("Annonce signalée – ID $offerId");
-    final reportLink = 'https://prestoo.app/offers/$offerId';
+    final subject = Uri.encodeComponent("Annonce signalée – ID ${widget.offerId}");
+    final reportLink = 'https://prestoo.app/offers/${widget.offerId}';
     final bodyText = """
 Bonjour,
 
 Je souhaite signaler l'annonce suivante.
 
-ID Firebase : $offerId
-Titre : ${title.trim()}
-Lieu : ${location.trim()}
-Catégorie : $category
+ID Firebase : ${widget.offerId}
+Titre : ${widget.title.trim()}
+Lieu : ${widget.location.trim()}
+Catégorie : ${widget.category}
 
 Lien : $reportLink
 
@@ -3994,12 +4072,17 @@ Motif du signalement :
         Uri.parse('mailto:contact@ilipresto.fr?subject=$subject&body=$body');
 
     try {
-      if (await canLaunchUrl(uri)) {
+      final ok = await canLaunchUrl(uri);
+      if (!context.mounted) return;
+
+      if (ok) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        showSuccessSnackBar(context, "Impossible d'ouvrir l'e-mail.");
+        return;
       }
+
+      showSuccessSnackBar(context, "Impossible d'ouvrir l'e-mail.");
     } catch (_) {
+      if (!context.mounted) return;
       showSuccessSnackBar(context, "Une erreur est survenue.");
     }
   }
@@ -4022,13 +4105,16 @@ Motif du signalement :
       return m?.group(1)?.replaceAll(' ', '') ?? "—";
     }
 
-    final String priceText = formatPrice(budget);
-    final String durationText = extractDuration(title);
-    final String city = location;
+    final String priceText = formatPrice(widget.budget);
+    final String durationText = extractDuration(widget.title);
+    final String city = widget.location;
 
-    final bool hasPhone = phone != null && phone!.trim().isNotEmpty;
-    final String phoneText = hasPhone ? phone!.trim() : "Numéro non renseigné";
-    final String rawDescription = (description ?? '').trim();
+    final bool hasPhone = widget.phone != null && widget.phone!.trim().isNotEmpty;
+    final String rawPhone = hasPhone ? widget.phone!.trim() : '';
+    final String phoneText = hasPhone
+      ? (_isPhoneVisible ? rawPhone : _maskPhone(rawPhone))
+      : "Numéro non renseigné";
+    final String rawDescription = (widget.description ?? '').trim();
     final String descriptionText = rawDescription.isEmpty
         ? "Aucune description détaillée fournie."
         : rawDescription;
@@ -4166,7 +4252,7 @@ Motif du signalement :
             children: [
               // ✅ Section principale avec infos clés
               _keyInfoCard(
-                  context, theme, city, priceText, category, durationText),
+                  context, theme, city, priceText, widget.category, durationText),
 
               const SizedBox(height: 16),
 
@@ -4188,6 +4274,33 @@ Motif du signalement :
               // ✅ CONTACT (carte)
               _SectionCard(
                 title: "Contact",
+                trailing: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(widget.annonceurId)
+                      .snapshots(),
+                  builder: (context, snap) {
+                    final pseudo = _extractUserPseudo(snap.data?.data());
+                    return TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => UserPublicProfilePage(
+                              userId: widget.annonceurId,
+                              initialPseudo: pseudo,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        pseudo,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    );
+                  },
+                ),
                 child: Column(
                   children: [
                     Row(
@@ -4212,6 +4325,23 @@ Motif du signalement :
                         ),
                       ],
                     ),
+                    if (hasPhone && !_isPhoneVisible) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _isPhoneVisible = true;
+                            });
+                          },
+                          child: const Text(
+                            "Voir le numéro",
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ),
+                    ],
                     // Bouton messagerie retiré
                   ],
                 ),
@@ -4298,59 +4428,56 @@ Motif du signalement :
   Widget _keyInfoCard(BuildContext context, ThemeData theme, String city,
       String priceText, String categoryText, String durationText) {
     return _CardShell(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Titre
-            Text(
-              title.trim(),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                height: 1.15,
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Titre
+          Text(
+            widget.title.trim(),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w900,
+              height: 1.15,
             ),
-            const SizedBox(height: 14),
-            // Prix + "pour X heures" (conditionnellement)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  priceText,
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: kPrestoOrange,
-                    height: 1,
-                  ),
+          ),
+          const SizedBox(height: 14),
+          // Prix + "pour X heures" (conditionnellement)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                priceText,
+                style: theme.textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: kPrestoOrange,
+                  height: 1,
                 ),
-                if (durationText != "—") ...[
-                  const SizedBox(width: 10),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 3),
-                    child: Text(
-                      "pour $durationText",
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w700,
-                      ),
+              ),
+              if (durationText != "—") ...[
+                const SizedBox(width: 10),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Text(
+                    "pour $durationText",
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ],
+                ),
               ],
-            ),
-            const SizedBox(height: 14),
-            const Divider(height: 1),
-            const SizedBox(height: 14),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1),
+          const SizedBox(height: 14),
 
-            // Infos secondaires avec icônes
-            _infoRow(Icons.place_outlined, city, theme),
-            const SizedBox(height: 12),
-            _infoRow(Icons.local_shipping_outlined, categoryText, theme),
-          ],
-        ),
+          // Infos secondaires avec icônes
+          _infoRow(Icons.place_outlined, city, theme),
+          const SizedBox(height: 12),
+          _infoRow(Icons.local_shipping_outlined, categoryText, theme),
+        ],
       ),
     );
   }
@@ -4374,6 +4501,317 @@ Motif du signalement :
   }
 
   // (supprimé) _pill inactif : retiré car non référencé.
+}
+
+class UserPublicProfilePage extends StatefulWidget {
+  final String userId;
+  final String? initialPseudo;
+
+  const UserPublicProfilePage({
+    super.key,
+    required this.userId,
+    this.initialPseudo,
+  });
+
+  @override
+  State<UserPublicProfilePage> createState() => _UserPublicProfilePageState();
+}
+
+class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _loadActiveOffers() async {
+    final col = FirebaseFirestore.instance.collection('offers');
+
+    final resUid = await col.where('uid', isEqualTo: widget.userId).get();
+    final resUserId = await col.where('userId', isEqualTo: widget.userId).get();
+
+    final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+    for (final d in resUid.docs) {
+      byId[d.id] = d;
+    }
+    for (final d in resUserId.docs) {
+      byId[d.id] = d;
+    }
+
+    final docs = byId.values.toList(growable: false);
+
+    // Filtrer “en cours”: public (nouveau modèle) ou status=active (legacy)
+    final filtered = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    for (final doc in docs) {
+      final data = doc.data();
+      final visibility = (data['visibility'] is Map)
+          ? (data['visibility'] as Map)
+          : const <String, dynamic>{};
+      final isPublic = visibility['isPublic'] == true || data['status'] == 'active';
+      if (!isPublic) continue;
+      filtered.add(doc);
+    }
+    return filtered;
+  }
+
+  String _extractUserPseudo(Map<String, dynamic>? data) {
+    final candidates = <String?>[
+      data?['pseudo']?.toString(),
+      data?['username']?.toString(),
+      data?['displayName']?.toString(),
+      data?['name']?.toString(),
+      widget.initialPseudo,
+    ];
+    for (final v in candidates) {
+      final s = (v ?? '').trim();
+      if (s.isNotEmpty) return s;
+    }
+    return 'Profil';
+  }
+
+  Future<void> _contactUser(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    final bool isLoggedIn = user != null;
+
+    if (!isLoggedIn) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const AccountPage(),
+        ),
+      );
+      return;
+    }
+
+    final conversationId = await ConversationService().getOrCreateConversationId(
+      currentUserId: user.uid,
+      otherUserId: widget.userId,
+    );
+
+    if (!context.mounted) return;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ConversationPage(
+          conversationId: conversationId,
+          offerTitle: 'Profil',
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      backgroundColor: const Color(0xFFF6F7F9),
+      appBar: AppBar(
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: const Text(
+          'Profil',
+          style: kPrestoAppBarTitleStyle,
+        ),
+        centerTitle: true,
+        backgroundColor: kPrestoOrange,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+          children: [
+            StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(widget.userId)
+                  .snapshots(),
+              builder: (context, snap) {
+                final pseudo = _extractUserPseudo(snap.data?.data());
+                return _CardShell(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: const Color(0xFFFFF3E8),
+                            child: Icon(
+                              Icons.person_outline,
+                              size: 20,
+                              color: Colors.orange.shade800,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              pseudo,
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrestoBlue,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          onPressed: () => _contactUser(context),
+                          icon: const Icon(Icons.chat_bubble_outline),
+                          label: const Text('Contacter par message'),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 14),
+            _CardShell(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Annonces publiées en cours',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FutureBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+                    future: _loadActiveOffers(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: CircularProgressIndicator(
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return Text(
+                          "Erreur de chargement des annonces.",
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        );
+                      }
+
+                      final docs = snapshot.data ?? const [];
+                      if (docs.isEmpty) {
+                        return Text(
+                          "Aucune annonce en cours.",
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        );
+                      }
+
+                      return Column(
+                        children: [
+                          for (final doc in docs) ...[
+                            _UserOfferMiniCard(data: doc.data()),
+                            const SizedBox(height: 10),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UserOfferMiniCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+  const _UserOfferMiniCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final title = (data['title'] ?? '').toString().trim();
+    final city = (data['city'] ?? '').toString().trim();
+    final category = (data['category'] ?? '').toString().trim();
+    final budget = data['budget'];
+    final priceText = (budget is num) ? "${budget.toStringAsFixed(0)} €" : '';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title.isEmpty ? 'Annonce' : title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (city.isNotEmpty)
+            Text(
+              city,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.black87,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          if (category.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                category,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          if (priceText.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                priceText,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: kPrestoOrange,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 // (supprimé) `_OfferMetaRow` était non référencé et générait un avertissement.
 
@@ -4919,9 +5357,15 @@ class _ConversationPageState extends State<ConversationPage> {
 
     final uri = Uri.parse("mailto:?subject=$subject&body=$body");
 
-    if (await canLaunchUrl(uri)) {
+    final ok = await canLaunchUrl(uri);
+    if (!mounted) return;
+
+    if (ok) {
       await launchUrl(uri);
-    } else {
+      return;
+    }
+
+    {
       showSuccessSnackBar(
         context,
         "Impossible d’ouvrir le client email sur cet appareil.",
@@ -5220,6 +5664,8 @@ class PublishOfferPage extends StatefulWidget {
 class _PublishOfferPageState extends State<PublishOfferPage> {
   final _formKey = GlobalKey<FormState>();
   final ScrollController _scrollController = ScrollController();
+
+  bool _isUrgent = false;
 
   // Champs texte
   final TextEditingController _titleController = TextEditingController();
@@ -5754,6 +6200,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _selectedRegionCode = null;
       _selectedDeptCode = null;
 
+      _isUrgent = false;
+
       _attemptedSubmit = false;
       _publishLocked = false;
       _canPublish = false;
@@ -5945,65 +6393,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     String offerTitle,
     String publisherUserId,
   ) async {
-    try {
-      // Récupérer tous les utilisateurs ayant cette catégorie en favori
-      final usersQuery = await FirebaseFirestore.instance
-          .collection('users')
-          .where('favoriteCategories', arrayContains: category)
-          .get();
-
-      final batch = FirebaseFirestore.instance.batch();
-      final now = Timestamp.now();
-
-      for (final userDoc in usersQuery.docs) {
-        // Ne pas notifier l'auteur de l'annonce
-        if (userDoc.id == publisherUserId) continue;
-
-        final userData = userDoc.data();
-        final selectedFavoriteCats =
-            (userData['selectedFavoriteCategories'] as List<dynamic>?)
-                    ?.map((e) => e.toString())
-                    .toList() ??
-                [];
-        final selectedFavoriteSubcats =
-            (userData['selectedFavoriteSubcategories'] as List<dynamic>?)
-                    ?.map((e) => e.toString())
-                    .toList() ??
-                [];
-
-        // Vérifier si la catégorie est sélectionnée
-        bool shouldNotify = selectedFavoriteCats.contains(category);
-
-        // Si une sous-catégorie est spécifiée, vérifier aussi
-        if (subCategory != null && subCategory.isNotEmpty) {
-          shouldNotify = shouldNotify &&
-              (selectedFavoriteSubcats.isEmpty ||
-                  selectedFavoriteSubcats.contains(subCategory));
-        }
-
-        if (shouldNotify) {
-          // Créer la notification
-          final notifRef =
-              FirebaseFirestore.instance.collection('notifications').doc();
-
-          batch.set(notifRef, {
-            'userId': userDoc.id,
-            'offerId': offerId,
-            'title': 'Nouvelle offre : $category',
-            'message': offerTitle,
-            'category': category,
-            'subCategory': subCategory,
-            'read': false,
-            'createdAt': now,
-          });
-        }
-      }
-
-      await batch.commit();
-    } catch (e) {
-      // Erreur silencieuse, ne pas bloquer la publication
-      debugPrint('Erreur lors de la création des notifications : $e');
-    }
+    // 🔒 Sécurité: la création de notifications se fait côté serveur (Cloud Functions)
+    // afin d'éviter qu'un client puisse créer des notifications pour d'autres utilisateurs.
+    return;
   }
 
   Future<void> _submitForm() async {
@@ -6029,6 +6421,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'description': _descriptionController.text.trim(),
         'category': _category,
         'subCategory': _selectedSubCategory,
+        'urgent': _isUrgent,
         'location': _locationController.text.trim(),
         'postalCode': _postalCodeController.text.trim(),
         'phone': _phoneController.text.trim(),
@@ -6450,6 +6843,31 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       ? null
                       : 'Téléphone invalide';
                 },
+              ),
+              const SizedBox(height: 16),
+
+              // URGENT
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.black12),
+                ),
+                child: SwitchListTile.adaptive(
+                  value: _isUrgent,
+                  onChanged: (v) {
+                    setState(() => _isUrgent = v);
+                  },
+                  title: const Text(
+                    'Urgent',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  activeColor: kPrestoOrange,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 2,
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -8651,11 +9069,15 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       },
     );
 
+    if (!context.mounted) return;
+
     if (confirmed == true) {
       await FirebaseFirestore.instance
           .collection('offers')
           .doc(offerId)
           .delete();
+
+      if (!context.mounted) return;
 
       showSuccessSnackBar(context, "Annonce supprimée ✅");
     }
