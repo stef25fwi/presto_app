@@ -81,35 +81,44 @@ Future<Uint8List> webBlobToWav16kMono(web.Blob blob) async {
 
   // Decode via WebAudio
   final audioCtx = web.AudioContext();
-  final decoded = await audioCtx.decodeAudioData(jsArrayBuffer).toDart;
+  try {
+    final decoded = await audioCtx.decodeAudioData(jsArrayBuffer).toDart;
 
-  // Mixdown to mono
-  final numCh = decoded.numberOfChannels;
-  final length = decoded.length;
-  final mono = Float32List(length);
-  for (int ch = 0; ch < numCh; ch++) {
-    final data = decoded.getChannelData(ch).toDart;
-    for (int i = 0; i < length; i++) {
-      mono[i] += data[i] / numCh;
+    // Mixdown to mono
+    final numCh = decoded.numberOfChannels;
+    final length = decoded.length;
+    final mono = Float32List(length);
+    for (int ch = 0; ch < numCh; ch++) {
+      final data = decoded.getChannelData(ch).toDart;
+      for (int i = 0; i < length; i++) {
+        mono[i] += data[i] / numCh;
+      }
+    }
+
+    // Resample to 16k
+    final srcRate = decoded.sampleRate.toDouble();
+    const dstRate = 16000.0;
+    final ratio = srcRate / dstRate;
+    final dstLen = (mono.length / ratio).floor();
+    final resampled = Float32List(dstLen);
+    for (int i = 0; i < dstLen; i++) {
+      final srcIndex = i * ratio;
+      final i0 = srcIndex.floor();
+      final i1 = (i0 + 1 < mono.length) ? i0 + 1 : i0;
+      final frac = srcIndex - i0;
+      resampled[i] = mono[i0] * (1 - frac) + mono[i1] * frac;
+    }
+
+    // Encode WAV PCM16
+    return _encodeWavPcm16(resampled, sampleRate: 16000, numChannels: 1);
+  } finally {
+    // Best-effort: libère les ressources WebAudio
+    try {
+      await audioCtx.close().toDart;
+    } catch (_) {
+      // ignore
     }
   }
-
-  // Resample to 16k
-  final srcRate = decoded.sampleRate.toDouble();
-  const dstRate = 16000.0;
-  final ratio = srcRate / dstRate;
-  final dstLen = (mono.length / ratio).floor();
-  final resampled = Float32List(dstLen);
-  for (int i = 0; i < dstLen; i++) {
-    final srcIndex = i * ratio;
-    final i0 = srcIndex.floor();
-    final i1 = (i0 + 1 < mono.length) ? i0 + 1 : i0;
-    final frac = srcIndex - i0;
-    resampled[i] = mono[i0] * (1 - frac) + mono[i1] * frac;
-  }
-
-  // Encode WAV PCM16
-  return _encodeWavPcm16(resampled, sampleRate: 16000, numChannels: 1);
 }
 
 Uint8List _encodeWavPcm16(Float32List samples,

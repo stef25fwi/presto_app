@@ -7726,7 +7726,11 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  Future<void> _saveProfile(User user) async {
+  Future<bool> _saveProfile(
+    User user, {
+    bool showSuccess = true,
+  }) async {
+    if (!mounted) return false;
     setState(() => _isSavingProfile = true);
     try {
       final pseudo = _profilePseudoController.text.trim();
@@ -7741,20 +7745,29 @@ class _AccountPageState extends State<AccountPage> {
             _selectedFavoriteSubcategories.toList(),
       }, SetOptions(merge: true));
 
+      // Best-effort: ne pas faire échouer la sauvegarde Firestore si
+      // la mise à jour du displayName échoue.
       if (pseudo.isNotEmpty) {
-        await user.updateDisplayName(pseudo);
+        try {
+          await user.updateDisplayName(pseudo);
+        } catch (_) {
+          // ignore
+        }
       }
 
       if (mounted) {
         // ✅ Passer en mode lecture après enregistrement
         setState(() => _isEditingProfile = false);
-        
-        showSuccessSnackBar(context, "Profil mis à jour avec succès");
+        if (showSuccess) {
+          showSuccessSnackBar(context, "Profil mis à jour avec succès");
+        }
       }
+      return true;
     } catch (e) {
       if (mounted) {
         showSuccessSnackBar(context, "Erreur lors de la sauvegarde du profil : $e");
       }
+      return false;
     } finally {
       if (mounted) {
         setState(() => _isSavingProfile = false);
@@ -7796,9 +7809,11 @@ class _AccountPageState extends State<AccountPage> {
       _selectedFavoriteSubcategories = selectedSubcats;
     });
 
-    await _saveProfile(user);
+    final ok = await _saveProfile(user, showSuccess: false);
     if (!mounted) return;
-    showSuccessSnackBar(context, 'Alertes enregistrées');
+    if (ok) {
+      showSuccessSnackBar(context, 'Alertes enregistrées');
+    }
   }
 
   Future<void> _openCategoryPickerSheet() async {
@@ -7992,7 +8007,7 @@ class _AccountPageState extends State<AccountPage> {
         _selectedFavoriteSubcategories.add(subcategory);
       }
     });
-    await _saveProfile(user);
+    await _saveProfile(user, showSuccess: false);
   }
 
   Future<void> _signInWithGoogle() async {

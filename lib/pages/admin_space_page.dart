@@ -59,6 +59,7 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
   MicroIaAudioQuality _audioQuality = MicroIaAudioQuality.medium;
   bool _fallback = true;
   double _quality = 0.62;
+  bool _ultraFastEnabled = false;
   final List<String> _languages = ['fr-FR'];
 
   @override
@@ -86,12 +87,19 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
             data['microia_audio_quality'] ??
             'MEDIUM')
           .toString();
+      final ultraFast = (data['ultraFastEnabled'] ??
+              data['microia_ultra_fast_enabled'] ??
+              data['microia_ultrafast_enabled'] ??
+              data['microia_ultra_fast'] ??
+              false) ==
+          true;
 
       setState(() {
         _mode = _modeFromRemote(modeStr);
         _fallback = fallback;
         _quality = threshold.clamp(0.0, 1.0);
         _audioQuality = microIaAudioQualityFromRcValue(audioQualityStr);
+        _ultraFastEnabled = ultraFast;
         _languages
           ..clear()
           ..add(lang.isEmpty ? 'fr-FR' : lang);
@@ -153,6 +161,7 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
         'qualityThreshold': _quality,
         'languageCode': lang.isEmpty ? 'fr-FR' : lang,
         'microia_audio_quality': microIaAudioQualityToRcValue(_audioQuality),
+        'ultraFastEnabled': _ultraFastEnabled,
       });
 
       final data = (res.data is Map)
@@ -169,12 +178,19 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
             data['microia_audio_quality'] ??
             microIaAudioQualityToRcValue(_audioQuality))
           .toString();
+        final ultraFast = (data['ultraFastEnabled'] ??
+                data['microia_ultra_fast_enabled'] ??
+                data['microia_ultrafast_enabled'] ??
+                data['microia_ultra_fast'] ??
+                _ultraFastEnabled) ==
+            true;
 
       setState(() {
         _mode = _modeFromRemote(modeStr.toUpperCase());
         _fallback = fallback;
         _quality = threshold.clamp(0.0, 1.0);
         _audioQuality = microIaAudioQualityFromRcValue(audioQualityStr);
+        _ultraFastEnabled = ultraFast;
         _languages
           ..clear()
           ..add(languageCode.trim().isEmpty ? 'fr-FR' : languageCode.trim());
@@ -230,8 +246,10 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
                   audioQuality: _audioQuality,
                   fallback: _fallback,
                   quality: _quality,
+                  ultraFastEnabled: _ultraFastEnabled,
                   languages: _languages,
                   onModeChanged: (m) => setState(() => _mode = m),
+                  onUltraFastChanged: (v) => setState(() => _ultraFastEnabled = v),
                   onAudioQualityChanged: (q) async {
                     final prev = _audioQuality;
                     setState(() => _audioQuality = q);
@@ -252,6 +270,7 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
                         'qualityThreshold': _quality,
                         'languageCode': lang.isEmpty ? 'fr-FR' : lang,
                         'audio_quality': microIaAudioQualityToRcValue(q),
+                        'ultraFastEnabled': _ultraFastEnabled,
                       });
                     } on FirebaseFunctionsException catch (e) {
                       if (mounted) setState(() => _audioQuality = prev);
@@ -721,9 +740,11 @@ class _MicroIaCard extends StatelessWidget {
   final MicroIaAudioQuality audioQuality;
   final bool fallback;
   final double quality;
+  final bool ultraFastEnabled;
   final List<String> languages;
 
   final ValueChanged<MicroIaMode> onModeChanged;
+  final ValueChanged<bool> onUltraFastChanged;
   final ValueChanged<MicroIaAudioQuality> onAudioQualityChanged;
   final ValueChanged<bool> onFallbackChanged;
   final ValueChanged<double> onQualityChanged;
@@ -739,8 +760,10 @@ class _MicroIaCard extends StatelessWidget {
     required this.audioQuality,
     required this.fallback,
     required this.quality,
+    required this.ultraFastEnabled,
     required this.languages,
     required this.onModeChanged,
+    required this.onUltraFastChanged,
     required this.onAudioQualityChanged,
     required this.onFallbackChanged,
     required this.onQualityChanged,
@@ -787,29 +810,73 @@ class _MicroIaCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: Colors.black12),
                   ),
-                  child: Row(
-                    children: [
-                      _SegButton(
-                        label: 'Google STT',
-                        selected: mode == MicroIaMode.google,
-                        selectedColor: prestoOrange,
-                        onTap: () => onModeChanged(MicroIaMode.google),
-                      ),
-                      const SizedBox(width: 6),
-                      _SegButton(
-                        label: 'Whisper',
-                        selected: mode == MicroIaMode.whisper,
-                        selectedColor: prestoOrange,
-                        onTap: () => onModeChanged(MicroIaMode.whisper),
-                      ),
-                      const SizedBox(width: 6),
-                      _SegButton(
-                        label: 'Hybride',
-                        selected: mode == MicroIaMode.hybride,
-                        selectedColor: prestoOrange,
-                        onTap: () => onModeChanged(MicroIaMode.hybride),
-                      ),
-                    ],
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _SegButton(
+                          label: 'Google STT',
+                          selected: mode == MicroIaMode.google,
+                          selectedColor: prestoOrange,
+                          onTap: () => onModeChanged(MicroIaMode.google),
+                        ),
+                        const SizedBox(width: 6),
+                        _SegButton(
+                          label: 'Whisper',
+                          selected: mode == MicroIaMode.whisper,
+                          selectedColor: prestoOrange,
+                          onTap: () => onModeChanged(MicroIaMode.whisper),
+                        ),
+                        const SizedBox(width: 6),
+                        _SegButton(
+                          label: 'Hybride',
+                          selected: mode == MicroIaMode.hybride,
+                          selectedColor: prestoOrange,
+                          onTap: () => onModeChanged(MicroIaMode.hybride),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.black12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.bolt_rounded,
+                                size: 18,
+                                color:
+                                    ultraFastEnabled ? prestoOrange : Colors.black54,
+                              ),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'Ultra',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Transform.scale(
+                                scale: 0.85,
+                                child: Switch(
+                                  value: ultraFastEnabled,
+                                  activeColor: prestoOrange,
+                                  onChanged: onUltraFastChanged,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
