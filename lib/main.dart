@@ -4310,7 +4310,7 @@ Motif du signalement :
                       .snapshots(),
                   builder: (context, snap) {
                     final pseudo = _extractUserPseudo(snap.data?.data());
-                    return TextButton(
+                    return TextButton.icon(
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -4321,11 +4321,18 @@ Motif du signalement :
                           ),
                         );
                       },
-                      child: Text(
+                      icon: const Icon(Icons.person_outline_rounded, size: 18),
+                      style: TextButton.styleFrom(
+                        foregroundColor: kPrestoBlue,
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      label: Text(
                         pseudo,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
                       ),
                     );
                   },
@@ -5719,6 +5726,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final List<XFile> _selectedPhotos = [];
   final List<String> _uploadedPhotoUrls = [];
 
+  final FirebaseFunctions _functions =
+      FirebaseFunctions.instanceFor(region: 'europe-west1');
+
   // Autocomplétion villes
   List<CityRecord> _citySuggestions = [];
   int _highlightedIndex = -1;
@@ -6366,6 +6376,90 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // --- GESTION DES PHOTOS ---
 
+  Future<void> _showPhotoPopup({required XFile file, required String label}) async {
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  color: Colors.black,
+                  child: InteractiveViewer(
+                    minScale: 1.0,
+                    maxScale: 4.0,
+                    child: Image.memory(
+                      bytes,
+                      fit: BoxFit.contain,
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: Text(
+                          'Image indisponible',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Material(
+                  color: Colors.black54,
+                  shape: const CircleBorder(),
+                  child: IconButton(
+                    tooltip: 'Fermer',
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 12,
+                bottom: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onPhotoTileTap(int photoIndex) async {
+    if (photoIndex < _selectedPhotos.length) {
+      final file = _selectedPhotos[photoIndex];
+      final label = 'Photo ${photoIndex + 1}';
+      await _showPhotoPopup(file: file, label: label);
+      return;
+    }
+    await _pickImage(photoIndex);
+  }
+
   Future<void> _pickImage(int photoIndex) async {
     if (_selectedPhotos.length >= 2 && photoIndex >= _selectedPhotos.length) {
       showSuccessSnackBar(context, 'Maximum 2 photos autorisées');
@@ -6374,7 +6468,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     try {
       final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 2000,
+        maxHeight: 2000,
+      );
 
       if (image == null) return;
 
@@ -6391,7 +6490,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
-  Future<void> _uploadPhotos() async {
+  Future<void> _uploadPhotos({required String uid}) async {
     if (_selectedPhotos.isEmpty) {
       _uploadedPhotoUrls.clear();
       return;
@@ -6400,16 +6499,30 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     try {
       _uploadedPhotoUrls.clear();
 
+      final callable = _functions.httpsCallable(
+        'processOfferPhoto',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 60)),
+      );
+
       for (int i = 0; i < _selectedPhotos.length; i++) {
         final photo = _selectedPhotos[i];
-        final fileName =
-            'offers/${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final rawPath = 'offers_raw/$uid/${ts}_$i.jpg';
 
-        final ref = FirebaseStorage.instance.ref().child(fileName);
+        final ref = FirebaseStorage.instance.ref().child(rawPath);
         final bytes = await photo.readAsBytes();
         await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
 
-        final url = await ref.getDownloadURL();
+        final res = await callable.call<dynamic>({
+          'storagePath': rawPath,
+        });
+        final data = (res.data is Map)
+            ? Map<String, dynamic>.from(res.data as Map)
+            : <String, dynamic>{};
+        final url = (data['downloadUrl'] ?? '').toString().trim();
+        if (url.isEmpty) {
+          throw Exception('URL de photo manquante');
+        }
         _uploadedPhotoUrls.add(url);
       }
     } catch (e) {
@@ -6440,14 +6553,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
 
     try {
-      // Uploader les photos
-      await _uploadPhotos();
-
       // Récupérer l'utilisateur actuel
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         throw Exception('Utilisateur non connecté');
       }
+
+      // Uploader les photos (optionnel) -> traitement serveur (resize + filigrane UID)
+      await _uploadPhotos(uid: user.uid);
 
       // Sauvegarder l'offre dans Firestore
       final docRef = await FirebaseFirestore.instance.collection('offers').add({
@@ -6833,12 +6946,25 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               const SizedBox(height: 16),
 
               // PHOTOS (max 2)
-              const Text(
-                'Photos de l\'offre',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
+              Row(
+                children: const [
+                  Text(
+                    'Photos de l\'offre',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    '(optionnel)',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               Row(
@@ -6849,7 +6975,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       file: _selectedPhotos.isNotEmpty
                           ? _selectedPhotos[0]
                           : null,
-                      onTap: () => _pickImage(0),
+                      onTap: () => _onPhotoTileTap(0),
+                      onLongPress: () => _pickImage(0),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -6859,7 +6986,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       file: _selectedPhotos.length > 1
                           ? _selectedPhotos[1]
                           : null,
-                      onTap: () => _pickImage(1),
+                      onTap: () => _onPhotoTileTap(1),
+                      onLongPress: () => _pickImage(1),
                     ),
                   ),
                 ],
@@ -7065,11 +7193,13 @@ class _PhotoSelectorTile extends StatelessWidget {
   final String label;
   final XFile? file;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   const _PhotoSelectorTile({
     required this.label,
     required this.file,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -7148,6 +7278,7 @@ class _PhotoSelectorTile extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
         height: 90,
         decoration: BoxDecoration(
@@ -9080,6 +9211,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   List<QueryDocumentSnapshot<Map<String, dynamic>>>? _offers;
   bool _isLoading = true;
   String? _error;
+  String? _selectedOfferId;
 
   @override
   void initState() {
@@ -9110,6 +9242,11 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       setState(() {
         _offers = snapshot.docs;
         _isLoading = false;
+
+        final ids = snapshot.docs.map((d) => d.id).toSet();
+        if (_selectedOfferId == null || !ids.contains(_selectedOfferId)) {
+          _selectedOfferId = snapshot.docs.isNotEmpty ? snapshot.docs.first.id : null;
+        }
       });
     } catch (e) {
       if (!mounted) return;
@@ -9153,109 +9290,177 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
     final docs = _offers ?? [];
 
-        if (docs.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              "Tu n’as pas encore publié d’annonce.",
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.black54,
+    if (docs.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          "Tu n’as pas encore publié d’annonce.",
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.black54,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+
+    final selectedId = _selectedOfferId;
+    final selectedDoc = (selectedId == null)
+        ? docs.first
+        : (docs.where((d) => d.id == selectedId).isNotEmpty
+            ? docs.firstWhere((d) => d.id == selectedId)
+            : docs.first);
+
+    final selectedData = selectedDoc.data();
+    final selectedTitle = (selectedData['title'] ?? 'Sans titre').toString().trim();
+    final selectedLocation =
+        (selectedData['location'] ?? 'Lieu non précisé').toString().trim();
+    final selectedCategory =
+        (selectedData['category'] ?? 'Catégorie non précisée').toString().trim();
+    final selectedBudget = selectedData['budget'];
+
+    String subtitle = "$selectedLocation · $selectedCategory";
+    if (selectedBudget != null && selectedBudget.toString().trim().isNotEmpty) {
+      subtitle += " · ${selectedBudget.toString()} €";
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InputDecorator(
+          decoration: InputDecoration(
+            labelText: 'Mes annonces',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              value: selectedDoc.id,
+              items: docs.map((doc) {
+                final data = doc.data();
+                final title = (data['title'] ?? 'Sans titre').toString().trim();
+                return DropdownMenuItem<String>(
+                  value: doc.id,
+                  child: Text(
+                    title.isEmpty ? 'Sans titre' : title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                );
+              }).toList(),
+              onChanged: (v) {
+                if (v == null) return;
+                setState(() => _selectedOfferId = v);
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: ListTile(
+            leading: const CircleAvatar(
+              backgroundColor: Color(0xFFFFF3E0),
+              child: Icon(
+                Icons.work_outline,
+                color: kPrestoOrange,
+              ),
+            ),
+            title: Text(
+              selectedTitle.isEmpty ? 'Sans titre' : selectedTitle,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            subtitle: Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
             ),
-          );
-        }
-
-        return Column(
-          children: docs.map((doc) {
-            final data = doc.data();
-            final offerId = doc.id;
-
-            final title = (data['title'] ?? 'Sans titre') as String;
-            final location = (data['location'] ?? 'Lieu non précisé') as String;
-            final category =
-                (data['category'] ?? 'Catégorie non précisée') as String;
-            final budget = data['budget'];
-
-            String subtitle = "$location · $category";
-            if (budget != null) {
-              subtitle += " · ${budget.toString()} €";
-            }
-
-            return Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFFFF3E0),
-                  child: Icon(
-                    Icons.work_outline,
-                    color: kPrestoOrange,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
                 ),
-                title: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                subtitle: Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                trailing: PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      _showEditOfferDialog(context, offerId, data);
-                    } else if (value == 'delete') {
-                      _confirmDeleteOffer(context, offerId, title);
-                    }
-                  },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(
-                      value: 'edit',
-                      child: Text("Modifier"),
-                    ),
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Text("Supprimer"),
-                    ),
-                  ],
-                ),
-                onTap: () {
+                onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => OfferDetailPage(
-                        offerId: offerId,
-                        title: title,
-                        location: location,
-                        category: category,
-                        subcategory: data['subcategory'] as String?,
-                        budget: budget is num ? budget : null,
-                        description: (data['description'] ?? '') as String?,
-                        phone: data['phone'] as String?,
-                        imageUrls: (data['imageUrls'] as List<dynamic>?)
+                        offerId: selectedDoc.id,
+                        title: selectedTitle.isEmpty ? 'Sans titre' : selectedTitle,
+                        location: selectedLocation.isEmpty
+                            ? 'Lieu non précisé'
+                            : selectedLocation,
+                        category: selectedCategory.isEmpty
+                            ? 'Catégorie non précisée'
+                            : selectedCategory,
+                        subcategory: selectedData['subcategory'] as String?,
+                        budget: selectedBudget is num ? selectedBudget : null,
+                        description: (selectedData['description'] ?? '') as String?,
+                        phone: selectedData['phone'] as String?,
+                        imageUrls: (selectedData['imageUrls'] as List<dynamic>?)
                                 ?.map((e) => e.toString())
                                 .toList() ??
                             const [],
-                        annonceurId: (data['userId'] ?? '') as String,
+                        annonceurId: (selectedData['userId'] ?? '') as String,
                       ),
                     ),
                   );
                 },
+                child: const Text('Voir détail'),
               ),
-            );
-          }).toList(),
-        );
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                onPressed: () async {
+                  final deleted = await _confirmDeleteOffer(
+                    context,
+                    selectedDoc.id,
+                    selectedTitle.isEmpty ? 'Sans titre' : selectedTitle,
+                  );
+                  if (deleted) {
+                    await _loadOffers();
+                  }
+                },
+                child: const Text('Supprimer'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
+  // ignore: unused_element
   Future<void> _showEditOfferDialog(
     BuildContext context,
     String offerId,
@@ -9343,7 +9548,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     );
   }
 
-  Future<void> _confirmDeleteOffer(
+  Future<bool> _confirmDeleteOffer(
     BuildContext context,
     String offerId,
     String title,
@@ -9374,7 +9579,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       },
     );
 
-    if (!context.mounted) return;
+    if (!context.mounted) return false;
 
     if (confirmed == true) {
       await FirebaseFirestore.instance
@@ -9382,10 +9587,13 @@ class _UserOffersSectionState extends State<UserOffersSection> {
           .doc(offerId)
           .delete();
 
-      if (!context.mounted) return;
+      if (!context.mounted) return false;
 
       showSuccessSnackBar(context, "Annonce supprimée ✅");
+      return true;
     }
+
+    return false;
   }
 }
 
