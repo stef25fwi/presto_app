@@ -407,13 +407,15 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
 
               const SizedBox(height: 14),
 
-              GridView.count(
+              GridView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1.55,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  mainAxisExtent: 150,
+                ),
                 children: [
                   _KpiTile(
                     icon: Icons.group_rounded,
@@ -715,11 +717,16 @@ class _KpiTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w600,
+                  Flexible(
+                    child: Text(
+                      subtitle,
+                      softWrap: true,
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        height: 1.2,
+                      ),
                     ),
                   ),
                 ],

@@ -11,6 +11,8 @@ const path = require('path');
 const fs = require('fs/promises');
 const { spawn } = require('child_process');
 const ffmpegPath = require('ffmpeg-static');
+const sharp = require('sharp');
+const { randomUUID } = require('crypto');
 
 admin.initializeApp();
 
@@ -1593,6 +1595,131 @@ exports.adminSetMicroIaConfig = onCall(
       languageCode: nextLanguage,
       audioQuality: nextAudioQuality,
       ultraFastEnabled: nextUltraFastEnabled,
+    };
+  }
+);
+
+// ============================================================================
+// Photos d'offres: resize + filigrane UID (stockage optimisé)
+// ============================================================================
+
+exports.processOfferPhoto = onCall(
+  {
+    region: 'europe-west1',
+    timeoutSeconds: 60,
+    enforceAppCheck: ENFORCE_APP_CHECK,
+  },
+  async (req) => {
+    const uid = assertAuthenticated(req);
+
+    const storagePath = String(req.data?.storagePath || '').trim();
+    if (!storagePath) {
+      throw new HttpsError('invalid-argument', 'storagePath manquant');
+    }
+
+    // Doit provenir du dossier offers_raw/{uid}/...
+    const expectedPrefix = `offers_raw/${uid}/`;
+    if (!storagePath.startsWith(expectedPrefix)) {
+      throw new HttpsError('permission-denied', 'Chemin non autorisé');
+    }
+    if (storagePath.includes('..') || storagePath.startsWith('/') || storagePath.includes('\\')) {
+      throw new HttpsError('invalid-argument', 'Chemin invalide');
+    }
+
+    const bucket = admin.storage().bucket();
+    const srcFile = bucket.file(storagePath);
+
+    // Download
+    let srcBuffer;
+    try {
+      const [buf] = await srcFile.download();
+      srcBuffer = buf;
+    } catch (e) {
+      console.warn('[processOfferPhoto] download failed', e?.message || e);
+      throw new HttpsError('not-found', 'Photo introuvable');
+    }
+
+    // Resize + watermark
+    let out;
+    try {
+      const resized = await sharp(srcBuffer)
+        .rotate()
+        .resize({
+          width: 1280,
+          height: 1280,
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .jpeg({ quality: 75, mozjpeg: true })
+        .toBuffer({ resolveWithObject: true });
+
+      const w = resized.info?.width || 1280;
+      const h = resized.info?.height || 720;
+      const fontSize = Math.max(14, Math.min(28, Math.round(w * 0.022)));
+      const padX = Math.max(10, Math.round(w * 0.02));
+      const padY = Math.max(10, Math.round(h * 0.02));
+
+      const safeUid = uid.replace(/[<>&"']/g, '');
+      const watermarkText = `UID ${safeUid}`;
+      const svg = Buffer.from(
+        `<svg width="${w}" height="${Math.max(44, fontSize + padY)}" xmlns="http://www.w3.org/2000/svg">
+          <style>
+            .t { font-family: Arial, sans-serif; font-size: ${fontSize}px; font-weight: 700; }
+          </style>
+          <rect x="0" y="0" width="${w}" height="${Math.max(44, fontSize + padY)}" fill="transparent"/>
+          <text x="${padX}" y="${Math.max(32, fontSize + 12)}" class="t" fill="rgba(0,0,0,0.55)">${watermarkText}</text>
+          <text x="${padX}" y="${Math.max(31, fontSize + 11)}" class="t" fill="rgba(255,255,255,0.70)">${watermarkText}</text>
+        </svg>`
+      );
+
+      const withMark = await sharp(resized.data)
+        .composite([
+          {
+            input: svg,
+            gravity: 'southwest',
+          },
+        ])
+        .jpeg({ quality: 75, mozjpeg: true })
+        .toBuffer();
+
+      out = withMark;
+    } catch (e) {
+      console.warn('[processOfferPhoto] sharp failed', e?.message || e);
+      throw new HttpsError('internal', 'Traitement image impossible');
+    }
+
+    // Upload final
+    const destPath = storagePath.replace(/^offers_raw\//, 'offers/');
+    const token = randomUUID();
+
+    try {
+      await bucket.file(destPath).save(out, {
+        contentType: 'image/jpeg',
+        resumable: false,
+        metadata: {
+          cacheControl: 'public,max-age=31536000',
+          metadata: {
+            firebaseStorageDownloadTokens: token,
+          },
+        },
+      });
+    } catch (e) {
+      console.warn('[processOfferPhoto] upload failed', e?.message || e);
+      throw new HttpsError('internal', 'Upload image impossible');
+    }
+
+    // Cleanup raw (best-effort)
+    try {
+      await srcFile.delete();
+    } catch (_) {
+      // ignore
+    }
+
+    const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(destPath)}?alt=media&token=${token}`;
+    return {
+      ok: true,
+      storagePath: destPath,
+      downloadUrl,
     };
   }
 );
