@@ -123,6 +123,44 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return _descCtrl;
   }
 
+  void _applyDraftToForm(OfferDraft draft, {String? transcript}) {
+    // ⚠️ Ne jamais modifier Téléphone / Budget ici.
+
+    // Titre
+    final nextTitle = (draft.title ?? '').trim();
+    if (nextTitle.isNotEmpty && _titleCtrl.text.trim().isEmpty) {
+      _titleCtrl.text = nextTitle;
+    }
+
+    // Description
+    final nextDesc = (draft.description ?? '').trim();
+    final currentDesc = _descCtrl.text.trim();
+    final transcriptTrim = (transcript ?? '').trim();
+    final canReplaceDesc = currentDesc.isEmpty || (transcriptTrim.isNotEmpty && currentDesc == transcriptTrim);
+    if (nextDesc.isNotEmpty && canReplaceDesc) {
+      _descCtrl.text = nextDesc;
+    }
+
+    // Catégorie
+    final nextCat = (draft.category ?? '').trim();
+    if ((_category == null || _category!.trim().isEmpty) && nextCat.isNotEmpty) {
+      // On ne force que si la catégorie fait partie des choix affichés.
+      if (_categories.contains(nextCat)) {
+        _category = nextCat;
+      }
+    }
+
+    // Ville / CP
+    final nextCity = (draft.city ?? '').trim();
+    final nextCp = (draft.postalCode ?? '').trim();
+    if (nextCity.isNotEmpty && _cityCtrl.text.trim().isEmpty) {
+      _cityCtrl.text = nextCity;
+    }
+    if (nextCp.isNotEmpty && _cpCtrl.text.trim().isEmpty) {
+      _cpCtrl.text = nextCp;
+    }
+  }
+
   // ignore: unused_element
   Future<void> _toggleMic() async {
     // STT désactivé : on force MicroIA
@@ -371,6 +409,27 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _descCtrl.text = transcript.trim();
       }
 
+      // Option A: après transcription, générer un brouillon (titre/catégorie/ville/CP)
+      try {
+        final draft = await AiOfferService.generateDraft(
+          hint: transcript.trim().isEmpty ? _descCtrl.text.trim() : transcript.trim(),
+          currentCity: _cityCtrl.text.trim(),
+          currentCategory: (_category ?? '').trim(),
+        );
+        _applyDraftToForm(draft, transcript: transcript);
+        await trace('web_after_draft', {
+          'title': draft.title,
+          'category': draft.category,
+          'city': draft.city,
+          'postalCode': draft.postalCode,
+        });
+      } catch (e) {
+        // best-effort: on garde au minimum la transcription.
+        await trace('web_draft_error', {
+          'error': e.toString(),
+        });
+      }
+
       if (mounted) {
         setState(() {});
         showSuccessSnackBar(context, 'Transcription web OK ✅');
@@ -511,6 +570,28 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       // Tu peux ensuite rappeler un autre callable pour générer le draft si besoin
       if (transcript.trim().isNotEmpty) {
         _descCtrl.text = transcript.trim();
+      }
+
+      // Option A: après transcription, générer un brouillon (titre/catégorie/ville/CP)
+      try {
+        final draft = await AiOfferService.generateDraft(
+          hint: transcript.trim().isEmpty ? _descCtrl.text.trim() : transcript.trim(),
+          currentCity: _cityCtrl.text.trim(),
+          currentCategory: (_category ?? '').trim(),
+        );
+        _applyDraftToForm(draft, transcript: transcript);
+
+        await trace('after_draft', {
+          'title': draft.title,
+          'category': draft.category,
+          'city': draft.city,
+          'postalCode': draft.postalCode,
+        });
+      } catch (e) {
+        // best-effort: on garde au minimum la transcription.
+        await trace('draft_error', {
+          'error': e.toString(),
+        });
       }
 
       if (mounted) {
