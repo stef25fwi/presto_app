@@ -1,6 +1,6 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
-const { onUserCreated } = require('firebase-functions/v2/auth');
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const functionsV1 = require("firebase-functions/v1");
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
 const OpenAI = require('openai');
@@ -750,9 +750,9 @@ function asNum(v, def) {
   return Number.isFinite(n) ? n : def;
 }
 
-async function getMicroIaConfig() {
+async function getMicroIaConfig({ forceRefresh = false } = {}) {
   const now = Date.now();
-  if (_microIaCfgCache && (now - _microIaCfgCacheAt) < MICROIA_RC_CACHE_MS) {
+  if (!forceRefresh && _microIaCfgCache && (now - _microIaCfgCacheAt) < MICROIA_RC_CACHE_MS) {
     return _microIaCfgCache;
   }
 
@@ -866,19 +866,21 @@ function isProUserData(data) {
   return false;
 }
 
-// ✅ Stats: incrémenter le nombre total de comptes Auth.
-exports.onAuthUserCreated = onUserCreated(
-  { region: 'europe-west1' },
-  async () => {
-    await USER_STATS_DOC.set(
-      {
-        totalAccounts: admin.firestore.FieldValue.increment(1),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
-  }
-);
+exports.onAuthUserCreated = functionsV1.auth.user().onCreate(async (user) => {
+  const uid = user.uid;
+  const db = admin.firestore();
+
+  await db.collection("users").doc(uid).set(
+    {
+      uid,
+      email: user.email || null,
+      displayName: user.displayName || null,
+      photoURL: user.photoURL || null,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+});
 
 // ✅ Tracking client (best-effort) : une connexion utilisateur.
 exports.trackUserLogin = onCall(
@@ -1137,6 +1139,10 @@ function isAllowedAudioContentType(ct) {
     v === 'audio/vnd.wave' ||
     v === 'audio/webm' ||
     v === 'video/webm' ||
+    v === 'audio/mp4' ||
+    v === 'video/mp4' ||
+    v === 'audio/x-m4a' ||
+    v === 'audio/aac' ||
     v === 'application/octet-stream'
   );
 }
@@ -1242,7 +1248,9 @@ exports.microIaProcessAudio = onCall(
       const expectedPrefix = `stt/${uid}_`;
       const isWavPath = storagePath.endsWith('.wav');
       const isWebmPath = storagePath.endsWith('.webm');
-      if (!storagePath.startsWith(expectedPrefix) || (!isWavPath && !isWebmPath)) {
+      const isM4aPath = storagePath.endsWith('.m4a');
+      const isMp4Path = storagePath.endsWith('.mp4');
+      if (!storagePath.startsWith(expectedPrefix) || (!isWavPath && !isWebmPath && !isM4aPath && !isMp4Path)) {
         throw new HttpsError("permission-denied", "storagePath does not belong to authenticated user.");
       }
 
@@ -1285,7 +1293,7 @@ exports.microIaProcessAudio = onCall(
       const shouldConvertToWav = !audioInfo?.isWav || audioInfo.audioFormat !== 1 || audioInfo.bitsPerSample !== 16;
       if (shouldConvertToWav) {
         const tmpDir = path.join(os.tmpdir(), 'presto_microia');
-        const ext = isWebmPath ? '.webm' : '.bin';
+        const ext = isWebmPath ? '.webm' : (isM4aPath ? '.m4a' : (isMp4Path ? '.mp4' : '.bin'));
         const inputPath = path.join(tmpDir, `in_${requestId}${ext}`);
         const outputPath = path.join(tmpDir, `out_${requestId}.wav`);
 
@@ -1483,7 +1491,7 @@ exports.adminGetMicroIaConfig = onCall(
   },
   async (req) => {
     await assertIsAdmin(req);
-    const cfg = await getMicroIaConfig();
+    const cfg = await getMicroIaConfig({ forceRefresh: true });
     return cfg;
   }
 );

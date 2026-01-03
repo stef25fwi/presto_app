@@ -79,6 +79,8 @@ class _ProProfilePageState extends State<ProProfilePage> {
       // best-effort: on ne bloque pas l'UX actuelle
     }
 
+    if (!mounted) return;
+
     // TODO plus tard: enregistrer dans Firestore:
     // pros/{uid}/profile + status "pending" + plan "free_pro_trial" etc.
     showSuccessSnackBar(context, "Profil Pro enregistré ✅ (abonnement bientôt)");

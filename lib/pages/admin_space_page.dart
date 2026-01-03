@@ -233,6 +233,7 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
                   languages: _languages,
                   onModeChanged: (m) => setState(() => _mode = m),
                   onAudioQualityChanged: (q) async {
+                    final prev = _audioQuality;
                     setState(() => _audioQuality = q);
 
                     try {
@@ -253,8 +254,10 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
                         'audio_quality': microIaAudioQualityToRcValue(q),
                       });
                     } on FirebaseFunctionsException catch (e) {
+                      if (mounted) setState(() => _audioQuality = prev);
                       _snack(e.message ?? 'Erreur admin');
                     } catch (e) {
+                      if (mounted) setState(() => _audioQuality = prev);
                       _snack('Erreur admin: $e');
                     }
                   },
@@ -819,18 +822,46 @@ class _MicroIaCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
 
-            SegmentedButton<MicroIaAudioQuality>(
-              segments: const [
-                ButtonSegment(value: MicroIaAudioQuality.low, label: Text("Basse")),
-                ButtonSegment(
-                    value: MicroIaAudioQuality.medium, label: Text("Moyenne")),
-                ButtonSegment(value: MicroIaAudioQuality.high, label: Text("Haute")),
-              ],
-              selected: {audioQuality},
-              onSelectionChanged: (set) {
-                if (set.isEmpty) return;
-                final q = set.first;
-                onAudioQualityChanged(q);
+            LayoutBuilder(
+              builder: (_, constraints) {
+                final isWide = constraints.maxWidth >= 360;
+                final padding = isWide ? 6.0 : 4.0;
+
+                return Container(
+                  padding: EdgeInsets.all(padding),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.black12),
+                  ),
+                  child: Row(
+                    children: [
+                      _SegButton(
+                        label: 'Basse',
+                        selected: audioQuality == MicroIaAudioQuality.low,
+                        selectedColor: prestoOrange,
+                        onTap: () =>
+                            onAudioQualityChanged(MicroIaAudioQuality.low),
+                      ),
+                      const SizedBox(width: 6),
+                      _SegButton(
+                        label: 'Moyenne',
+                        selected: audioQuality == MicroIaAudioQuality.medium,
+                        selectedColor: prestoOrange,
+                        onTap: () =>
+                            onAudioQualityChanged(MicroIaAudioQuality.medium),
+                      ),
+                      const SizedBox(width: 6),
+                      _SegButton(
+                        label: 'Haute',
+                        selected: audioQuality == MicroIaAudioQuality.high,
+                        selectedColor: prestoOrange,
+                        onTap: () =>
+                            onAudioQualityChanged(MicroIaAudioQuality.high),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
 
