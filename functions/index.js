@@ -735,6 +735,10 @@ function normalizeAudioQuality(v) {
   return 'MEDIUM';
 }
 
+function normalizeUltraFastEnabled(v) {
+  return asBool(v, false);
+}
+
 // ---------- Remote Config cache (évite de fetch à chaque appel) ----------
 let _microIaCfgCache = null;
 let _microIaCfgCacheAt = 0;
@@ -765,13 +769,19 @@ async function getMicroIaConfig({ forceRefresh = false } = {}) {
     const qualityThreshold = asNum(p.microia_quality_threshold?.defaultValue?.value, 0.62);
     const languageCode = p.microia_language_code?.defaultValue?.value || "fr-FR";
     const audioQuality = normalizeAudioQuality(p.microia_audio_quality?.defaultValue?.value || 'MEDIUM');
+    const ultraFastEnabled = normalizeUltraFastEnabled(
+      p.microia_ultra_fast_enabled?.defaultValue?.value ||
+        p.microia_ultrafast_enabled?.defaultValue?.value ||
+        p.microia_ultra_fast?.defaultValue?.value ||
+        false
+    );
 
-    _microIaCfgCache = { mode, fallbackEnabled, qualityThreshold, languageCode, audioQuality };
+    _microIaCfgCache = { mode, fallbackEnabled, qualityThreshold, languageCode, audioQuality, ultraFastEnabled };
     _microIaCfgCacheAt = now;
     return _microIaCfgCache;
   } catch (e) {
     console.warn("[getMicroIaConfig] Remote Config fetch failed, using defaults:", e?.message || e);
-    _microIaCfgCache = { mode: "HYBRID", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR", audioQuality: 'MEDIUM' };
+    _microIaCfgCache = { mode: "HYBRID", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR", audioQuality: 'MEDIUM', ultraFastEnabled: false };
     _microIaCfgCacheAt = now;
     return _microIaCfgCache;
   }
@@ -1257,6 +1267,10 @@ exports.microIaProcessAudio = onCall(
       const cfg = await getMicroIaConfig();
       const lang = languageCode || cfg.languageCode;
 
+      // Mode ultra-rapide (PRO): latence minimale, timeouts courts.
+      // Objectif: réponse très rapide, avec fallback limité uniquement si le 1er résultat est trop faible.
+      const ultraFastEnabled = cfg.ultraFastEnabled === true;
+
       // Garde-fous via metadata Storage AVANT download (coûts + RAM)
       const bucket = admin.storage().bucket();
       const file = bucket.file(storagePath);
@@ -1370,9 +1384,14 @@ exports.microIaProcessAudio = onCall(
         );
       }
 
-      const tryOrder = buildTryOrder(cfg.mode);
-      const threshold = cfg.qualityThreshold;
-      const fallbackEnabled = cfg.fallbackEnabled;
+      const tryOrder = ultraFastEnabled
+        ? ["GOOGLE_ONLY", "WHISPER_ONLY"]
+        : buildTryOrder(cfg.mode);
+
+      // En ultra-rapide, on accepte plus souvent le premier résultat pour éviter d'enchaîner des tentatives.
+      // On garde tout de même un fallback si le score est extrêmement bas (ex: texte vide).
+      const threshold = ultraFastEnabled ? 0.10 : cfg.qualityThreshold;
+      const fallbackEnabled = ultraFastEnabled ? true : cfg.fallbackEnabled;
 
       const needsOpenAI = tryOrder.some((m) => m !== "GOOGLE_ONLY");
       const openai = needsOpenAI ? new OpenAI({ apiKey: OPENAI_API_KEY.value() }) : null;
@@ -1388,21 +1407,21 @@ exports.microIaProcessAudio = onCall(
           if (attemptMode === "GOOGLE_ONLY") {
             out = await withTimeout(
               providerGoogleSTT({ audioBuffer, languageCode: lang, audioInfo }),
-              25_000,
+              ultraFastEnabled ? 12_000 : 25_000,
               'google_stt'
             );
           } else if (attemptMode === "WHISPER_ONLY") {
             if (!openai) throw new Error("OpenAI client not initialized");
             out = await withTimeout(
               providerWhisper({ audioBuffer, languageCode: lang, openai }),
-              60_000,
+              ultraFastEnabled ? 20_000 : 60_000,
               'whisper'
             );
           } else {
             if (!openai) throw new Error("OpenAI client not initialized");
             out = await withTimeout(
               providerHybrid({ audioBuffer, languageCode: lang, openai, audioInfo }),
-              80_000,
+              ultraFastEnabled ? 25_000 : 80_000,
               'hybrid'
             );
           }
@@ -1431,7 +1450,7 @@ exports.microIaProcessAudio = onCall(
             modeUsed: attemptMode,
             text: out.text,
             quality,
-            meta: { language: lang, audioInfo },
+            meta: { language: lang, audioInfo, ultraFastEnabled },
           };
 
           if (quality.score >= threshold) break;
@@ -1519,8 +1538,28 @@ exports.adminSetMicroIaConfig = onCall(
     const nextLanguage = asString(languageCode, 'fr-FR') || 'fr-FR';
     const nextAudioQuality = normalizeAudioQuality(req.data?.audio_quality || req.data?.microia_audio_quality);
 
+    const data = req.data || {};
+    const hasUltraFast =
+      Object.prototype.hasOwnProperty.call(data, 'ultraFastEnabled') ||
+      Object.prototype.hasOwnProperty.call(data, 'microia_ultra_fast_enabled') ||
+      Object.prototype.hasOwnProperty.call(data, 'microia_ultrafast_enabled') ||
+      Object.prototype.hasOwnProperty.call(data, 'microia_ultra_fast');
+
     const tpl = await admin.remoteConfig().getTemplate();
     tpl.parameters = tpl.parameters || {};
+
+    // Si l'appelant ne fournit pas le flag, on conserve la valeur existante.
+    const currentUltraFast = normalizeUltraFastEnabled(
+      tpl.parameters.microia_ultra_fast_enabled?.defaultValue?.value ||
+        tpl.parameters.microia_ultrafast_enabled?.defaultValue?.value ||
+        tpl.parameters.microia_ultra_fast?.defaultValue?.value ||
+        false
+    );
+    const nextUltraFastEnabled = hasUltraFast
+      ? normalizeUltraFastEnabled(
+          data.ultraFastEnabled ?? data.microia_ultra_fast_enabled ?? data.microia_ultrafast_enabled ?? data.microia_ultra_fast
+        )
+      : currentUltraFast;
 
     tpl.parameters.microia_mode = tpl.parameters.microia_mode || {};
     tpl.parameters.microia_mode.defaultValue = { value: nextMode };
@@ -1537,6 +1576,9 @@ exports.adminSetMicroIaConfig = onCall(
     tpl.parameters.microia_audio_quality = tpl.parameters.microia_audio_quality || {};
     tpl.parameters.microia_audio_quality.defaultValue = { value: nextAudioQuality };
 
+    tpl.parameters.microia_ultra_fast_enabled = tpl.parameters.microia_ultra_fast_enabled || {};
+    tpl.parameters.microia_ultra_fast_enabled.defaultValue = { value: nextUltraFastEnabled ? 'true' : 'false' };
+
     await admin.remoteConfig().publishTemplate(tpl);
 
     // Invalider le cache local pour accélérer la prise en compte côté Functions.
@@ -1550,6 +1592,7 @@ exports.adminSetMicroIaConfig = onCall(
       qualityThreshold: nextThreshold,
       languageCode: nextLanguage,
       audioQuality: nextAudioQuality,
+      ultraFastEnabled: nextUltraFastEnabled,
     };
   }
 );

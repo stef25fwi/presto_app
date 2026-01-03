@@ -176,17 +176,18 @@ class _UrgentBlinkBadgeState extends State<_UrgentBlinkBadge>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c;
   late final Animation<double> _opacity;
+  late final Animation<double> _scale;
 
   @override
   void initState() {
     super.initState();
     _c = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 560),
     )..repeat(reverse: true);
-    _opacity = Tween<double>(begin: 0.35, end: 1.0).animate(
-      CurvedAnimation(parent: _c, curve: Curves.easeInOut),
-    );
+    final curved = CurvedAnimation(parent: _c, curve: Curves.easeInOutCubic);
+    _opacity = Tween<double>(begin: 0.18, end: 1.0).animate(curved);
+    _scale = Tween<double>(begin: 0.96, end: 1.06).animate(curved);
   }
 
   @override
@@ -198,15 +199,25 @@ class _UrgentBlinkBadgeState extends State<_UrgentBlinkBadge>
   @override
   Widget build(BuildContext context) {
     const blue = OfferCard._kPrestoBlue;
-    return FadeTransition(
-      opacity: _opacity,
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _opacity.value,
+          child: Transform.scale(
+            scale: _scale.value,
+            child: child,
+          ),
+        );
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: blue.withValues(alpha: 0.12),
+          // Plus vif: fond et bord plus présents.
+          color: blue.withValues(alpha: 0.22),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: blue.withValues(alpha: 0.45),
+            color: blue.withValues(alpha: 0.78),
             width: 1,
           ),
         ),

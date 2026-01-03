@@ -339,11 +339,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     } else {
       // Démarrer l'enregistrement
       if (await _audioRecorder.hasPermission()) {
-        final filePath = await createTempAudioPath(prefix: 'presto_audio', extension: 'm4a');
+        // Ultra perf: WAV PCM16 16k mono (évite ffmpeg côté serveur)
+        final filePath = await createTempAudioPath(prefix: 'presto_audio', extension: 'wav');
         await _audioRecorder.start(
           const RecordConfig(
-            encoder: AudioEncoder.aacLc,
-            sampleRate: 44100,
+            encoder: AudioEncoder.wav,
+            sampleRate: 16000,
             numChannels: 1,
           ),
           path: filePath,
@@ -370,10 +371,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       await CrashlyticsContext.setKey('flow', 'webMic');
 
       final blob = await _webRec.stopToBlob();
-      final webmBytes = await webBlobToBytes(blob);
+      // Ultra perf: conversion côté navigateur -> WAV PCM16 16k mono (évite ffmpeg côté serveur)
+      final wavBytes = await webBlobToWav16kMono(blob);
 
-      final bytes = webmBytes.length;
-      debugPrint('[IA AUDIO WEB] webmBytes=$bytes');
+      final bytes = wavBytes.length;
+      debugPrint('[IA AUDIO WEB] wavBytes=$bytes');
 
       await trace('web_before_upload', {
         'bytes': bytes,
@@ -386,12 +388,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
 
       final ts = DateTime.now().millisecondsSinceEpoch;
-      final storagePath = 'stt/${uid}_$ts.webm';
+      final storagePath = 'stt/${uid}_$ts.wav';
 
       final ref = FirebaseStorage.instance.ref(storagePath);
       await ref.putData(
-        webmBytes,
-        SettableMetadata(contentType: 'audio/webm'),
+        wavBytes,
+        SettableMetadata(contentType: 'audio/wav'),
       );
 
       await trace('web_after_upload', {
