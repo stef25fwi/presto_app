@@ -301,11 +301,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     } else {
       // Démarrer l'enregistrement
       if (await _audioRecorder.hasPermission()) {
-        final filePath = await createTempWavPath(prefix: 'presto_audio');
+        final filePath = await createTempAudioPath(prefix: 'presto_audio', extension: 'm4a');
         await _audioRecorder.start(
           const RecordConfig(
-            encoder: AudioEncoder.wav,
-            sampleRate: 16000,
+            encoder: AudioEncoder.aacLc,
+            sampleRate: 44100,
             numChannels: 1,
           ),
           path: filePath,
@@ -414,8 +414,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       // Upload vers Cloud Storage (compatible Web: pas de dart:io / putFile)
       final xfile = XFile(audioPath);
-      final wavBytes = await xfile.readAsBytes();
-      final bytes = wavBytes.length;
+      final audioBytes = await xfile.readAsBytes();
+      final bytes = audioBytes.length;
 
       debugPrint('[IA AUDIO] bytes=$bytes path=$audioPath');
 
@@ -430,18 +430,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         );
       }
 
-      // ✅ extension cohérente avec RecordConfig encoder: AudioEncoder.wav
-      final fileName =
-          'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.wav';
+        final lower = audioPath.toLowerCase();
+        final isM4a = lower.endsWith('.m4a');
+        final isMp4 = lower.endsWith('.mp4');
+        final ext = isM4a ? 'm4a' : (isMp4 ? 'mp4' : 'wav');
+        final contentType = (isM4a || isMp4) ? 'audio/mp4' : 'audio/wav';
+
+        final fileName = 'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.$ext';
 
       final storageRef = FirebaseStorage.instance.ref().child(fileName);
 
       await retry(
         () => storageRef
             .putData(
-              wavBytes,
+              audioBytes,
               SettableMetadata(
-                contentType: 'audio/wav',
+                contentType: contentType,
                 cacheControl: 'private, max-age=3600',
               ),
             )

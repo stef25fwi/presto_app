@@ -5883,11 +5883,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // Préparer l'enregistreur haute qualité (WAV)
     try {
       if (await _recorder.hasPermission()) {
-        final filePath = await createTempWavPath(prefix: 'presto');
+        final filePath = await createTempAudioPath(prefix: 'presto', extension: 'm4a');
         await _recorder.start(
           RecordConfig(
-            encoder: AudioEncoder.wav,
-            sampleRate: 16000,
+            encoder: AudioEncoder.aacLc,
+            sampleRate: 44100,
             numChannels: 1,
           ),
           path: filePath,
@@ -6087,15 +6087,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final user = FirebaseAuth.instance.currentUser;
     final uid = user?.uid ?? 'anonymous';
     final xfile = XFile(localPath);
-    final wavBytes = await xfile.readAsBytes();
-    if (wavBytes.isEmpty) {
+    final audioBytes = await xfile.readAsBytes();
+    if (audioBytes.isEmpty) {
       throw 'Fichier audio introuvable';
     }
+    final lower = localPath.toLowerCase();
+    final isM4a = lower.endsWith('.m4a');
+    final isMp4 = lower.endsWith('.mp4');
+    final ext = isM4a ? 'm4a' : (isMp4 ? 'mp4' : 'wav');
+    final contentType = (isM4a || isMp4) ? 'audio/mp4' : 'audio/wav';
     final ts = DateTime.now().millisecondsSinceEpoch;
     final storage = FirebaseStorage.instance;
-    final destPath = 'stt/${uid}_$ts.wav';
+    final destPath = 'stt/${uid}_$ts.$ext';
     final ref = storage.ref(destPath);
-    await ref.putData(wavBytes, SettableMetadata(contentType: 'audio/wav'));
+    await ref.putData(audioBytes, SettableMetadata(contentType: contentType));
 
     final out = await MicroIaService.processAudio(
       storagePath: destPath,
