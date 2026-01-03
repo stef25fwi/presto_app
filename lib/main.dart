@@ -7229,8 +7229,7 @@ class _AccountPageState extends State<AccountPage> {
   Set<String> _favoriteCategories = <String>{};
   Set<String> _selectedFavoriteCategories = <String>{};
   Set<String> _selectedFavoriteSubcategories = <String>{};
-  String? _selectedCategoryInput;
-  String? _selectedSubCategoryInput;
+  Set<String> _draftFavoriteSelections = <String>{};
   bool _profileLoaded = false;
   bool _isSavingProfile = false;
   bool _isEditingProfile = false; // ✅ Mode édition du profil
@@ -7690,6 +7689,7 @@ class _AccountPageState extends State<AccountPage> {
             .map((e) => e.toString())
             .toList();
         _favoriteCategories = favs.toSet();
+        _draftFavoriteSelections = _favoriteCategories.toSet();
         final selectedCats =
             (data['selectedFavoriteCategories'] as List<dynamic>? ?? [])
                 .map((e) => e.toString())
@@ -7710,11 +7710,13 @@ class _AccountPageState extends State<AccountPage> {
         _favoriteCategories = <String>{};
         _selectedFavoriteCategories = <String>{};
         _selectedFavoriteSubcategories = <String>{};
+        _draftFavoriteSelections = <String>{};
       }
     } catch (_) {
       _favoriteCategories = <String>{};
       _selectedFavoriteCategories = <String>{};
       _selectedFavoriteSubcategories = <String>{};
+      _draftFavoriteSelections = <String>{};
     }
 
     if (mounted) {
@@ -7760,22 +7762,225 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  Future<void> _toggleFavoriteCategory(User user, String category) async {
+  void _mutateDraftCategory(String category) {
+    if (_draftFavoriteSelections.contains(category)) {
+      _draftFavoriteSelections.remove(category);
+      _draftFavoriteSelections.removeWhere((e) => e.startsWith('$category — '));
+    } else {
+      _draftFavoriteSelections.add(category);
+    }
+  }
+
+  void _mutateDraftSubcategory({
+    required String category,
+    required String subcategory,
+  }) {
+    final label = '$category — $subcategory';
+    if (_draftFavoriteSelections.contains(label)) {
+      _draftFavoriteSelections.remove(label);
+    } else {
+      _draftFavoriteSelections.add(category);
+      _draftFavoriteSelections.add(label);
+    }
+  }
+
+  Future<void> _applyDraftFavorites(User user) async {
+    final draft = _draftFavoriteSelections.toSet();
+
+    final selectedCats = draft.where((e) => !e.contains('—')).toSet();
+    final selectedSubcats = draft.where((e) => e.contains('—')).toSet();
+
     setState(() {
-      final exists = _favoriteCategories.contains(category);
-      if (exists) {
-        _favoriteCategories.remove(category);
-        _selectedFavoriteCategories.remove(category);
-        _selectedFavoriteSubcategories.remove(category);
-      } else {
-        _favoriteCategories.add(category);
-        _selectedFavoriteCategories.add(category);
-        if (category.contains('—')) {
-          _selectedFavoriteSubcategories.add(category);
-        }
-      }
+      _favoriteCategories = draft;
+      _selectedFavoriteCategories = selectedCats;
+      _selectedFavoriteSubcategories = selectedSubcats;
     });
+
     await _saveProfile(user);
+    if (!mounted) return;
+    showSuccessSnackBar(context, 'Alertes enregistrées');
+  }
+
+  Future<void> _openCategoryPickerSheet() async {
+    var changed = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, sheetSetState) {
+            return SafeArea(
+              child: SizedBox(
+                height: MediaQuery.of(ctx).size.height * 0.65,
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                  itemCount: _allFavoriteCategories.length + 1,
+                  separatorBuilder: (_, __) => const Divider(height: 0),
+                  itemBuilder: (_, index) {
+                    if (index == 0) {
+                      return const Padding(
+                        padding: EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          'Choisir des catégories',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      );
+                    }
+
+                    final cat = _allFavoriteCategories[index - 1];
+                    final selected = _draftFavoriteSelections.contains(cat);
+
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                      title: Text(
+                        cat,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      trailing: selected
+                          ? const Icon(Icons.check, color: kPrestoBlue)
+                          : null,
+                      onTap: () {
+                        sheetSetState(() {
+                          _mutateDraftCategory(cat);
+                          changed = true;
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (changed && mounted) setState(() {});
+  }
+
+  Future<void> _openSubcategoryPickerSheet() async {
+    final selectedCategories = _draftFavoriteSelections
+        .where((e) => !e.contains('—'))
+        .toList();
+
+    var changed = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      builder: (ctx) {
+        if (selectedCategories.isEmpty) {
+          return SafeArea(
+            child: SizedBox(
+              height: MediaQuery.of(ctx).size.height * 0.35,
+              child: const Center(
+                child: Text(
+                  'Choisis d’abord une catégorie',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+
+        final items = <({String category, String? subcategory, bool isHeader})>[];
+        for (final category in selectedCategories) {
+          items.add((category: category, subcategory: null, isHeader: true));
+          final subs = _subCategoriesByCategory[category] ?? const <String>[];
+          for (final sub in subs) {
+            items.add((category: category, subcategory: sub, isHeader: false));
+          }
+        }
+
+        return StatefulBuilder(
+          builder: (context, sheetSetState) {
+            return SafeArea(
+              child: SizedBox(
+                height: MediaQuery.of(ctx).size.height * 0.65,
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                  itemCount: items.length + 1,
+                  separatorBuilder: (_, __) => const Divider(height: 0),
+                  itemBuilder: (_, index) {
+                    if (index == 0) {
+                      return const Padding(
+                        padding: EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          'Choisir des sous-catégories',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      );
+                    }
+
+                    final item = items[index - 1];
+                    if (item.isHeader) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 10, bottom: 6),
+                        child: Text(
+                          item.category,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            color: kPrestoBlue,
+                          ),
+                        ),
+                      );
+                    }
+
+                    final sub = item.subcategory!;
+                    final label = '${item.category} — $sub';
+                    final selected = _draftFavoriteSelections.contains(label);
+
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                      title: Text(
+                        sub,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      trailing: selected
+                          ? const Icon(Icons.check, color: kPrestoBlue)
+                          : null,
+                      onTap: () {
+                        sheetSetState(() {
+                          _mutateDraftSubcategory(
+                            category: item.category,
+                            subcategory: sub,
+                          );
+                          changed = true;
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (changed && mounted) setState(() {});
   }
 
   // ignore: unused_element
@@ -8479,150 +8684,120 @@ class _AccountPageState extends State<AccountPage> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        // Sélecteur Catégorie
-                        DropdownButtonFormField<String>(
-                          value: _selectedCategoryInput,
-                          hint: const Text('Choisir une catégorie'),
-                          dropdownColor: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          items: _allFavoriteCategories.map((cat) {
-                            final selected = _favoriteCategories.contains(cat);
-                            return DropdownMenuItem<String>(
-                              value: cat,
-                              child: Row(
-                                children: [
-                                  Expanded(child: Text(cat)),
-                                  if (selected)
-                                    const Icon(Icons.check,
-                                        color: kPrestoBlue, size: 18),
-                                ],
+                        InkWell(
+                          onTap: _openCategoryPickerSheet,
+                          borderRadius: BorderRadius.circular(12),
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: 'Catégories',
+                              filled: true,
+                              fillColor: const Color(0xFFF9F9F9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                            );
-                          }).toList(),
-                          onChanged: (selectedCat) {
-                            setState(() {
-                              _selectedCategoryInput = selectedCat;
-                              _selectedSubCategoryInput = null;
-                            });
-                            if (selectedCat != null) {
-                              _toggleFavoriteCategory(user, selectedCat);
-                            }
-                          },
-                          decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
                             ),
-                            filled: true,
-                            fillColor: const Color(0xFFF9F9F9),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _draftFavoriteSelections
+                                            .where((e) => !e.contains('—'))
+                                            .isEmpty
+                                        ? 'Choisir des catégories'
+                                        : '${_draftFavoriteSelections.where((e) => !e.contains('—')).length} catégorie(s) sélectionnée(s)',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Colors.black54,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 10),
-                        // Sélecteur Sous-catégorie (dépend de la catégorie choisie)
-                        DropdownButtonFormField<String>(
-                          value: _selectedSubCategoryInput,
-                          hint: Text(_selectedCategoryInput == null
-                              ? 'Choisis d’abord une catégorie'
-                              : 'Sous-catégorie'),
-                          dropdownColor: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          items: (_selectedCategoryInput == null
-                                  ? <String>[]
-                                  : (_subCategoriesByCategory[
-                                          _selectedCategoryInput!] ??
-                                      []))
-                              .map((sub) {
-                            final label =
-                                '${_selectedCategoryInput ?? ''} — $sub';
-                            final selected =
-                                _favoriteCategories.contains(label);
-                            return DropdownMenuItem<String>(
-                              value: sub,
-                              child: Row(
-                                children: [
-                                  Expanded(child: Text(sub)),
-                                  if (selected)
-                                    const Icon(Icons.check,
-                                        color: kPrestoBlue, size: 18),
-                                ],
+                        InkWell(
+                          onTap: _openSubcategoryPickerSheet,
+                          borderRadius: BorderRadius.circular(12),
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: 'Sous-catégories',
+                              filled: true,
+                              fillColor: const Color(0xFFF9F9F9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                            );
-                          }).toList(),
-                          onChanged: (selectedSub) {
-                            if (selectedSub == null ||
-                                _selectedCategoryInput == null) return;
-                            setState(() {
-                              _selectedSubCategoryInput = selectedSub;
-                            });
-                            final label =
-                                '${_selectedCategoryInput!} — $selectedSub';
-                            _toggleFavoriteCategory(user, label);
-                          },
-                          decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
                             ),
-                            filled: true,
-                            fillColor: const Color(0xFFF9F9F9),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _draftFavoriteSelections
+                                            .where((e) => e.contains('—'))
+                                            .isEmpty
+                                        ? 'Choisir des sous-catégories'
+                                        : '${_draftFavoriteSelections.where((e) => e.contains('—')).length} sous-catégorie(s) sélectionnée(s)',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Colors.black54,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // Liste des sélections
-                        if (_favoriteCategories.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Sélections :',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black54,
-                                ),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrestoBlue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
                               ),
-                              const SizedBox(height: 8),
-                              Column(
-                                children: _favoriteCategories.map((cat) {
-                                  return Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 4),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.check,
-                                            color: kPrestoBlue, size: 18),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            cat,
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.close,
-                                              size: 18, color: Colors.black54),
-                                          onPressed: () =>
-                                              _toggleFavoriteCategory(
-                                                  user, cat),
-                                        ),
-                                      ],
+                            ),
+                            onPressed: _isSavingProfile
+                                ? null
+                                : () => _applyDraftFavorites(user),
+                            child: _isSavingProfile
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
                                     ),
-                                  );
-                                }).toList(),
-                              ),
-                            ],
-                          ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          "Plus tard, ces favoris pourront déclencher des notifications push et un badge sur la cloche de l'accueil.",
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.black45,
+                                  )
+                                : const Text(
+                                    'Valider mes alertes',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 15,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],
