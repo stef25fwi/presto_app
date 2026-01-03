@@ -14,6 +14,30 @@ class AdminSpacePage extends StatefulWidget {
 
 enum MicroIaMode { google, whisper, hybride }
 
+enum MicroIaAudioQuality { low, medium, high }
+
+String microIaAudioQualityToRcValue(MicroIaAudioQuality q) {
+  switch (q) {
+    case MicroIaAudioQuality.low:
+      return "LOW";
+    case MicroIaAudioQuality.medium:
+      return "MEDIUM";
+    case MicroIaAudioQuality.high:
+      return "HIGH";
+  }
+}
+
+MicroIaAudioQuality microIaAudioQualityFromRcValue(String v) {
+  switch (v.toUpperCase()) {
+    case "LOW":
+      return MicroIaAudioQuality.low;
+    case "HIGH":
+      return MicroIaAudioQuality.high;
+    default:
+      return MicroIaAudioQuality.medium;
+  }
+}
+
 class MicroIaTranscriptionPage extends StatefulWidget {
   const MicroIaTranscriptionPage({super.key});
 
@@ -32,6 +56,7 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
   bool _saving = false;
 
   MicroIaMode _mode = MicroIaMode.hybride;
+  MicroIaAudioQuality _audioQuality = MicroIaAudioQuality.medium;
   bool _fallback = true;
   double _quality = 0.62;
   final List<String> _languages = ['fr-FR'];
@@ -56,11 +81,17 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
       final fallback = data['fallbackEnabled'] == true;
       final threshold = (data['qualityThreshold'] as num?)?.toDouble() ?? 0.62;
       final lang = (data['languageCode'] ?? 'fr-FR').toString().trim();
+        final audioQualityStr = (data['audioQuality'] ??
+            data['audio_quality'] ??
+            data['microia_audio_quality'] ??
+            'MEDIUM')
+          .toString();
 
       setState(() {
         _mode = _modeFromRemote(modeStr);
         _fallback = fallback;
         _quality = threshold.clamp(0.0, 1.0);
+        _audioQuality = microIaAudioQualityFromRcValue(audioQualityStr);
         _languages
           ..clear()
           ..add(lang.isEmpty ? 'fr-FR' : lang);
@@ -121,6 +152,7 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
         'fallbackEnabled': _fallback,
         'qualityThreshold': _quality,
         'languageCode': lang.isEmpty ? 'fr-FR' : lang,
+        'microia_audio_quality': microIaAudioQualityToRcValue(_audioQuality),
       });
 
       final data = (res.data is Map)
@@ -132,11 +164,17 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
       final threshold =
           (data['qualityThreshold'] as num?)?.toDouble() ?? _quality;
       final languageCode = (data['languageCode'] ?? lang).toString();
+        final audioQualityStr = (data['audioQuality'] ??
+            data['audio_quality'] ??
+            data['microia_audio_quality'] ??
+            microIaAudioQualityToRcValue(_audioQuality))
+          .toString();
 
       setState(() {
         _mode = _modeFromRemote(modeStr.toUpperCase());
         _fallback = fallback;
         _quality = threshold.clamp(0.0, 1.0);
+        _audioQuality = microIaAudioQualityFromRcValue(audioQualityStr);
         _languages
           ..clear()
           ..add(languageCode.trim().isEmpty ? 'fr-FR' : languageCode.trim());
@@ -189,10 +227,37 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
                   prestoOrange: prestoOrange,
                   prestoBlue: prestoBlue,
                   mode: _mode,
+                  audioQuality: _audioQuality,
                   fallback: _fallback,
                   quality: _quality,
                   languages: _languages,
                   onModeChanged: (m) => setState(() => _mode = m),
+                  onAudioQualityChanged: (q) async {
+                    setState(() => _audioQuality = q);
+
+                    try {
+                      final callable = _functions.httpsCallable(
+                        'adminSetMicroIaConfig',
+                        options:
+                            HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+                      );
+
+                      final lang =
+                          _languages.isNotEmpty ? _languages.first.trim() : 'fr-FR';
+
+                      await callable.call<dynamic>({
+                        'mode': _modeToRemote(_mode),
+                        'fallbackEnabled': _fallback,
+                        'qualityThreshold': _quality,
+                        'languageCode': lang.isEmpty ? 'fr-FR' : lang,
+                        'audio_quality': microIaAudioQualityToRcValue(q),
+                      });
+                    } on FirebaseFunctionsException catch (e) {
+                      _snack(e.message ?? 'Erreur admin');
+                    } catch (e) {
+                      _snack('Erreur admin: $e');
+                    }
+                  },
                   onFallbackChanged: (v) => setState(() => _fallback = v),
                   onQualityChanged: (v) => setState(() => _quality = v),
                   onAddLanguage: () => _snack('Ajouter une langue (à brancher)'),
@@ -650,11 +715,13 @@ class _MicroIaCard extends StatelessWidget {
   final Color prestoBlue;
 
   final MicroIaMode mode;
+  final MicroIaAudioQuality audioQuality;
   final bool fallback;
   final double quality;
   final List<String> languages;
 
   final ValueChanged<MicroIaMode> onModeChanged;
+  final ValueChanged<MicroIaAudioQuality> onAudioQualityChanged;
   final ValueChanged<bool> onFallbackChanged;
   final ValueChanged<double> onQualityChanged;
   final VoidCallback onAddLanguage;
@@ -666,10 +733,12 @@ class _MicroIaCard extends StatelessWidget {
     required this.prestoOrange,
     required this.prestoBlue,
     required this.mode,
+    required this.audioQuality,
     required this.fallback,
     required this.quality,
     required this.languages,
     required this.onModeChanged,
+    required this.onAudioQualityChanged,
     required this.onFallbackChanged,
     required this.onQualityChanged,
     required this.onAddLanguage,
@@ -740,6 +809,28 @@ class _MicroIaCard extends StatelessWidget {
                     ],
                   ),
                 );
+              },
+            ),
+
+            const SizedBox(height: 16),
+            Text(
+              "Qualité audio (WAV)",
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+
+            SegmentedButton<MicroIaAudioQuality>(
+              segments: const [
+                ButtonSegment(value: MicroIaAudioQuality.low, label: Text("Basse")),
+                ButtonSegment(
+                    value: MicroIaAudioQuality.medium, label: Text("Moyenne")),
+                ButtonSegment(value: MicroIaAudioQuality.high, label: Text("Haute")),
+              ],
+              selected: {audioQuality},
+              onSelectionChanged: (set) {
+                if (set.isEmpty) return;
+                final q = set.first;
+                onAudioQualityChanged(q);
               },
             ),
 
