@@ -729,6 +729,12 @@ function normalizeMode(mode) {
   return "HYBRID";
 }
 
+function normalizeAudioQuality(v) {
+  const s = String(v || '').trim().toUpperCase();
+  if (s === 'LOW' || s === 'MEDIUM' || s === 'HIGH') return s;
+  return 'MEDIUM';
+}
+
 // ---------- Remote Config cache (évite de fetch à chaque appel) ----------
 let _microIaCfgCache = null;
 let _microIaCfgCacheAt = 0;
@@ -758,13 +764,14 @@ async function getMicroIaConfig() {
     const fallbackEnabled = asBool(p.microia_fallback_enabled?.defaultValue?.value, true);
     const qualityThreshold = asNum(p.microia_quality_threshold?.defaultValue?.value, 0.62);
     const languageCode = p.microia_language_code?.defaultValue?.value || "fr-FR";
+    const audioQuality = normalizeAudioQuality(p.microia_audio_quality?.defaultValue?.value || 'MEDIUM');
 
-    _microIaCfgCache = { mode, fallbackEnabled, qualityThreshold, languageCode };
+    _microIaCfgCache = { mode, fallbackEnabled, qualityThreshold, languageCode, audioQuality };
     _microIaCfgCacheAt = now;
     return _microIaCfgCache;
   } catch (e) {
     console.warn("[getMicroIaConfig] Remote Config fetch failed, using defaults:", e?.message || e);
-    _microIaCfgCache = { mode: "HYBRID", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR" };
+    _microIaCfgCache = { mode: "HYBRID", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR", audioQuality: 'MEDIUM' };
     _microIaCfgCacheAt = now;
     return _microIaCfgCache;
   }
@@ -1502,6 +1509,7 @@ exports.adminSetMicroIaConfig = onCall(
     const nextFallback = asBool(fallbackEnabled, true);
     const nextThreshold = Math.max(0, Math.min(1, asNum(qualityThreshold, 0.62)));
     const nextLanguage = asString(languageCode, 'fr-FR') || 'fr-FR';
+    const nextAudioQuality = normalizeAudioQuality(req.data?.audio_quality || req.data?.microia_audio_quality);
 
     const tpl = await admin.remoteConfig().getTemplate();
     tpl.parameters = tpl.parameters || {};
@@ -1518,6 +1526,9 @@ exports.adminSetMicroIaConfig = onCall(
     tpl.parameters.microia_language_code = tpl.parameters.microia_language_code || {};
     tpl.parameters.microia_language_code.defaultValue = { value: nextLanguage };
 
+    tpl.parameters.microia_audio_quality = tpl.parameters.microia_audio_quality || {};
+    tpl.parameters.microia_audio_quality.defaultValue = { value: nextAudioQuality };
+
     await admin.remoteConfig().publishTemplate(tpl);
 
     // Invalider le cache local pour accélérer la prise en compte côté Functions.
@@ -1530,6 +1541,7 @@ exports.adminSetMicroIaConfig = onCall(
       fallbackEnabled: nextFallback,
       qualityThreshold: nextThreshold,
       languageCode: nextLanguage,
+      audioQuality: nextAudioQuality,
     };
   }
 );
