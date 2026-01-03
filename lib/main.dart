@@ -578,6 +578,7 @@ class _HomePageState extends State<HomePage>
   int _currentSlide = 0;
 
   Timer? _homeAutoSlideTimer;
+  Timer? _presenceTimer;
   bool _carouselEnabled = false;
   bool _showBottomBar = true;
   double _lastScrollPosition = 0;
@@ -666,6 +667,11 @@ class _HomePageState extends State<HomePage>
     _selectedIndex = widget.initialIndex;
     WidgetsBinding.instance.addObserver(this);
 
+    _touchPresence();
+    _presenceTimer = Timer.periodic(const Duration(minutes: 2), (_) {
+      _touchPresence();
+    });
+
     // À l'arrivée sur l'accueil: on laisse le slide texte visible 4s,
     // puis on lance le carousel et sa rotation.
     if (_selectedIndex == 0) {
@@ -709,6 +715,28 @@ class _HomePageState extends State<HomePage>
     _scrollController.addListener(() {
       _onPageScroll(_scrollController.offset);
     });
+  }
+
+  Future<void> _touchPresence() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+        {
+          'lastSeenAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (_) {
+      // best-effort
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _touchPresence();
+    }
   }
 
   void _onPageScroll(double offset) {
@@ -779,6 +807,7 @@ class _HomePageState extends State<HomePage>
     _categoryController.dispose();
     _sloganTimer?.cancel();
     _homeAutoSlideTimer?.cancel();
+    _presenceTimer?.cancel();
     _dynamicKeywordsSubscription?.cancel();
     super.dispose();
   }
@@ -7099,6 +7128,35 @@ class _AccountPageState extends State<AccountPage> {
   final FirebaseFunctions _functions =
       FirebaseFunctions.instanceFor(region: 'europe-west1');
 
+  Future<void> _touchPresence() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+        {
+          'lastSeenAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (_) {
+      // best-effort
+    }
+  }
+
+  Future<void> _trackLogin() async {
+    try {
+      final callable = _functions.httpsCallable(
+        'trackUserLogin',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 10)),
+      );
+      await callable.call<dynamic>({});
+    } catch (_) {
+      // best-effort
+    } finally {
+      await _touchPresence();
+    }
+  }
+
   final TextEditingController _adminMicroIaLanguageController =
       TextEditingController();
 
@@ -7553,6 +7611,8 @@ class _AccountPageState extends State<AccountPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+
+      await _trackLogin();
       if (!mounted) return;
       showSuccessSnackBar(context, "Compte créé et connecté avec succès");
     } on FirebaseAuthException catch (e) {
@@ -7699,6 +7759,8 @@ class _AccountPageState extends State<AccountPage> {
         await _auth.signInWithCredential(credential);
       }
 
+      await _trackLogin();
+
       if (!mounted) return;
       showSuccessSnackBar(context, "Connecté avec Google");
     } catch (e) {
@@ -7733,6 +7795,8 @@ class _AccountPageState extends State<AccountPage> {
       );
 
       await _auth.signInWithCredential(oauthCredential);
+
+      await _trackLogin();
 
       if (!mounted) return;
       showSuccessSnackBar(context, "Connecté avec Apple");

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/friendly_snackbar.dart';
 import '../widgets/phone_input_field.dart';
 import '../constants.dart';
@@ -52,11 +54,29 @@ class _ProProfilePageState extends State<ProProfilePage> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_acceptTerms) {
       showSuccessSnackBar(context, "Veuillez accepter les conditions.");
       return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      showSuccessSnackBar(context, "Veuillez vous connecter avant.");
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+        {
+          'accountType': 'Pro',
+          'proEnabledAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } catch (_) {
+      // best-effort: on ne bloque pas l'UX actuelle
     }
 
     // TODO plus tard: enregistrer dans Firestore:
