@@ -7,7 +7,7 @@ class OfferCard extends StatelessWidget {
   final String offerId;
   final Map<String, dynamic> data;
 
-  static const Color _kPrestoOrange = Color(0xFFFF6600);
+  static const Color _kPrestoBlue = Color(0xFF2196F3);
 
   /// ✅ Mettre false dans "Je consulte les offres"
   /// ✅ Mettre true dans Profil / "Mes messages"
@@ -76,7 +76,7 @@ class OfferCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           border: Border(
             left: BorderSide(
-              color: const Color(0xFF2196F3), // Bleu
+              color: _kPrestoBlue, // Bleu
               width: 5,
             ),
           ),
@@ -116,36 +116,23 @@ class OfferCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   if (ageLabel.isNotEmpty)
-                    Text(
-                      'Publié il y a $ageLabel',
-                      style: const TextStyle(fontSize: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Publié il y a $ageLabel',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        if (isUrgent) ...[
+                          const SizedBox(width: 10),
+                          const _UrgentBlinkBadge(),
+                        ],
+                      ],
                     ),
                 ],
               ),
             ),
-
-            if (isUrgent) ...[
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _kPrestoOrange.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: _kPrestoOrange.withValues(alpha: 0.35),
-                    width: 1,
-                  ),
-                ),
-                child: const Text(
-                  'Urgent',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: _kPrestoOrange,
-                  ),
-                ),
-              ),
-            ],
 
             // ✅ Menu "..." : uniquement si showActionsMenu = true
             if (showActionsMenu)
@@ -172,6 +159,64 @@ class OfferCard extends StatelessWidget {
             else
               const SizedBox(width: 0), // ✅ supprime totalement le "..."
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UrgentBlinkBadge extends StatefulWidget {
+  const _UrgentBlinkBadge();
+
+  @override
+  State<_UrgentBlinkBadge> createState() => _UrgentBlinkBadgeState();
+}
+
+class _UrgentBlinkBadgeState extends State<_UrgentBlinkBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat(reverse: true);
+    _opacity = Tween<double>(begin: 0.35, end: 1.0).animate(
+      CurvedAnimation(parent: _c, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const blue = OfferCard._kPrestoBlue;
+    return FadeTransition(
+      opacity: _opacity,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: blue.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: blue.withValues(alpha: 0.45),
+            width: 1,
+          ),
+        ),
+        child: const Text(
+          'Urgent',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: blue,
+          ),
         ),
       ),
     );

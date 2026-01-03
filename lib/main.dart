@@ -6476,8 +6476,54 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
 
       if (!mounted) return;
-      showSuccessSnackBar(context, 'Votre offre a été publiée avec succès');
-      Navigator.of(context).pop();
+
+      final offerId = docRef.id;
+      final title = _titleController.text.trim();
+      final location = _locationController.text.trim();
+      final category = (_category ?? '').toString().trim();
+      final subcategory = _selectedSubCategory;
+      final budgetNum = _budgetType == 'À négocier' ? null : _parseBudget(_budgetController.text);
+      final description = _descriptionController.text.trim();
+      final phone = _phoneController.text.trim();
+      final imageUrls = _uploadedPhotoUrls.isEmpty ? null : List<String>.from(_uploadedPhotoUrls);
+
+      // ✅ Checkmark bleu au milieu de l'écran.
+      showDialog<void>(
+        context: context,
+        useRootNavigator: true,
+        barrierDismissible: false,
+        barrierColor: Colors.black.withValues(alpha: 0.10),
+        builder: (_) => const Center(
+          child: Icon(
+            Icons.check_circle,
+            color: kPrestoBlue,
+            size: 96,
+          ),
+        ),
+      );
+
+      await Future.delayed(const Duration(milliseconds: 700));
+      if (!mounted) return;
+
+      // Fermer le checkmark puis aller au détail.
+      Navigator.of(context, rootNavigator: true).pop();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => OfferDetailPage(
+            title: title.isEmpty ? 'Annonce' : title,
+            location: location,
+            category: category,
+            subcategory: subcategory,
+            budget: budgetNum,
+            description: description,
+            phone: phone.isEmpty ? null : phone,
+            imageUrls: imageUrls,
+            annonceurId: user.uid,
+            offerId: offerId,
+          ),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       showSuccessSnackBar(context, 'Erreur lors de la publication : $e');
