@@ -1,4 +1,5 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onUserCreated } = require('firebase-functions/v2/auth');
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
@@ -14,6 +15,8 @@ const ffmpegPath = require('ffmpeg-static');
 admin.initializeApp();
 
 const ENFORCE_APP_CHECK = String(process.env.ENFORCE_APP_CHECK || '').toLowerCase() === 'true';
+
+const USER_STATS_DOC = admin.firestore().collection('_stats').doc('users');
 
 // Secrets (Firebase Functions v2)
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
@@ -836,6 +839,129 @@ async function assertIsAdmin(req) {
     throw new HttpsError('permission-denied', 'Admin only.');
   }
 }
+
+async function getAuthUsersCount() {
+  let total = 0;
+  let pageToken = undefined;
+  do {
+    const res = await admin.auth().listUsers(1000, pageToken);
+    total += res.users.length;
+    pageToken = res.pageToken;
+  } while (pageToken);
+  return total;
+}
+
+function isProUserData(data) {
+  if (!data || typeof data !== 'object') return false;
+  const accountType = String(data.accountType || '').trim().toLowerCase();
+  if (accountType === 'pro') return true;
+  if (data.isPro === true) return true;
+  return false;
+}
+
+// ✅ Stats: incrémenter le nombre total de comptes Auth.
+exports.onAuthUserCreated = onUserCreated(
+  { region: 'europe-west1' },
+  async () => {
+    await USER_STATS_DOC.set(
+      {
+        totalAccounts: admin.firestore.FieldValue.increment(1),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+);
+
+// ✅ Tracking client (best-effort) : une connexion utilisateur.
+exports.trackUserLogin = onCall(
+  {
+    region: 'europe-west1',
+    timeoutSeconds: 10,
+    enforceAppCheck: ENFORCE_APP_CHECK,
+  },
+  async (req) => {
+    const uid = req.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Authentication required.');
+
+    // Anti-abus: limite très légère (10/min)
+    await rateLimitOrThrow({ uid, action: 'track_login', limit: 10, windowSec: 60 });
+
+    const userRef = admin.firestore().collection('users').doc(uid);
+    const userSnap = await userRef.get();
+    const userData = userSnap.data() || {};
+    const isPro = isProUserData(userData);
+
+    const inc = admin.firestore.FieldValue.increment(1);
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
+    const statsPatch = {
+      totalLogins: inc,
+      updatedAt: now,
+    };
+    if (isPro) statsPatch.proLogins = inc;
+
+    await Promise.all([
+      USER_STATS_DOC.set(statsPatch, { merge: true }),
+      userRef.set(
+        {
+          lastLoginAt: now,
+          lastSeenAt: now,
+        },
+        { merge: true }
+      ),
+    ]);
+
+    return { ok: true, isPro };
+  }
+);
+
+// ✅ Admin: stats utilisateurs pour la tuile "Utilisateurs".
+exports.adminGetUserStats = onCall(
+  {
+    region: 'europe-west1',
+    timeoutSeconds: 20,
+    enforceAppCheck: ENFORCE_APP_CHECK,
+  },
+  async (req) => {
+    await assertIsAdmin(req);
+
+    const statsSnap = await USER_STATS_DOC.get();
+    const stats = statsSnap.data() || {};
+
+    let totalAccounts = Number(stats.totalAccounts || 0);
+    if (!Number.isFinite(totalAccounts) || totalAccounts <= 0) {
+      // Fallback si jamais le trigger n'a pas encore rempli la stat.
+      totalAccounts = await getAuthUsersCount();
+      await USER_STATS_DOC.set(
+        {
+          totalAccounts,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    const onlineSinceMs = Date.now() - 5 * 60 * 1000;
+    const threshold = admin.firestore.Timestamp.fromMillis(onlineSinceMs);
+    const onlineCountSnap = await admin
+      .firestore()
+      .collection('users')
+      .where('lastSeenAt', '>=', threshold)
+      .count()
+      .get();
+
+    const onlineUsers = Number(onlineCountSnap.data().count || 0);
+    const proLogins = Number(stats.proLogins || 0);
+
+    return {
+      totalAccounts,
+      onlineUsers,
+      proLogins,
+      windowMinutes: 5,
+    };
+  }
+);
 
 function asString(v, def = '') {
   if (typeof v === 'string') return v;

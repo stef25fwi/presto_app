@@ -14,7 +14,14 @@ class AdminSpacePage extends StatefulWidget {
 
 enum MicroIaMode { google, whisper, hybride }
 
-class _AdminSpacePageState extends State<AdminSpacePage> {
+class MicroIaTranscriptionPage extends StatefulWidget {
+  const MicroIaTranscriptionPage({super.key});
+
+  @override
+  State<MicroIaTranscriptionPage> createState() => _MicroIaTranscriptionPageState();
+}
+
+class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
   static const Color prestoOrange = Color(0xFFFF6600);
   static const Color prestoBlue = Color(0xFF1A73E8);
 
@@ -122,7 +129,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
 
       final modeStr = (data['mode'] ?? _modeToRemote(_mode)).toString();
       final fallback = data['fallbackEnabled'] == true;
-      final threshold = (data['qualityThreshold'] as num?)?.toDouble() ?? _quality;
+      final threshold =
+          (data['qualityThreshold'] as num?)?.toDouble() ?? _quality;
       final languageCode = (data['languageCode'] ?? lang).toString();
 
       setState(() {
@@ -151,7 +159,110 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade50,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 0.5,
+        titleSpacing: 16,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => Navigator.of(context).maybePop(),
+          tooltip: 'Retour',
+        ),
+        title: const Text(
+          'Micro-IA — Transcription',
+          style: kPrestoAppBarTitleStyle,
+        ),
+      ),
+      body: SafeArea(
+        child: _loading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(prestoOrange),
+                ),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                child: _MicroIaCard(
+                  prestoOrange: prestoOrange,
+                  prestoBlue: prestoBlue,
+                  mode: _mode,
+                  fallback: _fallback,
+                  quality: _quality,
+                  languages: _languages,
+                  onModeChanged: (m) => setState(() => _mode = m),
+                  onFallbackChanged: (v) => setState(() => _fallback = v),
+                  onQualityChanged: (v) => setState(() => _quality = v),
+                  onAddLanguage: () => _snack('Ajouter une langue (à brancher)'),
+                  onRemoveLanguage: (code) =>
+                      setState(() => _languages.remove(code)),
+                  onSave: _saving ? null : _save,
+                  saving: _saving,
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+class _AdminSpacePageState extends State<AdminSpacePage> {
+  static const Color prestoOrange = Color(0xFFFF6600);
+  static const Color prestoBlue = Color(0xFF1A73E8);
+
+  final FirebaseFunctions _functions =
+      FirebaseFunctions.instanceFor(region: 'europe-west1');
+
+  bool _userStatsLoading = true;
+  Map<String, dynamic>? _userStats;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserStats();
+  }
+
+  Future<void> _loadUserStats() async {
+    setState(() => _userStatsLoading = true);
+    try {
+      final callable = _functions.httpsCallable(
+        'adminGetUserStats',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+      );
+      final res = await callable.call<dynamic>({});
+      final data = (res.data is Map)
+          ? Map<String, dynamic>.from(res.data as Map)
+          : <String, dynamic>{};
+      if (!mounted) return;
+      setState(() {
+        _userStats = data;
+      });
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      showSuccessSnackBar(context, e.message ?? 'Erreur stats utilisateurs');
+    } catch (e) {
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Erreur stats utilisateurs: $e');
+    } finally {
+      if (mounted) setState(() => _userStatsLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+
+    final totalAccounts = (_userStats?['totalAccounts'] as num?)?.toInt();
+    final onlineUsers = (_userStats?['onlineUsers'] as num?)?.toInt();
+    final proLogins = (_userStats?['proLogins'] as num?)?.toInt();
+    final windowMinutes = (_userStats?['windowMinutes'] as num?)?.toInt();
+
+    final usersSubtitle = _userStatsLoading
+      ? 'Chargement…'
+      : (totalAccounts == null || onlineUsers == null || proLogins == null)
+        ? '—'
+        : 'Total: $totalAccounts\nEn ligne: $onlineUsers (${windowMinutes ?? 5} min)\nConnexions Pro: $proLogins';
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -173,121 +284,104 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
         ],
       ),
       body: SafeArea(
-        child: _loading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(prestoOrange),
-                ),
-              )
-            : SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Gestion & configuration',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: Colors.black87,
-                          ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Gestion & configuration',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      "Paramètres système, modération et outils d’administration.",
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    _ProfileCard(
-                      prestoBlue: prestoBlue,
-                      uid: user?.uid ?? '(non connecté)',
-                      role: 'Admin',
-                      lastLoginLabel: user?.metadata.lastSignInTime == null
-                          ? 'Dernière connexion : (inconnue)'
-                          : 'Dernière connexion : ${user!.metadata.lastSignInTime!.toLocal().toIso8601String()}',
-                      onCopyUid: () async {
-                        _snack('UID copié');
-                      },
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 1.55,
-                      children: const [
-                        _KpiTile(
-                          icon: Icons.group_rounded,
-                          title: 'Utilisateurs',
-                          subtitle: '—',
-                          badge: null,
-                          iconColor: prestoBlue,
-                        ),
-                        _KpiTile(
-                          icon: Icons.campaign_rounded,
-                          title: 'Offres',
-                          subtitle: '—',
-                          badge: null,
-                          iconColor: prestoOrange,
-                        ),
-                        _KpiTile(
-                          icon: Icons.chat_bubble_rounded,
-                          title: 'Messages',
-                          subtitle: '—',
-                          badge: null,
-                          iconColor: prestoBlue,
-                        ),
-                        _KpiTile(
-                          icon: Icons.verified_user_rounded,
-                          title: 'Modération',
-                          subtitle: '—',
-                          badge: null,
-                          iconColor: prestoBlue,
-                        ),
-                        _KpiTile(
-                          icon: Icons.workspace_premium_rounded,
-                          title: 'Premium',
-                          subtitle: '—',
-                          badge: null,
-                          iconColor: prestoOrange,
-                        ),
-                        _KpiTile(
-                          icon: Icons.tune_rounded,
-                          title: 'Remote Config',
-                          subtitle: 'Réglages IA',
-                          badge: null,
-                          iconColor: prestoBlue,
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _MicroIaCard(
-                      prestoOrange: prestoOrange,
-                      prestoBlue: prestoBlue,
-                      mode: _mode,
-                      fallback: _fallback,
-                      quality: _quality,
-                      languages: _languages,
-                      onModeChanged: (m) => setState(() => _mode = m),
-                      onFallbackChanged: (v) => setState(() => _fallback = v),
-                      onQualityChanged: (v) => setState(() => _quality = v),
-                      onAddLanguage: () => _snack('Ajouter une langue (à brancher)'),
-                      onRemoveLanguage: (code) => setState(() => _languages.remove(code)),
-                      onSave: _saving ? null : _save,
-                      saving: _saving,
-                    ),
-                  ],
-                ),
               ),
+              const SizedBox(height: 6),
+              Text(
+                "Paramètres système, modération et outils d’administration.",
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              const SizedBox(height: 14),
+
+              _ProfileCard(
+                prestoBlue: prestoBlue,
+                uid: user?.uid ?? '(non connecté)',
+                role: 'Admin',
+                lastLoginLabel: user?.metadata.lastSignInTime == null
+                    ? 'Dernière connexion : (inconnue)'
+                    : 'Dernière connexion : ${user!.metadata.lastSignInTime!.toLocal().toIso8601String()}',
+                onCopyUid: () async {
+                  showSuccessSnackBar(context, 'UID copié');
+                },
+              ),
+
+              const SizedBox(height: 14),
+
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.55,
+                children: [
+                  _KpiTile(
+                    icon: Icons.group_rounded,
+                    title: 'Utilisateurs',
+                    subtitle: usersSubtitle,
+                    badge: null,
+                    iconColor: prestoBlue,
+                  ),
+                  const _KpiTile(
+                    icon: Icons.campaign_rounded,
+                    title: 'Offres',
+                    subtitle: '—',
+                    badge: null,
+                    iconColor: prestoOrange,
+                  ),
+                  const _KpiTile(
+                    icon: Icons.chat_bubble_rounded,
+                    title: 'Messages',
+                    subtitle: '—',
+                    badge: null,
+                    iconColor: prestoBlue,
+                  ),
+                  const _KpiTile(
+                    icon: Icons.verified_user_rounded,
+                    title: 'Modération',
+                    subtitle: '—',
+                    badge: null,
+                    iconColor: prestoBlue,
+                  ),
+                  const _KpiTile(
+                    icon: Icons.workspace_premium_rounded,
+                    title: 'Premium',
+                    subtitle: '—',
+                    badge: null,
+                    iconColor: prestoOrange,
+                  ),
+                  _KpiTile(
+                    icon: Icons.tune_rounded,
+                    title: 'Remote Config',
+                    subtitle: 'Réglages IA',
+                    badge: null,
+                    iconColor: prestoBlue,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const MicroIaTranscriptionPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -479,6 +573,7 @@ class _KpiTile extends StatelessWidget {
   final String subtitle;
   final String? badge;
   final Color iconColor;
+  final VoidCallback? onTap;
 
   const _KpiTile({
     required this.icon,
@@ -486,6 +581,7 @@ class _KpiTile extends StatelessWidget {
     required this.subtitle,
     required this.badge,
     required this.iconColor,
+    this.onTap,
   });
 
   @override
@@ -493,7 +589,7 @@ class _KpiTile extends StatelessWidget {
     return _CardShell(
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: () {},
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Stack(
