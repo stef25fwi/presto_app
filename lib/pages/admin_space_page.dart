@@ -817,7 +817,7 @@ class _MicroIaCard extends StatelessWidget {
 
             const SizedBox(height: 16),
             Text(
-              "Qualité audio (WAV)",
+              "Qualité audio",
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
