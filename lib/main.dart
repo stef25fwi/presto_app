@@ -58,8 +58,10 @@ SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
         isDarkBackground ? Brightness.light : Brightness.dark,
     // iOS: Brightness.dark => icônes claires
     statusBarBrightness: isDarkBackground ? Brightness.dark : Brightness.light,
-    systemNavigationBarColor: kPrestoOrange,
-    systemNavigationBarIconBrightness: Brightness.light,
+    systemNavigationBarColor: backgroundColor,
+    systemNavigationBarDividerColor: backgroundColor,
+    systemNavigationBarIconBrightness:
+        isDarkBackground ? Brightness.light : Brightness.dark,
   );
 }
 
@@ -357,17 +359,9 @@ Future<void> main() async {
       debugPrint('[Auth] anonymous sign-in failed: $e');
     }
 
-    // Configuration de la barre de navigation système orange
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: kPrestoOrange,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-        systemNavigationBarColor: kPrestoOrange,
-        systemNavigationBarIconBrightness: Brightness.light,
-        systemNavigationBarDividerColor: kPrestoOrange,
-      ),
-    );
+    // Configuration globale : barre système bleue Prestō sur toute l'app.
+    // (Le SplashScreen surcharge en orange.)
+    SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
 
     // Crashlytics n'est pas supporté sur le web
     if (!kIsWeb) {
@@ -440,6 +434,9 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
+    // Splash : status bar + barre de navigation système en orange.
+    SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoOrange));
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -457,6 +454,8 @@ class _SplashScreenState extends State<SplashScreen>
   void _navigateTo(Widget page) {
     if (!mounted) return;
     _navTimer?.cancel();
+    // Dès qu'on quitte le splash : barre système bleue partout.
+    SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => page),
     );
@@ -466,19 +465,15 @@ class _SplashScreenState extends State<SplashScreen>
   void dispose() {
     _controller.dispose();
     _navTimer?.cancel();
+    // Sécurité: si le widget est détruit autrement, on remet le style global.
+    SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: kPrestoOrange,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-        systemNavigationBarColor: kPrestoOrange,
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
+      value: prestoOverlayStyleFor(kPrestoOrange),
       child: Scaffold(
         backgroundColor: kPrestoOrange,
         body: SafeArea(

@@ -20,7 +20,6 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 class ToolboxJeMeLancePage extends StatefulWidget {
@@ -147,19 +146,18 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           await _auth.signInAnonymously();
           user = _auth.currentUser;
         } catch (e) {
-          setState(() {
-            _loading = false;
-            _error =
-                "Connexion requise (auth anonyme désactivée ?). Active l'auth anonyme dans Firebase Auth.";
-          });
-          return;
+          // Pas d'obligation de connexion pour accéder à la boîte à outils.
+          // Si l'auth anonyme est désactivée, on fonctionne en mode local (sans Firestore).
+          user = null;
         }
       }
 
       if (user == null) {
+        _parcoursId = null;
+        _recomputeDerived();
         setState(() {
           _loading = false;
-          _error = "Utilisateur non connecté.";
+          _error = null;
         });
         return;
       }
@@ -222,11 +220,21 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       });
     } on FirebaseException catch (e) {
       final isDenied = e.code.toLowerCase() == 'permission-denied';
+      if (isDenied) {
+        // Si Firestore est inaccessible (App Check / règles / auth), on laisse l'utilisateur
+        // accéder à la toolbox en mode local (sans persistance).
+        _parcoursId = null;
+        _recomputeDerived();
+        setState(() {
+          _loading = false;
+          _error = null;
+        });
+        return;
+      }
+
       setState(() {
         _loading = false;
-        _error = isDenied
-            ? "Accès Firestore refusé (permission-denied).\n\nCauses fréquentes :\n- App Check est en enforcement sur Firestore mais App Check Web n'est pas correctement configuré (il faut une *site key* Firebase App Check reCAPTCHA v3, pas une clé Google reCAPTCHA classique).\n- L'authentification n'est pas active (ex: auth anonyme).\n\nÀ vérifier : Firebase Console → App Check (Web) + domaines autorisés + variable FIREBASE_APPCHECK_WEB_SITE_KEY."
-            : "Erreur de chargement : ${e.message ?? e.code}";
+        _error = "Erreur de chargement : ${e.message ?? e.code}";
       });
     } catch (e) {
       setState(() {
@@ -268,6 +276,16 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       }, SetOptions(merge: true));
 
       if (mounted) setState(() => _saving = false);
+    } on FirebaseException catch (e) {
+      // Ne bloque pas l'écran si Firestore est interdit; on continue en mode non persistant.
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          if (e.code.toLowerCase() != 'permission-denied') {
+            _error = "Erreur de sauvegarde : ${e.message ?? e.code}";
+          }
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
