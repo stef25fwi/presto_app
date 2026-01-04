@@ -6494,6 +6494,57 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     await _pickImage(photoIndex);
   }
 
+  Future<ImageSource?> _selectPhotoSource() async {
+    if (!mounted) return null;
+
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: const Text('Galerie'),
+                  onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
+                ),
+                ListTile(
+                  enabled: !kIsWeb,
+                  leading: const Icon(Icons.photo_camera_outlined),
+                  title: const Text('Appareil photo'),
+                  subtitle: kIsWeb
+                      ? const Text('Indisponible sur Web')
+                      : null,
+                  onTap: kIsWeb
+                      ? null
+                      : () => Navigator.of(ctx).pop(ImageSource.camera),
+                ),
+                const SizedBox(height: 6),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _pickImage(int photoIndex) async {
     if (_selectedPhotos.length >= 2 && photoIndex >= _selectedPhotos.length) {
       showSuccessSnackBar(context, 'Maximum 2 photos autorisées');
@@ -6501,9 +6552,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     try {
+      final source = await _selectPhotoSource();
+      if (source == null) return;
+
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         imageQuality: 85,
         maxWidth: 2000,
         maxHeight: 2000,
