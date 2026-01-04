@@ -63,3 +63,45 @@ void showPrestoSnackBar(BuildContext context, String message) {
 void showSuccessSnackBar(BuildContext context, String message) {
   showPrestoSnackBar(context, message);
 }
+
+/// Affiche une SnackBar d'erreur
+void showErrorSnackBar(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: Color(0xFFD32F2F),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.error,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: Colors.grey.shade800,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      margin: const EdgeInsets.all(16),
+      duration: const Duration(seconds: 4),
+    ),
+  );
+}

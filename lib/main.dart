@@ -8450,9 +8450,24 @@ class _AccountPageState extends State<AccountPage> {
 
       if (!mounted) return;
       showSuccessSnackBar(context, "Connecté avec Google");
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      String msg = "Erreur Google";
+      if (e.code == 'unauthorized-domain') {
+        msg = "Domaine non autorisé. Ajoute ce domaine dans Firebase Console → Authentication → Authorized domains.";
+      } else if (e.code == 'operation-not-allowed') {
+        msg = "Google Sign-In non activé. Active-le dans Firebase Console → Authentication → Sign-in method.";
+      } else if (e.code == 'popup-blocked') {
+        msg = "Pop-up bloqué par le navigateur.";
+      } else if (e.code == 'popup-closed-by-user') {
+        msg = "Connexion annulée.";
+      } else {
+        msg = "Erreur Google : ${e.message ?? e.code}";
+      }
+      showErrorSnackBar(context, msg);
     } catch (e) {
       if (!mounted) return;
-      showSuccessSnackBar(context, "Erreur Google : $e");
+      showErrorSnackBar(context, "Erreur Google : $e");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
