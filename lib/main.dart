@@ -5146,7 +5146,6 @@ class MessagesPage extends StatelessWidget {
           stream: FirebaseFirestore.instance
               .collection('conversations')
               .where('participants', arrayContains: userId)
-              .orderBy('lastMessageAt', descending: true)
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -5173,7 +5172,22 @@ class MessagesPage extends StatelessWidget {
               );
             }
 
-            final docs = snapshot.data?.docs ?? [];
+            final docs = (snapshot.data?.docs ?? []).toList()
+              ..sort((a, b) {
+                final aData = a.data();
+                final bData = b.data();
+
+                final aTs = aData['lastMessageAt'];
+                final bTs = bData['lastMessageAt'];
+
+                final aTime = (aTs is Timestamp) ? aTs.toDate() : null;
+                final bTime = (bTs is Timestamp) ? bTs.toDate() : null;
+
+                if (aTime == null && bTime == null) return 0;
+                if (aTime == null) return 1;
+                if (bTime == null) return -1;
+                return bTime.compareTo(aTime);
+              });
 
             if (docs.isEmpty) {
               return const Center(
