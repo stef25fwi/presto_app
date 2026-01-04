@@ -4154,10 +4154,7 @@ Motif du signalement :
 
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
+        leading: const BackButton(),
         title: const Text(
           "Détail de l’offre",
           style: kPrestoAppBarTitleStyle,
@@ -4638,10 +4635,7 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
       backgroundColor: const Color(0xFFF6F7F9),
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
+        leading: const BackButton(),
         title: const Text(
           'Profil',
           style: kPrestoAppBarTitleStyle,
@@ -4764,7 +4758,10 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
                       return Column(
                         children: [
                           for (final doc in docs) ...[
-                            _UserOfferMiniCard(data: doc.data()),
+                            _UserOfferMiniCard(
+                              offerId: doc.id,
+                              data: doc.data(),
+                            ),
                             const SizedBox(height: 10),
                           ],
                         ],
@@ -4782,69 +4779,106 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
 }
 
 class _UserOfferMiniCard extends StatelessWidget {
+  final String offerId;
   final Map<String, dynamic> data;
-  const _UserOfferMiniCard({required this.data});
+  const _UserOfferMiniCard({required this.offerId, required this.data});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final title = (data['title'] ?? '').toString().trim();
-    final city = (data['city'] ?? '').toString().trim();
+    final location = (data['location'] ?? data['city'] ?? '').toString().trim();
     final category = (data['category'] ?? '').toString().trim();
     final budget = data['budget'];
     final priceText = (budget is num) ? "${budget.toStringAsFixed(0)} €" : '';
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    final annonceurId = (data['userId'] ?? data['uid'] ?? '').toString().trim();
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title.isEmpty ? 'Annonce' : title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w900,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) {
+                final description = (data['description'] ?? '').toString();
+                final phone = data['phone']?.toString();
+
+                final List<String> imageUrls =
+                    (data['imageUrls'] as List<dynamic>? ?? [])
+                        .map((e) => e.toString())
+                        .toList();
+
+                return OfferDetailPage(
+                  offerId: offerId,
+                  title: title.isEmpty ? 'Annonce' : title,
+                  location: location,
+                  category: category,
+                  subcategory: (data['subcategory'] ?? '') as String?,
+                  budget: budget is num ? budget : null,
+                  description: description.trim().isEmpty ? null : description,
+                  phone: phone?.trim().isEmpty ?? true ? null : phone,
+                  imageUrls: imageUrls.isEmpty ? null : imageUrls,
+                  annonceurId: annonceurId,
+                );
+              },
             ),
+          );
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.black.withOpacity(0.06)),
           ),
-          const SizedBox(height: 8),
-          if (city.isNotEmpty)
-            Text(
-              city,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.black87,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          if (category.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                category,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          if (priceText.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                priceText,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: kPrestoOrange,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title.isEmpty ? 'Annonce' : title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w900,
                 ),
               ),
-            ),
-        ],
+              const SizedBox(height: 8),
+              if (location.isNotEmpty)
+                Text(
+                  location,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              if (category.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    category,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              if (priceText.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    priceText,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: kPrestoOrange,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
