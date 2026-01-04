@@ -20,6 +20,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 class ToolboxJeMeLancePage extends StatefulWidget {
@@ -93,9 +94,68 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // --------------------------
   // Bootstrap: load or create parcours
   // --------------------------
+  Future<QueryDocumentSnapshot<Map<String, dynamic>>?> _tryFetchLatestParcours(
+    String uid,
+  ) async {
+    final col = _db.collection('users').doc(uid).collection('parcours');
+
+    // Tentative 1 : tri serveur sur updatedAt (peut échouer si types inconsistants)
+    try {
+      final snap = await col
+          .orderBy('updatedAt', descending: true)
+          .limit(1)
+          .get();
+      if (snap.docs.isNotEmpty) return snap.docs.first;
+      return null;
+    } catch (e) {
+      debugPrint('[Toolbox] latest parcours orderBy failed: $e');
+    }
+
+    // Fallback 2 : lecture sans orderBy + sélection locale
+    try {
+      final snap = await col.limit(50).get();
+      if (snap.docs.isEmpty) return null;
+
+      QueryDocumentSnapshot<Map<String, dynamic>>? best;
+      Timestamp? bestTs;
+
+      for (final d in snap.docs) {
+        final data = d.data();
+        final v = data['updatedAt'];
+        final ts = v is Timestamp ? v : null;
+        if (ts == null) continue;
+        if (bestTs == null || ts.compareTo(bestTs) > 0) {
+          bestTs = ts;
+          best = d;
+        }
+      }
+
+      return best ?? snap.docs.first;
+    } catch (e) {
+      debugPrint('[Toolbox] latest parcours fallback failed: $e');
+      return null;
+    }
+  }
+
   Future<void> _bootstrap() async {
     try {
-      final user = _auth.currentUser;
+      var user = _auth.currentUser;
+
+      // Tentative de sign-in anonyme si utilisateur null
+      if (user == null) {
+        try {
+          await _auth.signInAnonymously();
+          user = _auth.currentUser;
+        } catch (e) {
+          setState(() {
+            _loading = false;
+            _error =
+                "Connexion requise (auth anonyme désactivée ?). Active l'auth anonyme dans Firebase Auth.";
+          });
+          return;
+        }
+      }
+
       if (user == null) {
         setState(() {
           _loading = false;
@@ -104,17 +164,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         return;
       }
 
-      // Try to resume last updated parcours
-      final snap = await _db
-          .collection('users')
-          .doc(user.uid)
-          .collection('parcours')
-          .orderBy('updatedAt', descending: true)
-          .limit(1)
-          .get();
+      // Try to resume last updated parcours with fallback strategy
+      final latest = await _tryFetchLatestParcours(user.uid);
 
-      if (snap.docs.isEmpty) {
-        // Create a new parcours
+      if (latest == null) {
+        // Créer un nouveau parcours
         final doc = _db
             .collection('users')
             .doc(user.uid)
@@ -134,10 +188,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           'version': 1,
         });
 
-        // Default derived init
         _recomputeDerived();
       } else {
-        final d = snap.docs.first;
+        final d = latest;
         _parcoursId = d.id;
 
         final map = d.data();
@@ -148,11 +201,32 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         _importData(data);
         _importDerived(derived);
         _step = step.clamp(1, 3);
+
+        // Répare `updatedAt` si absent/non-Timestamp (évite crashes orderBy futur)
+        final updatedAt = map['updatedAt'];
+        if (updatedAt == null || updatedAt is! Timestamp) {
+          unawaited(
+            _db
+                .collection('users')
+                .doc(user.uid)
+                .collection('parcours')
+                .doc(_parcoursId)
+                .update({'updatedAt': FieldValue.serverTimestamp()}),
+          );
+        }
       }
 
       setState(() {
         _loading = false;
         _error = null;
+      });
+    } on FirebaseException catch (e) {
+      final isDenied = e.code.toLowerCase() == 'permission-denied';
+      setState(() {
+        _loading = false;
+        _error = isDenied
+            ? "Accès Firestore refusé (permission-denied).\n\nCauses fréquentes :\n- App Check est en enforcement sur Firestore mais App Check Web n'est pas correctement configuré (il faut une *site key* Firebase App Check reCAPTCHA v3, pas une clé Google reCAPTCHA classique).\n- L'authentification n'est pas active (ex: auth anonyme).\n\nÀ vérifier : Firebase Console → App Check (Web) + domaines autorisés + variable FIREBASE_APPCHECK_WEB_SITE_KEY."
+            : "Erreur de chargement : ${e.message ?? e.code}";
       });
     } catch (e) {
       setState(() {
