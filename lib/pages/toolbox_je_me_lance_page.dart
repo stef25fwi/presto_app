@@ -34,6 +34,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   static const Color kOrange = Color(0xFFFF6600);
   static const Color kBlue = Color(0xFF1A73E8);
   static const Color kBg = Color(0xFFF6F7FB);
+  static const Color kCardBg = Color(0xFFE8E8E8); // Gris clair pour les tuiles
 
   final _auth = FirebaseAuth.instance;
   final _db = FirebaseFirestore.instance;
@@ -1178,9 +1179,9 @@ class _Card extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _ToolboxJeMeLancePageState.kCardBg, // Fond gris clair
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1191,15 +1192,15 @@ class _Card extends StatelessWidget {
                 child: Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800, // Plus épais
                   ),
                 ),
               ),
               if (stepLabel != null)
                 Text(
                   stepLabel!,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w600),
                 ),
             ],
           ),
@@ -1227,9 +1228,9 @@ class _HeaderInfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: kCardBg, // Fond gris clair
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1252,8 +1253,8 @@ class _HeaderInfoCard extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800, // Plus épais
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -1293,11 +1294,11 @@ class _SelectRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFF1A73E8).withOpacity(0.08)
+              ? Colors.grey.shade300 // Sélection gris clair
               : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? const Color(0xFF1A73E8) : Colors.grey.shade200,
+            color: selected ? const Color(0xFF1A73E8) : Colors.grey.shade300,
           ),
         ),
         child: Row(
@@ -1308,7 +1309,7 @@ class _SelectRow extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(title,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+                  style: const TextStyle(fontWeight: FontWeight.w700)), // Plus épais
             ),
             Icon(Icons.chevron_right, color: Colors.grey.shade600),
           ],
@@ -1343,9 +1344,9 @@ class _InfoBox extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)), // Plus épais
                 const SizedBox(height: 4),
-                Text(text, style: TextStyle(color: Colors.grey.shade700)),
+                Text(text, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -1361,7 +1362,7 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: const TextStyle(fontWeight: FontWeight.bold));
+    return Text(text, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)); // Plus épais
   }
 }
 
@@ -1497,7 +1498,7 @@ class _CostRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text(label)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)), // Plus épais
         ],
       ),
     );
