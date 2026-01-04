@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -3860,6 +3861,53 @@ class OfferDetailPage extends StatefulWidget {
 class _OfferDetailPageState extends State<OfferDetailPage> {
   bool _isPhoneVisible = false;
 
+  String _toE164Like(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return '';
+
+    // Si déjà en +..., on conserve juste + et les chiffres.
+    if (trimmed.startsWith('+')) {
+      final digits = trimmed.replaceAll(RegExp(r'\D'), '');
+      return digits.isEmpty ? trimmed : '+$digits';
+    }
+
+    final digits = trimmed.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return '';
+
+    // Convention FR: 06XXXXXXXX / 07XXXXXXXX -> +33 6XXXXXXXX / +33 7XXXXXXXX
+    if (digits.length == 10 && digits.startsWith('0')) {
+      return '+33${digits.substring(1)}';
+    }
+    if (digits.length == 9 && (digits.startsWith('6') || digits.startsWith('7'))) {
+      return '+33$digits';
+    }
+
+    // Fallback: on affiche tel quel (sans espaces)
+    return digits;
+  }
+
+  String _formatPhoneWithIndicatif(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return '';
+
+    // Si l'utilisateur a déjà renseigné un indicatif, on affiche le numéro complet
+    // tel qu'il l'a saisi (en normalisant uniquement les espaces).
+    if (trimmed.startsWith('+')) {
+      return trimmed.replaceAll(RegExp(r'\s+'), ' ');
+    }
+
+    final e164 = _toE164Like(trimmed);
+    if (e164.isEmpty) return '';
+
+    // Format lisible pour +33
+    if (e164.startsWith('+33') && e164.length == 12) {
+      final n = e164.substring(3); // 9 digits
+      return '+33 ${n.substring(0, 1)} ${n.substring(1, 3)} ${n.substring(3, 5)} ${n.substring(5, 7)} ${n.substring(7, 9)}';
+    }
+
+    return e164;
+  }
+
   String _extractUserPseudo(Map<String, dynamic>? data) {
     if (data == null) return 'Profil';
     final candidates = <String?>[
@@ -3879,10 +3927,20 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
     final raw = value.trim();
     if (raw.isEmpty) return raw;
 
-    final digits = raw.replaceAll(RegExp(r'\D'), '');
+    final formatted = _formatPhoneWithIndicatif(raw);
+    final digits = formatted.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return '••••••••••';
 
-    // Masquage simple: on conserve les 2 premiers chiffres si possible.
+    // Masquage simple: conserve l'indicatif si présent, et 2 premiers chiffres du reste.
+    if (formatted.startsWith('+')) {
+      // ex: +33 6 .. => garder "+33 6" si possible
+      final parts = formatted.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+      if (parts.length >= 2) {
+        return '${parts[0]} ${parts[1]} •• •• •• ••';
+      }
+      return '${formatted.substring(0, math.min(6, formatted.length))} •• •• •• ••';
+    }
+
     final keep = digits.length >= 2 ? digits.substring(0, 2) : digits;
     return '$keep •• •• •• ••';
   }
@@ -3928,10 +3986,8 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
       return;
     }
 
-    final uri = Uri(
-      scheme: 'tel',
-      path: widget.phone!.trim(),
-    );
+    final dial = _toE164Like(widget.phone!.trim());
+    final uri = Uri(scheme: 'tel', path: dial.isNotEmpty ? dial : widget.phone!.trim());
 
     try {
       final ok = await canLaunchUrl(uri);
@@ -4140,8 +4196,9 @@ Motif du signalement :
 
     final bool hasPhone = widget.phone != null && widget.phone!.trim().isNotEmpty;
     final String rawPhone = hasPhone ? widget.phone!.trim() : '';
+    final String formattedPhone = hasPhone ? _formatPhoneWithIndicatif(rawPhone) : '';
     final String phoneText = hasPhone
-      ? (_isPhoneVisible ? rawPhone : _maskPhone(rawPhone))
+      ? (_isPhoneVisible ? formattedPhone : _maskPhone(formattedPhone))
       : "Numéro non renseigné";
     final String rawDescription = (widget.description ?? '').trim();
     final String descriptionText = rawDescription.isEmpty
@@ -4321,9 +4378,11 @@ Motif du signalement :
                       icon: const Icon(Icons.person_outline_rounded, size: 18),
                       style: TextButton.styleFrom(
                         foregroundColor: kPrestoBlue,
+                        backgroundColor: kPrestoBlue.withOpacity(0.08),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                         textStyle: const TextStyle(
                           fontWeight: FontWeight.w900,
-                          decoration: TextDecoration.underline,
                         ),
                       ),
                       label: Text(
@@ -4388,6 +4447,7 @@ Motif du signalement :
                 placeholderHeight: kIsWeb ? 220.0 : 140.0,
                 placeholderFolderPrefix: 'assets/carousel_home/',
                 flat: true,
+                animatePlaceholder: false,
               ),
 
               const SizedBox(height: 14),
@@ -5758,6 +5818,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // Photos (max 2)
   final List<XFile> _selectedPhotos = [];
+  final List<Uint8List?> _selectedPhotoBytes = [];
   final List<String> _uploadedPhotoUrls = [];
 
   final FirebaseFunctions _functions =
@@ -6272,6 +6333,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _selectedSubCategory = null;
       _budgetType = 'Fixe';
       _selectedPhotos.clear();
+      _selectedPhotoBytes.clear();
       _uploadedPhotoUrls.clear();
       _citySuggestions.clear();
       _highlightedIndex = -1;
@@ -6419,26 +6481,31 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       barrierDismissible: true,
       builder: (ctx) {
         return Dialog(
-          backgroundColor: Colors.transparent,
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           insetPadding: const EdgeInsets.all(16),
           child: Stack(
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
-                  color: Colors.black,
+                  color: Colors.white,
                   child: InteractiveViewer(
                     minScale: 1.0,
                     maxScale: 4.0,
                     child: Image.memory(
                       bytes,
                       fit: BoxFit.contain,
+                      gaplessPlayback: true,
                       width: double.infinity,
                       height: double.infinity,
                       errorBuilder: (_, __, ___) => const Center(
                         child: Text(
                           'Image indisponible',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(color: Colors.black87),
                         ),
                       ),
                     ),
@@ -6449,11 +6516,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 top: 10,
                 right: 10,
                 child: Material(
-                  color: Colors.black54,
+                  color: Colors.white,
                   shape: const CircleBorder(),
                   child: IconButton(
                     tooltip: 'Fermer',
-                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                    icon: const Icon(Icons.close_rounded, color: Colors.black87),
                     onPressed: () => Navigator.of(ctx).pop(),
                   ),
                 ),
@@ -6464,13 +6531,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.black54,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Colors.black12),
                   ),
                   child: Text(
                     label,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Colors.black87,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
                     ),
@@ -6565,11 +6633,25 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       if (image == null) return;
 
+      final bytes = await image.readAsBytes();
+
       setState(() {
         if (photoIndex < _selectedPhotos.length) {
           _selectedPhotos[photoIndex] = image;
+          if (photoIndex < _selectedPhotoBytes.length) {
+            _selectedPhotoBytes[photoIndex] = bytes;
+          } else {
+            while (_selectedPhotoBytes.length < photoIndex) {
+              _selectedPhotoBytes.add(null);
+            }
+            _selectedPhotoBytes.add(bytes);
+          }
         } else {
           _selectedPhotos.add(image);
+          while (_selectedPhotoBytes.length < _selectedPhotos.length - 1) {
+            _selectedPhotoBytes.add(null);
+          }
+          _selectedPhotoBytes.add(bytes);
         }
       });
     } catch (e) {
@@ -7063,6 +7145,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       file: _selectedPhotos.isNotEmpty
                           ? _selectedPhotos[0]
                           : null,
+                      bytes: _selectedPhotoBytes.isNotEmpty
+                          ? _selectedPhotoBytes[0]
+                          : null,
                       onTap: () => _onPhotoTileTap(0),
                       onLongPress: () => _pickImage(0),
                     ),
@@ -7073,6 +7158,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       label: 'Photo 2',
                       file: _selectedPhotos.length > 1
                           ? _selectedPhotos[1]
+                          : null,
+                      bytes: _selectedPhotoBytes.length > 1
+                          ? _selectedPhotoBytes[1]
                           : null,
                       onTap: () => _onPhotoTileTap(1),
                       onLongPress: () => _pickImage(1),
@@ -7280,12 +7368,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 class _PhotoSelectorTile extends StatelessWidget {
   final String label;
   final XFile? file;
+  final Uint8List? bytes;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
 
   const _PhotoSelectorTile({
     required this.label,
     required this.file,
+    required this.bytes,
     required this.onTap,
     this.onLongPress,
   });
@@ -7316,13 +7406,11 @@ class _PhotoSelectorTile extends StatelessWidget {
     } else {
       content = ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: FutureBuilder<Uint8List>(
-          future: localFile.readAsBytes(),
-          builder: (context, snap) {
-            if (snap.hasData) {
-              return Image.memory(
-                snap.data!,
+        child: (bytes != null)
+            ? Image.memory(
+                bytes!,
                 fit: BoxFit.cover,
+                gaplessPlayback: true,
                 errorBuilder: (_, __, ___) => Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -7337,29 +7425,25 @@ class _PhotoSelectorTile extends StatelessWidget {
                     ),
                   ],
                 ),
-              );
-            }
-
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                ),
-              ],
-            );
-          },
-        ),
+                  const SizedBox(height: 6),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
       );
     }
 
@@ -7450,6 +7534,7 @@ class _AccountPageState extends State<AccountPage> {
   Set<String> _selectedFavoriteSubcategories = <String>{};
   Set<String> _draftFavoriteSelections = <String>{};
   bool _profileLoaded = false;
+  bool _profileLoadRequested = false;
   bool _isSavingProfile = false;
   bool _isEditingProfile = false; // ✅ Mode édition du profil
 
@@ -7901,9 +7986,9 @@ class _AccountPageState extends State<AccountPage> {
 
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
-        _profilePseudoController.text = (data['pseudo'] ?? '') as String;
-        _profileCityController.text = (data['city'] ?? '') as String;
-        _profilePhoneController.text = (data['phone'] ?? '') as String;
+        _profilePseudoController.text = (data['pseudo'] ?? '').toString();
+        _profileCityController.text = (data['city'] ?? '').toString();
+        _profilePhoneController.text = (data['phone'] ?? '').toString();
         final favs = (data['favoriteCategories'] as List<dynamic>? ?? [])
             .map((e) => e.toString())
             .toList();
@@ -7941,6 +8026,7 @@ class _AccountPageState extends State<AccountPage> {
     if (mounted) {
       setState(() {
         _profileLoaded = true;
+        _profileLoadRequested = true;
       });
     }
   }
@@ -8574,9 +8660,12 @@ class _AccountPageState extends State<AccountPage> {
     // Lier les crash reports à l'utilisateur connecté
     CrashlyticsContext.setUserId(user.uid);
 
-    if (!_profileLoaded) {
-      _profileLoaded = true;
-      _loadUserProfile(user);
+    if (!_profileLoaded && !_profileLoadRequested) {
+      _profileLoadRequested = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _loadUserProfile(user);
+      });
     }
 
     final pseudo = _profilePseudoController.text.trim();
@@ -8713,7 +8802,12 @@ class _AccountPageState extends State<AccountPage> {
                                 // Synchroniser avec le controller principal
                                 if (_profileCityController.text.isNotEmpty && 
                                     textController.text != _profileCityController.text) {
-                                  textController.text = _profileCityController.text;
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    if (!mounted) return;
+                                    if (textController.text != _profileCityController.text) {
+                                      textController.text = _profileCityController.text;
+                                    }
+                                  });
                                 }
                                 
                                 return TextField(

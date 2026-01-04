@@ -1667,8 +1667,8 @@ exports.processOfferPhoto = onCall(
             .t { font-family: Arial, sans-serif; font-size: ${fontSize}px; font-weight: 700; }
           </style>
           <rect x="0" y="0" width="${w}" height="${Math.max(44, fontSize + padY)}" fill="transparent"/>
-          <text x="${padX}" y="${Math.max(32, fontSize + 12)}" class="t" fill="rgba(0,0,0,0.55)">${watermarkText}</text>
-          <text x="${padX}" y="${Math.max(31, fontSize + 11)}" class="t" fill="rgba(255,255,255,0.70)">${watermarkText}</text>
+          <text x="${padX}" y="${Math.max(32, fontSize + 12)}" class="t" fill="#000000" fill-opacity="0.55">${watermarkText}</text>
+          <text x="${padX}" y="${Math.max(31, fontSize + 11)}" class="t" fill="#FFFFFF" fill-opacity="0.70">${watermarkText}</text>
         </svg>`
       );
 
