@@ -47,6 +47,10 @@
 	<true/>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Nous avons besoin de l’appareil photo pour ajouter une photo à l’annonce.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Nous avons besoin de l’accès à vos photos pour choisir une image pour l’annonce.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Nous avons besoin du micro pour la dictée.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

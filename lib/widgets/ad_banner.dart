@@ -26,6 +26,7 @@ class AdBanner extends StatefulWidget {
   final double? placeholderHeight; // hauteur placeholder (mobile/web)
   final String? placeholderFolderPrefix; // dossier images placeholder
   final bool flat; // placeholder sans rebords
+  final bool animatePlaceholder; // anime le placeholder (ticker)
 
   const AdBanner({
     super.key,
@@ -34,6 +35,7 @@ class AdBanner extends StatefulWidget {
     this.placeholderHeight,
     this.placeholderFolderPrefix,
     this.flat = false,
+    this.animatePlaceholder = true,
   });
 
   @override
@@ -139,6 +141,7 @@ class _AdBannerState extends State<AdBanner> {
                 fit: BoxFit.cover,
                 interval: const Duration(seconds: 4),
                 antiRepeatWindow: 3,
+                enabled: widget.animatePlaceholder,
               ),
             ),
           ),
@@ -163,6 +166,7 @@ class _AdBannerState extends State<AdBanner> {
               fit: BoxFit.cover,
               interval: const Duration(seconds: 4),
               antiRepeatWindow: 3,
+              enabled: widget.animatePlaceholder,
             ),
           ),
         ),
