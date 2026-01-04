@@ -8077,11 +8077,46 @@ class _AccountPageState extends State<AccountPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      
+      // ✅ Tracking de connexion
+      await _trackLogin();
+      
       if (!mounted) return;
       showSuccessSnackBar(context, "Connexion réussie");
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      showSuccessSnackBar(context, e.message ?? "Erreur de connexion.");
+      String errorMsg;
+      
+      switch (e.code) {
+        case 'user-not-found':
+          errorMsg = "Aucun compte associé à cet email.";
+          break;
+        case 'wrong-password':
+          errorMsg = "Mot de passe incorrect.";
+          break;
+        case 'invalid-email':
+          errorMsg = "Format d'email invalide.";
+          break;
+        case 'user-disabled':
+          errorMsg = "Ce compte a été désactivé.";
+          break;
+        case 'too-many-requests':
+          errorMsg = "Trop de tentatives. Réessaye plus tard.";
+          break;
+        case 'invalid-credential':
+          errorMsg = "Email ou mot de passe incorrect.";
+          break;
+        case 'network-request-failed':
+          errorMsg = "Erreur réseau. Vérifie ta connexion.";
+          break;
+        default:
+          errorMsg = e.message ?? "Erreur de connexion : ${e.code}";
+      }
+      
+      showErrorSnackBar(context, errorMsg);
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, "Erreur inattendue : $e");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -8514,39 +8549,183 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _signInWithApple() async {
+    // ✅ Vérification stricte de la plateforme
     if (kIsWeb ||
         !(defaultTargetPlatform == TargetPlatform.iOS ||
             defaultTargetPlatform == TargetPlatform.macOS)) {
       if (!mounted) return;
-      showSuccessSnackBar(
-          context, "Connexion Apple dispo uniquement sur iOS / macOS.");
+      showErrorSnackBar(
+          context, "Connexion Apple disponible uniquement sur iOS et macOS.");
       return;
     }
 
     setState(() => _isLoading = true);
     try {
+      debugPrint('[Apple Sign-In] Démarrage de l\'authentification Apple...');
+      
+      // ✅ Récupération des credentials Apple avec scopes complets
       final appleCredential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
           AppleIDAuthorizationScopes.fullName,
         ],
+        webAuthenticationOptions: kIsWeb
+            ? WebAuthenticationOptions(
+                clientId: 'your.app.bundle.id', // À configurer dans Firebase Console
+                redirectUri: Uri.parse('https://your-project.firebaseapp.com/__/auth/handler'),
+              )
+            : null,
       );
 
+      debugPrint('[Apple Sign-In] Credentials reçus: ${appleCredential.identityToken != null}');
+
+      // ✅ Validation des credentials
+      if (appleCredential.identityToken == null) {
+        throw Exception('Identité Apple non reçue');
+      }
+
+      // ✅ Création du credential Firebase avec OAuthProvider
       final oauthCredential = OAuthProvider("apple.com").credential(
         idToken: appleCredential.identityToken,
         accessToken: appleCredential.authorizationCode,
       );
 
-      await _auth.signInWithCredential(oauthCredential);
+      // ✅ Connexion Firebase
+      final userCredential = await _auth.signInWithCredential(oauthCredential);
+      debugPrint('[Apple Sign-In] Utilisateur connecté: ${userCredential.user?.uid}');
 
+      // ✅ Mise à jour du profil si nom disponible (première connexion uniquement)
+      if (userCredential.additionalUserInfo?.isNewUser == true) {
+        final fullName = appleCredential.givenName != null || appleCredential.familyName != null
+            ? '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'.trim()
+            : null;
+        
+        if (fullName != null && fullName.isNotEmpty) {
+          try {
+            await userCredential.user?.updateDisplayName(fullName);
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(userCredential.user?.uid)
+                .set({'pseudo': fullName}, SetOptions(merge: true));
+            debugPrint('[Apple Sign-In] Nom mis à jour: $fullName');
+          } catch (e) {
+            debugPrint('[Apple Sign-In] Erreur mise à jour nom: $e');
+          }
+        }
+      }
+
+      // ✅ Tracking de connexion
       await _trackLogin();
 
       if (!mounted) return;
-      showSuccessSnackBar(context, "Connecté avec Apple");
+      showSuccessSnackBar(context, "Connecté avec Apple ✓");
+      
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (!mounted) return;
+      debugPrint('[Apple Sign-In] Authorization error: ${e.code} - ${e.message}');
+      
+      String msg;
+      switch (e.code) {
+        case AuthorizationErrorCode.canceled:
+          msg = "Connexion Apple annulée.";
+          break;
+        case AuthorizationErrorCode.failed:
+          msg = "Échec de l'authentification Apple. Réessaye.";
+          break;
+        case AuthorizationErrorCode.invalidResponse:
+          msg = "Réponse Apple invalide. Contacte le support.";
+          break;
+        case AuthorizationErrorCode.notHandled:
+          msg = "Requête Apple non traitée.";
+          break;
+        case AuthorizationErrorCode.notInteractive:
+          msg = "Authentification Apple non disponible en arrière-plan.";
+          break;
+        case AuthorizationErrorCode.unknown:
+        default:
+          msg = "Erreur Apple inconnue. Réessaye.";
+      }
+      showErrorSnackBar(context, msg);
+      
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      debugPrint('[Apple Sign-In] Firebase error: ${e.code} - ${e.message}');
+      
+      String msg;
+      switch (e.code) {
+        case 'account-exists-with-different-credential':
+          msg = "Un compte existe déjà avec cet email. Utilise ta méthode de connexion habituelle.";
+          break;
+        case 'invalid-credential':
+          msg = "Credentials Apple invalides. Réessaye.";
+          break;
+        case 'operation-not-allowed':
+          msg = "Connexion Apple non activée. Contacte le support.";
+          break;
+        case 'user-disabled':
+          msg = "Ce compte a été désactivé.";
+          break;
+        case 'user-not-found':
+          msg = "Aucun compte trouvé. Un nouveau compte sera créé.";
+          break;
+        case 'invalid-verification-code':
+        case 'invalid-verification-id':
+          msg = "Code de vérification Apple invalide.";
+          break;
+        default:
+          msg = "Erreur Firebase : ${e.message ?? e.code}";
+      }
+      showErrorSnackBar(context, msg);
+      
     } catch (e) {
       if (!mounted) return;
+      debugPrint('[Apple Sign-In] Unexpected error: $e');
+      showErrorSnackBar(context, "Erreur inattendue : $e");
+      
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _resetPassword() async {
+    final email = _emailController.text.trim();
+    
+    if (email.isEmpty || !email.contains('@')) {
+      showErrorSnackBar(context, "Entre un email valide pour réinitialiser ton mot de passe.");
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      
+      if (!mounted) return;
       showSuccessSnackBar(
-          context, "Connexion Apple indisponible ou erreur : $e");
+        context,
+        "Email de réinitialisation envoyé à $email. Vérifie ta boîte mail.",
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      String errorMsg;
+      
+      switch (e.code) {
+        case 'user-not-found':
+          errorMsg = "Aucun compte associé à cet email.";
+          break;
+        case 'invalid-email':
+          errorMsg = "Format d'email invalide.";
+          break;
+        case 'too-many-requests':
+          errorMsg = "Trop de tentatives. Réessaye plus tard.";
+          break;
+        default:
+          errorMsg = e.message ?? "Erreur : ${e.code}";
+      }
+      
+      showErrorSnackBar(context, errorMsg);
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, "Erreur : $e");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -8630,13 +8809,21 @@ class _AccountPageState extends State<AccountPage> {
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: _passwordController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: "Mot de passe",
+                            helperText: _isLoginMode ? null : "Au moins 8 caractères recommandés",
+                            helperStyle: const TextStyle(fontSize: 11),
                           ),
                           obscureText: true,
                           validator: (value) {
-                            if (value == null || value.trim().length < 6) {
-                              return "Au moins 6 caractères";
+                            if (value == null || value.trim().isEmpty) {
+                              return "Mot de passe requis";
+                            }
+                            if (_isLoginMode) {
+                              return null; // Pas de validation stricte en mode connexion
+                            }
+                            if (value.trim().length < 8) {
+                              return "Au moins 8 caractères pour plus de sécurité";
                             }
                             return null;
                           },
@@ -8713,6 +8900,22 @@ class _AccountPageState extends State<AccountPage> {
                       ),
                     ),
                   ),
+                  if (_isLoginMode) ...[
+                    const SizedBox(height: 4),
+                    Center(
+                      child: TextButton(
+                        onPressed: _isLoading ? null : _resetPassword,
+                        child: const Text(
+                          "Mot de passe oublié ?",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: kPrestoOrange,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   const Divider(),
                   const SizedBox(height: 12),
