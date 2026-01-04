@@ -349,14 +349,18 @@ Future<void> main() async {
     }
 
     // 🔒 Auth minimale requise pour les Cloud Functions (même en anonyme)
+    // Supprimé : on n'impose plus de connexion automatique au démarrage
+    // L'auth anonyme sera gérée au besoin par chaque page qui en a besoin
     try {
       final auth = FirebaseAuth.instance;
-      if (auth.currentUser == null) {
-        await auth.signInAnonymously();
+      // Ne force plus signInAnonymously() au démarrage
+      if (auth.currentUser != null) {
+        debugPrint('[Auth] User already signed in: ${auth.currentUser!.uid}');
+      } else {
+        debugPrint('[Auth] No user signed in at startup (OK)');
       }
     } catch (e) {
-      // Si l'auth anonyme n'est pas activée côté Firebase, les appels Functions échoueront.
-      debugPrint('[Auth] anonymous sign-in failed: $e');
+      debugPrint('[Auth] check failed: $e');
     }
 
     // Configuration globale : barre système bleue Prestō sur toute l'app.
@@ -8020,6 +8024,35 @@ class _AccountPageState extends State<AccountPage> {
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
     });
+    
+    // Sur Web, vérifie si l'utilisateur revient d'un redirect Google Sign-In
+    if (kIsWeb) {
+      _checkGoogleRedirectResult();
+    }
+  }
+  
+  Future<void> _checkGoogleRedirectResult() async {
+    try {
+      final result = await _auth.getRedirectResult();
+      if (result.user != null) {
+        await _trackLogin();
+        if (!mounted) return;
+        showSuccessSnackBar(context, "Connecté avec Google");
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      String msg = "Erreur Google";
+      if (e.code == 'unauthorized-domain') {
+        msg = "Domaine non autorisé. Ajoute ce domaine dans Firebase Console → Authentication → Authorized domains.";
+      } else if (e.code == 'operation-not-allowed') {
+        msg = "Google Sign-In non activé. Active-le dans Firebase Console → Authentication → Sign-in method.";
+      } else if (e.code != 'invalid-credential' && e.code != 'no-auth-event') {
+        msg = "Erreur Google : ${e.message ?? e.code}";
+        showErrorSnackBar(context, msg);
+      }
+    } catch (e) {
+      debugPrint('[Google Redirect] Error checking result: $e');
+    }
   }
 
   @override
@@ -8426,7 +8459,16 @@ class _AccountPageState extends State<AccountPage> {
     try {
       if (kIsWeb) {
         final googleProvider = GoogleAuthProvider();
-        await _auth.signInWithPopup(googleProvider);
+        googleProvider.setCustomParameters({'prompt': 'select_account'});
+        try {
+          await _auth.signInWithPopup(googleProvider);
+        } catch (popupError) {
+          // Fallback: essayer avec redirect si popup échoue
+          debugPrint('[Google Sign-In] Popup failed, trying redirect: $popupError');
+          await _auth.signInWithRedirect(googleProvider);
+          // La page sera rechargée après le redirect
+          return;
+        }
       } else {
         final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
         if (googleUser == null) {
@@ -8453,8 +8495,10 @@ class _AccountPageState extends State<AccountPage> {
       } else if (e.code == 'operation-not-allowed') {
         msg = "Google Sign-In non activé. Active-le dans Firebase Console → Authentication → Sign-in method.";
       } else if (e.code == 'popup-blocked') {
-        msg = "Pop-up bloqué par le navigateur.";
+        msg = "Pop-up bloqué par le navigateur. Réessaye ou autorise les pop-ups.";
       } else if (e.code == 'popup-closed-by-user') {
+        msg = "Connexion annulée.";
+      } else if (e.code == 'cancelled-popup-request' || e.code == 'cancelled') {
         msg = "Connexion annulée.";
       } else {
         msg = "Erreur Google : ${e.message ?? e.code}";
@@ -8462,6 +8506,7 @@ class _AccountPageState extends State<AccountPage> {
       showErrorSnackBar(context, msg);
     } catch (e) {
       if (!mounted) return;
+      debugPrint('[Google Sign-In] Error: $e');
       showErrorSnackBar(context, "Erreur Google : $e");
     } finally {
       if (mounted) setState(() => _isLoading = false);
