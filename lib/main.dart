@@ -25,7 +25,7 @@ import 'utils/friendly_snackbar.dart';
 import 'utils/recording_path.dart';
 import 'features/micro_ia/micro_ia_service.dart';
 import 'features/micro_ia/web_audio_recorder_stub.dart'
-  if (dart.library.html) 'features/micro_ia/web_audio_recorder.dart';
+    if (dart.library.html) 'features/micro_ia/web_audio_recorder.dart';
 import 'features/messaging/conversation_service.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/ad_banner.dart';
@@ -335,8 +335,11 @@ Future<void> main() async {
     if (!kIsWeb) {
       try {
         await FirebaseAppCheck.instance.activate(
-          androidProvider: kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-          appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+          androidProvider: kDebugMode
+              ? AndroidProvider.debug
+              : AndroidProvider.playIntegrity,
+          appleProvider:
+              kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
         );
       } catch (e) {
         debugPrint('[AppCheck] activation failed: $e');
@@ -818,14 +821,14 @@ class _HomePageState extends State<HomePage>
   void didChangeMetrics() {
     super.didChangeMetrics();
     if (!mounted) return;
-    
+
     // Utiliser View.of(context) au lieu de l'API window deprecated
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      
+
       try {
         final isKeyboardVisible = View.of(context).viewInsets.bottom > 0;
-        
+
         // Détecter les changements de visibilité du clavier
         if (_wasKeyboardVisible != isKeyboardVisible) {
           // Le clavier vient de se fermer : restaurer la bottomBar
@@ -837,7 +840,7 @@ class _HomePageState extends State<HomePage>
           // Le clavier vient de s'ouvrir : on peut optionnellement cacher la bottom bar
           // (actuellement géré par isKeyboardVisible dans le build)
         }
-        
+
         _wasKeyboardVisible = isKeyboardVisible;
       } catch (e) {
         // Fallback si View.of(context) n'est pas disponible
@@ -943,7 +946,8 @@ class _HomePageState extends State<HomePage>
       await commitIfNeeded();
 
       if (mounted) {
-        showSuccessSnackBar(context, "Offres de test réinitialisées et injectées ✅");
+        showSuccessSnackBar(
+            context, "Offres de test réinitialisées et injectées ✅");
       }
     } catch (e) {
       if (mounted) {
@@ -1023,11 +1027,6 @@ class _HomePageState extends State<HomePage>
               prefixIcon: const Icon(
                 Icons.search,
                 color: kPrestoBlue,
-              ),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.arrow_forward_ios, size: 18),
-                color: kPrestoOrange,
-                onPressed: () => _goToSearch(textEditingController.text),
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -1216,7 +1215,9 @@ class _HomePageState extends State<HomePage>
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
-                        color: isRead ? Colors.grey.shade600 : Colors.grey.shade800,
+                        color: isRead
+                            ? Colors.grey.shade600
+                            : Colors.grey.shade800,
                       ),
                     ),
                     onTap: () async {
@@ -1323,8 +1324,10 @@ class _HomePageState extends State<HomePage>
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
           resizeToAvoidBottomInset: false,
-          extendBody: true, // Permettre au contenu de s'étendre sous la bottom bar
-          backgroundColor: Colors.white, // Fond blanc pour éviter le bandeau beige
+          extendBody:
+              true, // Permettre au contenu de s'étendre sous la bottom bar
+          backgroundColor:
+              Colors.white, // Fond blanc pour éviter le bandeau beige
           body: SafeArea(
             bottom: false,
             child: AnimatedPadding(
@@ -1426,7 +1429,8 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildHomeContent() {
     final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-    final double bottomPadding = (isKeyboardVisible || !_showBottomBar) ? 16 : 100;
+    final double bottomPadding =
+        (isKeyboardVisible || !_showBottomBar) ? 16 : 100;
 
     return Container(
       color: Colors.white,
@@ -1892,7 +1896,8 @@ class _HomePageState extends State<HomePage>
                 // DERNIÈRES OFFRES - Section avec fond blanc
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
@@ -1934,14 +1939,15 @@ class _HomePageState extends State<HomePage>
                       StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                         stream: _latestOffersStream,
                         builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting &&
+                          if (snapshot.connectionState ==
+                                  ConnectionState.waiting &&
                               !snapshot.hasData) {
                             return const Padding(
                               padding: EdgeInsets.symmetric(vertical: 10),
                               child: Center(
                                 child: CircularProgressIndicator(
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      kPrestoOrange),
                                 ),
                               ),
                             );
@@ -1966,9 +1972,10 @@ class _HomePageState extends State<HomePage>
                           return Column(
                             children: docs.map((d) {
                               final data = d.data();
-                              final title = (data['title'] ?? 'Sans titre') as String;
-                              final location =
-                                  (data['location'] ?? 'Lieu non précisé') as String;
+                              final title =
+                                  (data['title'] ?? 'Sans titre') as String;
+                              final location = (data['location'] ??
+                                  'Lieu non précisé') as String;
                               final whenLabel = _labelWhenFromTitle(title);
 
                               return Padding(
@@ -1982,18 +1989,20 @@ class _HomePageState extends State<HomePage>
                                           title: title,
                                           location: location,
                                           category: (data['category'] ??
-                                              'Catégorie non précisée') as String,
-                                          subcategory: data['subcategory'] as String?,
+                                                  'Catégorie non précisée')
+                                              as String,
+                                          subcategory:
+                                              data['subcategory'] as String?,
                                           budget: data['budget'] is num
                                               ? data['budget'] as num
                                               : null,
-                                          description:
-                                              (data['description'] ?? '') as String?,
+                                          description: (data['description'] ??
+                                              '') as String?,
                                           phone: data['phone'] as String?,
-                                          imageUrls:
-                                              (data['imageUrls'] as List<dynamic>?)
-                                                  ?.map((e) => e.toString())
-                                                  .toList(),
+                                          imageUrls: (data['imageUrls']
+                                                  as List<dynamic>?)
+                                              ?.map((e) => e.toString())
+                                              .toList(),
                                           annonceurId:
                                               (data['userId'] ?? '') as String,
                                         ),
@@ -2023,7 +2032,8 @@ class _HomePageState extends State<HomePage>
                                           height: 36,
                                           decoration: BoxDecoration(
                                             color: const Color(0xFFFFF3E0),
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           child: const Icon(
                                             Icons.flash_on_outlined,
@@ -2883,7 +2893,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           _keywordCtrl.text.trim().isEmpty ? null : _keywordCtrl.text.trim();
       _queryKey++;
       _lastDoc = null; // Reset pagination
-      _showFilters = false; // ✅ Rétracter le panneau après application des filtres
+      _showFilters =
+          false; // ✅ Rétracter le panneau après application des filtres
     });
   }
 
@@ -2982,11 +2993,16 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   Widget _buildActiveFilterChips() {
     // Compter les filtres actifs
     int activeFiltersCount = 0;
-    if (_filterCategory != null && _filterCategory!.isNotEmpty) activeFiltersCount++;
-    if (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) activeFiltersCount++;
-    if (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) activeFiltersCount++;
-    if (_filterCityName != null && _filterCityName!.isNotEmpty) activeFiltersCount++;
-    if (_activeSearchQuery != null && _activeSearchQuery!.isNotEmpty) activeFiltersCount++;
+    if (_filterCategory != null && _filterCategory!.isNotEmpty)
+      activeFiltersCount++;
+    if (_filterRegionCode != null && _filterRegionCode!.isNotEmpty)
+      activeFiltersCount++;
+    if (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty)
+      activeFiltersCount++;
+    if (_filterCityName != null && _filterCityName!.isNotEmpty)
+      activeFiltersCount++;
+    if (_activeSearchQuery != null && _activeSearchQuery!.isNotEmpty)
+      activeFiltersCount++;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -3003,14 +3019,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
               },
               borderRadius: BorderRadius.circular(12),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: activeFiltersCount > 0 
+                  color: activeFiltersCount > 0
                       ? kPrestoOrange.withOpacity(0.1)
                       : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: activeFiltersCount > 0 ? kPrestoOrange : Colors.grey.shade300,
+                    color: activeFiltersCount > 0
+                        ? kPrestoOrange
+                        : Colors.grey.shade300,
                     width: 1.5,
                   ),
                 ),
@@ -3019,14 +3038,18 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     Icon(
                       _showFilters ? Icons.filter_list_off : Icons.filter_list,
                       size: 22,
-                      color: activeFiltersCount > 0 ? kPrestoOrange : Colors.grey.shade700,
+                      color: activeFiltersCount > 0
+                          ? kPrestoOrange
+                          : Colors.grey.shade700,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         _showFilters ? 'Masquer les filtres' : 'Filtres',
                         style: TextStyle(
-                          color: activeFiltersCount > 0 ? kPrestoOrange : Colors.grey.shade700,
+                          color: activeFiltersCount > 0
+                              ? kPrestoOrange
+                              : Colors.grey.shade700,
                           fontWeight: FontWeight.w600,
                           fontSize: 15,
                         ),
@@ -3034,7 +3057,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     ),
                     if (activeFiltersCount > 0) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: kPrestoOrange,
                           borderRadius: BorderRadius.circular(12),
@@ -3087,220 +3111,239 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         // Fond blanc derrière les annonces pour un look plus clair
         backgroundColor: Colors.white,
         appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-        title: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            baseTitle,
-            style: kPrestoAppBarTitleStyle,
+          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
+          title: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              baseTitle,
+              style: kPrestoAppBarTitleStyle,
+            ),
           ),
+          backgroundColor: kPrestoOrange,
+          foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.home_outlined),
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const HomePage()),
+                  (route) => false,
+                );
+              },
+            ),
+          ],
         ),
-        backgroundColor: kPrestoOrange,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.home_outlined),
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const HomePage()),
-                (route) => false,
-              );
-            },
-          ),
-        ],
-      ),
         body: Column(
           children: [
             // ✅ Tuiles cliquables pour filtres actifs
             _buildActiveFilterChips(),
             _buildFilterPanel(),
             Expanded(
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              key: ValueKey(
-                  _queryKey), // Force la reconstruction quand les filtres changent
-              stream: _buildQuery().snapshots(),
-              builder: (context, snapshot) {
-                // ✅ Ne plus afficher le loader si on a déjà des données
-                if (snapshot.connectionState == ConnectionState.waiting &&
-                    !snapshot.hasData) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                    ),
-                  );
-                }
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                key: ValueKey(
+                    _queryKey), // Force la reconstruction quand les filtres changent
+                stream: _buildQuery().snapshots(),
+                builder: (context, snapshot) {
+                  // ✅ Ne plus afficher le loader si on a déjà des données
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !snapshot.hasData) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                      ),
+                    );
+                  }
 
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        "Erreur lors du chargement des offres.\n${snapshot.error}",
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.w600,
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          "Erreur lors du chargement des offres.\n${snapshot.error}",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }
+                    );
+                  }
 
-                List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
-                    snapshot.data?.docs ?? [];
+                  List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
+                      snapshot.data?.docs ?? [];
 
-                if (_activeSearchQuery != null &&
-                    _activeSearchQuery!.trim().isNotEmpty) {
-                  final q = _activeSearchQuery!.trim().toLowerCase();
-                  docs = docs.where((d) {
-                    final data = d.data();
-                    final title =
-                        (data['title'] ?? '').toString().toLowerCase();
-                    final desc =
-                        (data['description'] ?? '').toString().toLowerCase();
-                    return title.contains(q) || desc.contains(q);
-                  }).toList();
-                }
+                  if (_activeSearchQuery != null &&
+                      _activeSearchQuery!.trim().isNotEmpty) {
+                    final q = _activeSearchQuery!.trim().toLowerCase();
+                    docs = docs.where((d) {
+                      final data = d.data();
+                      final title =
+                          (data['title'] ?? '').toString().toLowerCase();
+                      final desc =
+                          (data['description'] ?? '').toString().toLowerCase();
+                      return title.contains(q) || desc.contains(q);
+                    }).toList();
+                  }
 
-                // Nombre après filtrage
-                final int resultCount = docs.length;
+                  // Nombre après filtrage
+                  final int resultCount = docs.length;
 
-                if (docs.isEmpty) {
+                  if (docs.isEmpty) {
+                    return Column(
+                      children: [
+                        // Compteur d'annonces
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            border: Border(
+                                bottom:
+                                    BorderSide(color: Colors.grey.shade200)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.list_alt,
+                                  size: 18, color: Colors.grey.shade600),
+                              const SizedBox(width: 8),
+                              Text(
+                                '0 annonce',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Expanded(child: _EmptyOffers()),
+                      ],
+                    );
+                  }
+
+                  const int _adsEvery =
+                      8; // Bandeau pub après chaque 8 annonces
+                  final int _adSlots = docs.length ~/ _adsEvery;
+                  final int _totalItems = docs.length + _adSlots;
+
                   return Column(
                     children: [
                       // Compteur d'annonces
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade50,
-                          border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                          border: Border(
+                              bottom: BorderSide(color: Colors.grey.shade200)),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.list_alt, size: 18, color: Colors.grey.shade600),
+                            Icon(Icons.list_alt,
+                                size: 18, color: kPrestoOrange),
                             const SizedBox(width: 8),
                             Text(
-                              '0 annonce',
-                              style: TextStyle(
+                              '$resultCount annonce${resultCount > 1 ? 's' : ''}',
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.grey.shade700,
+                                color: Colors.black87,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Expanded(child: _EmptyOffers()),
-                    ],
-                  );
-                }
+                      Expanded(
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.fromLTRB(2, 16, 2, 120),
+                          itemCount: _totalItems,
+                          itemBuilder: (context, index) {
+                            final bool isAd =
+                                (index + 1) % (_adsEvery + 1) == 0;
+                            if (isAd) {
+                              return AdBanner(
+                                margin: EdgeInsets.zero,
+                                placeholderHeight: kIsWeb ? 180.0 : 100.0,
+                                placeholderFolderPrefix:
+                                    'assets/carousel_home/',
+                                flat: true,
+                              );
+                            }
 
-                const int _adsEvery = 8; // Bandeau pub après chaque 8 annonces
-                final int _adSlots = docs.length ~/ _adsEvery;
-                final int _totalItems = docs.length + _adSlots;
+                            final int docIndex =
+                                index - (index ~/ (_adsEvery + 1));
+                            final doc = docs[docIndex];
+                            final offerId = doc.id;
+                            final data = doc.data();
 
-                return Column(
-                  children: [
-                    // Compteur d'annonces
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.list_alt, size: 18, color: kPrestoOrange),
-                          const SizedBox(width: 8),
-                          Text(
-                            '$resultCount annonce${resultCount > 1 ? 's' : ''}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.fromLTRB(2, 16, 2, 120),
-                        itemCount: _totalItems,
-                        itemBuilder: (context, index) {
-                          final bool isAd = (index + 1) % (_adsEvery + 1) == 0;
-                          if (isAd) {
-                            return AdBanner(
-                              margin: EdgeInsets.zero,
-                              placeholderHeight: kIsWeb ? 180.0 : 100.0,
-                              placeholderFolderPrefix: 'assets/carousel_home/',
-                              flat: true,
-                            );
-                          }
+                            final title =
+                                (data['title'] ?? 'Sans titre') as String;
+                            final location = (data['location'] ??
+                                'Lieu non précisé') as String;
+                            final category = (data['category'] ??
+                                'Catégorie non précisée') as String;
+                            final budget = data['budget'];
+                            final description =
+                                (data['description'] ?? '') as String;
+                            final phone = data['phone'] == null
+                                ? null
+                                : data['phone'] as String;
 
-                          final int docIndex = index - (index ~/ (_adsEvery + 1));
-                          final doc = docs[docIndex];
-                          final offerId = doc.id;
-                          final data = doc.data();
+                            final List<String> imageUrls =
+                                (data['imageUrls'] as List<dynamic>? ?? [])
+                                    .map((e) => e.toString())
+                                    .toList();
 
-                          final title = (data['title'] ?? 'Sans titre') as String;
-                          final location =
-                              (data['location'] ?? 'Lieu non précisé') as String;
-                          final category = (data['category'] ??
-                              'Catégorie non précisée') as String;
-                          final budget = data['budget'];
-                          final description = (data['description'] ?? '') as String;
-                          final phone =
-                              data['phone'] == null ? null : data['phone'] as String;
-
-                          final List<String> imageUrls =
-                              (data['imageUrls'] as List<dynamic>? ?? [])
-                                  .map((e) => e.toString())
-                                  .toList();
-
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => OfferDetailPage(
-                                offerId: offerId,
-                                title: title,
-                                location: location,
-                                category: category,
-                                subcategory:
-                                    (data['subcategory'] ?? '') as String?,
-                                budget: budget is num ? budget : null,
-                                description:
-                                    description.isEmpty ? null : description,
-                                phone: phone,
-                                imageUrls: imageUrls.isEmpty ? null : imageUrls,
-                                annonceurId: (data['userId'] ?? '') as String,
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => OfferDetailPage(
+                                        offerId: offerId,
+                                        title: title,
+                                        location: location,
+                                        category: category,
+                                        subcategory: (data['subcategory'] ?? '')
+                                            as String?,
+                                        budget: budget is num ? budget : null,
+                                        description: description.isEmpty
+                                            ? null
+                                            : description,
+                                        phone: phone,
+                                        imageUrls: imageUrls.isEmpty
+                                            ? null
+                                            : imageUrls,
+                                        annonceurId:
+                                            (data['userId'] ?? '') as String,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: OfferCard(
+                                  offerId: offerId,
+                                  data: data,
+                                  showActionsMenu: false,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                        child: OfferCard(
-                          offerId: offerId,
-                          data: data,
-                          showActionsMenu: false,
+                            );
+                          },
                         ),
                       ),
-                    );
-                  },
-                ),
-                    ),
-                  ],
-                );
-              },
+                    ],
+                  );
+                },
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -3878,7 +3921,8 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
     if (digits.length == 10 && digits.startsWith('0')) {
       return '+33${digits.substring(1)}';
     }
-    if (digits.length == 9 && (digits.startsWith('6') || digits.startsWith('7'))) {
+    if (digits.length == 9 &&
+        (digits.startsWith('6') || digits.startsWith('7'))) {
       return '+33$digits';
     }
 
@@ -3934,7 +3978,8 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
     // Masquage simple: conserve l'indicatif si présent, et 2 premiers chiffres du reste.
     if (formatted.startsWith('+')) {
       // ex: +33 6 .. => garder "+33 6" si possible
-      final parts = formatted.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+      final parts =
+          formatted.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
       if (parts.length >= 2) {
         return '${parts[0]} ${parts[1]} •• •• •• ••';
       }
@@ -3987,7 +4032,8 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
     }
 
     final dial = _toE164Like(widget.phone!.trim());
-    final uri = Uri(scheme: 'tel', path: dial.isNotEmpty ? dial : widget.phone!.trim());
+    final uri =
+        Uri(scheme: 'tel', path: dial.isNotEmpty ? dial : widget.phone!.trim());
 
     try {
       final ok = await canLaunchUrl(uri);
@@ -3998,7 +4044,8 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
         return;
       }
 
-      showSuccessSnackBar(context, "Impossible de lancer l’appel sur cet appareil.");
+      showSuccessSnackBar(
+          context, "Impossible de lancer l’appel sur cet appareil.");
     } catch (_) {
       if (!context.mounted) return;
       showSuccessSnackBar(context, "Une erreur est survenue lors de l’appel.");
@@ -4135,7 +4182,8 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   }
 
   Future<void> _reportOffer(BuildContext context) async {
-    final subject = Uri.encodeComponent("Annonce signalée – ID ${widget.offerId}");
+    final subject =
+        Uri.encodeComponent("Annonce signalée – ID ${widget.offerId}");
     final reportLink = 'https://prestoo.app/offers/${widget.offerId}';
     final bodyText = """
 Bonjour,
@@ -4194,12 +4242,14 @@ Motif du signalement :
     final String durationText = extractDuration(widget.title);
     final String city = widget.location;
 
-    final bool hasPhone = widget.phone != null && widget.phone!.trim().isNotEmpty;
+    final bool hasPhone =
+        widget.phone != null && widget.phone!.trim().isNotEmpty;
     final String rawPhone = hasPhone ? widget.phone!.trim() : '';
-    final String formattedPhone = hasPhone ? _formatPhoneWithIndicatif(rawPhone) : '';
+    final String formattedPhone =
+        hasPhone ? _formatPhoneWithIndicatif(rawPhone) : '';
     final String phoneText = hasPhone
-      ? (_isPhoneVisible ? formattedPhone : _maskPhone(formattedPhone))
-      : "Numéro non renseigné";
+        ? (_isPhoneVisible ? formattedPhone : _maskPhone(formattedPhone))
+        : "Numéro non renseigné";
     final String rawDescription = (widget.description ?? '').trim();
     final String descriptionText = rawDescription.isEmpty
         ? "Aucune description détaillée fournie."
@@ -4224,7 +4274,8 @@ Motif du signalement :
           PopupMenuButton<String>(
             icon: const Icon(Icons.menu),
             color: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             onSelected: (value) {
               if (value == 'report') {
                 _reportOffer(context);
@@ -4234,7 +4285,8 @@ Motif du signalement :
               PopupMenuItem<String>(
                 value: 'report',
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.red.shade50,
                     borderRadius: BorderRadius.circular(8),
@@ -4242,7 +4294,8 @@ Motif du signalement :
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.flag_outlined, color: Colors.red.shade700, size: 18),
+                      Icon(Icons.flag_outlined,
+                          color: Colors.red.shade700, size: 18),
                       const SizedBox(width: 8),
                       Text(
                         'Signaler',
@@ -4334,8 +4387,8 @@ Motif du signalement :
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ✅ Section principale avec infos clés
-              _keyInfoCard(
-                  context, theme, city, priceText, widget.category, durationText),
+              _keyInfoCard(context, theme, city, priceText, widget.category,
+                  durationText),
 
               const SizedBox(height: 16),
 
@@ -4379,8 +4432,10 @@ Motif du signalement :
                       style: TextButton.styleFrom(
                         foregroundColor: kPrestoBlue,
                         backgroundColor: kPrestoBlue.withOpacity(0.08),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(999)),
                         textStyle: const TextStyle(
                           fontWeight: FontWeight.w900,
                         ),
@@ -4496,7 +4551,8 @@ Motif du signalement :
                         onPressed: () {
                           // si tu veux, tu peux faire Clipboard.setData(...)
                           // mais pour rester simple, on peut réutiliser un share "instagram" ou snackbar
-                          showSuccessSnackBar(context, "Lien copié (à brancher).");
+                          showSuccessSnackBar(
+                              context, "Lien copié (à brancher).");
                         },
                       ),
                     ),
@@ -4611,7 +4667,8 @@ class UserPublicProfilePage extends StatefulWidget {
 }
 
 class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
-  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _loadActiveOffers() async {
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _loadActiveOffers() async {
     final col = FirebaseFirestore.instance.collection('offers');
 
     final resUid = await col.where('uid', isEqualTo: widget.userId).get();
@@ -4634,7 +4691,8 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
       final visibility = (data['visibility'] is Map)
           ? (data['visibility'] as Map)
           : const <String, dynamic>{};
-      final isPublic = visibility['isPublic'] == true || data['status'] == 'active';
+      final isPublic =
+          visibility['isPublic'] == true || data['status'] == 'active';
       if (!isPublic) continue;
       filtered.add(doc);
     }
@@ -4669,7 +4727,8 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
       return;
     }
 
-    final conversationId = await ConversationService().getOrCreateConversationId(
+    final conversationId =
+        await ConversationService().getOrCreateConversationId(
       currentUserId: user.uid,
       otherUserId: widget.userId,
     );
@@ -4779,7 +4838,8 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  FutureBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+                  FutureBuilder<
+                      List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
                     future: _loadActiveOffers(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -5069,217 +5129,217 @@ class MessagesPage extends StatelessWidget {
             style: kPrestoAppBarTitleStyle,
           ),
           backgroundColor: kPrestoOrange,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.home_outlined),
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const HomePage()),
-                (route) => false,
+          foregroundColor: Colors.white,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.home_outlined),
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const HomePage()),
+                  (route) => false,
+                );
+              },
+            ),
+          ],
+        ),
+        body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('conversations')
+              .where('participants', arrayContains: userId)
+              .orderBy('lastMessageAt', descending: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                ),
               );
-            },
-          ),
-        ],
-      ),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: FirebaseFirestore.instance
-            .collection('conversations')
-            .where('participants', arrayContains: userId)
-            .orderBy('lastMessageAt', descending: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
-              ),
-            );
-          }
+            }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  "Erreur lors du chargement des conversations.\n${snapshot.error}",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.w600,
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    "Erreur lors du chargement des conversations.\n${snapshot.error}",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
-            );
-          }
+              );
+            }
 
-          final docs = snapshot.data?.docs ?? [];
+            final docs = snapshot.data?.docs ?? [];
 
-          if (docs.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.chat_bubble_outline,
-                      size: 64,
-                      color: Colors.black26,
-                    ),
-                    SizedBox(height: 16),
-                    Text(
-                      "Aucune conversation pour l’instant",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+            if (docs.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.chat_bubble_outline,
+                        size: 64,
+                        color: Colors.black26,
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      "Accepte une offre ou envoie un message depuis le détail d’une annonce pour démarrer une conversation.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w500,
+                      SizedBox(height: 16),
+                      Text(
+                        "Aucune conversation pour l’instant",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            itemCount: docs.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 4),
-            itemBuilder: (context, index) {
-              final data = docs[index].data();
-              final conversationId = docs[index].id;
-
-              final offerTitle =
-                  (data['offerTitle'] ?? 'Conversation iliprestō') as String;
-              final lastMessage =
-                  (data['lastMessage'] ?? 'Pas encore de message') as String;
-              final ts = data['lastMessageAt'] as Timestamp?;
-              final timeLabel = formatTimeLabel(ts);
-
-              final Map<String, dynamic> unreadMap =
-                  (data['unreadCount'] as Map<String, dynamic>?) ?? {};
-              final int unread =
-                  (unreadMap[userId] is int) ? unreadMap[userId] as int : 0;
-
-              return _TapScale(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ConversationPage(
-                        conversationId: conversationId,
-                        offerTitle: offerTitle,
+                      SizedBox(height: 8),
+                      Text(
+                        "Accepte une offre ou envoie un message depuis le détail d’une annonce pour démarrer une conversation.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                  );
-                },
-                child: Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
+                    ],
                   ),
-                  elevation: 1.5,
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            width: 46,
-                            height: 46,
-                            color: const Color(0xFFFFF3E0),
-                            child: const Icon(
-                              Icons.work_outline,
-                              color: kPrestoOrange,
+                ),
+              );
+            }
+
+            return ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              itemCount: docs.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 4),
+              itemBuilder: (context, index) {
+                final data = docs[index].data();
+                final conversationId = docs[index].id;
+
+                final offerTitle =
+                    (data['offerTitle'] ?? 'Conversation iliprestō') as String;
+                final lastMessage =
+                    (data['lastMessage'] ?? 'Pas encore de message') as String;
+                final ts = data['lastMessageAt'] as Timestamp?;
+                final timeLabel = formatTimeLabel(ts);
+
+                final Map<String, dynamic> unreadMap =
+                    (data['unreadCount'] as Map<String, dynamic>?) ?? {};
+                final int unread =
+                    (unreadMap[userId] is int) ? unreadMap[userId] as int : 0;
+
+                return _TapScale(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ConversationPage(
+                          conversationId: conversationId,
+                          offerTitle: offerTitle,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    elevation: 1.5,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              width: 46,
+                              height: 46,
+                              color: const Color(0xFFFFF3E0),
+                              child: const Icon(
+                                Icons.work_outline,
+                                color: kPrestoOrange,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                offerTitle,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                lastMessage,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: unread > 0
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  color: unread > 0
-                                      ? Colors.black87
-                                      : Colors.black54,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              timeLabel,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: Colors.black45,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            if (unread > 0)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: kPrestoBlue,
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  unread.toString(),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  offerTitle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.white,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  lastMessage,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: unread > 0
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: unread > 0
+                                        ? Colors.black87
+                                        : Colors.black54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                timeLabel,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.black45,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                          ],
-                        ),
-                      ],
+                              const SizedBox(height: 6),
+                              if (unread > 0)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: kPrestoBlue,
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    unread.toString(),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
-          );
-        },
-      ),
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -5574,207 +5634,209 @@ class _ConversationPageState extends State<ConversationPage> {
         appBar: AppBar(
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
           backgroundColor: kPrestoOrange,
-        foregroundColor: Colors.white,
-        titleSpacing: 0,
-        title: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                width: 40,
-                height: 40,
-                color: const Color(0xFFFFF3E0),
-                child: const Icon(
-                  Icons.work_outline,
-                  color: kPrestoOrange,
-                  size: 22,
+          foregroundColor: Colors.white,
+          titleSpacing: 0,
+          title: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  color: const Color(0xFFFFF3E0),
+                  child: const Icon(
+                    Icons.work_outline,
+                    color: kPrestoOrange,
+                    size: 22,
+                  ),
                 ),
               ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    widget.offerTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: kPrestoAppBarTitleStyle,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            PopupMenuButton<String>(
+              onSelected: _onMenuSelected,
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 'email',
+                  child: Text("Partager par email"),
+                ),
+                PopupMenuItem(
+                  value: 'txt',
+                  child: Text("Enregistrer la conversation (texte)"),
+                ),
+              ],
             ),
-            const SizedBox(width: 10),
+          ],
+        ),
+        body: Column(
+          children: [
+            // Liste des messages
             Expanded(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  widget.offerTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: kPrestoAppBarTitleStyle,
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: _firestore
+                    .collection('conversations')
+                    .doc(widget.conversationId)
+                    .collection('messages')
+                    .orderBy('createdAt', descending: true)
+                    .limit(200)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !_isLoadingMeta) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                      ),
+                    );
+                  }
+
+                  final docs = snapshot.data?.docs ?? [];
+                  if (docs.isEmpty) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text(
+                          "Aucun message pour le moment.\nCommence la conversation !",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    reverse: true,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    itemCount: docs.length,
+                    itemBuilder: (context, index) {
+                      final data = docs[index].data();
+                      final text = (data['text'] ?? '') as String;
+                      final senderName =
+                          (data['senderName'] ?? 'iliprestō') as String;
+                      final senderId = (data['senderId'] ?? '') as String;
+                      final ts = data['createdAt'] as Timestamp?;
+                      final timeLabel = formatTimeLabel(ts);
+
+                      final isMe = senderId == userId;
+
+                      return Align(
+                        alignment:
+                            isMe ? Alignment.centerRight : Alignment.centerLeft,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.75,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isMe ? kPrestoBlue : Colors.white,
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(18),
+                              topRight: const Radius.circular(18),
+                              bottomLeft: Radius.circular(isMe ? 18 : 4),
+                              bottomRight: Radius.circular(isMe ? 4 : 18),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 6,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (!isMe)
+                                Text(
+                                  senderName,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              if (!isMe) const SizedBox(height: 2),
+                              Text(
+                                text,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: isMe ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                child: Text(
+                                  timeLabel,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color:
+                                        isMe ? Colors.white70 : Colors.black38,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+
+            // Zone de saisie
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              color: Colors.grey[100],
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _messageController,
+                        minLines: 1,
+                        maxLines: 4,
+                        decoration: const InputDecoration(
+                          hintText: "Écrire un message...",
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.send, color: kPrestoOrange),
+                      onPressed: _sendMessage,
+                    ),
+                  ],
                 ),
               ),
             ),
           ],
         ),
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: _onMenuSelected,
-            itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: 'email',
-                child: Text("Partager par email"),
-              ),
-              PopupMenuItem(
-                value: 'txt',
-                child: Text("Enregistrer la conversation (texte)"),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Liste des messages
-          Expanded(
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _firestore
-                  .collection('conversations')
-                  .doc(widget.conversationId)
-                  .collection('messages')
-                  .orderBy('createdAt', descending: true)
-                  .limit(200)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting &&
-                    !_isLoadingMeta) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                    ),
-                  );
-                }
-
-                final docs = snapshot.data?.docs ?? [];
-                if (docs.isEmpty) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text(
-                        "Aucun message pour le moment.\nCommence la conversation !",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  reverse: true,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  itemCount: docs.length,
-                  itemBuilder: (context, index) {
-                    final data = docs[index].data();
-                    final text = (data['text'] ?? '') as String;
-                    final senderName =
-                        (data['senderName'] ?? 'iliprestō') as String;
-                    final senderId = (data['senderId'] ?? '') as String;
-                    final ts = data['createdAt'] as Timestamp?;
-                    final timeLabel = formatTimeLabel(ts);
-
-                    final isMe = senderId == userId;
-
-                    return Align(
-                      alignment:
-                          isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 3),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.75,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isMe ? kPrestoBlue : Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topLeft: const Radius.circular(18),
-                            topRight: const Radius.circular(18),
-                            bottomLeft: Radius.circular(isMe ? 18 : 4),
-                            bottomRight: Radius.circular(isMe ? 4 : 18),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (!isMe)
-                              Text(
-                                senderName,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            if (!isMe) const SizedBox(height: 2),
-                            Text(
-                              text,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: isMe ? Colors.white : Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: Text(
-                                timeLabel,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: isMe ? Colors.white70 : Colors.black38,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-
-          // Zone de saisie
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            color: Colors.grey[100],
-            child: SafeArea(
-              top: false,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      minLines: 1,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        hintText: "Écrire un message...",
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.send, color: kPrestoOrange),
-                    onPressed: _sendMessage,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
       ),
     );
   }
@@ -5932,15 +5994,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _onPublishPressed() async {
-    setState(() => _attemptedSubmit = true);
+    setState(() {
+      _attemptedSubmit = true;
+      _publishLocked = false;
+    });
 
     final valid = _formKey.currentState?.validate() ?? false;
     if (!valid || !_requiredOk()) {
-      setState(() {
-        _publishLocked = true;
-        _canPublish = false;
-      });
-      showSuccessSnackBar(context, 'Complète les champs obligatoires pour publier.');
+      // Les champs invalides (ou manquants) seront affichés en rouge via la validation.
       return;
     }
 
@@ -5988,7 +6049,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // Préparer l'enregistreur haute qualité (WAV)
     try {
       if (await _recorder.hasPermission()) {
-        final filePath = await createTempAudioPath(prefix: 'presto', extension: 'm4a');
+        final filePath =
+            await createTempAudioPath(prefix: 'presto', extension: 'm4a');
         await _recorder.start(
           RecordConfig(
             encoder: AudioEncoder.aacLc,
@@ -6031,13 +6093,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         final blob = await _webRec.stopToBlob();
         final webmBytes = await webBlobToBytes(blob);
         if (webmBytes.length < 30000) {
-          throw Exception('Audio invalide (blob trop petit: ${webmBytes.length} bytes).');
+          throw Exception(
+              'Audio invalide (blob trop petit: ${webmBytes.length} bytes).');
         }
 
         final ts = DateTime.now().millisecondsSinceEpoch;
         final destPath = 'stt/${uid}_$ts.webm';
         final ref = FirebaseStorage.instance.ref(destPath);
-        await ref.putData(webmBytes, SettableMetadata(contentType: 'audio/webm'));
+        await ref.putData(
+            webmBytes, SettableMetadata(contentType: 'audio/webm'));
 
         final out = await MicroIaService.processAudio(
           storagePath: destPath,
@@ -6059,7 +6123,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             final postalCode = (draft['postalCode'] as String? ?? '').trim();
 
             if (title.isNotEmpty) _titleController.text = title;
-            if (description.isNotEmpty) _descriptionController.text = description;
+            if (description.isNotEmpty)
+              _descriptionController.text = description;
             if (category.isNotEmpty) {
               _category = category;
               _selectedSubCategory = null;
@@ -6068,7 +6133,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             if (postalCode.isNotEmpty) _postalCodeController.text = postalCode;
           });
 
-          showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
+          showSuccessSnackBar(
+              context, 'Transcription réussie et champs remplis');
         } else {
           final code = (draft['code'] ?? '').toString();
           showSuccessSnackBar(
@@ -6248,7 +6314,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             : 'Erreur IA: ${draft['error'] ?? 'inconnue'}',
       );
     }
-    
   }
 
   /// Appelle la Cloud Function pour analyser la description avec OpenAI
@@ -6472,7 +6537,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // --- GESTION DES PHOTOS ---
 
-  Future<void> _showPhotoPopup({required XFile file, required String label}) async {
+  Future<void> _showPhotoPopup(
+      {required XFile file, required String label}) async {
     final bytes = await file.readAsBytes();
     if (!mounted) return;
 
@@ -6520,7 +6586,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   shape: const CircleBorder(),
                   child: IconButton(
                     tooltip: 'Fermer',
-                    icon: const Icon(Icons.close_rounded, color: Colors.black87),
+                    icon:
+                        const Icon(Icons.close_rounded, color: Colors.black87),
                     onPressed: () => Navigator.of(ctx).pop(),
                   ),
                 ),
@@ -6529,7 +6596,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 left: 12,
                 bottom: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(999),
@@ -6597,9 +6665,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   enabled: !kIsWeb,
                   leading: const Icon(Icons.photo_camera_outlined),
                   title: const Text('Appareil photo'),
-                  subtitle: kIsWeb
-                      ? const Text('Indisponible sur Web')
-                      : null,
+                  subtitle: kIsWeb ? const Text('Indisponible sur Web') : null,
                   onTap: kIsWeb
                       ? null
                       : () => Navigator.of(ctx).pop(ImageSource.camera),
@@ -6765,10 +6831,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final location = _locationController.text.trim();
       final category = (_category ?? '').toString().trim();
       final subcategory = _selectedSubCategory;
-      final budgetNum = _budgetType == 'À négocier' ? null : _parseBudget(_budgetController.text);
+      final budgetNum = _budgetType == 'À négocier'
+          ? null
+          : _parseBudget(_budgetController.text);
       final description = _descriptionController.text.trim();
       final phone = _phoneController.text.trim();
-      final imageUrls = _uploadedPhotoUrls.isEmpty ? null : List<String>.from(_uploadedPhotoUrls);
+      final imageUrls = _uploadedPhotoUrls.isEmpty
+          ? null
+          : List<String>.from(_uploadedPhotoUrls);
 
       // ✅ Checkmark bleu au milieu de l'écran.
       showDialog<void>(
@@ -6821,7 +6891,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   Widget build(BuildContext context) {
-    final publishDisabled = _publishLocked || !_canPublish || _isSubmitting;
+    final publishVisuallyDisabled = !_canPublish || _isSubmitting;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -6880,67 +6950,111 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             ),
           ],
         ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          autovalidateMode:
-              _attemptedSubmit ? AutovalidateMode.always : AutovalidateMode.disabled,
-          child: ListView(
-            controller: _scrollController,
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Bouton Premium AI avec enregistrement audio
-              Center(
-                child: _isListening
-                    ? _buildMicRecordingButton()
-                    : PremiumAiButton(
-                        onPressed: _isAnalyzing ? null : _startMic,
-                        label: 'Décrire mon besoin (IA)',
-                        isLoading: _isAnalyzing,
-                      ),
-              ),
-              if (_isListening) ...[
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _PulsingDot(delay: 0),
-                    const SizedBox(width: 8),
-                    _PulsingDot(delay: 200),
-                    const SizedBox(width: 8),
-                    _PulsingDot(delay: 400),
-                  ],
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            autovalidateMode: _attemptedSubmit
+                ? AutovalidateMode.always
+                : AutovalidateMode.disabled,
+            child: ListView(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(16),
+              children: [
+                // Bouton Premium AI avec enregistrement audio
+                Center(
+                  child: _isListening
+                      ? _buildMicRecordingButton()
+                      : PremiumAiButton(
+                          onPressed: _isAnalyzing ? null : _startMic,
+                          label: 'Décrire mon besoin (IA)',
+                          isLoading: _isAnalyzing,
+                        ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Enregistrement en cours...',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                    fontStyle: FontStyle.italic,
+                if (_isListening) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _PulsingDot(delay: 0),
+                      const SizedBox(width: 8),
+                      _PulsingDot(delay: 200),
+                      const SizedBox(width: 8),
+                      _PulsingDot(delay: 400),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                if (_useCloudStt && !kIsWeb)
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Enregistrement en cours...',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_useCloudStt && !kIsWeb)
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: kPrestoBlue.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(999),
+                          border:
+                              Border.all(color: kPrestoBlue.withOpacity(0.25)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.cloud_done,
+                                size: 16, color: kPrestoBlue),
+                            SizedBox(width: 6),
+                            Text(
+                              'Qualité audio améliorée (Cloud)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: kPrestoBlue,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+                if (_isAnalyzing) ...[
+                  const SizedBox(height: 8),
                   Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
+                          horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: kPrestoBlue.withOpacity(0.08),
+                        color: kPrestoBlue.withOpacity(0.06),
                         borderRadius: BorderRadius.circular(999),
-                        border:
-                            Border.all(color: kPrestoBlue.withOpacity(0.25)),
+                        border: Border.all(color: kPrestoBlue.withOpacity(0.2)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.cloud_done, size: 16, color: kPrestoBlue),
-                          SizedBox(width: 6),
+                        children: [
+                          _useCloudStt && !kIsWeb
+                              ? const Icon(Icons.cloud_sync,
+                                  size: 16, color: kPrestoBlue)
+                              : SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        kPrestoBlue),
+                                  ),
+                                ),
+                          const SizedBox(width: 8),
                           Text(
-                            'Qualité audio améliorée (Cloud)',
-                            style: TextStyle(
+                            _useCloudStt && !kIsWeb
+                                ? 'Transcription et analyse (Cloud)…'
+                                : 'Analyse en cours…',
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: kPrestoBlue,
@@ -6950,115 +7064,33 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       ),
                     ),
                   ),
-              ],
-              if (_isAnalyzing) ...[
-                const SizedBox(height: 8),
-                Center(
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: kPrestoBlue.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: kPrestoBlue.withOpacity(0.2)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _useCloudStt && !kIsWeb
-                            ? const Icon(Icons.cloud_sync,
-                                size: 16, color: kPrestoBlue)
-                            : SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      kPrestoBlue),
-                                ),
-                              ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _useCloudStt && !kIsWeb
-                              ? 'Transcription et analyse (Cloud)…'
-                              : 'Analyse en cours…',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: kPrestoBlue,
-                          ),
-                        ),
-                      ],
-                    ),
+                ],
+                const SizedBox(height: 16),
+
+                // TITRE
+                TextFormField(
+                  controller: _titleController,
+                  decoration: InputDecoration(
+                    label: _requiredLabel('Titre de l’offre'),
+                    border: const OutlineInputBorder(),
+                    hintText: 'Ex : Monter un meuble IKEA',
                   ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Merci de saisir un titre';
+                    }
+                    return null;
+                  },
                 ),
-              ],
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // TITRE
-              TextFormField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  label: _requiredLabel('Titre de l’offre'),
-                  border: const OutlineInputBorder(),
-                  hintText: 'Ex : Monter un meuble IKEA',
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Merci de saisir un titre';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // CATÉGORIE
-              DropdownButtonFormField<String>(
-                value: _category,
-                dropdownColor: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                decoration: InputDecoration(
-                  label: _requiredLabel('Catégorie'),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                ),
-                items: _categories
-                    .map(
-                      (cat) => DropdownMenuItem(
-                        value: cat,
-                        child: Text(cat),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _category = value;
-                    _selectedSubCategory = null;
-                  });
-                  _recompute();
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Merci de choisir une catégorie';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // SOUS-CATÉGORIE (dropdown dynamique)
-              if (_category != null)
+                // CATÉGORIE
                 DropdownButtonFormField<String>(
-                  value: _selectedSubCategory,
+                  value: _category,
                   dropdownColor: Colors.white,
                   borderRadius: BorderRadius.circular(14),
                   decoration: InputDecoration(
-                    label: _requiredLabel('Sous-catégorie'),
+                    label: _requiredLabel('Catégorie'),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -7067,297 +7099,342 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 14),
                   ),
-                  items: (kCategorySubcategories[_category] ?? [])
+                  items: _categories
                       .map(
-                        (sub) => DropdownMenuItem(
-                          value: sub,
-                          child: Text(sub),
+                        (cat) => DropdownMenuItem(
+                          value: cat,
+                          child: Text(cat),
                         ),
                       )
                       .toList(),
                   onChanged: (value) {
                     setState(() {
-                      _selectedSubCategory = value;
+                      _category = value;
+                      _selectedSubCategory = null;
                     });
                     _recompute();
                   },
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Merci de choisir une sous-catégorie';
+                      return 'Merci de choisir une catégorie';
                     }
                     return null;
                   },
                 ),
-              if (_category != null) const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // DESCRIPTION
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  label: _requiredLabel('Description détaillée'),
-                  alignLabelWithHint: true,
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                ),
-                minLines: 4,
-                maxLines: 8,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Merci de décrire votre besoin';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // PHOTOS (max 2)
-              Row(
-                children: const [
-                  Text(
-                    'Photos de l\'offre',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    '(optionnel)',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _PhotoSelectorTile(
-                      label: 'Photo 1',
-                      file: _selectedPhotos.isNotEmpty
-                          ? _selectedPhotos[0]
-                          : null,
-                      bytes: _selectedPhotoBytes.isNotEmpty
-                          ? _selectedPhotoBytes[0]
-                          : null,
-                      onTap: () => _onPhotoTileTap(0),
-                      onLongPress: () => _pickImage(0),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _PhotoSelectorTile(
-                      label: 'Photo 2',
-                      file: _selectedPhotos.length > 1
-                          ? _selectedPhotos[1]
-                          : null,
-                      bytes: _selectedPhotoBytes.length > 1
-                          ? _selectedPhotoBytes[1]
-                          : null,
-                      onTap: () => _onPhotoTileTap(1),
-                      onLongPress: () => _pickImage(1),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // VILLE + CP + AUTOCOMPLÉTION
-              const Text(
-                'Localisation',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _locationController,
-                decoration: InputDecoration(
-                  label: _requiredLabel('Ville'),
-                  hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                ),
-                onChanged: _onCityChanged,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Merci de saisir une ville';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _postalCodeController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Code postal',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                ),
-                onChanged: _onPostalCodeChanged,
-              ),
-              _buildCitySuggestionsOverlay(),
-              const SizedBox(height: 16),
-
-              // TÉLÉPHONE avec sélection indicatif
-              PhoneInputFieldCompact(
-                controller: _phoneController,
-                label: _requiredLabel('Téléphone (pour être rappelé)'),
-                hintText: '612345678',
-                onPhoneChanged: (_) => _recompute(),
-                validator: (value) {
-                  return _isValidPhoneFR(value ?? '')
-                      ? null
-                      : 'Téléphone invalide';
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // URGENT
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.black12),
-                ),
-                child: SwitchListTile.adaptive(
-                  value: _isUrgent,
-                  onChanged: (v) {
-                    setState(() => _isUrgent = v);
-                  },
-                  title: const Text(
-                    'Urgent',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  activeColor: kPrestoOrange,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // BUDGET
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: DropdownButtonFormField<String>(
-                      value: _budgetType,
-                      dropdownColor: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      items: _budgetTypes
-                          .map(
-                              (t) => DropdownMenuItem(value: t, child: Text(t)))
-                          .toList(),
-                      onChanged: (v) {
-                        if (v == null) return;
-                        setState(() {
-                          _budgetType = v;
-                          if (_budgetType == 'À négocier') {
-                            _budgetController.clear();
-                          }
-                        });
-                        _recompute();
-                      },
-                      decoration: InputDecoration(
-                        labelText: 'Budget',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
+                // SOUS-CATÉGORIE (dropdown dynamique)
+                if (_category != null)
+                  DropdownButtonFormField<String>(
+                    value: _selectedSubCategory,
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    decoration: InputDecoration(
+                      label: _requiredLabel('Sous-catégorie'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    flex: 3,
-                    child: TextFormField(
-                      controller: _budgetController,
-                      keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9., ]'))],
-                      decoration: InputDecoration(
-                        label: _budgetType == 'Fixe'
-                            ? _requiredLabel('Montant (€)')
-                            : null,
-                        labelText: _budgetType == 'Fixe' ? null : 'Montant (€)',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
-                      ),
-                      enabled: _budgetType == 'Fixe',
-                      validator: (value) {
-                        if (_budgetType == 'À négocier') return null;
-                        final b = _parseBudget(value ?? '');
-                        if (b == null) return 'Montant invalide';
-                        if (b <= 0) return 'Le montant doit être > 0';
-                        return null;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              const Text(
-                '* Champs obligatoires',
-                style: TextStyle(color: Colors.black54),
-              ),
-              const SizedBox(height: 10),
-
-              // BOUTON PUBLIER
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: publishDisabled ? null : _onPublishPressed,
-                  icon: _isSubmitting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                    items: (kCategorySubcategories[_category] ?? [])
+                        .map(
+                          (sub) => DropdownMenuItem(
+                            value: sub,
+                            child: Text(sub),
+                          ),
                         )
-                      : const Icon(Icons.send),
-                  label: Text(
-                    _isSubmitting
-                        ? 'Publication en cours...'
-                        : 'Publier mon offre',
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedSubCategory = value;
+                      });
+                      _recompute();
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Merci de choisir une sous-catégorie';
+                      }
+                      return null;
+                    },
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrestoOrange,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                if (_category != null) const SizedBox(height: 16),
+
+                // DESCRIPTION
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: InputDecoration(
+                    label: _requiredLabel('Description détaillée'),
+                    alignLabelWithHint: true,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 14),
+                  ),
+                  minLines: 4,
+                  maxLines: 8,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Merci de décrire votre besoin';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // PHOTOS (max 2)
+                Row(
+                  children: const [
+                    Text(
+                      'Photos de l\'offre',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      '(optionnel)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _PhotoSelectorTile(
+                        label: 'Photo 1',
+                        file: _selectedPhotos.isNotEmpty
+                            ? _selectedPhotos[0]
+                            : null,
+                        bytes: _selectedPhotoBytes.isNotEmpty
+                            ? _selectedPhotoBytes[0]
+                            : null,
+                        onTap: () => _onPhotoTileTap(0),
+                        onLongPress: () => _pickImage(0),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _PhotoSelectorTile(
+                        label: 'Photo 2',
+                        file: _selectedPhotos.length > 1
+                            ? _selectedPhotos[1]
+                            : null,
+                        bytes: _selectedPhotoBytes.length > 1
+                            ? _selectedPhotoBytes[1]
+                            : null,
+                        onTap: () => _onPhotoTileTap(1),
+                        onLongPress: () => _pickImage(1),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // VILLE + CP + AUTOCOMPLÉTION
+                const Text(
+                  'Localisation',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _locationController,
+                  decoration: InputDecoration(
+                    label: _requiredLabel('Ville'),
+                    hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 14),
+                  ),
+                  onChanged: _onCityChanged,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Merci de saisir une ville';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _postalCodeController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Code postal',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 14),
+                  ),
+                  onChanged: _onPostalCodeChanged,
+                ),
+                _buildCitySuggestionsOverlay(),
+                const SizedBox(height: 16),
+
+                // TÉLÉPHONE avec sélection indicatif
+                PhoneInputFieldCompact(
+                  controller: _phoneController,
+                  label: _requiredLabel('Téléphone (pour être rappelé)'),
+                  hintText: '612345678',
+                  onPhoneChanged: (_) => _recompute(),
+                  validator: (value) {
+                    return _isValidPhoneFR(value ?? '')
+                        ? null
+                        : 'Téléphone invalide';
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // URGENT
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.black12),
+                  ),
+                  child: SwitchListTile.adaptive(
+                    value: _isUrgent,
+                    onChanged: (v) {
+                      setState(() => _isUrgent = v);
+                    },
+                    title: const Text(
+                      'Urgent',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    activeColor: kPrestoOrange,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 2,
+                    ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+
+                // BUDGET
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: DropdownButtonFormField<String>(
+                        value: _budgetType,
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        items: _budgetTypes
+                            .map((t) =>
+                                DropdownMenuItem(value: t, child: Text(t)))
+                            .toList(),
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setState(() {
+                            _budgetType = v;
+                            if (_budgetType == 'À négocier') {
+                              _budgetController.clear();
+                            }
+                          });
+                          _recompute();
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Budget',
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 3,
+                      child: TextFormField(
+                        controller: _budgetController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9., ]'))
+                        ],
+                        decoration: InputDecoration(
+                          label: _budgetType == 'Fixe'
+                              ? _requiredLabel('Montant (€)')
+                              : null,
+                          labelText:
+                              _budgetType == 'Fixe' ? null : 'Montant (€)',
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 14),
+                        ),
+                        enabled: _budgetType == 'Fixe',
+                        validator: (value) {
+                          if (_budgetType == 'À négocier') return null;
+                          final b = _parseBudget(value ?? '');
+                          if (b == null) return 'Montant invalide';
+                          if (b <= 0) return 'Le montant doit être > 0';
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                const Text(
+                  '* Champs obligatoires',
+                  style: TextStyle(color: Colors.black54),
+                ),
+                const SizedBox(height: 10),
+
+                // BOUTON PUBLIER
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _isSubmitting ? null : _onPublishPressed,
+                    icon: _isSubmitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send),
+                    label: Text(
+                      _isSubmitting
+                          ? 'Publication en cours...'
+                          : 'Publier mon offre',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: publishVisuallyDisabled
+                          ? Colors.grey.shade400
+                          : kPrestoOrange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -7575,11 +7652,15 @@ class _AccountPageState extends State<AccountPage> {
       });
 
       // ✅ Re-synchronise l'UI avec la config effectivement publiée.
-      final data = (res.data is Map) ? Map<String, dynamic>.from(res.data as Map) : <String, dynamic>{};
+      final data = (res.data is Map)
+          ? Map<String, dynamic>.from(res.data as Map)
+          : <String, dynamic>{};
       final mode = (data['mode'] ?? _adminMicroIaMode).toString();
       final fallback = data['fallbackEnabled'] == true;
-      final threshold = (data['qualityThreshold'] as num?)?.toDouble() ?? _adminMicroIaQualityThreshold;
-      final lang = (data['languageCode'] ?? _adminMicroIaLanguageCode).toString();
+      final threshold = (data['qualityThreshold'] as num?)?.toDouble() ??
+          _adminMicroIaQualityThreshold;
+      final lang =
+          (data['languageCode'] ?? _adminMicroIaLanguageCode).toString();
 
       if (!mounted) return;
 
@@ -7610,7 +7691,8 @@ class _AccountPageState extends State<AccountPage> {
     return FutureBuilder<Map<String, dynamic>>(
       future: _adminCfgFuture,
       builder: (context, cfgSnap) {
-        if (cfgSnap.connectionState == ConnectionState.waiting && !_adminConfigLoaded) {
+        if (cfgSnap.connectionState == ConnectionState.waiting &&
+            !_adminConfigLoaded) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Center(
@@ -7624,7 +7706,8 @@ class _AccountPageState extends State<AccountPage> {
         if (cfgSnap.hasError && !_adminConfigLoaded) {
           final err = cfgSnap.error;
           if (err is FirebaseFunctionsException) {
-            if (err.code == 'permission-denied' || err.code == 'unauthenticated') {
+            if (err.code == 'permission-denied' ||
+                err.code == 'unauthenticated') {
               return const SizedBox.shrink();
             }
           }
@@ -7646,7 +7729,8 @@ class _AccountPageState extends State<AccountPage> {
           final cfg = cfgSnap.data!;
           final mode = (cfg['mode'] ?? 'HYBRID').toString();
           final fallback = cfg['fallbackEnabled'] == true;
-          final threshold = (cfg['qualityThreshold'] as num?)?.toDouble() ?? 0.62;
+          final threshold =
+              (cfg['qualityThreshold'] as num?)?.toDouble() ?? 0.62;
           final lang = (cfg['languageCode'] ?? 'fr-FR').toString();
 
           _adminMicroIaMode = mode;
@@ -7786,7 +7870,9 @@ class _AccountPageState extends State<AccountPage> {
                         : null,
                     decoration: InputDecoration(
                       labelText: 'Mode',
-                      helperText: canEdit ? null : 'Lecture seule (appuie sur “Modifier”)',
+                      helperText: canEdit
+                          ? null
+                          : 'Lecture seule (appuie sur “Modifier”)',
                       helperStyle: disabledHintStyle,
                     ),
                   ),
@@ -7798,7 +7884,10 @@ class _AccountPageState extends State<AccountPage> {
                       style: TextStyle(fontSize: 12),
                     ),
                     value: _adminMicroIaFallbackEnabled,
-                    onChanged: canEdit ? (v) => setState(() => _adminMicroIaFallbackEnabled = v) : null,
+                    onChanged: canEdit
+                        ? (v) =>
+                            setState(() => _adminMicroIaFallbackEnabled = v)
+                        : null,
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -7814,7 +7903,10 @@ class _AccountPageState extends State<AccountPage> {
                     min: 0.40,
                     max: 0.95,
                     divisions: 55,
-                    onChanged: canEdit ? (v) => setState(() => _adminMicroIaQualityThreshold = v) : null,
+                    onChanged: canEdit
+                        ? (v) =>
+                            setState(() => _adminMicroIaQualityThreshold = v)
+                        : null,
                   ),
                   TextField(
                     controller: _adminMicroIaLanguageController,
@@ -7836,20 +7928,23 @@ class _AccountPageState extends State<AccountPage> {
                               backgroundColor: kPrestoBlue,
                               foregroundColor: Colors.white,
                             ),
-                            onPressed: _adminSaving ? null : _adminSetMicroIaConfig,
+                            onPressed:
+                                _adminSaving ? null : _adminSetMicroIaConfig,
                             icon: _adminSaving
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
                                     ),
                                   )
                                 : const Icon(Icons.check_circle_outline),
                             label: Text(
                               _adminSaving ? 'Application…' : 'Appliquer',
-                              style: const TextStyle(fontWeight: FontWeight.w800),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w800),
                             ),
                           )
                         : OutlinedButton.icon(
@@ -7971,7 +8066,8 @@ class _AccountPageState extends State<AccountPage> {
       showSuccessSnackBar(context, "Compte créé et connecté avec succès");
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      showSuccessSnackBar(context, e.message ?? "Erreur lors de l’inscription.");
+      showSuccessSnackBar(
+          context, e.message ?? "Erreur lors de l’inscription.");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -8004,7 +8100,7 @@ class _AccountPageState extends State<AccountPage> {
                 .map((e) => e.toString())
                 .toList();
         _selectedFavoriteSubcategories = selectedSubcats.toSet();
-        
+
         // ✅ Si les champs sont remplis, ne pas être en mode édition par défaut
         final hasProfile = _profilePseudoController.text.isNotEmpty ||
             _profileCityController.text.isNotEmpty ||
@@ -8070,7 +8166,8 @@ class _AccountPageState extends State<AccountPage> {
       return true;
     } catch (e) {
       if (mounted) {
-        showSuccessSnackBar(context, "Erreur lors de la sauvegarde du profil : $e");
+        showSuccessSnackBar(
+            context, "Erreur lors de la sauvegarde du profil : $e");
       }
       return false;
     } finally {
@@ -8188,9 +8285,8 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _openSubcategoryPickerSheet() async {
-    final selectedCategories = _draftFavoriteSelections
-        .where((e) => !e.contains('—'))
-        .toList();
+    final selectedCategories =
+        _draftFavoriteSelections.where((e) => !e.contains('—')).toList();
 
     var changed = false;
 
@@ -8218,7 +8314,8 @@ class _AccountPageState extends State<AccountPage> {
           );
         }
 
-        final items = <({String category, String? subcategory, bool isHeader})>[];
+        final items =
+            <({String category, String? subcategory, bool isHeader})>[];
         for (final category in selectedCategories) {
           items.add((category: category, subcategory: null, isHeader: true));
           final subs = _subCategoriesByCategory[category] ?? const <String>[];
@@ -8352,7 +8449,8 @@ class _AccountPageState extends State<AccountPage> {
         !(defaultTargetPlatform == TargetPlatform.iOS ||
             defaultTargetPlatform == TargetPlatform.macOS)) {
       if (!mounted) return;
-      showSuccessSnackBar(context, "Connexion Apple dispo uniquement sur iOS / macOS.");
+      showSuccessSnackBar(
+          context, "Connexion Apple dispo uniquement sur iOS / macOS.");
       return;
     }
 
@@ -8378,7 +8476,8 @@ class _AccountPageState extends State<AccountPage> {
       showSuccessSnackBar(context, "Connecté avec Apple");
     } catch (e) {
       if (!mounted) return;
-      showSuccessSnackBar(context, "Connexion Apple indisponible ou erreur : $e");
+      showSuccessSnackBar(
+          context, "Connexion Apple indisponible ou erreur : $e");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -8403,254 +8502,254 @@ class _AccountPageState extends State<AccountPage> {
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-        title: const Text(
-          "Mon compte iliprestō",
-          style: kPrestoAppBarTitleStyle,
+          title: const Text(
+            "Mon compte iliprestō",
+            style: kPrestoAppBarTitleStyle,
+          ),
+          backgroundColor: kPrestoOrange,
+          foregroundColor: Colors.white,
         ),
-        backgroundColor: kPrestoOrange,
-        foregroundColor: Colors.white,
-      ),
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        controller: _scrollController,
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _isLoginMode
-                      ? "Se connecter à iliprestō"
-                      : "Créer un compte iliprestō",
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
+        backgroundColor: Colors.white,
+        body: SingleChildScrollView(
+          controller: _scrollController,
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _isLoginMode
+                        ? "Se connecter à iliprestō"
+                        : "Créer un compte iliprestō",
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  "Un compte te permet de gérer tes offres, tes messages et ta visibilité.",
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(height: 6),
+                  const Text(
+                    "Un compte te permet de gérer tes offres, tes messages et ta visibilité.",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: "Email",
+                  const SizedBox(height: 20),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(
+                            labelText: "Email",
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Indique un email";
+                            }
+                            if (!value.contains('@')) {
+                              return "Email invalide";
+                            }
+                            return null;
+                          },
                         ),
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return "Indique un email";
-                          }
-                          if (!value.contains('@')) {
-                            return "Email invalide";
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _passwordController,
-                        decoration: const InputDecoration(
-                          labelText: "Mot de passe",
-                        ),
-                        obscureText: true,
-                        validator: (value) {
-                          if (value == null || value.trim().length < 6) {
-                            return "Au moins 6 caractères";
-                          }
-                          return null;
-                        },
-                      ),
-                      if (!_isLoginMode) ...[
                         const SizedBox(height: 12),
                         TextFormField(
-                          controller: _passwordConfirmController,
+                          controller: _passwordController,
                           decoration: const InputDecoration(
-                            labelText: "Confirme le mot de passe",
+                            labelText: "Mot de passe",
                           ),
                           obscureText: true,
+                          validator: (value) {
+                            if (value == null || value.trim().length < 6) {
+                              return "Au moins 6 caractères";
+                            }
+                            return null;
+                          },
                         ),
-                      ],
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPrestoOrange,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                        if (!_isLoginMode) ...[
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _passwordConfirmController,
+                            decoration: const InputDecoration(
+                              labelText: "Confirme le mot de passe",
+                            ),
+                            obscureText: true,
                           ),
-                          onPressed: _isLoading
-                              ? null
-                              : () {
-                                  if (_isLoginMode) {
-                                    _signInWithEmail();
-                                  } else {
-                                    _registerWithEmail();
-                                  }
-                                },
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
+                        ],
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: kPrestoOrange,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            onPressed: _isLoading
+                                ? null
+                                : () {
+                                    if (_isLoginMode) {
+                                      _signInWithEmail();
+                                    } else {
+                                      _registerWithEmail();
+                                    }
+                                  },
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    _isLoginMode
+                                        ? "Se connecter"
+                                        : "Créer mon compte",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15,
                                     ),
                                   ),
-                                )
-                              : Text(
-                                  _isLoginMode
-                                      ? "Se connecter"
-                                      : "Créer mon compte",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 15,
-                                  ),
-                                ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Center(
-                  child: TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _isLoginMode = !_isLoginMode;
-                      });
-                    },
-                    child: Text(
-                      _isLoginMode
-                          ? "Pas encore de compte ? S’inscrire"
-                          : "Déjà un compte ? Se connecter",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: kPrestoBlue,
-                      ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                const Divider(),
-                const SizedBox(height: 12),
-                const Text(
-                  "Ou se connecter avec",
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: const BorderSide(color: Colors.black12),
-                      backgroundColor: Colors.white,
-                    ),
-                    onPressed: _isLoading ? null : _signInWithGoogle,
-                    icon: Image.asset(
-                      'assets/images/google_g.png',
-                      width: 18,
-                      height: 18,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(Icons.login,
-                            size: 18, color: Colors.red);
+                  const SizedBox(height: 16),
+                  Center(
+                    child: TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _isLoginMode = !_isLoginMode;
+                        });
                       },
-                    ),
-                    label: const Text(
-                      "Continuer avec Google",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: const BorderSide(color: Colors.black12),
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: _isLoading ? null : _signInWithApple,
-                    icon: const Icon(
-                      Icons.apple,
-                      size: 20,
-                    ),
-                    label: const Text(
-                      "Continuer avec Apple",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Vous êtes une entreprise ?",
-                        style: TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 16),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
-                        "Abonnement bientôt disponible.",
-                        style: TextStyle(color: Colors.black54),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const ProProfilePage()),
-                            );
-                          },
-                          icon: const Icon(Icons.business_center_outlined),
-                          label: const Text("Créer un compte Pro"),
+                      child: Text(
+                        _isLoginMode
+                            ? "Pas encore de compte ? S’inscrire"
+                            : "Déjà un compte ? Se connecter",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: kPrestoBlue,
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Ou se connecter avec",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: Colors.black12),
+                        backgroundColor: Colors.white,
+                      ),
+                      onPressed: _isLoading ? null : _signInWithGoogle,
+                      icon: Image.asset(
+                        'assets/images/google_g.png',
+                        width: 18,
+                        height: 18,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.login,
+                              size: 18, color: Colors.red);
+                        },
+                      ),
+                      label: const Text(
+                        "Continuer avec Google",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: Colors.black12),
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: _isLoading ? null : _signInWithApple,
+                      icon: const Icon(
+                        Icons.apple,
+                        size: 20,
+                      ),
+                      label: const Text(
+                        "Continuer avec Apple",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Vous êtes une entreprise ?",
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 16),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
+                          "Abonnement bientôt disponible.",
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (_) => const ProProfilePage()),
+                              );
+                            },
+                            icon: const Icon(Icons.business_center_outlined),
+                            label: const Text("Créer un compte Pro"),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -8684,311 +8783,77 @@ class _AccountPageState extends State<AccountPage> {
             style: kPrestoAppBarTitleStyle,
           ),
           backgroundColor: kPrestoOrange,
-        foregroundColor: Colors.white,
-      ),
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              padding: const EdgeInsets.only(bottom: 120),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 42,
-                          backgroundColor: kPrestoOrange.withOpacity(0.1),
-                          backgroundImage: user.photoURL != null
-                              ? NetworkImage(user.photoURL!)
-                              : null,
-                          child: user.photoURL == null
-                              ? const Icon(
-                                  Icons.person,
-                                  size: 42,
-                                  color: kPrestoOrange,
-                                )
-                              : null,
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          displayName,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          user.email ?? "",
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          "Tu restes connecté automatiquement.\nTu ne seras déconnecté que si tu appuies sur « Se déconnecter ».",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.black54,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    "Mon profil",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      children: [
-                        TextField(
-                          controller: _profilePseudoController,
-                          enabled: _isEditingProfile,
-                          decoration: InputDecoration(
-                            labelText: "Pseudo",
-                            hintText: "Ex : DJ Heat, Stef971...",
-                            filled: !_isEditingProfile,
-                            fillColor: !_isEditingProfile ? Colors.grey.shade100 : null,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        AbsorbPointer(
-                          absorbing: !_isEditingProfile,
-                          child: Opacity(
-                            opacity: _isEditingProfile ? 1.0 : 0.6,
-                            child: Autocomplete<CityRecord>(
-                              displayStringForOption: (city) => '${city.name} (${city.cp})',
-                              optionsBuilder: (TextEditingValue value) {
-                                final query = value.text.trim();
-                                if (query.length < 2) {
-                                  return const Iterable<CityRecord>.empty();
-                                }
-                                return CitySearch.instance.search(query, limit: 10);
-                              },
-                              onSelected: (CityRecord city) {
-                                setState(() {
-                                  _profileCityController.text = '${city.name} (${city.cp})';
-                                });
-                              },
-                              fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
-                                // Synchroniser avec le controller principal
-                                if (_profileCityController.text.isNotEmpty && 
-                                    textController.text != _profileCityController.text) {
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                                    if (!mounted) return;
-                                    if (textController.text != _profileCityController.text) {
-                                      textController.text = _profileCityController.text;
-                                    }
-                                  });
-                                }
-                                
-                                return TextField(
-                                  controller: textController,
-                                  focusNode: focusNode,
-                                  enabled: _isEditingProfile,
-                                  decoration: InputDecoration(
-                                    labelText: "Ville",
-                                    hintText: "Ex : Baie-Mahault",
-                                    filled: !_isEditingProfile,
-                                    fillColor: !_isEditingProfile ? Colors.grey.shade100 : null,
-                                  ),
-                                  onChanged: (value) {
-                                    _profileCityController.text = value;
-                                  },
-                                );
-                              },
-                              optionsViewBuilder: (context, onSelected, options) {
-                                return Align(
-                                  alignment: Alignment.topLeft,
-                                  child: Material(
-                                    elevation: 4.0,
-                                    child: Container(
-                                      constraints: const BoxConstraints(maxHeight: 200),
-                                      width: MediaQuery.of(context).size.width - 80,
-                                      child: ListView.builder(
-                                        padding: EdgeInsets.zero,
-                                        shrinkWrap: true,
-                                        itemCount: options.length,
-                                        itemBuilder: (context, index) {
-                                          final city = options.elementAt(index);
-                                          return ListTile(
-                                            dense: true,
-                                            title: Text('${city.name} (${city.cp})'),
-                                            subtitle: Text('Dept ${city.dept}'),
-                                            onTap: () => onSelected(city),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        AbsorbPointer(
-                          absorbing: !_isEditingProfile,
-                          child: Opacity(
-                            opacity: _isEditingProfile ? 1.0 : 0.6,
-                            child: PhoneInputFieldCompact(
-                              controller: _profilePhoneController,
-                              labelText: 'Téléphone',
-                              hintText: '690123456',
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _isEditingProfile ? kPrestoOrange : kPrestoBlue,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                            ),
-                            onPressed: _isSavingProfile
-                                ? null
-                                : () {
-                                    if (_isEditingProfile) {
-                                      _saveProfile(user);
-                                    } else {
-                                      setState(() => _isEditingProfile = true);
-                                    }
-                                  },
-                            icon: _isSavingProfile
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          Colors.white),
-                                    ),
+          foregroundColor: Colors.white,
+        ),
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                padding: const EdgeInsets.only(bottom: 120),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 42,
+                            backgroundColor: kPrestoOrange.withOpacity(0.1),
+                            backgroundImage: user.photoURL != null
+                                ? NetworkImage(user.photoURL!)
+                                : null,
+                            child: user.photoURL == null
+                                ? const Icon(
+                                    Icons.person,
+                                    size: 42,
+                                    color: kPrestoOrange,
                                   )
-                                : Icon(_isEditingProfile ? Icons.save_outlined : Icons.edit_outlined),
-                            label: Text(
-                              _isSavingProfile
-                                  ? "Enregistrement..."
-                                  : _isEditingProfile 
-                                      ? "Enregistrer mon profil"
-                                      : "Modifier mon profil",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 14,
-                              ),
+                                : null,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            displayName,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    "Mes messages",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Retrouve toutes les conversations liées à tes offres ou aux offres auxquelles tu as répondu.",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const MessagesPage(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.chat_bubble_outline),
-                            label: const Text(
-                              "Ouvrir mes messages",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
+                          const SizedBox(height: 2),
+                          Text(
+                            user.email ?? "",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 12),
+                          const Text(
+                            "Tu restes connecté automatiquement.\nTu ne seras déconnecté que si tu appuies sur « Se déconnecter ».",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    "Mes annonces publiées",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
+                    const SizedBox(height: 24),
+                    const Text(
+                      "Mon profil",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  RepaintBoundary(
-                    child: UserOffersSection(userId: user.uid),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    "Mes catégories favorites",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  RepaintBoundary(
-                    child: Container(
+                    const SizedBox(height: 8),
+                    Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(18),
@@ -9000,257 +8865,520 @@ class _AccountPageState extends State<AccountPage> {
                           ),
                         ],
                       ),
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Sélectionne les catégories pour lesquelles tu veux être notifié quand une nouvelle annonce est publiée.",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        InkWell(
-                          onTap: _openCategoryPickerSheet,
-                          borderRadius: BorderRadius.circular(12),
-                          child: InputDecorator(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        children: [
+                          TextField(
+                            controller: _profilePseudoController,
+                            enabled: _isEditingProfile,
                             decoration: InputDecoration(
-                              labelText: 'Catégories',
-                              filled: true,
-                              fillColor: const Color(0xFFF9F9F9),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    _draftFavoriteSelections
-                                            .where((e) => !e.contains('—'))
-                                            .isEmpty
-                                        ? 'Choisir des catégories'
-                                        : '${_draftFavoriteSelections.where((e) => !e.contains('—')).length} catégorie(s) sélectionnée(s)',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.arrow_drop_down,
-                                  color: Colors.black54,
-                                ),
-                              ],
+                              labelText: "Pseudo",
+                              hintText: "Ex : DJ Heat, Stef971...",
+                              filled: !_isEditingProfile,
+                              fillColor: !_isEditingProfile
+                                  ? Colors.grey.shade100
+                                  : null,
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        InkWell(
-                          onTap: _openSubcategoryPickerSheet,
-                          borderRadius: BorderRadius.circular(12),
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: 'Sous-catégories',
-                              filled: true,
-                              fillColor: const Color(0xFFF9F9F9),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    _draftFavoriteSelections
-                                            .where((e) => e.contains('—'))
-                                            .isEmpty
-                                        ? 'Choisir des sous-catégories'
-                                        : '${_draftFavoriteSelections.where((e) => e.contains('—')).length} sous-catégorie(s) sélectionnée(s)',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.black87,
+                          const SizedBox(height: 10),
+                          AbsorbPointer(
+                            absorbing: !_isEditingProfile,
+                            child: Opacity(
+                              opacity: _isEditingProfile ? 1.0 : 0.6,
+                              child: Autocomplete<CityRecord>(
+                                displayStringForOption: (city) =>
+                                    '${city.name} (${city.cp})',
+                                optionsBuilder: (TextEditingValue value) {
+                                  final query = value.text.trim();
+                                  if (query.length < 2) {
+                                    return const Iterable<CityRecord>.empty();
+                                  }
+                                  return CitySearch.instance
+                                      .search(query, limit: 10);
+                                },
+                                onSelected: (CityRecord city) {
+                                  setState(() {
+                                    _profileCityController.text =
+                                        '${city.name} (${city.cp})';
+                                  });
+                                },
+                                fieldViewBuilder: (context, textController,
+                                    focusNode, onFieldSubmitted) {
+                                  // Synchroniser avec le controller principal
+                                  if (_profileCityController.text.isNotEmpty &&
+                                      textController.text !=
+                                          _profileCityController.text) {
+                                    WidgetsBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      if (!mounted) return;
+                                      if (textController.text !=
+                                          _profileCityController.text) {
+                                        textController.text =
+                                            _profileCityController.text;
+                                      }
+                                    });
+                                  }
+
+                                  return TextField(
+                                    controller: textController,
+                                    focusNode: focusNode,
+                                    enabled: _isEditingProfile,
+                                    decoration: InputDecoration(
+                                      labelText: "Ville",
+                                      hintText: "Ex : Baie-Mahault",
+                                      filled: !_isEditingProfile,
+                                      fillColor: !_isEditingProfile
+                                          ? Colors.grey.shade100
+                                          : null,
                                     ),
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.arrow_drop_down,
-                                  color: Colors.black54,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: kPrestoBlue,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            onPressed: _isSavingProfile
-                                ? null
-                                : () => _applyDraftFavorites(user),
-                            child: _isSavingProfile
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
+                                    onChanged: (value) {
+                                      _profileCityController.text = value;
+                                    },
+                                  );
+                                },
+                                optionsViewBuilder:
+                                    (context, onSelected, options) {
+                                  return Align(
+                                    alignment: Alignment.topLeft,
+                                    child: Material(
+                                      elevation: 4.0,
+                                      child: Container(
+                                        constraints: const BoxConstraints(
+                                            maxHeight: 200),
+                                        width:
+                                            MediaQuery.of(context).size.width -
+                                                80,
+                                        child: ListView.builder(
+                                          padding: EdgeInsets.zero,
+                                          shrinkWrap: true,
+                                          itemCount: options.length,
+                                          itemBuilder: (context, index) {
+                                            final city =
+                                                options.elementAt(index);
+                                            return ListTile(
+                                              dense: true,
+                                              title: Text(
+                                                  '${city.name} (${city.cp})'),
+                                              subtitle:
+                                                  Text('Dept ${city.dept}'),
+                                              onTap: () => onSelected(city),
+                                            );
+                                          },
+                                        ),
                                       ),
                                     ),
-                                  )
-                                : const Text(
-                                    'Valider mes alertes',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          kPrestoOrange.withOpacity(0.15),
-                          kPrestoBlue.withOpacity(0.1),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: kPrestoOrange.withOpacity(0.3),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: kPrestoOrange.withOpacity(0.15),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: kPrestoOrange,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(
-                                Icons.business_center,
-                                color: Colors.white,
-                                size: 24,
+                                  );
+                                },
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Text(
-                                "Vous êtes une entreprise ?",
-                                style: TextStyle(
+                          ),
+                          const SizedBox(height: 10),
+                          AbsorbPointer(
+                            absorbing: !_isEditingProfile,
+                            child: Opacity(
+                              opacity: _isEditingProfile ? 1.0 : 0.6,
+                              child: PhoneInputFieldCompact(
+                                controller: _profilePhoneController,
+                                labelText: 'Téléphone',
+                                hintText: '690123456',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _isEditingProfile
+                                    ? kPrestoOrange
+                                    : kPrestoBlue,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
+                              ),
+                              onPressed: _isSavingProfile
+                                  ? null
+                                  : () {
+                                      if (_isEditingProfile) {
+                                        _saveProfile(user);
+                                      } else {
+                                        setState(
+                                            () => _isEditingProfile = true);
+                                      }
+                                    },
+                              icon: _isSavingProfile
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.white),
+                                      ),
+                                    )
+                                  : Icon(_isEditingProfile
+                                      ? Icons.save_outlined
+                                      : Icons.edit_outlined),
+                              label: Text(
+                                _isSavingProfile
+                                    ? "Enregistrement..."
+                                    : _isEditingProfile
+                                        ? "Enregistrer mon profil"
+                                        : "Modifier mon profil",
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w800,
-                                  fontSize: 17,
-                                  color: Colors.black87,
+                                  fontSize: 14,
                                 ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      "Mes messages",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Retrouve toutes les conversations liées à tes offres ou aux offres auxquelles tu as répondu.",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const MessagesPage(),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.chat_bubble_outline),
+                              label: const Text(
+                                "Ouvrir mes messages",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      "Mes annonces publiées",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    RepaintBoundary(
+                      child: UserOffersSection(userId: user.uid),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      "Mes catégories favorites",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    RepaintBoundary(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Sélectionne les catégories pour lesquelles tu veux être notifié quand une nouvelle annonce est publiée.",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            InkWell(
+                              onTap: _openCategoryPickerSheet,
+                              borderRadius: BorderRadius.circular(12),
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  labelText: 'Catégories',
+                                  filled: true,
+                                  fillColor: const Color(0xFFF9F9F9),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _draftFavoriteSelections
+                                                .where((e) => !e.contains('—'))
+                                                .isEmpty
+                                            ? 'Choisir des catégories'
+                                            : '${_draftFavoriteSelections.where((e) => !e.contains('—')).length} catégorie(s) sélectionnée(s)',
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Colors.black54,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            InkWell(
+                              onTap: _openSubcategoryPickerSheet,
+                              borderRadius: BorderRadius.circular(12),
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  labelText: 'Sous-catégories',
+                                  filled: true,
+                                  fillColor: const Color(0xFFF9F9F9),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _draftFavoriteSelections
+                                                .where((e) => e.contains('—'))
+                                                .isEmpty
+                                            ? 'Choisir des sous-catégories'
+                                            : '${_draftFavoriteSelections.where((e) => e.contains('—')).length} sous-catégorie(s) sélectionnée(s)',
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.arrow_drop_down,
+                                      color: Colors.black54,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: kPrestoBlue,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                onPressed: _isSavingProfile
+                                    ? null
+                                    : () => _applyDraftFavorites(user),
+                                child: _isSavingProfile
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Valider mes alertes',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 15,
+                                        ),
+                                      ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
-                          "Abonnement bientôt disponible.",
-                          style: TextStyle(
-                            color: Colors.black87,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: kPrestoOrange,
-                              foregroundColor: Colors.white,
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const ProProfilePage()),
-                              );
-                            },
-                            icon: const Icon(Icons.business_center_outlined, size: 20),
-                            label: const Text(
-                              "Créer un compte Pro",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 28),
-                  _buildAdminSpaceEntry(user),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _signOut,
-                      icon: const Icon(Icons.logout),
-                      label: const Text(
-                        "Se déconnecter",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            kPrestoOrange.withOpacity(0.15),
+                            kPrestoBlue.withOpacity(0.1),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: kPrestoOrange.withOpacity(0.3),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: kPrestoOrange.withOpacity(0.15),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: kPrestoOrange,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.business_center,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text(
+                                  "Vous êtes une entreprise ?",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 17,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
+                            "Abonnement bientôt disponible.",
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: kPrestoOrange,
+                                foregroundColor: Colors.white,
+                                elevation: 2,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const ProProfilePage()),
+                                );
+                              },
+                              icon: const Icon(Icons.business_center_outlined,
+                                  size: 20),
+                              label: const Text(
+                                "Créer un compte Pro",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    _buildAdminSpaceEntry(user),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _signOut,
+                        icon: const Icon(Icons.logout),
+                        label: const Text(
+                          "Se déconnecter",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -9330,8 +9458,8 @@ class _AccountPageState extends State<AccountPage> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
                   ),
                 ),
               ),
@@ -9413,21 +9541,39 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('offers')
-          .where('ownerId', isEqualTo: widget.userId)
-          .orderBy('createdAt', descending: true)
-          .get();
-      
+      final col = FirebaseFirestore.instance.collection('offers');
+
+      // Champ actuel utilisé lors de la publication: userId.
+      // Fallback: ownerId / uid (anciens schémas) pour compatibilité.
+      QuerySnapshot<Map<String, dynamic>> snapshot =
+          await col.where('userId', isEqualTo: widget.userId).get();
+      if (snapshot.docs.isEmpty) {
+        snapshot = await col.where('ownerId', isEqualTo: widget.userId).get();
+      }
+      if (snapshot.docs.isEmpty) {
+        snapshot = await col.where('uid', isEqualTo: widget.userId).get();
+      }
+
+      final docs = snapshot.docs.toList();
+      // Trie côté client pour éviter un index composite (where + orderBy).
+      docs.sort((a, b) {
+        final ta = a.data()['createdAt'];
+        final tb = b.data()['createdAt'];
+        final ma = ta is Timestamp ? ta.millisecondsSinceEpoch : 0;
+        final mb = tb is Timestamp ? tb.millisecondsSinceEpoch : 0;
+        return mb.compareTo(ma);
+      });
+
       if (!mounted) return;
-      
+
       setState(() {
-        _offers = snapshot.docs;
+        _offers = docs;
         _isLoading = false;
 
-        final ids = snapshot.docs.map((d) => d.id).toSet();
+        final ids = docs.map((d) => d.id).toSet();
         if (_selectedOfferId == null || !ids.contains(_selectedOfferId)) {
-          _selectedOfferId = snapshot.docs.isNotEmpty ? snapshot.docs.first.id : null;
+          _selectedOfferId =
+              docs.isNotEmpty ? docs.first.id : null;
         }
       });
     } catch (e) {
@@ -9494,11 +9640,14 @@ class _UserOffersSectionState extends State<UserOffersSection> {
             : docs.first);
 
     final selectedData = selectedDoc.data();
-    final selectedTitle = (selectedData['title'] ?? 'Sans titre').toString().trim();
+    final selectedTitle =
+        (selectedData['title'] ?? 'Sans titre').toString().trim();
     final selectedLocation =
         (selectedData['location'] ?? 'Lieu non précisé').toString().trim();
     final selectedCategory =
-        (selectedData['category'] ?? 'Catégorie non précisée').toString().trim();
+        (selectedData['category'] ?? 'Catégorie non précisée')
+            .toString()
+            .trim();
     final selectedBudget = selectedData['budget'];
 
     String subtitle = "$selectedLocation · $selectedCategory";
@@ -9588,7 +9737,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                     MaterialPageRoute(
                       builder: (_) => OfferDetailPage(
                         offerId: selectedDoc.id,
-                        title: selectedTitle.isEmpty ? 'Sans titre' : selectedTitle,
+                        title: selectedTitle.isEmpty
+                            ? 'Sans titre'
+                            : selectedTitle,
                         location: selectedLocation.isEmpty
                             ? 'Lieu non précisé'
                             : selectedLocation,
@@ -9597,7 +9748,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                             : selectedCategory,
                         subcategory: selectedData['subcategory'] as String?,
                         budget: selectedBudget is num ? selectedBudget : null,
-                        description: (selectedData['description'] ?? '') as String?,
+                        description:
+                            (selectedData['description'] ?? '') as String?,
                         phone: selectedData['phone'] as String?,
                         imageUrls: (selectedData['imageUrls'] as List<dynamic>?)
                                 ?.map((e) => e.toString())

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart'
-  show kIsWeb, kDebugMode, defaultTargetPlatform, TargetPlatform;
+    show kIsWeb, kDebugMode, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:presto_app/widgets/random_asset_ticker.dart';
@@ -7,17 +7,24 @@ import 'package:presto_app/widgets/random_asset_ticker.dart';
 /// Config pour les IDs pub (remplacer par vos vrais IDs AdMob/AdSense)
 class AdConfig {
   // ====== ANDROID ======
-  static const String androidBannerId = 'ca-app-pub-3940256099942544/6300978111'; // TEST
-  static const String androidNativeId = 'ca-app-pub-3940256099942544/2247696110'; // TEST
-  static const String androidInterstitialId = 'ca-app-pub-3940256099942544/1033173712'; // TEST
+  static const String androidBannerId =
+      'ca-app-pub-3940256099942544/6300978111'; // TEST
+  static const String androidNativeId =
+      'ca-app-pub-3940256099942544/2247696110'; // TEST
+  static const String androidInterstitialId =
+      'ca-app-pub-3940256099942544/1033173712'; // TEST
 
   // ====== iOS ======
-  static const String iosBannerId = 'ca-app-pub-3940256099942544/2934735716'; // TEST
-  static const String iosNativeId = 'ca-app-pub-3940256099942544/3986624511'; // TEST
-  static const String iosInterstitialId = 'ca-app-pub-3940256099942544/5135589807'; // TEST
+  static const String iosBannerId =
+      'ca-app-pub-3940256099942544/2934735716'; // TEST
+  static const String iosNativeId =
+      'ca-app-pub-3940256099942544/3986624511'; // TEST
+  static const String iosInterstitialId =
+      'ca-app-pub-3940256099942544/5135589807'; // TEST
 
   // ====== WEB / AdSense ======
-  static const String webAdSlotId = 'ca-app-pub-3940256099942544'; // TEST (remplacer avec votre slot)
+  static const String webAdSlotId =
+      'ca-app-pub-3940256099942544'; // TEST (remplacer avec votre slot)
 }
 
 class AdBanner extends StatefulWidget {
@@ -121,7 +128,8 @@ class _AdBannerState extends State<AdBanner> {
   @override
   Widget build(BuildContext context) {
     // Placeholder margin commun
-    final margin = widget.margin ?? const EdgeInsets.symmetric(vertical: 8, horizontal: 4);
+    final margin =
+        widget.margin ?? const EdgeInsets.symmetric(vertical: 8, horizontal: 4);
 
     // Fonction helper: placeholder image (ticker) tant que pub non active
     Widget placeholderBanner() {
