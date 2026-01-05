@@ -1,0 +1,292 @@
+
+===== ENV =====
+
+$ pwd
+/workspaces/presto_app
+
+$ uname -a || true
+Linux codespaces-3d34fd 6.8.0-1030-azure #35~22.04.1-Ubuntu SMP Mon May 26 18:08:30 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+
+$ flutter --version || true
+Flutter 3.38.5 • channel [user-branch] • unknown source
+Framework • revision f6ff1529fd (3 weeks ago) • 2025-12-11 11:50:07 -0500
+Engine • hash c108a94d7a8273e112339e6c6833daa06e723a54 (revision 1527ae0ec5) (22 days ago) • 2025-12-11 15:04:31.000Z
+Tools • Dart 3.10.4 • DevTools 2.51.1
+
+$ dart --version || true
+Dart SDK version: 3.10.4 (stable) (Tue Dec 9 00:01:55 2025 -0800) on "linux_x64"
+
+$ node --version || true
+v20.19.6
+
+$ npm --version || true
+10.8.2
+
+===== PUBSPEC (deps audio) =====
+
+$ test -f pubspec.yaml && sed -n "1,220p" pubspec.yaml || echo "pubspec.yaml not found"
+name: presto_app
+description: Prest'o app
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_auth: 
+  google_sign_in: 
+  sign_in_with_apple:
+  http: ^1.2.2 
+  
+
+  cupertino_icons: ^1.0.8
+
+  # 🔥 Firebase / Firestore / URL launcher
+  firebase_core: ^4.3.0
+  firebase_crashlytics:
+  cloud_firestore: ^6.1.1
+  cloud_functions: ^6.0.5
+  url_launcher: ^6.3.0
+  image_picker: ^1.1.2
+  firebase_storage: ^13.0.5
+  firebase_messaging: ^16.1.0
+  firebase_app_check:
+  record: ^6.1.2
+  path_provider: ^2.1.0
+  google_mobile_ads: ^7.0.0
+  font_awesome_flutter: ^10.7.0
+  flutter_svg: ^2.0.9
+  web: ^1.0.0
+  cross_file: ^0.3.4+2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/data/cities/
+    - assets/data/cities_compact.json
+    - assets/carousel_home/
+$ test -f pubspec.lock && (grep -nE "flutter_sound|record|audio_session|just_audio|flutter_webrtc|ffmpeg|ffmpeg_kit|permission_handler|path_provider" pubspec.lock || true) || true
+587:  path_provider:
+590:      name: path_provider
+595:  path_provider_android:
+598:      name: path_provider_android
+603:  path_provider_foundation:
+606:      name: path_provider_foundation
+611:  path_provider_linux:
+614:      name: path_provider_linux
+619:  path_provider_platform_interface:
+622:      name: path_provider_platform_interface
+627:  path_provider_windows:
+630:      name: path_provider_windows
+659:  record:
+662:      name: record
+667:  record_android:
+670:      name: record_android
+675:  record_ios:
+678:      name: record_ios
+683:  record_linux:
+686:      name: record_linux
+691:  record_macos:
+694:      name: record_macos
+699:  record_platform_interface:
+702:      name: record_platform_interface
+707:  record_web:
+710:      name: record_web
+715:  record_windows:
+718:      name: record_windows
+
+===== AUDIO CODE SEARCH =====
+
+$ rg -n --hidden --glob "!.dart_tool/**" --glob "!build/**" "flutter_sound|FlutterSound|startRecorder|stopRecorder|Codec\.pcm16WAV|pcm16WAV|Codec\.wav|WAV|wav" lib || true
+lib/features/micro_ia/web_audio_recorder.dart:77:/// Convert any recorded blob (webm/opus) -> WAV PCM16 16k mono (Uint8List)
+lib/features/micro_ia/web_audio_recorder.dart:111:  // Encode WAV PCM16
+lib/features/micro_ia/web_audio_recorder.dart:134:  writeString(8, 'WAVE');
+lib/pages/publish_offer_page.dart:307:            encoder: AudioEncoder.wav,
+lib/pages/publish_offer_page.dart:417:      final wavBytes = await xfile.readAsBytes();
+lib/pages/publish_offer_page.dart:418:      final bytes = wavBytes.length;
+lib/pages/publish_offer_page.dart:433:      // ✅ extension cohérente avec RecordConfig encoder: AudioEncoder.wav
+lib/pages/publish_offer_page.dart:435:          'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.wav';
+lib/pages/publish_offer_page.dart:442:              wavBytes,
+lib/pages/publish_offer_page.dart:444:                contentType: 'audio/wav',
+lib/utils/recording_path_io.dart:5:  return '${dir.path}/${prefix}_${DateTime.now().millisecondsSinceEpoch}.wav';
+lib/main.dart:5849:    // On enregistre uniquement en WAV 16k mono, puis _stopMic() déclenchera _uploadAndTranscribe() (MicroIA).
+lib/main.dart:5883:    // Préparer l'enregistreur haute qualité (WAV)
+lib/main.dart:5889:            encoder: AudioEncoder.wav,
+lib/main.dart:6086:    // ✅ Forcer le pipeline MicroIA (WAV 16k mono) + génération de draft.
+lib/main.dart:6090:    final wavBytes = await xfile.readAsBytes();
+lib/main.dart:6091:    if (wavBytes.isEmpty) {
+lib/main.dart:6096:    final destPath = 'stt/${uid}_$ts.wav';
+lib/main.dart:6098:    await ref.putData(wavBytes, SettableMetadata(contentType: 'audio/wav'));
+lib/services/audio_service_web.dart:28:// Inclure `wav` pour compatibilité compilation avec le code partagé.
+lib/services/audio_service_web.dart:30:enum AudioEncoder { aacLc, wav }
+
+$ rg -n --hidden --glob "!.dart_tool/**" --glob "!build/**" "sampleRate|numChannels|channels|bitRate|bitDepth|encoder" lib || true
+lib/features/micro_ia/web_audio_recorder.dart:98:  final srcRate = decoded.sampleRate.toDouble();
+lib/features/micro_ia/web_audio_recorder.dart:112:  return _encodeWavPcm16(resampled, sampleRate: 16000, numChannels: 1);
+lib/features/micro_ia/web_audio_recorder.dart:116:    {required int sampleRate, required int numChannels}) {
+lib/features/micro_ia/web_audio_recorder.dart:119:  final blockAlign = numChannels * bytesPerSample;
+lib/features/micro_ia/web_audio_recorder.dart:120:  final byteRate = sampleRate * blockAlign;
+lib/features/micro_ia/web_audio_recorder.dart:139:  out.setUint16(22, numChannels, Endian.little);
+lib/features/micro_ia/web_audio_recorder.dart:140:  out.setUint32(24, sampleRate, Endian.little);
+lib/main.dart:5889:            encoder: AudioEncoder.wav,
+lib/main.dart:5890:            sampleRate: 16000,
+lib/main.dart:5891:            numChannels: 1,
+lib/services/audio_service_web.dart:17:  final AudioEncoder encoder;
+lib/services/audio_service_web.dart:18:  final int sampleRate;
+lib/services/audio_service_web.dart:19:  final int numChannels;
+lib/services/audio_service_web.dart:22:    required this.encoder,
+lib/services/audio_service_web.dart:23:    required this.sampleRate,
+lib/services/audio_service_web.dart:24:    required this.numChannels,
+lib/pages/publish_offer_page.dart:307:            encoder: AudioEncoder.wav,
+lib/pages/publish_offer_page.dart:308:            sampleRate: 16000,
+lib/pages/publish_offer_page.dart:309:            numChannels: 1,
+lib/pages/publish_offer_page.dart:433:      // ✅ extension cohérente avec RecordConfig encoder: AudioEncoder.wav
+
+$ rg -n --hidden --glob "!.dart_tool/**" --glob "!build/**" "MediaRecorder|AudioContext|WebAudio|AudioWorklet|getUserMedia|navigator\.mediaDevices|encodeWav|wavEncoder" lib web || true
+lib/features/micro_ia/web_audio_recorder_stub.dart:5:class WebAudioRecorder {
+lib/features/micro_ia/web_audio_recorder_stub.dart:7:    throw UnsupportedError('WebAudioRecorder is only available on Web');
+lib/features/micro_ia/web_audio_recorder_stub.dart:11:    throw UnsupportedError('WebAudioRecorder is only available on Web');
+lib/features/micro_ia/web_audio_recorder.dart:10:class WebAudioRecorder {
+lib/features/micro_ia/web_audio_recorder.dart:11:  web.MediaRecorder? _rec;
+lib/features/micro_ia/web_audio_recorder.dart:21:    final mediaDevices = web.window.navigator.mediaDevices;
+lib/features/micro_ia/web_audio_recorder.dart:24:    _stream = await mediaDevices.getUserMedia(constraints).toDart;
+lib/features/micro_ia/web_audio_recorder.dart:27:    _rec = web.MediaRecorder(_stream!);
+lib/features/micro_ia/web_audio_recorder.dart:82:  // Decode via WebAudio
+lib/features/micro_ia/web_audio_recorder.dart:83:  final audioCtx = web.AudioContext();
+lib/features/micro_ia/web_audio_recorder.dart:112:  return _encodeWavPcm16(resampled, sampleRate: 16000, numChannels: 1);
+lib/features/micro_ia/web_audio_recorder.dart:115:Uint8List _encodeWavPcm16(Float32List samples,
+lib/pages/publish_offer_page.dart:47:  final WebAudioRecorder _webRec = WebAudioRecorder();
+lib/main.dart:5743:  final WebAudioRecorder _webRec = WebAudioRecorder();
+
+$ rg -n --hidden --glob "!.dart_tool/**" --glob "!build/**" "permission_handler|openRecorder|closeRecorder|openAudioSession|AudioSession|requestPermission" lib || true
+lib/services/notification_service.dart:20:    final settings = await _messaging.requestPermission(
+
+===== FILES THAT LOOK LIKE MIC / AUDIO =====
+
+$ ls -la lib | tee -a "mic_toggle_audit_20260103_030345.txt" >/dev/null || true
+total 824
+drwxrwxrwx+ 10 root root   4096 Dec 31 21:17 .
+drwxrwxrwx+ 23 root root   4096 Jan  3 03:03 ..
+drwxrwxrwx+  2 root root   4096 Dec 30 20:48 app
+-rw-rw-rw-   1 root root   6039 Dec 30 20:48 app_core.dart
+-rw-rw-rw-   1 root root   8889 Jan  1 16:31 constants.dart
+drwxrwxrwx+  2 root root   4096 Dec 30 20:48 data
+drwxrwxrwx+  2 root root   4096 Dec 30 20:48 dev
+drwxrwxrwx+  7 root root   4096 Dec 30 20:48 features
+-rw-rw-rw-   1 root root    663 Dec 30 20:48 firebase_options.dart
+-rw-rw-rw-   1 root root    177 Jan  2 15:05 google_places_config.dart
+-rw-rw-rw-   1 root root 183736 Jan  1 16:35 main_backup.dart
+-rw-rw-rw-   1 root root 323332 Jan  2 21:47 main.dart
+-rw-rw-rw-   1 root root 179174 Dec 30 20:48 main.dart.save
+-rw-rw-rw-   1 root root    470 Dec 30 20:48 messages_page.dart
+drwxrwxrwx+  3 root root   4096 Jan  1 17:26 pages
+-rw-rw-rw-   1 root root   7098 Jan  2 02:28 premium_ai_button_preview.dart
+-rw-rw-rw-   1 root root  33432 Jan  2 02:28 profile_page
+-rw-rw-rw-   1 root root  33573 Jan  2 02:28 profile_page.dart
+drwxrwxrwx+  2 root root   4096 Dec 30 20:48 services
+drwxrwxrwx+  2 root root   4096 Jan  1 07:41 utils
+drwxrwxrwx+  2 root root   4096 Dec 30 20:48 widgets
+
+$ find lib -maxdepth 4 -type f \( -iname "*mic*" -o -iname "*audio*" -o -iname "*record*" -o -iname "*transcrib*" \) -print | tee -a "mic_toggle_audit_20260103_030345.txt" || true
+lib/services/micro_ia_service.dart
+lib/services/audio_service_mobile.dart
+lib/services/audio_service_web.dart
+lib/services/audio_service.dart
+lib/utils/recording_path_io.dart
+lib/utils/recording_path_web.dart
+lib/utils/recording_path.dart
+lib/features/transcription/transcribe_and_draft_offer_service.dart
+lib/features/micro_ia/micro_ia_service.dart
+lib/features/micro_ia/web_audio_recorder.dart
+lib/features/micro_ia/web_audio_recorder_stub.dart
+lib/services/micro_ia_service.dart
+lib/services/audio_service_mobile.dart
+lib/services/audio_service_web.dart
+lib/services/audio_service.dart
+lib/utils/recording_path_io.dart
+lib/utils/recording_path_web.dart
+lib/utils/recording_path.dart
+lib/features/transcription/transcribe_and_draft_offer_service.dart
+lib/features/micro_ia/micro_ia_service.dart
+lib/features/micro_ia/web_audio_recorder.dart
+lib/features/micro_ia/web_audio_recorder_stub.dart
+
+===== BACKEND / TRANSCRIPTION TOUCHPOINTS (optional) =====
+
+$ rg -n --hidden --glob "!.dart_tool/**" --glob "!build/**" "transcribe|speech|stt|whisper|gemini|vertex|google\.cloud\.speech|SpeechClient|microia" lib functions || true
+lib/features/transcription/transcribe_and_draft_offer_service.dart:44:  Future<TranscribeAndDraftOfferResult> transcribeAndDraftOffer({
+lib/features/transcription/transcribe_and_draft_offer_service.dart:49:      'transcribeAndDraftOffer',
+lib/features/publish_offer/ai_offer_service.dart:77:  static Future<({String transcript, OfferDraft draft})> transcribeAndDraft({
+lib/features/publish_offer/ai_offer_service.dart:86:      'transcribeAndDraftOffer',
+lib/pages/publish_offer_page.dart:73:  // STT (speech_to_text) désactivé: Android trop variable, et la page utilise le pipeline Premium Audio.
+lib/pages/publish_offer_page.dart:102:      await FirebaseFirestore.instance.collection('debug_microia').add({
+lib/pages/publish_offer_page.dart:110:      debugPrint('[debug_microia] trace failed: $e');
+lib/pages/publish_offer_page.dart:351:      final storagePath = 'stt/${uid}_$ts.webm';
+lib/pages/publish_offer_page.dart:435:          'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.wav';
+lib/pages/publish_offer_page.dart:529:        reason: 'Upload/transcribe failed',
+lib/pages/admin_space_page.dart:15:enum MicroIaMode { google, whisper, hybride }
+lib/pages/admin_space_page.dart:89:        return MicroIaMode.whisper;
+lib/pages/admin_space_page.dart:100:      case MicroIaMode.whisper:
+lib/pages/admin_space_page.dart:729:                        selected: mode == MicroIaMode.whisper,
+lib/pages/admin_space_page.dart:731:                        onTap: () => onModeChanged(MicroIaMode.whisper),
+lib/main.dart:5848:    // ✅ Micro global: on ne fait PLUS speech_to_text (trop variable)
+lib/main.dart:5933:        final destPath = 'stt/${uid}_$ts.webm';
+lib/main.dart:6096:    final destPath = 'stt/${uid}_$ts.wav';
+functions/package-lock.json:11:        "@google-cloud/speech": "^6.7.1",
+functions/package-lock.json:12:        "@google-cloud/vertexai": "^1.10.0",
+functions/package-lock.json:199:    "node_modules/@google-cloud/speech": {
+functions/package-lock.json:201:      "resolved": "https://registry.npmjs.org/@google-cloud/speech/-/speech-6.7.1.tgz",
+functions/package-lock.json:260:    "node_modules/@google-cloud/vertexai": {
+functions/package-lock.json:262:      "resolved": "https://registry.npmjs.org/@google-cloud/vertexai/-/vertexai-1.10.0.tgz",
+functions/package-lock.json:489:      "integrity": "sha512-czWPzKIAXucn9PtsttxmumiQ9N0ok9FrBwgRWrwmVLlp86BrMExzvXRLFYRJ+Ex3g6yqj+KuaxfX1JTgV2lpfg==",
+functions/package.json:17:    "@google-cloud/speech": "^6.7.1",
+functions/package.json:18:    "@google-cloud/vertexai": "^1.10.0",
+functions/index.js:521:exports.transcribeAndDraftOffer = onCall({ region: 'europe-west1', timeoutSeconds: 120, secrets: [OPENAI_API_KEY], enforceAppCheck: ENFORCE_APP_CHECK }, async (req) => {
+functions/index.js:526:    gcsUri,               // ex: "gs://bucket/stt/xxx.wav"
+functions/index.js:545:  // Doit provenir du dossier stt/ et appartenir à l'utilisateur
+functions/index.js:546:  const expectedPrefix = `stt/${uid}_`;
+functions/index.js:550:    throw new HttpsError('permission-denied', 'gcsUri non autorisé (stt/${uid}_*.wav requis).');
+functions/index.js:586:  await rateLimitOrThrow({ uid, action: 'transcribe_and_draft', limit: 10, windowSec: 60 });
+functions/index.js:590:    const speech = require("@google-cloud/speech");
+functions/index.js:591:    const speechClient = new speech.SpeechClient();
+functions/index.js:604:    const [response] = await speechClient.recognize(request);
+functions/index.js:704:    console.error('[transcribeAndDraftOffer] Error:', error);
+functions/index.js:711:// StoragePath in Firebase Storage: "stt/uid_timestamp.wav"
+functions/index.js:714:const speech = require("@google-cloud/speech");
+functions/index.js:757:    const mode = normalizeMode(p.microia_mode?.defaultValue?.value || "HYBRID");
+functions/index.js:758:    const fallbackEnabled = asBool(p.microia_fallback_enabled?.defaultValue?.value, true);
+functions/index.js:759:    const qualityThreshold = asNum(p.microia_quality_threshold?.defaultValue?.value, 0.62);
+functions/index.js:760:    const languageCode = p.microia_language_code?.defaultValue?.value || "fr-FR";
+functions/index.js:1034:  const speechClient = new speech.SpeechClient();
+functions/index.js:1040:      raw: { skipped: true, reason: 'unsupported_audio_for_google_stt', audioInfo },
+functions/index.js:1064:  const [response] = await speechClient.recognize(request);
+functions/index.js:1078:    model: "whisper-1",
+functions/index.js:1234:      // Ownership strict: la page client upload sous stt/${uid}_${timestamp}.wav
+functions/index.js:1235:      const expectedPrefix = `stt/${uid}_`;
+functions/index.js:1280:        const tmpDir = path.join(os.tmpdir(), 'presto_microia');
+functions/index.js:1377:              'google_stt'
+functions/index.js:1384:              'whisper'
+functions/index.js:1509:    tpl.parameters.microia_mode = tpl.parameters.microia_mode || {};
+functions/index.js:1510:    tpl.parameters.microia_mode.defaultValue = { value: nextMode };
+functions/index.js:1512:    tpl.parameters.microia_fallback_enabled = tpl.parameters.microia_fallback_enabled || {};
+functions/index.js:1513:    tpl.parameters.microia_fallback_enabled.defaultValue = { value: nextFallback ? 'true' : 'false' };
+functions/index.js:1515:    tpl.parameters.microia_quality_threshold = tpl.parameters.microia_quality_threshold || {};
+functions/index.js:1516:    tpl.parameters.microia_quality_threshold.defaultValue = { value: String(nextThreshold) };
+functions/index.js:1518:    tpl.parameters.microia_language_code = tpl.parameters.microia_language_code || {};
+functions/index.js:1519:    tpl.parameters.microia_language_code.defaultValue = { value: nextLanguage };
+functions/add_microia_settings.js:17:      console.log('Creating document: settings/microia...');
+functions/add_microia_settings.js:19:      const result = await db.collection('settings').doc('microia').set({
+functions/add_microia_settings.js:27:      console.log('  Path: settings/microia');
+
+===== DONE =====

@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Upload photos d'offres (brutes) : traitement serveur (resize + filigrane)
+    match /offers_raw/{uid}/{file} {
+      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Photos d'offres finales (optimisées + filigrane)
+    match /offers/{uid}/{file} {
+      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null;
+    }
+
+    // Upload photos d'offres (utilisé par l'app)
+    match /offers/{file} {
+      allow write: if request.auth != null;
+      allow read: if request.auth != null;
+    }
+
+    // Uploads MicroIA: stt/${uid}_${timestamp}.wav / .webm / .m4a / .mp4
+    match /stt/{file} {
+      allow write: if request.auth != null
+        && file.matches("^" + request.auth.uid + "_.*\\.(wav|webm|m4a|mp4)$");
+
+      // Optionnel: restreins davantage si besoin.
+      allow read: if request.auth != null
+        && file.matches("^" + request.auth.uid + "_.*\\.(wav|webm|m4a|mp4)$");
+    }
+  }
+}

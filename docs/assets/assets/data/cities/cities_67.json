@@ -1,0 +1,3122 @@
+[
+  {
+    "name": "ACHENHEIM",
+    "cp": "67204",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ADAMSWILLER",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ALBE",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ALTECKENDORF",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ALTENHEIM",
+    "cp": "67490",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ALTORF",
+    "cp": "67120",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ALTWILLER",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ANDLAU",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ARTOLSHEIM",
+    "cp": "67390",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ASCHBACH",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ASSWILLER",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "AVOLSHEIM",
+    "cp": "67120",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BAERENDORF",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BALBRONN",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BALDENHEIM",
+    "cp": "67600",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BAREMBACH",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BARR",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BASSEMBERG",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BATZENDORF",
+    "cp": "67500",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BEINHEIM",
+    "cp": "67930",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BELLEFOSSE",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BELMONT",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BENFELD",
+    "cp": "67230",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BERG",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BERGBIETEN",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BERNARDSWILLER",
+    "cp": "67210",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BERNARDVILLE",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BERNOLSHEIM",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BERSTETT",
+    "cp": "67370",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BERSTHEIM",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BETSCHDORF",
+    "cp": "67660",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BETTWILLER",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BIBLISHEIM",
+    "cp": "67360",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BIETLENHEIM",
+    "cp": "67720",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BILWISHEIM",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BINDERNHEIM",
+    "cp": "67600",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BISCHHEIM",
+    "cp": "67800",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BISCHHOLTZ",
+    "cp": "67340",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BISCHOFFSHEIM",
+    "cp": "67870",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BISCHWILLER",
+    "cp": "67240",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BISSERT",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BITSCHHOFFEN",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BLAESHEIM",
+    "cp": "67113",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BLANCHERUPT",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BLIENSCHWILLER",
+    "cp": "67650",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BOERSCH",
+    "cp": "67530",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BOESENBIESEN",
+    "cp": "67390",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BOLSENHEIM",
+    "cp": "67150",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BOOFZHEIM",
+    "cp": "67860",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BOOTZHEIM",
+    "cp": "67390",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BOSSELSHAUSEN",
+    "cp": "67330",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BOSSENDORF",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BOURG BRUCHE",
+    "cp": "67420",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BOURGHEIM",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BOUXWILLER",
+    "cp": "67330",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BREITENAU",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BREITENBACH",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BREUSCHWICKERSHEIM",
+    "cp": "67112",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BRUMATH",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BUHL",
+    "cp": "67470",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BURBACH",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BUST",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BUSWILLER",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "BUTTEN",
+    "cp": "67430",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "CHATENOIS",
+    "cp": "67730",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "CLEEBOURG",
+    "cp": "67160",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "CLIMBACH",
+    "cp": "67510",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "COLROY LA ROCHE",
+    "cp": "67420",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "COSSWILLER",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "CRASTATT",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "CROETTWILLER",
+    "cp": "67470",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DACHSTEIN",
+    "cp": "67120",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DAHLENHEIM",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DALHUNDEN",
+    "cp": "67770",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DAMBACH",
+    "cp": "67110",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DAMBACH LA VILLE",
+    "cp": "67650",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DANGOLSHEIM",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DAUBENSAND",
+    "cp": "67150",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DAUENDORF",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DEHLINGEN",
+    "cp": "67430",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DETTWILLER",
+    "cp": "67490",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DIEBOLSHEIM",
+    "cp": "67230",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DIEDENDORF",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DIEFFENBACH AU VAL",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DIEFFENBACH LES WOERTH",
+    "cp": "67360",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DIEFFENTHAL",
+    "cp": "67650",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DIEMERINGEN",
+    "cp": "67430",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DIMBSTHAL",
+    "cp": "67440",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DINGSHEIM",
+    "cp": "67370",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DINSHEIM SUR BRUCHE",
+    "cp": "67190",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DOMFESSEL",
+    "cp": "67430",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DONNENHEIM",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DORLISHEIM",
+    "cp": "67120",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DOSSENHEIM KOCHERSBERG",
+    "cp": "67117",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DOSSENHEIM SUR ZINSEL",
+    "cp": "67330",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DRACHENBRONN BIRLENBACH",
+    "cp": "67160",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DRULINGEN",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DRUSENHEIM",
+    "cp": "67410",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DUNTZENHEIM",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DUPPIGHEIM",
+    "cp": "67120",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DURNINGEN",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DURRENBACH",
+    "cp": "67360",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DURSTEL",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "DUTTLENHEIM",
+    "cp": "67120",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "EBERBACH SELTZ",
+    "cp": "67470",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "EBERSHEIM",
+    "cp": "67600",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "EBERSMUNSTER",
+    "cp": "67600",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ECKARTSWILLER",
+    "cp": "67700",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ECKBOLSHEIM",
+    "cp": "67201",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ECKWERSHEIM",
+    "cp": "67550",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "EICHHOFFEN",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ELSENHEIM",
+    "cp": "67390",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ENGWILLER",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ENTZHEIM",
+    "cp": "67960",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "EPFIG",
+    "cp": "67680",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ERCKARTSWILLER",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ERGERSHEIM",
+    "cp": "67120",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ERNOLSHEIM BRUCHE",
+    "cp": "67120",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ERNOLSHEIM LES SAVERNE",
+    "cp": "67330",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ERSTEIN",
+    "cp": "67150",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ESCHAU",
+    "cp": "67114",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ESCHBACH",
+    "cp": "67360",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ESCHBOURG",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ESCHWILLER",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ETTENDORF",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "EYWILLER",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FEGERSHEIM",
+    "cp": "67640",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FESSENHEIM LE BAS",
+    "cp": "67117",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FLEXBOURG",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FORSTFELD",
+    "cp": "67480",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FORSTHEIM",
+    "cp": "67580",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FORT LOUIS",
+    "cp": "67480",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FOUCHY",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FOUDAY",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FRIEDOLSHEIM",
+    "cp": "67490",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FRIESENHEIM",
+    "cp": "67860",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FROESCHWILLER",
+    "cp": "67360",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FROHMUHL",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FURCHHAUSEN",
+    "cp": "67700",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "FURDENHEIM",
+    "cp": "67117",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GAMBSHEIM",
+    "cp": "67760",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GEISPOLSHEIM",
+    "cp": "67118",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GEISWILLER ZOEBERSDORF",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GERSTHEIM",
+    "cp": "67150",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GERTWILLER",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GEUDERTHEIM",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GOERLINGEN",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GOERSDORF",
+    "cp": "67360",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GOTTENHOUSE",
+    "cp": "67700",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GOTTESHEIM",
+    "cp": "67490",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GOUGENHEIM",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GOXWILLER",
+    "cp": "67210",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GRANDFONTAINE",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GRASSENDORF",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GRENDELBRUCH",
+    "cp": "67190",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GRESSWILLER",
+    "cp": "67190",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GRIES",
+    "cp": "67240",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GRIESHEIM PRES MOLSHEIM",
+    "cp": "67870",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GRIESHEIM SUR SOUFFEL",
+    "cp": "67370",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GUMBRECHTSHOFFEN",
+    "cp": "67110",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GUNDERSHOFFEN",
+    "cp": "67110",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GUNGWILLER",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "GUNSTETT",
+    "cp": "67360",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HAEGEN",
+    "cp": "67700",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HAGUENAU",
+    "cp": "67500",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HANDSCHUHEIM",
+    "cp": "67117",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HANGENBIETEN",
+    "cp": "67980",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HARSKIRCHEN",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HATTEN",
+    "cp": "67690",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HATTMATT",
+    "cp": "67330",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HEGENEY",
+    "cp": "67360",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HEIDOLSHEIM",
+    "cp": "67390",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HEILIGENBERG",
+    "cp": "67190",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HEILIGENSTEIN",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HENGWILLER",
+    "cp": "67440",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HERBITZHEIM",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HERBSHEIM",
+    "cp": "67230",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HERRLISHEIM",
+    "cp": "67850",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HESSENHEIM",
+    "cp": "67390",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HILSENHEIM",
+    "cp": "67600",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HINDISHEIM",
+    "cp": "67150",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HINSBOURG",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HINSINGEN",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HIPSHEIM",
+    "cp": "67150",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HIRSCHLAND",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HOCHFELDEN",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HOCHSTETT",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HOENHEIM",
+    "cp": "67800",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HOERDT",
+    "cp": "67720",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HOFFEN",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HOHENGOEFT",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HOHFRANKENHEIM",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HOLTZHEIM",
+    "cp": "67810",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HUNSPACH",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HURTIGHEIM",
+    "cp": "67117",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HUTTENDORF",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "HUTTENHEIM",
+    "cp": "67230",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ICHTRATZHEIM",
+    "cp": "67640",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ILLKIRCH GRAFFENSTADEN",
+    "cp": "67400",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "INGENHEIM",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "INGOLSHEIM",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "INGWILLER",
+    "cp": "67340",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "INNENHEIM",
+    "cp": "67880",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ISSENHAUSEN",
+    "cp": "67330",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ITTENHEIM",
+    "cp": "67117",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ITTERSWILLER",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "JETTERSWILLER",
+    "cp": "67440",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KALTENHOUSE",
+    "cp": "67240",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KAUFFENHEIM",
+    "cp": "67480",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KEFFENACH",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KERTZFELD",
+    "cp": "67230",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KESKASTEL",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KESSELDORF",
+    "cp": "67930",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KIENHEIM",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KILSTETT",
+    "cp": "67840",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KINDWILLER",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KINTZHEIM",
+    "cp": "67600",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KIRCHHEIM",
+    "cp": "67520",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KIRRBERG",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KIRRWILLER",
+    "cp": "67330",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KLEINGOEFT",
+    "cp": "67440",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KNOERSHEIM",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KOGENHEIM",
+    "cp": "67230",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KOLBSHEIM",
+    "cp": "67120",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KRAUTERGERSHEIM",
+    "cp": "67880",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KRAUTWILLER",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KRIEGSHEIM",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KURTZENHOUSE",
+    "cp": "67240",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KUTTOLSHEIM",
+    "cp": "67520",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "KUTZENHAUSEN",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LA BROQUE",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LA BROQUE",
+    "cp": "67570",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LA PETITE PIERRE",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LA VANCELLE",
+    "cp": "67730",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LA WANTZENAU",
+    "cp": "67610",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LALAYE",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LAMPERTHEIM",
+    "cp": "67450",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LAMPERTSLOCH",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LANDERSHEIM",
+    "cp": "67700",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LANGENSOULTZBACH",
+    "cp": "67360",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LAUBACH",
+    "cp": "67580",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LAUTERBOURG",
+    "cp": "67630",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LE HOHWALD",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LEMBACH",
+    "cp": "67510",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LEUTENHEIM",
+    "cp": "67480",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LICHTENBERG",
+    "cp": "67340",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LIMERSHEIM",
+    "cp": "67150",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LINGOLSHEIM",
+    "cp": "67380",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LIPSHEIM",
+    "cp": "67640",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LITTENHEIM",
+    "cp": "67490",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LIXHAUSEN",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LOBSANN",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LOCHWILLER",
+    "cp": "67440",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LOHR",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LORENTZEN",
+    "cp": "67430",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LUPSTEIN",
+    "cp": "67490",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "LUTZELHOUSE",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MACKENHEIM",
+    "cp": "67390",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MACKWILLER",
+    "cp": "67430",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MAENNOLSHEIM",
+    "cp": "67700",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MAISONSGOUTTE",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MARCKOLSHEIM",
+    "cp": "67390",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MARLENHEIM",
+    "cp": "67520",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MARMOUTIER",
+    "cp": "67440",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MATZENHEIM",
+    "cp": "67150",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MEISTRATZHEIM",
+    "cp": "67210",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MELSHEIM",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MEMMELSHOFFEN",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MENCHHOFFEN",
+    "cp": "67340",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MERKWILLER PECHELBRONN",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MERTZWILLER",
+    "cp": "67580",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MIETESHEIM",
+    "cp": "67580",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MINVERSHEIM",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MITTELBERGHEIM",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MITTELHAUSBERGEN",
+    "cp": "67206",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MITTELSCHAEFFOLSHEIM",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MOLLKIRCH",
+    "cp": "67190",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MOLSHEIM",
+    "cp": "67120",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MOMMENHEIM",
+    "cp": "67670",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MONSWILLER",
+    "cp": "67700",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MORSBRONN LES BAINS",
+    "cp": "67360",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MORSCHWILLER",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MOTHERN",
+    "cp": "67470",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MUHLBACH SUR BRUCHE",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MULHAUSEN",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MUNCHHAUSEN",
+    "cp": "67470",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MUNDOLSHEIM",
+    "cp": "67450",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MUSSIG",
+    "cp": "67600",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MUTTERSHOLTZ",
+    "cp": "67600",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MUTZENHOUSE",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "MUTZIG",
+    "cp": "67190",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NATZWILLER",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NEEWILLER PRES LAUTERBOURG",
+    "cp": "67630",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NEUBOIS",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NEUGARTHEIM ITTLENHEIM",
+    "cp": "67370",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NEUHAEUSEL",
+    "cp": "67480",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NEUVE EGLISE",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLER LA ROCHE",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NEUWILLER LES SAVERNE",
+    "cp": "67330",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NIEDERBRONN LES BAINS",
+    "cp": "67110",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NIEDERHASLACH",
+    "cp": "67280",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NIEDERHAUSBERGEN",
+    "cp": "67207",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NIEDERLAUTERBACH",
+    "cp": "67630",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NIEDERMODERN",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NIEDERNAI",
+    "cp": "67210",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NIEDERROEDERN",
+    "cp": "67470",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NIEDERSCHAEFFOLSHEIM",
+    "cp": "67500",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NIEDERSOULTZBACH",
+    "cp": "67330",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NIEDERSTEINBACH",
+    "cp": "67510",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NORDHEIM",
+    "cp": "67520",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NORDHOUSE",
+    "cp": "67150",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "NOTHALTEN",
+    "cp": "67680",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBENHEIM",
+    "cp": "67230",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBERBRONN",
+    "cp": "67110",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBERDORF SPACHBACH",
+    "cp": "67360",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBERHASLACH",
+    "cp": "67280",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBERHAUSBERGEN",
+    "cp": "67205",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBERHOFFEN LES WISSEMBOURG",
+    "cp": "67160",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBERHOFFEN SUR MODER",
+    "cp": "67240",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBERLAUTERBACH",
+    "cp": "67160",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBERMODERN ZUTZENDORF",
+    "cp": "67330",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBERNAI",
+    "cp": "67210",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBERROEDERN",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBERSCHAEFFOLSHEIM",
+    "cp": "67203",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBERSOULTZBACH",
+    "cp": "67330",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OBERSTEINBACH",
+    "cp": "67510",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ODRATZHEIM",
+    "cp": "67520",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OERMINGEN",
+    "cp": "67970",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OFFENDORF",
+    "cp": "67850",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OFFWILLER",
+    "cp": "67340",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OHLUNGEN",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OHLUNGEN",
+    "cp": "67590",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OHNENHEIM",
+    "cp": "67390",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OLWISHEIM",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ORSCHWILLER",
+    "cp": "67600",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OSTHOFFEN",
+    "cp": "67990",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OSTHOUSE",
+    "cp": "67150",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OSTWALD",
+    "cp": "67540",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OTTERSTHAL",
+    "cp": "67700",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OTTERSWILLER",
+    "cp": "67700",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OTTROTT",
+    "cp": "67530",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "OTTWILLER",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "PETERSBACH",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "PFALZWEYER",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "PFULGRIESHEIM",
+    "cp": "67370",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "PLAINE",
+    "cp": "67420",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "PLOBSHEIM",
+    "cp": "67115",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "PREUSCHDORF",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "PRINTZHEIM",
+    "cp": "67490",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "PUBERG",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "QUATZENHEIM",
+    "cp": "67117",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "RANGEN",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "RANRUPT",
+    "cp": "67420",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "RATZWILLER",
+    "cp": "67430",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "RAUWILLER",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "REICHSFELD",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "REICHSHOFFEN",
+    "cp": "67110",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "REICHSTETT",
+    "cp": "67116",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "REINHARDSMUNSTER",
+    "cp": "67440",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "REIPERTSWILLER",
+    "cp": "67340",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "RETSCHWILLER",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "REUTENBOURG",
+    "cp": "67440",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "REXINGEN",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "RHINAU",
+    "cp": "67860",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "RICHTOLSHEIM",
+    "cp": "67390",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "RIEDSELTZ",
+    "cp": "67160",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "RIMSDORF",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "RINGENDORF",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "RITTERSHOFFEN",
+    "cp": "67690",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROESCHWOOG",
+    "cp": "67480",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROHR",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROHRWILLER",
+    "cp": "67410",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROMANSWILLER",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROPPENHEIM",
+    "cp": "67480",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROSENWILLER",
+    "cp": "67560",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROSHEIM",
+    "cp": "67560",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROSSFELD",
+    "cp": "67230",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROSTEIG",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROTHAU",
+    "cp": "67570",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROTHBACH",
+    "cp": "67340",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROTT",
+    "cp": "67160",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROTTELSHEIM",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ROUNTZENHEIM AUENHEIM",
+    "cp": "67480",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "RUSS",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SAALES",
+    "cp": "67420",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SAASENHEIM",
+    "cp": "67390",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SAESSOLSHEIM",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SALMBACH",
+    "cp": "67160",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SAND",
+    "cp": "67230",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SARRE UNION",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SARREWERDEN",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SAULXURES",
+    "cp": "67420",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SAVERNE",
+    "cp": "67700",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHAEFFERSHEIM",
+    "cp": "67150",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHAFFHOUSE PRES SELTZ",
+    "cp": "67470",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHALKENDORF",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHARRACHBERGHEIM IRMSTETT",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHEIBENHARD",
+    "cp": "67630",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHERLENHEIM",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHERWILLER",
+    "cp": "67750",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHILLERSDORF",
+    "cp": "67340",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHILTIGHEIM",
+    "cp": "67300",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHIRMECK",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHIRRHEIN",
+    "cp": "67240",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHIRRHOFFEN",
+    "cp": "67240",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHLEITHAL",
+    "cp": "67160",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHNERSHEIM",
+    "cp": "67370",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHOENAU",
+    "cp": "67390",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHOENBOURG",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHOENENBOURG",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHOPPERTEN",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHWEIGHOUSE SUR MODER",
+    "cp": "67590",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHWENHEIM",
+    "cp": "67440",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHWINDRATZHEIM",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SCHWOBSHEIM",
+    "cp": "67390",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SEEBACH",
+    "cp": "67160",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SELESTAT",
+    "cp": "67600",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SELTZ",
+    "cp": "67470",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SERMERSHEIM",
+    "cp": "67230",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SESSENHEIM",
+    "cp": "67770",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SIEGEN",
+    "cp": "67160",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SIEWILLER",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SILTZHEIM",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SOLBACH",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SOMMERAU",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SOMMERAU",
+    "cp": "67440",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SOUFFELWEYERSHEIM",
+    "cp": "67460",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SOUFFLENHEIM",
+    "cp": "67620",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SOULTZ LES BAINS",
+    "cp": "67120",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SOULTZ SOUS FORETS",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SPARSBACH",
+    "cp": "67340",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ST BLAISE LA ROCHE",
+    "cp": "67420",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN SAVERNE",
+    "cp": "67700",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ST MAURICE",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ST NABOR",
+    "cp": "67530",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE BOIS",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "STATTMATTEN",
+    "cp": "67770",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "STEIGE",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "STEINBOURG",
+    "cp": "67790",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "STEINSELTZ",
+    "cp": "67160",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "STILL",
+    "cp": "67190",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "STOTZHEIM",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "STRASBOURG",
+    "cp": "67000",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "STRASBOURG",
+    "cp": "67100",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "STRASBOURG",
+    "cp": "67200",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "STRUTH",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "STUNDWILLER",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "STUTZHEIM OFFENHEIM",
+    "cp": "67370",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SUNDHOUSE",
+    "cp": "67920",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "SURBOURG",
+    "cp": "67250",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "THAL DRULINGEN",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "THAL MARMOUTIER",
+    "cp": "67440",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "THANVILLE",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "TIEFFENBACH",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "TRAENHEIM",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "TRIEMBACH AU VAL",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "TRIMBACH",
+    "cp": "67470",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "TRUCHTERSHEIM",
+    "cp": "67370",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "UHLWILLER",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "UHRWILLER",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "URBEIS",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "URMATT",
+    "cp": "67280",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "UTTENHEIM",
+    "cp": "67150",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "UTTENHOFFEN",
+    "cp": "67110",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "UTTWILLER",
+    "cp": "67330",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "VAL DE MODER",
+    "cp": "67350",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "VALFF",
+    "cp": "67210",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "VENDENHEIM",
+    "cp": "67550",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "VILLE",
+    "cp": "67220",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "VOELLERDINGEN",
+    "cp": "67430",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "VOLKSBERG",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WAHLENHEIM",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WALBOURG",
+    "cp": "67360",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WALDERSBACH",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WALDHAMBACH",
+    "cp": "67430",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WALDOLWISHEIM",
+    "cp": "67700",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WALTENHEIM SUR ZORN",
+    "cp": "67670",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WANGEN",
+    "cp": "67520",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WANGENBOURG ENGENTHAL",
+    "cp": "67710",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WASSELONNE",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WEINBOURG",
+    "cp": "67340",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WEISLINGEN",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WEITBRUCH",
+    "cp": "67500",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WEITERSWILLER",
+    "cp": "67340",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WESTHOFFEN",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WESTHOUSE",
+    "cp": "67230",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WESTHOUSE MARMOUTIER",
+    "cp": "67440",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WEYER",
+    "cp": "67320",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WEYERSHEIM",
+    "cp": "67720",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WICKERSHEIM WILSHAUSEN",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WILDERSBACH",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WILLGOTTHEIM",
+    "cp": "67370",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WILWISHEIM",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WIMMENAU",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WINDSTEIN",
+    "cp": "67110",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WINGEN",
+    "cp": "67510",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WINGEN SUR MODER",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WINGERSHEIM LES QUATRE BANS",
+    "cp": "67170",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WINGERSHEIM LES QUATRE BANS",
+    "cp": "67270",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WINTERSHOUSE",
+    "cp": "67590",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WINTZENBACH",
+    "cp": "67470",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WINTZENHEIM KOCHERSBERG",
+    "cp": "67370",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WISCHES",
+    "cp": "67130",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WISSEMBOURG",
+    "cp": "67160",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WITTERNHEIM",
+    "cp": "67230",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WITTERSHEIM",
+    "cp": "67670",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WITTISHEIM",
+    "cp": "67820",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WIWERSHEIM",
+    "cp": "67370",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WOERTH",
+    "cp": "67360",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WOLFISHEIM",
+    "cp": "67202",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WOLFSKIRCHEN",
+    "cp": "67260",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WOLSCHHEIM",
+    "cp": "67700",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "WOLXHEIM",
+    "cp": "67120",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ZEHNACKER",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ZEINHEIM",
+    "cp": "67310",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ZELLWILLER",
+    "cp": "67140",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ZINSWILLER",
+    "cp": "67110",
+    "dept": "67",
+    "region": ""
+  },
+  {
+    "name": "ZITTERSHEIM",
+    "cp": "67290",
+    "dept": "67",
+    "region": ""
+  }
+]
