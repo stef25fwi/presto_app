@@ -5231,8 +5231,15 @@ String formatAgeSince(Timestamp? ts) {
 
 /// PAGE MESSAGES (LISTE DE CONVERSATIONS) //////////////////////////////////
 
-class MessagesPage extends StatelessWidget {
+class MessagesPage extends StatefulWidget {
   const MessagesPage({super.key});
+
+  @override
+  State<MessagesPage> createState() => _MessagesPageState();
+}
+
+class _MessagesPageState extends State<MessagesPage> {
+  bool _isDarkMode = false;
 
   Widget _buildNeedAccount(BuildContext context) {
     return Scaffold(
@@ -5300,28 +5307,49 @@ class MessagesPage extends StatelessWidget {
       return _buildNeedAccount(context);
     }
 
+    final bgColor = _isDarkMode ? const Color(0xFF1a1a1a) : Colors.white;
+    final bubbleColor = _isDarkMode ? const Color(0xFF303030) : const Color(0xFFf0f0f0);
+    final textColor = _isDarkMode ? Colors.white : Colors.black87;
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: Colors.white,
+        backgroundColor: bgColor,
         appBar: AppBar(
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
           title: const Text(
             "Mes messages",
             style: kPrestoAppBarTitleStyle,
           ),
-          backgroundColor: kPrestoOrange,
+          backgroundColor: _isDarkMode ? const Color(0xFF1a1a1a) : kPrestoOrange,
           foregroundColor: Colors.white,
           actions: [
-            IconButton(
-              icon: const Icon(Icons.home_outlined),
-              onPressed: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const HomePage()),
-                  (route) => false,
-                );
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (value) {
+                if (value == 'dark_mode') {
+                  setState(() => _isDarkMode = !_isDarkMode);
+                }
               },
+              itemBuilder: (BuildContext context) => [
+                PopupMenuItem<String>(
+                  value: 'dark_mode',
+                  child: Row(
+                    children: [
+                      Icon(
+                        _isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                        color: Colors.black87,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        _isDarkMode ? 'Mode clair' : 'Mode sombre',
+                        style: const TextStyle(color: Colors.black87),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -5338,9 +5366,11 @@ class MessagesPage extends StatelessWidget {
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
+              return Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    _isDarkMode ? Colors.white : kPrestoOrange,
+                  ),
                 ),
               );
             }
@@ -5379,33 +5409,34 @@ class MessagesPage extends StatelessWidget {
               });
 
             if (docs.isEmpty) {
-              return const Center(
+              return Center(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.chat_bubble_outline,
                         size: 64,
-                        color: Colors.black26,
+                        color: _isDarkMode ? Colors.white24 : Colors.black26,
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text(
                         "Aucune conversation pour l’instant",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
+                          color: textColor,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
                         "Accepte une offre ou envoie un message depuis le détail d’une annonce pour démarrer une conversation.",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.black54,
+                          color: _isDarkMode ? Colors.white54 : Colors.black54,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -5447,10 +5478,11 @@ class MessagesPage extends StatelessWidget {
                     );
                   },
                   child: Card(
+                    color: bubbleColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    elevation: 1.5,
+                    elevation: _isDarkMode ? 0 : 1.5,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 8),
@@ -5461,10 +5493,14 @@ class MessagesPage extends StatelessWidget {
                             child: Container(
                               width: 46,
                               height: 46,
-                              color: const Color(0xFFFFF3E0),
-                              child: const Icon(
+                              color: _isDarkMode
+                                  ? const Color(0xFF454545)
+                                  : const Color(0xFFFFF3E0),
+                              child: Icon(
                                 Icons.work_outline,
-                                color: kPrestoOrange,
+                                color: _isDarkMode
+                                    ? Colors.orange[300]
+                                    : kPrestoOrange,
                               ),
                             ),
                           ),
@@ -5477,9 +5513,10 @@ class MessagesPage extends StatelessWidget {
                                   offerTitle,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
+                                    color: textColor,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -5493,8 +5530,10 @@ class MessagesPage extends StatelessWidget {
                                         ? FontWeight.w700
                                         : FontWeight.w500,
                                     color: unread > 0
-                                        ? Colors.black87
-                                        : Colors.black54,
+                                        ? textColor
+                                        : (_isDarkMode
+                                            ? Colors.white54
+                                            : Colors.black54),
                                   ),
                                 ),
                               ],
@@ -5506,9 +5545,11 @@ class MessagesPage extends StatelessWidget {
                             children: [
                               Text(
                                 timeLabel,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.black45,
+                                  color: _isDarkMode
+                                      ? Colors.white38
+                                      : Colors.black45,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
