@@ -928,6 +928,7 @@ exports.trackUserLogin = onCall(
         {
           lastLoginAt: now,
           lastSeenAt: now,
+          status: 'online', // ✅ Marquer online au login
         },
         { merge: true }
       ),
@@ -981,6 +982,68 @@ exports.adminGetUserStats = onCall(
       proLogins,
       windowMinutes: 5,
     };
+  }
+);
+
+// ✅ Obtenir le statut de présence d'un ou plusieurs utilisateurs
+exports.getUserPresenceStatus = onCall(
+  {
+    region: 'europe-west1',
+    timeoutSeconds: 10,
+    enforceAppCheck: ENFORCE_APP_CHECK,
+  },
+  async (req) => {
+    const uid = req.auth?.uid;
+    if (!uid) throw new functions.https.HttpsError('unauthenticated', 'Not signed in');
+
+    const { userIds } = req.data || {};
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      throw new functions.https.HttpsError('invalid-argument', 'userIds array required');
+    }
+
+    if (userIds.length > 50) {
+      throw new functions.https.HttpsError('invalid-argument', 'Max 50 users at once');
+    }
+
+    const db = admin.firestore();
+    const now = Date.now();
+    const onlineThreshold = now - 5 * 60 * 1000; // 5 min
+    const awayThreshold = now - 15 * 60 * 1000; // 15 min
+
+    const userStatuses = {};
+
+    const userDocs = await Promise.all(
+      userIds.map((id) => db.collection('users').doc(id).get())
+    );
+
+    for (let i = 0; i < userDocs.length; i++) {
+      const doc = userDocs[i];
+      const userId = userIds[i];
+
+      if (!doc.exists) {
+        userStatuses[userId] = { status: 'offline', lastSeen: null };
+        continue;
+      }
+
+      const data = doc.data();
+      const lastSeenAt = data.lastSeenAt?.toMillis() || 0;
+      const explicitStatus = data.status || null;
+
+      let status = 'offline';
+      if (explicitStatus === 'online' && lastSeenAt >= onlineThreshold) {
+        status = 'online';
+      } else if (lastSeenAt >= awayThreshold) {
+        status = 'away';
+      }
+
+      userStatuses[userId] = {
+        status,
+        lastSeen: lastSeenAt > 0 ? lastSeenAt : null,
+        sessionDuration: data.lastSessionDuration || null,
+      };
+    }
+
+    return { statuses: userStatuses };
   }
 );
 
