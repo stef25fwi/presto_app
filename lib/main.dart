@@ -1127,7 +1127,9 @@ class _HomePageState extends State<HomePage>
 
     return Autocomplete<String>(
       optionsBuilder: (TextEditingValue value) {
-        if (!_showSearchSuggestions) return const Iterable<String>.empty();
+        // ✅ Ne pas afficher les suggestions quand le clavier est visible (Android fix)
+        final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+        if (!_showSearchSuggestions || isKeyboardVisible) return const Iterable<String>.empty();
         return _buildSearchSuggestions(value);
       },
       onSelected: selectSuggestion,
@@ -1607,6 +1609,7 @@ class _HomePageState extends State<HomePage>
           ),
           child: SingleChildScrollView(
             controller: _scrollController,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: EdgeInsets.fromLTRB(10, 8, 10, bottomPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
