@@ -46,7 +46,6 @@ import 'app/theme.dart';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'widgets/offline_banner.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -1488,9 +1487,6 @@ class _HomePageState extends State<HomePage>
             bottom: false,
             child: Column(
               children: [
-                // ✅ Banner offline en haut
-                OfflineBanner(isVisible: !_isOnline),
-                
                 Expanded(
                   child: AnimatedPadding(
                     duration: const Duration(milliseconds: 180),
@@ -1660,7 +1656,7 @@ class _HomePageState extends State<HomePage>
 
                 // SLIDER
                 SizedBox(
-                  height: 260,
+                  height: 300,
                   width: double.infinity,
                   child: Stack(
                     children: [
@@ -1682,24 +1678,21 @@ class _HomePageState extends State<HomePage>
                           // 2.. = slides existants
 
                           if (index == 1) {
-                            return Container(
-                              height: double.infinity,
-                              width: double.infinity,
-                              margin: const EdgeInsets.symmetric(horizontal: 0),
-                              padding: const EdgeInsets.symmetric(vertical: 0),
-                              decoration: BoxDecoration(
-                                color: kPrestoOrange,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.10),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(20),
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                height: double.infinity,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.10),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
                                 child: SizedBox.expand(
                                   child: RepaintBoundary(
                                     child: RandomAssetTicker(
@@ -6259,7 +6252,96 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
   }
 
+  Future<bool> _ensureLoggedInForPublish() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) return true;
+
+    final startInSignup = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final bottom = MediaQuery.of(ctx).viewInsets.bottom;
+        return Padding(
+          padding: EdgeInsets.fromLTRB(20, 16, 20, bottom + 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                width: 48,
+                height: 5,
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const Text(
+                'Connecte-toi pour publier',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Ton formulaire reste rempli. Connecte-toi ou crée ton compte pour finaliser la publication.',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(height: 18),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrestoOrange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Je me connecte'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(color: Colors.grey.shade400),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text("Je crée mon compte"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(null),
+                child: const Text('Plus tard'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (startInSignup == null) return false;
+
+    if (!mounted) return false;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => AccountPage(startInSignup: startInSignup),
+      ),
+    );
+
+    return FirebaseAuth.instance.currentUser != null;
+  }
+
   Future<void> _onPublishPressed() async {
+    final loggedIn = await _ensureLoggedInForPublish();
+    if (!loggedIn) return;
+
     setState(() {
       _attemptedSubmit = true;
       _publishLocked = false;
@@ -7836,8 +7918,9 @@ class _PhotoSelectorTile extends StatelessWidget {
 
 class AccountPage extends StatefulWidget {
   final Function(double)? onScroll;
+  final bool startInSignup;
 
-  const AccountPage({super.key, this.onScroll});
+  const AccountPage({super.key, this.onScroll, this.startInSignup = false});
 
   @override
   State<AccountPage> createState() => _AccountPageState();
@@ -7920,7 +8003,7 @@ class _AccountPageState extends State<AccountPage> {
       TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
-  bool _isLoginMode = true;
+  late bool _isLoginMode;
   bool _isLoading = false;
 
   // Email / mot de passe
@@ -8339,6 +8422,7 @@ class _AccountPageState extends State<AccountPage> {
   @override
   void initState() {
     super.initState();
+    _isLoginMode = !widget.startInSignup;
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
     });
