@@ -3273,7 +3273,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset: false,
         // Fond blanc derrière les annonces pour un look plus clair
         backgroundColor: Colors.white,
         appBar: AppBar(
@@ -3299,8 +3299,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
             ),
           ],
         ),
-        body: Column(
-          children: [
+        body: AnimatedPadding(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            children: [
             // ✅ Tuiles cliquables pour filtres actifs
             _buildActiveFilterChips(),
             _buildFilterPanel(),
@@ -3510,6 +3516,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -4422,7 +4429,7 @@ Motif du signalement :
         : rawDescription;
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFFF6F7F9),
 
       appBar: AppBar(
@@ -4545,21 +4552,27 @@ Motif du signalement :
         ),
       ),
 
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-              0, 14, 0, 160), // espace pour bottomSheet, cartes pleine largeur
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ✅ Section principale avec infos clés
-              _keyInfoCard(context, theme, city, priceText, widget.category,
-                  durationText),
+      body: AnimatedPadding(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+                0, 14, 0, 160), // espace pour bottomSheet, cartes pleine largeur
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ✅ Section principale avec infos clés
+                _keyInfoCard(context, theme, city, priceText, widget.category,
+                    durationText),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-              // ✅ DESCRIPTION (carte)
-              _SectionCard(
+                // ✅ DESCRIPTION (carte)
+                _SectionCard(
                 title: "Description",
                 child: Text(
                   descriptionText,
@@ -4728,6 +4741,7 @@ Motif du signalement :
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -5286,7 +5300,7 @@ class MessagesPage extends StatelessWidget {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset: false,
         backgroundColor: Colors.white,
         appBar: AppBar(
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
@@ -5308,7 +5322,13 @@ class MessagesPage extends StatelessWidget {
             ),
           ],
         ),
-        body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        body: AnimatedPadding(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance
               .collection('conversations')
               .where('participants', arrayContains: userId)
@@ -5519,6 +5539,7 @@ class MessagesPage extends StatelessWidget {
               },
             );
           },
+        ),
         ),
       ),
     );
@@ -7081,7 +7102,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset: false,
         backgroundColor: Colors.grey.shade100,
         appBar: AppBar(
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
@@ -7135,8 +7156,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             ),
           ],
         ),
-        body: SafeArea(
-          child: Form(
+        body: AnimatedPadding(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: SafeArea(
+            child: Form(
             key: _formKey,
             autovalidateMode: _attemptedSubmit
                 ? AutovalidateMode.always
@@ -7620,6 +7647,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -9169,7 +9197,7 @@ class _AccountPageState extends State<AccountPage> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
           title: const Text(
@@ -9180,41 +9208,47 @@ class _AccountPageState extends State<AccountPage> {
           foregroundColor: Colors.white,
         ),
         backgroundColor: Colors.white,
-        body: SingleChildScrollView(
-          controller: _scrollController,
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _isLoginMode
-                        ? "Se connecter à iliprestō"
-                        : "Créer un compte iliprestō",
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
+        body: AnimatedPadding(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _isLoginMode
+                          ? "Se connecter à iliprestō"
+                          : "Créer un compte iliprestō",
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    "Un compte te permet de gérer tes offres, tes messages et ta visibilité.",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w500,
+                    const SizedBox(height: 6),
+                    const Text(
+                      "Un compte te permet de gérer tes offres, tes messages et ta visibilité.",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: _emailController,
-                          decoration: const InputDecoration(
+                    const SizedBox(height: 20),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _emailController,
+                            decoration: const InputDecoration(
                             labelText: "Email",
                           ),
                           keyboardType: TextInputType.emailAddress,
@@ -9445,6 +9479,7 @@ class _AccountPageState extends State<AccountPage> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -9469,7 +9504,7 @@ class _AccountPageState extends State<AccountPage> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
           title: const Text(
@@ -9480,10 +9515,16 @@ class _AccountPageState extends State<AccountPage> {
           foregroundColor: Colors.white,
         ),
         backgroundColor: Colors.white,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
+        body: AnimatedPadding(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
               child: SingleChildScrollView(
                 controller: _scrollController,
@@ -10144,6 +10185,7 @@ class _AccountPageState extends State<AccountPage> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
