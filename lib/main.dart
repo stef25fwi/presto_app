@@ -397,7 +397,20 @@ Future<void> main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // 🔒 App Check
+    // � Logs de diagnostic Firebase
+    debugPrint('=== Firebase Initialization ===');
+    debugPrint('✓ Firebase initialized');
+    debugPrint('✓ Auth instance: ${FirebaseAuth.instance.runtimeType}');
+    debugPrint('✓ Firestore instance: ${FirebaseFirestore.instance.runtimeType}');
+    if (kIsWeb) {
+      debugPrint('✓ Platform: Web');
+      debugPrint('  - Google Sign-In: Popup + Redirect fallback');
+    } else {
+      debugPrint('✓ Platform: ${defaultTargetPlatform.toString().split('.').last}');
+    }
+    debugPrint('');
+
+    // �🔒 App Check
     // - En debug: provider debug (nécessite d'ajouter le debug token dans la console App Check)
     // - En release: Play Integrity (Android) + App Attest (iOS)
     // Note: Web non activé ici (reCAPTCHA v3) car nécessite une siteKey.
@@ -9020,13 +9033,29 @@ class _AccountPageState extends State<AccountPage> {
         } catch (popupError) {
           debugPrint('[Google Sign-In] Popup échoué: $popupError');
           
-          // ✅ Fallback automatique vers redirect
-          if (popupError.toString().contains('popup') || 
-              popupError.toString().contains('blocked')) {
-            debugPrint('[Google Sign-In] Bascule vers redirect...');
-            await _auth.signInWithRedirect(googleProvider);
-            // La page sera rechargée après le redirect
-            return;
+          // ✅ Fallback automatique vers redirect pour popup bloqués ou erreurs internes
+          final errorMsg = popupError.toString().toLowerCase();
+          if (errorMsg.contains('popup') || 
+              errorMsg.contains('blocked') ||
+              errorMsg.contains('internal-error') ||
+              errorMsg.contains('auth-error')) {
+            try {
+              debugPrint('[Google Sign-In] Bascule vers redirect...');
+              await _auth.signInWithRedirect(googleProvider);
+              // La page sera rechargée après le redirect
+              return;
+            } catch (redirectError) {
+              debugPrint('[Google Sign-In] Redirect échoué: $redirectError');
+              // Afficher l'erreur du redirect
+              if (mounted) {
+                String msg = "Erreur de connexion Google. Réessaye.";
+                if (redirectError.toString().contains('internal-error')) {
+                  msg = "Erreur interne. Vérifie ta configuration Firebase → Authentification → OAuth.";
+                }
+                showErrorSnackBar(context, msg);
+              }
+              rethrow;
+            }
           }
           rethrow;
         }
@@ -9127,6 +9156,16 @@ class _AccountPageState extends State<AccountPage> {
           break;
         case 'network-request-failed':
           msg = "Erreur réseau. Vérifie ta connexion internet.";
+          break;
+        case 'internal-error':
+        case 'auth-error':
+          msg = "Erreur interne Firebase. Vérifie ta configuration OAuth2 dans Firebase Console → Authentification → Paramètres OAuth.";
+          break;
+        case 'invalid-oauth-client':
+          msg = "Client OAuth invalide. Vérifie tes clés Google dans Firebase.";
+          break;
+        case 'idp-error':
+          msg = "Erreur du fournisseur d'identité. Réessaye ou contacte le support.";
           break;
         default:
           msg = "Erreur Google : ${e.message ?? e.code}";
