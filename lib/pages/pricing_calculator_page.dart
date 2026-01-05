@@ -348,7 +348,7 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
             _SectionCard(
               headerColor: kPrestoBlue,
               headerIcon: Icons.timer_outlined,
-              title: '2. Temps & Main d'œuvre',
+              title: '2. Temps & Main d\'oeuvre',
               child: Column(
                 children: [
                   _RowField(
