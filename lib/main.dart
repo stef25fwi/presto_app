@@ -881,14 +881,10 @@ class _HomePageState extends State<HomePage>
   }
 
   void _onPageScroll(double offset) {
-    final isScrollingDown = offset > _lastScrollPosition;
-
-    if (isScrollingDown && _showBottomBar) {
-      setState(() => _showBottomBar = false);
-    } else if (!isScrollingDown && !_showBottomBar) {
+    // Force bottom bar to stay visible even on scroll
+    if (!_showBottomBar) {
       setState(() => _showBottomBar = true);
     }
-
     _lastScrollPosition = offset;
   }
 
@@ -1594,8 +1590,7 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildHomeContent() {
     final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-    final double bottomPadding =
-        (isKeyboardVisible || !_showBottomBar) ? 16 : 100;
+    final double bottomPadding = isKeyboardVisible ? 16 : 100;
 
     return Container(
       color: Colors.white,
