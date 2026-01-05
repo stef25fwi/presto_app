@@ -49,6 +49,71 @@ import 'package:flutter_svg/flutter_svg.dart';
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
 
+/// ✅ Fonction utilitaire pour récupérer le statut de présence d'utilisateurs
+Future<Map<String, dynamic>> getUserPresenceStatus(List<String> userIds) async {
+  if (userIds.isEmpty) return {};
+  
+  try {
+    final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
+    final callable = functions.httpsCallable(
+      'getUserPresenceStatus',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 10)),
+    );
+    
+    final result = await callable.call<Map<String, dynamic>>({
+      'userIds': userIds,
+    });
+    
+    return result.data['statuses'] as Map<String, dynamic>? ?? {};
+  } catch (e) {
+    debugPrint('[Presence] Error fetching user status: $e');
+    return {};
+  }
+}
+
+/// ✅ Widget pour afficher l'indicateur de statut utilisateur
+class UserStatusIndicator extends StatelessWidget {
+  final String status; // 'online', 'away', 'offline'
+  final double size;
+  
+  const UserStatusIndicator({
+    super.key,
+    required this.status,
+    this.size = 12,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    switch (status) {
+      case 'online':
+        color = Colors.green;
+        break;
+      case 'away':
+        color = Colors.orange;
+        break;
+      default:
+        color = Colors.grey;
+    }
+    
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
   final estimated = ThemeData.estimateBrightnessForColor(backgroundColor);
   final isDarkBackground = estimated == Brightness.dark;
@@ -582,6 +647,8 @@ class _HomePageState extends State<HomePage>
 
   Timer? _homeAutoSlideTimer;
   Timer? _presenceTimer;
+  DateTime? _lastPresenceUpdate;
+  DateTime? _sessionStartTime;
   bool _carouselEnabled = false;
   bool _showBottomBar = true;
   double _lastScrollPosition = 0;
@@ -668,9 +735,11 @@ class _HomePageState extends State<HomePage>
     super.initState();
 
     _selectedIndex = widget.initialIndex;
+    _sessionStartTime = DateTime.now();
     WidgetsBinding.instance.addObserver(this);
 
-    _touchPresence();
+    // ✅ Présence initiale avec statut "online"
+    _touchPresence(status: 'online');
     _presenceTimer = Timer.periodic(const Duration(minutes: 2), (_) {
       _touchPresence();
     });
@@ -720,14 +789,38 @@ class _HomePageState extends State<HomePage>
     });
   }
 
-  Future<void> _touchPresence() async {
+  Future<void> _touchPresence({String? status}) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
+
+    // ✅ Throttling: ne pas mettre à jour si < 30s depuis dernière update
+    final now = DateTime.now();
+    if (_lastPresenceUpdate != null &&
+        status == null &&
+        now.difference(_lastPresenceUpdate!).inSeconds < 30) {
+      return;
+    }
+
+    _lastPresenceUpdate = now;
+
     try {
+      final data = <String, dynamic>{
+        'lastSeenAt': FieldValue.serverTimestamp(),
+      };
+
+      // ✅ Ajouter le statut si fourni (online/away/offline)
+      if (status != null) {
+        data['status'] = status;
+      }
+
+      // ✅ Stats de session (temps passé)
+      if (_sessionStartTime != null && status == 'offline') {
+        final sessionDuration = now.difference(_sessionStartTime!);
+        data['lastSessionDuration'] = sessionDuration.inMinutes;
+      }
+
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-        {
-          'lastSeenAt': FieldValue.serverTimestamp(),
-        },
+        data,
         SetOptions(merge: true),
       );
     } catch (_) {
@@ -737,8 +830,21 @@ class _HomePageState extends State<HomePage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _touchPresence();
+    switch (state) {
+      case AppLifecycleState.resumed:
+        // ✅ App reprend → online
+        _touchPresence(status: 'online');
+        break;
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        // ✅ App en pause → away
+        _touchPresence(status: 'away');
+        break;
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        // ✅ App fermée → offline
+        _touchPresence(status: 'offline');
+        break;
     }
   }
 
@@ -805,6 +911,10 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    
+    // ✅ Marquer offline avant de quitter
+    _touchPresence(status: 'offline');
+    
     _carouselController.dispose();
     _scrollController.dispose();
     _categoryController.dispose();
@@ -7572,14 +7682,18 @@ class _AccountPageState extends State<AccountPage> {
   final FirebaseFunctions _functions =
       FirebaseFunctions.instanceFor(region: 'europe-west1');
 
-  Future<void> _touchPresence() async {
+  Future<void> _touchPresence({String? status}) async {
     final user = _auth.currentUser;
     if (user == null) return;
     try {
+      final data = <String, dynamic>{
+        'lastSeenAt': FieldValue.serverTimestamp(),
+      };
+      if (status != null) {
+        data['status'] = status;
+      }
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-        {
-          'lastSeenAt': FieldValue.serverTimestamp(),
-        },
+        data,
         SetOptions(merge: true),
       );
     } catch (_) {
@@ -7597,7 +7711,8 @@ class _AccountPageState extends State<AccountPage> {
     } catch (_) {
       // best-effort
     } finally {
-      await _touchPresence();
+      // ✅ Marquer comme online après login
+      await _touchPresence(status: 'online');
     }
   }
 
