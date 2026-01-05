@@ -908,6 +908,15 @@ exports.trackUserLogin = onCall(
     // Anti-abus: limite très légère (10/min)
     await rateLimitOrThrow({ uid, action: 'track_login', limit: 10, windowSec: 60 });
 
+    // ✅ Récupération des métriques enrichies
+    const {
+      authMethod = 'unknown',
+      platform = 'unknown',
+      deviceType = 'unknown',
+      isNewUser = false,
+      timestamp = Date.now()
+    } = req.data || {};
+
     const userRef = admin.firestore().collection('users').doc(uid);
     const userSnap = await userRef.get();
     const userData = userSnap.data() || {};
@@ -916,11 +925,31 @@ exports.trackUserLogin = onCall(
     const inc = admin.firestore.FieldValue.increment(1);
     const now = admin.firestore.FieldValue.serverTimestamp();
 
+    // ✅ Stats globales enrichies
     const statsPatch = {
       totalLogins: inc,
       updatedAt: now,
     };
     if (isPro) statsPatch.proLogins = inc;
+    if (isNewUser) statsPatch.totalRegistrations = inc;
+
+    // ✅ Stats par méthode d'authentification
+    if (authMethod) {
+      statsPatch[`loginsByMethod.${authMethod}`] = inc;
+    }
+    
+    // ✅ Stats par plateforme
+    if (platform) {
+      statsPatch[`loginsByPlatform.${platform}`] = inc;
+    }
+
+    // ✅ Historique de connexion dans le profil utilisateur
+    const loginHistory = {
+      timestamp: admin.firestore.Timestamp.fromMillis(timestamp),
+      method: authMethod,
+      platform,
+      deviceType,
+    };
 
     await Promise.all([
       USER_STATS_DOC.set(statsPatch, { merge: true }),
@@ -928,13 +957,35 @@ exports.trackUserLogin = onCall(
         {
           lastLoginAt: now,
           lastSeenAt: now,
-          status: 'online', // ✅ Marquer online au login
+          status: 'online',
+          lastAuthMethod: authMethod,
+          lastPlatform: platform,
+          lastDeviceType: deviceType,
+          // ✅ Garder historique des 10 dernières connexions
+          loginHistory: admin.firestore.FieldValue.arrayUnion(loginHistory),
         },
         { merge: true }
       ),
     ]);
 
-    return { ok: true, isPro };
+    // ✅ Limiter l'historique à 10 entrées (asynchrone, best-effort)
+    userRef.get().then((snap) => {
+      const data = snap.data();
+      const history = data?.loginHistory || [];
+      if (history.length > 10) {
+        userRef.update({
+          loginHistory: history.slice(-10),
+        }).catch(() => {});
+      }
+    }).catch(() => {});
+
+    return {
+      ok: true,
+      isPro,
+      isNewUser,
+      authMethod,
+      platform,
+    };
   }
 );
 
@@ -975,11 +1026,19 @@ exports.adminGetUserStats = onCall(
 
     const onlineUsers = Number(onlineCountSnap.data().count || 0);
     const proLogins = Number(stats.proLogins || 0);
+    const totalRegistrations = Number(stats.totalRegistrations || 0);
+
+    // ✅ Stats par méthode et plateforme
+    const loginsByMethod = stats.loginsByMethod || {};
+    const loginsByPlatform = stats.loginsByPlatform || {};
 
     return {
       totalAccounts,
       onlineUsers,
       proLogins,
+      totalRegistrations,
+      loginsByMethod,
+      loginsByPlatform,
       windowMinutes: 5,
     };
   }

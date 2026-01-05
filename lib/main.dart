@@ -7701,18 +7701,50 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  Future<void> _trackLogin() async {
+  Future<void> _trackLogin({
+    String? authMethod,
+    bool isNewUser = false,
+  }) async {
     try {
+      // ✅ Métriques enrichies
+      final platform = kIsWeb ? 'web' : defaultTargetPlatform.name;
+      final deviceType = _getDeviceType();
+      
       final callable = _functions.httpsCallable(
         'trackUserLogin',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 10)),
       );
-      await callable.call<dynamic>({});
-    } catch (_) {
-      // best-effort
+      
+      await callable.call<dynamic>({
+        'authMethod': authMethod,
+        'platform': platform,
+        'deviceType': deviceType,
+        'isNewUser': isNewUser,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
+    } catch (e) {
+      debugPrint('[Tracking] Error: $e');
     } finally {
       // ✅ Marquer comme online après login
       await _touchPresence(status: 'online');
+    }
+  }
+  
+  String _getDeviceType() {
+    if (kIsWeb) return 'web';
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.iOS:
+        return 'ios';
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.macOS:
+        return 'macos';
+      case TargetPlatform.windows:
+        return 'windows';
+      case TargetPlatform.linux:
+        return 'linux';
+      default:
+        return 'unknown';
     }
   }
 
@@ -8153,7 +8185,8 @@ class _AccountPageState extends State<AccountPage> {
     try {
       final result = await _auth.getRedirectResult();
       if (result.user != null) {
-        await _trackLogin();
+        final isNew = result.additionalUserInfo?.isNewUser ?? false;
+        await _trackLogin(authMethod: 'google', isNewUser: isNew);
         if (!mounted) return;
         showSuccessSnackBar(context, "Connecté avec Google");
       }
@@ -8197,7 +8230,7 @@ class _AccountPageState extends State<AccountPage> {
       );
       
       // ✅ Tracking de connexion
-      await _trackLogin();
+      await _trackLogin(authMethod: 'email', isNewUser: false);
       
       if (!mounted) return;
       showSuccessSnackBar(context, "Connexion réussie");
@@ -8256,7 +8289,7 @@ class _AccountPageState extends State<AccountPage> {
         password: _passwordController.text.trim(),
       );
 
-      await _trackLogin();
+      await _trackLogin(authMethod: 'email', isNewUser: true);
       if (!mounted) return;
       showSuccessSnackBar(context, "Compte créé et connecté avec succès");
     } on FirebaseAuthException catch (e) {
@@ -8780,9 +8813,15 @@ class _AccountPageState extends State<AccountPage> {
         await _auth.signInWithCredential(credential);
       }
 
-      // ✅ Tracking de la connexion
+      // ✅ Tracking de la connexion avec détection nouveau compte
       debugPrint('[Google Sign-In] Tracking de la connexion...');
-      await _trackLogin();
+      final user = _auth.currentUser;
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user?.uid)
+          .get();
+      final isNew = !userDoc.exists || userDoc.data()?['lastLoginAt'] == null;
+      await _trackLogin(authMethod: 'google', isNewUser: isNew);
 
       if (!mounted) return;
       debugPrint('[Google Sign-In] Connexion réussie');
@@ -8929,8 +8968,14 @@ class _AccountPageState extends State<AccountPage> {
         }
       }
 
-      // ✅ Tracking de connexion
-      await _trackLogin();
+      // ✅ Tracking de connexion avec détection nouveau compte
+      final user = _auth.currentUser;
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user?.uid)
+          .get();
+      final isNew = !userDoc.exists || userDoc.data()?['lastLoginAt'] == null;
+      await _trackLogin(authMethod: 'apple', isNewUser: isNew);
 
       if (!mounted) return;
       showSuccessSnackBar(context, "Connecté avec Apple ✓");
