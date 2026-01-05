@@ -6118,6 +6118,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _budgetController = TextEditingController();
 
+  // Indicatif téléphonique sélectionné
+  String _selectedPhoneCountryCode = '+33';
+
   // Catégories / sous-catégories
   String? _category;
   String? _selectedSubCategory;
@@ -6655,6 +6658,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _highlightedIndex = -1;
       _selectedRegionCode = null;
       _selectedDeptCode = null;
+      _selectedPhoneCountryCode = '+33';
 
       _isUrgent = false;
 
@@ -6723,10 +6727,21 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       _selectedDeptCode = city.dept;
       _selectedRegionCode = city.region;
+      _selectedPhoneCountryCode = _countryCodeForDept(city.dept);
 
       _citySuggestions = [];
       _highlightedIndex = -1;
     });
+  }
+
+  String _countryCodeForDept(String dept) {
+    if (dept.startsWith('971')) return '+590'; // Guadeloupe
+    if (dept.startsWith('972')) return '+596'; // Martinique
+    if (dept.startsWith('973')) return '+594'; // Guyane
+    if (dept.startsWith('974')) return '+262'; // La Réunion
+    if (dept.startsWith('976')) return '+262'; // Mayotte
+    if (dept.startsWith('987')) return '+689'; // Polynésie
+    return '+33'; // Métropole par défaut
   }
 
   Widget _buildCitySuggestionsOverlay() {
@@ -7550,6 +7565,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   controller: _phoneController,
                   label: _requiredLabel('Téléphone (pour être rappelé)'),
                   hintText: '612345678',
+                  initialCountryCode: _selectedPhoneCountryCode,
+                  onCountryCodeChanged: (code) {
+                    setState(() {
+                      _selectedPhoneCountryCode = code;
+                    });
+                  },
                   onPhoneChanged: (_) => _recompute(),
                   validator: (value) {
                     return _isValidPhoneFR(value ?? '')

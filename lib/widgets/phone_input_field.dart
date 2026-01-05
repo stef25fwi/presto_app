@@ -21,6 +21,7 @@ class PhoneInputField extends StatefulWidget {
   final Widget? label;
   final String? labelText;
   final String? hintText;
+  final String? initialCountryCode;
   final InputDecoration? decoration;
   final ValueChanged<String>? onCountryCodeChanged;
   final ValueChanged<String>? onPhoneChanged;
@@ -33,6 +34,7 @@ class PhoneInputField extends StatefulWidget {
     this.label,
     this.labelText,
     this.hintText,
+    this.initialCountryCode,
     this.decoration,
     this.onCountryCodeChanged,
     this.onPhoneChanged,
@@ -89,10 +91,35 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
   @override
   void initState() {
     super.initState();
-    _selectedCountry = countryCodes.first; // France par défaut
+    _selectedCountry = _fromCode(widget.initialCountryCode) ?? countryCodes.first; // France par défaut
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.onCountryCodeChanged?.call(_selectedCountry.code);
     });
+  }
+
+  CountryCode? _fromCode(String? code) {
+    if (code == null) return null;
+    return countryCodes.firstWhere(
+      (c) => c.code == code,
+      orElse: () => countryCodes.first,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant PhoneInputField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialCountryCode != null &&
+        widget.initialCountryCode != _selectedCountry.code) {
+      final next = _fromCode(widget.initialCountryCode);
+      if (next != null && next.code != _selectedCountry.code) {
+        setState(() {
+          _selectedCountry = next;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          widget.onCountryCodeChanged?.call(_selectedCountry.code);
+        });
+      }
+    }
   }
 
   void _onCountryChanged(CountryCode? newCountry) {
@@ -162,6 +189,7 @@ class PhoneInputFieldCompact extends StatefulWidget {
   final Widget? label;
   final String? labelText;
   final String? hintText;
+  final String? initialCountryCode;
   final ValueChanged<String>? onCountryCodeChanged;
   final ValueChanged<String>? onPhoneChanged;
   final FocusNode? focusNode;
@@ -173,6 +201,7 @@ class PhoneInputFieldCompact extends StatefulWidget {
     this.label,
     this.labelText,
     this.hintText,
+    this.initialCountryCode,
     this.onCountryCodeChanged,
     this.onPhoneChanged,
     this.focusNode,
@@ -200,10 +229,35 @@ class _PhoneInputFieldCompactState extends State<PhoneInputFieldCompact> {
   @override
   void initState() {
     super.initState();
-    _selectedCountry = countryCodes.first;
+    _selectedCountry = _fromCode(widget.initialCountryCode) ?? countryCodes.first;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.onCountryCodeChanged?.call(_selectedCountry.code);
     });
+  }
+
+  CountryCode? _fromCode(String? code) {
+    if (code == null) return null;
+    return countryCodes.firstWhere(
+      (c) => c.code == code,
+      orElse: () => countryCodes.first,
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant PhoneInputFieldCompact oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialCountryCode != null &&
+        widget.initialCountryCode != _selectedCountry.code) {
+      final next = _fromCode(widget.initialCountryCode);
+      if (next != null && next.code != _selectedCountry.code) {
+        setState(() {
+          _selectedCountry = next;
+        });
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          widget.onCountryCodeChanged?.call(_selectedCountry.code);
+        });
+      }
+    }
   }
 
   @override
