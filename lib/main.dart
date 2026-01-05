@@ -529,8 +529,6 @@ class _SplashScreenState extends State<SplashScreen>
   void _navigateTo(Widget page) {
     if (!mounted) return;
     _navTimer?.cancel();
-    // Dès qu'on quitte le splash : barre système bleue partout.
-    SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => page),
     );
@@ -741,6 +739,9 @@ class _HomePageState extends State<HomePage>
   @override
   void initState() {
     super.initState();
+
+    // Assure la barre de statut bleue dès que l'accueil est actif
+    SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
 
     _selectedIndex = widget.initialIndex;
     _sessionStartTime = DateTime.now();
