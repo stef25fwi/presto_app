@@ -1465,6 +1465,15 @@ class _HomePageState extends State<HomePage>
     // N'applique le padding clavier que s'il est réellement visible pour éviter que la bottom bar reste à mi-écran
     final double effectiveBottomInset = isKeyboardVisible ? viewInsetsBottom : 0;
 
+    // Si le clavier est caché mais que la bottom bar était masquée (scroll), on la force à revenir en bas
+    if (!isKeyboardVisible && !_showBottomBar) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_showBottomBar) {
+          setState(() => _showBottomBar = true);
+        }
+      });
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoBlue),
       child: GestureDetector(
