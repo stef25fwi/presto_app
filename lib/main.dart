@@ -881,10 +881,14 @@ class _HomePageState extends State<HomePage>
   }
 
   void _onPageScroll(double offset) {
-    // Force bottom bar to stay visible even on scroll
-    if (!_showBottomBar) {
+    final isScrollingDown = offset > _lastScrollPosition;
+
+    if (isScrollingDown && _showBottomBar) {
+      setState(() => _showBottomBar = false);
+    } else if (!isScrollingDown && !_showBottomBar) {
       setState(() => _showBottomBar = true);
     }
+
     _lastScrollPosition = offset;
   }
 
@@ -1456,7 +1460,10 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+    final viewInsetsBottom = MediaQuery.of(context).viewInsets.bottom;
+    final bool isKeyboardVisible = viewInsetsBottom > 0;
+    // N'applique le padding clavier que s'il est réellement visible pour éviter que la bottom bar reste à mi-écran
+    final double effectiveBottomInset = isKeyboardVisible ? viewInsetsBottom : 0;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoBlue),
@@ -1480,7 +1487,7 @@ class _HomePageState extends State<HomePage>
                     duration: const Duration(milliseconds: 180),
                     curve: Curves.easeOut,
                     padding: EdgeInsets.only(
-                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                      bottom: effectiveBottomInset,
                     ),
                     child: Stack(
                       children: [
@@ -1590,7 +1597,8 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildHomeContent() {
     final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-    final double bottomPadding = isKeyboardVisible ? 16 : 100;
+    final double bottomPadding =
+        (isKeyboardVisible || !_showBottomBar) ? 16 : 100;
 
     return Container(
       color: Colors.white,
