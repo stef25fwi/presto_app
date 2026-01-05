@@ -1660,7 +1660,7 @@ class _HomePageState extends State<HomePage>
 
                 // SLIDER
                 SizedBox(
-                  height: 300,
+                  height: 220,
                   width: double.infinity,
                   child: Stack(
                     children: [
