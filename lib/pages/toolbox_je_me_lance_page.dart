@@ -21,6 +21,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:presto_app/services/toolbox_cache_service.dart';
 
 class ToolboxJeMeLancePage extends StatefulWidget {
   const ToolboxJeMeLancePage({super.key});
@@ -38,6 +39,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
   final _auth = FirebaseAuth.instance;
   final _db = FirebaseFirestore.instance;
+  final _cacheService = ToolboxCacheService();
 
   // UI state
   int _step = 1; // 1..3
@@ -47,6 +49,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
   // Parcours Firestore
   String? _parcoursId;
+  bool _isFromCache = false; // Flag pour indiquer si le parcours provient du cache
 
   // Form fields
   final TextEditingController _projectCtrl = TextEditingController();
@@ -261,7 +264,14 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     setState(() => _saving = true);
     try {
-      if (recompute) _recomputeDerived();
+      if (recompute) {
+        // Utiliser le cache si les critères clés sont remplis
+        if (_projectCtrl.text.trim().isNotEmpty && _region.isNotEmpty) {
+          await _recomputeDerivedWithCache();
+        } else {
+          _recomputeDerived();
+        }
+      }
 
       await _db
           .collection('users')
@@ -368,8 +378,55 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   }
 
   // --------------------------
-  // Derived computation (RULES)
+  // Derived computation (RULES + CACHE)
   // --------------------------
+  Future<void> _recomputeDerivedWithCache() async {
+    // Essayer de récupérer depuis le cache
+    final cachedJourney = await _cacheService.fetchExistingJourney(
+      typeProjet: _activityType,
+      domaine: _projectCtrl.text.trim(),
+      region: _region,
+    );
+
+    if (cachedJourney != null) {
+      // Parcours trouvé en cache!
+      _isFromCache = true;
+      debugPrint('✅ Parcours trouvé en cache (${_activityType} / ${_projectCtrl.text} / ${_region})');
+      _importDerived(cachedJourney['content'] as Map<String, dynamic>? ?? {});
+    } else {
+      // Générer un nouveau parcours
+      _isFromCache = false;
+      final r = _computeRecommendationRules();
+      _recommendation = r['recommendation'] as Map<String, dynamic>;
+      _blockingAlerts = (r['blockingAlerts'] as List).cast<String>();
+      _costs = (r['costs'] as Map).cast<String, dynamic>();
+      _plan30 = (r['plan30'] as List)
+          .map((e) => (e as Map).cast<String, dynamic>())
+          .toList();
+      _aides = (r['aides'] as List)
+          .map((e) => (e as Map).cast<String, dynamic>())
+          .toList();
+
+      // Sauvegarder le nouveau parcours généré en cache
+      final journeyContent = {
+        'recommendation': _recommendation,
+        'blockingAlerts': _blockingAlerts,
+        'costs': _costs,
+        'plan30': _plan30,
+        'aides': _aides,
+      };
+
+      unawaited(
+        _cacheService.saveNewJourney(
+          typeProjet: _activityType,
+          domaine: _projectCtrl.text.trim(),
+          region: _region,
+          journeyContent: journeyContent,
+        ),
+      );
+    }
+  }
+
   void _recomputeDerived() {
     final r = _computeRecommendationRules();
     _recommendation = r['recommendation'] as Map<String, dynamic>;
