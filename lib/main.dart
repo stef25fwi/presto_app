@@ -36,6 +36,7 @@ import 'widgets/entrepreneur_toolbox_slide.dart';
 import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
+import 'services/connectivity_service.dart';
 import 'pages/pro_profile_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/admin_space_page.dart';
@@ -45,6 +46,7 @@ import 'app/theme.dart';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'widgets/offline_banner.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
@@ -459,6 +461,10 @@ Future<void> main() async {
       }
     }
 
+    // ✅ Démarrage du monitoring de connectivité
+    ConnectivityState.startMonitoring();
+    debugPrint('[Connectivity] Monitoring started');
+
     runApp(const PrestoApp());
   }, (error, stack) {
     if (!kIsWeb) {
@@ -653,8 +659,10 @@ class _HomePageState extends State<HomePage>
   bool _showBottomBar = true;
   double _lastScrollPosition = 0;
   bool _wasKeyboardVisible = false;
+  bool _isOnline = true; // ✅ État de connectivité
 
   late final AnimationController _categoryController;
+  StreamSubscription<bool>? _connectivitySubscription; // ✅ Écoute connectivité
 
   // Taille de police de référence pour les titres des slides (alignée sur le slide 1)
   static const double _homeSlideTitleFontSize = 24;
@@ -736,7 +744,30 @@ class _HomePageState extends State<HomePage>
 
     _selectedIndex = widget.initialIndex;
     _sessionStartTime = DateTime.now();
+    _isOnline = ConnectivityState.isOnline; // ✅ État initial
     WidgetsBinding.instance.addObserver(this);
+
+    // ✅ Écoute des changements de connectivité
+    _connectivitySubscription = ConnectivityState.onlineStream.listen((isOnline) {
+      if (mounted) {
+        setState(() {
+          _isOnline = isOnline;
+        });
+        
+        // Afficher un message
+        if (isOnline) {
+          showSuccessSnackBar(context, '✓ Connexion rétablie');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Mode hors ligne activé • Consultation uniquement'),
+              backgroundColor: Colors.grey,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    });
 
     // ✅ Présence initiale avec statut "online"
     _touchPresence(status: 'online');
@@ -921,6 +952,7 @@ class _HomePageState extends State<HomePage>
     _sloganTimer?.cancel();
     _homeAutoSlideTimer?.cancel();
     _presenceTimer?.cancel();
+    _connectivitySubscription?.cancel(); // ✅ Arrêt écoute connectivité
     _dynamicKeywordsSubscription?.cancel();
     super.dispose();
   }
@@ -1439,96 +1471,117 @@ class _HomePageState extends State<HomePage>
               Colors.white, // Fond blanc pour éviter le bandeau beige
           body: SafeArea(
             bottom: false,
-            child: AnimatedPadding(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOut,
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Stack(
-                children: [
-                  IndexedStack(
-                    index: _selectedIndex,
-                    children: [
-                      _buildHomeContent(),
-                      ConsultOffersPage(onScroll: _onPageScroll),
-                      PublishOfferPage(onScroll: _onPageScroll),
-                      const MessagesPage(),
-                      AccountPage(onScroll: _onPageScroll),
-                    ],
-                  ),
-                  if (!isKeyboardVisible)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      child: AnimatedSlide(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeInOut,
-                        offset:
-                            _showBottomBar ? Offset.zero : const Offset(0, 1),
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            color: kPrestoOrange,
-                            borderRadius:
-                                BorderRadius.vertical(top: Radius.circular(24)),
-                          ),
-                          padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-                          child: SafeArea(
-                            top: false,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Expanded(
-                                  child: _BottomNavItem(
-                                    icon: Icons.home,
-                                    label: "Accueil",
-                                    selected: _selectedIndex == 0,
-                                    onTap: () => _onBottomTap(0),
+            child: Column(
+              children: [
+                // ✅ Banner offline en haut
+                OfflineBanner(isVisible: !_isOnline),
+                
+                Expanded(
+                  child: AnimatedPadding(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    child: Stack(
+                      children: [
+                        IndexedStack(
+                          index: _selectedIndex,
+                          children: [
+                            _buildHomeContent(),
+                            ConsultOffersPage(onScroll: _onPageScroll),
+                            PublishOfferPage(onScroll: _onPageScroll, isOnline: _isOnline), // ✅ Passer l'état
+                            const MessagesPage(),
+                            AccountPage(onScroll: _onPageScroll),
+                          ],
+                        ),
+                        if (!isKeyboardVisible)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: AnimatedSlide(
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeInOut,
+                              offset:
+                                  _showBottomBar ? Offset.zero : const Offset(0, 1),
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: kPrestoOrange,
+                                  borderRadius:
+                                      BorderRadius.vertical(top: Radius.circular(24)),
+                                ),
+                                padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+                                child: SafeArea(
+                                  top: false,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        child: _BottomNavItem(
+                                          icon: Icons.home,
+                                          label: "Accueil",
+                                          selected: _selectedIndex == 0,
+                                          onTap: () => _onBottomTap(0),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: _BottomNavItem(
+                                          icon: Icons.search,
+                                          label: "Je consulte\nles offres",
+                                          selected: _selectedIndex == 1,
+                                          onTap: () => _onBottomTap(1),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 1,
+                                        child: _BottomNavItem(
+                                          icon: Icons.add_circle_outline,
+                                          label: "Publier\nune offre",
+                                          isBig: true,
+                                          isDisabled: !_isOnline, // ✅ Désactiver si offline
+                                          onTap: () {
+                                            if (_isOnline) {
+                                              _onBottomTap(2);
+                                            } else {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text('Publication impossible en mode hors ligne'),
+                                                  backgroundColor: Colors.orange,
+                                                ),
+                                              );
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: _BottomNavItem(
+                                          icon: Icons.chat_bubble_outline,
+                                          label: "Messages",
+                                          selected: _selectedIndex == 3,
+                                          onTap: () => _onBottomTap(3),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: _BottomNavItem(
+                                          icon: Icons.person_outline,
+                                          label: "Compte",
+                                          selected: _selectedIndex == 4,
+                                          onTap: () => _onBottomTap(4),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Expanded(
-                                  child: _BottomNavItem(
-                                    icon: Icons.search,
-                                    label: "Je consulte\nles offres",
-                                    selected: _selectedIndex == 1,
-                                    onTap: () => _onBottomTap(1),
-                                  ),
-                                ),
-                                Expanded(
-                                  flex: 1,
-                                  child: _BottomNavItem(
-                                    icon: Icons.add_circle_outline,
-                                    label: "Publier\nune offre",
-                                    isBig: true,
-                                    onTap: () => _onBottomTap(2),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _BottomNavItem(
-                                    icon: Icons.chat_bubble_outline,
-                                    label: "Messages",
-                                    selected: _selectedIndex == 3,
-                                    onTap: () => _onBottomTap(3),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _BottomNavItem(
-                                    icon: Icons.person_outline,
-                                    label: "Compte",
-                                    selected: _selectedIndex == 4,
-                                    onTap: () => _onBottomTap(4),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                      ),
+                      ],
                     ),
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -2382,6 +2435,7 @@ class _BottomNavItem extends StatefulWidget {
   final String label;
   final bool selected;
   final bool isBig;
+  final bool isDisabled; // ✅ Nouveau paramètre
   final VoidCallback onTap;
 
   const _BottomNavItem({
@@ -2390,6 +2444,7 @@ class _BottomNavItem extends StatefulWidget {
     required this.onTap,
     this.selected = false,
     this.isBig = false,
+    this.isDisabled = false, // ✅ Défaut false
   });
 
   @override
@@ -2434,7 +2489,7 @@ class _BottomNavItemState extends State<_BottomNavItem>
 
   @override
   Widget build(BuildContext context) {
-    const color = Colors.white;
+    final color = widget.isDisabled ? Colors.white.withOpacity(0.5) : Colors.white; // ✅ Grisé si désactivé
     final fontWeight = widget.selected ? FontWeight.w700 : FontWeight.w500;
 
     return _TapScale(
@@ -2450,12 +2505,12 @@ class _BottomNavItemState extends State<_BottomNavItem>
                 padding: EdgeInsets.all(widget.isBig ? 6 : 4),
                 decoration: BoxDecoration(
                   color: widget.isBig
-                      ? Colors.white
+                      ? (widget.isDisabled ? Colors.white.withOpacity(0.5) : Colors.white) // ✅ Grisé si désactivé
                       : widget.selected
                           ? Colors.white.withOpacity(0.35)
                           : Colors.transparent,
                   borderRadius: BorderRadius.circular(999),
-                  boxShadow: widget.isBig
+                  boxShadow: widget.isBig && !widget.isDisabled // ✅ Pas d'ombre si désactivé
                       ? [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.35),
@@ -2476,7 +2531,9 @@ class _BottomNavItemState extends State<_BottomNavItem>
                 child: Icon(
                   widget.icon,
                   size: widget.isBig ? 28 : 24,
-                  color: widget.isBig ? kPrestoOrange : color,
+                  color: widget.isBig
+                      ? (widget.isDisabled ? kPrestoOrange.withOpacity(0.4) : kPrestoOrange) // ✅ Grisé si désactivé
+                      : color,
                 ),
               ),
             ),
@@ -5969,8 +6026,13 @@ class _ConversationPageState extends State<ConversationPage> {
 
 class PublishOfferPage extends StatefulWidget {
   final Function(double)? onScroll;
+  final bool isOnline; // ✅ Paramètre pour l'état de connectivité
 
-  const PublishOfferPage({super.key, this.onScroll});
+  const PublishOfferPage({
+    super.key,
+    this.onScroll,
+    this.isOnline = true, // ✅ Par défaut en ligne
+  });
 
   @override
   State<PublishOfferPage> createState() => _PublishOfferPageState();
