@@ -119,7 +119,7 @@ class ToolboxCacheService {
 
       return journeyId;
     } catch (e) {
-      print('❌ Erreur lors de la sauvegarde du parcours: $e');
+      debugPrint('❌ Erreur lors de la sauvegarde du parcours: $e');
       return null;
     }
   }
@@ -145,7 +145,7 @@ class ToolboxCacheService {
 
       return true;
     } catch (e) {
-      print('❌ Erreur lors de la suppression: $e');
+      debugPrint('❌ Erreur lors de la suppression: $e');
       return false;
     }
   }
@@ -156,7 +156,7 @@ class ToolboxCacheService {
       final snapshot = await _db.collection('toolbox_journeys').count().get();
       return snapshot.count ?? 0;
     } catch (e) {
-      print('❌ Erreur stats cache: $e');
+      debugPrint('❌ Erreur stats cache: $e');
       return 0;
     }
   }

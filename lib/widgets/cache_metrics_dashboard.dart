@@ -164,6 +164,7 @@ class _CacheMetricsDashboardState extends State<CacheMetricsDashboard> {
               child: ElevatedButton.icon(
                 onPressed: () async {
                   await _monitoring.saveMetricsToFirestore();
+                  if (!mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Metrics sauvegardées')),
                   );

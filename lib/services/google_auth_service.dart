@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/services.dart';
 
 /// Service centralisé pour Google Sign-In avec gestion d'erreurs améliorée
 class GoogleAuthService {
-  final _auth = FirebaseAuth.instance;
+  // final _auth = FirebaseAuth.instance; // Unused for now
   
   // Configuration
   static const int maxRetries = 2;
@@ -50,7 +50,7 @@ class GoogleAuthService {
       case 'popup-closed-by-user':
       case 'cancelled-popup-request':
       case 'cancelled':
-        return null; // Annulation silencieuse
+        return ''; // Annulation silencieuse
       case 'network-request-failed':
         return "📡 Erreur réseau. Vérifie ta connexion internet et réessaye.";
 
@@ -80,7 +80,7 @@ class GoogleAuthService {
     switch (code) {
       case 'sign_in_canceled':
       case 'sign_in_cancelled':
-        return null; // Annulation silencieuse
+        return ''; // Annulation silencieuse
       case 'network_error':
         return "📡 Erreur réseau. Vérifie ta connexion et réessaye.";
       case 'sign_in_failed':

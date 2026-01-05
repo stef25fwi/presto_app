@@ -47,12 +47,12 @@ class ToolboxPage extends StatelessWidget {
                   title: 'Je me lance !',
                   subtitle: 'Crée ton entreprise simplement,\nsans te tromper.',
                   description:
-                      'IliPrestō te guide de A à Z : projet, statut,\naides, coûts, démarches, plan d'actions…',
+                      'IliPrestō te guide de A à Z : projet, statut,\naides, coûts, démarches, plan d\'actions...',
                   items: const [
                     'Statut juridique\nconseillé',
                     'Coûts &\ndémarches\nexactes',
                     'Aides, subventions\n& organismes',
-                    'Plan d'actions\nsur 30 jours',
+                    'Plan d\'actions\nsur 30 jours',
                   ],
                   ctaText: 'Démarrer mon projet',
                   ctaColor: prestoBlue,
@@ -70,7 +70,7 @@ class ToolboxPage extends StatelessWidget {
 
                 // Section title "Outils pour entrepreneurs"
                 const _SectionTitle(
-                  icon: Icons.workspaces_outline_rounded,
+                  icon: Icons.work_outline,
                   title: 'Outils pour entrepreneurs',
                 ),
                 const SizedBox(height: 12),
@@ -79,7 +79,7 @@ class ToolboxPage extends StatelessWidget {
                   icon: Icons.calculate_rounded,
                   iconBg: const Color(0xFFE8F0FF),
                   title: "La calculatrice de\nl'entrepreneur",
-                  subtitle: 'Fixe le bon prix pour vendre\nsans perdre d'argent.',
+                  subtitle: 'Fixe le bon prix pour vendre\nsans perdre d\'argent',
                   description:
                       'En quelques clics, calcule ton coût de\nrevient, ton prix de vente conseillé et\ncompare avec le marché.',
                   items: const [
@@ -169,7 +169,7 @@ class _SectionTitle extends StatelessWidget {
               )
             ],
           ),
-          child: Icon(Icons.workspaces_outline_rounded, size: 18, color: ToolboxPage.textPrimary),
+          child: Icon(Icons.work_outline, size: 18, color: ToolboxPage.textPrimary),
         ),
         const SizedBox(width: 10),
         Expanded(
