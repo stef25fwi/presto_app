@@ -33,6 +33,7 @@ import 'widgets/offer_card.dart';
 import 'widgets/phone_input_field.dart';
 import 'package:presto_app/widgets/random_asset_ticker.dart';
 import 'widgets/entrepreneur_toolbox_slide.dart';
+import 'pages/toolbox_hub_page.dart';
 import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
@@ -482,6 +483,9 @@ class PrestoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       routes: {
         '/publish': (_) => const PublishOfferPage(),
+        AppRoutes.toolboxHub: (_) => const ToolboxHubPage(),
+        AppRoutes.toolboxCurrent: (_) => const CurrentToolboxPage(),
+        AppRoutes.entrepreneurCalculator: (_) => const EntrepreneurCalculatorPage(),
       },
       theme: buildPrestoTheme(),
       home: const SplashScreen(),
