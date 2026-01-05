@@ -38,6 +38,7 @@ import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
 import 'services/connectivity_service.dart';
+import 'services/google_auth_service.dart';
 import 'pages/pro_profile_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/admin_space_page.dart';
@@ -7949,6 +7950,7 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ScrollController _scrollController = ScrollController();
+  final GoogleAuthService _googleAuthService = GoogleAuthService();
 
   final FirebaseFunctions _functions =
       FirebaseFunctions.instanceFor(region: 'europe-west1');
