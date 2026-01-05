@@ -7627,6 +7627,9 @@ class _AccountPageState extends State<AccountPage> {
   bool _profileLoadRequested = false;
   bool _isSavingProfile = false;
   bool _isEditingProfile = false; // ✅ Mode édition du profil
+  bool _profileLoadError = false;
+  int _profileLoadRetries = 0;
+  static const int _maxProfileLoadRetries = 3;
 
   // Admin: paramètres Micro-IA (Remote Config)
   bool _adminConfigLoaded = false;
@@ -8150,12 +8153,13 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  Future<void> _loadUserProfile(User user) async {
+  Future<void> _loadUserProfile(User user, {bool isRetry = false}) async {
     try {
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
-          .get();
+          .get()
+          .timeout(const Duration(seconds: 8));
 
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
@@ -8183,17 +8187,36 @@ class _AccountPageState extends State<AccountPage> {
             _profileCityController.text.isNotEmpty ||
             _profilePhoneController.text.isNotEmpty;
         _isEditingProfile = !hasProfile;
+        _profileLoadError = false;
+        _profileLoadRetries = 0;
       } else {
+        // Profil vide : créer un document par défaut
         _favoriteCategories = <String>{};
         _selectedFavoriteCategories = <String>{};
         _selectedFavoriteSubcategories = <String>{};
         _draftFavoriteSelections = <String>{};
+        _isEditingProfile = true;
+        _profileLoadError = false;
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[Profile] Erreur chargement profil: $e');
+      
+      // Retry automatique jusqu'à 3 fois
+      if (!isRetry && _profileLoadRetries < _maxProfileLoadRetries) {
+        _profileLoadRetries++;
+        await Future.delayed(const Duration(milliseconds: 800));
+        if (mounted) {
+          await _loadUserProfile(user, isRetry: true);
+          return;
+        }
+      }
+      
       _favoriteCategories = <String>{};
       _selectedFavoriteCategories = <String>{};
       _selectedFavoriteSubcategories = <String>{};
       _draftFavoriteSelections = <String>{};
+      _profileLoadError = true;
+      _isEditingProfile = true;
     }
 
     if (mounted) {
@@ -8204,37 +8227,110 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
+  bool _validateProfile() {
+    final pseudo = _profilePseudoController.text.trim();
+    final phone = _profilePhoneController.text.trim();
+
+    // Validation pseudo
+    if (pseudo.isEmpty) {
+      showErrorSnackBar(context, "Le pseudo est obligatoire");
+      return false;
+    }
+    if (pseudo.length < 2) {
+      showErrorSnackBar(context, "Le pseudo doit contenir au moins 2 caractères");
+      return false;
+    }
+    if (pseudo.length > 50) {
+      showErrorSnackBar(context, "Le pseudo ne doit pas dépasser 50 caractères");
+      return false;
+    }
+    if (!RegExp(r'^[a-zA-Z0-9àâäæéèêëïîôùûüœçÀÂÄÆÉÈÊËÏÎÔÙÛÜŒÇ\s\-_\.]+$')
+        .hasMatch(pseudo)) {
+      showErrorSnackBar(context,
+          "Le pseudo ne peut contenir que des lettres, chiffres et caractères spéciaux (-, _, .)");
+      return false;
+    }
+
+    // Validation phone (optionnel mais si rempli)
+    if (phone.isNotEmpty) {
+      if (!RegExp(r'^[+]?[0-9]{10,15}$').hasMatch(phone.replaceAll(' ', ''))) {
+        showErrorSnackBar(
+            context, "Le numéro de téléphone doit contenir 10-15 chiffres");
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  double _calculateProfileCompleteness() {
+    int filled = 0;
+    int total = 4;
+
+    if (_profilePseudoController.text.trim().isNotEmpty) filled++;
+    if (_profileCityController.text.trim().isNotEmpty) filled++;
+    if (_profilePhoneController.text.trim().isNotEmpty) filled++;
+    if (_favoriteCategories.isNotEmpty) filled++;
+
+    return filled / total;
+  }
+
   Future<bool> _saveProfile(
     User user, {
     bool showSuccess = true,
   }) async {
     if (!mounted) return false;
+
+    // Validation du profil
+    if (!_validateProfile()) {
+      return false;
+    }
+
     setState(() => _isSavingProfile = true);
     try {
       final pseudo = _profilePseudoController.text.trim();
+      final city = _profileCityController.text.trim();
+      final phone = _profilePhoneController.text.trim();
 
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+      final profileData = {
         'pseudo': pseudo,
-        'city': _profileCityController.text.trim(),
-        'phone': _profilePhoneController.text.trim(),
+        'city': city,
+        'phone': phone,
         'favoriteCategories': _favoriteCategories.toList(),
         'selectedFavoriteCategories': _selectedFavoriteCategories.toList(),
-        'selectedFavoriteSubcategories':
-            _selectedFavoriteSubcategories.toList(),
-      }, SetOptions(merge: true));
+        'selectedFavoriteSubcategories': _selectedFavoriteSubcategories.toList(),
+        'profileUpdatedAt': FieldValue.serverTimestamp(),
+        'profileCompleteness': _calculateProfileCompleteness(),
+      };
 
-      // Best-effort: ne pas faire échouer la sauvegarde Firestore si
-      // la mise à jour du displayName échoue.
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(profileData, SetOptions(merge: true))
+          .timeout(const Duration(seconds: 10));
+
+      // Mise à jour du displayName Firebase Auth
       if (pseudo.isNotEmpty) {
         try {
-          await user.updateDisplayName(pseudo);
+          await user.updateDisplayName(pseudo).timeout(
+            const Duration(seconds: 5),
+          );
+        } catch (e) {
+          debugPrint('[Profile] Erreur mise à jour displayName: $e');
+          // Continue même si échoue
+        }
+      }
+
+      // ✅ Vérifier l'email si pas encore vérifié
+      if (!user.emailVerified && user.email != null) {
+        try {
+          await user.sendEmailVerification();
         } catch (_) {
-          // ignore
+          // Silencieux
         }
       }
 
       if (mounted) {
-        // ✅ Passer en mode lecture après enregistrement
         setState(() => _isEditingProfile = false);
         if (showSuccess) {
           showSuccessSnackBar(context, "Profil mis à jour avec succès");
@@ -8243,8 +8339,13 @@ class _AccountPageState extends State<AccountPage> {
       return true;
     } catch (e) {
       if (mounted) {
-        showSuccessSnackBar(
-            context, "Erreur lors de la sauvegarde du profil : $e");
+        String errorMsg = "Erreur lors de la sauvegarde du profil";
+        if (e.toString().contains('TimeoutException')) {
+          errorMsg = "Délai d'attente dépassé. Vérifiez votre connexion";
+        } else if (e.toString().contains('PermissionDenied')) {
+          errorMsg = "Vous n'êtes pas autorisé à modifier ce profil";
+        }
+        showErrorSnackBar(context, errorMsg);
       }
       return false;
     } finally {
@@ -8491,60 +8592,159 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
+    
     try {
       if (kIsWeb) {
+        // ✅ Configuration du provider Google avec paramètres optimaux
         final googleProvider = GoogleAuthProvider();
-        googleProvider.setCustomParameters({'prompt': 'select_account'});
+        googleProvider.setCustomParameters({
+          'prompt': 'select_account', // Force le choix du compte
+          'login_hint': '', // Pas de compte pré-sélectionné
+        });
+
+        // Ajout des scopes pour récupérer les infos utilisateur
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
+
         try {
+          debugPrint('[Google Sign-In] Tentative avec popup...');
           await _auth.signInWithPopup(googleProvider);
+          debugPrint('[Google Sign-In] Popup réussi');
         } catch (popupError) {
-          // Fallback: essayer avec redirect si popup échoue
-          debugPrint('[Google Sign-In] Popup failed, trying redirect: $popupError');
-          await _auth.signInWithRedirect(googleProvider);
-          // La page sera rechargée après le redirect
-          return;
+          debugPrint('[Google Sign-In] Popup échoué: $popupError');
+          
+          // ✅ Fallback automatique vers redirect
+          if (popupError.toString().contains('popup') || 
+              popupError.toString().contains('blocked')) {
+            debugPrint('[Google Sign-In] Bascule vers redirect...');
+            await _auth.signInWithRedirect(googleProvider);
+            // La page sera rechargée après le redirect
+            return;
+          }
+          rethrow;
         }
       } else {
-        final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+        // ✅ Mode mobile/desktop avec GoogleSignIn
+        final googleSignIn = GoogleSignIn(
+          scopes: ['email', 'profile'],
+        );
+
+        // Déconnexion préventive pour éviter les problèmes de cache
+        try {
+          await googleSignIn.signOut();
+        } catch (_) {
+          // Ignore si déjà déconnecté
+        }
+
+        debugPrint('[Google Sign-In] Lancement de la connexion mobile...');
+        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+        
         if (googleUser == null) {
-          setState(() => _isLoading = false);
+          // L'utilisateur a annulé
+          debugPrint('[Google Sign-In] Connexion annulée par l\'utilisateur');
+          if (mounted) setState(() => _isLoading = false);
           return;
         }
+
+        debugPrint('[Google Sign-In] Utilisateur sélectionné: ${googleUser.email}');
+        
+        // Récupération des tokens
         final googleAuth = await googleUser.authentication;
+        
+        if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+          throw Exception('Tokens Google invalides');
+        }
+
+        // Création du credential Firebase
         final credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         );
+
+        debugPrint('[Google Sign-In] Connexion à Firebase...');
         await _auth.signInWithCredential(credential);
       }
 
+      // ✅ Tracking de la connexion
+      debugPrint('[Google Sign-In] Tracking de la connexion...');
       await _trackLogin();
 
       if (!mounted) return;
-      showSuccessSnackBar(context, "Connecté avec Google");
+      debugPrint('[Google Sign-In] Connexion réussie');
+      showSuccessSnackBar(context, "✓ Connecté avec Google");
+      
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      String msg = "Erreur Google";
-      if (e.code == 'unauthorized-domain') {
-        msg = "Domaine non autorisé. Ajoute ce domaine dans Firebase Console → Authentication → Authorized domains.";
-      } else if (e.code == 'operation-not-allowed') {
-        msg = "Google Sign-In non activé. Active-le dans Firebase Console → Authentication → Sign-in method.";
-      } else if (e.code == 'popup-blocked') {
-        msg = "Pop-up bloqué par le navigateur. Réessaye ou autorise les pop-ups.";
-      } else if (e.code == 'popup-closed-by-user') {
-        msg = "Connexion annulée.";
-      } else if (e.code == 'cancelled-popup-request' || e.code == 'cancelled') {
-        msg = "Connexion annulée.";
-      } else {
-        msg = "Erreur Google : ${e.message ?? e.code}";
+      debugPrint('[Google Sign-In] FirebaseAuthException: ${e.code} - ${e.message}');
+      
+      // ✅ Messages d'erreur détaillés en français
+      String msg;
+      switch (e.code) {
+        case 'account-exists-with-different-credential':
+          msg = "Ce compte existe déjà avec une autre méthode de connexion. Utilise ta méthode habituelle.";
+          break;
+        case 'invalid-credential':
+          msg = "Identifiants Google invalides. Réessaye.";
+          break;
+        case 'operation-not-allowed':
+          msg = "Connexion Google non activée. Contacte le support.";
+          break;
+        case 'user-disabled':
+          msg = "Ce compte a été désactivé.";
+          break;
+        case 'user-not-found':
+          msg = "Aucun compte trouvé avec ces identifiants.";
+          break;
+        case 'wrong-password':
+          msg = "Mot de passe incorrect.";
+          break;
+        case 'invalid-email':
+          msg = "Adresse email invalide.";
+          break;
+        case 'unauthorized-domain':
+          msg = "Domaine non autorisé. Ajoute-le dans Firebase Console.";
+          break;
+        case 'popup-blocked':
+          msg = "Pop-up bloqué. Autorise les pop-ups ou réessaye.";
+          break;
+        case 'popup-closed-by-user':
+        case 'cancelled-popup-request':
+        case 'cancelled':
+          msg = "Connexion annulée.";
+          break;
+        case 'network-request-failed':
+          msg = "Erreur réseau. Vérifie ta connexion internet.";
+          break;
+        default:
+          msg = "Erreur Google : ${e.message ?? e.code}";
       }
       showErrorSnackBar(context, msg);
+      
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      debugPrint('[Google Sign-In] PlatformException: ${e.code} - ${e.message}');
+      
+      // Erreurs spécifiques au plugin Google Sign-In
+      if (e.code == 'sign_in_canceled' || e.code == 'sign_in_cancelled') {
+        // Annulation silencieuse, pas de message d'erreur
+        debugPrint('[Google Sign-In] Utilisateur a annulé');
+      } else if (e.code == 'network_error') {
+        showErrorSnackBar(context, "Erreur réseau. Vérifie ta connexion.");
+      } else if (e.code == 'sign_in_failed') {
+        showErrorSnackBar(context, "Échec de la connexion Google. Réessaye.");
+      } else {
+        showErrorSnackBar(context, "Erreur : ${e.message ?? e.code}");
+      }
+      
     } catch (e) {
       if (!mounted) return;
-      debugPrint('[Google Sign-In] Error: $e');
-      showErrorSnackBar(context, "Erreur Google : $e");
+      debugPrint('[Google Sign-In] Erreur inattendue: $e');
+      showErrorSnackBar(context, "Erreur inattendue. Réessaye.");
+      
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -9103,6 +9303,77 @@ class _AccountPageState extends State<AccountPage> {
                               color: Colors.black54,
                             ),
                           ),
+                          const SizedBox(height: 12),
+                          // ✅ Indicateur de complétude du profil
+                          if (_profileLoaded)
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5F5F5),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Complétude du profil",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: _calculateProfileCompleteness(),
+                                      minHeight: 6,
+                                      backgroundColor: Colors.grey.shade300,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        _calculateProfileCompleteness() >= 1.0
+                                            ? Colors.green
+                                            : _calculateProfileCompleteness() >= 0.75
+                                                ? Colors.orange
+                                                : Colors.red,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${(_calculateProfileCompleteness() * 100).toStringAsFixed(0)}% complet',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (_profileLoadError)
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.warning_amber, size: 14, color: Colors.red.shade700),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Erreur chargement profil',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.red.shade700,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           const SizedBox(height: 12),
                           const Text(
                             "Tu restes connecté automatiquement.\nTu ne seras déconnecté que si tu appuies sur « Se déconnecter ».",
