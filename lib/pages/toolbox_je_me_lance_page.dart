@@ -1228,7 +1228,7 @@ class _HeaderInfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
-        color: kCardBg, // Fond gris clair
+        color: _ToolboxJeMeLancePageState.kCardBg, // Fond gris clair
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: Colors.grey.shade300),
       ),
