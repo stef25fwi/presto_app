@@ -1660,7 +1660,7 @@ class _HomePageState extends State<HomePage>
 
                 // SLIDER
                 SizedBox(
-                  height: 220,
+                  height: 300,
                   width: double.infinity,
                   child: Stack(
                     children: [
@@ -1699,12 +1699,15 @@ class _HomePageState extends State<HomePage>
                                 ),
                                 child: SizedBox.expand(
                                   child: RepaintBoundary(
-                                    child: RandomAssetTicker(
-                                      folderPrefix: 'assets/carousel_home/',
-                                      interval: const Duration(seconds: 3),
-                                      antiRepeatWindow: 3,
-                                      fit: BoxFit.cover,
-                                      enabled: _carouselEnabled,
+                                    child: AspectRatio(
+                                      aspectRatio: 1.3, // Optimal pour 300px de haut (390px de large)
+                                      child: RandomAssetTicker(
+                                        folderPrefix: 'assets/carousel_home/',
+                                        interval: const Duration(seconds: 3),
+                                        antiRepeatWindow: 3,
+                                        fit: BoxFit.cover,
+                                        enabled: _carouselEnabled,
+                                      ),
                                     ),
                                   ),
                                 ),
