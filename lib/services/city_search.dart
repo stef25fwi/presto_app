@@ -72,6 +72,19 @@ class CitySearch {
       }
     }
 
+    // Fallback: manually inject missing critical cities.
+    final hasMelun = _allCities.any((c) => c.name.toLowerCase() == 'melun');
+    if (!hasMelun) {
+      _allCities.add(
+        CityRecord(
+          name: 'Melun',
+          postalCode: '77000',
+          departmentCode: '77',
+          regionCode: '11', // Île-de-France
+        ),
+      );
+    }
+
     _loaded = true;
   }
 
