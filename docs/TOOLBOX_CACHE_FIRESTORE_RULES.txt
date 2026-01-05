@@ -1,0 +1,42 @@
+/// Firestore Rules pour le système de cache de boîte à outils
+/// 
+/// Structure:
+/// /toolbox_journeys/{journeyId}
+///   - type_projet: string
+///   - domaine: string
+///   - region: string
+///   - criteria_hash: string
+///   - generated_at: timestamp
+///   - content: {object avec recommendation, blockingAlerts, costs, plan30, aides}
+///
+/// /toolbox_journey_index/{indexId}
+///   - criteria_hash: string
+///   - journey_id: string
+///   - created_at: timestamp
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Collections publiques (lecture seule pour tous)
+    match /toolbox_journeys/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    match /toolbox_journey_index/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    // Collections utilisateur (privé)
+    match /users/{uid}/parcours/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
+
+/// Notes:
+/// - toolbox_journeys et toolbox_journey_index sont publiques en lecture
+///   (tous les utilisateurs voient tous les parcours, ce qui est voulu)
+/// - Écriture restreinte à utilisateurs authentifiés avec email vérifié
+/// - users/{uid}/parcours est privé (accès utilisateur seulement)

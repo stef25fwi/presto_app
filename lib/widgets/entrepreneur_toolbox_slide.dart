@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:presto_app/pages/toolbox_hub_page.dart';
+import 'package:presto_app/pages/toolbox_page.dart';
 import 'package:presto_app/widgets/presto_info_icon_animated.dart';
 
 class EntrepreneurToolboxSlide extends StatelessWidget {
@@ -78,7 +78,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => const ToolboxHubPage(),
+                    builder: (_) => const ToolboxPage(),
                   ),
                 );
               },
