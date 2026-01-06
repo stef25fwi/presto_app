@@ -956,7 +956,6 @@ class _HomePageState extends State<HomePage>
     _sloganTimer?.cancel();
     _homeAutoSlideTimer?.cancel();
     _presenceTimer?.cancel();
-    _connectivitySubscription?.cancel(); // ✅ Arrêt écoute connectivité
     _dynamicKeywordsSubscription?.cancel();
     super.dispose();
   }
@@ -1693,16 +1692,12 @@ class _HomePageState extends State<HomePage>
                                 ),
                                 child: SizedBox.expand(
                                   child: RepaintBoundary(
-                                    child: AspectRatio(
-                                      aspectRatio:
-                                          1.3, // Optimal pour 300px de haut (390px de large)
-                                      child: RandomAssetTicker(
-                                        folderPrefix: 'assets/carousel_home/',
-                                        interval: const Duration(seconds: 3),
-                                        antiRepeatWindow: 3,
-                                        fit: BoxFit.cover,
-                                        enabled: _carouselEnabled,
-                                      ),
+                                    child: RandomAssetTicker(
+                                      folderPrefix: 'assets/carousel_home/',
+                                      interval: const Duration(seconds: 3),
+                                      antiRepeatWindow: 3,
+                                      fit: BoxFit.cover,
+                                      enabled: _carouselEnabled,
                                     ),
                                   ),
                                 ),
