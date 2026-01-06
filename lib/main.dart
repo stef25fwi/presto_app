@@ -38,6 +38,7 @@ import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
 import 'services/google_auth_service.dart';
 import 'pages/pro_profile_page.dart';
+import 'pages/account/account_premium_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/admin_space_page.dart';
 import 'dev/seed_offers.dart';
@@ -417,19 +418,18 @@ Future<void> main() async {
     // - Web: reCAPTCHA v3 si une siteKey est fournie.
     //   Exemple:
     //   `flutter run -d chrome --dart-define=APPCHECK_RECAPTCHA_SITE_KEY=xxxxx`
-    const webRecaptchaSiteKey =
-        String.fromEnvironment('APPCHECK_RECAPTCHA_SITE_KEY');
+    // Clé site reCAPTCHA v3 (override possible via --dart-define=APPCHECK_RECAPTCHA_SITE_KEY)
+    const webRecaptchaSiteKey = String.fromEnvironment(
+      'APPCHECK_RECAPTCHA_SITE_KEY',
+      defaultValue: '6LehQ0IsAAAAAIVtHXyi-obNQFOZEnBKXAW_P2de',
+    );
     try {
       if (kIsWeb) {
-        if (webRecaptchaSiteKey.isNotEmpty) {
-          await FirebaseAppCheck.instance.activate(
-            webProvider: ReCaptchaV3Provider(webRecaptchaSiteKey),
-          );
-          debugPrint('[AppCheck] Web activated (reCAPTCHA v3)');
-        } else {
-          debugPrint(
-              '[AppCheck] Web not activated (missing APPCHECK_RECAPTCHA_SITE_KEY)');
-        }
+        debugPrint('[APPCHECK] siteKey=${webRecaptchaSiteKey.substring(0, 10)}...');
+        await FirebaseAppCheck.instance.activate(
+          webProvider: ReCaptchaV3Provider(webRecaptchaSiteKey),
+        );
+        debugPrint('[AppCheck] Web activated (reCAPTCHA v3)');
       } else {
         await FirebaseAppCheck.instance.activate(
           androidProvider: kDebugMode
@@ -507,6 +507,7 @@ class PrestoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       routes: {
         '/publish': (_) => const PublishOfferPage(),
+        '/messages': (_) => const MessagesPage(),
         AppRoutes.toolboxHub: (_) => const ToolboxHubPage(),
         AppRoutes.toolboxCurrent: (_) => const CurrentToolboxPage(),
         AppRoutes.entrepreneurCalculator: (_) =>
@@ -549,9 +550,51 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    _navTimer = Timer(const Duration(milliseconds: 3500), () {
-      _navigateTo(const HomePage());
-    });
+    // Sur Web, vérifier d'abord le redirect Google Sign-In
+    if (kIsWeb) {
+      _checkGoogleRedirectAndNavigate();
+    } else {
+      _navTimer = Timer(const Duration(milliseconds: 3500), () {
+        _navigateTo(const HomePage());
+      });
+    }
+  }
+
+  /// Vérifie si l'utilisateur revient d'un redirect Google Sign-In (Web uniquement)
+  Future<void> _checkGoogleRedirectAndNavigate() async {
+    debugPrint('🔍 [SPLASH] Checking for Google redirect result...');
+    try {
+      final result = await FirebaseAuth.instance.getRedirectResult();
+      if (result.user != null) {
+        debugPrint('✅ [SPLASH] User authenticated via redirect!');
+        debugPrint('✅ [SPLASH] Email: ${result.user?.email}');
+        debugPrint('✅ [SPLASH] UID: ${result.user?.uid}');
+        // Attendre un peu pour montrer le splash, puis naviguer vers HomePage
+        _navTimer = Timer(const Duration(milliseconds: 1500), () {
+          _navigateTo(const HomePage());
+        });
+      } else {
+        debugPrint('ℹ️ [SPLASH] No redirect result, normal app start');
+        // Pas de redirect, navigation normale après splash
+        _navTimer = Timer(const Duration(milliseconds: 3500), () {
+          _navigateTo(const HomePage());
+        });
+      }
+    } on FirebaseAuthException catch (e) {
+      debugPrint('❌ [SPLASH] FirebaseAuthException during redirect check');
+      debugPrint('❌ [SPLASH] Code: ${e.code}');
+      debugPrint('❌ [SPLASH] Message: ${e.message}');
+      // Erreur d'auth, mais on continue quand même vers HomePage
+      _navTimer = Timer(const Duration(milliseconds: 3500), () {
+        _navigateTo(const HomePage());
+      });
+    } catch (e) {
+      debugPrint('❌ [SPLASH] Unexpected error: $e');
+      // Erreur inattendue, navigation normale
+      _navTimer = Timer(const Duration(milliseconds: 3500), () {
+        _navigateTo(const HomePage());
+      });
+    }
   }
 
   void _navigateTo(Widget page) {
@@ -1508,7 +1551,7 @@ class _HomePageState extends State<HomePage>
                             ConsultOffersPage(onScroll: _onPageScroll),
                             PublishOfferPage(onScroll: _onPageScroll),
                             const MessagesPage(),
-                            AccountPage(onScroll: _onPageScroll),
+                            AccountPremiumPage(),
                           ],
                         ),
                         if (!isKeyboardVisible)
@@ -1652,9 +1695,13 @@ class _HomePageState extends State<HomePage>
                 const SizedBox(height: 14),
 
                 // SLIDER
-                SizedBox(
+                Container(
                   height: 220,
                   width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: kPrestoOrange,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   child: Stack(
                     children: [
                       PageView.builder(

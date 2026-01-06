@@ -71,52 +71,10 @@ class _ProfilePageState extends State<ProfilePage> {
         _emailCtrl.text = email;
       }
     });
-
-    // Sur Web, vérifie si l'utilisateur revient d'un redirect Google Sign-In
-    if (kIsWeb) {
-      _checkGoogleRedirectResult();
-    }
-  }
-
-  Future<void> _checkGoogleRedirectResult() async {
-    debugPrint('🔍 [REDIRECT] Checking for redirect result...');
-    try {
-      final result = await _auth.getRedirectResult();
-      if (result.user != null) {
-        debugPrint('✅ [REDIRECT] User returned from Google redirect');
-        debugPrint('✅ [REDIRECT] Email: ${result.user?.email}');
-        debugPrint('✅ [REDIRECT] UID: ${result.user?.uid}');
-        debugPrint('✅ [REDIRECT] Provider: ${result.credential?.providerId}');
-        if (!mounted) return;
-        showSuccessSnackBar(context, "Connecté avec Google");
-      } else {
-        debugPrint('ℹ️ [REDIRECT] No redirect result (user might not have redirected)');
-      }
-    } on FirebaseAuthException catch (e) {
-      debugPrint('❌ [REDIRECT] FirebaseAuthException caught');
-      debugPrint('❌ [REDIRECT] Code: ${e.code}');
-      debugPrint('❌ [REDIRECT] Message: ${e.message}');
-      
-      if (!mounted) return;
-      String msg = "Erreur Google";
-      if (e.code == 'unauthorized-domain') {
-        msg =
-            "Domaine non autorisé. Ajoutez ce domaine dans Firebase Console → Authentication → Authorized domains.";
-        debugPrint('⚠️ [REDIRECT] DOMAIN NOT AUTHORIZED!');
-      } else if (e.code == 'operation-not-allowed') {
-        msg =
-            "Google Sign-In non activé. Activez-le dans Firebase Console → Authentication → Sign-in method.";
-        debugPrint('⚠️ [REDIRECT] GOOGLE SIGN-IN NOT ENABLED!');
-      } else if (e.code != 'invalid-credential' && e.code != 'no-auth-event') {
-        msg = "Erreur Google : ${e.message ?? e.code}";
-        showErrorSnackBar(context, msg);
-      } else {
-        debugPrint('ℹ️ [REDIRECT] Benign error (${e.code}), ignoring');
-      }
-    } catch (e) {
-      debugPrint('❌ [REDIRECT] Unexpected error: $e');
-      debugPrint('❌ [REDIRECT] Type: ${e.runtimeType}');
-    }
+    
+    // Note : la vérification du redirect Google Sign-In est maintenant gérée
+    // dans le SplashScreen (main.dart) pour éviter d'être bloqué sur le splash
+    // après un redirect. Le résultat sera déjà traité quand on arrive ici.
   }
 
   @override
