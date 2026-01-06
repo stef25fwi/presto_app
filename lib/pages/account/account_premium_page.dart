@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../admin_space_page.dart';
 
 class AccountPremiumPage extends StatefulWidget {
   const AccountPremiumPage({super.key});
@@ -420,8 +421,11 @@ class _AccountPremiumPageState extends State<AccountPremiumPage> {
   }
 
   void onOpenAdmin() {
-    // TODO: open admin space
-    _snack("🛠️ Ouvrir l’espace admin");
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const AdminSpacePage(),
+      ),
+    );
   }
 
   Future<void> onLogout() async {
@@ -489,7 +493,7 @@ class _AccountPremiumPageState extends State<AccountPremiumPage> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
           children: [
             // 1) HEADER PROFIL PREMIUM
             _PremiumCard(
