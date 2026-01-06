@@ -38,6 +38,7 @@ import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
 import 'services/connectivity_service.dart';
+import 'services/google_auth_service.dart';
 import 'pages/pro_profile_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/admin_space_page.dart';
@@ -1673,7 +1674,7 @@ class _HomePageState extends State<HomePage>
 
                 // SLIDER
                 SizedBox(
-                  height: 300,
+                  height: 220,
                   width: double.infinity,
                   child: Stack(
                     children: [
@@ -7949,7 +7950,7 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ScrollController _scrollController = ScrollController();
-  // final GoogleAuthService _googleAuthService = GoogleAuthService(); // TODO: integrate service
+  final GoogleAuthService _googleAuthService = GoogleAuthService();
 
   final FirebaseFunctions _functions =
       FirebaseFunctions.instanceFor(region: 'europe-west1');
@@ -9015,44 +9016,41 @@ class _AccountPageState extends State<AccountPage> {
     setState(() => _isLoading = true);
     
     try {
+      _googleAuthService.logAttempt('signInWithGoogle', 
+        details: kIsWeb ? 'Mode Web' : 'Mode Mobile');
+
       if (kIsWeb) {
         // ✅ Configuration du provider Google avec paramètres optimaux
         final googleProvider = GoogleAuthProvider();
         googleProvider.setCustomParameters({
-          'prompt': 'select_account', // Force le choix du compte
-          'login_hint': '', // Pas de compte pré-sélectionné
+          'prompt': 'select_account',
+          'login_hint': '',
         });
-
-        // Ajout des scopes pour récupérer les infos utilisateur
         googleProvider.addScope('email');
         googleProvider.addScope('profile');
 
+        bool redirectHandled = false;
         try {
-          debugPrint('[Google Sign-In] Tentative avec popup...');
+          _googleAuthService.logAttempt('Popup');
           await _auth.signInWithPopup(googleProvider);
-          debugPrint('[Google Sign-In] Popup réussi');
+          _googleAuthService.logSuccess('Popup', _auth.currentUser?.email);
         } catch (popupError) {
-          debugPrint('[Google Sign-In] Popup échoué: $popupError');
+          _googleAuthService.logError('Popup', popupError);
           
-          // ✅ Fallback automatique vers redirect pour popup bloqués ou erreurs internes
-          final errorMsg = popupError.toString().toLowerCase();
-          if (errorMsg.contains('popup') || 
-              errorMsg.contains('blocked') ||
-              errorMsg.contains('internal-error') ||
-              errorMsg.contains('auth-error')) {
+          // ✅ Fallback automatique vers redirect
+          if (_googleAuthService.shouldFallbackToRedirect(popupError)) {
             try {
-              debugPrint('[Google Sign-In] Bascule vers redirect...');
+              _googleAuthService.logFallback('Popup', 'Redirect', 
+                reason: 'Popup bloqué ou erreur interne');
               await _auth.signInWithRedirect(googleProvider);
-              // La page sera rechargée après le redirect
-              return;
+              redirectHandled = true;
+              return; // Important: sortir ici après redirect
             } catch (redirectError) {
-              debugPrint('[Google Sign-In] Redirect échoué: $redirectError');
-              // Afficher l'erreur du redirect
-              if (mounted) {
-                String msg = "Erreur de connexion Google. Réessaye.";
-                if (redirectError.toString().contains('internal-error')) {
-                  msg = "Erreur interne. Vérifie ta configuration Firebase → Authentification → OAuth.";
-                }
+              _googleAuthService.logError('Redirect', redirectError);
+              if (!mounted) return;
+              
+              final msg = _googleAuthService.getErrorMessage(redirectError);
+              if (msg.isNotEmpty) {
                 showErrorSnackBar(context, msg);
               }
               if (mounted) {
@@ -9062,150 +9060,96 @@ class _AccountPageState extends State<AccountPage> {
             }
           }
           
-          // Gère l'erreur popup directement
-          if (mounted) {
-            String msg = "Erreur de connexion Google. Réessaye.";
-            if (popupError.toString().contains('internal-error')) {
-              msg = "Erreur interne. Vérifie ta configuration Firebase → Authentification → OAuth.";
-            }
+          // Erreur qui n'est pas un popup bloqué
+          if (!mounted) return;
+          
+          final msg = _googleAuthService.getErrorMessage(popupError);
+          if (msg.isNotEmpty) {
             showErrorSnackBar(context, msg);
+          }
+          if (mounted) {
             setState(() => _isLoading = false);
           }
           return;
         }
       } else {
-        // ✅ Mode mobile/desktop avec GoogleSignIn
-        final googleSignIn = GoogleSignIn(
-          scopes: ['email', 'profile'],
-        );
+        // ✅ Mode mobile/desktop
+        final googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
 
-        // Déconnexion préventive pour éviter les problèmes de cache
         try {
           await googleSignIn.signOut();
-        } catch (_) {
-          // Ignore si déjà déconnecté
-        }
+        } catch (_) {}
 
-        debugPrint('[Google Sign-In] Lancement de la connexion mobile...');
         final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
         
         if (googleUser == null) {
-          // L'utilisateur a annulé
-          debugPrint('[Google Sign-In] Connexion annulée par l\'utilisateur');
+          _googleAuthService.logAttempt('Connexion annulée par l\'utilisateur');
           if (mounted) setState(() => _isLoading = false);
           return;
         }
 
-        debugPrint('[Google Sign-In] Utilisateur sélectionné: ${googleUser.email}');
+        _googleAuthService.logAttempt('Récupération tokens', 
+          details: 'Email: ${googleUser.email}');
         
-        // Récupération des tokens
         final googleAuth = await googleUser.authentication;
         
         if (googleAuth.accessToken == null || googleAuth.idToken == null) {
           throw Exception('Tokens Google invalides');
         }
 
-        // Création du credential Firebase
         final credential = GoogleAuthProvider.credential(
           accessToken: googleAuth.accessToken,
           idToken: googleAuth.idToken,
         );
 
-        debugPrint('[Google Sign-In] Connexion à Firebase...');
+        _googleAuthService.logAttempt('signInWithCredential');
         await _auth.signInWithCredential(credential);
+        _googleAuthService.logSuccess('Mobile', _auth.currentUser?.email);
       }
 
       // ✅ Tracking de la connexion avec détection nouveau compte
-      debugPrint('[Google Sign-In] Tracking de la connexion...');
       final user = _auth.currentUser;
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user?.uid)
-          .get();
-      final isNew = !userDoc.exists || userDoc.data()?['lastLoginAt'] == null;
-      await _trackLogin(authMethod: 'google', isNewUser: isNew);
+      if (user != null) {
+        try {
+          final userDoc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+          final isNew = !userDoc.exists || userDoc.data()?['lastLoginAt'] == null;
+          await _trackLogin(authMethod: 'google', isNewUser: isNew);
+        } catch (trackingError) {
+          _googleAuthService.logError('Tracking', trackingError);
+          // Continuer même si le tracking échoue
+        }
+      }
 
       if (!mounted) return;
-      debugPrint('[Google Sign-In] Connexion réussie');
+      _googleAuthService.logSuccess('signInWithGoogle', user?.email);
       showSuccessSnackBar(context, "✓ Connecté avec Google");
       
     } on FirebaseAuthException catch (e) {
+      _googleAuthService.logError('signInWithGoogle', e);
       if (!mounted) return;
-      debugPrint('[Google Sign-In] FirebaseAuthException: ${e.code} - ${e.message}');
       
-      // ✅ Messages d'erreur détaillés en français
-      String msg;
-      switch (e.code) {
-        case 'account-exists-with-different-credential':
-          msg = "Ce compte existe déjà avec une autre méthode de connexion. Utilise ta méthode habituelle.";
-          break;
-        case 'invalid-credential':
-          msg = "Identifiants Google invalides. Réessaye.";
-          break;
-        case 'operation-not-allowed':
-          msg = "Connexion Google non activée. Contacte le support.";
-          break;
-        case 'user-disabled':
-          msg = "Ce compte a été désactivé.";
-          break;
-        case 'user-not-found':
-          msg = "Aucun compte trouvé avec ces identifiants.";
-          break;
-        case 'wrong-password':
-          msg = "Mot de passe incorrect.";
-          break;
-        case 'invalid-email':
-          msg = "Adresse email invalide.";
-          break;
-        case 'unauthorized-domain':
-          msg = "Domaine non autorisé. Ajoute-le dans Firebase Console.";
-          break;
-        case 'popup-blocked':
-          msg = "Pop-up bloqué. Autorise les pop-ups ou réessaye.";
-          break;
-        case 'popup-closed-by-user':
-        case 'cancelled-popup-request':
-        case 'cancelled':
-          msg = "Connexion annulée.";
-          break;
-        case 'network-request-failed':
-          msg = "Erreur réseau. Vérifie ta connexion internet.";
-          break;
-        case 'internal-error':
-        case 'auth-error':
-          msg = "Erreur interne Firebase. Vérifie ta configuration OAuth2 dans Firebase Console → Authentification → Paramètres OAuth.";
-          break;
-        case 'invalid-oauth-client':
-          msg = "Client OAuth invalide. Vérifie tes clés Google dans Firebase.";
-          break;
-        case 'idp-error':
-          msg = "Erreur du fournisseur d'identité. Réessaye ou contacte le support.";
-          break;
-        default:
-          msg = "Erreur Google : ${e.message ?? e.code}";
+      final msg = _googleAuthService.getErrorMessage(e);
+      if (msg.isNotEmpty) {
+        showErrorSnackBar(context, msg);
       }
-      showErrorSnackBar(context, msg);
       
     } on PlatformException catch (e) {
+      _googleAuthService.logError('signInWithGoogle', e);
       if (!mounted) return;
-      debugPrint('[Google Sign-In] PlatformException: ${e.code} - ${e.message}');
       
-      // Erreurs spécifiques au plugin Google Sign-In
-      if (e.code == 'sign_in_canceled' || e.code == 'sign_in_cancelled') {
-        // Annulation silencieuse, pas de message d'erreur
-        debugPrint('[Google Sign-In] Utilisateur a annulé');
-      } else if (e.code == 'network_error') {
-        showErrorSnackBar(context, "Erreur réseau. Vérifie ta connexion.");
-      } else if (e.code == 'sign_in_failed') {
-        showErrorSnackBar(context, "Échec de la connexion Google. Réessaye.");
-      } else {
-        showErrorSnackBar(context, "Erreur : ${e.message ?? e.code}");
+      final msg = _googleAuthService.getErrorMessage(e);
+      if (msg.isNotEmpty) {
+        showErrorSnackBar(context, msg);
       }
       
-    } catch (e) {
+    } catch (e, stackTrace) {
+      _googleAuthService.logError('signInWithGoogle', e);
+      debugPrint('Stack trace: $stackTrace');
       if (!mounted) return;
-      debugPrint('[Google Sign-In] Erreur inattendue: $e');
-      showErrorSnackBar(context, "Erreur inattendue. Réessaye.");
+      showErrorSnackBar(context, "Erreur lors de la connexion. Réessaye.");
       
     } finally {
       if (mounted) {
