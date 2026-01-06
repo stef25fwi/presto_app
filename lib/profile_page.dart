@@ -1,4 +1,9 @@
+import 'dart:async';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'utils/friendly_snackbar.dart';
 import 'constants.dart';
 import 'widgets/phone_input_field.dart';
@@ -14,7 +19,10 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   AuthMode _authMode = AuthMode.login;
-  bool _isLoggedIn = false; // TODO: à connecter avec ton vrai système d'auth
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  StreamSubscription<User?>? _authSub;
+  bool _isLoading = false;
 
   // Controllers pour les formulaires
   final _formKeyAuth = GlobalKey<FormState>();
@@ -55,7 +63,19 @@ class _ProfilePageState extends State<ProfilePage> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    _authSub = _auth.authStateChanges().listen((user) {
+      final email = user?.email;
+      if (email != null && email.isNotEmpty && _emailCtrl.text != email) {
+        _emailCtrl.text = email;
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    _authSub?.cancel();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _passwordConfirmCtrl.dispose();
@@ -66,34 +86,122 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
-  // --- Actions fictives à connecter plus tard à Firebase / Auth ---
-  void _onGoogleSignIn() {
-    // TODO: Intégrer Firebase Auth Google
-    setState(() {
-      _isLoggedIn = true;
-    });
-  }
+  Future<void> _onGoogleSignIn() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      final provider = GoogleAuthProvider()
+        ..setCustomParameters({'prompt': 'select_account'});
+      provider.addScope('email');
+      provider.addScope('profile');
 
-  void _onAppleSignIn() {
-    // TODO: Intégrer Sign in with Apple
-    setState(() {
-      _isLoggedIn = true;
-    });
-  }
+      if (kIsWeb) {
+        try {
+          await _auth.signInWithPopup(provider);
+        } catch (_) {
+          // Fallback redirect (ex: popup bloquée)
+          await _auth.signInWithRedirect(provider);
+          return; // le navigateur redirige
+        }
+      } else {
+        await _auth.signInWithProvider(provider);
+      }
 
-  void _onEmailAuth() {
-    if (_formKeyAuth.currentState?.validate() ?? false) {
-      // TODO: login / signup email réel
-      setState(() {
-        _isLoggedIn = true;
-      });
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Connecté avec Google');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, e.message ?? 'Erreur Google: ${e.code}');
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur Google: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _onLogout() {
-    setState(() {
-      _isLoggedIn = false;
-    });
+  Future<void> _onAppleSignIn() async {
+    if (_isLoading) return;
+    if (kIsWeb ||
+        !(defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.macOS)) {
+      showErrorSnackBar(context, 'Connexion Apple disponible sur iOS/macOS.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      if (appleCredential.identityToken == null) {
+        throw Exception('Identité Apple non reçue');
+      }
+
+      final oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      await _auth.signInWithCredential(oauthCredential);
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Connecté avec Apple');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, e.message ?? 'Erreur Apple: ${e.code}');
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur Apple: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _onEmailAuth() async {
+    if (_isLoading) return;
+    if (!(_formKeyAuth.currentState?.validate() ?? false)) return;
+
+    setState(() => _isLoading = true);
+    try {
+      final email = _emailCtrl.text.trim();
+      final password = _passwordCtrl.text;
+
+      if (_authMode == AuthMode.login) {
+        await _auth.signInWithEmailAndPassword(email: email, password: password);
+        if (!mounted) return;
+        showSuccessSnackBar(context, 'Connexion réussie');
+      } else {
+        await _auth.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        if (!mounted) return;
+        showSuccessSnackBar(context, 'Compte créé');
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, e.message ?? 'Erreur: ${e.code}');
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _onLogout() async {
+    try {
+      await _auth.signOut();
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Déconnecté');
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur déconnexion: $e');
+    }
   }
 
   // --- UI ---
@@ -103,24 +211,34 @@ class _ProfilePageState extends State<ProfilePage> {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Mon profil',
-          style: kPrestoAppBarTitleStyle,
-        ),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-      ),
-      body: Container(
-        color: colorScheme.surface,
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: _isLoggedIn ? _buildProfileContent(colorScheme, isDark) : _buildAuthContent(colorScheme, isDark),
+    return StreamBuilder<User?>(
+      stream: _auth.authStateChanges(),
+      builder: (context, snapshot) {
+        final user = snapshot.data;
+        final isLoggedIn = user != null;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text(
+              'Mon profil',
+              style: kPrestoAppBarTitleStyle,
+            ),
+            centerTitle: true,
+            automaticallyImplyLeading: false,
           ),
-        ),
-      ),
+          body: Container(
+            color: colorScheme.surface,
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: isLoggedIn
+                    ? _buildProfileContent(colorScheme, isDark, user)
+                    : _buildAuthContent(colorScheme, isDark),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -207,7 +325,7 @@ class _ProfilePageState extends State<ProfilePage> {
           label: _authMode == AuthMode.login
               ? 'Se connecter avec Google'
               : "S'inscrire avec Google",
-          onTap: _onGoogleSignIn,
+          onTap: () async => _onGoogleSignIn(),
           colorScheme: colorScheme,
         ),
         const SizedBox(height: 8),
@@ -216,7 +334,7 @@ class _ProfilePageState extends State<ProfilePage> {
           label: _authMode == AuthMode.login
               ? 'Se connecter avec Apple'
               : "S'inscrire avec Apple",
-          onTap: _onAppleSignIn,
+          onTap: () async => _onAppleSignIn(),
           colorScheme: colorScheme,
         ),
 
@@ -306,7 +424,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: _onEmailAuth,
+                        onPressed: _isLoading ? null : () async => _onEmailAuth(),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -347,13 +465,13 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildSocialButton({
     required IconData icon,
     required String label,
-    required VoidCallback onTap,
+    required Future<void> Function() onTap,
     required ColorScheme colorScheme,
   }) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: onTap,
+        onPressed: _isLoading ? null : () async => onTap(),
         icon: Icon(icon),
         label: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -398,7 +516,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildProfileContent(ColorScheme colorScheme, bool isDark) {
+  Widget _buildProfileContent(ColorScheme colorScheme, bool isDark, User user) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -437,7 +555,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             IconButton(
-              onPressed: _onLogout,
+              onPressed: () async => _onLogout(),
               icon: Icon(Icons.logout, color: colorScheme.error),
               tooltip: 'Déconnexion',
             ),
