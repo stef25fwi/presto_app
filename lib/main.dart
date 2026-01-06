@@ -13,7 +13,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:record/record.dart';
 
@@ -98,7 +97,7 @@ class UserStatusIndicator extends StatelessWidget {
       default:
         color = Colors.grey;
     }
-    
+
     return Container(
       width: size,
       height: size,
@@ -411,22 +410,32 @@ Future<void> main() async {
     }
     debugPrint('');
 
-    // �🔒 App Check
-    // - En debug: provider debug (nécessite d'ajouter le debug token dans la console App Check)
-    // - En release: Play Integrity (Android) + App Attest (iOS)
-    // Note: Web non activé ici (reCAPTCHA v3) car nécessite une siteKey.
-    if (!kIsWeb) {
-      try {
+    // 🔒 App Check
+    // - Debug: provider debug (ajouter le debug token dans Firebase Console → App Check)
+    // - Release: Play Integrity (Android) + App Attest (iOS)
+    // - Web: reCAPTCHA v3 si une siteKey est fournie.
+    //   Exemple:
+    //   `flutter run -d chrome --dart-define=APPCHECK_RECAPTCHA_SITE_KEY=xxxxx`
+    const webRecaptchaSiteKey = String.fromEnvironment('APPCHECK_RECAPTCHA_SITE_KEY');
+    try {
+      if (kIsWeb) {
+        if (webRecaptchaSiteKey.isNotEmpty) {
+          await FirebaseAppCheck.instance.activate(
+            webProvider: ReCaptchaV3Provider(webRecaptchaSiteKey),
+          );
+          debugPrint('[AppCheck] Web activated (reCAPTCHA v3)');
+        } else {
+          debugPrint('[AppCheck] Web not activated (missing APPCHECK_RECAPTCHA_SITE_KEY)');
+        }
+      } else {
         await FirebaseAppCheck.instance.activate(
-          androidProvider: kDebugMode
-              ? AndroidProvider.debug
-              : AndroidProvider.playIntegrity,
-          appleProvider:
-              kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+          androidProvider:
+              kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+          appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
         );
-      } catch (e) {
-        debugPrint('[AppCheck] activation failed: $e');
       }
+    } catch (e) {
+      debugPrint('[AppCheck] activation failed: $e');
     }
 
     // 🔒 Auth minimale requise pour les Cloud Functions (même en anonyme)
@@ -9071,38 +9080,16 @@ class _AccountPageState extends State<AccountPage> {
           return;
         }
       } else {
-        // ✅ Mode mobile/desktop
-        final googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
+        // ✅ Mode mobile/desktop (sans google_sign_in)
+        // Utilise les SDK natifs via FirebaseAuth (ouvre le sélecteur de compte Google).
+        final provider = GoogleAuthProvider()
+          ..setCustomParameters({'prompt': 'select_account'});
+        provider.addScope('email');
+        provider.addScope('profile');
 
-        try {
-          await googleSignIn.signOut();
-        } catch (_) {}
-
-        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-        
-        if (googleUser == null) {
-          _googleAuthService.logAttempt('Connexion annulée par l\'utilisateur');
-          if (mounted) setState(() => _isLoading = false);
-          return;
-        }
-
-        _googleAuthService.logAttempt('Récupération tokens', 
-          details: 'Email: ${googleUser.email}');
-        
-        final googleAuth = await googleUser.authentication;
-        
-        if (googleAuth.accessToken == null || googleAuth.idToken == null) {
-          throw Exception('Tokens Google invalides');
-        }
-
-        final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-
-        _googleAuthService.logAttempt('signInWithCredential');
-        await _auth.signInWithCredential(credential);
-        _googleAuthService.logSuccess('Mobile', _auth.currentUser?.email);
+        _googleAuthService.logAttempt('signInWithProvider');
+        await _auth.signInWithProvider(provider);
+        _googleAuthService.logSuccess('Provider', _auth.currentUser?.email);
       }
 
       // ✅ Tracking de la connexion avec détection nouveau compte
@@ -9256,8 +9243,8 @@ class _AccountPageState extends State<AccountPage> {
           msg = "Authentification Apple non disponible en arrière-plan.";
           break;
         case AuthorizationErrorCode.unknown:
-        default:
           msg = "Erreur Apple inconnue. Réessaye.";
+          break;
       }
       showErrorSnackBar(context, msg);
       
@@ -9348,10 +9335,6 @@ class _AccountPageState extends State<AccountPage> {
   Future<void> _signOut() async {
     try {
       await _auth.signOut();
-      if (!kIsWeb) {
-        final googleSignIn = GoogleSignIn();
-        await googleSignIn.signOut();
-      }
       SessionState.userId = null;
       await CrashlyticsContext.setUserId(null);
     } catch (_) {}
