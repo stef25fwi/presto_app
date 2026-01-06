@@ -79,27 +79,43 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _checkGoogleRedirectResult() async {
+    debugPrint('🔍 [REDIRECT] Checking for redirect result...');
     try {
       final result = await _auth.getRedirectResult();
       if (result.user != null) {
+        debugPrint('✅ [REDIRECT] User returned from Google redirect');
+        debugPrint('✅ [REDIRECT] Email: ${result.user?.email}');
+        debugPrint('✅ [REDIRECT] UID: ${result.user?.uid}');
+        debugPrint('✅ [REDIRECT] Provider: ${result.credential?.providerId}');
         if (!mounted) return;
         showSuccessSnackBar(context, "Connecté avec Google");
+      } else {
+        debugPrint('ℹ️ [REDIRECT] No redirect result (user might not have redirected)');
       }
     } on FirebaseAuthException catch (e) {
+      debugPrint('❌ [REDIRECT] FirebaseAuthException caught');
+      debugPrint('❌ [REDIRECT] Code: ${e.code}');
+      debugPrint('❌ [REDIRECT] Message: ${e.message}');
+      
       if (!mounted) return;
       String msg = "Erreur Google";
       if (e.code == 'unauthorized-domain') {
         msg =
             "Domaine non autorisé. Ajoutez ce domaine dans Firebase Console → Authentication → Authorized domains.";
+        debugPrint('⚠️ [REDIRECT] DOMAIN NOT AUTHORIZED!');
       } else if (e.code == 'operation-not-allowed') {
         msg =
             "Google Sign-In non activé. Activez-le dans Firebase Console → Authentication → Sign-in method.";
+        debugPrint('⚠️ [REDIRECT] GOOGLE SIGN-IN NOT ENABLED!');
       } else if (e.code != 'invalid-credential' && e.code != 'no-auth-event') {
         msg = "Erreur Google : ${e.message ?? e.code}";
         showErrorSnackBar(context, msg);
+      } else {
+        debugPrint('ℹ️ [REDIRECT] Benign error (${e.code}), ignoring');
       }
     } catch (e) {
-      debugPrint('[Google Redirect] Error checking result: $e');
+      debugPrint('❌ [REDIRECT] Unexpected error: $e');
+      debugPrint('❌ [REDIRECT] Type: ${e.runtimeType}');
     }
   }
 
@@ -118,48 +134,85 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _onGoogleSignIn() async {
     if (_isLoading) return;
+    
+    debugPrint('🔵 [AUTH] ========================================');
+    debugPrint('🔵 [AUTH] Starting Google Sign-In...');
+    debugPrint('🔵 [AUTH] Current user: ${_auth.currentUser?.email ?? "null"}');
+    debugPrint('🔵 [AUTH] Platform: ${kIsWeb ? "Web" : "Native"}');
+    debugPrint('🔵 [AUTH] Auth Domain: presto-app-74abe.firebaseapp.com');
+    
     setState(() => _isLoading = true);
     try {
       final provider = GoogleAuthProvider()
         ..setCustomParameters({'prompt': 'select_account'});
       provider.addScope('email');
       provider.addScope('profile');
+      
+      debugPrint('🔵 [AUTH] Provider configured with scopes: email, profile');
 
       if (kIsWeb) {
+        debugPrint('🔵 [AUTH] Using Web flow (Popup with Redirect fallback)');
         try {
+          debugPrint('🔵 [AUTH] Attempting popup sign-in...');
           await _auth.signInWithPopup(provider);
+          debugPrint('✅ [AUTH] Popup sign-in successful!');
+          debugPrint('✅ [AUTH] User: ${_auth.currentUser?.email}');
+          debugPrint('✅ [AUTH] UID: ${_auth.currentUser?.uid}');
           if (!mounted) return;
           showSuccessSnackBar(context, 'Connecté avec Google');
         } catch (popupError) {
-          debugPrint("POPUP BLOCKED -> Fallback to redirect: $popupError");
+          debugPrint("⚠️ [AUTH] POPUP BLOCKED or FAILED");
+          debugPrint("⚠️ [AUTH] Error type: ${popupError.runtimeType}");
+          debugPrint("⚠️ [AUTH] Error details: $popupError");
+          debugPrint("🔄 [AUTH] Fallback to redirect...");
           // Fallback redirect (ex: popup bloquée)
           await _auth.signInWithRedirect(provider);
+          debugPrint("🔄 [AUTH] Redirect initiated, browser will redirect now");
           // Le navigateur va rediriger, on ne continue pas l'exécution
           return;
         }
       } else {
+        debugPrint('🔵 [AUTH] Using Native provider flow');
         await _auth.signInWithProvider(provider);
+        debugPrint('✅ [AUTH] Native sign-in successful!');
+        debugPrint('✅ [AUTH] User: ${_auth.currentUser?.email}');
         if (!mounted) return;
         showSuccessSnackBar(context, 'Connecté avec Google');
       }
     } on FirebaseAuthException catch (e) {
-      debugPrint("GOOGLE AUTH FAIL -> code=${e.code} message=${e.message}");
+      debugPrint("❌ [AUTH] FirebaseAuthException caught");
+      debugPrint("❌ [AUTH] Code: ${e.code}");
+      debugPrint("❌ [AUTH] Message: ${e.message}");
+      debugPrint("❌ [AUTH] Plugin: ${e.plugin}");
+      debugPrint("❌ [AUTH] Stack: ${e.stackTrace}");
+      
       if (!mounted) return;
       String msg = "Erreur Google";
       if (e.code == 'popup-closed-by-user') {
         msg = "Connexion annulée";
+        debugPrint("ℹ️ [AUTH] User closed the popup");
       } else if (e.code == 'unauthorized-domain') {
         msg = "Domaine non autorisé dans Firebase Console";
+        debugPrint("⚠️ [AUTH] DOMAIN NOT AUTHORIZED!");
+        debugPrint("⚠️ [AUTH] Add this domain in Firebase Console → Authentication → Authorized domains");
+      } else if (e.code == 'operation-not-allowed') {
+        msg = "Google Sign-In non activé";
+        debugPrint("⚠️ [AUTH] GOOGLE SIGN-IN NOT ENABLED!");
+        debugPrint("⚠️ [AUTH] Enable it in Firebase Console → Authentication → Sign-in method");
       } else {
         msg = "Erreur : ${e.message ?? e.code}";
       }
       showErrorSnackBar(context, msg);
     } catch (e) {
-      debugPrint("GOOGLE AUTH FAIL -> $e");
+      debugPrint("❌ [AUTH] Unexpected error");
+      debugPrint("❌ [AUTH] Type: ${e.runtimeType}");
+      debugPrint("❌ [AUTH] Details: $e");
       if (!mounted) return;
       showErrorSnackBar(context, 'Erreur lors de la connexion : $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+      debugPrint('🔵 [AUTH] Sign-in flow completed');
+      debugPrint('🔵 [AUTH] ========================================');
     }
   }
 

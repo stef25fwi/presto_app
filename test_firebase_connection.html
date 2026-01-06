@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Test Firebase Connection - Presto App</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 { color: #333; margin-top: 0; }
+    h2 { color: #666; margin-top: 0; }
+    .status { padding: 10px; border-radius: 4px; margin: 10px 0; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .info { background: #d1ecf1; color: #0c5460; }
+    button {
+      background: #ff6b35;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    button:hover { background: #ff5722; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    pre {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+    .test-result {
+      margin: 10px 0;
+      padding: 10px;
+      border-left: 4px solid #ddd;
+    }
+    .test-pass { border-left-color: #28a745; }
+    .test-fail { border-left-color: #dc3545; }
+  </style>
+</head>
+<body>
+  <h1>🔥 Test de connexion Firebase - Presto App</h1>
+  
+  <div class="card">
+    <h2>Configuration Firebase</h2>
+    <div id="config-status">Chargement...</div>
+  </div>
+
+  <div class="card">
+    <h2>Tests d'authentification</h2>
+    <button onclick="testFirebaseInit()">1. Test Initialisation Firebase</button>
+    <button onclick="testAuthInstance()">2. Test Firebase Auth</button>
+    <button onclick="testFirestoreInstance()">3. Test Firestore</button>
+    <button onclick="testGoogleSignIn()">4. Test Google Sign-In (Popup)</button>
+    <button onclick="testGoogleRedirect()">5. Test Google Sign-In (Redirect)</button>
+    <div id="test-results" style="margin-top: 20px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>État actuel de l'authentification</h2>
+    <div id="auth-status">Non connecté</div>
+    <button onclick="signOut()">Se déconnecter</button>
+  </div>
+
+  <div class="card">
+    <h2>Logs de diagnostic</h2>
+    <pre id="logs">Prêt pour les tests...</pre>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut as firebaseSignOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+    import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+    // Configuration Firebase
+    const firebaseConfig = {
+      apiKey: 'AIzaSyB-Oo_86VpG_refQU7my0qk10tQFQDU-Fo',
+      authDomain: 'presto-app-74abe.firebaseapp.com',
+      projectId: 'presto-app-74abe',
+      storageBucket: 'presto-app-74abe.firebasestorage.app',
+      messagingSenderId: '151421230024',
+      appId: '1:151421230024:web:8b83d1d11084c5a02b3efd'
+    };
+
+    let app, auth, db;
+    let logs = [];
+
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const logMsg = `[${timestamp}] ${message}`;
+      logs.push(logMsg);
+      console.log(logMsg);
+      document.getElementById('logs').textContent = logs.join('\n');
+      
+      if (type === 'error') {
+        console.error(message);
+      }
+    }
+
+    function showResult(message, isSuccess) {
+      const resultsDiv = document.getElementById('test-results');
+      const resultDiv = document.createElement('div');
+      resultDiv.className = `test-result ${isSuccess ? 'test-pass' : 'test-fail'}`;
+      resultDiv.innerHTML = `<strong>${isSuccess ? '✅' : '❌'}</strong> ${message}`;
+      resultsDiv.appendChild(resultDiv);
+    }
+
+    // Test 1: Initialisation Firebase
+    window.testFirebaseInit = function() {
+      try {
+        app = initializeApp(firebaseConfig);
+        log('✅ Firebase initialisé avec succès', 'success');
+        showResult('Firebase initialisé', true);
+        document.getElementById('config-status').innerHTML = `
+          <div class="status success">
+            <strong>✅ Configuration validée</strong><br>
+            Project ID: ${firebaseConfig.projectId}<br>
+            Auth Domain: ${firebaseConfig.authDomain}<br>
+            App ID: ${firebaseConfig.appId}
+          </div>
+        `;
+      } catch (error) {
+        log(`❌ Erreur initialisation: ${error.message}`, 'error');
+        showResult(`Erreur initialisation: ${error.message}`, false);
+        document.getElementById('config-status').innerHTML = `
+          <div class="status error">
+            <strong>❌ Erreur de configuration</strong><br>
+            ${error.message}
+          </div>
+        `;
+      }
+    };
+
+    // Test 2: Instance Auth
+    window.testAuthInstance = function() {
+      try {
+        if (!app) {
+          testFirebaseInit();
+        }
+        auth = getAuth(app);
+        log('✅ Firebase Auth instance créée', 'success');
+        showResult('Firebase Auth OK', true);
+        
+        // Écouter les changements d'état
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            log(`👤 Utilisateur connecté: ${user.email || user.uid}`);
+            document.getElementById('auth-status').innerHTML = `
+              <div class="status success">
+                <strong>👤 Connecté</strong><br>
+                Email: ${user.email || 'N/A'}<br>
+                UID: ${user.uid}<br>
+                Provider: ${user.providerData[0]?.providerId || 'N/A'}
+              </div>
+            `;
+          } else {
+            log('👤 Aucun utilisateur connecté');
+            document.getElementById('auth-status').innerHTML = `
+              <div class="status info">
+                <strong>👤 Non connecté</strong>
+              </div>
+            `;
+          }
+        });
+      } catch (error) {
+        log(`❌ Erreur Auth: ${error.message}`, 'error');
+        showResult(`Erreur Auth: ${error.message}`, false);
+      }
+    };
+
+    // Test 3: Instance Firestore
+    window.testFirestoreInstance = async function() {
+      try {
+        if (!app) {
+          testFirebaseInit();
+        }
+        db = getFirestore(app);
+        log('✅ Firestore instance créée', 'success');
+        
+        // Essayer de lire une collection (ça peut échouer si non connecté)
+        try {
+          const offersRef = collection(db, 'offers');
+          const snapshot = await getDocs(offersRef);
+          log(`✅ Firestore accessible: ${snapshot.size} offres trouvées`);
+          showResult(`Firestore OK (${snapshot.size} offres)`, true);
+        } catch (firestoreError) {
+          log(`⚠️ Firestore connecté mais lecture limitée: ${firestoreError.message}`);
+          showResult('Firestore connecté (lecture limitée)', true);
+        }
+      } catch (error) {
+        log(`❌ Erreur Firestore: ${error.message}`, 'error');
+        showResult(`Erreur Firestore: ${error.message}`, false);
+      }
+    };
+
+    // Test 4: Google Sign-In Popup
+    window.testGoogleSignIn = async function() {
+      try {
+        if (!auth) {
+          await testAuthInstance();
+        }
+        
+        log('🔄 Tentative connexion Google (popup)...');
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        provider.addScope('email');
+        provider.addScope('profile');
+        
+        const result = await signInWithPopup(auth, provider);
+        log(`✅ Connexion réussie: ${result.user.email}`);
+        showResult(`Google Sign-In OK: ${result.user.email}`, true);
+      } catch (error) {
+        log(`❌ Erreur Google popup: [${error.code}] ${error.message}`, 'error');
+        
+        if (error.code === 'auth/popup-blocked') {
+          showResult('Popup bloquée - Utilisez le test Redirect à la place', false);
+        } else if (error.code === 'auth/popup-closed-by-user') {
+          showResult('Popup fermée par l\'utilisateur', false);
+        } else if (error.code === 'auth/unauthorized-domain') {
+          showResult('⚠️ DOMAINE NON AUTORISÉ - Ajoutez ce domaine dans Firebase Console → Authentication → Authorized domains', false);
+        } else {
+          showResult(`Erreur Google: ${error.message}`, false);
+        }
+      }
+    };
+
+    // Test 5: Google Sign-In Redirect
+    window.testGoogleRedirect = async function() {
+      try {
+        if (!auth) {
+          await testAuthInstance();
+        }
+        
+        log('🔄 Redirection vers Google Sign-In...');
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        provider.addScope('email');
+        provider.addScope('profile');
+        
+        await signInWithRedirect(auth, provider);
+        // La page va être redirigée, donc on ne verra pas la suite
+      } catch (error) {
+        log(`❌ Erreur Google redirect: [${error.code}] ${error.message}`, 'error');
+        showResult(`Erreur redirect: ${error.message}`, false);
+      }
+    };
+
+    // Déconnexion
+    window.signOut = async function() {
+      try {
+        if (!auth) {
+          await testAuthInstance();
+        }
+        await firebaseSignOut(auth);
+        log('👋 Déconnecté avec succès');
+        showResult('Déconnexion OK', true);
+      } catch (error) {
+        log(`❌ Erreur déconnexion: ${error.message}`, 'error');
+        showResult(`Erreur déconnexion: ${error.message}`, false);
+      }
+    };
+
+    // Vérifier si on revient d'un redirect
+    window.addEventListener('load', async () => {
+      log('📄 Page chargée, vérification redirect result...');
+      try {
+        testFirebaseInit();
+        await testAuthInstance();
+        
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          log(`✅ Retour de redirect Google: ${result.user.email}`);
+          showResult(`Connexion Google réussie: ${result.user.email}`, true);
+        } else {
+          log('ℹ️ Pas de redirect en attente');
+        }
+      } catch (error) {
+        if (error.code !== 'auth/no-auth-event') {
+          log(`❌ Erreur vérification redirect: [${error.code}] ${error.message}`, 'error');
+          showResult(`Erreur redirect: ${error.message}`, false);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

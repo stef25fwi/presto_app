@@ -2441,7 +2441,6 @@ class _BottomNavItem extends StatefulWidget {
   final String label;
   final bool selected;
   final bool isBig;
-  final bool isDisabled; // ✅ Nouveau paramètre
   final VoidCallback onTap;
 
   const _BottomNavItem({
@@ -2450,7 +2449,6 @@ class _BottomNavItem extends StatefulWidget {
     required this.onTap,
     this.selected = false,
     this.isBig = false,
-    this.isDisabled = false, // ✅ Défaut false
   });
 
   @override
