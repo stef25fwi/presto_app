@@ -7144,8 +7144,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      showSuccessSnackBar(context, "Erreur lors de l'upload : $e");
-      rethrow;
+      showErrorSnackBar(context, "Erreur lors de l'upload : $e");
+      debugPrint('[Upload] Erreur: $e');
     }
   }
 
@@ -9029,7 +9029,6 @@ class _AccountPageState extends State<AccountPage> {
         googleProvider.addScope('email');
         googleProvider.addScope('profile');
 
-        bool redirectHandled = false;
         try {
           _googleAuthService.logAttempt('Popup');
           await _auth.signInWithPopup(googleProvider);
@@ -9043,7 +9042,6 @@ class _AccountPageState extends State<AccountPage> {
               _googleAuthService.logFallback('Popup', 'Redirect', 
                 reason: 'Popup bloqué ou erreur interne');
               await _auth.signInWithRedirect(googleProvider);
-              redirectHandled = true;
               return; // Important: sortir ici après redirect
             } catch (redirectError) {
               _googleAuthService.logError('Redirect', redirectError);
