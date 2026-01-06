@@ -110,11 +110,11 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       showSuccessSnackBar(context, 'Connecté avec Google');
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, e.message ?? 'Erreur Google: ${e.code}');
+      debugPrint("GOOGLE AUTH FAIL -> code=${e.code} message=${e.message}");
+      rethrow;
     } catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, 'Erreur Google: $e');
+      debugPrint("GOOGLE AUTH FAIL -> $e");
+      rethrow;
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -171,7 +171,8 @@ class _ProfilePageState extends State<ProfilePage> {
       final password = _passwordCtrl.text;
 
       if (_authMode == AuthMode.login) {
-        await _auth.signInWithEmailAndPassword(email: email, password: password);
+        await _auth.signInWithEmailAndPassword(
+            email: email, password: password);
         if (!mounted) return;
         showSuccessSnackBar(context, 'Connexion réussie');
       } else {
@@ -267,7 +268,8 @@ class _ProfilePageState extends State<ProfilePage> {
         // Switch Connexion / Inscription
         Container(
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest.withValues(alpha: isDark ? 0.3 : 1),
+            color: colorScheme.surfaceContainerHighest
+                .withValues(alpha: isDark ? 0.3 : 1),
             borderRadius: BorderRadius.circular(24),
           ),
           padding: const EdgeInsets.all(4),
@@ -279,7 +281,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
-                      color: _authMode == AuthMode.login ? colorScheme.primary : Colors.transparent,
+                      color: _authMode == AuthMode.login
+                          ? colorScheme.primary
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     alignment: Alignment.center,
@@ -287,7 +291,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       'Connexion',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: _authMode == AuthMode.login ? colorScheme.onPrimary : colorScheme.onSurface,
+                        color: _authMode == AuthMode.login
+                            ? colorScheme.onPrimary
+                            : colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -299,7 +305,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
-                      color: _authMode == AuthMode.signup ? colorScheme.primary : Colors.transparent,
+                      color: _authMode == AuthMode.signup
+                          ? colorScheme.primary
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     alignment: Alignment.center,
@@ -307,7 +315,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       'Inscription',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: _authMode == AuthMode.signup ? colorScheme.onPrimary : colorScheme.onSurface,
+                        color: _authMode == AuthMode.signup
+                            ? colorScheme.onPrimary
+                            : colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -341,12 +351,16 @@ class _ProfilePageState extends State<ProfilePage> {
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(child: Divider(color: colorScheme.outline.withValues(alpha: 0.4))),
+            Expanded(
+                child:
+                    Divider(color: colorScheme.outline.withValues(alpha: 0.4))),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 8.0),
               child: Text('ou avec e-mail'),
             ),
-            Expanded(child: Divider(color: colorScheme.outline.withValues(alpha: 0.4))),
+            Expanded(
+                child:
+                    Divider(color: colorScheme.outline.withValues(alpha: 0.4))),
           ],
         ),
         const SizedBox(height: 8),
@@ -354,7 +368,8 @@ class _ProfilePageState extends State<ProfilePage> {
         // Formulaire Email
         Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Form(
@@ -424,7 +439,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                        onPressed: _isLoading ? null : () async => _onEmailAuth(),
+                      onPressed: _isLoading ? null : () async => _onEmailAuth(),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -432,8 +447,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                       child: Text(
-                        _authMode == AuthMode.login ? 'Se connecter' : 'Créer mon compte',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        _authMode == AuthMode.login
+                            ? 'Se connecter'
+                            : 'Créer mon compte',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -534,13 +552,17 @@ class _ProfilePageState extends State<ProfilePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _nameCtrl.text.isEmpty ? 'Mon profil Presto' : _nameCtrl.text,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    _nameCtrl.text.isEmpty
+                        ? 'Mon profil Presto'
+                        : _nameCtrl.text,
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Icon(Icons.verified, size: 18, color: colorScheme.primary),
+                      Icon(Icons.verified,
+                          size: 18, color: colorScheme.primary),
                       const SizedBox(width: 4),
                       Text(
                         'Compte non vérifié',
@@ -567,7 +589,8 @@ class _ProfilePageState extends State<ProfilePage> {
         _buildSectionTitle('Informations personnelles'),
         Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Form(
@@ -678,28 +701,32 @@ class _ProfilePageState extends State<ProfilePage> {
         _buildSectionTitle('Préférences'),
         Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 _buildSwitchRow(
                   title: 'Offres proches de moi',
-                  subtitle: 'Recevoir les nouvelles annonces autour de ma position.',
+                  subtitle:
+                      'Recevoir les nouvelles annonces autour de ma position.',
                   value: _notifNearby,
                   onChanged: (v) => setState(() => _notifNearby = v),
                 ),
                 const Divider(),
                 _buildSwitchRow(
                   title: 'Catégories favorites',
-                  subtitle: 'Être alerté quand une annonce correspond à mes favoris.',
+                  subtitle:
+                      'Être alerté quand une annonce correspond à mes favoris.',
                   value: _notifFavorites,
                   onChanged: (v) => setState(() => _notifFavorites = v),
                 ),
                 const Divider(),
                 _buildSwitchRow(
                   title: 'Quand on accepte mon offre',
-                  subtitle: 'Notification dès qu\'un prestataire ou un client accepte.',
+                  subtitle:
+                      'Notification dès qu\'un prestataire ou un client accepte.',
                   value: _notifAcceptOffer,
                   onChanged: (v) => setState(() => _notifAcceptOffer = v),
                 ),
@@ -720,7 +747,8 @@ class _ProfilePageState extends State<ProfilePage> {
         // Langue & thème
         Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -785,7 +813,8 @@ class _ProfilePageState extends State<ProfilePage> {
         _buildSectionTitle('Mes catégories favorites'),
         Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -821,7 +850,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                               ),
                               IconButton(
-                                icon: Icon(Icons.close, size: 20, color: colorScheme.error),
+                                icon: Icon(Icons.close,
+                                    size: 20, color: colorScheme.error),
                                 onPressed: () {
                                   setState(() {
                                     _favoriteCategories.remove(category);
@@ -837,16 +867,21 @@ class _ProfilePageState extends State<ProfilePage> {
                             children: [
                               ...subcategories.map(
                                 (sub) => Chip(
-                                  label: Text(sub, style: const TextStyle(fontSize: 12)),
+                                  label: Text(sub,
+                                      style: const TextStyle(fontSize: 12)),
                                   onDeleted: () {
                                     setState(() {
-                                      _favoriteCategories[category]?.remove(sub);
-                                      if (_favoriteCategories[category]?.isEmpty ?? false) {
+                                      _favoriteCategories[category]
+                                          ?.remove(sub);
+                                      if (_favoriteCategories[category]
+                                              ?.isEmpty ??
+                                          false) {
                                         _favoriteCategories.remove(category);
                                       }
                                     });
                                   },
-                                  backgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                                  backgroundColor: colorScheme.primaryContainer
+                                      .withValues(alpha: 0.3),
                                 ),
                               ),
                             ],
@@ -880,7 +915,8 @@ class _ProfilePageState extends State<ProfilePage> {
         _buildSectionTitle('Sécurité & aide'),
         Card(
           elevation: 1,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Column(
             children: [
               ListTile(
@@ -908,7 +944,8 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const Divider(height: 0),
               ListTile(
-                leading: Icon(Icons.delete_forever_outlined, color: colorScheme.error),
+                leading: Icon(Icons.delete_forever_outlined,
+                    color: colorScheme.error),
                 title: Text(
                   'Supprimer mon compte',
                   style: TextStyle(color: colorScheme.error),
@@ -1039,7 +1076,9 @@ class _ProfilePageState extends State<ProfilePage> {
                               _favoriteCategories[category]!.add(sub);
                             } else {
                               _favoriteCategories[category]?.remove(sub);
-                              if ((_favoriteCategories[category]?.length ?? 0) == 0) {
+                              if ((_favoriteCategories[category]?.length ??
+                                      0) ==
+                                  0) {
                                 _favoriteCategories.remove(category);
                               }
                             }

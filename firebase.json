@@ -20,7 +20,7 @@
     "rules": "firestore.rules"
   },
   "hosting": {
-    "public": "public",
+    "public": "build/web",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "headers": [
       {
@@ -31,7 +31,7 @@
       }
     ],
     "rewrites": [
-      { "source": "**", "destination": "/maintenance.html" }
+      { "source": "**", "destination": "/index.html" }
     ]
   }
 }
