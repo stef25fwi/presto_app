@@ -51,6 +51,11 @@ service cloud.firestore {
       }
     }
 
+    // ✅ Pros: chaque pro gère son doc (profil + statut)
+    match /pros/{proId} {
+      allow read, create, update, delete: if isSignedIn() && proId == uid();
+    }
+
     // ✅ Notifications globales (utilisées par l'app)
     match /notifications/{notifId} {
       // Lecture uniquement par le propriétaire
