@@ -9055,10 +9055,23 @@ class _AccountPageState extends State<AccountPage> {
                 }
                 showErrorSnackBar(context, msg);
               }
-              rethrow;
+              if (mounted) {
+                setState(() => _isLoading = false);
+              }
+              return;
             }
           }
-          rethrow;
+          
+          // Gère l'erreur popup directement
+          if (mounted) {
+            String msg = "Erreur de connexion Google. Réessaye.";
+            if (popupError.toString().contains('internal-error')) {
+              msg = "Erreur interne. Vérifie ta configuration Firebase → Authentification → OAuth.";
+            }
+            showErrorSnackBar(context, msg);
+            setState(() => _isLoading = false);
+          }
+          return;
         }
       } else {
         // ✅ Mode mobile/desktop avec GoogleSignIn
@@ -9595,28 +9608,18 @@ class _AccountPageState extends State<AccountPage> {
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: const BorderSide(color: Colors.black12),
-                        backgroundColor: Colors.white,
-                      ),
-                      onPressed: _isLoading ? null : _signInWithGoogle,
-                      icon: Image.asset(
-                        'assets/images/google_g.png',
-                        width: 18,
-                        height: 18,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(Icons.login,
-                              size: 18, color: Colors.red);
-                        },
-                      ),
-                      label: const Text(
-                        "Continuer avec Google",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                    child: ElevatedButton.icon(
+                      onPressed: _isLoading ? null : () async {
+                        try {
+                          await _signInWithGoogle();
+                        } catch (e) {
+                          if (mounted) {
+                            showErrorSnackBar(context, "Erreur de connexion. Réessaye.");
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.g_mobiledata),
+                      label: const Text("Se connecter avec Google"),
                     ),
                   ),
                   const SizedBox(height: 10),
