@@ -10,7 +10,7 @@ class DefaultFirebaseOptions {
       projectId: 'presto-app-74abe',
       storageBucket: 'presto-app-74abe.firebasestorage.app',
       messagingSenderId: '151421230024',
-      appId: '1:151421230024:web:8b83d1d11084c5a02b3efd',
+      appId: '1:151421230024:web:deb9b7cb4f744c742b3efd',
       // measurementId: '…', // optionnel, tu peux en ajouter un si Firebase te le donne
     );
   }
