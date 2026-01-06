@@ -32,6 +32,7 @@ class _AccountPremiumPageState extends State<AccountPremiumPage> {
   bool alertsDirty = false; // devient true si modifié
   String? selectedOffer; // titre sélectionné
   List<String> myOffers = const [];
+  final Map<String, String> _offerIdByTitle = {};
 
   // Catégories favorites
   String? favCategory;
@@ -153,6 +154,7 @@ class _AccountPremiumPageState extends State<AccountPremiumPage> {
         final data = doc.data();
         final t = (data['title'] ?? '').toString();
         if (t.isNotEmpty) titles.add(t);
+        _offerIdByTitle[t] = doc.id;
       }
       if (mounted) {
         setState(() {
@@ -247,13 +249,169 @@ class _AccountPremiumPageState extends State<AccountPremiumPage> {
   }
 
   void onViewOfferDetail() {
-    // TODO: open offer detail
-    _snack("➡️ Voir détail");
+    final offerTitle = selectedOffer ?? (myOffers.isNotEmpty ? myOffers.first : null);
+    if (offerTitle == null) {
+      _snack("Aucune annonce sélectionnée", error: true);
+      return;
+    }
+
+    final offerId = _offerIdByTitle[offerTitle];
+    if (offerId == null) {
+      _snack("Annonce introuvable", error: true);
+      return;
+    }
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      builder: (ctx) {
+        return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+          future: FirebaseFirestore.instance.collection('offers').doc(offerId).get(),
+          builder: (context, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
+              return const SizedBox(
+                height: 220,
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            if (!snap.hasData || !snap.data!.exists) {
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text("Annonce introuvable ou supprimée."),
+              );
+            }
+
+            final data = snap.data!.data() ?? {};
+            String s(String k) => (data[k] ?? '').toString();
+            final budget = data['budget'];
+            final budgetText = budget == null
+                ? 'Budget non renseigné'
+                : budget is num
+                    ? '${budget.toString()} €'
+                    : budget.toString();
+            final images = (data['imageUrls'] as List<dynamic>?)
+                    ?.map((e) => e.toString())
+                    .where((e) => e.isNotEmpty)
+                    .toList() ??
+                const <String>[];
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 12,
+                bottom: 12 + MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s('title').isEmpty ? offerTitle : s('title'),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      s('city').isNotEmpty ? s('city') : s('location'),
+                      style: const TextStyle(color: textMuted, fontSize: 13.5),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        if (s('category').isNotEmpty)
+                          _chip("Catégorie", s('category')),
+                        if (s('subcategory').isNotEmpty)
+                          _chip("Sous-catégorie", s('subcategory')),
+                        _chip("Budget", budgetText),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      s('description').isEmpty ? 'Pas de description.' : s('description'),
+                      style: const TextStyle(fontSize: 14.5, height: 1.35),
+                    ),
+                    if (images.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 140,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: images.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 10),
+                          itemBuilder: (_, index) {
+                            return ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: Image.network(images[index], width: 200, height: 140, fit: BoxFit.cover),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: prestoOrange,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close),
+                            label: const Text('Fermer'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> onDeleteOffer() async {
-    // TODO: delete offer in Firestore
-    _snack("Annonce supprimée 🗑️");
+    final offerTitle = selectedOffer ?? (myOffers.isNotEmpty ? myOffers.first : null);
+    if (offerTitle == null) {
+      _snack("Aucune annonce sélectionnée", error: true);
+      return;
+    }
+
+    final offerId = _offerIdByTitle[offerTitle];
+    if (offerId == null) {
+      _snack("Annonce introuvable", error: true);
+      return;
+    }
+
+    // Suppression sans confirmation complexe pour rester rapide
+    try {
+      await FirebaseFirestore.instance.collection('offers').doc(offerId).delete();
+      if (!mounted) return;
+
+      setState(() {
+        myOffers = myOffers.where((t) => t != offerTitle).toList();
+        _offerIdByTitle.remove(offerTitle);
+        if (selectedOffer == offerTitle) {
+          selectedOffer = myOffers.isNotEmpty ? myOffers.first : null;
+        }
+      });
+
+      _snack("Annonce supprimée 🗑️");
+    } catch (e) {
+      if (!mounted) return;
+      _snack("Suppression impossible: $e", error: true);
+    }
   }
 
   void onCreatePro() {
@@ -292,6 +450,20 @@ class _AccountPremiumPageState extends State<AccountPremiumPage> {
       SnackBar(
         content: Text(msg),
         backgroundColor: error ? Colors.red.shade700 : Colors.black87,
+      ),
+    );
+  }
+
+  Widget _chip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.04),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        "$label : $value",
+        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
       ),
     );
   }
