@@ -54,18 +54,18 @@ const kPrestoBlue = Color(0xFF1A73E8);
 /// ✅ Fonction utilitaire pour récupérer le statut de présence d'utilisateurs
 Future<Map<String, dynamic>> getUserPresenceStatus(List<String> userIds) async {
   if (userIds.isEmpty) return {};
-  
+
   try {
     final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
     final callable = functions.httpsCallable(
       'getUserPresenceStatus',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 10)),
     );
-    
+
     final result = await callable.call<Map<String, dynamic>>({
       'userIds': userIds,
     });
-    
+
     return result.data['statuses'] as Map<String, dynamic>? ?? {};
   } catch (e) {
     debugPrint('[Presence] Error fetching user status: $e');
@@ -77,7 +77,7 @@ Future<Map<String, dynamic>> getUserPresenceStatus(List<String> userIds) async {
 class UserStatusIndicator extends StatelessWidget {
   final String status; // 'online', 'away', 'offline'
   final double size;
-  
+
   const UserStatusIndicator({
     super.key,
     required this.status,
@@ -401,12 +401,14 @@ Future<void> main() async {
     debugPrint('=== Firebase Initialization ===');
     debugPrint('✓ Firebase initialized');
     debugPrint('✓ Auth instance: ${FirebaseAuth.instance.runtimeType}');
-    debugPrint('✓ Firestore instance: ${FirebaseFirestore.instance.runtimeType}');
+    debugPrint(
+        '✓ Firestore instance: ${FirebaseFirestore.instance.runtimeType}');
     if (kIsWeb) {
       debugPrint('✓ Platform: Web');
       debugPrint('  - Google Sign-In: Popup + Redirect fallback');
     } else {
-      debugPrint('✓ Platform: ${defaultTargetPlatform.toString().split('.').last}');
+      debugPrint(
+          '✓ Platform: ${defaultTargetPlatform.toString().split('.').last}');
     }
     debugPrint('');
 
@@ -416,7 +418,8 @@ Future<void> main() async {
     // - Web: reCAPTCHA v3 si une siteKey est fournie.
     //   Exemple:
     //   `flutter run -d chrome --dart-define=APPCHECK_RECAPTCHA_SITE_KEY=xxxxx`
-    const webRecaptchaSiteKey = String.fromEnvironment('APPCHECK_RECAPTCHA_SITE_KEY');
+    const webRecaptchaSiteKey =
+        String.fromEnvironment('APPCHECK_RECAPTCHA_SITE_KEY');
     try {
       if (kIsWeb) {
         if (webRecaptchaSiteKey.isNotEmpty) {
@@ -425,13 +428,16 @@ Future<void> main() async {
           );
           debugPrint('[AppCheck] Web activated (reCAPTCHA v3)');
         } else {
-          debugPrint('[AppCheck] Web not activated (missing APPCHECK_RECAPTCHA_SITE_KEY)');
+          debugPrint(
+              '[AppCheck] Web not activated (missing APPCHECK_RECAPTCHA_SITE_KEY)');
         }
       } else {
         await FirebaseAppCheck.instance.activate(
-          androidProvider:
-              kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-          appleProvider: kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+          androidProvider: kDebugMode
+              ? AndroidProvider.debug
+              : AndroidProvider.playIntegrity,
+          appleProvider:
+              kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
         );
       }
     } catch (e) {
@@ -508,7 +514,8 @@ class PrestoApp extends StatelessWidget {
         '/publish': (_) => const PublishOfferPage(),
         AppRoutes.toolboxHub: (_) => const ToolboxHubPage(),
         AppRoutes.toolboxCurrent: (_) => const CurrentToolboxPage(),
-        AppRoutes.entrepreneurCalculator: (_) => const EntrepreneurCalculatorPage(),
+        AppRoutes.entrepreneurCalculator: (_) =>
+            const EntrepreneurCalculatorPage(),
       },
       theme: buildPrestoTheme(),
       home: const SplashScreen(),
@@ -775,12 +782,13 @@ class _HomePageState extends State<HomePage>
     WidgetsBinding.instance.addObserver(this);
 
     // ✅ Écoute des changements de connectivité
-    _connectivitySubscription = ConnectivityState.onlineStream.listen((isOnline) {
+    _connectivitySubscription =
+        ConnectivityState.onlineStream.listen((isOnline) {
       if (mounted) {
         setState(() {
           _isOnline = isOnline;
         });
-        
+
         // Afficher un message
         if (isOnline) {
           showSuccessSnackBar(context, '✓ Connexion rétablie');
@@ -878,9 +886,9 @@ class _HomePageState extends State<HomePage>
       }
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-        data,
-        SetOptions(merge: true),
-      );
+            data,
+            SetOptions(merge: true),
+          );
     } catch (_) {
       // best-effort
     }
@@ -969,10 +977,10 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    
+
     // ✅ Marquer offline avant de quitter
     _touchPresence(status: 'offline');
-    
+
     _carouselController.dispose();
     _scrollController.dispose();
     _categoryController.dispose();
@@ -1156,7 +1164,8 @@ class _HomePageState extends State<HomePage>
       optionsBuilder: (TextEditingValue value) {
         // ✅ Ne pas afficher les suggestions quand le clavier est visible (Android fix)
         final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-        if (!_showSearchSuggestions || isKeyboardVisible) return const Iterable<String>.empty();
+        if (!_showSearchSuggestions || isKeyboardVisible)
+          return const Iterable<String>.empty();
         return _buildSearchSuggestions(value);
       },
       onSelected: selectSuggestion,
@@ -1489,7 +1498,8 @@ class _HomePageState extends State<HomePage>
     final viewInsetsBottom = MediaQuery.of(context).viewInsets.bottom;
     final bool isKeyboardVisible = viewInsetsBottom > 0;
     // N'applique le padding clavier que s'il est réellement visible pour éviter que la bottom bar reste à mi-écran
-    final double effectiveBottomInset = isKeyboardVisible ? viewInsetsBottom : 0;
+    final double effectiveBottomInset =
+        isKeyboardVisible ? viewInsetsBottom : 0;
 
     // Si le clavier est caché mais que la bottom bar était masquée (scroll), on la force à revenir en bas
     if (!isKeyboardVisible && !_showBottomBar) {
@@ -1528,7 +1538,9 @@ class _HomePageState extends State<HomePage>
                           children: [
                             _buildHomeContent(),
                             ConsultOffersPage(onScroll: _onPageScroll),
-                            PublishOfferPage(onScroll: _onPageScroll, isOnline: _isOnline), // ✅ Passer l'état
+                            PublishOfferPage(
+                                onScroll: _onPageScroll,
+                                isOnline: _isOnline), // ✅ Passer l'état
                             const MessagesPage(),
                             AccountPage(onScroll: _onPageScroll),
                           ],
@@ -1541,20 +1553,24 @@ class _HomePageState extends State<HomePage>
                             child: AnimatedSlide(
                               duration: const Duration(milliseconds: 250),
                               curve: Curves.easeInOut,
-                              offset:
-                                  _showBottomBar ? Offset.zero : const Offset(0, 1),
+                              offset: _showBottomBar
+                                  ? Offset.zero
+                                  : const Offset(0, 1),
                               child: Container(
                                 decoration: const BoxDecoration(
                                   color: kPrestoOrange,
-                                  borderRadius:
-                                      BorderRadius.vertical(top: Radius.circular(24)),
+                                  borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(24)),
                                 ),
-                                padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+                                padding:
+                                    const EdgeInsets.fromLTRB(10, 4, 10, 6),
                                 child: SafeArea(
                                   top: false,
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
                                       Expanded(
                                         child: _BottomNavItem(
@@ -1578,15 +1594,19 @@ class _HomePageState extends State<HomePage>
                                           icon: Icons.add_circle_outline,
                                           label: "Publier\nune offre",
                                           isBig: true,
-                                          isDisabled: !_isOnline, // ✅ Désactiver si offline
+                                          isDisabled:
+                                              !_isOnline, // ✅ Désactiver si offline
                                           onTap: () {
                                             if (_isOnline) {
                                               _onBottomTap(2);
                                             } else {
-                                              ScaffoldMessenger.of(context).showSnackBar(
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
                                                 const SnackBar(
-                                                  content: Text('Publication impossible en mode hors ligne'),
-                                                  backgroundColor: Colors.orange,
+                                                  content: Text(
+                                                      'Publication impossible en mode hors ligne'),
+                                                  backgroundColor:
+                                                      Colors.orange,
                                                 ),
                                               );
                                             }
@@ -1723,7 +1743,8 @@ class _HomePageState extends State<HomePage>
                                 child: SizedBox.expand(
                                   child: RepaintBoundary(
                                     child: AspectRatio(
-                                      aspectRatio: 1.3, // Optimal pour 300px de haut (390px de large)
+                                      aspectRatio:
+                                          1.3, // Optimal pour 300px de haut (390px de large)
                                       child: RandomAssetTicker(
                                         folderPrefix: 'assets/carousel_home/',
                                         interval: const Duration(seconds: 3),
@@ -2528,7 +2549,9 @@ class _BottomNavItemState extends State<_BottomNavItem>
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.isDisabled ? Colors.white.withOpacity(0.5) : Colors.white; // ✅ Grisé si désactivé
+    final color = widget.isDisabled
+        ? Colors.white.withOpacity(0.5)
+        : Colors.white; // ✅ Grisé si désactivé
     final fontWeight = widget.selected ? FontWeight.w700 : FontWeight.w500;
 
     return _TapScale(
@@ -2544,12 +2567,15 @@ class _BottomNavItemState extends State<_BottomNavItem>
                 padding: EdgeInsets.all(widget.isBig ? 6 : 4),
                 decoration: BoxDecoration(
                   color: widget.isBig
-                      ? (widget.isDisabled ? Colors.white.withOpacity(0.5) : Colors.white) // ✅ Grisé si désactivé
+                      ? (widget.isDisabled
+                          ? Colors.white.withOpacity(0.5)
+                          : Colors.white) // ✅ Grisé si désactivé
                       : widget.selected
                           ? Colors.white.withOpacity(0.35)
                           : Colors.transparent,
                   borderRadius: BorderRadius.circular(999),
-                  boxShadow: widget.isBig && !widget.isDisabled // ✅ Pas d'ombre si désactivé
+                  boxShadow: widget.isBig &&
+                          !widget.isDisabled // ✅ Pas d'ombre si désactivé
                       ? [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.35),
@@ -2571,7 +2597,9 @@ class _BottomNavItemState extends State<_BottomNavItem>
                   widget.icon,
                   size: widget.isBig ? 28 : 24,
                   color: widget.isBig
-                      ? (widget.isDisabled ? kPrestoOrange.withOpacity(0.4) : kPrestoOrange) // ✅ Grisé si désactivé
+                      ? (widget.isDisabled
+                          ? kPrestoOrange.withOpacity(0.4)
+                          : kPrestoOrange) // ✅ Grisé si désactivé
                       : color,
                 ),
               ),
@@ -3346,62 +3374,102 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           ),
           child: Column(
             children: [
-            // ✅ Tuiles cliquables pour filtres actifs
-            _buildActiveFilterChips(),
-            _buildFilterPanel(),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                key: ValueKey(
-                    _queryKey), // Force la reconstruction quand les filtres changent
-                stream: _buildQuery().snapshots(),
-                builder: (context, snapshot) {
-                  // ✅ Ne plus afficher le loader si on a déjà des données
-                  if (snapshot.connectionState == ConnectionState.waiting &&
-                      !snapshot.hasData) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                      ),
-                    );
-                  }
+              // ✅ Tuiles cliquables pour filtres actifs
+              _buildActiveFilterChips(),
+              _buildFilterPanel(),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  key: ValueKey(
+                      _queryKey), // Force la reconstruction quand les filtres changent
+                  stream: _buildQuery().snapshots(),
+                  builder: (context, snapshot) {
+                    // ✅ Ne plus afficher le loader si on a déjà des données
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        !snapshot.hasData) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                        ),
+                      );
+                    }
 
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Text(
-                          "Erreur lors du chargement des offres.\n${snapshot.error}",
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.w600,
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            "Erreur lors du chargement des offres.\n${snapshot.error}",
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }
+                      );
+                    }
 
-                  List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
-                      snapshot.data?.docs ?? [];
+                    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
+                        snapshot.data?.docs ?? [];
 
-                  if (_activeSearchQuery != null &&
-                      _activeSearchQuery!.trim().isNotEmpty) {
-                    final q = _activeSearchQuery!.trim().toLowerCase();
-                    docs = docs.where((d) {
-                      final data = d.data();
-                      final title =
-                          (data['title'] ?? '').toString().toLowerCase();
-                      final desc =
-                          (data['description'] ?? '').toString().toLowerCase();
-                      return title.contains(q) || desc.contains(q);
-                    }).toList();
-                  }
+                    if (_activeSearchQuery != null &&
+                        _activeSearchQuery!.trim().isNotEmpty) {
+                      final q = _activeSearchQuery!.trim().toLowerCase();
+                      docs = docs.where((d) {
+                        final data = d.data();
+                        final title =
+                            (data['title'] ?? '').toString().toLowerCase();
+                        final desc = (data['description'] ?? '')
+                            .toString()
+                            .toLowerCase();
+                        return title.contains(q) || desc.contains(q);
+                      }).toList();
+                    }
 
-                  // Nombre après filtrage
-                  final int resultCount = docs.length;
+                    // Nombre après filtrage
+                    final int resultCount = docs.length;
 
-                  if (docs.isEmpty) {
+                    if (docs.isEmpty) {
+                      return Column(
+                        children: [
+                          // Compteur d'annonces
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              border: Border(
+                                  bottom:
+                                      BorderSide(color: Colors.grey.shade200)),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.list_alt,
+                                    size: 18, color: Colors.grey.shade600),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '0 annonce',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Expanded(child: _EmptyOffers()),
+                        ],
+                      );
+                    }
+
+                    const int _adsEvery =
+                        8; // Bandeau pub après chaque 8 annonces
+                    final int _adSlots = docs.length ~/ _adsEvery;
+                    final int _totalItems = docs.length + _adSlots;
+
                     return Column(
                       children: [
                         // Compteur d'annonces
@@ -3418,144 +3486,106 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.list_alt,
-                                  size: 18, color: Colors.grey.shade600),
+                                  size: 18, color: kPrestoOrange),
                               const SizedBox(width: 8),
                               Text(
-                                '0 annonce',
-                                style: TextStyle(
+                                '$resultCount annonce${resultCount > 1 ? 's' : ''}',
+                                style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade700,
+                                  color: Colors.black87,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const Expanded(child: _EmptyOffers()),
+                        Expanded(
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.fromLTRB(2, 16, 2, 120),
+                            itemCount: _totalItems,
+                            itemBuilder: (context, index) {
+                              final bool isAd =
+                                  (index + 1) % (_adsEvery + 1) == 0;
+                              if (isAd) {
+                                return AdBanner(
+                                  margin: EdgeInsets.zero,
+                                  placeholderHeight: kIsWeb ? 180.0 : 100.0,
+                                  placeholderFolderPrefix:
+                                      'assets/carousel_home/',
+                                  flat: true,
+                                );
+                              }
+
+                              final int docIndex =
+                                  index - (index ~/ (_adsEvery + 1));
+                              final doc = docs[docIndex];
+                              final offerId = doc.id;
+                              final data = doc.data();
+
+                              final title =
+                                  (data['title'] ?? 'Sans titre') as String;
+                              final location = (data['location'] ??
+                                  'Lieu non précisé') as String;
+                              final category = (data['category'] ??
+                                  'Catégorie non précisée') as String;
+                              final budget = data['budget'];
+                              final description =
+                                  (data['description'] ?? '') as String;
+                              final phone = data['phone'] == null
+                                  ? null
+                                  : data['phone'] as String;
+
+                              final List<String> imageUrls =
+                                  (data['imageUrls'] as List<dynamic>? ?? [])
+                                      .map((e) => e.toString())
+                                      .toList();
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => OfferDetailPage(
+                                          offerId: offerId,
+                                          title: title,
+                                          location: location,
+                                          category: category,
+                                          subcategory: (data['subcategory'] ??
+                                              '') as String?,
+                                          budget: budget is num ? budget : null,
+                                          description: description.isEmpty
+                                              ? null
+                                              : description,
+                                          phone: phone,
+                                          imageUrls: imageUrls.isEmpty
+                                              ? null
+                                              : imageUrls,
+                                          annonceurId:
+                                              (data['userId'] ?? '') as String,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: OfferCard(
+                                    offerId: offerId,
+                                    data: data,
+                                    showActionsMenu: false,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ],
                     );
-                  }
-
-                  const int _adsEvery =
-                      8; // Bandeau pub après chaque 8 annonces
-                  final int _adSlots = docs.length ~/ _adsEvery;
-                  final int _totalItems = docs.length + _adSlots;
-
-                  return Column(
-                    children: [
-                      // Compteur d'annonces
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          border: Border(
-                              bottom: BorderSide(color: Colors.grey.shade200)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.list_alt,
-                                size: 18, color: kPrestoOrange),
-                            const SizedBox(width: 8),
-                            Text(
-                              '$resultCount annonce${resultCount > 1 ? 's' : ''}',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.fromLTRB(2, 16, 2, 120),
-                          itemCount: _totalItems,
-                          itemBuilder: (context, index) {
-                            final bool isAd =
-                                (index + 1) % (_adsEvery + 1) == 0;
-                            if (isAd) {
-                              return AdBanner(
-                                margin: EdgeInsets.zero,
-                                placeholderHeight: kIsWeb ? 180.0 : 100.0,
-                                placeholderFolderPrefix:
-                                    'assets/carousel_home/',
-                                flat: true,
-                              );
-                            }
-
-                            final int docIndex =
-                                index - (index ~/ (_adsEvery + 1));
-                            final doc = docs[docIndex];
-                            final offerId = doc.id;
-                            final data = doc.data();
-
-                            final title =
-                                (data['title'] ?? 'Sans titre') as String;
-                            final location = (data['location'] ??
-                                'Lieu non précisé') as String;
-                            final category = (data['category'] ??
-                                'Catégorie non précisée') as String;
-                            final budget = data['budget'];
-                            final description =
-                                (data['description'] ?? '') as String;
-                            final phone = data['phone'] == null
-                                ? null
-                                : data['phone'] as String;
-
-                            final List<String> imageUrls =
-                                (data['imageUrls'] as List<dynamic>? ?? [])
-                                    .map((e) => e.toString())
-                                    .toList();
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => OfferDetailPage(
-                                        offerId: offerId,
-                                        title: title,
-                                        location: location,
-                                        category: category,
-                                        subcategory: (data['subcategory'] ?? '')
-                                            as String?,
-                                        budget: budget is num ? budget : null,
-                                        description: description.isEmpty
-                                            ? null
-                                            : description,
-                                        phone: phone,
-                                        imageUrls: imageUrls.isEmpty
-                                            ? null
-                                            : imageUrls,
-                                        annonceurId:
-                                            (data['userId'] ?? '') as String,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: OfferCard(
-                                  offerId: offerId,
-                                  data: data,
-                                  showActionsMenu: false,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -4599,8 +4629,8 @@ Motif du signalement :
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-                0, 14, 0, 160), // espace pour bottomSheet, cartes pleine largeur
+            padding: const EdgeInsets.fromLTRB(0, 14, 0,
+                160), // espace pour bottomSheet, cartes pleine largeur
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -4612,175 +4642,179 @@ Motif du signalement :
 
                 // ✅ DESCRIPTION (carte)
                 _SectionCard(
-                title: "Description",
-                child: Text(
-                  descriptionText,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey.shade800,
-                    height: 1.35,
-                    fontWeight: FontWeight.w500,
+                  title: "Description",
+                  child: Text(
+                    descriptionText,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: Colors.grey.shade800,
+                      height: 1.35,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 14),
+                const SizedBox(height: 14),
 
-              // ✅ CONTACT (carte)
-              _SectionCard(
-                title: "Contact",
-                trailing: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(widget.annonceurId)
-                      .snapshots(),
-                  builder: (context, snap) {
-                    final pseudo = _extractUserPseudo(snap.data?.data());
-                    return TextButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => UserPublicProfilePage(
-                              userId: widget.annonceurId,
-                              initialPseudo: pseudo,
+                // ✅ CONTACT (carte)
+                _SectionCard(
+                  title: "Contact",
+                  trailing:
+                      StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(widget.annonceurId)
+                        .snapshots(),
+                    builder: (context, snap) {
+                      final pseudo = _extractUserPseudo(snap.data?.data());
+                      return TextButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => UserPublicProfilePage(
+                                userId: widget.annonceurId,
+                                initialPseudo: pseudo,
+                              ),
+                            ),
+                          );
+                        },
+                        icon:
+                            const Icon(Icons.person_outline_rounded, size: 18),
+                        style: TextButton.styleFrom(
+                          foregroundColor: kPrestoBlue,
+                          backgroundColor: kPrestoBlue.withOpacity(0.08),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999)),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        label: Text(
+                          pseudo,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      );
+                    },
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: const Color(0xFFFFF3E8),
+                            child: Icon(
+                              Icons.call,
+                              size: 18,
+                              color: Colors.orange.shade800,
                             ),
                           ),
-                        );
-                      },
-                      icon: const Icon(Icons.person_outline_rounded, size: 18),
-                      style: TextButton.styleFrom(
-                        foregroundColor: kPrestoBlue,
-                        backgroundColor: kPrestoBlue.withOpacity(0.08),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(999)),
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      label: Text(
-                        pseudo,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    );
-                  },
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: const Color(0xFFFFF3E8),
-                          child: Icon(
-                            Icons.call,
-                            size: 18,
-                            color: Colors.orange.shade800,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              phoneText,
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            phoneText,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
+                        ],
+                      ),
+                      if (hasPhone && !_isPhoneVisible) ...[
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _isPhoneVisible = true;
+                              });
+                            },
+                            child: const Text(
+                              "Voir le numéro",
+                              style: TextStyle(fontWeight: FontWeight.w800),
                             ),
                           ),
                         ),
                       ],
-                    ),
-                    if (hasPhone && !_isPhoneVisible) ...[
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _isPhoneVisible = true;
-                            });
-                          },
-                          child: const Text(
-                            "Voir le numéro",
-                            style: TextStyle(fontWeight: FontWeight.w800),
+                      // Bouton messagerie retiré
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // ✅ PUBLICITÉ - Carrousel pleine largeur sans rebord
+                AdBanner(
+                  margin: EdgeInsets.zero,
+                  placeholderHeight: kIsWeb ? 220.0 : 140.0,
+                  placeholderFolderPrefix: 'assets/carousel_home/',
+                  flat: true,
+                  animatePlaceholder: false,
+                ),
+
+                const SizedBox(height: 14),
+
+                // ✅ PARTAGER (carte) -> boutons comme mockup
+                _SectionCard(
+                  title: "Partager l’annonce",
+                  trailing: const Icon(Icons.chevron_right),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _ShareButton(
+                          icon: SvgPicture.network(
+                            'https://cdn.simpleicons.org/whatsapp',
+                            width: 18,
+                            height: 18,
+                            placeholderBuilder: (context) => Icon(
+                                Icons.chat_bubble_outline,
+                                size: 18,
+                                color: Colors.grey.shade800),
                           ),
+                          label: "WhatsApp",
+                          onPressed: () => _shareOn(context, 'whatsapp'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _ShareButton(
+                          icon: SvgPicture.network(
+                            'https://cdn.simpleicons.org/facebook',
+                            width: 18,
+                            height: 18,
+                            placeholderBuilder: (context) => Icon(
+                                Icons.facebook,
+                                size: 18,
+                                color: Colors.grey.shade800),
+                          ),
+                          label: "Facebook",
+                          onPressed: () => _shareOn(context, 'facebook'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _ShareButton(
+                          icon: const Icon(Icons.link,
+                              size: 18, color: Colors.grey),
+                          label: "Copier le lien",
+                          onPressed: () {
+                            // si tu veux, tu peux faire Clipboard.setData(...)
+                            // mais pour rester simple, on peut réutiliser un share "instagram" ou snackbar
+                            showSuccessSnackBar(
+                                context, "Lien copié (à brancher).");
+                          },
                         ),
                       ),
                     ],
-                    // Bouton messagerie retiré
-                  ],
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // ✅ PUBLICITÉ - Carrousel pleine largeur sans rebord
-              AdBanner(
-                margin: EdgeInsets.zero,
-                placeholderHeight: kIsWeb ? 220.0 : 140.0,
-                placeholderFolderPrefix: 'assets/carousel_home/',
-                flat: true,
-                animatePlaceholder: false,
-              ),
-
-              const SizedBox(height: 14),
-
-              // ✅ PARTAGER (carte) -> boutons comme mockup
-              _SectionCard(
-                title: "Partager l’annonce",
-                trailing: const Icon(Icons.chevron_right),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _ShareButton(
-                        icon: SvgPicture.network(
-                          'https://cdn.simpleicons.org/whatsapp',
-                          width: 18,
-                          height: 18,
-                          placeholderBuilder: (context) => Icon(
-                              Icons.chat_bubble_outline,
-                              size: 18,
-                              color: Colors.grey.shade800),
-                        ),
-                        label: "WhatsApp",
-                        onPressed: () => _shareOn(context, 'whatsapp'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _ShareButton(
-                        icon: SvgPicture.network(
-                          'https://cdn.simpleicons.org/facebook',
-                          width: 18,
-                          height: 18,
-                          placeholderBuilder: (context) => Icon(Icons.facebook,
-                              size: 18, color: Colors.grey.shade800),
-                        ),
-                        label: "Facebook",
-                        onPressed: () => _shareOn(context, 'facebook'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _ShareButton(
-                        icon: const Icon(Icons.link,
-                            size: 18, color: Colors.grey),
-                        label: "Copier le lien",
-                        onPressed: () {
-                          // si tu veux, tu peux faire Clipboard.setData(...)
-                          // mais pour rester simple, on peut réutiliser un share "instagram" ou snackbar
-                          showSuccessSnackBar(
-                              context, "Lien copié (à brancher).");
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -5344,7 +5378,8 @@ class _MessagesPageState extends State<MessagesPage> {
     }
 
     final bgColor = _isDarkMode ? const Color(0xFF1a1a1a) : Colors.white;
-    final bubbleColor = _isDarkMode ? const Color(0xFF303030) : const Color(0xFFf0f0f0);
+    final bubbleColor =
+        _isDarkMode ? const Color(0xFF303030) : const Color(0xFFf0f0f0);
     final textColor = _isDarkMode ? Colors.white : Colors.black87;
 
     return GestureDetector(
@@ -5358,7 +5393,8 @@ class _MessagesPageState extends State<MessagesPage> {
             "Mes messages",
             style: kPrestoAppBarTitleStyle,
           ),
-          backgroundColor: _isDarkMode ? const Color(0xFF1a1a1a) : kPrestoOrange,
+          backgroundColor:
+              _isDarkMode ? const Color(0xFF1a1a1a) : kPrestoOrange,
           foregroundColor: Colors.white,
           actions: [
             PopupMenuButton<String>(
@@ -5396,230 +5432,232 @@ class _MessagesPageState extends State<MessagesPage> {
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
           child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance
-              .collection('conversations')
-              .where('participants', arrayContains: userId)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    _isDarkMode ? Colors.white : kPrestoOrange,
-                  ),
-                ),
-              );
-            }
-
-            if (snapshot.hasError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    "Erreur lors du chargement des conversations.\n${snapshot.error}",
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.w600,
+            stream: FirebaseFirestore.instance
+                .collection('conversations')
+                .where('participants', arrayContains: userId)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      _isDarkMode ? Colors.white : kPrestoOrange,
                     ),
                   ),
-                ),
-              );
-            }
+                );
+              }
 
-            final docs = (snapshot.data?.docs ?? []).toList()
-              ..sort((a, b) {
-                final aData = a.data();
-                final bData = b.data();
-
-                final aTs = aData['lastMessageAt'];
-                final bTs = bData['lastMessageAt'];
-
-                final aTime = (aTs is Timestamp) ? aTs.toDate() : null;
-                final bTime = (bTs is Timestamp) ? bTs.toDate() : null;
-
-                if (aTime == null && bTime == null) return 0;
-                if (aTime == null) return 1;
-                if (bTime == null) return -1;
-                return bTime.compareTo(aTime);
-              });
-
-            if (docs.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.chat_bubble_outline,
-                        size: 64,
-                        color: _isDarkMode ? Colors.white24 : Colors.black26,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Aucune conversation pour l’instant",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: textColor,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Accepte une offre ou envoie un message depuis le détail d’une annonce pour démarrer une conversation.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: _isDarkMode ? Colors.white54 : Colors.black54,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            return ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              itemCount: docs.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 4),
-              itemBuilder: (context, index) {
-                final data = docs[index].data();
-                final conversationId = docs[index].id;
-
-                final offerTitle =
-                    (data['offerTitle'] ?? 'Conversation iliprestō') as String;
-                final lastMessage =
-                    (data['lastMessage'] ?? 'Pas encore de message') as String;
-                final ts = data['lastMessageAt'] as Timestamp?;
-                final timeLabel = formatTimeLabel(ts);
-
-                final Map<String, dynamic> unreadMap =
-                    (data['unreadCount'] as Map<String, dynamic>?) ?? {};
-                final int unread =
-                    (unreadMap[userId] is int) ? unreadMap[userId] as int : 0;
-
-                return _TapScale(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ConversationPage(
-                          conversationId: conversationId,
-                          offerTitle: offerTitle,
-                        ),
-                      ),
-                    );
-                  },
-                  child: Card(
-                    color: bubbleColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    elevation: _isDarkMode ? 0 : 1.5,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: 46,
-                              height: 46,
-                              color: _isDarkMode
-                                  ? const Color(0xFF454545)
-                                  : const Color(0xFFFFF3E0),
-                              child: Icon(
-                                Icons.work_outline,
-                                color: _isDarkMode
-                                    ? Colors.orange[300]
-                                    : kPrestoOrange,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  offerTitle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                    color: textColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  lastMessage,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: unread > 0
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
-                                    color: unread > 0
-                                        ? textColor
-                                        : (_isDarkMode
-                                            ? Colors.white54
-                                            : Colors.black54),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                timeLabel,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: _isDarkMode
-                                      ? Colors.white38
-                                      : Colors.black45,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              if (unread > 0)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: kPrestoBlue,
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Text(
-                                    unread.toString(),
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ],
+              if (snapshot.hasError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      "Erreur lors du chargement des conversations.\n${snapshot.error}",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 );
-              },
-            );
-          },
-        ),
+              }
+
+              final docs = (snapshot.data?.docs ?? []).toList()
+                ..sort((a, b) {
+                  final aData = a.data();
+                  final bData = b.data();
+
+                  final aTs = aData['lastMessageAt'];
+                  final bTs = bData['lastMessageAt'];
+
+                  final aTime = (aTs is Timestamp) ? aTs.toDate() : null;
+                  final bTime = (bTs is Timestamp) ? bTs.toDate() : null;
+
+                  if (aTime == null && bTime == null) return 0;
+                  if (aTime == null) return 1;
+                  if (bTime == null) return -1;
+                  return bTime.compareTo(aTime);
+                });
+
+              if (docs.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.chat_bubble_outline,
+                          size: 64,
+                          color: _isDarkMode ? Colors.white24 : Colors.black26,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Aucune conversation pour l’instant",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Accepte une offre ou envoie un message depuis le détail d’une annonce pour démarrer une conversation.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color:
+                                _isDarkMode ? Colors.white54 : Colors.black54,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return ListView.separated(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                itemCount: docs.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 4),
+                itemBuilder: (context, index) {
+                  final data = docs[index].data();
+                  final conversationId = docs[index].id;
+
+                  final offerTitle = (data['offerTitle'] ??
+                      'Conversation iliprestō') as String;
+                  final lastMessage = (data['lastMessage'] ??
+                      'Pas encore de message') as String;
+                  final ts = data['lastMessageAt'] as Timestamp?;
+                  final timeLabel = formatTimeLabel(ts);
+
+                  final Map<String, dynamic> unreadMap =
+                      (data['unreadCount'] as Map<String, dynamic>?) ?? {};
+                  final int unread =
+                      (unreadMap[userId] is int) ? unreadMap[userId] as int : 0;
+
+                  return _TapScale(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ConversationPage(
+                            conversationId: conversationId,
+                            offerTitle: offerTitle,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Card(
+                      color: bubbleColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      elevation: _isDarkMode ? 0 : 1.5,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                width: 46,
+                                height: 46,
+                                color: _isDarkMode
+                                    ? const Color(0xFF454545)
+                                    : const Color(0xFFFFF3E0),
+                                child: Icon(
+                                  Icons.work_outline,
+                                  color: _isDarkMode
+                                      ? Colors.orange[300]
+                                      : kPrestoOrange,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    offerTitle,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                      color: textColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    lastMessage,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: unread > 0
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      color: unread > 0
+                                          ? textColor
+                                          : (_isDarkMode
+                                              ? Colors.white54
+                                              : Colors.black54),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  timeLabel,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: _isDarkMode
+                                        ? Colors.white38
+                                        : Colors.black45,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                if (unread > 0)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: kPrestoBlue,
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      unread.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -7348,67 +7386,110 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ),
           child: SafeArea(
             child: Form(
-            key: _formKey,
-            autovalidateMode: _attemptedSubmit
-                ? AutovalidateMode.always
-                : AutovalidateMode.disabled,
-            child: ListView(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              children: [
-                // Bouton Premium AI avec enregistrement audio
-                Center(
-                  child: _isListening
-                      ? _buildMicRecordingButton()
-                      : PremiumAiButton(
-                          onPressed: _isAnalyzing ? null : _startMic,
-                          label: 'Décrire mon besoin (IA)',
-                          isLoading: _isAnalyzing,
-                        ),
-                ),
-                if (_isListening) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _PulsingDot(delay: 0),
-                      const SizedBox(width: 8),
-                      _PulsingDot(delay: 200),
-                      const SizedBox(width: 8),
-                      _PulsingDot(delay: 400),
-                    ],
+              key: _formKey,
+              autovalidateMode: _attemptedSubmit
+                  ? AutovalidateMode.always
+                  : AutovalidateMode.disabled,
+              child: ListView(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // Bouton Premium AI avec enregistrement audio
+                  Center(
+                    child: _isListening
+                        ? _buildMicRecordingButton()
+                        : PremiumAiButton(
+                            onPressed: _isAnalyzing ? null : _startMic,
+                            label: 'Décrire mon besoin (IA)',
+                            isLoading: _isAnalyzing,
+                          ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Enregistrement en cours...',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                      fontStyle: FontStyle.italic,
+                  if (_isListening) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _PulsingDot(delay: 0),
+                        const SizedBox(width: 8),
+                        _PulsingDot(delay: 200),
+                        const SizedBox(width: 8),
+                        _PulsingDot(delay: 400),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (_useCloudStt && !kIsWeb)
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Enregistrement en cours...',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (_useCloudStt && !kIsWeb)
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: kPrestoBlue.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                                color: kPrestoBlue.withOpacity(0.25)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(Icons.cloud_done,
+                                  size: 16, color: kPrestoBlue),
+                              SizedBox(width: 6),
+                              Text(
+                                'Qualité audio améliorée (Cloud)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: kPrestoBlue,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                  if (_isAnalyzing) ...[
+                    const SizedBox(height: 8),
                     Center(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                            horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: kPrestoBlue.withOpacity(0.08),
+                          color: kPrestoBlue.withOpacity(0.06),
                           borderRadius: BorderRadius.circular(999),
                           border:
-                              Border.all(color: kPrestoBlue.withOpacity(0.25)),
+                              Border.all(color: kPrestoBlue.withOpacity(0.2)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.cloud_done,
-                                size: 16, color: kPrestoBlue),
-                            SizedBox(width: 6),
+                          children: [
+                            _useCloudStt && !kIsWeb
+                                ? const Icon(Icons.cloud_sync,
+                                    size: 16, color: kPrestoBlue)
+                                : SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          kPrestoBlue),
+                                    ),
+                                  ),
+                            const SizedBox(width: 8),
                             Text(
-                              'Qualité audio améliorée (Cloud)',
-                              style: TextStyle(
+                              _useCloudStt && !kIsWeb
+                                  ? 'Transcription et analyse (Cloud)…'
+                                  : 'Analyse en cours…',
+                              style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: kPrestoBlue,
@@ -7418,115 +7499,33 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         ),
                       ),
                     ),
-                ],
-                if (_isAnalyzing) ...[
-                  const SizedBox(height: 8),
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: kPrestoBlue.withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: kPrestoBlue.withOpacity(0.2)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _useCloudStt && !kIsWeb
-                              ? const Icon(Icons.cloud_sync,
-                                  size: 16, color: kPrestoBlue)
-                              : SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        kPrestoBlue),
-                                  ),
-                                ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _useCloudStt && !kIsWeb
-                                ? 'Transcription et analyse (Cloud)…'
-                                : 'Analyse en cours…',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: kPrestoBlue,
-                            ),
-                          ),
-                        ],
-                      ),
+                  ],
+                  const SizedBox(height: 16),
+
+                  // TITRE
+                  TextFormField(
+                    controller: _titleController,
+                    decoration: InputDecoration(
+                      label: _requiredLabel('Titre de l’offre'),
+                      border: const OutlineInputBorder(),
+                      hintText: 'Ex : Monter un meuble IKEA',
                     ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Merci de saisir un titre';
+                      }
+                      return null;
+                    },
                   ),
-                ],
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                // TITRE
-                TextFormField(
-                  controller: _titleController,
-                  decoration: InputDecoration(
-                    label: _requiredLabel('Titre de l’offre'),
-                    border: const OutlineInputBorder(),
-                    hintText: 'Ex : Monter un meuble IKEA',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Merci de saisir un titre';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // CATÉGORIE
-                DropdownButtonFormField<String>(
-                  value: _category,
-                  dropdownColor: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  decoration: InputDecoration(
-                    label: _requiredLabel('Catégorie'),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
-                  ),
-                  items: _categories
-                      .map(
-                        (cat) => DropdownMenuItem(
-                          value: cat,
-                          child: Text(cat),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _category = value;
-                      _selectedSubCategory = null;
-                    });
-                    _recompute();
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Merci de choisir une catégorie';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // SOUS-CATÉGORIE (dropdown dynamique)
-                if (_category != null)
+                  // CATÉGORIE
                   DropdownButtonFormField<String>(
-                    value: _selectedSubCategory,
+                    value: _category,
                     dropdownColor: Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     decoration: InputDecoration(
-                      label: _requiredLabel('Sous-catégorie'),
+                      label: _requiredLabel('Catégorie'),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -7535,309 +7534,350 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 14),
                     ),
-                    items: (kCategorySubcategories[_category] ?? [])
+                    items: _categories
                         .map(
-                          (sub) => DropdownMenuItem(
-                            value: sub,
-                            child: Text(sub),
+                          (cat) => DropdownMenuItem(
+                            value: cat,
+                            child: Text(cat),
                           ),
                         )
                         .toList(),
                     onChanged: (value) {
                       setState(() {
-                        _selectedSubCategory = value;
+                        _category = value;
+                        _selectedSubCategory = null;
                       });
                       _recompute();
                     },
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Merci de choisir une sous-catégorie';
+                        return 'Merci de choisir une catégorie';
                       }
                       return null;
                     },
                   ),
-                if (_category != null) const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                // DESCRIPTION
-                TextFormField(
-                  controller: _descriptionController,
-                  decoration: InputDecoration(
-                    label: _requiredLabel('Description détaillée'),
-                    alignLabelWithHint: true,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
-                  ),
-                  minLines: 4,
-                  maxLines: 8,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Merci de décrire votre besoin';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // PHOTOS (max 2)
-                Row(
-                  children: const [
-                    Text(
-                      'Photos de l\'offre',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      '(optionnel)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _PhotoSelectorTile(
-                        label: 'Photo 1',
-                        file: _selectedPhotos.isNotEmpty
-                            ? _selectedPhotos[0]
-                            : null,
-                        bytes: _selectedPhotoBytes.isNotEmpty
-                            ? _selectedPhotoBytes[0]
-                            : null,
-                        onTap: () => _onPhotoTileTap(0),
-                        onLongPress: () => _pickImage(0),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _PhotoSelectorTile(
-                        label: 'Photo 2',
-                        file: _selectedPhotos.length > 1
-                            ? _selectedPhotos[1]
-                            : null,
-                        bytes: _selectedPhotoBytes.length > 1
-                            ? _selectedPhotoBytes[1]
-                            : null,
-                        onTap: () => _onPhotoTileTap(1),
-                        onLongPress: () => _pickImage(1),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // VILLE + CP + AUTOCOMPLÉTION
-                const Text(
-                  'Localisation',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _locationController,
-                  decoration: InputDecoration(
-                    label: _requiredLabel('Ville'),
-                    hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
-                  ),
-                  onChanged: _onCityChanged,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Merci de saisir une ville';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _postalCodeController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Code postal',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
-                  ),
-                  onChanged: _onPostalCodeChanged,
-                ),
-                _buildCitySuggestionsOverlay(),
-                const SizedBox(height: 16),
-
-                // TÉLÉPHONE avec sélection indicatif
-                PhoneInputFieldCompact(
-                  controller: _phoneController,
-                  label: _requiredLabel('Téléphone (pour être rappelé)'),
-                  hintText: '612345678',
-                  initialCountryCode: _selectedPhoneCountryCode,
-                  onCountryCodeChanged: (code) {
-                    setState(() {
-                      _selectedPhoneCountryCode = code;
-                    });
-                  },
-                  onPhoneChanged: (_) => _recompute(),
-                  validator: (value) {
-                    return _isValidPhoneFR(value ?? '')
-                        ? null
-                        : 'Téléphone invalide';
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // URGENT
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black12),
-                  ),
-                  child: SwitchListTile.adaptive(
-                    value: _isUrgent,
-                    onChanged: (v) {
-                      setState(() => _isUrgent = v);
-                    },
-                    title: const Text(
-                      'Urgent',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    activeColor: kPrestoOrange,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 2,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // BUDGET
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: DropdownButtonFormField<String>(
-                        value: _budgetType,
-                        dropdownColor: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        items: _budgetTypes
-                            .map((t) =>
-                                DropdownMenuItem(value: t, child: Text(t)))
-                            .toList(),
-                        onChanged: (v) {
-                          if (v == null) return;
-                          setState(() {
-                            _budgetType = v;
-                            if (_budgetType == 'À négocier') {
-                              _budgetController.clear();
-                            }
-                          });
-                          _recompute();
-                        },
-                        decoration: InputDecoration(
-                          labelText: 'Budget',
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 14),
+                  // SOUS-CATÉGORIE (dropdown dynamique)
+                  if (_category != null)
+                    DropdownButtonFormField<String>(
+                      value: _selectedSubCategory,
+                      dropdownColor: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      decoration: InputDecoration(
+                        label: _requiredLabel('Sous-catégorie'),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 3,
-                      child: TextFormField(
-                        controller: _budgetController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9., ]'))
-                        ],
-                        decoration: InputDecoration(
-                          label: _budgetType == 'Fixe'
-                              ? _requiredLabel('Montant (€)')
-                              : null,
-                          labelText:
-                              _budgetType == 'Fixe' ? null : 'Montant (€)',
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 14),
-                        ),
-                        enabled: _budgetType == 'Fixe',
-                        validator: (value) {
-                          if (_budgetType == 'À négocier') return null;
-                          final b = _parseBudget(value ?? '');
-                          if (b == null) return 'Montant invalide';
-                          if (b <= 0) return 'Le montant doit être > 0';
-                          return null;
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                const Text(
-                  '* Champs obligatoires',
-                  style: TextStyle(color: Colors.black54),
-                ),
-                const SizedBox(height: 10),
-
-                // BOUTON PUBLIER
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _isSubmitting ? null : _onPublishPressed,
-                    icon: _isSubmitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                      items: (kCategorySubcategories[_category] ?? [])
+                          .map(
+                            (sub) => DropdownMenuItem(
+                              value: sub,
+                              child: Text(sub),
+                            ),
                           )
-                        : const Icon(Icons.send),
-                    label: Text(
-                      _isSubmitting
-                          ? 'Publication en cours...'
-                          : 'Publier mon offre',
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedSubCategory = value;
+                        });
+                        _recompute();
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Merci de choisir une sous-catégorie';
+                        }
+                        return null;
+                      },
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: publishVisuallyDisabled
-                          ? Colors.grey.shade400
-                          : kPrestoOrange,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                  if (_category != null) const SizedBox(height: 16),
+
+                  // DESCRIPTION
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(
+                      label: _requiredLabel('Description détaillée'),
+                      alignLabelWithHint: true,
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
+                    ),
+                    minLines: 4,
+                    maxLines: 8,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Merci de décrire votre besoin';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // PHOTOS (max 2)
+                  Row(
+                    children: const [
+                      Text(
+                        'Photos de l\'offre',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        '(optionnel)',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _PhotoSelectorTile(
+                          label: 'Photo 1',
+                          file: _selectedPhotos.isNotEmpty
+                              ? _selectedPhotos[0]
+                              : null,
+                          bytes: _selectedPhotoBytes.isNotEmpty
+                              ? _selectedPhotoBytes[0]
+                              : null,
+                          onTap: () => _onPhotoTileTap(0),
+                          onLongPress: () => _pickImage(0),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _PhotoSelectorTile(
+                          label: 'Photo 2',
+                          file: _selectedPhotos.length > 1
+                              ? _selectedPhotos[1]
+                              : null,
+                          bytes: _selectedPhotoBytes.length > 1
+                              ? _selectedPhotoBytes[1]
+                              : null,
+                          onTap: () => _onPhotoTileTap(1),
+                          onLongPress: () => _pickImage(1),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // VILLE + CP + AUTOCOMPLÉTION
+                  const Text(
+                    'Localisation',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _locationController,
+                    decoration: InputDecoration(
+                      label: _requiredLabel('Ville'),
+                      hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
+                    ),
+                    onChanged: _onCityChanged,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Merci de saisir une ville';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _postalCodeController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Code postal',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
+                    ),
+                    onChanged: _onPostalCodeChanged,
+                  ),
+                  _buildCitySuggestionsOverlay(),
+                  const SizedBox(height: 16),
+
+                  // TÉLÉPHONE avec sélection indicatif
+                  PhoneInputFieldCompact(
+                    controller: _phoneController,
+                    label: _requiredLabel('Téléphone (pour être rappelé)'),
+                    hintText: '612345678',
+                    initialCountryCode: _selectedPhoneCountryCode,
+                    onCountryCodeChanged: (code) {
+                      setState(() {
+                        _selectedPhoneCountryCode = code;
+                      });
+                    },
+                    onPhoneChanged: (_) => _recompute(),
+                    validator: (value) {
+                      return _isValidPhoneFR(value ?? '')
+                          ? null
+                          : 'Téléphone invalide';
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // URGENT
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.black12),
+                    ),
+                    child: SwitchListTile.adaptive(
+                      value: _isUrgent,
+                      onChanged: (v) {
+                        setState(() => _isUrgent = v);
+                      },
+                      title: const Text(
+                        'Urgent',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      activeColor: kPrestoOrange,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 2,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+
+                  // BUDGET
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: DropdownButtonFormField<String>(
+                          value: _budgetType,
+                          dropdownColor: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          items: _budgetTypes
+                              .map((t) =>
+                                  DropdownMenuItem(value: t, child: Text(t)))
+                              .toList(),
+                          onChanged: (v) {
+                            if (v == null) return;
+                            setState(() {
+                              _budgetType = v;
+                              if (_budgetType == 'À négocier') {
+                                _budgetController.clear();
+                              }
+                            });
+                            _recompute();
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Budget',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 14),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 3,
+                        child: TextFormField(
+                          controller: _budgetController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                                RegExp(r'[0-9., ]'))
+                          ],
+                          decoration: InputDecoration(
+                            label: _budgetType == 'Fixe'
+                                ? _requiredLabel('Montant (€)')
+                                : null,
+                            labelText:
+                                _budgetType == 'Fixe' ? null : 'Montant (€)',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 14),
+                          ),
+                          enabled: _budgetType == 'Fixe',
+                          validator: (value) {
+                            if (_budgetType == 'À négocier') return null;
+                            final b = _parseBudget(value ?? '');
+                            if (b == null) return 'Montant invalide';
+                            if (b <= 0) return 'Le montant doit être > 0';
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  const Text(
+                    '* Champs obligatoires',
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // BOUTON PUBLIER
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isSubmitting ? null : _onPublishPressed,
+                      icon: _isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.send),
+                      label: Text(
+                        _isSubmitting
+                            ? 'Publication en cours...'
+                            : 'Publier mon offre',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: publishVisuallyDisabled
+                            ? Colors.grey.shade400
+                            : kPrestoOrange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -7975,9 +8015,9 @@ class _AccountPageState extends State<AccountPage> {
         data['status'] = status;
       }
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-        data,
-        SetOptions(merge: true),
-      );
+            data,
+            SetOptions(merge: true),
+          );
     } catch (_) {
       // best-effort
     }
@@ -7991,12 +8031,12 @@ class _AccountPageState extends State<AccountPage> {
       // ✅ Métriques enrichies
       final platform = kIsWeb ? 'web' : defaultTargetPlatform.name;
       final deviceType = _getDeviceType();
-      
+
       final callable = _functions.httpsCallable(
         'trackUserLogin',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 10)),
       );
-      
+
       await callable.call<dynamic>({
         'authMethod': authMethod,
         'platform': platform,
@@ -8011,7 +8051,7 @@ class _AccountPageState extends State<AccountPage> {
       await _touchPresence(status: 'online');
     }
   }
-  
+
   String _getDeviceType() {
     if (kIsWeb) return 'web';
     switch (defaultTargetPlatform) {
@@ -8457,13 +8497,13 @@ class _AccountPageState extends State<AccountPage> {
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
     });
-    
+
     // Sur Web, vérifie si l'utilisateur revient d'un redirect Google Sign-In
     if (kIsWeb) {
       _checkGoogleRedirectResult();
     }
   }
-  
+
   Future<void> _checkGoogleRedirectResult() async {
     try {
       final result = await _auth.getRedirectResult();
@@ -8477,9 +8517,11 @@ class _AccountPageState extends State<AccountPage> {
       if (!mounted) return;
       String msg = "Erreur Google";
       if (e.code == 'unauthorized-domain') {
-        msg = "Domaine non autorisé. Ajoute ce domaine dans Firebase Console → Authentication → Authorized domains.";
+        msg =
+            "Domaine non autorisé. Ajoute ce domaine dans Firebase Console → Authentication → Authorized domains.";
       } else if (e.code == 'operation-not-allowed') {
-        msg = "Google Sign-In non activé. Active-le dans Firebase Console → Authentication → Sign-in method.";
+        msg =
+            "Google Sign-In non activé. Active-le dans Firebase Console → Authentication → Sign-in method.";
       } else if (e.code != 'invalid-credential' && e.code != 'no-auth-event') {
         msg = "Erreur Google : ${e.message ?? e.code}";
         showErrorSnackBar(context, msg);
@@ -8511,16 +8553,16 @@ class _AccountPageState extends State<AccountPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      
+
       // ✅ Tracking de connexion
       await _trackLogin(authMethod: 'email', isNewUser: false);
-      
+
       if (!mounted) return;
       showSuccessSnackBar(context, "Connexion réussie");
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       String errorMsg;
-      
+
       switch (e.code) {
         case 'user-not-found':
           errorMsg = "Aucun compte associé à cet email.";
@@ -8546,7 +8588,7 @@ class _AccountPageState extends State<AccountPage> {
         default:
           errorMsg = e.message ?? "Erreur de connexion : ${e.code}";
       }
-      
+
       showErrorSnackBar(context, errorMsg);
     } catch (e) {
       if (!mounted) return;
@@ -8631,7 +8673,7 @@ class _AccountPageState extends State<AccountPage> {
       }
     } catch (e) {
       debugPrint('[Profile] Erreur chargement profil: $e');
-      
+
       // Retry automatique jusqu'à 3 fois
       if (!isRetry && _profileLoadRetries < _maxProfileLoadRetries) {
         _profileLoadRetries++;
@@ -8641,7 +8683,7 @@ class _AccountPageState extends State<AccountPage> {
           return;
         }
       }
-      
+
       _favoriteCategories = <String>{};
       _selectedFavoriteCategories = <String>{};
       _selectedFavoriteSubcategories = <String>{};
@@ -8668,11 +8710,13 @@ class _AccountPageState extends State<AccountPage> {
       return false;
     }
     if (pseudo.length < 2) {
-      showErrorSnackBar(context, "Le pseudo doit contenir au moins 2 caractères");
+      showErrorSnackBar(
+          context, "Le pseudo doit contenir au moins 2 caractères");
       return false;
     }
     if (pseudo.length > 50) {
-      showErrorSnackBar(context, "Le pseudo ne doit pas dépasser 50 caractères");
+      showErrorSnackBar(
+          context, "Le pseudo ne doit pas dépasser 50 caractères");
       return false;
     }
     if (!RegExp(r'^[a-zA-Z0-9àâäæéèêëïîôùûüœçÀÂÄÆÉÈÊËÏÎÔÙÛÜŒÇ\s\-_\.]+$')
@@ -8729,7 +8773,8 @@ class _AccountPageState extends State<AccountPage> {
         'phone': phone,
         'favoriteCategories': _favoriteCategories.toList(),
         'selectedFavoriteCategories': _selectedFavoriteCategories.toList(),
-        'selectedFavoriteSubcategories': _selectedFavoriteSubcategories.toList(),
+        'selectedFavoriteSubcategories':
+            _selectedFavoriteSubcategories.toList(),
         'profileUpdatedAt': FieldValue.serverTimestamp(),
         'profileCompleteness': _calculateProfileCompleteness(),
       };
@@ -8744,8 +8789,8 @@ class _AccountPageState extends State<AccountPage> {
       if (pseudo.isNotEmpty) {
         try {
           await user.updateDisplayName(pseudo).timeout(
-            const Duration(seconds: 5),
-          );
+                const Duration(seconds: 5),
+              );
         } catch (e) {
           debugPrint('[Profile] Erreur mise à jour displayName: $e');
           // Continue même si échoue
@@ -9023,10 +9068,10 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<void> _signInWithGoogle() async {
     setState(() => _isLoading = true);
-    
+
     try {
-      _googleAuthService.logAttempt('signInWithGoogle', 
-        details: kIsWeb ? 'Mode Web' : 'Mode Mobile');
+      _googleAuthService.logAttempt('signInWithGoogle',
+          details: kIsWeb ? 'Mode Web' : 'Mode Mobile');
 
       if (kIsWeb) {
         // ✅ Configuration du provider Google avec paramètres optimaux
@@ -9044,18 +9089,18 @@ class _AccountPageState extends State<AccountPage> {
           _googleAuthService.logSuccess('Popup', _auth.currentUser?.email);
         } catch (popupError) {
           _googleAuthService.logError('Popup', popupError);
-          
+
           // ✅ Fallback automatique vers redirect
           if (_googleAuthService.shouldFallbackToRedirect(popupError)) {
             try {
-              _googleAuthService.logFallback('Popup', 'Redirect', 
-                reason: 'Popup bloqué ou erreur interne');
+              _googleAuthService.logFallback('Popup', 'Redirect',
+                  reason: 'Popup bloqué ou erreur interne');
               await _auth.signInWithRedirect(googleProvider);
               return; // Important: sortir ici après redirect
             } catch (redirectError) {
               _googleAuthService.logError('Redirect', redirectError);
               if (!mounted) return;
-              
+
               final msg = _googleAuthService.getErrorMessage(redirectError);
               if (msg.isNotEmpty) {
                 showErrorSnackBar(context, msg);
@@ -9066,10 +9111,10 @@ class _AccountPageState extends State<AccountPage> {
               return;
             }
           }
-          
+
           // Erreur qui n'est pas un popup bloqué
           if (!mounted) return;
-          
+
           final msg = _googleAuthService.getErrorMessage(popupError);
           if (msg.isNotEmpty) {
             showErrorSnackBar(context, msg);
@@ -9100,7 +9145,8 @@ class _AccountPageState extends State<AccountPage> {
               .collection('users')
               .doc(user.uid)
               .get();
-          final isNew = !userDoc.exists || userDoc.data()?['lastLoginAt'] == null;
+          final isNew =
+              !userDoc.exists || userDoc.data()?['lastLoginAt'] == null;
           await _trackLogin(authMethod: 'google', isNewUser: isNew);
         } catch (trackingError) {
           _googleAuthService.logError('Tracking', trackingError);
@@ -9111,31 +9157,32 @@ class _AccountPageState extends State<AccountPage> {
       if (!mounted) return;
       _googleAuthService.logSuccess('signInWithGoogle', user?.email);
       showSuccessSnackBar(context, "✓ Connecté avec Google");
-      
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e, st) {
+      debugPrint(
+          "❌ FirebaseAuthException: code=${e.code} message=${e.message}");
+      debugPrintStack(stackTrace: st);
       _googleAuthService.logError('signInWithGoogle', e);
       if (!mounted) return;
-      
+
       final msg = _googleAuthService.getErrorMessage(e);
       if (msg.isNotEmpty) {
         showErrorSnackBar(context, msg);
       }
-      
-    } on PlatformException catch (e) {
+    } on PlatformException catch (e, st) {
+      debugPrint("❌ PlatformException: code=${e.code} message=${e.message}");
+      debugPrintStack(stackTrace: st);
       _googleAuthService.logError('signInWithGoogle', e);
       if (!mounted) return;
-      
+
       final msg = _googleAuthService.getErrorMessage(e);
       if (msg.isNotEmpty) {
         showErrorSnackBar(context, msg);
       }
-      
     } catch (e, stackTrace) {
       _googleAuthService.logError('signInWithGoogle', e);
       debugPrint('Stack trace: $stackTrace');
       if (!mounted) return;
       showErrorSnackBar(context, "Erreur lors de la connexion. Réessaye.");
-      
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -9157,7 +9204,7 @@ class _AccountPageState extends State<AccountPage> {
     setState(() => _isLoading = true);
     try {
       debugPrint('[Apple Sign-In] Démarrage de l\'authentification Apple...');
-      
+
       // ✅ Récupération des credentials Apple avec scopes complets
       final appleCredential = await SignInWithApple.getAppleIDCredential(
         scopes: [
@@ -9166,13 +9213,16 @@ class _AccountPageState extends State<AccountPage> {
         ],
         webAuthenticationOptions: kIsWeb
             ? WebAuthenticationOptions(
-                clientId: 'your.app.bundle.id', // À configurer dans Firebase Console
-                redirectUri: Uri.parse('https://your-project.firebaseapp.com/__/auth/handler'),
+                clientId:
+                    'your.app.bundle.id', // À configurer dans Firebase Console
+                redirectUri: Uri.parse(
+                    'https://your-project.firebaseapp.com/__/auth/handler'),
               )
             : null,
       );
 
-      debugPrint('[Apple Sign-In] Credentials reçus: ${appleCredential.identityToken != null}');
+      debugPrint(
+          '[Apple Sign-In] Credentials reçus: ${appleCredential.identityToken != null}');
 
       // ✅ Validation des credentials
       if (appleCredential.identityToken == null) {
@@ -9187,14 +9237,17 @@ class _AccountPageState extends State<AccountPage> {
 
       // ✅ Connexion Firebase
       final userCredential = await _auth.signInWithCredential(oauthCredential);
-      debugPrint('[Apple Sign-In] Utilisateur connecté: ${userCredential.user?.uid}');
+      debugPrint(
+          '[Apple Sign-In] Utilisateur connecté: ${userCredential.user?.uid}');
 
       // ✅ Mise à jour du profil si nom disponible (première connexion uniquement)
       if (userCredential.additionalUserInfo?.isNewUser == true) {
-        final fullName = appleCredential.givenName != null || appleCredential.familyName != null
-            ? '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'.trim()
+        final fullName = appleCredential.givenName != null ||
+                appleCredential.familyName != null
+            ? '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'
+                .trim()
             : null;
-        
+
         if (fullName != null && fullName.isNotEmpty) {
           try {
             await userCredential.user?.updateDisplayName(fullName);
@@ -9220,11 +9273,11 @@ class _AccountPageState extends State<AccountPage> {
 
       if (!mounted) return;
       showSuccessSnackBar(context, "Connecté avec Apple ✓");
-      
     } on SignInWithAppleAuthorizationException catch (e) {
       if (!mounted) return;
-      debugPrint('[Apple Sign-In] Authorization error: ${e.code} - ${e.message}');
-      
+      debugPrint(
+          '[Apple Sign-In] Authorization error: ${e.code} - ${e.message}');
+
       String msg;
       switch (e.code) {
         case AuthorizationErrorCode.canceled:
@@ -9247,15 +9300,15 @@ class _AccountPageState extends State<AccountPage> {
           break;
       }
       showErrorSnackBar(context, msg);
-      
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       debugPrint('[Apple Sign-In] Firebase error: ${e.code} - ${e.message}');
-      
+
       String msg;
       switch (e.code) {
         case 'account-exists-with-different-credential':
-          msg = "Un compte existe déjà avec cet email. Utilise ta méthode de connexion habituelle.";
+          msg =
+              "Un compte existe déjà avec cet email. Utilise ta méthode de connexion habituelle.";
           break;
         case 'invalid-credential':
           msg = "Credentials Apple invalides. Réessaye.";
@@ -9277,12 +9330,10 @@ class _AccountPageState extends State<AccountPage> {
           msg = "Erreur Firebase : ${e.message ?? e.code}";
       }
       showErrorSnackBar(context, msg);
-      
     } catch (e) {
       if (!mounted) return;
       debugPrint('[Apple Sign-In] Unexpected error: $e');
       showErrorSnackBar(context, "Erreur inattendue : $e");
-      
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -9290,16 +9341,17 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
-    
+
     if (email.isEmpty || !email.contains('@')) {
-      showErrorSnackBar(context, "Entre un email valide pour réinitialiser ton mot de passe.");
+      showErrorSnackBar(context,
+          "Entre un email valide pour réinitialiser ton mot de passe.");
       return;
     }
-    
+
     setState(() => _isLoading = true);
     try {
       await _auth.sendPasswordResetEmail(email: email);
-      
+
       if (!mounted) return;
       showSuccessSnackBar(
         context,
@@ -9308,7 +9360,7 @@ class _AccountPageState extends State<AccountPage> {
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       String errorMsg;
-      
+
       switch (e.code) {
         case 'user-not-found':
           errorMsg = "Aucun compte associé à cet email.";
@@ -9322,7 +9374,7 @@ class _AccountPageState extends State<AccountPage> {
         default:
           errorMsg = e.message ?? "Erreur : ${e.code}";
       }
-      
+
       showErrorSnackBar(context, errorMsg);
     } catch (e) {
       if (!mounted) return;
@@ -9396,226 +9448,233 @@ class _AccountPageState extends State<AccountPage> {
                           TextFormField(
                             controller: _emailController,
                             decoration: const InputDecoration(
-                            labelText: "Email",
+                              labelText: "Email",
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return "Indique un email";
+                              }
+                              if (!value.contains('@')) {
+                                return "Email invalide";
+                              }
+                              return null;
+                            },
                           ),
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return "Indique un email";
-                            }
-                            if (!value.contains('@')) {
-                              return "Email invalide";
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _passwordController,
-                          decoration: InputDecoration(
-                            labelText: "Mot de passe",
-                            helperText: _isLoginMode ? null : "Au moins 8 caractères recommandés",
-                            helperStyle: const TextStyle(fontSize: 11),
-                          ),
-                          obscureText: true,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return "Mot de passe requis";
-                            }
-                            if (_isLoginMode) {
-                              return null; // Pas de validation stricte en mode connexion
-                            }
-                            if (value.trim().length < 8) {
-                              return "Au moins 8 caractères pour plus de sécurité";
-                            }
-                            return null;
-                          },
-                        ),
-                        if (!_isLoginMode) ...[
                           const SizedBox(height: 12),
                           TextFormField(
-                            controller: _passwordConfirmController,
-                            decoration: const InputDecoration(
-                              labelText: "Confirme le mot de passe",
+                            controller: _passwordController,
+                            decoration: InputDecoration(
+                              labelText: "Mot de passe",
+                              helperText: _isLoginMode
+                                  ? null
+                                  : "Au moins 8 caractères recommandés",
+                              helperStyle: const TextStyle(fontSize: 11),
                             ),
                             obscureText: true,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return "Mot de passe requis";
+                              }
+                              if (_isLoginMode) {
+                                return null; // Pas de validation stricte en mode connexion
+                              }
+                              if (value.trim().length < 8) {
+                                return "Au moins 8 caractères pour plus de sécurité";
+                              }
+                              return null;
+                            },
                           ),
-                        ],
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: kPrestoOrange,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                          if (!_isLoginMode) ...[
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _passwordConfirmController,
+                              decoration: const InputDecoration(
+                                labelText: "Confirme le mot de passe",
+                              ),
+                              obscureText: true,
                             ),
-                            onPressed: _isLoading
-                                ? null
-                                : () {
-                                    if (_isLoginMode) {
-                                      _signInWithEmail();
-                                    } else {
-                                      _registerWithEmail();
-                                    }
-                                  },
-                            child: _isLoading
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
+                          ],
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: kPrestoOrange,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                              onPressed: _isLoading
+                                  ? null
+                                  : () {
+                                      if (_isLoginMode) {
+                                        _signInWithEmail();
+                                      } else {
+                                        _registerWithEmail();
+                                      }
+                                    },
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          Colors.white,
+                                        ),
+                                      ),
+                                    )
+                                  : Text(
+                                      _isLoginMode
+                                          ? "Se connecter"
+                                          : "Créer mon compte",
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 15,
                                       ),
                                     ),
-                                  )
-                                : Text(
-                                    _isLoginMode
-                                        ? "Se connecter"
-                                        : "Créer mon compte",
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 15,
-                                    ),
-                                  ),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _isLoginMode = !_isLoginMode;
-                        });
-                      },
-                      child: Text(
-                        _isLoginMode
-                            ? "Pas encore de compte ? S’inscrire"
-                            : "Déjà un compte ? Se connecter",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: kPrestoBlue,
+                    const SizedBox(height: 16),
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _isLoginMode = !_isLoginMode;
+                          });
+                        },
+                        child: Text(
+                          _isLoginMode
+                              ? "Pas encore de compte ? S’inscrire"
+                              : "Déjà un compte ? Se connecter",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: kPrestoBlue,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  if (_isLoginMode) ...[
-                    const SizedBox(height: 4),
-                    Center(
-                      child: TextButton(
-                        onPressed: _isLoading ? null : _resetPassword,
-                        child: const Text(
-                          "Mot de passe oublié ?",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: kPrestoOrange,
-                            fontSize: 13,
+                    if (_isLoginMode) ...[
+                      const SizedBox(height: 4),
+                      Center(
+                        child: TextButton(
+                          onPressed: _isLoading ? null : _resetPassword,
+                          child: const Text(
+                            "Mot de passe oublié ?",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: kPrestoOrange,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Ou se connecter avec",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                try {
+                                  await _signInWithGoogle();
+                                } catch (e) {
+                                  if (mounted) {
+                                    showErrorSnackBar(context,
+                                        "Erreur de connexion. Réessaye.");
+                                  }
+                                }
+                              },
+                        icon: const Icon(Icons.g_mobiledata),
+                        label: const Text("Se connecter avec Google"),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: const BorderSide(color: Colors.black12),
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: _isLoading ? null : _signInWithApple,
+                        icon: const Icon(
+                          Icons.apple,
+                          size: 20,
+                        ),
+                        label: const Text(
+                          "Continuer avec Apple",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Vous êtes une entreprise ?",
+                            style: TextStyle(
+                                fontWeight: FontWeight.w800, fontSize: 16),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
+                            "Abonnement bientôt disponible.",
+                            style: TextStyle(color: Colors.black54),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (_) => const ProProfilePage()),
+                                );
+                              },
+                              icon: const Icon(Icons.business_center_outlined),
+                              label: const Text("Créer un compte Pro"),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                  const SizedBox(height: 16),
-                  const Divider(),
-                  const SizedBox(height: 12),
-                  const Text(
-                    "Ou se connecter avec",
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : () async {
-                        try {
-                          await _signInWithGoogle();
-                        } catch (e) {
-                          if (mounted) {
-                            showErrorSnackBar(context, "Erreur de connexion. Réessaye.");
-                          }
-                        }
-                      },
-                      icon: const Icon(Icons.g_mobiledata),
-                      label: const Text("Se connecter avec Google"),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: const BorderSide(color: Colors.black12),
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: _isLoading ? null : _signInWithApple,
-                      icon: const Icon(
-                        Icons.apple,
-                        size: 20,
-                      ),
-                      label: const Text(
-                        "Continuer avec Apple",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Vous êtes une entreprise ?",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 16),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
-                          "Abonnement bientôt disponible.",
-                          style: TextStyle(color: Colors.black54),
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const ProProfilePage()),
-                              );
-                            },
-                            icon: const Icon(Icons.business_center_outlined),
-                            label: const Text("Créer un compte Pro"),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -9662,401 +9721,146 @@ class _AccountPageState extends State<AccountPage> {
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                padding: const EdgeInsets.only(bottom: 120),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 42,
-                            backgroundColor: kPrestoOrange.withOpacity(0.1),
-                            backgroundImage: user.photoURL != null
-                                ? NetworkImage(user.photoURL!)
-                                : null,
-                            child: user.photoURL == null
-                                ? const Icon(
-                                    Icons.person,
-                                    size: 42,
-                                    color: kPrestoOrange,
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            displayName,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            user.email ?? "",
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          // ✅ Indicateur de complétude du profil
-                          if (_profileLoaded)
-                            Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF5F5F5),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    "Complétude du profil",
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: LinearProgressIndicator(
-                                      value: _calculateProfileCompleteness(),
-                                      minHeight: 6,
-                                      backgroundColor: Colors.grey.shade300,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        _calculateProfileCompleteness() >= 1.0
-                                            ? Colors.green
-                                            : _calculateProfileCompleteness() >= 0.75
-                                                ? Colors.orange
-                                                : Colors.red,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${(_calculateProfileCompleteness() * 100).toStringAsFixed(0)}% complet',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.black54,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          if (_profileLoadError)
-                            Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade50,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.warning_amber, size: 14, color: Colors.red.shade700),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'Erreur chargement profil',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.red.shade700,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            "Tu restes connecté automatiquement.\nTu ne seras déconnecté que si tu appuies sur « Se déconnecter ».",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      "Mon profil",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        children: [
-                          TextField(
-                            controller: _profilePseudoController,
-                            enabled: _isEditingProfile,
-                            decoration: InputDecoration(
-                              labelText: "Pseudo",
-                              hintText: "Ex : DJ Heat, Stef971...",
-                              filled: !_isEditingProfile,
-                              fillColor: !_isEditingProfile
-                                  ? Colors.grey.shade100
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.only(bottom: 120),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 42,
+                              backgroundColor: kPrestoOrange.withOpacity(0.1),
+                              backgroundImage: user.photoURL != null
+                                  ? NetworkImage(user.photoURL!)
+                                  : null,
+                              child: user.photoURL == null
+                                  ? const Icon(
+                                      Icons.person,
+                                      size: 42,
+                                      color: kPrestoOrange,
+                                    )
                                   : null,
                             ),
-                          ),
-                          const SizedBox(height: 10),
-                          AbsorbPointer(
-                            absorbing: !_isEditingProfile,
-                            child: Opacity(
-                              opacity: _isEditingProfile ? 1.0 : 0.6,
-                              child: Autocomplete<CityRecord>(
-                                displayStringForOption: (city) =>
-                                    '${city.name} (${city.cp})',
-                                optionsBuilder: (TextEditingValue value) {
-                                  final query = value.text.trim();
-                                  if (query.length < 2) {
-                                    return const Iterable<CityRecord>.empty();
-                                  }
-                                  return CitySearch.instance
-                                      .search(query, limit: 10);
-                                },
-                                onSelected: (CityRecord city) {
-                                  setState(() {
-                                    _profileCityController.text =
-                                        '${city.name} (${city.cp})';
-                                  });
-                                },
-                                fieldViewBuilder: (context, textController,
-                                    focusNode, onFieldSubmitted) {
-                                  // Synchroniser avec le controller principal
-                                  if (_profileCityController.text.isNotEmpty &&
-                                      textController.text !=
-                                          _profileCityController.text) {
-                                    WidgetsBinding.instance
-                                        .addPostFrameCallback((_) {
-                                      if (!mounted) return;
-                                      if (textController.text !=
-                                          _profileCityController.text) {
-                                        textController.text =
-                                            _profileCityController.text;
-                                      }
-                                    });
-                                  }
-
-                                  return TextField(
-                                    controller: textController,
-                                    focusNode: focusNode,
-                                    enabled: _isEditingProfile,
-                                    decoration: InputDecoration(
-                                      labelText: "Ville",
-                                      hintText: "Ex : Baie-Mahault",
-                                      filled: !_isEditingProfile,
-                                      fillColor: !_isEditingProfile
-                                          ? Colors.grey.shade100
-                                          : null,
+                            const SizedBox(height: 10),
+                            Text(
+                              displayName,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              user.email ?? "",
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            // ✅ Indicateur de complétude du profil
+                            if (_profileLoaded)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 8, horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF5F5F5),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      "Complétude du profil",
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black54,
+                                      ),
                                     ),
-                                    onChanged: (value) {
-                                      _profileCityController.text = value;
-                                    },
-                                  );
-                                },
-                                optionsViewBuilder:
-                                    (context, onSelected, options) {
-                                  return Align(
-                                    alignment: Alignment.topLeft,
-                                    child: Material(
-                                      elevation: 4.0,
-                                      child: Container(
-                                        constraints: const BoxConstraints(
-                                            maxHeight: 200),
-                                        width:
-                                            MediaQuery.of(context).size.width -
-                                                80,
-                                        child: ListView.builder(
-                                          padding: EdgeInsets.zero,
-                                          shrinkWrap: true,
-                                          itemCount: options.length,
-                                          itemBuilder: (context, index) {
-                                            final city =
-                                                options.elementAt(index);
-                                            return ListTile(
-                                              dense: true,
-                                              title: Text(
-                                                  '${city.name} (${city.cp})'),
-                                              subtitle:
-                                                  Text('Dept ${city.dept}'),
-                                              onTap: () => onSelected(city),
-                                            );
-                                          },
+                                    const SizedBox(height: 6),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: LinearProgressIndicator(
+                                        value: _calculateProfileCompleteness(),
+                                        minHeight: 6,
+                                        backgroundColor: Colors.grey.shade300,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          _calculateProfileCompleteness() >= 1.0
+                                              ? Colors.green
+                                              : _calculateProfileCompleteness() >=
+                                                      0.75
+                                                  ? Colors.orange
+                                                  : Colors.red,
                                         ),
                                       ),
                                     ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          AbsorbPointer(
-                            absorbing: !_isEditingProfile,
-                            child: Opacity(
-                              opacity: _isEditingProfile ? 1.0 : 0.6,
-                              child: PhoneInputFieldCompact(
-                                controller: _profilePhoneController,
-                                labelText: 'Téléphone',
-                                hintText: '690123456',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _isEditingProfile
-                                    ? kPrestoOrange
-                                    : kPrestoBlue,
-                                foregroundColor: Colors.white,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
-                              ),
-                              onPressed: _isSavingProfile
-                                  ? null
-                                  : () {
-                                      if (_isEditingProfile) {
-                                        _saveProfile(user);
-                                      } else {
-                                        setState(
-                                            () => _isEditingProfile = true);
-                                      }
-                                    },
-                              icon: _isSavingProfile
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                                Colors.white),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${(_calculateProfileCompleteness() * 100).toStringAsFixed(0)}% complet',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.black54,
                                       ),
-                                    )
-                                  : Icon(_isEditingProfile
-                                      ? Icons.save_outlined
-                                      : Icons.edit_outlined),
-                              label: Text(
-                                _isSavingProfile
-                                    ? "Enregistrement..."
-                                    : _isEditingProfile
-                                        ? "Enregistrer mon profil"
-                                        : "Modifier mon profil",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14,
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      "Mes messages",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Retrouve toutes les conversations liées à tes offres ou aux offres auxquelles tu as répondu.",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const MessagesPage(),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.chat_bubble_outline),
-                              label: const Text(
-                                "Ouvrir mes messages",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
+                            if (_profileLoadError)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 8, horizontal: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.warning_amber,
+                                        size: 14, color: Colors.red.shade700),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Erreur chargement profil',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.red.shade700,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              "Tu restes connecté automatiquement.\nTu ne seras déconnecté que si tu appuies sur « Se déconnecter ».",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      "Mes annonces publiées",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                      const SizedBox(height: 24),
+                      const Text(
+                        "Mon profil",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    RepaintBoundary(
-                      child: UserOffersSection(userId: user.uid),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      "Mes catégories favorites",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    RepaintBoundary(
-                      child: Container(
+                      const SizedBox(height: 8),
+                      Container(
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(18),
@@ -10068,261 +9872,524 @@ class _AccountPageState extends State<AccountPage> {
                             ),
                           ],
                         ),
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          children: [
+                            TextField(
+                              controller: _profilePseudoController,
+                              enabled: _isEditingProfile,
+                              decoration: InputDecoration(
+                                labelText: "Pseudo",
+                                hintText: "Ex : DJ Heat, Stef971...",
+                                filled: !_isEditingProfile,
+                                fillColor: !_isEditingProfile
+                                    ? Colors.grey.shade100
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            AbsorbPointer(
+                              absorbing: !_isEditingProfile,
+                              child: Opacity(
+                                opacity: _isEditingProfile ? 1.0 : 0.6,
+                                child: Autocomplete<CityRecord>(
+                                  displayStringForOption: (city) =>
+                                      '${city.name} (${city.cp})',
+                                  optionsBuilder: (TextEditingValue value) {
+                                    final query = value.text.trim();
+                                    if (query.length < 2) {
+                                      return const Iterable<CityRecord>.empty();
+                                    }
+                                    return CitySearch.instance
+                                        .search(query, limit: 10);
+                                  },
+                                  onSelected: (CityRecord city) {
+                                    setState(() {
+                                      _profileCityController.text =
+                                          '${city.name} (${city.cp})';
+                                    });
+                                  },
+                                  fieldViewBuilder: (context, textController,
+                                      focusNode, onFieldSubmitted) {
+                                    // Synchroniser avec le controller principal
+                                    if (_profileCityController
+                                            .text.isNotEmpty &&
+                                        textController.text !=
+                                            _profileCityController.text) {
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        if (!mounted) return;
+                                        if (textController.text !=
+                                            _profileCityController.text) {
+                                          textController.text =
+                                              _profileCityController.text;
+                                        }
+                                      });
+                                    }
+
+                                    return TextField(
+                                      controller: textController,
+                                      focusNode: focusNode,
+                                      enabled: _isEditingProfile,
+                                      decoration: InputDecoration(
+                                        labelText: "Ville",
+                                        hintText: "Ex : Baie-Mahault",
+                                        filled: !_isEditingProfile,
+                                        fillColor: !_isEditingProfile
+                                            ? Colors.grey.shade100
+                                            : null,
+                                      ),
+                                      onChanged: (value) {
+                                        _profileCityController.text = value;
+                                      },
+                                    );
+                                  },
+                                  optionsViewBuilder:
+                                      (context, onSelected, options) {
+                                    return Align(
+                                      alignment: Alignment.topLeft,
+                                      child: Material(
+                                        elevation: 4.0,
+                                        child: Container(
+                                          constraints: const BoxConstraints(
+                                              maxHeight: 200),
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width -
+                                              80,
+                                          child: ListView.builder(
+                                            padding: EdgeInsets.zero,
+                                            shrinkWrap: true,
+                                            itemCount: options.length,
+                                            itemBuilder: (context, index) {
+                                              final city =
+                                                  options.elementAt(index);
+                                              return ListTile(
+                                                dense: true,
+                                                title: Text(
+                                                    '${city.name} (${city.cp})'),
+                                                subtitle:
+                                                    Text('Dept ${city.dept}'),
+                                                onTap: () => onSelected(city),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            AbsorbPointer(
+                              absorbing: !_isEditingProfile,
+                              child: Opacity(
+                                opacity: _isEditingProfile ? 1.0 : 0.6,
+                                child: PhoneInputFieldCompact(
+                                  controller: _profilePhoneController,
+                                  labelText: 'Téléphone',
+                                  hintText: '690123456',
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _isEditingProfile
+                                      ? kPrestoOrange
+                                      : kPrestoBlue,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 10),
+                                ),
+                                onPressed: _isSavingProfile
+                                    ? null
+                                    : () {
+                                        if (_isEditingProfile) {
+                                          _saveProfile(user);
+                                        } else {
+                                          setState(
+                                              () => _isEditingProfile = true);
+                                        }
+                                      },
+                                icon: _isSavingProfile
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  Colors.white),
+                                        ),
+                                      )
+                                    : Icon(_isEditingProfile
+                                        ? Icons.save_outlined
+                                        : Icons.edit_outlined),
+                                label: Text(
+                                  _isSavingProfile
+                                      ? "Enregistrement..."
+                                      : _isEditingProfile
+                                          ? "Enregistrer mon profil"
+                                          : "Modifier mon profil",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        "Mes messages",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.all(14),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              "Sélectionne les catégories pour lesquelles tu veux être notifié quand une nouvelle annonce est publiée.",
+                              "Retrouve toutes les conversations liées à tes offres ou aux offres auxquelles tu as répondu.",
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.black54,
                               ),
                             ),
                             const SizedBox(height: 10),
-                            InkWell(
-                              onTap: _openCategoryPickerSheet,
-                              borderRadius: BorderRadius.circular(12),
-                              child: InputDecorator(
-                                decoration: InputDecoration(
-                                  labelText: 'Catégories',
-                                  filled: true,
-                                  fillColor: const Color(0xFFF9F9F9),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 10,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        _draftFavoriteSelections
-                                                .where((e) => !e.contains('—'))
-                                                .isEmpty
-                                            ? 'Choisir des catégories'
-                                            : '${_draftFavoriteSelections.where((e) => !e.contains('—')).length} catégorie(s) sélectionnée(s)',
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ),
-                                    const Icon(
-                                      Icons.arrow_drop_down,
-                                      color: Colors.black54,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            InkWell(
-                              onTap: _openSubcategoryPickerSheet,
-                              borderRadius: BorderRadius.circular(12),
-                              child: InputDecorator(
-                                decoration: InputDecoration(
-                                  labelText: 'Sous-catégories',
-                                  filled: true,
-                                  fillColor: const Color(0xFFF9F9F9),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 10,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        _draftFavoriteSelections
-                                                .where((e) => e.contains('—'))
-                                                .isEmpty
-                                            ? 'Choisir des sous-catégories'
-                                            : '${_draftFavoriteSelections.where((e) => e.contains('—')).length} sous-catégorie(s) sélectionnée(s)',
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ),
-                                    const Icon(
-                                      Icons.arrow_drop_down,
-                                      color: Colors.black54,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
                             SizedBox(
                               width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: kPrestoBlue,
-                                  foregroundColor: Colors.white,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const MessagesPage(),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.chat_bubble_outline),
+                                label: const Text(
+                                  "Ouvrir mes messages",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                                onPressed: _isSavingProfile
-                                    ? null
-                                    : () => _applyDraftFavorites(user),
-                                child: _isSavingProfile
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                            Colors.white,
-                                          ),
-                                        ),
-                                      )
-                                    : const Text(
-                                        'Valider mes alertes',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: 15,
-                                        ),
-                                      ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            kPrestoOrange.withOpacity(0.15),
-                            kPrestoBlue.withOpacity(0.1),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                      const SizedBox(height: 24),
+                      const Text(
+                        "Mes annonces publiées",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
                         ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: kPrestoOrange.withOpacity(0.3),
-                          width: 2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: kPrestoOrange.withOpacity(0.15),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                      const SizedBox(height: 8),
+                      RepaintBoundary(
+                        child: UserOffersSection(userId: user.uid),
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        "Mes catégories favorites",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      RepaintBoundary(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: kPrestoOrange,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Icon(
-                                  Icons.business_center,
-                                  color: Colors.white,
-                                  size: 24,
+                              const Text(
+                                "Sélectionne les catégories pour lesquelles tu veux être notifié quand une nouvelle annonce est publiée.",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black54,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Text(
-                                  "Vous êtes une entreprise ?",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 17,
-                                    color: Colors.black87,
+                              const SizedBox(height: 10),
+                              InkWell(
+                                onTap: _openCategoryPickerSheet,
+                                borderRadius: BorderRadius.circular(12),
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: 'Catégories',
+                                    filled: true,
+                                    fillColor: const Color(0xFFF9F9F9),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
                                   ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          _draftFavoriteSelections
+                                                  .where(
+                                                      (e) => !e.contains('—'))
+                                                  .isEmpty
+                                              ? 'Choisir des catégories'
+                                              : '${_draftFavoriteSelections.where((e) => !e.contains('—')).length} catégorie(s) sélectionnée(s)',
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.arrow_drop_down,
+                                        color: Colors.black54,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              InkWell(
+                                onTap: _openSubcategoryPickerSheet,
+                                borderRadius: BorderRadius.circular(12),
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    labelText: 'Sous-catégories',
+                                    filled: true,
+                                    fillColor: const Color(0xFFF9F9F9),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          _draftFavoriteSelections
+                                                  .where((e) => e.contains('—'))
+                                                  .isEmpty
+                                              ? 'Choisir des sous-catégories'
+                                              : '${_draftFavoriteSelections.where((e) => e.contains('—')).length} sous-catégorie(s) sélectionnée(s)',
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                      ),
+                                      const Icon(
+                                        Icons.arrow_drop_down,
+                                        color: Colors.black54,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: kPrestoBlue,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                  onPressed: _isSavingProfile
+                                      ? null
+                                      : () => _applyDraftFavorites(user),
+                                  child: _isSavingProfile
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Valider mes alertes',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 15,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
-                            "Abonnement bientôt disponible.",
-                            style: TextStyle(
-                              color: Colors.black87,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: kPrestoOrange,
-                                foregroundColor: Colors.white,
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const ProProfilePage()),
-                                );
-                              },
-                              icon: const Icon(Icons.business_center_outlined,
-                                  size: 20),
-                              label: const Text(
-                                "Créer un compte Pro",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 28),
-                    _buildAdminSpaceEntry(user),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _signOut,
-                        icon: const Icon(Icons.logout),
-                        label: const Text(
-                          "Se déconnecter",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              kPrestoOrange.withOpacity(0.15),
+                              kPrestoBlue.withOpacity(0.1),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: kPrestoOrange.withOpacity(0.3),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: kPrestoOrange.withOpacity(0.15),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: kPrestoOrange,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.business_center,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    "Vous êtes une entreprise ?",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 17,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
+                              "Abonnement bientôt disponible.",
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: kPrestoOrange,
+                                  foregroundColor: Colors.white,
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => const ProProfilePage()),
+                                  );
+                                },
+                                icon: const Icon(Icons.business_center_outlined,
+                                    size: 20),
+                                label: const Text(
+                                  "Créer un compte Pro",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      _buildAdminSpaceEntry(user),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _signOut,
+                          icon: const Icon(Icons.logout),
+                          label: const Text(
+                            "Se déconnecter",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -10516,8 +10583,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
         final ids = docs.map((d) => d.id).toSet();
         if (_selectedOfferId == null || !ids.contains(_selectedOfferId)) {
-          _selectedOfferId =
-              docs.isNotEmpty ? docs.first.id : null;
+          _selectedOfferId = docs.isNotEmpty ? docs.first.id : null;
         }
       });
     } catch (e) {
