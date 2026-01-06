@@ -1,0 +1,10 @@
+{
+  "name": "test-firebase-api",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Test des clés API Firebase",
+  "main": "test_api.js",
+  "scripts": {
+    "test": "node test_api.js"
+  }
+}
