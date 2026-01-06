@@ -36,7 +36,6 @@ import 'pages/toolbox_hub_page.dart';
 import 'services/city_search.dart';
 import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
-import 'services/connectivity_service.dart';
 import 'services/google_auth_service.dart';
 import 'pages/pro_profile_page.dart';
 import 'pages/legal_info_page.dart';
@@ -490,10 +489,6 @@ Future<void> main() async {
       }
     }
 
-    // ✅ Démarrage du monitoring de connectivité
-    ConnectivityState.startMonitoring();
-    debugPrint('[Connectivity] Monitoring started');
-
     runApp(const PrestoApp());
   }, (error, stack) {
     if (!kIsWeb) {
@@ -690,10 +685,8 @@ class _HomePageState extends State<HomePage>
   bool _showBottomBar = true;
   double _lastScrollPosition = 0;
   bool _wasKeyboardVisible = false;
-  bool _isOnline = true; // ✅ État de connectivité
 
   late final AnimationController _categoryController;
-  StreamSubscription<bool>? _connectivitySubscription; // ✅ Écoute connectivité
 
   // Taille de police de référence pour les titres des slides (alignée sur le slide 1)
   static const double _homeSlideTitleFontSize = 24;
@@ -778,31 +771,7 @@ class _HomePageState extends State<HomePage>
 
     _selectedIndex = widget.initialIndex;
     _sessionStartTime = DateTime.now();
-    _isOnline = ConnectivityState.isOnline; // ✅ État initial
     WidgetsBinding.instance.addObserver(this);
-
-    // ✅ Écoute des changements de connectivité
-    _connectivitySubscription =
-        ConnectivityState.onlineStream.listen((isOnline) {
-      if (mounted) {
-        setState(() {
-          _isOnline = isOnline;
-        });
-
-        // Afficher un message
-        if (isOnline) {
-          showSuccessSnackBar(context, '✓ Connexion rétablie');
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Mode hors ligne activé • Consultation uniquement'),
-              backgroundColor: Colors.grey,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-    });
 
     // ✅ Présence initiale avec statut "online"
     _touchPresence(status: 'online');
@@ -1538,9 +1507,7 @@ class _HomePageState extends State<HomePage>
                           children: [
                             _buildHomeContent(),
                             ConsultOffersPage(onScroll: _onPageScroll),
-                            PublishOfferPage(
-                                onScroll: _onPageScroll,
-                                isOnline: _isOnline), // ✅ Passer l'état
+                            PublishOfferPage(onScroll: _onPageScroll),
                             const MessagesPage(),
                             AccountPage(onScroll: _onPageScroll),
                           ],
@@ -1594,23 +1561,7 @@ class _HomePageState extends State<HomePage>
                                           icon: Icons.add_circle_outline,
                                           label: "Publier\nune offre",
                                           isBig: true,
-                                          isDisabled:
-                                              !_isOnline, // ✅ Désactiver si offline
-                                          onTap: () {
-                                            if (_isOnline) {
-                                              _onBottomTap(2);
-                                            } else {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                      'Publication impossible en mode hors ligne'),
-                                                  backgroundColor:
-                                                      Colors.orange,
-                                                ),
-                                              );
-                                            }
-                                          },
+                                          onTap: () => _onBottomTap(2),
                                         ),
                                       ),
                                       Expanded(
@@ -2549,9 +2500,7 @@ class _BottomNavItemState extends State<_BottomNavItem>
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.isDisabled
-        ? Colors.white.withOpacity(0.5)
-        : Colors.white; // ✅ Grisé si désactivé
+    final color = Colors.white;
     final fontWeight = widget.selected ? FontWeight.w700 : FontWeight.w500;
 
     return _TapScale(
@@ -2567,15 +2516,12 @@ class _BottomNavItemState extends State<_BottomNavItem>
                 padding: EdgeInsets.all(widget.isBig ? 6 : 4),
                 decoration: BoxDecoration(
                   color: widget.isBig
-                      ? (widget.isDisabled
-                          ? Colors.white.withOpacity(0.5)
-                          : Colors.white) // ✅ Grisé si désactivé
+                      ? Colors.white
                       : widget.selected
                           ? Colors.white.withOpacity(0.35)
                           : Colors.transparent,
                   borderRadius: BorderRadius.circular(999),
-                  boxShadow: widget.isBig &&
-                          !widget.isDisabled // ✅ Pas d'ombre si désactivé
+                  boxShadow: widget.isBig
                       ? [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.35),
@@ -2596,11 +2542,7 @@ class _BottomNavItemState extends State<_BottomNavItem>
                 child: Icon(
                   widget.icon,
                   size: widget.isBig ? 28 : 24,
-                  color: widget.isBig
-                      ? (widget.isDisabled
-                          ? kPrestoOrange.withOpacity(0.4)
-                          : kPrestoOrange) // ✅ Grisé si désactivé
-                      : color,
+                  color: widget.isBig ? kPrestoOrange : color,
                 ),
               ),
             ),
@@ -6165,12 +6107,10 @@ class _ConversationPageState extends State<ConversationPage> {
 
 class PublishOfferPage extends StatefulWidget {
   final Function(double)? onScroll;
-  final bool isOnline; // ✅ Paramètre pour l'état de connectivité
 
   const PublishOfferPage({
     super.key,
     this.onScroll,
-    this.isOnline = true, // ✅ Par défaut en ligne
   });
 
   @override
