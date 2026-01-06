@@ -5,7 +5,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import 'firebase_options.dart';
@@ -4515,18 +4514,9 @@ class _AccountPageState extends State<AccountPage> {
         final googleProvider = GoogleAuthProvider();
         await _auth.signInWithPopup(googleProvider);
       } else {
-        final GoogleSignInAccount? googleUser =
-            await GoogleSignIn().signIn();
-        if (googleUser == null) {
-          setState(() => _isLoading = false);
-          return;
-        }
-        final googleAuth = await googleUser.authentication;
-        final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-        await _auth.signInWithCredential(credential);
+        final provider = GoogleAuthProvider()
+          ..setCustomParameters({'prompt': 'select_account'});
+        await _auth.signInWithProvider(provider);
       }
 
       if (!mounted) return;
@@ -4596,10 +4586,6 @@ class _AccountPageState extends State<AccountPage> {
   Future<void> _signOut() async {
     try {
       await _auth.signOut();
-      if (!kIsWeb) {
-        final googleSignIn = GoogleSignIn();
-        await googleSignIn.signOut();
-      }
     } catch (_) {
       // on ignore
     }
