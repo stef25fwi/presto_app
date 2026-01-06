@@ -71,6 +71,36 @@ class _ProfilePageState extends State<ProfilePage> {
         _emailCtrl.text = email;
       }
     });
+
+    // Sur Web, vérifie si l'utilisateur revient d'un redirect Google Sign-In
+    if (kIsWeb) {
+      _checkGoogleRedirectResult();
+    }
+  }
+
+  Future<void> _checkGoogleRedirectResult() async {
+    try {
+      final result = await _auth.getRedirectResult();
+      if (result.user != null) {
+        if (!mounted) return;
+        showSuccessSnackBar(context, "Connecté avec Google");
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      String msg = "Erreur Google";
+      if (e.code == 'unauthorized-domain') {
+        msg =
+            "Domaine non autorisé. Ajoutez ce domaine dans Firebase Console → Authentication → Authorized domains.";
+      } else if (e.code == 'operation-not-allowed') {
+        msg =
+            "Google Sign-In non activé. Activez-le dans Firebase Console → Authentication → Sign-in method.";
+      } else if (e.code != 'invalid-credential' && e.code != 'no-auth-event') {
+        msg = "Erreur Google : ${e.message ?? e.code}";
+        showErrorSnackBar(context, msg);
+      }
+    } catch (e) {
+      debugPrint('[Google Redirect] Error checking result: $e');
+    }
   }
 
   @override
@@ -98,23 +128,36 @@ class _ProfilePageState extends State<ProfilePage> {
       if (kIsWeb) {
         try {
           await _auth.signInWithPopup(provider);
-        } catch (_) {
+          if (!mounted) return;
+          showSuccessSnackBar(context, 'Connecté avec Google');
+        } catch (popupError) {
+          debugPrint("POPUP BLOCKED -> Fallback to redirect: $popupError");
           // Fallback redirect (ex: popup bloquée)
           await _auth.signInWithRedirect(provider);
-          return; // le navigateur redirige
+          // Le navigateur va rediriger, on ne continue pas l'exécution
+          return;
         }
       } else {
         await _auth.signInWithProvider(provider);
+        if (!mounted) return;
+        showSuccessSnackBar(context, 'Connecté avec Google');
       }
-
-      if (!mounted) return;
-      showSuccessSnackBar(context, 'Connecté avec Google');
     } on FirebaseAuthException catch (e) {
       debugPrint("GOOGLE AUTH FAIL -> code=${e.code} message=${e.message}");
-      rethrow;
+      if (!mounted) return;
+      String msg = "Erreur Google";
+      if (e.code == 'popup-closed-by-user') {
+        msg = "Connexion annulée";
+      } else if (e.code == 'unauthorized-domain') {
+        msg = "Domaine non autorisé dans Firebase Console";
+      } else {
+        msg = "Erreur : ${e.message ?? e.code}";
+      }
+      showErrorSnackBar(context, msg);
     } catch (e) {
       debugPrint("GOOGLE AUTH FAIL -> $e");
-      rethrow;
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur lors de la connexion : $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
