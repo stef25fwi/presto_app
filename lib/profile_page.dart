@@ -416,7 +416,7 @@ class _AccountPageState extends State<AccountPage> {
       showErrorSnackBar(context, 'Erreur Firestore: ${e.message ?? e.code}');
     } catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Erreur lors de la sauvegarde: $e');
+      showErrorSnackBar(context, 'Erreur lors de la suppression: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
