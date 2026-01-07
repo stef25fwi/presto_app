@@ -3376,16 +3376,52 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     }
 
                     if (snapshot.hasError) {
+                      debugPrint('❌ [OFFERS] Error: ${snapshot.error}');
+                      debugPrint('❌ [OFFERS] Stack: ${snapshot.stackTrace}');
+                      
                       return Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Text(
-                            "Erreur lors du chargement des offres.\n${snapshot.error}",
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: Colors.red.shade300,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                "Erreur lors du chargement des offres",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.red.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "${snapshot.error}",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  setState(() => _queryKey++);
+                                },
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Réessayer'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: kPrestoOrange,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
