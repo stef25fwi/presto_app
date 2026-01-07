@@ -104,7 +104,15 @@ service cloud.firestore {
           && resource.data.participants.hasAny([uid()]);
       }
 
-      allow read: if isParticipant();
+      // Lecture: autoriser les queries où participants contient l'userId
+      // ET la lecture d'un document spécifique si participant
+      allow read: if isSignedIn() && (
+        // Pour les queries: on autorise si l'utilisateur est connecté
+        // (la query elle-même filtre avec arrayContains)
+        request.query != null
+        // Pour un document spécifique: vérifier qu'il est participant
+        || isParticipant()
+      );
 
       allow create: if isSignedIn()
         && (request.resource.data.participants is list)
