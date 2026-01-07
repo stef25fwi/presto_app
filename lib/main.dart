@@ -10963,15 +10963,49 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     if (!context.mounted) return false;
 
     if (confirmed == true) {
-      await FirebaseFirestore.instance
-          .collection('offers')
-          .doc(offerId)
-          .delete();
+      try {
+        // 1️⃣ Récupérer les URLs des images avant suppression
+        final doc = await FirebaseFirestore.instance
+            .collection('offers')
+            .doc(offerId)
+            .get();
+        
+        final imageUrls = (doc.data()?['imageUrls'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ?? [];
 
-      if (!context.mounted) return false;
+        // 2️⃣ Supprimer les images de Storage
+        if (imageUrls.isNotEmpty) {
+          debugPrint('🗑️ [DELETE] Suppression de ${imageUrls.length} images...');
+          for (final url in imageUrls) {
+            try {
+              final ref = FirebaseStorage.instance.refFromURL(url);
+              await ref.delete();
+              debugPrint('✅ [DELETE] Image supprimée: $url');
+            } catch (e) {
+              debugPrint('⚠️ [DELETE] Erreur suppression image: $e');
+              // Continue même si une image échoue
+            }
+          }
+        }
 
-      showSuccessSnackBar(context, "Annonce supprimée ✅");
-      return true;
+        // 3️⃣ Supprimer le document Firestore
+        await FirebaseFirestore.instance
+            .collection('offers')
+            .doc(offerId)
+            .delete();
+
+        if (!context.mounted) return false;
+
+        showSuccessSnackBar(context, "Annonce supprimée ✅");
+        return true;
+      } catch (e) {
+        debugPrint('❌ [DELETE] Erreur: $e');
+        if (!context.mounted) return false;
+        
+        showErrorSnackBar(context, "Erreur lors de la suppression");
+        return false;
+      }
     }
 
     return false;
