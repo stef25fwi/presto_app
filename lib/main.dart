@@ -5486,7 +5486,7 @@ class _MessagesPageState extends State<MessagesPage> {
               if (docs.isEmpty) {
                 return Center(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -5524,7 +5524,7 @@ class _MessagesPageState extends State<MessagesPage> {
 
               return ListView.separated(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                 itemCount: docs.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 4),
                 itemBuilder: (context, index) {
