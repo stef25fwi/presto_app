@@ -49,7 +49,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
   // Parcours Firestore
   String? _parcoursId;
-  // bool _isFromCache = false; // Utilisé dans _recomputeDerivedWithCache
+  bool _isFromCache = false;
 
   // Form fields
   final TextEditingController _projectCtrl = TextEditingController();
@@ -390,12 +390,13 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     if (cachedJourney != null) {
       // Parcours trouvé en cache!
-      // _isFromCache = true; // TODO: activer quand la fonctionnalité sera affichée
-      debugPrint('✅ Parcours trouvé en cache ($_activityType / ${_projectCtrl.text} / $_region)');
+      _isFromCache = true;
+      debugPrint('✅ Parcours trouvé en cache ($_activityType / ${_projectCtrl.text} / $_region) - isFromCache: $_isFromCache');
       _importDerived(cachedJourney['content'] as Map<String, dynamic>? ?? {});
     } else {
       // Générer un nouveau parcours
-      // _isFromCache = false;
+      _isFromCache = false;
+      debugPrint('🔨 Génération d\'un nouveau parcours - isFromCache: $_isFromCache');
       final r = _computeRecommendationRules();
       _recommendation = r['recommendation'] as Map<String, dynamic>;
       _blockingAlerts = (r['blockingAlerts'] as List).cast<String>();
@@ -428,6 +429,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   }
 
   void _recomputeDerived() {
+    _isFromCache = false;
     final r = _computeRecommendationRules();
     _recommendation = r['recommendation'] as Map<String, dynamic>;
     _blockingAlerts = (r['blockingAlerts'] as List).cast<String>();

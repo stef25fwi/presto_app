@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -256,6 +257,147 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       if (!mounted) return;
       showErrorSnackBar(context, 'Erreur déconnexion: $e');
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      showErrorSnackBar(context, 'Utilisateur non connecté');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final data = {
+        'pseudo': _nameCtrl.text.trim(),
+        'city': _cityCtrl.text.trim(),
+        'postalCode': _cpCtrl.text.trim(),
+        'phone': _phoneCtrl.text.trim(),
+        'email': _emailCtrl.text.trim(),
+        'accountType': _accountType,
+        'language': _language,
+        'theme': _theme,
+        'notifNearby': _notifNearby,
+        'notifFavorites': _notifFavorites,
+        'notifAcceptOffer': _notifAcceptOffer,
+        'notifSystem': _notifSystem,
+        'favoriteCategories': _favoriteCategories.map((key, value) => 
+          MapEntry(key, value)),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(data, SetOptions(merge: true));
+
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Profil mis à jour.');
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur Firestore: ${e.message ?? e.code}');
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur lors de la sauvegarde: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _confirmDeleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Supprimer le compte'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Cette action est irréversible et entraînera :',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            const Text('• Suppression de toutes vos données'),
+            const Text('• Suppression de vos annonces'),
+            const Text('• Perte de votre historique'),
+            const Text('• Déconnexion immédiate'),
+            const SizedBox(height: 16),
+            Text(
+              'Êtes-vous sûr(e) de vouloir continuer ?',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(dialogContext).colorScheme.error,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            child: const Text('Supprimer définitivement'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _deleteAccount();
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    setState(() => _isLoading = true);
+    try {
+      // Suppression des données Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .delete();
+
+      // Suppression du compte Firebase Auth
+      await user.delete();
+
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Compte supprimé avec succès');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      if (e.code == 'requires-recent-login') {
+        showErrorSnackBar(
+          context,
+          'Pour votre sécurité, reconnectez-vous avant de supprimer votre compte.',
+        );
+      } else {
+        showErrorSnackBar(context, 'Erreur Auth: ${e.message ?? e.code}');
+      }
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur Firestore: ${e.message ?? e.code}');
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur lors de la suppression: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -733,10 +875,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: FilledButton.tonalIcon(
-                      onPressed: () {
+                      onPressed: _isLoading ? null : () async {
                         if (_formKeyProfile.currentState?.validate() ?? false) {
-                          // TODO: sauvegarde profil vers Firestore
-                          showSuccessSnackBar(context, 'Profil mis à jour.');
+                          await _saveProfile();
                         }
                       },
                       icon: const Icon(Icons.save_outlined),
@@ -1004,9 +1145,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   'Supprimer mon compte',
                   style: TextStyle(color: colorScheme.error),
                 ),
-                onTap: () {
-                  // TODO: confirmation suppression
-                },
+                onTap: _confirmDeleteAccount,
               ),
             ],
           ),

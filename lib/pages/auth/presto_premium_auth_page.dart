@@ -3,7 +3,6 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class PrestoPremiumAuthPage extends StatefulWidget {
@@ -25,6 +24,7 @@ class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
   bool _loadingApple = false;
   bool _loadingEmail = false;
   bool _obscure = true;
+  bool _isSignUpMode = false; // Mode inscription ou connexion
 
   bool get _showApple {
     // Apple button: iOS/macOS + Web (si tu gères Apple sur web)
@@ -47,28 +47,39 @@ class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
   Future<void> _signInWithGoogle() async {
     setState(() => _loadingGoogle = true);
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      
-      if (googleUser == null) {
-        if (mounted) setState(() => _loadingGoogle = false);
-        return; // L'utilisateur a annulé
+      // Authentification Google via Firebase (Web et Mobile)
+      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
+
+      if (kIsWeb) {
+        // Sur Web: popup OAuth
+        await FirebaseAuth.instance.signInWithPopup(googleProvider);
+      } else {
+        // Sur Mobile: redirect OAuth
+        await FirebaseAuth.instance.signInWithRedirect(googleProvider);
       }
-
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      await FirebaseAuth.instance.signInWithCredential(credential);
 
       if (!mounted) return;
       // Navigation après connexion réussie
       Navigator.of(context).pushReplacementNamed('/home');
     } catch (e) {
       if (!mounted) return;
-      _toastError("Erreur Google: ${e.toString()}");
+      String errorMsg = "Erreur Google";
+      if (e is FirebaseAuthException) {
+        switch (e.code) {
+          case 'popup-closed-by-user':
+          case 'cancelled-popup-request':
+            return; // Annulation silencieuse
+          case 'popup-blocked':
+            errorMsg = "Pop-up bloquée. Autorise les pop-ups.";
+            break;
+          case 'account-exists-with-different-credential':
+            errorMsg = "Ce compte existe avec une autre méthode.";
+            break;
+          default:
+            errorMsg = "Erreur Google: ${e.message}";
+        }
+      }
+      _toastError(errorMsg);
     } finally {
       if (mounted) setState(() => _loadingGoogle = false);
     }
@@ -164,7 +175,8 @@ class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Lien de réinitialisation envoyé ✅\nVérifie ta boîte mail."),
+          content:
+              Text("Lien de réinitialisation envoyé ✅\nVérifie ta boîte mail."),
           duration: Duration(seconds: 4),
         ),
       );
@@ -187,18 +199,73 @@ class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
     }
   }
 
-  void _goToSignUp() {
-    // TODO: Navigator.pushNamed(context, '/signup');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("➡️ Ouvre l'écran 'Créer un compte'")),
-    );
+  Future<void> _goToSignUp() async {
+    setState(() => _isSignUpMode = !_isSignUpMode);
+  }
+
+  Future<void> _createAccount() async {
+    final email = _emailCtrl.text.trim();
+    final pass = _passCtrl.text;
+
+    if (email.isEmpty || !email.contains("@")) {
+      _toastError("Entre une adresse email valide.");
+      return;
+    }
+    if (pass.length < 6) {
+      _toastError("Mot de passe trop court (min. 6).");
+      return;
+    }
+
+    setState(() => _loadingEmail = true);
+    try {
+      // Création du compte
+      final userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: pass,
+      );
+
+      // Envoi de l'email de vérification (optionnel)
+      await userCredential.user?.sendEmailVerification();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Compte créé ✅\nEmail de vérification envoyé."),
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      // Navigation après inscription réussie
+      await Future.delayed(const Duration(milliseconds: 800));
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/home');
+    } catch (e) {
+      if (!mounted) return;
+      String errorMsg = "Erreur lors de la création";
+      if (e is FirebaseAuthException) {
+        switch (e.code) {
+          case 'email-already-in-use':
+            errorMsg = "Cet email est déjà utilisé.\nEssaie de te connecter.";
+            break;
+          case 'invalid-email':
+            errorMsg = "Format d'email invalide.";
+            break;
+          case 'weak-password':
+            errorMsg = "Mot de passe trop faible.";
+            break;
+          default:
+            errorMsg = "Erreur: ${e.message}";
+        }
+      }
+      _toastError(errorMsg);
+    } finally {
+      if (mounted) setState(() => _loadingEmail = false);
+    }
   }
 
   void _discoverPro() {
-    // TODO: Navigator.pushNamed(context, '/pro');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("💼 Découvrir le compte Pro")),
-    );
+    Navigator.pushNamed(context, '/pro');
   }
 
   void _toastError(String msg) {
@@ -231,7 +298,8 @@ class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
                   // 1) HEADER PREMIUM (léger)
                   _HeaderPremium(
                     title: "Bienvenue sur Prestō",
-                    subtitle: "Le moyen le plus rapide de trouver ou proposer un service",
+                    subtitle:
+                        "Le moyen le plus rapide de trouver ou proposer un service",
                     accent: prestoOrange,
                     muted: textMuted,
                   ),
@@ -289,17 +357,21 @@ class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
                           borderRadius: BorderRadius.circular(18),
                           onTap: _loadingAny
                               ? null
-                              : () => setState(() => _emailExpanded = !_emailExpanded),
+                              : () => setState(
+                                  () => _emailExpanded = !_emailExpanded),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
                             child: Row(
                               children: [
                                 const Icon(Icons.mail_outline, size: 20),
                                 const SizedBox(width: 10),
-                                const Expanded(
+                                Expanded(
                                   child: Text(
-                                    "Se connecter avec un email",
-                                    style: TextStyle(
+                                    _isSignUpMode
+                                        ? "Créer un compte avec email"
+                                        : "Se connecter avec un email",
+                                    style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -314,19 +386,20 @@ class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
                             ),
                           ),
                         ),
-
                         AnimatedSize(
                           duration: _anim,
                           curve: Curves.easeOut,
                           child: _emailExpanded
                               ? Padding(
-                                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+                                  padding:
+                                      const EdgeInsets.fromLTRB(12, 8, 12, 6),
                                   child: Column(
                                     children: [
                                       _Input(
                                         controller: _emailCtrl,
                                         hint: "Adresse email",
-                                        keyboardType: TextInputType.emailAddress,
+                                        keyboardType:
+                                            TextInputType.emailAddress,
                                         enabled: !_loadingAny,
                                       ),
                                       const SizedBox(height: 10),
@@ -338,9 +411,12 @@ class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
                                         suffix: IconButton(
                                           onPressed: _loadingAny
                                               ? null
-                                              : () => setState(() => _obscure = !_obscure),
+                                              : () => setState(
+                                                  () => _obscure = !_obscure),
                                           icon: Icon(
-                                            _obscure ? Icons.visibility_off : Icons.visibility,
+                                            _obscure
+                                                ? Icons.visibility_off
+                                                : Icons.visibility,
                                             size: 20,
                                             color: textMuted,
                                           ),
@@ -348,30 +424,47 @@ class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
                                       ),
                                       const SizedBox(height: 12),
 
-                                      // Ici tu gardes l'orange pour 1 seul bouton principal max :
+                                      // Bouton dynamique selon le mode
                                       _MainActionButton(
-                                        label: "Se connecter",
+                                        label: _isSignUpMode
+                                            ? "Créer mon compte"
+                                            : "Se connecter",
                                         loading: _loadingEmail,
                                         color: prestoOrange,
-                                        onTap: _loadingAny ? null : _signInWithEmailPassword,
+                                        onTap: _loadingAny
+                                            ? null
+                                            : (_isSignUpMode
+                                                ? _createAccount
+                                                : _signInWithEmailPassword),
                                       ),
 
                                       const SizedBox(height: 10),
 
-                                      // Une seule ligne
+                                      // Liens selon le mode
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
+                                          if (!_isSignUpMode) ...[
+                                            _LinkText(
+                                              text: "Mot de passe oublié ?",
+                                              color: prestoBlue,
+                                              onTap: _loadingAny
+                                                  ? null
+                                                  : _resetPassword,
+                                            ),
+                                            const Text("   •   ",
+                                                style: TextStyle(
+                                                    color: textMuted)),
+                                          ],
                                           _LinkText(
-                                            text: "Mot de passe oublié ?",
+                                            text: _isSignUpMode
+                                                ? "J'ai déjà un compte"
+                                                : "Créer un compte",
                                             color: prestoBlue,
-                                            onTap: _loadingAny ? null : _resetPassword,
-                                          ),
-                                          const Text("   •   ", style: TextStyle(color: textMuted)),
-                                          _LinkText(
-                                            text: "Créer un compte",
-                                            color: prestoBlue,
-                                            onTap: _loadingAny ? null : _goToSignUp,
+                                            onTap: _loadingAny
+                                                ? null
+                                                : _goToSignUp,
                                           ),
                                         ],
                                       ),
@@ -514,11 +607,15 @@ class _OrDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Divider(height: 1, thickness: 1, color: muted.withOpacity(0.20))),
+        Expanded(
+            child: Divider(
+                height: 1, thickness: 1, color: muted.withOpacity(0.20))),
         const SizedBox(width: 10),
         Text("ou", style: TextStyle(fontSize: 13, color: muted)),
         const SizedBox(width: 10),
-        Expanded(child: Divider(height: 1, thickness: 1, color: muted.withOpacity(0.20))),
+        Expanded(
+            child: Divider(
+                height: 1, thickness: 1, color: muted.withOpacity(0.20))),
       ],
     );
   }
@@ -545,7 +642,8 @@ class _PrimaryProviderButton extends StatelessWidget {
 
     final bg = isApple ? Colors.black : Colors.white;
     final fg = isApple ? Colors.white : Colors.black87;
-    final border = isApple ? Colors.transparent : Colors.black.withOpacity(0.14);
+    final border =
+        isApple ? Colors.transparent : Colors.black.withOpacity(0.14);
 
     return InkWell(
       onTap: onTap,
@@ -570,7 +668,8 @@ class _PrimaryProviderButton extends StatelessWidget {
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(isApple ? Icons.apple : Icons.g_mobiledata, color: fg, size: 22),
+                  Icon(isApple ? Icons.apple : Icons.g_mobiledata,
+                      color: fg, size: 22),
                   const SizedBox(width: 10),
                   Text(
                     label,
@@ -616,7 +715,9 @@ class _MainActionButton extends StatelessWidget {
             ? const SizedBox(
                 width: 18,
                 height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2.2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                child: CircularProgressIndicator(
+                    strokeWidth: 2.2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
               )
             : Text(
                 label,
@@ -664,7 +765,8 @@ class _Input extends StatelessWidget {
         hintText: hint,
         filled: true,
         fillColor: const Color(0xFFF9FAFB),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: border,
         enabledBorder: border,
         focusedBorder: border.copyWith(
@@ -744,7 +846,8 @@ class _SoftInfoCard extends StatelessWidget {
               color: prestoOrange.withOpacity(0.12),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.work_outline, color: prestoOrange, size: 22),
+            child:
+                const Icon(Icons.work_outline, color: prestoOrange, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -756,11 +859,13 @@ class _SoftInfoCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w800),
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: Colors.black.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(999),

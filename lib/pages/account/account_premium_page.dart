@@ -86,7 +86,7 @@ class _AccountPremiumPageState extends State<AccountPremiumPage> {
     if (!snap.exists) return;
     final data = snap.data();
     if (data == null) return;
-    String? s(dynamic v) => v == null ? null : v.toString();
+    String? s(dynamic v) => v?.toString();
 
     final pseudo = s(data['pseudo']);
     final city = s(data['city']);
@@ -416,8 +416,7 @@ class _AccountPremiumPageState extends State<AccountPremiumPage> {
   }
 
   void onCreatePro() {
-    // TODO: open pro onboarding
-    _snack("💼 Créer un compte Pro");
+    Navigator.of(context).pushNamed('/pro-onboarding');
   }
 
   void onOpenAdmin() {

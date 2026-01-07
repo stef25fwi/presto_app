@@ -39,6 +39,7 @@ import 'services/notification_service.dart';
 import 'services/google_auth_service.dart';
 import 'pages/pro_profile_page.dart';
 import 'pages/account/account_premium_page.dart';
+import 'pages/auth/presto_premium_auth_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/admin_space_page.dart';
 import 'dev/seed_offers.dart';
@@ -508,6 +509,7 @@ class PrestoApp extends StatelessWidget {
       routes: {
         '/publish': (_) => const PublishOfferPage(),
         '/messages': (_) => const MessagesPage(),
+        '/auth': (_) => const PrestoPremiumAuthPage(),
         AppRoutes.toolboxHub: (_) => const ToolboxHubPage(),
         AppRoutes.toolboxCurrent: (_) => const CurrentToolboxPage(),
         AppRoutes.entrepreneurCalculator: (_) =>
