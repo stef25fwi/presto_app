@@ -662,6 +662,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             ? null
             : '${_phoneCountryCode.trim()} ${_phoneCtrl.text.trim()}',
         'userId': user.uid,
+        'ownerId': user.uid,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'status': 'active',

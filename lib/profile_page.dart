@@ -27,6 +27,8 @@ class _AccountPageState extends State<AccountPage> {
   StreamSubscription<User?>? _authSub;
   bool _isLoading = false;
   bool _isEditingProfile = false;
+  bool _isLoadingProfile = false;
+  String? _loadedProfileUid;
   final ScrollController _scrollController = ScrollController();
 
   // Controllers pour les formulaires
@@ -75,11 +77,140 @@ class _AccountPageState extends State<AccountPage> {
       if (email != null && email.isNotEmpty && _emailCtrl.text != email) {
         _emailCtrl.text = email;
       }
+
+      if (user == null) {
+        setState(() {
+          _loadedProfileUid = null;
+          _isEditingProfile = false;
+          _isLoadingProfile = false;
+
+          _nameCtrl.clear();
+          _cityCtrl.clear();
+          _cpCtrl.clear();
+          _phoneCtrl.clear();
+          _emailCtrl.clear();
+
+          _notifNearby = true;
+          _notifFavorites = true;
+          _notifAcceptOffer = true;
+          _notifSystem = true;
+
+          _accountType = 'Particulier';
+          _language = 'Français';
+          _theme = 'Système';
+
+          _favoriteCategories
+            ..clear()
+            ..addAll({
+              'Jardinage': ['Tondeuse', 'Élagage'],
+              'Peinture': ['Intérieur'],
+            });
+        });
+        return;
+      }
+
+      // Charge le profil Firestore dès la connexion (ou changement de compte)
+      if (_loadedProfileUid != user.uid) {
+        _loadProfileForUser(user);
+      }
     });
     
     // Note : la vérification du redirect Google Sign-In est maintenant gérée
     // dans le SplashScreen (main.dart) pour éviter d'être bloqué sur le splash
     // après un redirect. Le résultat sera déjà traité quand on arrive ici.
+  }
+
+  Future<void> _loadProfileForUser(User user) async {
+    if (_isLoadingProfile) return;
+
+    setState(() {
+      _isLoadingProfile = true;
+    });
+
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!mounted) return;
+      if (_auth.currentUser?.uid != user.uid) return;
+
+      final data = snap.data() ?? <String, dynamic>{};
+
+      // Ne pas écraser les saisies pendant l’édition.
+      final canApply = !_isEditingProfile || _loadedProfileUid == null;
+
+      // Fallbacks raisonnables
+      final pseudo = (data['pseudo'] ?? user.displayName ?? '').toString();
+      final city = (data['city'] ?? '').toString();
+      final postalCode = (data['postalCode'] ?? '').toString();
+      final phone = (data['phone'] ?? '').toString();
+      final email = (data['email'] ?? user.email ?? '').toString();
+
+      final accountType = (data['accountType'] ?? _accountType).toString();
+      final language = (data['language'] ?? _language).toString();
+      final theme = (data['theme'] ?? _theme).toString();
+
+      final notifNearby = data['notifNearby'];
+      final notifFavorites = data['notifFavorites'];
+      final notifAcceptOffer = data['notifAcceptOffer'];
+      final notifSystem = data['notifSystem'];
+
+      final favRaw = data['favoriteCategories'];
+
+      setState(() {
+        _loadedProfileUid = user.uid;
+
+        if (canApply) {
+          _nameCtrl.text = pseudo;
+          _cityCtrl.text = city;
+          _cpCtrl.text = postalCode;
+          _phoneCtrl.text = phone;
+          _emailCtrl.text = email;
+
+          if (accountType.isNotEmpty) _accountType = accountType;
+          if (language.isNotEmpty) _language = language;
+          if (theme.isNotEmpty) _theme = theme;
+
+          if (notifNearby is bool) _notifNearby = notifNearby;
+          if (notifFavorites is bool) _notifFavorites = notifFavorites;
+          if (notifAcceptOffer is bool) _notifAcceptOffer = notifAcceptOffer;
+          if (notifSystem is bool) _notifSystem = notifSystem;
+
+          if (favRaw is Map) {
+            final next = <String, List<String>>{};
+            for (final entry in favRaw.entries) {
+              final key = entry.key?.toString();
+              if (key == null || key.isEmpty) continue;
+
+              final value = entry.value;
+              if (value is Iterable) {
+                next[key] = value.map((e) => e.toString()).toList();
+              } else if (value != null) {
+                next[key] = [value.toString()];
+              }
+            }
+
+            _favoriteCategories
+              ..clear()
+              ..addAll(next);
+          }
+        }
+      });
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur chargement profil: ${e.message ?? e.code}');
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur chargement profil: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingProfile = false;
+        });
+      }
+    }
   }
 
   @override
@@ -320,6 +451,8 @@ class _AccountPageState extends State<AccountPage> {
 
     // Vérifier que l'utilisateur est bien le propriétaire
     try {
+      if (mounted) setState(() => _isLoading = true);
+
       final offerDoc = await FirebaseFirestore.instance
           .collection('offers')
           .doc(offerId)
@@ -332,7 +465,7 @@ class _AccountPageState extends State<AccountPage> {
       }
 
       final offerData = offerDoc.data();
-      final ownerId = offerData?['ownerId'] ?? offerData?['userId'];
+      final ownerId = offerData?['ownerId'] ?? offerData?['userId'] ?? offerData?['uid'];
       
       if (ownerId != user.uid) {
         if (!mounted) return;
@@ -413,7 +546,15 @@ class _AccountPageState extends State<AccountPage> {
       showSuccessSnackBar(context, 'Annonce supprimée avec succès');
     } on FirebaseException catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Erreur Firestore: ${e.message ?? e.code}');
+      final code = e.code;
+      if (code == 'permission-denied') {
+        showErrorSnackBar(
+          context,
+          'Suppression refusée (droits Firestore). Vérifiez que ownerId/userId/uid correspond à votre compte.',
+        );
+      } else {
+        showErrorSnackBar(context, 'Erreur Firestore ($code): ${e.message ?? code}');
+      }
     } catch (e) {
       if (!mounted) return;
       showErrorSnackBar(context, 'Erreur lors de la suppression: $e');
@@ -1180,7 +1321,7 @@ class _AccountPageState extends State<AccountPage> {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('offers')
-                .where('ownerId', isEqualTo: user.uid)
+                .where('userId', isEqualTo: user.uid)
                 .orderBy('createdAt', descending: true)
                 .snapshots(),
             builder: (context, snapshot) {

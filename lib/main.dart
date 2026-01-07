@@ -7277,6 +7277,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'budgetType': _budgetType,
         'imageUrls': _uploadedPhotoUrls.isEmpty ? null : _uploadedPhotoUrls,
         'userId': user.uid,
+        'ownerId': user.uid,
         'createdAt': Timestamp.now(),
       });
 
