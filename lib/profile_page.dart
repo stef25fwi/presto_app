@@ -11,14 +11,14 @@ import 'widgets/phone_input_field.dart';
 
 enum AuthMode { login, signup }
 
-class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+class AccountPage extends StatefulWidget {
+  const AccountPage({super.key});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  State<AccountPage> createState() => _AccountPageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _AccountPageState extends State<AccountPage> {
   AuthMode _authMode = AuthMode.login;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -417,7 +417,7 @@ class _ProfilePageState extends State<ProfilePage> {
         return Scaffold(
           appBar: AppBar(
             title: const Text(
-              'Mon profil',
+              'Mon compte ilipresto',
               style: kPrestoAppBarTitleStyle,
             ),
             centerTitle: true,

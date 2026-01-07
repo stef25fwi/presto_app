@@ -38,7 +38,7 @@ import 'services/ai_draft_service.dart';
 import 'services/notification_service.dart';
 import 'services/google_auth_service.dart';
 import 'pages/pro_profile_page.dart';
-import 'pages/account/account_premium_page.dart';
+import 'profile_page.dart';
 import 'pages/auth/presto_premium_auth_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/admin_space_page.dart';
@@ -1553,7 +1553,7 @@ class _HomePageState extends State<HomePage>
                             ConsultOffersPage(onScroll: _onPageScroll),
                             PublishOfferPage(onScroll: _onPageScroll),
                             const MessagesPage(),
-                            AccountPremiumPage(),
+                            const AccountPage(),
                           ],
                         ),
                         if (!isKeyboardVisible)
@@ -1726,20 +1726,18 @@ class _HomePageState extends State<HomePage>
                           if (index == 1) {
                             return ClipRRect(
                               borderRadius: BorderRadius.circular(20),
-                              child: Container(
-                                height: double.infinity,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.10),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: SizedBox.expand(
+                              child: SizedBox.expand(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.10),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
                                   child: RepaintBoundary(
                                     child: RandomAssetTicker(
                                       folderPrefix: 'assets/carousel_home/',
@@ -5419,6 +5417,7 @@ class _MessagesPageState extends State<MessagesPage> {
             stream: FirebaseFirestore.instance
                 .collection('conversations')
                 .where('participants', arrayContains: userId)
+                .orderBy('lastMessageAt', descending: true)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -5432,37 +5431,58 @@ class _MessagesPageState extends State<MessagesPage> {
               }
 
               if (snapshot.hasError) {
+                debugPrint('❌ [Messages] Erreur Firestore: ${snapshot.error}');
+                debugPrint('❌ [Messages] Stack trace: ${snapshot.stackTrace}');
+                
                 return Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      "Erreur lors du chargement des conversations.\n${snapshot.error}",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          "Erreur lors du chargement des conversations",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.red,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          "${snapshot.error}",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrestoBlue,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () {
+                            setState(() {});
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Réessayer'),
+                        ),
+                      ],
                     ),
                   ),
                 );
               }
 
-              final docs = (snapshot.data?.docs ?? []).toList()
-                ..sort((a, b) {
-                  final aData = a.data();
-                  final bData = b.data();
-
-                  final aTs = aData['lastMessageAt'];
-                  final bTs = bData['lastMessageAt'];
-
-                  final aTime = (aTs is Timestamp) ? aTs.toDate() : null;
-                  final bTime = (bTs is Timestamp) ? bTs.toDate() : null;
-
-                  if (aTime == null && bTime == null) return 0;
-                  if (aTime == null) return 1;
-                  if (bTime == null) return -1;
-                  return bTime.compareTo(aTime);
-                });
+              final docs = (snapshot.data?.docs ?? []).toList();
 
               if (docs.isEmpty) {
                 return Center(
