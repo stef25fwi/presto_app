@@ -20,7 +20,8 @@ service cloud.firestore {
     function isOwnerByField(data) {
       return isSignedIn() && (
         (data.userId is string && data.userId == uid()) ||
-        (data.uid is string && data.uid == uid())
+        (data.uid is string && data.uid == uid()) ||
+        (data.ownerId is string && data.ownerId == uid())
       );
     }
 
@@ -86,7 +87,8 @@ service cloud.firestore {
         && isOwnerByField(request.resource.data)
         // Empêche de créer une annonce "au nom" d'un autre
         && (!('userId' in request.resource.data) || request.resource.data.userId == uid())
-        && (!('uid' in request.resource.data) || request.resource.data.uid == uid());
+        && (!('uid' in request.resource.data) || request.resource.data.uid == uid())
+        && (!('ownerId' in request.resource.data) || request.resource.data.ownerId == uid());
 
       // Update/Delete uniquement propriétaire (et champs server-only protégés)
       allow update, delete: if isSignedIn()

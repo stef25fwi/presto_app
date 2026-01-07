@@ -194,6 +194,7 @@ class PhoneInputFieldCompact extends StatefulWidget {
   final ValueChanged<String>? onPhoneChanged;
   final FocusNode? focusNode;
   final FormFieldValidator<String>? validator;
+  final bool enabled;
 
   const PhoneInputFieldCompact({
     super.key,
@@ -206,6 +207,7 @@ class PhoneInputFieldCompact extends StatefulWidget {
     this.onPhoneChanged,
     this.focusNode,
     this.validator,
+    this.enabled = true,
   });
 
   @override
@@ -286,14 +288,14 @@ class _PhoneInputFieldCompactState extends State<PhoneInputFieldCompact> {
                   ),
                 )
                 .toList(),
-            onChanged: (newCountry) {
+            onChanged: widget.enabled ? (newCountry) {
               if (newCountry != null) {
                 setState(() {
                   _selectedCountry = newCountry;
                 });
                 widget.onCountryCodeChanged?.call(newCountry.code);
               }
-            },
+            } : null,
           ),
         ),
         const SizedBox(width: 8),
@@ -303,6 +305,7 @@ class _PhoneInputFieldCompactState extends State<PhoneInputFieldCompact> {
           child: TextFormField(
             controller: widget.controller,
             focusNode: widget.focusNode,
+            enabled: widget.enabled,
             decoration: InputDecoration(
               label: widget.label,
               labelText:

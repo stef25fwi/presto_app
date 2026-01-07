@@ -26,6 +26,7 @@ class _AccountPageState extends State<AccountPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   StreamSubscription<User?>? _authSub;
   bool _isLoading = false;
+  bool _isEditingProfile = false;
   final ScrollController _scrollController = ScrollController();
 
   // Controllers pour les formulaires
@@ -297,7 +298,119 @@ class _AccountPageState extends State<AccountPage> {
           .set(data, SetOptions(merge: true));
 
       if (!mounted) return;
+      setState(() => _isEditingProfile = false);
       showSuccessSnackBar(context, 'Profil mis à jour.');
+    } on FirebaseException catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur Firestore: ${e.message ?? e.code}');
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur lors de la sauvegarde: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _deleteOffer(String offerId, String offerTitle) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      showErrorSnackBar(context, 'Utilisateur non connecté');
+      return;
+    }
+
+    // Vérifier que l'utilisateur est bien le propriétaire
+    try {
+      final offerDoc = await FirebaseFirestore.instance
+          .collection('offers')
+          .doc(offerId)
+          .get();
+
+      if (!offerDoc.exists) {
+        if (!mounted) return;
+        showErrorSnackBar(context, 'Annonce introuvable');
+        return;
+      }
+
+      final offerData = offerDoc.data();
+      final ownerId = offerData?['ownerId'] ?? offerData?['userId'];
+      
+      if (ownerId != user.uid) {
+        if (!mounted) return;
+        showErrorSnackBar(context, 'Vous n\'êtes pas autorisé à supprimer cette annonce');
+        return;
+      }
+
+      // Confirmer la suppression
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Row(
+            children: [
+              Icon(Icons.warning, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('Confirmer la suppression'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Êtes-vous sûr de vouloir supprimer cette annonce ?',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  offerTitle,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Cette action est irréversible.',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.red,
+              ),
+              child: const Text('Supprimer'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+
+      // Supprimer l'annonce
+      await FirebaseFirestore.instance
+          .collection('offers')
+          .doc(offerId)
+          .delete();
+
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Annonce supprimée avec succès');
     } on FirebaseException catch (e) {
       if (!mounted) return;
       showErrorSnackBar(context, 'Erreur Firestore: ${e.message ?? e.code}');
@@ -551,7 +664,6 @@ class _AccountPageState extends State<AccountPage> {
                   primary: false,
                   physics: const ClampingScrollPhysics(),
                   padding: const EdgeInsets.all(16),
-                  cacheExtent: 500,
                   child: isLoggedIn
                       ? _buildProfileContent(colorScheme, isDark, user)
                       : _buildAuthContent(colorScheme, isDark),
@@ -904,20 +1016,17 @@ class _AccountPageState extends State<AccountPage> {
         ),
         const SizedBox(height: 24),
 
-        // Infos personnelles
-        _buildSectionTitle('Informations personnelles'),
-        Card(
-          elevation: 1,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKeyProfile,
-              child: Column(
-                children: [
+        // Section Mon Profil
+        _buildMainSectionCard(
+          title: '👤 Mon profil',
+          colorScheme: colorScheme,
+          child: Form(
+            key: _formKeyProfile,
+            child: Column(
+              children: [
                   TextFormField(
                     controller: _nameCtrl,
+                    enabled: _isEditingProfile,
                     decoration: const InputDecoration(
                       labelText: 'Nom complet',
                       prefixIcon: Icon(Icons.person_outline),
@@ -926,6 +1035,7 @@ class _AccountPageState extends State<AccountPage> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _cityCtrl,
+                    enabled: _isEditingProfile,
                     decoration: const InputDecoration(
                       labelText: 'Commune',
                       prefixIcon: Icon(Icons.location_on_outlined),
@@ -934,6 +1044,7 @@ class _AccountPageState extends State<AccountPage> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _cpCtrl,
+                    enabled: _isEditingProfile,
                     decoration: const InputDecoration(
                       labelText: 'C/P',
                       prefixIcon: Icon(Icons.markunread_mailbox_outlined),
@@ -943,6 +1054,7 @@ class _AccountPageState extends State<AccountPage> {
                   const SizedBox(height: 12),
                   PhoneInputFieldCompact(
                     controller: _phoneCtrl,
+                    enabled: _isEditingProfile,
                     labelText: 'Téléphone',
                     hintText: '612345678',
                     onCountryCodeChanged: (code) {
@@ -955,6 +1067,7 @@ class _AccountPageState extends State<AccountPage> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _emailCtrl,
+                    enabled: _isEditingProfile,
                     decoration: const InputDecoration(
                       labelText: 'E-mail',
                       prefixIcon: Icon(Icons.email_outlined),
@@ -969,6 +1082,7 @@ class _AccountPageState extends State<AccountPage> {
                           value: _accountType,
                           labelText: 'Type de compte',
                           prefixIcon: Icons.badge_outlined,
+                          enabled: _isEditingProfile,
                           items: const [
                             DropdownMenuItem(
                               value: 'Particulier',
@@ -983,13 +1097,13 @@ class _AccountPageState extends State<AccountPage> {
                               child: Text('Micro-Entreprise'),
                             ),
                           ],
-                          onChanged: (value) {
+                          onChanged: _isEditingProfile ? (value) {
                             if (value != null) {
                               setState(() {
                                 _accountType = value;
                               });
                             }
-                          },
+                          } : null,
                         ),
                       ),
                     ],
@@ -997,25 +1111,350 @@ class _AccountPageState extends State<AccountPage> {
                   const SizedBox(height: 16),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: FilledButton.tonalIcon(
-                      onPressed: _isLoading ? null : () async {
-                        if (_formKeyProfile.currentState?.validate() ?? false) {
-                          await _saveProfile();
-                        }
-                      },
-                      icon: const Icon(Icons.save_outlined),
-                      label: const Text('Enregistrer'),
-                    ),
+                    child: _isEditingProfile
+                        ? FilledButton.tonalIcon(
+                            onPressed: _isLoading ? null : () async {
+                              if (_formKeyProfile.currentState?.validate() ?? false) {
+                                await _saveProfile();
+                              }
+                            },
+                            icon: const Icon(Icons.save_outlined),
+                            label: const Text('Enregistrer mon profil'),
+                          )
+                        : FilledButton.tonalIcon(
+                            onPressed: () {
+                              setState(() => _isEditingProfile = true);
+                            },
+                            icon: const Icon(Icons.edit_outlined),
+                            label: const Text('Modifier mon profil'),
+                          ),
                   ),
                 ],
               ),
             ),
           ),
+
+        const SizedBox(height: 20),
+
+        // Section Mes Messages
+        _buildMainSectionCard(
+          title: '💬 Mes messages',
+          colorScheme: colorScheme,
+          child: Column(
+            children: [
+              ListTile(
+                leading: Icon(Icons.inbox_outlined, color: colorScheme.primary),
+                title: const Text('Boîte de réception'),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text('3', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                onTap: () {
+                  // TODO: Navigation vers les messages
+                  showSuccessSnackBar(context, 'Fonctionnalité à venir');
+                },
+              ),
+              const Divider(height: 0),
+              ListTile(
+                leading: Icon(Icons.send_outlined, color: colorScheme.primary),
+                title: const Text('Messages envoyés'),
+                onTap: () {
+                  // TODO: Navigation vers messages envoyés
+                  showSuccessSnackBar(context, 'Fonctionnalité à venir');
+                },
+              ),
+            ],
+          ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
-        // Préférences
+        // Section Mes Annonces
+        _buildMainSectionCard(
+          title: '📢 Mes annonces publiées',
+          colorScheme: colorScheme,
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('offers')
+                .where('ownerId', isEqualTo: user.uid)
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Icon(Icons.error_outline, 
+                        size: 48, 
+                        color: colorScheme.error,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Erreur lors du chargement',
+                        style: TextStyle(color: colorScheme.error),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final offers = snapshot.data?.docs ?? [];
+
+              if (offers.isEmpty) {
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.article_outlined,
+                            size: 64,
+                            color: colorScheme.primary.withValues(alpha: 0.3),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Aucune annonce publiée',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Créez votre première annonce pour trouver des prestataires',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 0),
+                    ListTile(
+                      leading: Icon(Icons.add_circle_outline, color: colorScheme.primary),
+                      title: const Text('Créer une nouvelle annonce'),
+                      onTap: () {
+                        // TODO: Navigation vers création d'annonce
+                        showSuccessSnackBar(context, 'Fonctionnalité à venir');
+                      },
+                    ),
+                  ],
+                );
+              }
+
+              return Column(
+                children: [
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: offers.length,
+                    separatorBuilder: (context, index) => const Divider(height: 0),
+                    itemBuilder: (context, index) {
+                      final offer = offers[index];
+                      final data = offer.data() as Map<String, dynamic>;
+                      final offerId = offer.id;
+                      final title = data['title'] ?? 'Sans titre';
+                      final category = data['category'] ?? '';
+                      final budget = data['budget'];
+                      final createdAt = data['createdAt'] as Timestamp?;
+                      final dateStr = createdAt != null
+                          ? _formatDate(createdAt.toDate())
+                          : '';
+
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: colorScheme.primaryContainer,
+                          child: Icon(
+                            Icons.article,
+                            color: colorScheme.primary,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (category.isNotEmpty)
+                              Text(
+                                category,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                            if (budget != null)
+                              Text(
+                                '${budget}€',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            if (dateStr.isNotEmpty)
+                              Text(
+                                dateStr,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: colorScheme.onSurface.withValues(alpha: 0.5),
+                                ),
+                              ),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                          tooltip: 'Supprimer',
+                          onPressed: () => _deleteOffer(offerId, title),
+                        ),
+                        onTap: () {
+                          // TODO: Navigation vers détail de l'annonce
+                          showSuccessSnackBar(context, 'Détail de l\'annonce à venir');
+                        },
+                      );
+                    },
+                  ),
+                  const Divider(height: 0),
+                  ListTile(
+                    leading: Icon(Icons.add_circle_outline, color: colorScheme.primary),
+                    title: const Text('Créer une nouvelle annonce'),
+                    onTap: () {
+                      // TODO: Navigation vers création d'annonce
+                      showSuccessSnackBar(context, 'Fonctionnalité à venir');
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Section Catégories Favorites
+        _buildMainSectionCard(
+          title: '⭐ Mes catégories favorites',
+          colorScheme: colorScheme,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_favoriteCategories.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Aucune catégorie favorite sélectionnée',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ..._favoriteCategories.entries.map((entry) {
+                        final category = entry.key;
+                        final subcategories = entry.value;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      category,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.close,
+                                        size: 20, color: colorScheme.error),
+                                    onPressed: () {
+                                      setState(() {
+                                        _favoriteCategories.remove(category);
+                                      });
+                                    },
+                                    tooltip: 'Supprimer',
+                                  ),
+                                ],
+                              ),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  ...subcategories.map(
+                                    (sub) => Chip(
+                                      label: Text(sub,
+                                          style: const TextStyle(fontSize: 12)),
+                                      onDeleted: () {
+                                        setState(() {
+                                          _favoriteCategories[category]
+                                              ?.remove(sub);
+                                          if (_favoriteCategories[category]
+                                                  ?.isEmpty ??
+                                              false) {
+                                            _favoriteCategories.remove(category);
+                                          }
+                                        });
+                                      },
+                                      backgroundColor: colorScheme.primaryContainer
+                                          .withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ),
+              const Divider(height: 0),
+              ListTile(
+                leading: Icon(Icons.add, color: colorScheme.primary),
+                title: const Text('Ajouter une catégorie'),
+                onTap: _showAddCategoryDialog,
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Préférences (reste comme avant)
         _buildSectionTitle('Préférences'),
         Card(
           elevation: 1,
@@ -1125,109 +1564,7 @@ class _AccountPageState extends State<AccountPage> {
           ),
         ),
 
-        const SizedBox(height: 16),
-
-        // Catégories favorites
-        _buildSectionTitle('Mes catégories favorites'),
-        Card(
-          elevation: 1,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_favoriteCategories.isEmpty)
-                  Text(
-                    'Aucune catégorie favori sélectionnée',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colorScheme.onSurface.withValues(alpha: 0.6),
-                      fontStyle: FontStyle.italic,
-                    ),
-                  )
-                else
-                  ..._favoriteCategories.entries.map((entry) {
-                    final category = entry.key;
-                    final subcategories = entry.value;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  category,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.close,
-                                    size: 20, color: colorScheme.error),
-                                onPressed: () {
-                                  setState(() {
-                                    _favoriteCategories.remove(category);
-                                  });
-                                },
-                                tooltip: 'Supprimer',
-                              ),
-                            ],
-                          ),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              ...subcategories.map(
-                                (sub) => Chip(
-                                  label: Text(sub,
-                                      style: const TextStyle(fontSize: 12)),
-                                  onDeleted: () {
-                                    setState(() {
-                                      _favoriteCategories[category]
-                                          ?.remove(sub);
-                                      if (_favoriteCategories[category]
-                                              ?.isEmpty ??
-                                          false) {
-                                        _favoriteCategories.remove(category);
-                                      }
-                                    });
-                                  },
-                                  backgroundColor: colorScheme.primaryContainer
-                                      .withValues(alpha: 0.3),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _showAddCategoryDialog,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Ajouter une catégorie'),
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
         // Sécurité & aide
         _buildSectionTitle('Sécurité & aide'),
@@ -1292,6 +1629,80 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inDays == 0) {
+      if (diff.inHours == 0) {
+        if (diff.inMinutes == 0) {
+          return "À l'instant";
+        }
+        return 'Il y a ${diff.inMinutes} min';
+      }
+      return 'Il y a ${diff.inHours}h';
+    } else if (diff.inDays == 1) {
+      return 'Hier';
+    } else if (diff.inDays < 7) {
+      return 'Il y a ${diff.inDays} jours';
+    } else if (diff.inDays < 30) {
+      final weeks = (diff.inDays / 7).floor();
+      return 'Il y a $weeks semaine${weeks > 1 ? 's' : ''}';
+    } else if (diff.inDays < 365) {
+      final months = (diff.inDays / 30).floor();
+      return 'Il y a $months mois';
+    } else {
+      final years = (diff.inDays / 365).floor();
+      return 'Il y a $years an${years > 1 ? 's' : ''}';
+    }
+  }
+
+  Widget _buildMainSectionCard({
+    required String title,
+    required ColorScheme colorScheme,
+    required Widget child,
+  }) {
+    return Card(
+      elevation: 3,
+      shadowColor: colorScheme.primary.withValues(alpha: 0.3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: colorScheme.primary.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onPrimaryContainer,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSwitchRow({
     required String title,
     required String subtitle,
@@ -1322,9 +1733,10 @@ class _AccountPageState extends State<AccountPage> {
   Widget _buildStyledDropdown<T>({
     required T value,
     required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
+    required ValueChanged<T?>? onChanged,
     String? labelText,
     IconData? prefixIcon,
+    bool enabled = true,
   }) {
     return DropdownButtonFormField<T>(
       initialValue: value,
@@ -1344,7 +1756,7 @@ class _AccountPageState extends State<AccountPage> {
         ),
       ),
       items: items,
-      onChanged: onChanged,
+      onChanged: enabled ? onChanged : null,
       menuMaxHeight: 250,
     );
   }
@@ -1409,6 +1821,7 @@ class _AccountPageState extends State<AccountPage> {
                 );
               }),
             ],
+            ),
           ),
         ),
         actions: [
