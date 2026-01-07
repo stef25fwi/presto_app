@@ -55,7 +55,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
       final data = snap.data();
       if (data == null) return;
 
-      String? s(dynamic v) => v == null ? null : v.toString();
+      String? s(dynamic v) => v?.toString();
 
       _companyCtrl.text = s(data['companyName']) ?? _companyCtrl.text;
       _siretCtrl.text = s(data['siret']) ?? _siretCtrl.text;

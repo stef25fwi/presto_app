@@ -702,7 +702,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           IconButton(
             icon: const Icon(Icons.home_outlined),
             onPressed: () {
-              // TODO: remplace par ta navigation Home
               Navigator.popUntil(context, (r) => r.isFirst);
             },
           ),
