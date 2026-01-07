@@ -529,6 +529,7 @@ class _AccountPageState extends State<AccountPage> {
         final isLoggedIn = user != null;
 
         return Scaffold(
+          resizeToAvoidBottomInset: true,
           appBar: AppBar(
             title: const Text(
               'Mon compte ilipresto',
@@ -547,10 +548,10 @@ class _AccountPageState extends State<AccountPage> {
                 radius: const Radius.circular(8),
                 child: SingleChildScrollView(
                   controller: _scrollController,
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
-                  ),
+                  primary: false,
+                  physics: const ClampingScrollPhysics(),
                   padding: const EdgeInsets.all(16),
+                  cacheExtent: 500,
                   child: isLoggedIn
                       ? _buildProfileContent(colorScheme, isDark, user)
                       : _buildAuthContent(colorScheme, isDark),
