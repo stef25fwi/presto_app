@@ -2257,7 +2257,7 @@ class _HomePageState extends State<HomePage>
                 Container(
                   width: double.infinity,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFE3F2FD),
+                    color: Colors.white,
                     borderRadius: BorderRadius.all(Radius.circular(16)),
                   ),
                   padding:
@@ -2280,14 +2280,30 @@ class _HomePageState extends State<HomePage>
                         description:
                             "En quelques lignes, vous décrivez votre besoin et votre lieu.",
                       ),
-                      SizedBox(height: 6),
+                      SizedBox(height: 4),
+                      Center(
+                        child: Icon(
+                          Icons.arrow_downward_rounded,
+                          color: kPrestoOrange,
+                          size: 28,
+                        ),
+                      ),
+                      SizedBox(height: 4),
                       _HowItWorksStep(
                         stepNumber: 2,
                         title: "Mon offre est diffusée instantanément",
                         description:
                             "Les prestataires proches sont notifiés et voient immédiatement votre offre.",
                       ),
-                      SizedBox(height: 6),
+                      SizedBox(height: 4),
+                      Center(
+                        child: Icon(
+                          Icons.arrow_downward_rounded,
+                          color: kPrestoOrange,
+                          size: 28,
+                        ),
+                      ),
+                      SizedBox(height: 4),
                       _HowItWorksStep(
                         stepNumber: 3,
                         title: "Ils me contactent aussitôt",
