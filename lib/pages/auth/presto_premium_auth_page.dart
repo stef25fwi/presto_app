@@ -22,8 +22,7 @@ class PrestoPremiumAuthPage extends StatefulWidget {
   });
 
   @override
-  State<PrestoPremiumAuthPage> createState() =>
-      _PrestoPremiumAuthPageState();
+  State<PrestoPremiumAuthPage> createState() => _PrestoPremiumAuthPageState();
 }
 
 class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
@@ -270,7 +269,6 @@ class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
                           ),
                         ),
                         const SizedBox(height: 10),
-
                         AnimatedSize(
                           duration: _anim,
                           curve: Curves.easeOut,
@@ -281,8 +279,7 @@ class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
                                       controller: _emailCtrl,
                                       hint: "Adresse email",
                                       enabled: !_loadingAny,
-                                      keyboardType:
-                                          TextInputType.emailAddress,
+                                      keyboardType: TextInputType.emailAddress,
                                     ),
                                     const SizedBox(height: 12),
                                     _SoftField(
@@ -320,9 +317,8 @@ class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
                                       children: [
                                         _Link(
                                           text: "Mot de passe oublié ?",
-                                          onTap: _loadingAny
-                                              ? null
-                                              : _handleReset,
+                                          onTap:
+                                              _loadingAny ? null : _handleReset,
                                         ),
                                         const Padding(
                                           padding: EdgeInsets.symmetric(
@@ -479,7 +475,7 @@ class _HeaderPremium extends StatelessWidget {
           width: 46,
           height: 46,
           decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.14),
+            color: accent.withOpacity(0.14),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(Icons.bolt, color: accent, size: 24),
@@ -532,10 +528,10 @@ class _CardShell extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+        border: Border.all(color: Colors.black.withOpacity(0.08)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Colors.black.withOpacity(0.06),
             blurRadius: 18,
             offset: const Offset(0, 10),
           )
@@ -558,7 +554,7 @@ class _OrDivider extends StatelessWidget {
           child: Divider(
             height: 1,
             thickness: 1,
-            color: muted.withValues(alpha: 0.35),
+            color: muted.withOpacity(0.35),
           ),
         ),
         const SizedBox(width: 10),
@@ -575,7 +571,7 @@ class _OrDivider extends StatelessWidget {
           child: Divider(
             height: 1,
             thickness: 1,
-            color: muted.withValues(alpha: 0.35),
+            color: muted.withOpacity(0.35),
           ),
         ),
       ],
@@ -603,7 +599,8 @@ class _ProviderButton extends StatelessWidget {
     final isApple = variant == _ProviderVariant.apple;
     final bg = isApple ? const Color(0xFF1F2329) : Colors.white;
     final fg = isApple ? Colors.white : const Color(0xFF111827);
-    final border = isApple ? Colors.transparent : Colors.black.withValues(alpha: 0.14);
+    final border =
+        isApple ? Colors.transparent : Colors.black.withOpacity(0.14);
 
     return InkWell(
       onTap: onTap,
@@ -693,7 +690,7 @@ class _SoftField extends StatelessWidget {
   Widget build(BuildContext context) {
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
-      borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.10)),
+      borderSide: BorderSide(color: Colors.black.withOpacity(0.10)),
     );
 
     return TextField(
@@ -710,7 +707,7 @@ class _SoftField extends StatelessWidget {
         border: border,
         enabledBorder: border,
         focusedBorder: border.copyWith(
-          borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.18)),
+          borderSide: BorderSide(color: Colors.black.withOpacity(0.18)),
         ),
         suffixIcon: suffix,
       ),
@@ -795,7 +792,7 @@ class _BriefcaseIcon extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFFFF3E8),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
       ),
       child: const Icon(Icons.work, color: Color(0xFFB45309), size: 26),
     );

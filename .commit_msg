@@ -1,0 +1,33 @@
+feat: page Mon compte - sections encadrées + édition profil + suppression annonces
+
+✨ Fonctionnalités ajoutées:
+
+📋 Sections encadrées principales:
+- 👤 Mon profil : édition activable/désactivable
+- 💬 Mes messages : boîte de réception et envois
+- 📢 Mes annonces publiées : affichage dynamique en temps réel
+- ⭐ Mes catégories favorites : gestion complète
+
+🔐 Mode édition profil:
+- Champs grisés par défaut
+- Bouton 'Modifier mon profil' pour activer l'édition
+- Bouton 'Enregistrer mon profil' pour sauvegarder
+- Support du champ enabled pour PhoneInputFieldCompact
+
+🗑️ Suppression d'annonces:
+- Affichage dynamique avec StreamBuilder
+- Vérification des droits utilisateur (ownerId/userId)
+- Popup de confirmation avec fond blanc
+- Messages d'erreur explicites
+- Mise à jour automatique de la liste
+
+🎨 Design Material 3:
+- Cartes avec bordure colorée et ombre
+- En-têtes stylisés avec fond coloré
+- Formatage intelligent des dates (relatif)
+- Icônes et badges pour meilleure UX
+
+🔧 Améliorations techniques:
+- Support ownerId dans firestore.rules
+- Gestion des états de chargement et erreurs
+- Protection contre les modifications non autorisées
