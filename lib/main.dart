@@ -426,7 +426,8 @@ Future<void> main() async {
     );
     try {
       if (kIsWeb) {
-        debugPrint('[APPCHECK] siteKey=${webRecaptchaSiteKey.substring(0, 10)}...');
+        debugPrint(
+            '[APPCHECK] siteKey=${webRecaptchaSiteKey.substring(0, 10)}...');
         await FirebaseAppCheck.instance.activate(
           webProvider: ReCaptchaV3Provider(webRecaptchaSiteKey),
         );
@@ -510,60 +511,65 @@ class PrestoApp extends StatelessWidget {
         '/publish': (_) => const PublishOfferPage(),
         '/messages': (_) => const MessagesPage(),
         '/auth': (context) => PrestoPremiumAuthPage(
-          onGoogle: () async {
-            final auth = FirebaseAuth.instance;
-            final provider = GoogleAuthProvider()
-              ..setCustomParameters({'prompt': 'select_account'});
-            provider.addScope('email');
-            provider.addScope('profile');
-            
-            if (kIsWeb) {
-              try {
-                await auth.signInWithPopup(provider);
-              } catch (_) {
-                await auth.signInWithRedirect(provider);
-              }
-            } else {
-              await auth.signInWithProvider(provider);
-            }
-          },
-          onApple: () async {
-            if (kIsWeb || !(defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS)) {
-              throw Exception('Connexion Apple disponible sur iOS/macOS.');
-            }
-            final appleCredential = await SignInWithApple.getAppleIDCredential(
-              scopes: [
-                AppleIDAuthorizationScopes.email,
-                AppleIDAuthorizationScopes.fullName,
-              ],
-            );
-            if (appleCredential.identityToken == null) {
-              throw Exception('Identité Apple non reçue');
-            }
-            final oauthCredential = OAuthProvider('apple.com').credential(
-              idToken: appleCredential.identityToken,
-              accessToken: appleCredential.authorizationCode,
-            );
-            await FirebaseAuth.instance.signInWithCredential(oauthCredential);
-          },
-          onEmailLogin: (email, password) async {
-            await FirebaseAuth.instance.signInWithEmailAndPassword(
-              email: email,
-              password: password,
-            );
-          },
-          onResetPassword: (email) async {
-            await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-          },
-          onGoToSignup: () {
-            _showSignupDialog(context);
-          },
-          onDiscoverPro: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Prochainement disponible')),
-            );
-          },
-        ),
+              onGoogle: () async {
+                final auth = FirebaseAuth.instance;
+                final provider = GoogleAuthProvider()
+                  ..setCustomParameters({'prompt': 'select_account'});
+                provider.addScope('email');
+                provider.addScope('profile');
+
+                if (kIsWeb) {
+                  try {
+                    await auth.signInWithPopup(provider);
+                  } catch (_) {
+                    await auth.signInWithRedirect(provider);
+                  }
+                } else {
+                  await auth.signInWithProvider(provider);
+                }
+              },
+              onApple: () async {
+                if (kIsWeb ||
+                    !(defaultTargetPlatform == TargetPlatform.iOS ||
+                        defaultTargetPlatform == TargetPlatform.macOS)) {
+                  throw Exception('Connexion Apple disponible sur iOS/macOS.');
+                }
+                final appleCredential =
+                    await SignInWithApple.getAppleIDCredential(
+                  scopes: [
+                    AppleIDAuthorizationScopes.email,
+                    AppleIDAuthorizationScopes.fullName,
+                  ],
+                );
+                if (appleCredential.identityToken == null) {
+                  throw Exception('Identité Apple non reçue');
+                }
+                final oauthCredential = OAuthProvider('apple.com').credential(
+                  idToken: appleCredential.identityToken,
+                  accessToken: appleCredential.authorizationCode,
+                );
+                await FirebaseAuth.instance
+                    .signInWithCredential(oauthCredential);
+              },
+              onEmailLogin: (email, password) async {
+                await FirebaseAuth.instance.signInWithEmailAndPassword(
+                  email: email,
+                  password: password,
+                );
+              },
+              onResetPassword: (email) async {
+                await FirebaseAuth.instance
+                    .sendPasswordResetEmail(email: email);
+              },
+              onGoToSignup: () {
+                _showSignupDialog(context);
+              },
+              onDiscoverPro: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Prochainement disponible')),
+                );
+              },
+            ),
         AppRoutes.toolboxHub: (_) => const ToolboxHubPage(),
         AppRoutes.toolboxCurrent: (_) => const CurrentToolboxPage(),
         AppRoutes.entrepreneurCalculator: (_) =>
@@ -637,14 +643,16 @@ void _showSignupDialog(BuildContext context) {
 
             if (pass.length < 6) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Mot de passe trop court (min. 6)')),
+                const SnackBar(
+                    content: Text('Mot de passe trop court (min. 6)')),
               );
               return;
             }
 
             if (pass != confirmPass) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Les mots de passe ne correspondent pas')),
+                const SnackBar(
+                    content: Text('Les mots de passe ne correspondent pas')),
               );
               return;
             }
@@ -1937,7 +1945,8 @@ class _HomePageState extends State<HomePage>
                                   ),
                                 ],
                                 image: const DecorationImage(
-                                  image: AssetImage('assets/carousel_home/backgroungslide.png'),
+                                  image: AssetImage(
+                                      'assets/carousel_home/backgroungslide.png'),
                                   fit: BoxFit.fill,
                                 ),
                               ),
@@ -2021,7 +2030,8 @@ class _HomePageState extends State<HomePage>
                                 ),
                               ],
                               image: const DecorationImage(
-                                image: AssetImage('assets/carousel_home/backgroungslide.png'),
+                                image: AssetImage(
+                                    'assets/carousel_home/backgroungslide.png'),
                                 fit: BoxFit.fill,
                               ),
                             ),
@@ -3000,33 +3010,42 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   late final Map<String, String> _deptToRegion = _buildDeptToRegion();
 
-  String _normalizeForCategoryMatch(String input) {
-    return input
+  // ✅ Cache de normalisation pour améliorer la performance de recherche
+  final Map<String, String> _normalizedTextCache = {};
+
+  /// Normalise un texte pour la recherche (diacritiques, casse, séparateurs)
+  String _normalizeText(String input) {
+    // Cache hit: retourner directement
+    if (_normalizedTextCache.containsKey(input)) {
+      return _normalizedTextCache[input]!;
+    }
+
+    final normalized = input
         .trim()
         .toLowerCase()
-        // diacritiques courants FR
-        .replaceAll('à', 'a')
-        .replaceAll('â', 'a')
-        .replaceAll('ä', 'a')
+        // Diacritiques courants FR
+        .replaceAll(RegExp(r'[àâä]'), 'a')
         .replaceAll('ç', 'c')
-        .replaceAll('é', 'e')
-        .replaceAll('è', 'e')
-        .replaceAll('ê', 'e')
-        .replaceAll('ë', 'e')
-        .replaceAll('î', 'i')
-        .replaceAll('ï', 'i')
-        .replaceAll('ô', 'o')
-        .replaceAll('ö', 'o')
-        .replaceAll('ù', 'u')
-        .replaceAll('û', 'u')
-        .replaceAll('ü', 'u')
+        .replaceAll(RegExp(r'[éèêë]'), 'e')
+        .replaceAll(RegExp(r'[îï]'), 'i')
+        .replaceAll(RegExp(r'[ôö]'), 'o')
+        .replaceAll(RegExp(r'[ùûü]'), 'u')
         .replaceAll('œ', 'oe')
-        // séparateurs usuels
-        .replaceAll('/', ' ')
-        .replaceAll('-', ' ')
-        .replaceAll('’', ' ')
-        .replaceAll("'", ' ')
+        // Séparateurs usuels
+        .replaceAll(RegExp(r"[/\-'’']"), ' ')
         .replaceAll(RegExp(r'\s+'), ' ');
+
+    // Limiter la taille du cache à 200 entrées
+    if (_normalizedTextCache.length > 200) {
+      _normalizedTextCache.clear();
+    }
+
+    _normalizedTextCache[input] = normalized;
+    return normalized;
+  }
+
+  String _normalizeForCategoryMatch(String input) {
+    return _normalizeText(input);
   }
 
   String? _matchKnownCategory(String input) {
@@ -3149,8 +3168,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     Query<Map<String, dynamic>> query =
         FirebaseFirestore.instance.collection('offers');
 
-    bool hasFilter = false;
-
     final loc = _locationController.text.trim();
     final cp = _postalCodeController.text.trim();
     final cat = _selectedCategory;
@@ -3165,16 +3182,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     // Filtre catégorie (panneau de filtres prioritaire)
     if (filterCat != null && filterCat.isNotEmpty) {
-      hasFilter = true;
       query = query.where('category', isEqualTo: filterCat);
     } else if (cat != null && cat.isNotEmpty && cat != 'Toutes catégories') {
-      hasFilter = true;
       query = query.where('category', isEqualTo: cat);
     }
 
     // Filtre région (par code région) - utilise dept au lieu de region
     if (filterRegCode != null && filterRegCode.isNotEmpty) {
-      hasFilter = true;
       // Les offres n'ont pas de champ 'region', on doit filtrer par dept
       final depts = kRegionDepartments[filterRegCode] ?? [];
       if (depts.isNotEmpty) {
@@ -3183,7 +3197,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         query = query.where('dept', isEqualTo: depts.first);
       }
     } else if (regionCode != null && regionCode.isNotEmpty) {
-      hasFilter = true;
       final depts = kRegionDepartments[regionCode] ?? [];
       if (depts.isNotEmpty) {
         query = query.where('dept', isEqualTo: depts.first);
@@ -3192,36 +3205,29 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     // Filtre département (utilise dept au lieu de departmentCode)
     if (filterDeptCode != null && filterDeptCode.isNotEmpty) {
-      hasFilter = true;
       query = query.where('dept', isEqualTo: filterDeptCode);
     }
 
     // Filtre ville (panneau de filtres prioritaire)
     if (filterCity != null && filterCity.isNotEmpty) {
-      hasFilter = true;
       query = query.where('location', isEqualTo: filterCity);
     } else if (loc.isNotEmpty) {
-      hasFilter = true;
       query = query.where('location', isEqualTo: loc);
     }
 
     // Code postal
     if (cp.isNotEmpty) {
-      hasFilter = true;
       query = query.where('postalCode', isEqualTo: cp);
     }
 
     // Sous-catégorie
     if (subcat != null && subcat.isNotEmpty) {
-      hasFilter = true;
       query = query.where('subcategory', isEqualTo: subcat);
     }
 
-    // ✅ Si aucun filtre, on trie par date
-    // ✅ Si des filtres sont appliqués, on ne peut pas utiliser orderBy sans index composite
-    if (!hasFilter) {
-      query = query.orderBy('createdAt', descending: true);
-    }
+    // ✅ Tri par date (avec index composites déployés)
+    // ✅ Maintenant possible même avec filtres grâce aux index dans firestore.indexes.json
+    query = query.orderBy('createdAt', descending: true);
 
     // ✅ Limiter le nombre de résultats pour éviter les requêtes trop lourdes
     query = query.limit(100);
@@ -3562,7 +3568,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     if (snapshot.hasError) {
                       debugPrint('❌ [OFFERS] Error: ${snapshot.error}');
                       debugPrint('❌ [OFFERS] Stack: ${snapshot.stackTrace}');
-                      
+
                       return Center(
                         child: Padding(
                           padding: const EdgeInsets.all(12),
@@ -3614,17 +3620,22 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
                         snapshot.data?.docs ?? [];
 
+                    // ✅ Filtrage client-side optimisé avec normalisation
                     if (_activeSearchQuery != null &&
                         _activeSearchQuery!.trim().isNotEmpty) {
-                      final q = _activeSearchQuery!.trim().toLowerCase();
+                      final q = _normalizeText(_activeSearchQuery!);
+                      final queryTokens =
+                          q.split(' ').where((t) => t.isNotEmpty).toList();
+
                       docs = docs.where((d) {
                         final data = d.data();
-                        final title =
-                            (data['title'] ?? '').toString().toLowerCase();
-                        final desc = (data['description'] ?? '')
-                            .toString()
-                            .toLowerCase();
-                        return title.contains(q) || desc.contains(q);
+                        final title = _normalizeText(data['title'] ?? '');
+                        final desc = _normalizeText(data['description'] ?? '');
+                        final combined = '$title $desc';
+
+                        // Correspondance si tous les tokens sont présents
+                        return queryTokens
+                            .every((token) => combined.contains(token));
                       }).toList();
                     }
 
@@ -5658,7 +5669,7 @@ class _MessagesPageState extends State<MessagesPage> {
               if (snapshot.hasError) {
                 debugPrint('❌ [Messages] Erreur Firestore: ${snapshot.error}');
                 debugPrint('❌ [Messages] Stack trace: ${snapshot.stackTrace}');
-                
+
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(12),
@@ -5749,8 +5760,7 @@ class _MessagesPageState extends State<MessagesPage> {
               }
 
               return ListView.separated(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                 itemCount: docs.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 4),
                 itemBuilder: (context, index) {
@@ -10760,14 +10770,16 @@ class _UserOffersSectionState extends State<UserOffersSection> {
             .collection('offers')
             .doc(offerId)
             .get();
-        
+
         final imageUrls = (doc.data()?['imageUrls'] as List<dynamic>?)
-            ?.map((e) => e.toString())
-            .toList() ?? [];
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
 
         // 2️⃣ Supprimer les images de Storage
         if (imageUrls.isNotEmpty) {
-          debugPrint('🗑️ [DELETE] Suppression de ${imageUrls.length} images...');
+          debugPrint(
+              '🗑️ [DELETE] Suppression de ${imageUrls.length} images...');
           for (final url in imageUrls) {
             try {
               final ref = FirebaseStorage.instance.refFromURL(url);
@@ -10793,7 +10805,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       } catch (e) {
         debugPrint('❌ [DELETE] Erreur: $e');
         if (!context.mounted) return false;
-        
+
         showErrorSnackBar(context, "Erreur lors de la suppression");
         return false;
       }
