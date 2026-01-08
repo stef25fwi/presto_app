@@ -25,6 +25,7 @@ import 'utils/recording_path.dart';
 import 'features/micro_ia/micro_ia_service.dart';
 import 'features/micro_ia/web_audio_recorder_stub.dart'
     if (dart.library.html) 'features/micro_ia/web_audio_recorder.dart';
+import 'services/firebase_service.dart';
 import 'features/messaging/conversation_service.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/ad_banner.dart';
@@ -413,6 +414,9 @@ Future<void> main() async {
     }
     debugPrint('');
 
+    // ✅ Initialiser le service Firebase centralisé avec optimisations
+    await FirebaseService.instance.initialize();
+
     // 🔒 App Check
     // - Debug: provider debug (ajouter le debug token dans Firebase Console → App Check)
     // - Release: Play Integrity (Android) + App Attest (iOS)
@@ -460,7 +464,7 @@ Future<void> main() async {
       }
 
       // ✅ Synchroniser SessionState.userId automatiquement avec les changements d'auth
-      auth.authStateChanges().listen((User? user) {
+      FirebaseService.instance.authStateChanges.listen((User? user) {
         SessionState.userId = user?.uid;
         debugPrint('[Auth] State changed: ${user?.uid ?? "null"}');
       });
@@ -5620,6 +5624,10 @@ class _MessagesPageState extends State<MessagesPage> {
           actions: [
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert),
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               onSelected: (value) {
                 if (value == 'dark_mode') {
                   setState(() => _isDarkMode = !_isDarkMode);
@@ -6090,7 +6098,9 @@ class _ConversationPageState extends State<ConversationPage> {
     return snap.docs.map((d) => d.data()).toList();
   }
 
-  Future<void> _shareByEmail() async {
+  /*
+  // ANCIENNE VERSION - NE PAS UTILISER - COMMENTEE
+  void _onMenuSelected(String value) async {
     final messages = await _fetchMessagesOnce();
     final buffer = StringBuffer();
 
@@ -6170,14 +6180,186 @@ class _ConversationPageState extends State<ConversationPage> {
       },
     );
   }
+  */
 
-  void _onMenuSelected(String value) {
+  void _onMenuSelected(String value) async {
     switch (value) {
       case 'email':
-        _shareByEmail();
+        // Récupérer les messages et les formater
+        final messages = await _fetchMessagesOnce();
+        final buffer = StringBuffer();
+
+        buffer.writeln("Conversation iliprestō - ${widget.offerTitle}");
+        buffer.writeln("======================================");
+        buffer.writeln();
+
+        for (final m in messages) {
+          final sender = (m['senderName'] ?? 'Utilisateur') as String;
+          final text = (m['text'] ?? '') as String;
+          final ts = m['createdAt'] as Timestamp?;
+          final timeLabel = formatTimeLabel(ts);
+          buffer.writeln("[$timeLabel] $sender : $text");
+        }
+
+        final subject = Uri.encodeComponent("Conversation iliprestō - ${widget.offerTitle}");
+        final body = Uri.encodeComponent(buffer.toString());
+
+        if (!mounted) return;
+
+        // Afficher dialogue pour choisir l'application mail
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              "Partager par email",
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            content: const Text(
+              "Choisissez votre application mail pour partager cette conversation.",
+              style: TextStyle(fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text("Annuler"),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrestoOrange,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  final uri = Uri.parse("mailto:?subject=$subject&body=$body");
+                  try {
+                    final ok = await canLaunchUrl(uri);
+                    if (ok) {
+                      await launchUrl(uri);
+                    } else {
+                      if (!mounted) return;
+                      showSuccessSnackBar(
+                        context,
+                        "Impossible d'ouvrir le client email sur cet appareil.",
+                      );
+                    }
+                  } catch (e) {
+                    if (!mounted) return;
+                    showSuccessSnackBar(
+                      context,
+                      "Erreur lors de l'ouverture du client email.",
+                    );
+                  }
+                },
+                child: const Text("Ouvrir l'application mail"),
+              ),
+            ],
+          ),
+        );
         break;
+
       case 'txt':
-        _exportAsText();
+        // Récupérer les messages et les formater
+        final messages = await _fetchMessagesOnce();
+        final buffer = StringBuffer();
+
+        buffer.writeln("Conversation iliprestō - ${widget.offerTitle}");
+        buffer.writeln("======================================");
+        buffer.writeln();
+
+        for (final m in messages) {
+          final sender = (m['senderName'] ?? 'Utilisateur') as String;
+          final text = (m['text'] ?? '') as String;
+          final ts = m['createdAt'] as Timestamp?;
+          final timeLabel = formatTimeLabel(ts);
+          buffer.writeln("[$timeLabel] $sender : $text");
+        }
+
+        final text = buffer.toString();
+
+        if (!mounted) return;
+
+        // Afficher dialogue pour enregistrer
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              "Enregistrer la conversation",
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Aperçu de la conversation :",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    constraints: const BoxConstraints(maxHeight: 300),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: SingleChildScrollView(
+                      child: SelectableText(
+                        text.isEmpty ? "Aucun message pour l'instant." : text,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          height: 1.4,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text("Annuler"),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrestoOrange,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  showSuccessSnackBar(
+                    context,
+                    "Sélectionnez le texte ci-dessus pour le copier et l'enregistrer.",
+                  );
+                },
+                icon: const Icon(Icons.download, size: 18),
+                label: const Text("Enregistrer"),
+              ),
+            ],
+          ),
+        );
         break;
     }
   }
@@ -6229,15 +6411,31 @@ class _ConversationPageState extends State<ConversationPage> {
           ),
           actions: [
             PopupMenuButton<String>(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               onSelected: _onMenuSelected,
-              itemBuilder: (context) => const [
-                PopupMenuItem(
+              itemBuilder: (context) => [
+                const PopupMenuItem(
                   value: 'email',
-                  child: Text("Partager par email"),
+                  child: Row(
+                    children: [
+                      Icon(Icons.email_outlined, size: 20, color: kPrestoOrange),
+                      SizedBox(width: 12),
+                      Text("Partager par email"),
+                    ],
+                  ),
                 ),
-                PopupMenuItem(
+                const PopupMenuItem(
                   value: 'txt',
-                  child: Text("Enregistrer la conversation (texte)"),
+                  child: Row(
+                    children: [
+                      Icon(Icons.file_download_outlined, size: 20, color: kPrestoOrange),
+                      SizedBox(width: 12),
+                      Text("Enregistrer (texte)"),
+                    ],
+                  ),
                 ),
               ],
             ),
