@@ -1829,7 +1829,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildHomeContent() {
     final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
     final double bottomPadding =
-        (isKeyboardVisible || !_showBottomBar) ? 24 : 120;
+        (isKeyboardVisible || !_showBottomBar) ? 24 : 150;
 
     return Container(
       color: Colors.white,
@@ -1881,13 +1881,9 @@ class _HomePageState extends State<HomePage>
                 const SizedBox(height: 14),
 
                 // SLIDER
-                Container(
+                SizedBox(
                   height: 220,
                   width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
                   child: Stack(
                     children: [
                       PageView.builder(
@@ -1908,28 +1904,18 @@ class _HomePageState extends State<HomePage>
                           // 2.. = slides existants
 
                           if (index == 1) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: SizedBox.expand(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.10),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: RepaintBoundary(
-                                    child: RandomAssetTicker(
-                                      folderPrefix: 'assets/carousel_home/',
-                                      interval: const Duration(seconds: 3),
-                                      antiRepeatWindow: 3,
-                                      fit: BoxFit.cover,
-                                      enabled: _carouselEnabled,
-                                    ),
+                            return SizedBox.expand(
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: Colors.black,
+                                ),
+                                child: RepaintBoundary(
+                                  child: RandomAssetTicker(
+                                    folderPrefix: 'assets/carousel_home/',
+                                    interval: const Duration(seconds: 3),
+                                    antiRepeatWindow: 3,
+                                    fit: BoxFit.cover,
+                                    enabled: _carouselEnabled,
                                   ),
                                 ),
                               ),
@@ -1946,17 +1932,8 @@ class _HomePageState extends State<HomePage>
 
                             return Container(
                               height: double.infinity,
-                              margin: const EdgeInsets.symmetric(horizontal: 0),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.10),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                                image: const DecorationImage(
+                              decoration: const BoxDecoration(
+                                image: DecorationImage(
                                   image: AssetImage(
                                       'assets/dlimages/backgroungslide.png'),
                                   fit: BoxFit.fill,
@@ -2031,17 +2008,8 @@ class _HomePageState extends State<HomePage>
 
                           final slideBody = Container(
                             height: double.infinity,
-                            margin: const EdgeInsets.symmetric(horizontal: 0),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.10),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                              image: const DecorationImage(
+                            decoration: const BoxDecoration(
+                              image: DecorationImage(
                                 image: AssetImage(
                                     'assets/dlimages/backgroungslide.png'),
                                 fit: BoxFit.fill,
@@ -2273,42 +2241,27 @@ class _HomePageState extends State<HomePage>
                           color: kPrestoBlue,
                         ),
                       ),
-                      SizedBox(height: 8),
-                      _HowItWorksStep(
+                      SizedBox(height: 16),
+                      _HowItWorksStepWithProgress(
                         stepNumber: 1,
                         title: "Je publie une offre",
                         description:
                             "En quelques lignes, vous décrivez votre besoin et votre lieu.",
+                        showLine: true,
                       ),
-                      SizedBox(height: 4),
-                      Center(
-                        child: Icon(
-                          Icons.arrow_downward_rounded,
-                          color: kPrestoOrange,
-                          size: 28,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      _HowItWorksStep(
+                      _HowItWorksStepWithProgress(
                         stepNumber: 2,
                         title: "Mon offre est diffusée instantanément",
                         description:
                             "Les prestataires proches sont notifiés et voient immédiatement votre offre.",
+                        showLine: true,
                       ),
-                      SizedBox(height: 4),
-                      Center(
-                        child: Icon(
-                          Icons.arrow_downward_rounded,
-                          color: kPrestoOrange,
-                          size: 28,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      _HowItWorksStep(
+                      _HowItWorksStepWithProgress(
                         stepNumber: 3,
                         title: "Ils me contactent aussitôt",
                         description:
                             "Vous échangez et choisissez la personne idéale pour le job.",
+                        showLine: false,
                       ),
                     ],
                   ),
@@ -2950,6 +2903,92 @@ class _HowItWorksStep extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HowItWorksStepWithProgress extends StatelessWidget {
+  final int stepNumber;
+  final String title;
+  final String description;
+  final bool showLine;
+
+  const _HowItWorksStepWithProgress({
+    required this.stepNumber,
+    required this.title,
+    required this.description,
+    required this.showLine,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: kPrestoOrange,
+                child: Text(
+                  stepNumber.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              if (showLine)
+                Expanded(
+                  child: Container(
+                    width: 3,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          kPrestoOrange,
+                          kPrestoOrange.withOpacity(0.3),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: showLine ? 12 : 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: kPrestoBlue,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.black87,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -3737,7 +3776,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                         Expanded(
                           child: ListView.builder(
                             controller: _scrollController,
-                            padding: const EdgeInsets.fromLTRB(2, 8, 2, 120),
+                            padding: const EdgeInsets.fromLTRB(2, 8, 2, 150),
                             itemCount: _totalItems,
                             itemBuilder: (context, index) {
                               final bool isAd =
@@ -4865,7 +4904,7 @@ Motif du signalement :
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(0, 14, 0,
-                160), // espace pour bottomSheet, cartes pleine largeur
+                180), // espace pour bottomSheet, cartes pleine largeur
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -5787,7 +5826,7 @@ class _MessagesPageState extends State<MessagesPage> {
               }
 
               return ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                padding: const EdgeInsets.fromLTRB(4, 8, 4, 140),
                 itemCount: docs.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 4),
                 itemBuilder: (context, index) {
@@ -7847,7 +7886,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   : AutovalidateMode.disabled,
               child: ListView(
                 controller: _scrollController,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 150),
                 children: [
                   // Bouton Premium AI avec enregistrement audio
                   Center(
@@ -9767,7 +9806,7 @@ class _AccountPageState extends State<AccountPage> {
                 constraints: const BoxConstraints(maxWidth: 500),
                 child: SingleChildScrollView(
                   controller: _scrollController,
-                  padding: const EdgeInsets.only(bottom: 120),
+                  padding: const EdgeInsets.only(bottom: 150),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
