@@ -453,9 +453,17 @@ Future<void> main() async {
       // Ne force plus signInAnonymously() au démarrage
       if (auth.currentUser != null) {
         debugPrint('[Auth] User already signed in: ${auth.currentUser!.uid}');
+        SessionState.userId = auth.currentUser!.uid;
       } else {
         debugPrint('[Auth] No user signed in at startup (OK)');
+        SessionState.userId = null;
       }
+
+      // ✅ Synchroniser SessionState.userId automatiquement avec les changements d'auth
+      auth.authStateChanges().listen((User? user) {
+        SessionState.userId = user?.uid;
+        debugPrint('[Auth] State changed: ${user?.uid ?? "null"}');
+      });
     } catch (e) {
       debugPrint('[Auth] check failed: $e');
     }
@@ -9493,7 +9501,7 @@ class _AccountPageState extends State<AccountPage> {
   Future<void> _signOut() async {
     try {
       await _auth.signOut();
-      SessionState.userId = null;
+      // ✅ SessionState.userId sera automatiquement mis à null via authStateChanges()
       await CrashlyticsContext.setUserId(null);
     } catch (_) {}
   }
@@ -9501,7 +9509,7 @@ class _AccountPageState extends State<AccountPage> {
   // Ancienne méthode _buildProfile supprimée - remplacée par PrestoPremiumAuthPage pour l'auth
 
   Widget _buildProfile(User user) {
-    SessionState.userId = user.uid;
+    // ✅ SessionState.userId est maintenant synchronisé automatiquement via authStateChanges()
     // Lier les crash reports à l'utilisateur connecté
     CrashlyticsContext.setUserId(user.uid);
 
