@@ -48,7 +48,7 @@ class HomePageV2Option2 extends StatelessWidget {
 
             // Search
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: _SearchBar(
                 hint: "Que cherchez-vous ?",
                 onChanged: (_) {},
@@ -60,7 +60,7 @@ class HomePageV2Option2 extends StatelessWidget {
 
             // Location row (Baie-Mahault • Autour de moi + chevron)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: _LocationBar(
                 leftText: "Baie-Mahault",
                 rightText: "Autour de moi",
@@ -72,7 +72,7 @@ class HomePageV2Option2 extends StatelessWidget {
 
             // Filter chips
             Padding(
-              padding: const EdgeInsets.only(left: 16),
+              padding: const EdgeInsets.only(left: 8),
               child: SizedBox(
                 height: 40,
                 child: ListView(

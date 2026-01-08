@@ -779,7 +779,7 @@ class _SplashScreenState extends State<SplashScreen>
         body: SafeArea(
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -3398,7 +3398,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       activeFiltersCount++;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
@@ -3565,7 +3565,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       
                       return Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(12),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -3703,7 +3703,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                         Expanded(
                           child: ListView.builder(
                             controller: _scrollController,
-                            padding: const EdgeInsets.fromLTRB(2, 16, 2, 120),
+                            padding: const EdgeInsets.fromLTRB(2, 8, 2, 120),
                             itemCount: _totalItems,
                             itemBuilder: (context, index) {
                               final bool isAd =
@@ -3804,7 +3804,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
             borderRadius: BorderRadius.circular(12),
           ),
           clipBehavior: Clip.antiAlias,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -4279,7 +4279,7 @@ class _EmptyOffers extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: const [
@@ -5530,7 +5530,7 @@ class _MessagesPageState extends State<MessagesPage> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(12),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -5618,12 +5618,12 @@ class _MessagesPageState extends State<MessagesPage> {
                     children: [
                       Icon(
                         _isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                        color: Colors.black87,
+                        color: textColor,
                       ),
                       const SizedBox(width: 12),
                       Text(
                         _isDarkMode ? 'Mode clair' : 'Mode sombre',
-                        style: const TextStyle(color: Colors.black87),
+                        style: TextStyle(color: textColor),
                       ),
                     ],
                   ),
@@ -5661,7 +5661,7 @@ class _MessagesPageState extends State<MessagesPage> {
                 
                 return Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -6274,7 +6274,7 @@ class _ConversationPageState extends State<ConversationPage> {
                   return ListView.builder(
                     reverse: true,
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                     itemCount: docs.length,
                     itemBuilder: (context, index) {
                       final data = docs[index].data();
@@ -9535,7 +9535,7 @@ class _AccountPageState extends State<AccountPage> {
           ),
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(12),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 500),
                 child: SingleChildScrollView(
