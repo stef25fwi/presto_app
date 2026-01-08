@@ -188,7 +188,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kPrestoBeige,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,

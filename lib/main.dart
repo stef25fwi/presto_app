@@ -5618,12 +5618,12 @@ class _MessagesPageState extends State<MessagesPage> {
                     children: [
                       Icon(
                         _isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                        color: textColor,
+                        color: Colors.black87,
                       ),
                       const SizedBox(width: 12),
                       Text(
                         _isDarkMode ? 'Mode clair' : 'Mode sombre',
-                        style: TextStyle(color: textColor),
+                        style: const TextStyle(color: Colors.black87),
                       ),
                     ],
                   ),
@@ -8202,7 +8202,7 @@ class _PhotoSelectorTile extends StatelessWidget {
       child: Container(
         height: 90,
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF3E0),
+          color: Colors.grey.shade200,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.black12),
         ),
