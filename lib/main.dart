@@ -3520,11 +3520,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           ),
           backgroundColor: kPrestoOrange,
           foregroundColor: Colors.white,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(
-              bottom: Radius.circular(20),
-            ),
-          ),
           actions: [
             IconButton(
               icon: const Icon(Icons.home_outlined),
