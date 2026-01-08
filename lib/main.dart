@@ -1885,7 +1885,7 @@ class _HomePageState extends State<HomePage>
                   offset: const Offset(-10, 0),
                   child: SizedBox(
                     height: 220,
-                    width: MediaQuery.of(context).size.width,
+                    width: MediaQuery.of(context).size.width + 20,
                     child: Stack(
                       children: [
                         PageView.builder(
