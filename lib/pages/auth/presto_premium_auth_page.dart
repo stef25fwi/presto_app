@@ -31,7 +31,7 @@ class _PrestoPremiumAuthPageState extends State<PrestoPremiumAuthPage>
 
   // Palette (conforme Prestō)
   static const prestoOrange = Color(0xFFFF6600);
-  static const prestoBlue = Color(0xFF1A73E8);
+  // static const prestoBlue = Color(0xFF1A73E8); // Non utilisé actuellement
   static const textMuted = Color(0xFF6B7280);
 
   final _emailCtrl = TextEditingController();

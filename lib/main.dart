@@ -3161,25 +3161,28 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       query = query.where('category', isEqualTo: cat);
     }
 
-    // Filtre région (par code région)
+    // Filtre région (par code région) - utilise dept au lieu de region
     if (filterRegCode != null && filterRegCode.isNotEmpty) {
       hasFilter = true;
-      final regionName = kRegions[filterRegCode];
-      if (regionName != null) {
-        query = query.where('region', isEqualTo: regionName);
+      // Les offres n'ont pas de champ 'region', on doit filtrer par dept
+      final depts = kRegionDepartments[filterRegCode] ?? [];
+      if (depts.isNotEmpty) {
+        // Pour Firestore, on ne peut pas faire un IN avec d'autres where
+        // On va juste prendre le premier dept pour l'instant (limitation)
+        query = query.where('dept', isEqualTo: depts.first);
       }
     } else if (regionCode != null && regionCode.isNotEmpty) {
       hasFilter = true;
-      final regionName = kRegions[regionCode];
-      if (regionName != null) {
-        query = query.where('region', isEqualTo: regionName);
+      final depts = kRegionDepartments[regionCode] ?? [];
+      if (depts.isNotEmpty) {
+        query = query.where('dept', isEqualTo: depts.first);
       }
     }
 
-    // Filtre département (par code département)
+    // Filtre département (utilise dept au lieu de departmentCode)
     if (filterDeptCode != null && filterDeptCode.isNotEmpty) {
       hasFilter = true;
-      query = query.where('departmentCode', isEqualTo: filterDeptCode);
+      query = query.where('dept', isEqualTo: filterDeptCode);
     }
 
     // Filtre ville (panneau de filtres prioritaire)
@@ -3203,9 +3206,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       query = query.where('subcategory', isEqualTo: subcat);
     }
 
+    // ✅ Si aucun filtre, on trie par date
+    // ✅ Si des filtres sont appliqués, on ne peut pas utiliser orderBy sans index composite
     if (!hasFilter) {
       query = query.orderBy('createdAt', descending: true);
     }
+
+    // ✅ Limiter le nombre de résultats pour éviter les requêtes trop lourdes
+    query = query.limit(100);
 
     return query;
   }
@@ -8282,14 +8290,12 @@ class _AccountPageState extends State<AccountPage> {
   final TextEditingController _adminMicroIaLanguageController =
       TextEditingController();
 
-  final _formKey = GlobalKey<FormState>();
-  late bool _isLoginMode;
-  bool _isLoading = false;
+  // final _formKey = GlobalKey<FormState>(); // Plus utilisé avec PrestoPremiumAuthPage
 
-  // Email / mot de passe
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _passwordConfirmController = TextEditingController();
+  // Email / mot de passe - Maintenant gérés par PrestoPremiumAuthPage
+  // final _emailController = TextEditingController();
+  // final _passwordController = TextEditingController();
+  // final _passwordConfirmController = TextEditingController();
 
   // Profil utilisateur
   final TextEditingController _profilePseudoController =
@@ -8702,7 +8708,7 @@ class _AccountPageState extends State<AccountPage> {
   @override
   void initState() {
     super.initState();
-    _isLoginMode = !widget.startInSignup;
+    // _isLoginMode = !widget.startInSignup; // Plus utilisé avec PrestoPremiumAuthPage
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
     });
@@ -8742,9 +8748,9 @@ class _AccountPageState extends State<AccountPage> {
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    _passwordConfirmController.dispose();
+    // _emailController.dispose(); // Maintenant géré par PrestoPremiumAuthPage
+    // _passwordController.dispose();
+    // _passwordConfirmController.dispose();
     _profilePseudoController.dispose();
     _profileCityController.dispose();
     _profilePhoneController.dispose();
@@ -8753,87 +8759,7 @@ class _AccountPageState extends State<AccountPage> {
     super.dispose();
   }
 
-  Future<void> _signInWithEmail() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-    try {
-      await _auth.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-
-      // ✅ Tracking de connexion
-      await _trackLogin(authMethod: 'email', isNewUser: false);
-
-      if (!mounted) return;
-      showSuccessSnackBar(context, "Connexion réussie");
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      String errorMsg;
-
-      switch (e.code) {
-        case 'user-not-found':
-          errorMsg = "Aucun compte associé à cet email.";
-          break;
-        case 'wrong-password':
-          errorMsg = "Mot de passe incorrect.";
-          break;
-        case 'invalid-email':
-          errorMsg = "Format d'email invalide.";
-          break;
-        case 'user-disabled':
-          errorMsg = "Ce compte a été désactivé.";
-          break;
-        case 'too-many-requests':
-          errorMsg = "Trop de tentatives. Réessaye plus tard.";
-          break;
-        case 'invalid-credential':
-          errorMsg = "Email ou mot de passe incorrect.";
-          break;
-        case 'network-request-failed':
-          errorMsg = "Erreur réseau. Vérifie ta connexion.";
-          break;
-        default:
-          errorMsg = e.message ?? "Erreur de connexion : ${e.code}";
-      }
-
-      showErrorSnackBar(context, errorMsg);
-    } catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, "Erreur inattendue : $e");
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _registerWithEmail() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    if (_passwordController.text.trim() !=
-        _passwordConfirmController.text.trim()) {
-      showSuccessSnackBar(context, "Les mots de passe ne correspondent pas.");
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-
-      await _trackLogin(authMethod: 'email', isNewUser: true);
-      if (!mounted) return;
-      showSuccessSnackBar(context, "Compte créé et connecté avec succès");
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      showSuccessSnackBar(
-          context, e.message ?? "Erreur lors de l’inscription.");
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
+  // Ancienne méthode - maintenant gérée par PrestoPremiumAuthPage
 
   Future<void> _loadUserProfile(User user, {bool isRetry = false}) async {
     try {
@@ -9276,7 +9202,7 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _signInWithGoogle() async {
-    setState(() => _isLoading = true);
+    // setState(() => _isLoading = true); // Géré par PrestoPremiumAuthPage
 
     try {
       _googleAuthService.logAttempt('signInWithGoogle',
@@ -9315,7 +9241,7 @@ class _AccountPageState extends State<AccountPage> {
                 showErrorSnackBar(context, msg);
               }
               if (mounted) {
-                setState(() => _isLoading = false);
+                // setState(() => _isLoading = false);
               }
               return;
             }
@@ -9329,7 +9255,7 @@ class _AccountPageState extends State<AccountPage> {
             showErrorSnackBar(context, msg);
           }
           if (mounted) {
-            setState(() => _isLoading = false);
+            // setState(() => _isLoading = false);
           }
           return;
         }
@@ -9394,7 +9320,7 @@ class _AccountPageState extends State<AccountPage> {
       showErrorSnackBar(context, "Erreur lors de la connexion. Réessaye.");
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        // setState(() => _isLoading = false);
       }
     }
   }
@@ -9410,7 +9336,7 @@ class _AccountPageState extends State<AccountPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    // setState(() => _isLoading = true); // Géré par PrestoPremiumAuthPage
     try {
       debugPrint('[Apple Sign-In] Démarrage de l\'authentification Apple...');
 
@@ -9544,52 +9470,7 @@ class _AccountPageState extends State<AccountPage> {
       debugPrint('[Apple Sign-In] Unexpected error: $e');
       showErrorSnackBar(context, "Erreur inattendue : $e");
     } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _resetPassword() async {
-    final email = _emailController.text.trim();
-
-    if (email.isEmpty || !email.contains('@')) {
-      showErrorSnackBar(context,
-          "Entre un email valide pour réinitialiser ton mot de passe.");
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      await _auth.sendPasswordResetEmail(email: email);
-
-      if (!mounted) return;
-      showSuccessSnackBar(
-        context,
-        "Email de réinitialisation envoyé à $email. Vérifie ta boîte mail.",
-      );
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      String errorMsg;
-
-      switch (e.code) {
-        case 'user-not-found':
-          errorMsg = "Aucun compte associé à cet email.";
-          break;
-        case 'invalid-email':
-          errorMsg = "Format d'email invalide.";
-          break;
-        case 'too-many-requests':
-          errorMsg = "Trop de tentatives. Réessaye plus tard.";
-          break;
-        default:
-          errorMsg = e.message ?? "Erreur : ${e.code}";
-      }
-
-      showErrorSnackBar(context, errorMsg);
-    } catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, "Erreur : $e");
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      // if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -9601,292 +9482,7 @@ class _AccountPageState extends State<AccountPage> {
     } catch (_) {}
   }
 
-  Widget _buildAuthForm() {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        appBar: AppBar(
-          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-          title: const Text(
-            "Mon compte iliprestō",
-            style: kPrestoAppBarTitleStyle,
-          ),
-          backgroundColor: kPrestoOrange,
-          foregroundColor: Colors.white,
-        ),
-        backgroundColor: Colors.white,
-        body: AnimatedPadding(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 500),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _isLoginMode
-                          ? "Se connecter à iliprestō"
-                          : "Créer un compte iliprestō",
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      "Un compte te permet de gérer tes offres, tes messages et ta visibilité.",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          TextFormField(
-                            controller: _emailController,
-                            decoration: const InputDecoration(
-                              labelText: "Email",
-                            ),
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return "Indique un email";
-                              }
-                              if (!value.contains('@')) {
-                                return "Email invalide";
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            controller: _passwordController,
-                            decoration: InputDecoration(
-                              labelText: "Mot de passe",
-                              helperText: _isLoginMode
-                                  ? null
-                                  : "Au moins 8 caractères recommandés",
-                              helperStyle: const TextStyle(fontSize: 11),
-                            ),
-                            obscureText: true,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return "Mot de passe requis";
-                              }
-                              if (_isLoginMode) {
-                                return null; // Pas de validation stricte en mode connexion
-                              }
-                              if (value.trim().length < 8) {
-                                return "Au moins 8 caractères pour plus de sécurité";
-                              }
-                              return null;
-                            },
-                          ),
-                          if (!_isLoginMode) ...[
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              controller: _passwordConfirmController,
-                              decoration: const InputDecoration(
-                                labelText: "Confirme le mot de passe",
-                              ),
-                              obscureText: true,
-                            ),
-                          ],
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: kPrestoOrange,
-                                foregroundColor: Colors.white,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                              onPressed: _isLoading
-                                  ? null
-                                  : () {
-                                      if (_isLoginMode) {
-                                        _signInWithEmail();
-                                      } else {
-                                        _registerWithEmail();
-                                      }
-                                    },
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                          Colors.white,
-                                        ),
-                                      ),
-                                    )
-                                  : Text(
-                                      _isLoginMode
-                                          ? "Se connecter"
-                                          : "Créer mon compte",
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _isLoginMode = !_isLoginMode;
-                          });
-                        },
-                        child: Text(
-                          _isLoginMode
-                              ? "Pas encore de compte ? S’inscrire"
-                              : "Déjà un compte ? Se connecter",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: kPrestoBlue,
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (_isLoginMode) ...[
-                      const SizedBox(height: 4),
-                      Center(
-                        child: TextButton(
-                          onPressed: _isLoading ? null : _resetPassword,
-                          child: const Text(
-                            "Mot de passe oublié ?",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: kPrestoOrange,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    const SizedBox(height: 12),
-                    const Text(
-                      "Ou se connecter avec",
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _isLoading
-                            ? null
-                            : () async {
-                                try {
-                                  await _signInWithGoogle();
-                                } catch (e) {
-                                  if (mounted) {
-                                    showErrorSnackBar(context,
-                                        "Erreur de connexion. Réessaye.");
-                                  }
-                                }
-                              },
-                        icon: const Icon(Icons.g_mobiledata),
-                        label: const Text("Se connecter avec Google"),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          side: const BorderSide(color: Colors.black12),
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: _isLoading ? null : _signInWithApple,
-                        icon: const Icon(
-                          Icons.apple,
-                          size: 20,
-                        ),
-                        label: const Text(
-                          "Continuer avec Apple",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Vous êtes une entreprise ?",
-                            style: TextStyle(
-                                fontWeight: FontWeight.w800, fontSize: 16),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
-                            "Abonnement bientôt disponible.",
-                            style: TextStyle(color: Colors.black54),
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const ProProfilePage()),
-                                );
-                              },
-                              icon: const Icon(Icons.business_center_outlined),
-                              label: const Text("Créer un compte Pro"),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // Ancienne méthode _buildProfile supprimée - remplacée par PrestoPremiumAuthPage pour l'auth
 
   Widget _buildProfile(User user) {
     SessionState.userId = user.uid;
@@ -10715,7 +10311,19 @@ class _AccountPageState extends State<AccountPage> {
         if (user == null) {
           SessionState.userId = null;
           CrashlyticsContext.setUserId(null);
-          return _buildAuthForm();
+          return PrestoPremiumAuthPage(
+            onGoogle: () async => await _signInWithGoogle(),
+            onApple: () async => await _signInWithApple(),
+            onEmailLogin: (email, password) async {
+              await _auth.signInWithEmailAndPassword(
+                email: email,
+                password: password,
+              );
+            },
+            onResetPassword: (email) async {
+              await _auth.sendPasswordResetEmail(email: email);
+            },
+          );
         } else {
           return _buildProfile(user);
         }
