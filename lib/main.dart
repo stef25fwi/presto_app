@@ -1854,7 +1854,7 @@ class _HomePageState extends State<HomePage>
                   height: 220,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: kPrestoOrange,
+                    color: Colors.transparent,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Stack(
@@ -1917,7 +1917,6 @@ class _HomePageState extends State<HomePage>
                               height: double.infinity,
                               margin: const EdgeInsets.symmetric(horizontal: 0),
                               decoration: BoxDecoration(
-                                color: kPrestoOrange,
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
@@ -1926,6 +1925,10 @@ class _HomePageState extends State<HomePage>
                                     offset: const Offset(0, 4),
                                   ),
                                 ],
+                                image: const DecorationImage(
+                                  image: AssetImage('assets/carousel_home/backgroungslide.png'),
+                                  fit: BoxFit.fill,
+                                ),
                               ),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -1998,7 +2001,6 @@ class _HomePageState extends State<HomePage>
                             height: double.infinity,
                             margin: const EdgeInsets.symmetric(horizontal: 0),
                             decoration: BoxDecoration(
-                              color: kPrestoOrange,
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
@@ -2007,6 +2009,10 @@ class _HomePageState extends State<HomePage>
                                   offset: const Offset(0, 4),
                                 ),
                               ],
+                              image: const DecorationImage(
+                                image: AssetImage('assets/carousel_home/backgroungslide.png'),
+                                fit: BoxFit.fill,
+                              ),
                             ),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(

@@ -1,25 +1,18 @@
-fix: connexion Firebase + page d'inscription
+feat: fond d'image backgroungslide.png sur tous les slides
 
-🔧 Corrections et améliorations:
+✨ Améliorations visuelles:
 
-✅ Page de connexion branchée Firebase:
-- Connexion Google (popup + redirect fallback Web)
-- Connexion Apple (iOS/macOS)
-- Connexion Email/Password
-- Réinitialisation mot de passe
+🎨 Image de fond unifiée:
+- Remplacement du fond orange par backgroungslide.png
+- Application sur tous les slides (texte principal, toolbox, infos)
+- BoxFit.fill pour remplir l'espace sans crop
 
-✅ Création de compte:
-- Ajout dialogue d'inscription (_showSignupDialog)
-- Validation email et mot de passe
-- Confirmation mot de passe
-- Intégration FirebaseAuth.createUserWithEmailAndPassword
-- Fix: route /signup inexistante remplacée par dialogue
+📱 Modifications appliquées:
+- Slide principal (texte): fond d'image au lieu de kPrestoOrange
+- Slide entrepreneur toolbox: fond d'image au lieu du gradient orange
+- Slides secondaires: fond d'image unifié
+- Container parent: transparent pour éviter débordements
 
-✅ Compatibilité:
-- Utilisation de withOpacity au lieu de withValues
-- Support Web et mobile pour toutes les méthodes d'auth
-
-📱 Fonctionnalités testées:
-- Firebase initialisé correctement
-- Tous les providers d'authentification configurés
-- Gestion des erreurs avec messages utilisateur
+🔧 Fichiers modifiés:
+- lib/main.dart: 3 emplacements avec DecorationImage
+- lib/widgets/entrepreneur_toolbox_slide.dart: gradient -> image

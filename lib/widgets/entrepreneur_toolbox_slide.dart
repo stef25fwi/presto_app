@@ -50,14 +50,9 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide> {
               height: 220,
               decoration: BoxDecoration(
                 borderRadius: border,
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFFF6A00),
-                    Color(0xFFFF7A1A),
-                    Color(0xFFFA5B00),
-                  ],
+                image: const DecorationImage(
+                  image: AssetImage('assets/carousel_home/backgroungslide.png'),
+                  fit: BoxFit.fill,
                 ),
                 boxShadow: [
                   BoxShadow(
