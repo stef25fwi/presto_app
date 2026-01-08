@@ -555,7 +555,7 @@ class PrestoApp extends StatelessWidget {
             await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
           },
           onGoToSignup: () {
-            Navigator.of(context).pushReplacementNamed('/signup');
+            _showSignupDialog(context);
           },
           onDiscoverPro: () {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -572,6 +572,106 @@ class PrestoApp extends StatelessWidget {
       home: const SplashScreen(),
     );
   }
+}
+
+/// Dialogue de création de compte (inscription)
+void _showSignupDialog(BuildContext context) {
+  final emailCtrl = TextEditingController();
+  final passCtrl = TextEditingController();
+  final confirmPassCtrl = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Créer un compte'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                hintText: 'votre@email.com',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: passCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Mot de passe',
+                hintText: 'Min. 6 caractères',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: confirmPassCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Confirmer le mot de passe',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text('Annuler'),
+        ),
+        FilledButton(
+          onPressed: () async {
+            final email = emailCtrl.text.trim();
+            final pass = passCtrl.text;
+            final confirmPass = confirmPassCtrl.text;
+
+            if (email.isEmpty || !email.contains('@')) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Email invalide')),
+              );
+              return;
+            }
+
+            if (pass.length < 6) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Mot de passe trop court (min. 6)')),
+              );
+              return;
+            }
+
+            if (pass != confirmPass) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Les mots de passe ne correspondent pas')),
+              );
+              return;
+            }
+
+            try {
+              await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                email: email,
+                password: pass,
+              );
+              if (ctx.mounted) Navigator.of(ctx).pop();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Compte créé avec succès ! ✅')),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Erreur: $e')),
+                );
+              }
+            }
+          },
+          child: const Text('Créer le compte'),
+        ),
+      ],
+    ),
+  );
 }
 
 /// SPLASH /////////////////////////////////////////////////////////////////
