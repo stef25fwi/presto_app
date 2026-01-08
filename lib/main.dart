@@ -1698,7 +1698,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildHomeContent() {
     final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
     final double bottomPadding =
-        (isKeyboardVisible || !_showBottomBar) ? 16 : 100;
+        (isKeyboardVisible || !_showBottomBar) ? 24 : 120;
 
     return Container(
       color: Colors.white,
@@ -5384,6 +5384,7 @@ class _MessagesPageState extends State<MessagesPage> {
 
   Widget _buildNeedAccount(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: const Text(
@@ -5406,7 +5407,7 @@ class _MessagesPageState extends State<MessagesPage> {
               ),
               const SizedBox(height: 16),
               const Text(
-                "Pour utiliser la messagerie iliprestō, connecte-toi à ton compte.",
+                "Pour utiliser la messagerie iliprestō, connectez-vous à votre compte.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
