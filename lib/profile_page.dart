@@ -1075,12 +1075,12 @@ class _AccountPageState extends State<AccountPage> {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: _isLoading ? null : () async => onTap(),
-        icon: Icon(icon),
+        icon: Icon(icon, size: 20),
         label: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: 14),
           child: Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
           ),
         ),
         style: OutlinedButton.styleFrom(
@@ -1294,48 +1294,155 @@ class _AccountPageState extends State<AccountPage> {
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
 
-        // Section Mes Messages
+        // Section encadrée pour Mes messages, catégories et annonces favorites
         _buildMainSectionCard(
-          title: '💬 Mes messages',
+          title: '⭐ Mes favoris & messages',
           colorScheme: colorScheme,
           child: Column(
             children: [
-              ListTile(
-                leading: Icon(Icons.inbox_outlined, color: colorScheme.primary),
-                title: const Text('Boîte de réception'),
-                trailing: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
+              // Mes Messages
+              _buildSubsectionTitle('💬 Mes messages', colorScheme),
+              Column(
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.inbox_outlined, color: colorScheme.primary),
+                    title: const Text('Boîte de réception'),
+                    trailing: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text('3',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    onTap: () {
+                      // TODO: Navigation vers les messages
+                      showSuccessSnackBar(context, 'Fonctionnalité à venir');
+                    },
                   ),
-                  child: const Text('3',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                onTap: () {
-                  // TODO: Navigation vers les messages
-                  showSuccessSnackBar(context, 'Fonctionnalité à venir');
-                },
+                  const Divider(height: 0),
+                  ListTile(
+                    leading: Icon(Icons.send_outlined, color: colorScheme.primary),
+                    title: const Text('Messages envoyés'),
+                    onTap: () {
+                      // TODO: Navigation vers messages envoyés
+                      showSuccessSnackBar(context, 'Fonctionnalité à venir');
+                    },
+                  ),
+                ],
               ),
-              const Divider(height: 0),
-              ListTile(
-                leading: Icon(Icons.send_outlined, color: colorScheme.primary),
-                title: const Text('Messages envoyés'),
-                onTap: () {
-                  // TODO: Navigation vers messages envoyés
-                  showSuccessSnackBar(context, 'Fonctionnalité à venir');
-                },
+
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 16),
+
+              // Mes Catégories Favorites
+              _buildSubsectionTitle('⭐ Mes catégories favorites', colorScheme),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_favoriteCategories.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        'Aucune catégorie favorite sélectionnée',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ..._favoriteCategories.entries.map((entry) {
+                            final category = entry.key;
+                            final subcategories = entry.value;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          category,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(Icons.close,
+                                            size: 20, color: colorScheme.error),
+                                        onPressed: () {
+                                          setState(() {
+                                            _favoriteCategories.remove(category);
+                                          });
+                                        },
+                                        tooltip: 'Supprimer',
+                                      ),
+                                    ],
+                                  ),
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 6,
+                                    children: [
+                                      ...subcategories.map(
+                                        (sub) => Chip(
+                                          label: Text(sub,
+                                              style: const TextStyle(fontSize: 12)),
+                                          onDeleted: () {
+                                            setState(() {
+                                              _favoriteCategories[category]
+                                                  ?.remove(sub);
+                                              if (_favoriteCategories[category]
+                                                      ?.isEmpty ??
+                                                  false) {
+                                                _favoriteCategories
+                                                    .remove(category);
+                                              }
+                                            });
+                                          },
+                                          backgroundColor: colorScheme
+                                              .primaryContainer
+                                              .withValues(alpha: 0.3),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    ),
+                  const Divider(height: 0),
+                  ListTile(
+                    leading: Icon(Icons.add, color: colorScheme.primary),
+                    title: const Text('Ajouter une catégorie'),
+                    onTap: _showAddCategoryDialog,
+                  ),
+                ],
               ),
             ],
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
 
-        // Section Mes Annonces
+        // Section Mes Annonces (reste séparée)
         _buildMainSectionCard(
           title: '📢 Mes annonces publiées',
           colorScheme: colorScheme,
@@ -1522,245 +1629,131 @@ class _AccountPageState extends State<AccountPage> {
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
 
-        // Section Catégories Favorites
+        // Préférences
         _buildMainSectionCard(
-          title: '⭐ Mes catégories favorites',
+          title: '🔔 Préférences de notifications',
           colorScheme: colorScheme,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (_favoriteCategories.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'Aucune catégorie favorite sélectionnée',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colorScheme.onSurface.withValues(alpha: 0.6),
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                )
-              else
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ..._favoriteCategories.entries.map((entry) {
-                        final category = entry.key;
-                        final subcategories = entry.value;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      category,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.close,
-                                        size: 20, color: colorScheme.error),
-                                    onPressed: () {
-                                      setState(() {
-                                        _favoriteCategories.remove(category);
-                                      });
-                                    },
-                                    tooltip: 'Supprimer',
-                                  ),
-                                ],
-                              ),
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 6,
-                                children: [
-                                  ...subcategories.map(
-                                    (sub) => Chip(
-                                      label: Text(sub,
-                                          style: const TextStyle(fontSize: 12)),
-                                      onDeleted: () {
-                                        setState(() {
-                                          _favoriteCategories[category]
-                                              ?.remove(sub);
-                                          if (_favoriteCategories[category]
-                                                  ?.isEmpty ??
-                                              false) {
-                                            _favoriteCategories
-                                                .remove(category);
-                                          }
-                                        });
-                                      },
-                                      backgroundColor: colorScheme
-                                          .primaryContainer
-                                          .withValues(alpha: 0.3),
-                                    ),
-                                  ),
-                                ],
-                              ),
-    
-    ljhjkl@@                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ],
-                  ),
-                ),
-              const Divider(height: 0),
-              ListTile(
-                leading: Icon(Icons.add, color: colorScheme.primary),
-                title: const Text('Ajouter une catégorie'),
-                onTap: _showAddCategoryDialog,
+              _buildSwitchRow(
+                title: 'Offres proches de moi',
+                subtitle:
+                    'Recevoir les nouvelles annonces autour de ma position.',
+                value: _notifNearby,
+                onChanged: (v) => setState(() => _notifNearby = v),
+              ),
+              const Divider(),
+              _buildSwitchRow(
+                title: 'Catégories favorites',
+                subtitle:
+                    'Être alerté quand une annonce correspond à mes favoris.',
+                value: _notifFavorites,
+                onChanged: (v) => setState(() => _notifFavorites = v),
+              ),
+              const Divider(),
+              _buildSwitchRow(
+                title: 'Quand on accepte mon offre',
+                subtitle:
+                    'Notification dès qu\'un prestataire ou un client accepte.',
+                value: _notifAcceptOffer,
+                onChanged: (v) => setState(() => _notifAcceptOffer = v),
+              ),
+              const Divider(),
+              _buildSwitchRow(
+                title: 'Infos système & sécurité',
+                subtitle: 'Mises à jour importantes de Presto.',
+                value: _notifSystem,
+                onChanged: (v) => setState(() => _notifSystem = v),
               ),
             ],
           ),
         ),
 
-        const SizedBox(height: 20),
-
-        // Préférences (reste comme avant)
-        _buildSectionTitle('Préférences'),
-        Card(
-          elevation: 1,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _buildSwitchRow(
-                  title: 'Offres proches de moi',
-                  subtitle:
-                      'Recevoir les nouvelles annonces autour de ma position.',
-                  value: _notifNearby,
-                  onChanged: (v) => setState(() => _notifNearby = v),
-                ),
-                const Divider(),
-                _buildSwitchRow(
-                  title: 'Catégories favorites',
-                  subtitle:
-                      'Être alerté quand une annonce correspond à mes favoris.',
-                  value: _notifFavorites,
-                  onChanged: (v) => setState(() => _notifFavorites = v),
-                ),
-                const Divider(),
-                _buildSwitchRow(
-                  title: 'Quand on accepte mon offre',
-                  subtitle:
-                      'Notification dès qu\'un prestataire ou un client accepte.',
-                  value: _notifAcceptOffer,
-                  onChanged: (v) => setState(() => _notifAcceptOffer = v),
-                ),
-                const Divider(),
-                _buildSwitchRow(
-                  title: 'Infos système & sécurité',
-                  subtitle: 'Mises à jour importantes de Presto.',
-                  value: _notifSystem,
-                  onChanged: (v) => setState(() => _notifSystem = v),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
         // Langue & thème
-        Card(
-          elevation: 1,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                _buildStyledDropdown<String>(
-                  value: _language,
-                  labelText: 'Langue',
-                  prefixIcon: Icons.language,
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'Français',
-                      child: Text('Français'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Créole',
-                      child: Text('Créole'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Anglais',
-                      child: Text('Anglais'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _language = value);
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                _buildStyledDropdown<String>(
-                  value: _theme,
-                  labelText: 'Thème',
-                  prefixIcon: Icons.brightness_6_outlined,
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'Système',
-                      child: Text('Automatique (système)'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Clair',
-                      child: Text('Clair'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Sombre',
-                      child: Text('Sombre'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _theme = value);
-                    }
-                  },
-                ),
-              ],
-            ),
+        _buildMainSectionCard(
+          title: '🌍 Langue & apparence',
+          colorScheme: colorScheme,
+          child: Column(
+            children: [
+              _buildStyledDropdown<String>(
+                value: _language,
+                labelText: 'Langue',
+                prefixIcon: Icons.language,
+                items: const [
+                  DropdownMenuItem(
+                    value: 'Français',
+                    child: Text('Français'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Créole',
+                    child: Text('Créole'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Anglais',
+                    child: Text('Anglais'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _language = value);
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildStyledDropdown<String>(
+                value: _theme,
+                labelText: 'Thème',
+                prefixIcon: Icons.brightness_6_outlined,
+                items: const [
+                  DropdownMenuItem(
+                    value: 'Système',
+                    child: Text('Automatique (système)'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Clair',
+                    child: Text('Clair'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Sombre',
+                    child: Text('Sombre'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _theme = value);
+                  }
+                },
+              ),
+            ],
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
 
         // Sécurité & aide
-        _buildSectionTitle('Sécurité & aide'),
-        Card(
-          elevation: 1,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        _buildMainSectionCard(
+          title: '🔒 Sécurité & aide',
+          colorScheme: colorScheme,
           child: Column(
             children: [
               ListTile(
-                leading: const Icon(Icons.lock_reset_outlined),
+                leading: Icon(Icons.lock_reset_outlined, color: colorScheme.primary),
                 title: const Text('Changer mon mot de passe'),
                 onTap: _onForgotPassword,
               ),
               const Divider(height: 0),
               ListTile(
-                leading: const Icon(Icons.description_outlined),
+                leading: Icon(Icons.description_outlined, color: colorScheme.primary),
                 title: const Text('Télécharger mes données'),
                 onTap: _downloadUserData,
               ),
               const Divider(height: 0),
               ListTile(
-                leading: const Icon(Icons.support_agent_outlined),
+                leading: Icon(Icons.support_agent_outlined, color: colorScheme.primary),
                 title: const Text('FAQ & support'),
                 onTap: () {
                   Navigator.of(context).push(
@@ -1789,14 +1782,15 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSubsectionTitle(String title, ColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 12, left: 4),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 18,
+        style: TextStyle(
+          fontSize: 16,
           fontWeight: FontWeight.w700,
+          color: colorScheme.primary,
         ),
       ),
     );

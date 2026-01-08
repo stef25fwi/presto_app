@@ -189,47 +189,72 @@ class HomePageV2Option2 extends StatelessWidget {
 
                     const SizedBox(height: 18),
 
-                    // How it works header
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            "Comment ça marche ?",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.black87,
-                            ),
-                          ),
+                    // How it works - Section dans une Card bien visible
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: prestoOrange.withOpacity(0.3),
+                          width: 2,
                         ),
-                        GestureDetector(
-                          onTap: () {},
-                          child: const Text(
-                            "Voir plus",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: prestoOrange,
-                            ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: prestoOrange.withOpacity(0.15),
+                            blurRadius: 24,
+                            offset: const Offset(0, 12),
+                            spreadRadius: 2,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Header
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  "Comment ça marche ?",
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {},
+                                child: const Text(
+                                  "Voir plus",
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: prestoOrange,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
 
-                    // Steps (compact)
-                    const _StepCard(
-                      number: 1,
-                      title: "Je publie une offre",
-                      subtitle: "Les prestataires proches sont notifiés",
-                      showChevron: false,
-                    ),
-                    const SizedBox(height: 10),
-                    const _StepCard(
-                      number: 3,
-                      title: "Je choisis et je valide",
-                      subtitle: "",
-                      showChevron: true,
+                          // Steps (compact)
+                          const _StepCard(
+                            number: 1,
+                            title: "Je publie une offre",
+                            subtitle: "Les prestataires proches sont notifiés",
+                            showChevron: false,
+                          ),
+                          const SizedBox(height: 10),
+                          const _StepCard(
+                            number: 3,
+                            title: "Je choisis et je valide",
+                            subtitle: "",
+                            showChevron: true,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

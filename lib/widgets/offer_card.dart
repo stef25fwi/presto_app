@@ -77,7 +77,7 @@ class OfferCard extends StatelessWidget {
           border: Border(
             left: BorderSide(
               color: _kPrestoBlue, // Bleu
-              width: 5,
+              width: 10,
             ),
           ),
           boxShadow: [
