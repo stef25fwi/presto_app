@@ -3389,6 +3389,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           ),
           backgroundColor: kPrestoOrange,
           foregroundColor: Colors.white,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              bottom: Radius.circular(20),
+            ),
+          ),
           actions: [
             IconButton(
               icon: const Icon(Icons.home_outlined),
@@ -5393,6 +5398,11 @@ class _MessagesPageState extends State<MessagesPage> {
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(20),
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),

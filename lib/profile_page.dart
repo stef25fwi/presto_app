@@ -791,6 +791,11 @@ class _AccountPageState extends State<AccountPage> {
             ),
             centerTitle: true,
             automaticallyImplyLeading: false,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(20),
+              ),
+            ),
           ),
           body: Container(
             color: colorScheme.surface,
