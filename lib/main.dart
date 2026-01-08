@@ -508,7 +508,61 @@ class PrestoApp extends StatelessWidget {
       routes: {
         '/publish': (_) => const PublishOfferPage(),
         '/messages': (_) => const MessagesPage(),
-        '/auth': (_) => const PrestoPremiumAuthPage(),
+        '/auth': (context) => PrestoPremiumAuthPage(
+          onGoogle: () async {
+            final auth = FirebaseAuth.instance;
+            final provider = GoogleAuthProvider()
+              ..setCustomParameters({'prompt': 'select_account'});
+            provider.addScope('email');
+            provider.addScope('profile');
+            
+            if (kIsWeb) {
+              try {
+                await auth.signInWithPopup(provider);
+              } catch (_) {
+                await auth.signInWithRedirect(provider);
+              }
+            } else {
+              await auth.signInWithProvider(provider);
+            }
+          },
+          onApple: () async {
+            if (kIsWeb || !(defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS)) {
+              throw Exception('Connexion Apple disponible sur iOS/macOS.');
+            }
+            final appleCredential = await SignInWithApple.getAppleIDCredential(
+              scopes: [
+                AppleIDAuthorizationScopes.email,
+                AppleIDAuthorizationScopes.fullName,
+              ],
+            );
+            if (appleCredential.identityToken == null) {
+              throw Exception('Identité Apple non reçue');
+            }
+            final oauthCredential = OAuthProvider('apple.com').credential(
+              idToken: appleCredential.identityToken,
+              accessToken: appleCredential.authorizationCode,
+            );
+            await FirebaseAuth.instance.signInWithCredential(oauthCredential);
+          },
+          onEmailLogin: (email, password) async {
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
+              email: email,
+              password: password,
+            );
+          },
+          onResetPassword: (email) async {
+            await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+          },
+          onGoToSignup: () {
+            Navigator.of(context).pushReplacementNamed('/signup');
+          },
+          onDiscoverPro: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Prochainement disponible')),
+            );
+          },
+        ),
         AppRoutes.toolboxHub: (_) => const ToolboxHubPage(),
         AppRoutes.toolboxCurrent: (_) => const CurrentToolboxPage(),
         AppRoutes.entrepreneurCalculator: (_) =>
