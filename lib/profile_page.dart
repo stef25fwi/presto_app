@@ -114,7 +114,7 @@ class _AccountPageState extends State<AccountPage> {
         _loadProfileForUser(user);
       }
     });
-    
+
     // Note : la vérification du redirect Google Sign-In est maintenant gérée
     // dans le SplashScreen (main.dart) pour éviter d'être bloqué sur le splash
     // après un redirect. Le résultat sera déjà traité quand on arrive ici.
@@ -200,7 +200,8 @@ class _AccountPageState extends State<AccountPage> {
       });
     } on FirebaseException catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Erreur chargement profil: ${e.message ?? e.code}');
+      showErrorSnackBar(
+          context, 'Erreur chargement profil: ${e.message ?? e.code}');
     } catch (e) {
       if (!mounted) return;
       showErrorSnackBar(context, 'Erreur chargement profil: $e');
@@ -229,20 +230,20 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<void> _onGoogleSignIn() async {
     if (_isLoading) return;
-    
+
     debugPrint('🔵 [AUTH] ========================================');
     debugPrint('🔵 [AUTH] Starting Google Sign-In...');
     debugPrint('🔵 [AUTH] Current user: ${_auth.currentUser?.email ?? "null"}');
     debugPrint('🔵 [AUTH] Platform: ${kIsWeb ? "Web" : "Native"}');
     debugPrint('🔵 [AUTH] Auth Domain: presto-app-74abe.firebaseapp.com');
-    
+
     setState(() => _isLoading = true);
     try {
       final provider = GoogleAuthProvider()
         ..setCustomParameters({'prompt': 'select_account'});
       provider.addScope('email');
       provider.addScope('profile');
-      
+
       debugPrint('🔵 [AUTH] Provider configured with scopes: email, profile');
 
       if (kIsWeb) {
@@ -280,7 +281,7 @@ class _AccountPageState extends State<AccountPage> {
       debugPrint("❌ [AUTH] Message: ${e.message}");
       debugPrint("❌ [AUTH] Plugin: ${e.plugin}");
       debugPrint("❌ [AUTH] Stack: ${e.stackTrace}");
-      
+
       if (!mounted) return;
       String msg = "Erreur Google";
       if (e.code == 'popup-closed-by-user') {
@@ -289,11 +290,13 @@ class _AccountPageState extends State<AccountPage> {
       } else if (e.code == 'unauthorized-domain') {
         msg = "Domaine non autorisé dans Firebase Console";
         debugPrint("⚠️ [AUTH] DOMAIN NOT AUTHORIZED!");
-        debugPrint("⚠️ [AUTH] Add this domain in Firebase Console → Authentication → Authorized domains");
+        debugPrint(
+            "⚠️ [AUTH] Add this domain in Firebase Console → Authentication → Authorized domains");
       } else if (e.code == 'operation-not-allowed') {
         msg = "Google Sign-In non activé";
         debugPrint("⚠️ [AUTH] GOOGLE SIGN-IN NOT ENABLED!");
-        debugPrint("⚠️ [AUTH] Enable it in Firebase Console → Authentication → Sign-in method");
+        debugPrint(
+            "⚠️ [AUTH] Enable it in Firebase Console → Authentication → Sign-in method");
       } else {
         msg = "Erreur : ${e.message ?? e.code}";
       }
@@ -418,8 +421,8 @@ class _AccountPageState extends State<AccountPage> {
         'notifFavorites': _notifFavorites,
         'notifAcceptOffer': _notifAcceptOffer,
         'notifSystem': _notifSystem,
-        'favoriteCategories': _favoriteCategories.map((key, value) => 
-          MapEntry(key, value)),
+        'favoriteCategories':
+            _favoriteCategories.map((key, value) => MapEntry(key, value)),
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -465,15 +468,19 @@ class _AccountPageState extends State<AccountPage> {
       }
 
       final offerData = offerDoc.data();
-      final ownerId = offerData?['ownerId'] ?? offerData?['userId'] ?? offerData?['uid'];
-      
+      final ownerId =
+          offerData?['ownerId'] ?? offerData?['userId'] ?? offerData?['uid'];
+
       if (ownerId != user.uid) {
         if (!mounted) return;
-        showErrorSnackBar(context, 'Vous n\'êtes pas autorisé à supprimer cette annonce');
+        showErrorSnackBar(
+            context, 'Vous n\'êtes pas autorisé à supprimer cette annonce');
         return;
       }
 
       // Confirmer la suppression
+      if (!mounted) return;
+      // ignore: use_build_context_synchronously
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
@@ -553,7 +560,8 @@ class _AccountPageState extends State<AccountPage> {
           'Suppression refusée (droits Firestore). Vérifiez que ownerId/userId/uid correspond à votre compte.',
         );
       } else {
-        showErrorSnackBar(context, 'Erreur Firestore ($code): ${e.message ?? code}');
+        showErrorSnackBar(
+            context, 'Erreur Firestore ($code): ${e.message ?? code}');
       }
     } catch (e) {
       if (!mounted) return;
@@ -661,7 +669,7 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<void> _onForgotPassword() async {
     final email = _emailCtrl.text.trim();
-    
+
     if (email.isEmpty || !email.contains('@')) {
       showErrorSnackBar(context, 'Veuillez saisir un e-mail valide');
       return;
@@ -707,7 +715,7 @@ class _AccountPageState extends State<AccountPage> {
           .collection('users')
           .doc(user.uid)
           .get();
-      
+
       if (!doc.exists) {
         if (!mounted) return;
         showErrorSnackBar(context, 'Aucune donnée trouvée');
@@ -729,7 +737,7 @@ class _AccountPageState extends State<AccountPage> {
       final prettyJson = encoder.convert(jsonData);
 
       if (!mounted) return;
-      
+
       // Show dialog with data
       showDialog(
         context: context,
@@ -756,7 +764,7 @@ class _AccountPageState extends State<AccountPage> {
           ],
         ),
       );
-      
+
       showSuccessSnackBar(context, 'Données récupérées');
     } on FirebaseException catch (e) {
       if (!mounted) return;
@@ -1170,115 +1178,121 @@ class _AccountPageState extends State<AccountPage> {
             key: _formKeyProfile,
             child: Column(
               children: [
-                  TextFormField(
-                    controller: _nameCtrl,
-                    enabled: _isEditingProfile,
-                    decoration: const InputDecoration(
-                      labelText: 'Nom complet',
-                      prefixIcon: Icon(Icons.person_outline),
-                    ),
+                TextFormField(
+                  controller: _nameCtrl,
+                  enabled: _isEditingProfile,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom complet',
+                    prefixIcon: Icon(Icons.person_outline),
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _cityCtrl,
-                    enabled: _isEditingProfile,
-                    decoration: const InputDecoration(
-                      labelText: 'Commune',
-                      prefixIcon: Icon(Icons.location_on_outlined),
-                    ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _cityCtrl,
+                  enabled: _isEditingProfile,
+                  decoration: const InputDecoration(
+                    labelText: 'Commune',
+                    prefixIcon: Icon(Icons.location_on_outlined),
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _cpCtrl,
-                    enabled: _isEditingProfile,
-                    decoration: const InputDecoration(
-                      labelText: 'C/P',
-                      prefixIcon: Icon(Icons.markunread_mailbox_outlined),
-                    ),
-                    keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _cpCtrl,
+                  enabled: _isEditingProfile,
+                  decoration: const InputDecoration(
+                    labelText: 'C/P',
+                    prefixIcon: Icon(Icons.markunread_mailbox_outlined),
                   ),
-                  const SizedBox(height: 12),
-                  PhoneInputFieldCompact(
-                    controller: _phoneCtrl,
-                    enabled: _isEditingProfile,
-                    labelText: 'Téléphone',
-                    hintText: '612345678',
-                    onCountryCodeChanged: (code) {
-                      debugPrint('Code choisi: $code');
-                    },
-                    onPhoneChanged: (phone) {
-                      debugPrint('Téléphone saisi: $phone');
-                    },
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 12),
+                PhoneInputFieldCompact(
+                  controller: _phoneCtrl,
+                  enabled: _isEditingProfile,
+                  labelText: 'Téléphone',
+                  hintText: '612345678',
+                  onCountryCodeChanged: (code) {
+                    debugPrint('Code choisi: $code');
+                  },
+                  onPhoneChanged: (phone) {
+                    debugPrint('Téléphone saisi: $phone');
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _emailCtrl,
+                  enabled: _isEditingProfile,
+                  decoration: const InputDecoration(
+                    labelText: 'E-mail',
+                    prefixIcon: Icon(Icons.email_outlined),
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _emailCtrl,
-                    enabled: _isEditingProfile,
-                    decoration: const InputDecoration(
-                      labelText: 'E-mail',
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildStyledDropdown<String>(
-                          value: _accountType,
-                          labelText: 'Type de compte',
-                          prefixIcon: Icons.badge_outlined,
-                          enabled: _isEditingProfile,
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'Particulier',
-                              child: Text('Particulier'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Pro',
-                              child: Text('Pro'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Micro-Entreprise',
-                              child: Text('Micro-Entreprise'),
-                            ),
-                          ],
-                          onChanged: _isEditingProfile ? (value) {
-                            if (value != null) {
-                              setState(() {
-                                _accountType = value;
-                              });
-                            }
-                          } : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: _isEditingProfile
-                        ? FilledButton.tonalIcon(
-                            onPressed: _isLoading ? null : () async {
-                              if (_formKeyProfile.currentState?.validate() ?? false) {
-                                await _saveProfile();
-                              }
-                            },
-                            icon: const Icon(Icons.save_outlined),
-                            label: const Text('Enregistrer mon profil'),
-                          )
-                        : FilledButton.tonalIcon(
-                            onPressed: () {
-                              setState(() => _isEditingProfile = true);
-                            },
-                            icon: const Icon(Icons.edit_outlined),
-                            label: const Text('Modifier mon profil'),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStyledDropdown<String>(
+                        value: _accountType,
+                        labelText: 'Type de compte',
+                        prefixIcon: Icons.badge_outlined,
+                        enabled: _isEditingProfile,
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'Particulier',
+                            child: Text('Particulier'),
                           ),
-                  ),
-                ],
-              ),
+                          DropdownMenuItem(
+                            value: 'Pro',
+                            child: Text('Pro'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Micro-Entreprise',
+                            child: Text('Micro-Entreprise'),
+                          ),
+                        ],
+                        onChanged: _isEditingProfile
+                            ? (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    _accountType = value;
+                                  });
+                                }
+                              }
+                            : null,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _isEditingProfile
+                      ? FilledButton.tonalIcon(
+                          onPressed: _isLoading
+                              ? null
+                              : () async {
+                                  if (_formKeyProfile.currentState
+                                          ?.validate() ??
+                                      false) {
+                                    await _saveProfile();
+                                  }
+                                },
+                          icon: const Icon(Icons.save_outlined),
+                          label: const Text('Enregistrer mon profil'),
+                        )
+                      : FilledButton.tonalIcon(
+                          onPressed: () {
+                            setState(() => _isEditingProfile = true);
+                          },
+                          icon: const Icon(Icons.edit_outlined),
+                          label: const Text('Modifier mon profil'),
+                        ),
+                ),
+              ],
             ),
           ),
+        ),
 
         const SizedBox(height: 20),
 
@@ -1292,12 +1306,14 @@ class _AccountPageState extends State<AccountPage> {
                 leading: Icon(Icons.inbox_outlined, color: colorScheme.primary),
                 title: const Text('Boîte de réception'),
                 trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text('3', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text('3',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 onTap: () {
                   // TODO: Navigation vers les messages
@@ -1344,8 +1360,9 @@ class _AccountPageState extends State<AccountPage> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      Icon(Icons.error_outline, 
-                        size: 48, 
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
                         color: colorScheme.error,
                       ),
                       const SizedBox(height: 8),
@@ -1386,7 +1403,8 @@ class _AccountPageState extends State<AccountPage> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 14,
-                              color: colorScheme.onSurface.withValues(alpha: 0.6),
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -1394,7 +1412,8 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                     const Divider(height: 0),
                     ListTile(
-                      leading: Icon(Icons.add_circle_outline, color: colorScheme.primary),
+                      leading: Icon(Icons.add_circle_outline,
+                          color: colorScheme.primary),
                       title: const Text('Créer une nouvelle annonce'),
                       onTap: () {
                         // TODO: Navigation vers création d'annonce
@@ -1411,7 +1430,8 @@ class _AccountPageState extends State<AccountPage> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: offers.length,
-                    separatorBuilder: (context, index) => const Divider(height: 0),
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 0),
                     itemBuilder: (context, index) {
                       final offer = offers[index];
                       final data = offer.data() as Map<String, dynamic>;
@@ -1455,7 +1475,7 @@ class _AccountPageState extends State<AccountPage> {
                               ),
                             if (budget != null)
                               Text(
-                                '${budget}€',
+                                '$budget€',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
@@ -1466,26 +1486,30 @@ class _AccountPageState extends State<AccountPage> {
                                 dateStr,
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: colorScheme.onSurface.withValues(alpha: 0.5),
+                                  color: colorScheme.onSurface
+                                      .withValues(alpha: 0.5),
                                 ),
                               ),
                           ],
                         ),
                         trailing: IconButton(
-                          icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                          icon: Icon(Icons.delete_outline,
+                              color: colorScheme.error),
                           tooltip: 'Supprimer',
                           onPressed: () => _deleteOffer(offerId, title),
                         ),
                         onTap: () {
                           // TODO: Navigation vers détail de l'annonce
-                          showSuccessSnackBar(context, 'Détail de l\'annonce à venir');
+                          showSuccessSnackBar(
+                              context, 'Détail de l\'annonce à venir');
                         },
                       );
                     },
                   ),
                   const Divider(height: 0),
                   ListTile(
-                    leading: Icon(Icons.add_circle_outline, color: colorScheme.primary),
+                    leading: Icon(Icons.add_circle_outline,
+                        color: colorScheme.primary),
                     title: const Text('Créer une nouvelle annonce'),
                     onTap: () {
                       // TODO: Navigation vers création d'annonce
@@ -1571,17 +1595,20 @@ class _AccountPageState extends State<AccountPage> {
                                           if (_favoriteCategories[category]
                                                   ?.isEmpty ??
                                               false) {
-                                            _favoriteCategories.remove(category);
+                                            _favoriteCategories
+                                                .remove(category);
                                           }
                                         });
                                       },
-                                      backgroundColor: colorScheme.primaryContainer
+                                      backgroundColor: colorScheme
+                                          .primaryContainer
                                           .withValues(alpha: 0.3),
                                     ),
                                   ),
                                 ],
                               ),
-                            ],
+    
+    ljhjkl@@                            ],
                           ),
                         );
                       }).toList(),
@@ -1919,54 +1946,57 @@ class _AccountPageState extends State<AccountPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-              ..._allCategories.entries.map((entry) {
-                final category = entry.key;
-                final allSubs = entry.value;
+                ..._allCategories.entries.map((entry) {
+                  final category = entry.key;
+                  final allSubs = entry.value;
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12, bottom: 8),
-                      child: Text(
-                        category,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12, bottom: 8),
+                        child: Text(
+                          category,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
-                    ),
-                    ...allSubs.map((sub) {
-                      final isFavored =
-                          _favoriteCategories[category]?.contains(sub) ?? false;
-                      return CheckboxListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(sub, style: const TextStyle(fontSize: 13)),
-                        value: isFavored,
-                        onChanged: (val) {
-                          setState(() {
-                            if (val == true) {
-                              if (!_favoriteCategories.containsKey(category)) {
-                                _favoriteCategories[category] = [];
+                      ...allSubs.map((sub) {
+                        final isFavored =
+                            _favoriteCategories[category]?.contains(sub) ??
+                                false;
+                        return CheckboxListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          title:
+                              Text(sub, style: const TextStyle(fontSize: 13)),
+                          value: isFavored,
+                          onChanged: (val) {
+                            setState(() {
+                              if (val == true) {
+                                if (!_favoriteCategories
+                                    .containsKey(category)) {
+                                  _favoriteCategories[category] = [];
+                                }
+                                _favoriteCategories[category]!.add(sub);
+                              } else {
+                                _favoriteCategories[category]?.remove(sub);
+                                if ((_favoriteCategories[category]?.length ??
+                                        0) ==
+                                    0) {
+                                  _favoriteCategories.remove(category);
+                                }
                               }
-                              _favoriteCategories[category]!.add(sub);
-                            } else {
-                              _favoriteCategories[category]?.remove(sub);
-                              if ((_favoriteCategories[category]?.length ??
-                                      0) ==
-                                  0) {
-                                _favoriteCategories.remove(category);
-                              }
-                            }
-                          });
-                        },
-                      );
-                    }),
-                  ],
-                );
-              }),
-            ],
+                            });
+                          },
+                        );
+                      }),
+                    ],
+                  );
+                }),
+              ],
             ),
           ),
         ),
