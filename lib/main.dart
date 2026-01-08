@@ -1946,7 +1946,7 @@ class _HomePageState extends State<HomePage>
                                 ],
                                 image: const DecorationImage(
                                   image: AssetImage(
-                                      'assets/carousel_home/backgroungslide.png'),
+                                      'assets/dlimages/backgroungslide.png'),
                                   fit: BoxFit.fill,
                                 ),
                               ),
@@ -2031,7 +2031,7 @@ class _HomePageState extends State<HomePage>
                               ],
                               image: const DecorationImage(
                                 image: AssetImage(
-                                    'assets/carousel_home/backgroungslide.png'),
+                                    'assets/dlimages/backgroungslide.png'),
                                 fit: BoxFit.fill,
                               ),
                             ),

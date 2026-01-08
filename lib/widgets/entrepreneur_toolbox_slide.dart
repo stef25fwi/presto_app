@@ -51,7 +51,7 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide> {
               decoration: BoxDecoration(
                 borderRadius: border,
                 image: const DecorationImage(
-                  image: AssetImage('assets/carousel_home/backgroungslide.png'),
+                  image: AssetImage('assets/dlimages/backgroungslide.png'),
                   fit: BoxFit.cover,
                 ),
                 boxShadow: [
