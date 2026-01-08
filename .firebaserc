@@ -1,7 +1,8 @@
 {
   "projects": {
     "default": "presto-app-74abe",
-    "prod": "presto-app-74abe"
+    "prod": "presto-app-74abe",
+    "presto_app": "presto-app-74abe"
   },
   "targets": {},
   "etags": {}
