@@ -39,6 +39,7 @@ import 'services/notification_service.dart';
 import 'services/google_auth_service.dart';
 import 'pages/pro_profile_page.dart';
 import 'pages/auth/presto_premium_auth_page.dart';
+import 'pages/home_page_v2_option2.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/admin_space_page.dart';
 import 'dev/seed_offers.dart';
@@ -782,15 +783,25 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: const Text(
-                      'iliprestō',
-                      style: TextStyle(
-                        fontSize: 54,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 1.3,
+                  GestureDetector(
+                    onLongPress: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HomePageV2Option2(),
+                        ),
+                      );
+                    },
+                    child: ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: const Text(
+                        'iliprestō',
+                        style: TextStyle(
+                          fontSize: 54,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 1.3,
+                        ),
                       ),
                     ),
                   ),
