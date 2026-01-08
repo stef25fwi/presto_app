@@ -6,7 +6,6 @@ import '../widgets/phone_input_field.dart';
 import '../constants.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
-const kPrestoBeige = Color(0xFFFCEEE2);
 
 class ProProfilePage extends StatefulWidget {
   const ProProfilePage({super.key});
