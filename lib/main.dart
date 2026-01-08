@@ -1881,13 +1881,15 @@ class _HomePageState extends State<HomePage>
                 const SizedBox(height: 14),
 
                 // SLIDER
-                SizedBox(
-                  height: 220,
-                  width: double.infinity,
-                  child: Stack(
-                    children: [
-                      PageView.builder(
-                        controller: _carouselController,
+                Transform.translate(
+                  offset: const Offset(-10, 0),
+                  child: SizedBox(
+                    height: 220,
+                    width: MediaQuery.of(context).size.width,
+                    child: Stack(
+                      children: [
+                        PageView.builder(
+                          controller: _carouselController,
                         itemCount: _slides.length + 1,
                         onPageChanged: (index) {
                           setState(() {
@@ -2112,6 +2114,7 @@ class _HomePageState extends State<HomePage>
                       ),
                     ],
                   ),
+                ),
                 ),
 
                 const SizedBox(height: 12),
