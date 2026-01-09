@@ -1652,9 +1652,15 @@ class _HomePageState extends State<HomePage>
     final viewInsetsBottom = MediaQuery.of(context).viewInsets.bottom;
     // Seuil de 10px pour éviter les faux positifs (résidus de padding)
     final bool isKeyboardVisible = viewInsetsBottom > 10;
-    // N'applique le padding clavier que s'il est réellement visible pour éviter que la bottom bar reste à mi-écran
+
+    // Sur web/mobile, on évite de “doubler” le padding clavier sur les onglets
+    // qui gèrent déjà le clavier eux-mêmes (Compte, Publier, etc).
+    final bool shouldApplyKeyboardPadding = _selectedIndex == 0;
+
     final double effectiveBottomInset =
-        isKeyboardVisible ? viewInsetsBottom : 0;
+        (isKeyboardVisible && shouldApplyKeyboardPadding)
+            ? viewInsetsBottom
+            : 0;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoBlue),
@@ -1671,15 +1677,15 @@ class _HomePageState extends State<HomePage>
             child: Column(
               children: [
                 Expanded(
-                  child: AnimatedPadding(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOut,
-                    padding: EdgeInsets.only(
-                      bottom: effectiveBottomInset,
-                    ),
-                    child: Stack(
-                      children: [
-                        IndexedStack(
+                  child: Stack(
+                    children: [
+                      AnimatedPadding(
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                        padding: EdgeInsets.only(
+                          bottom: effectiveBottomInset,
+                        ),
+                        child: IndexedStack(
                           index: _selectedIndex,
                           children: [
                             _buildHomeContent(),
@@ -1689,73 +1695,71 @@ class _HomePageState extends State<HomePage>
                             const AccountPage(),
                           ],
                         ),
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              color: kPrestoOrange,
-                              borderRadius:
-                                  BorderRadius.vertical(top: Radius.circular(24)),
-                            ),
-                            padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-                            child: SafeArea(
-                              top: false,
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    child: _BottomNavItem(
-                                      icon: Icons.home,
-                                      label: "Accueil",
-                                      selected: _selectedIndex == 0,
-                                      onTap: () => _onBottomTap(0),
-                                    ),
+                      ),
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: kPrestoOrange,
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(24)),
+                          ),
+                          padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+                          child: SafeArea(
+                            top: false,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: _BottomNavItem(
+                                    icon: Icons.home,
+                                    label: "Accueil",
+                                    selected: _selectedIndex == 0,
+                                    onTap: () => _onBottomTap(0),
                                   ),
-                                  Expanded(
-                                    child: _BottomNavItem(
-                                      icon: Icons.search,
-                                      label: "Je consulte\nles offres",
-                                      selected: _selectedIndex == 1,
-                                      onTap: () => _onBottomTap(1),
-                                    ),
+                                ),
+                                Expanded(
+                                  child: _BottomNavItem(
+                                    icon: Icons.search,
+                                    label: "Je consulte\nles offres",
+                                    selected: _selectedIndex == 1,
+                                    onTap: () => _onBottomTap(1),
                                   ),
-                                  Expanded(
-                                    flex: 1,
-                                    child: _BottomNavItem(
-                                      icon: Icons.add_circle_outline,
-                                      label: "Publier\nune offre",
-                                      isBig: true,
-                                      onTap: () => _onBottomTap(2),
-                                    ),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: _BottomNavItem(
+                                    icon: Icons.add_circle_outline,
+                                    label: "Publier\nune offre",
+                                    isBig: true,
+                                    onTap: () => _onBottomTap(2),
                                   ),
-                                  Expanded(
-                                    child: _BottomNavItem(
-                                      icon: Icons.chat_bubble_outline,
-                                      label: "Messages",
-                                      selected: _selectedIndex == 3,
-                                      onTap: () => _onBottomTap(3),
-                                    ),
+                                ),
+                                Expanded(
+                                  child: _BottomNavItem(
+                                    icon: Icons.chat_bubble_outline,
+                                    label: "Messages",
+                                    selected: _selectedIndex == 3,
+                                    onTap: () => _onBottomTap(3),
                                   ),
-                                  Expanded(
-                                    child: _BottomNavItem(
-                                      icon: Icons.person_outline,
-                                      label: "Compte",
-                                      selected: _selectedIndex == 4,
-                                      onTap: () => _onBottomTap(4),
-                                    ),
+                                ),
+                                Expanded(
+                                  child: _BottomNavItem(
+                                    icon: Icons.person_outline,
+                                    label: "Compte",
+                                    selected: _selectedIndex == 4,
+                                    onTap: () => _onBottomTap(4),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -1832,115 +1836,117 @@ class _HomePageState extends State<HomePage>
                         children: [
                           PageView.builder(
                             controller: _carouselController,
-                          itemCount: _slides.length + 1,
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentSlide = index;
+                            itemCount: _slides.length + 1,
+                            onPageChanged: (index) {
+                              setState(() {
+                                _currentSlide = index;
+                                if (index == 1) {
+                                  _carouselEnabled = true;
+                                }
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              // Ordre voulu:
+                              // 0 = slide texte (fixe 4s)
+                              // 1 = carousel d'images (démarre après 4s)
+                              // 2.. = slides existants
+
                               if (index == 1) {
-                                _carouselEnabled = true;
-                              }
-                            });
-                          },
-                          itemBuilder: (context, index) {
-                          // Ordre voulu:
-                          // 0 = slide texte (fixe 4s)
-                          // 1 = carousel d'images (démarre après 4s)
-                          // 2.. = slides existants
-
-                          if (index == 1) {
-                            return SizedBox.expand(
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  color: Colors.black,
-                                ),
-                                child: RepaintBoundary(
-                                  child: RandomAssetTicker(
-                                    folderPrefix: 'assets/carousel_home/',
-                                    interval: const Duration(seconds: 3),
-                                    antiRepeatWindow: 3,
-                                    fit: BoxFit.cover,
-                                    enabled: _carouselEnabled,
+                                return SizedBox.expand(
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black,
+                                    ),
+                                    child: RepaintBoundary(
+                                      child: RandomAssetTicker(
+                                        folderPrefix: 'assets/carousel_home/',
+                                        interval: const Duration(seconds: 3),
+                                        antiRepeatWindow: 3,
+                                        fit: BoxFit.cover,
+                                        enabled: _carouselEnabled,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                            );
-                          }
+                                );
+                              }
 
-                          final slideIndex = index == 0 ? 0 : index - 1;
-                          final slide = _slides[slideIndex];
+                              final slideIndex = index == 0 ? 0 : index - 1;
+                              final slide = _slides[slideIndex];
 
-                          // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
-                          if (slideIndex == 0) {
-                            const String bigText =
-                                "Trouvez immédiatement quelqu'un pour faire le job !";
+                              // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
+                              if (slideIndex == 0) {
+                                const String bigText =
+                                    "Trouvez immédiatement quelqu'un pour faire le job !";
 
-                            return Container(
-                              height: double.infinity,
-                              decoration: const BoxDecoration(
-                                image: DecorationImage(
-                                  image: AssetImage(
-                                      'assets/dlimages/backgroungslide.png'),
-                                  fit: BoxFit.fill,
-                                ),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 18,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
-                                    Text(
-                                      "DISPONIBLE",
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 1.2,
-                                      ),
+                                return Container(
+                                  height: double.infinity,
+                                  decoration: const BoxDecoration(
+                                    image: DecorationImage(
+                                      image: AssetImage(
+                                          'assets/dlimages/backgroungslide.png'),
+                                      fit: BoxFit.fill,
                                     ),
-                                    SizedBox(height: 10),
-                                    // ✅ Phrase principale en très gros sur toute la largeur
-                                    Text(
-                                      bigText,
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize:
-                                            _homeSlideTitleFontSize, // taille bien grosse
-                                        fontWeight: FontWeight.w900,
-                                        height: 1.25,
-                                      ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 18,
+                                      vertical: 18,
                                     ),
-                                    SizedBox(height: 12),
-                                    Text(
-                                      "Une personne disponible près de chez vous, en quelques minutes.",
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        height: 1.3,
-                                      ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: const [
+                                        Text(
+                                          "DISPONIBLE",
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 1.2,
+                                          ),
+                                        ),
+                                        SizedBox(height: 10),
+                                        // ✅ Phrase principale en très gros sur toute la largeur
+                                        Text(
+                                          bigText,
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize:
+                                                _homeSlideTitleFontSize, // taille bien grosse
+                                            fontWeight: FontWeight.w900,
+                                            height: 1.25,
+                                          ),
+                                        ),
+                                        SizedBox(height: 12),
+                                        Text(
+                                          "Une personne disponible près de chez vous, en quelques minutes.",
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }
+                                  ),
+                                );
+                              }
 
-                          // ✅ SLIDE 2 (index 1) : Boîte à outils de l'entrepreneur
-                          if (slideIndex == 1) {
-                            return const EntrepreneurToolboxSlide();
-                          }
+                              // ✅ SLIDE 2 (index 1) : Boîte à outils de l'entrepreneur
+                              if (slideIndex == 1) {
+                                return const EntrepreneurToolboxSlide();
+                              }
 
-                          // 🔁 SLIDES 2, 3, 4 : layout texte + icône / image
-                          final VoidCallback? onSlideTap =
-                              slideIndex == (_slides.length - 1)
+                              // 🔁 SLIDES 2, 3, 4 : layout texte + icône / image
+                              final VoidCallback? onSlideTap = slideIndex ==
+                                      (_slides.length - 1)
                                   ? () {
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
@@ -1950,110 +1956,112 @@ class _HomePageState extends State<HomePage>
                                     }
                                   : null;
 
-                          final slideBody = Container(
-                            height: double.infinity,
-                            decoration: const BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage(
-                                    'assets/dlimages/backgroungslide.png'),
-                                fit: BoxFit.fill,
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              child: Row(
-                                children: [
-                                  // Texte
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          slide.badge.toUpperCase(),
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                              final slideBody = Container(
+                                height: double.infinity,
+                                decoration: const BoxDecoration(
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                        'assets/dlimages/backgroungslide.png'),
+                                    fit: BoxFit.fill,
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      // Texte
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              slide.badge.toUpperCase(),
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              slide.title,
+                                              maxLines: 3,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize:
+                                                    _homeSlideTitleFontSize,
+                                                fontWeight: FontWeight.w900,
+                                                height: 1.25,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              slide.subtitle,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          slide.title,
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: _homeSlideTitleFontSize,
-                                            fontWeight: FontWeight.w900,
-                                            height: 1.25,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          slide.subtitle,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                                      ),
+
+                                      // 👉 Illustration (icône) sur les slides texte
+                                      if (slideIndex != 0) ...[
+                                        const SizedBox(width: 8),
+                                        _buildSlideIllustration(
+                                          slide,
+                                          index,
                                         ),
                                       ],
-                                    ),
+                                    ],
                                   ),
+                                ),
+                              );
 
-                                  // 👉 Illustration (icône) sur les slides texte
-                                  if (slideIndex != 0) ...[
-                                    const SizedBox(width: 8),
-                                    _buildSlideIllustration(
-                                      slide,
-                                      index,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          );
-
-                          if (onSlideTap == null) return slideBody;
-                          return GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: onSlideTap,
-                            child: slideBody,
-                          );
-                        },
-                      ),
-                      // Indicateurs
-                      Positioned(
-                        bottom: 8,
-                        left: 0,
-                        right: 0,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(
-                            _slides.length + 1,
-                            (index) => AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
-                              width: _currentSlide == index ? 16 : 8,
-                              height: 7,
-                              decoration: BoxDecoration(
-                                color: _currentSlide == index
-                                    ? Colors.white
-                                    : Colors.white.withOpacity(0.4),
-                                borderRadius: BorderRadius.circular(999),
+                              if (onSlideTap == null) return slideBody;
+                              return GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: onSlideTap,
+                                child: slideBody,
+                              );
+                            },
+                          ),
+                          // Indicateurs
+                          Positioned(
+                            bottom: 8,
+                            left: 0,
+                            right: 0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                _slides.length + 1,
+                                (index) => AnimatedContainer(
+                                  duration: const Duration(milliseconds: 250),
+                                  margin:
+                                      const EdgeInsets.symmetric(horizontal: 3),
+                                  width: _currentSlide == index ? 16 : 8,
+                                  height: 7,
+                                  decoration: BoxDecoration(
+                                    color: _currentSlide == index
+                                        ? Colors.white
+                                        : Colors.white.withOpacity(0.4),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
                         ],
                       ),
                     ),
@@ -3708,7 +3716,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                             category: category,
                                             subcategory: (data['subcategory'] ??
                                                 '') as String?,
-                                            budget: budget is num ? budget : null,
+                                            budget:
+                                                budget is num ? budget : null,
                                             description: description.isEmpty
                                                 ? null
                                                 : description,
@@ -3716,8 +3725,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                             imageUrls: imageUrls.isEmpty
                                                 ? null
                                                 : imageUrls,
-                                            annonceurId:
-                                                (data['userId'] ?? '') as String,
+                                            annonceurId: (data['userId'] ?? '')
+                                                as String,
                                           ),
                                         ),
                                       );
@@ -6137,7 +6146,8 @@ class _ConversationPageState extends State<ConversationPage> {
           buffer.writeln("[$timeLabel] $sender : $text");
         }
 
-        final subject = Uri.encodeComponent("Conversation iliprestō - ${widget.offerTitle}");
+        final subject = Uri.encodeComponent(
+            "Conversation iliprestō - ${widget.offerTitle}");
         final body = Uri.encodeComponent(buffer.toString());
 
         if (!mounted) return;
@@ -6357,7 +6367,8 @@ class _ConversationPageState extends State<ConversationPage> {
                   value: 'email',
                   child: Row(
                     children: [
-                      Icon(Icons.email_outlined, size: 20, color: kPrestoOrange),
+                      Icon(Icons.email_outlined,
+                          size: 20, color: kPrestoOrange),
                       SizedBox(width: 12),
                       Text("Partager par email"),
                     ],
@@ -6367,7 +6378,8 @@ class _ConversationPageState extends State<ConversationPage> {
                   value: 'txt',
                   child: Row(
                     children: [
-                      Icon(Icons.file_download_outlined, size: 20, color: kPrestoOrange),
+                      Icon(Icons.file_download_outlined,
+                          size: 20, color: kPrestoOrange),
                       SizedBox(width: 12),
                       Text("Enregistrer (texte)"),
                     ],
@@ -9660,6 +9672,10 @@ class _AccountPageState extends State<AccountPage> {
         ? pseudo
         : (user.displayName ?? "Utilisateur iliprestō");
 
+    final profileViewInsetsBottom = MediaQuery.of(context).viewInsets.bottom;
+    final profileBottomInset =
+        profileViewInsetsBottom > 10 ? profileViewInsetsBottom : 0.0;
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -9678,7 +9694,7 @@ class _AccountPageState extends State<AccountPage> {
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+            bottom: profileBottomInset,
           ),
           child: Center(
             child: Padding(
