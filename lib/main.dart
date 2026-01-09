@@ -1847,6 +1847,7 @@ class _HomePageState extends State<HomePage>
           ),
           child: SingleChildScrollView(
             controller: _scrollController,
+            physics: const ClampingScrollPhysics(),
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: EdgeInsets.fromLTRB(10, 8, 10, bottomPadding),
             child: Column(
@@ -3782,7 +3783,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                         Expanded(
                           child: ListView.builder(
                             controller: _scrollController,
-                            padding: const EdgeInsets.fromLTRB(2, 8, 2, 150),
+                            physics: const ClampingScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(2, 8, 2, 100),
+                            addAutomaticKeepAlives: true,
+                            addRepaintBoundaries: true,
                             itemCount: _totalItems,
                             itemBuilder: (context, index) {
                               final bool isAd =
@@ -3821,37 +3825,39 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                       .map((e) => e.toString())
                                       .toList();
 
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => OfferDetailPage(
-                                          offerId: offerId,
-                                          title: title,
-                                          location: location,
-                                          category: category,
-                                          subcategory: (data['subcategory'] ??
-                                              '') as String?,
-                                          budget: budget is num ? budget : null,
-                                          description: description.isEmpty
-                                              ? null
-                                              : description,
-                                          phone: phone,
-                                          imageUrls: imageUrls.isEmpty
-                                              ? null
-                                              : imageUrls,
-                                          annonceurId:
-                                              (data['userId'] ?? '') as String,
+                              return RepaintBoundary(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => OfferDetailPage(
+                                            offerId: offerId,
+                                            title: title,
+                                            location: location,
+                                            category: category,
+                                            subcategory: (data['subcategory'] ??
+                                                '') as String?,
+                                            budget: budget is num ? budget : null,
+                                            description: description.isEmpty
+                                                ? null
+                                                : description,
+                                            phone: phone,
+                                            imageUrls: imageUrls.isEmpty
+                                                ? null
+                                                : imageUrls,
+                                            annonceurId:
+                                                (data['userId'] ?? '') as String,
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                  child: OfferCard(
-                                    offerId: offerId,
-                                    data: data,
-                                    showActionsMenu: false,
+                                      );
+                                    },
+                                    child: OfferCard(
+                                      offerId: offerId,
+                                      data: data,
+                                      showActionsMenu: false,
+                                    ),
                                   ),
                                 ),
                               );
