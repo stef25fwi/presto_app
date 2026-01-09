@@ -1,5 +1,6 @@
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { setGlobalOptions } = require('firebase-functions/v2');
 const functionsV1 = require("firebase-functions/v1");
 const { defineSecret } = require('firebase-functions/params');
 const admin = require('firebase-admin');
@@ -23,6 +24,15 @@ const USER_STATS_DOC = admin.firestore().collection('_stats').doc('users');
 // Secrets (Firebase Functions v2)
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
 const GOOGLE_PLACES_API_KEY = defineSecret('GOOGLE_PLACES_API_KEY');
+
+// Configuration Speech-to-Text
+const SPEECH_LOCATION = "asia-southeast1";
+const API_ENDPOINT = `${SPEECH_LOCATION}-speech.googleapis.com`;
+
+const { SpeechClient } = require('@google-cloud/speech').v2;
+const speechClient = new SpeechClient({ apiEndpoint: API_ENDPOINT });
+
+setGlobalOptions({ region: 'europe-west1' });
 
 // Carte des villes et codes postaux (Guadeloupe et Martinique)
 const CITY_POSTAL_MAP = {
@@ -588,24 +598,32 @@ exports.transcribeAndDraftOffer = onCall({ region: 'europe-west1', timeoutSecond
   await rateLimitOrThrow({ uid, action: 'transcribe_and_draft', limit: 10, windowSec: 60 });
 
   try {
-    // 1) Transcription : utiliser l'API Speech-to-Text v1
-    const speech = require("@google-cloud/speech");
-    const speechClient = new speech.SpeechClient();
+    // 1) Transcription : utiliser l'API Speech-to-Text V2 + Chirp 3
+    console.log("[STT] Starting transcription V2 for:", gcsUri);
 
-    console.log("[STT] Starting transcription for:", gcsUri);
+    const projectId =
+      process.env.GCLOUD_PROJECT ||
+      process.env.GCP_PROJECT ||
+      (await speechClient.getProjectId());
 
-    const request = {
-      audio: { uri: gcsUri },
+    const recognizer = `projects/${projectId}/locations/${SPEECH_LOCATION}/recognizers/_`;
+
+    const [response] = await speechClient.recognize({
+      recognizer,
       config: {
-        encoding: "LINEAR16",
-        languageCode: languageCode,
-        enableAutomaticPunctuation: true,
+        languageCodes: [languageCode],
+        model: 'chirp_3',
+        features: { 
+          automaticPunctuation: true,
+          enableWordTimeOffsets: false,
+        },
       },
-    };
+      uri: gcsUri,
+    });
 
-    const [response] = await speechClient.recognize(request);
     let transcript = (response.results || [])
       .map(r => (r.alternatives?.[0]?.transcript || ""))
+      .filter(Boolean)
       .join("\n")
       .trim();
 
@@ -783,7 +801,7 @@ async function getMicroIaConfig({ forceRefresh = false } = {}) {
     return _microIaCfgCache;
   } catch (e) {
     console.warn("[getMicroIaConfig] Remote Config fetch failed, using defaults:", e?.message || e);
-    _microIaCfgCache = { mode: "HYBRID", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR", audioQuality: 'MEDIUM', ultraFastEnabled: false };
+    _microIaCfgCache = { mode: "HYBRID", fallbackEnabled: true, qualityThreshold: 0.62, languageCode: "fr-FR", audioQuality: 'MEDIUM', ultraFastEnabled: true };
     _microIaCfgCacheAt = now;
     return _microIaCfgCache;
   }
@@ -1174,8 +1192,7 @@ function canUseGoogleStt(audioInfo) {
 }
 
 async function providerGoogleSTT({ audioBuffer, languageCode, audioInfo }) {
-  const speechClient = new speech.SpeechClient();
-
+  // Utilise le client Speech V2 global
   if (!canUseGoogleStt(audioInfo)) {
     return {
       text: '',
@@ -1184,34 +1201,38 @@ async function providerGoogleSTT({ audioBuffer, languageCode, audioInfo }) {
     };
   }
 
-  const sampleRateHertz =
-    typeof audioInfo?.sampleRate === 'number' && audioInfo.sampleRate > 0
-      ? audioInfo.sampleRate
-      : 16000;
-  const audioChannelCount =
-    typeof audioInfo?.numChannels === 'number' && audioInfo.numChannels > 0
-      ? audioInfo.numChannels
-      : 1;
+  try {
+    const projectId =
+      process.env.GCLOUD_PROJECT ||
+      process.env.GCP_PROJECT ||
+      (await speechClient.getProjectId());
 
-  const request = {
-    config: {
-      encoding: "LINEAR16",
-      sampleRateHertz,
-      audioChannelCount,
-      languageCode,
-      enableAutomaticPunctuation: true,
-    },
-    audio: { content: audioBuffer.toString("base64") },
-  };
+    const recognizer = `projects/${projectId}/locations/${SPEECH_LOCATION}/recognizers/_`;
 
-  const [response] = await speechClient.recognize(request);
+    const [response] = await speechClient.recognize({
+      recognizer,
+      config: {
+        languageCodes: [languageCode || 'fr-FR'],
+        model: 'chirp_3',
+        autoDecodingConfig: {},
+        features: { automaticPunctuation: true },
+      },
+      content: audioBuffer,
+    });
 
-  const alternatives = response?.results?.flatMap((r) => r.alternatives || []) || [];
-  const best = alternatives[0] || {};
-  const text = best.transcript || "";
-  const confidence = typeof best.confidence === "number" ? best.confidence : null;
+    const text = (response.results || [])
+      .map(r => r.alternatives?.[0]?.transcript || "")
+      .filter(Boolean)
+      .join("\n");
 
-  return { text, googleConfidence: confidence, raw: response };
+    // V2 ne retourne pas de confidence de la même manière, on estime à null
+    const confidence = null;
+
+    return { text, googleConfidence: confidence, raw: response };
+  } catch (error) {
+    console.error('[providerGoogleSTT] Error:', error);
+    return { text: '', googleConfidence: null, raw: { error: error?.message || String(error) } };
+  }
 }
 
 async function providerWhisper({ audioBuffer, languageCode, openai }) {
@@ -1843,5 +1864,51 @@ exports.processOfferPhoto = onCall(
       storagePath: destPath,
       downloadUrl,
     };
+  }
+);
+
+// ✅ Fonction Speech-to-Text rapide en us-east1 avec Speech V2
+exports.transcribeFast = onCall(
+  { 
+    region: 'us-east1',
+    timeoutSeconds: 60,
+    enforceAppCheck: ENFORCE_APP_CHECK 
+  },
+  async (req) => {
+    try {
+      const { audioBase64, languageCode } = req.data || {};
+      if (!audioBase64) throw new HttpsError("invalid-argument", "audioBase64 requis.");
+
+      const audioBytes = Buffer.from(audioBase64, "base64");
+
+      const projectId =
+        process.env.GCLOUD_PROJECT ||
+        process.env.GCP_PROJECT ||
+        (await speechClient.getProjectId());
+
+      const recognizer = `projects/${projectId}/locations/${SPEECH_LOCATION}/recognizers/_`;
+
+      const [resp] = await speechClient.recognize({
+        recognizer,
+        config: {
+          languageCodes: [languageCode || "fr-FR"],
+          model: "chirp_3",
+          autoDecodingConfig: {},
+          features: { automaticPunctuation: true },
+        },
+        content: audioBytes,
+      });
+
+      const text = (resp.results || [])
+        .map((r) => r.alternatives?.[0]?.transcript || "")
+        .filter(Boolean)
+        .join("\n");
+
+      return { ok: true, speechLocation: SPEECH_LOCATION, text };
+    } catch (e) {
+      console.error(e);
+      if (e instanceof HttpsError) throw e;
+      throw new HttpsError("internal", e?.message || "Speech error");
+    }
   }
 );
