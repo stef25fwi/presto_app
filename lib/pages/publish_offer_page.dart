@@ -86,7 +86,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Timer? _streamTimeout;
   bool _streamingActive = false;
 
-  bool get _streamingEnabled => !kIsWeb && kMicroIaStreamUrl.isNotEmpty;
+  // TEMPORAIRE: désactivé jusqu'au déploiement Cloud Run + package record ne supporte pas startStream()
+  bool get _streamingEnabled => false; // TODO: Activer après déploiement backend
+  // bool get _streamingEnabled => !kIsWeb && kMicroIaStreamUrl.isNotEmpty;
 
   final List<String> _categories = const [
     'Jardinage',
@@ -656,7 +658,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   /// Streaming WebSocket: enregistrement + transcription + draft en temps réel
+  /// TEMPORAIRE: Désactivé - package record v6.1.2 ne supporte pas startStream()
+  /// TODO: Implémenter avec approche par chunks après déploiement backend
   Future<bool> _toggleStreamingRecording() async {
+    // Code temporairement désactivé jusqu'à migration vers package supportant streaming
+    return false; // Fallback vers legacy
+    
+    /* CODE ORIGINAL - À RÉACTIVER APRÈS MIGRATION PACKAGE
     if (_aiLoading) return true;
     if (_streamingActive) {
       await _stopStreamingRecording();
@@ -740,6 +748,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _endStreamingError(e);
       return false; // fallback vers legacy
     }
+    */
   }
 
   Future<void> _stopStreamingRecording() async {
