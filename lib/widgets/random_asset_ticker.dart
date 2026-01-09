@@ -27,7 +27,11 @@ class RandomAssetTicker extends StatefulWidget {
 }
 
 class _RandomAssetTickerState extends State<RandomAssetTicker> {
+  static final Map<String, List<String>> _folderAssetsCache = <String, List<String>>{};
+  static final Map<String, Future<List<String>>> _folderAssetsLoader = <String, Future<List<String>>>{};
+
   final _rnd = Random();
+
   Timer? _timer;
 
   List<String> _assets = [];
@@ -48,6 +52,18 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
   @override
   void didUpdateWidget(covariant RandomAssetTicker oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.folderPrefix != widget.folderPrefix) {
+      _timer?.cancel();
+      setState(() {
+        _assets = [];
+        _current = null;
+        _loading = true;
+      });
+      _loadCarouselImages();
+      return;
+    }
+
     if (oldWidget.enabled != widget.enabled) {
       if (widget.enabled) {
         _startTicker();
@@ -57,64 +73,64 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
     }
   }
 
+  Future<List<String>> _loadAssetsForFolder(String prefix) {
+    final cached = _folderAssetsCache[prefix];
+    if (cached != null) return Future.value(cached);
+
+    return _folderAssetsLoader.putIfAbsent(prefix, () async {
+      try {
+        final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+        final allAssets = manifest.listAssets();
+        final images = allAssets
+            .where((p) => p.startsWith(prefix))
+            .where((p) {
+              final x = p.toLowerCase();
+              return x.endsWith('.png') ||
+                  x.endsWith('.jpg') ||
+                  x.endsWith('.jpeg') ||
+                  x.endsWith('.webp');
+            })
+            .toList()
+          ..sort();
+
+        _folderAssetsCache[prefix] = images;
+        return images;
+      } catch (e) {
+        _folderAssetsLoader.remove(prefix);
+        rethrow;
+      }
+    });
+  }
+
   Future<void> _loadCarouselImages() async {
     try {
-      final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-      final allAssets = manifest.listAssets();
-
-      final images = allAssets
-          .where((p) => p.startsWith(widget.folderPrefix))
-          .where((p) {
-            final x = p.toLowerCase();
-            return x.endsWith('.png') || x.endsWith('.jpg') || x.endsWith('.jpeg') || x.endsWith('.webp');
-          })
-          .toList();
+      final base = await _loadAssetsForFolder(widget.folderPrefix);
+      final images = List<String>.from(base);
 
       // Affiche toujours le "slide 1" en premier si présent (ex: 01.png),
       // puis garde un ordre aléatoire pour le reste.
-      images.sort();
       final first = images.isNotEmpty ? images.first : null;
       final rest = images.length > 1 ? images.sublist(1) : <String>[];
-      rest.shuffle();
-      final ordered = first == null ? <String>[] : <String>[first, ...rest];
-
-      debugPrint('carousel : ${ordered.length} image(s) trouvée(s)');
-      if (ordered.isNotEmpty) {
-        debugPrint(ordered.take(20).join('\n'));
-      }
-
-      if (!mounted) return;
-
-      if (ordered.isEmpty) {
-        setState(() {
-          _assets = [];
-          _loading = false;
-        });
-        return;
-      }
-
-      // Précharge au minimum la 1ère image pour éviter une "première transition" plus lente.
-      try {
-        await precacheImage(AssetImage(ordered.first), context);
-      } catch (_) {
-        _failedAssets.add(ordered.first);
-      }
+      rest.shuffle(_rnd);
 
       if (!mounted) return;
 
       setState(() {
-        _assets = ordered;
-        _current = ordered.first;
+        _assets = [
+          if (first != null) first,
+          ...rest,
+        ];
+        _current = _assets.isNotEmpty ? _assets.first : null;
         _loading = false;
       });
 
       _lastShown.clear();
-      _pushLastShown(_current!);
+      if (_current != null) _pushLastShown(_current!);
 
-      // Précharge le reste en arrière-plan pour uniformiser les transitions.
-      _precacheAllAssets();
-
+      // Si le ticker est désactivé, on évite de précacher tout le dossier
+      // (cas typique: placeholder statique dans une liste).
       if (widget.enabled) {
+        _precacheAllAssets();
         _startTicker();
       }
     } catch (e) {

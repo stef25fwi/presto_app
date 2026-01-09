@@ -2931,6 +2931,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   DocumentSnapshot<Map<String, dynamic>>? _lastDoc;
   bool _isLoading = false;
 
+  // + Pagination progressive
+  static const int _initialLimit = 20;
+  static const int _pageSize = 20;
+  static const int _maxLimit = 100;
+  int _pageLimit = _initialLimit;
+
   /// Mot-clé actif appliqué aux résultats (initialisé depuis searchQuery, réinitialisable)
   String? _activeSearchQuery;
 
@@ -3051,6 +3057,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
+      _maybeLoadMore();
     });
 
     final initialCategoryFilter = widget.categoryFilter?.trim();
@@ -3092,6 +3099,21 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     _syncLocationFieldFromFilter();
   }
 
+  void _maybeLoadMore() {
+    if (!_scrollController.hasClients) return;
+    if (_pageLimit >= _maxLimit) return;
+
+    final position = _scrollController.position;
+    // Seuil simple: quand on approche du bas, on augmente la limite.
+    const thresholdPx = 400.0;
+    if (position.maxScrollExtent - position.pixels > thresholdPx) return;
+
+    setState(() {
+      _pageLimit = math.min(_pageLimit + _pageSize, _maxLimit);
+      _queryKey++; // force StreamBuilder à recréer le stream avec la nouvelle limit
+    });
+  }
+
   @override
   void dispose() {
     _filterDebounce.dispose();
@@ -3107,7 +3129,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     super.dispose();
   }
 
-  Query<Map<String, dynamic>> _buildQuery() {
+  Query<Map<String, dynamic>> _buildOffersQuery() {
     Query<Map<String, dynamic>> query =
         FirebaseFirestore.instance.collection('offers');
 
@@ -3173,7 +3195,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     query = query.orderBy('createdAt', descending: true);
 
     // ✅ Limiter le nombre de résultats pour éviter les requêtes trop lourdes
-    query = query.limit(100);
+    query = query.limit(_pageLimit);
 
     return query;
   }
@@ -3190,7 +3212,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     }
 
     try {
-      var query = _buildQuery();
+      var query = _buildOffersQuery();
 
       // Exemple de pagination si besoin
       if (_lastDoc != null) {
@@ -3216,7 +3238,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     }
   }
 
-  void _applyFilters() {
+  void _applyFiltersOrSearch() {
     // Annule le debounce en cours pour éviter les conflits
     _filterDebounce._t?.cancel();
 
@@ -3235,15 +3257,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           _keywordCtrl.text.trim().isEmpty ? null : _keywordCtrl.text.trim();
       _queryKey++;
       _lastDoc = null; // Reset pagination
-      _showFilters =
-          false; // ✅ Rétracter le panneau après application des filtres
+      _pageLimit = _initialLimit;
+      _showFilters = false;
     });
   }
 
   void _onAnyFilterChanged() {
     // ✅ Auto-apply avec debounce
     _filterDebounce.run(() {
-      _applyFilters();
+      _applyFiltersOrSearch();
     });
   }
 
@@ -3273,6 +3295,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _activeSearchQuery = null;
       _filterPanelKey++; // Force la reconstruction du panneau
       _queryKey++; // Force la reconstruction du StreamBuilder
+      _pageLimit = _initialLimit;
     });
 
     // 2) reset champs texte
@@ -3490,7 +3513,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                 child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   key: ValueKey(
                       _queryKey), // Force la reconstruction quand les filtres changent
-                  stream: _buildQuery().snapshots(),
+                  stream: _buildOffersQuery().snapshots(),
                   builder: (context, snapshot) {
                     // ✅ Ne plus afficher le loader si on a déjà des données
                     if (snapshot.connectionState == ConnectionState.waiting &&
@@ -3667,6 +3690,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                   placeholderFolderPrefix:
                                       'assets/carousel_home/',
                                   flat: true,
+                                  animatePlaceholder: false,
                                 );
                               }
 
@@ -3782,7 +3806,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: _applyFilters,
+                      onPressed: _applyFiltersOrSearch,
                       icon: const Icon(Icons.search),
                       label: const Text('Rechercher'),
                       style: ElevatedButton.styleFrom(
@@ -6701,6 +6725,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   void initState() {
     super.initState();
+
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
     });

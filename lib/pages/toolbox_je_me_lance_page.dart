@@ -642,6 +642,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // --------------------------
   @override
   Widget build(BuildContext context) {
+    final user = _auth.currentUser;
+    final needsSignIn = user == null || user.isAnonymous;
+
     return Scaffold(
       backgroundColor: kBg,
       appBar: AppBar(
@@ -650,6 +653,17 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         elevation: 0,
         title: const Text("Boîte à outils"),
         actions: [
+          if (needsSignIn)
+            TextButton(
+              onPressed: () async {
+                await Navigator.of(context).pushNamed('/auth');
+                await _reloadAfterAuth(); // animation de chargement pendant le reload
+              },
+              child: const Text(
+                "Connexion",
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+              ),
+            ),
           if (_saving)
             const Padding(
               padding: EdgeInsets.only(right: 12),
@@ -1157,6 +1171,15 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         ),
       ],
     );
+  }
+
+  Future<void> _reloadAfterAuth() async {
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    await _bootstrap(); // _bootstrap remettra _loading=false en fin de traitement
   }
 }
 
