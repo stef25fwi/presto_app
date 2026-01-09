@@ -1881,11 +1881,7 @@ class _HomePageState extends State<HomePage>
                                 return Container(
                                   height: double.infinity,
                                   decoration: const BoxDecoration(
-                                    image: DecorationImage(
-                                      image: AssetImage(
-                                          'assets/dlimages/backgroungslide.png'),
-                                      fit: BoxFit.fill,
-                                    ),
+                                    color: kPrestoOrange,
                                   ),
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
@@ -1959,11 +1955,7 @@ class _HomePageState extends State<HomePage>
                               final slideBody = Container(
                                 height: double.infinity,
                                 decoration: const BoxDecoration(
-                                  image: DecorationImage(
-                                    image: AssetImage(
-                                        'assets/dlimages/backgroungslide.png'),
-                                    fit: BoxFit.fill,
-                                  ),
+                                  color: kPrestoOrange,
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -6191,14 +6183,14 @@ class _ConversationPageState extends State<ConversationPage> {
                     } else {
                       if (!mounted) return;
                       showSuccessSnackBar(
-                        context,
+                        this.context,
                         "Impossible d'ouvrir le client email sur cet appareil.",
                       );
                     }
                   } catch (e) {
                     if (!mounted) return;
                     showSuccessSnackBar(
-                      context,
+                      this.context,
                       "Erreur lors de l'ouverture du client email.",
                     );
                   }
@@ -6625,6 +6617,33 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // Toujours actif (améliore la qualité via Google STT côté serveur)
   final bool _useCloudStt = true;
 
+  // ✅ Extraction rapide CP (FR + DROM) depuis la transcription
+  String? _extractPostalCodeFromTranscript(String transcript) {
+    final t = transcript;
+    // 5 chiffres métropole + 97x/98x (DROM/COM) acceptés aussi (souvent 5 chiffres au final)
+    final m = RegExp(r'\b(97[0-9]{3}|98[0-9]{3}|[0-9]{5})\b').firstMatch(t);
+    return m?.group(1);
+  }
+
+  // ✅ Extraction ville: soit via CP (fiable), soit via motif "à <ville>"
+  CityRecord? _extractCityRecordFromTranscript(String transcript, {String? cp}) {
+    if (cp != null && cp.trim().isNotEmpty) {
+      return CitySearch.instance.pickBestForPostalCode(cp.trim());
+    }
+
+    // ✅ FIX: raw string + apostrophes => utiliser guillemets doubles
+    final m = RegExp(
+      r"\b(?:a|à|sur|vers|près de|proche de)\s+([A-Za-zÀ-ÖØ-öø-ÿ'’\-\s]{2,40})\b",
+      caseSensitive: false,
+    ).firstMatch(transcript);
+
+    final rawCity = m?.group(1)?.trim();
+    if (rawCity == null || rawCity.isEmpty) return null;
+
+    final candidates = CitySearch.instance.search(rawCity, limit: 1);
+    return candidates.isNotEmpty ? candidates.first : null;
+  }
+
   /// Remplissage immédiat (latence perçue ↓) dès que la transcription est prête.
   /// L'IA pourra ensuite affiner et remplacer.
   void _applyFastDraftFromTranscript(String transcript) {
@@ -6642,12 +6661,41 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final firstSentence = firstLine.split(RegExp(r'[.!?]')).first.trim();
       final candidate = (firstSentence.isNotEmpty ? firstSentence : firstLine);
 
-      final title = candidate.length > 72 ? '${candidate.substring(0, 72).trim()}…' : candidate;
+      final title = candidate.length > 72
+          ? '${candidate.substring(0, 72).trim()}…'
+          : candidate;
       if (title.isNotEmpty) _titleController.text = title;
     }
 
-    // Catégorie/ville/CP: volontairement pas “inventés” ici (on évite de mettre des infos fausses).
-    // ...existing code...
+    // ✅ CP + ville (sans inventer): uniquement si on détecte un CP ou une ville matchable
+    if (_postalCodeController.text.trim().isEmpty) {
+      final cp = _extractPostalCodeFromTranscript(t);
+      if (cp != null && cp.isNotEmpty) _postalCodeController.text = cp;
+    }
+
+    final effectiveCp = _postalCodeController.text.trim().isEmpty
+        ? null
+        : _postalCodeController.text.trim();
+
+    if (_locationController.text.trim().isEmpty) {
+      final cityRec = _extractCityRecordFromTranscript(t, cp: effectiveCp);
+      if (cityRec != null) {
+        _locationController.text = cityRec.name;
+
+        // si CP vide mais la ville en a un, on complète
+        if (_postalCodeController.text.trim().isEmpty && cityRec.cp.isNotEmpty) {
+          _postalCodeController.text = cityRec.cp;
+        }
+
+        // bonus cohérence UI: indicatif selon dept (déjà présent dans le code)
+        if (!mounted) return;
+        setState(() {
+          _selectedDeptCode = cityRec.dept;
+          _selectedRegionCode = cityRec.region;
+          _selectedPhoneCountryCode = _countryCodeForDept(cityRec.dept);
+        });
+      }
+    }
   }
 
   @override
@@ -6938,6 +6986,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         final transcript = (out['text'] ?? '').toString().trim();
         if (transcript.isEmpty) throw Exception('Aucun texte reconnu');
 
+        // Remplissage immédiat (titre/desc/ville/cp) avant l'IA.
+        _applyFastDraftFromTranscript(transcript);
+
         final draft = await _aiService.generateOfferDraft(text: transcript);
         if (!mounted) return;
 
@@ -7109,6 +7160,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (transcript.isEmpty) {
       throw Exception('Aucun texte reconnu');
     }
+
+    // Remplissage immédiat (titre/desc/ville/cp) avant l'IA.
+    _applyFastDraftFromTranscript(transcript);
 
     final draft = await _aiService.generateOfferDraft(text: transcript);
     if (!mounted) return;

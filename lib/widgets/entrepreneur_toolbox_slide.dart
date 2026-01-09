@@ -50,10 +50,7 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide> {
               height: 220,
               decoration: BoxDecoration(
                 borderRadius: border,
-                image: const DecorationImage(
-                  image: AssetImage('assets/dlimages/backgroungslide.png'),
-                  fit: BoxFit.cover,
-                ),
+                color: prestoOrange,
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.18),

@@ -1800,20 +1800,6 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Widget _buildSubsectionTitle(String title, ColorScheme colorScheme) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12, left: 4),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-          color: colorScheme.primary,
-        ),
-      ),
-    );
-  }
-
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final diff = now.difference(date);
