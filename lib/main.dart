@@ -4874,7 +4874,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
     
     // Masquer tous sauf les 2 derniers chiffres
     if (digits.length <= 2) return digits;
-    return '••••••' + digits.substring(digits.length - 2);
+    return '••••••${digits.substring(digits.length - 2)}';
   }
 
   Future<void> _shareOn(BuildContext context, String platform) async {
