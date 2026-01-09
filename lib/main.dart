@@ -1820,25 +1820,28 @@ class _HomePageState extends State<HomePage>
                 const SizedBox(height: 14),
 
                 // SLIDER
-                Transform.translate(
-                  offset: const Offset(-10, 0),
-                  child: SizedBox(
-                    height: 220,
-                    width: MediaQuery.of(context).size.width + 20,
-                    child: Stack(
-                      children: [
-                        PageView.builder(
-                          controller: _carouselController,
-                        itemCount: _slides.length + 1,
-                        onPageChanged: (index) {
-                          setState(() {
-                            _currentSlide = index;
-                            if (index == 1) {
-                              _carouselEnabled = true;
-                            }
-                          });
-                        },
-                        itemBuilder: (context, index) {
+                SizedBox(
+                  height: 220,
+                  child: OverflowBox(
+                    alignment: Alignment.center,
+                    minWidth: MediaQuery.of(context).size.width,
+                    maxWidth: MediaQuery.of(context).size.width,
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      child: Stack(
+                        children: [
+                          PageView.builder(
+                            controller: _carouselController,
+                          itemCount: _slides.length + 1,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentSlide = index;
+                              if (index == 1) {
+                                _carouselEnabled = true;
+                              }
+                            });
+                          },
+                          itemBuilder: (context, index) {
                           // Ordre voulu:
                           // 0 = slide texte (fixe 4s)
                           // 1 = carousel d'images (démarre après 4s)
@@ -2051,9 +2054,10 @@ class _HomePageState extends State<HomePage>
                           ),
                         ),
                       ),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
-                ),
                 ),
 
                 const SizedBox(height: 12),
@@ -2783,76 +2787,6 @@ class _NotificationBellBase extends StatelessWidget {
 }
 
 /// BLOC COMMENT ÇA MARCHE /////////////////////////////////////////////////
-
-class _HowItWorksStep extends StatelessWidget {
-  final int stepNumber;
-  final String title;
-  final String description;
-
-  const _HowItWorksStep({
-    required this.stepNumber,
-    required this.title,
-    required this.description,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: kPrestoOrange,
-            child: Text(
-              stepNumber.toString(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _HowItWorksStepWithProgress extends StatelessWidget {
   final int stepNumber;
   final String title;
