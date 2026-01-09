@@ -53,6 +53,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
   // Form fields
   final TextEditingController _projectCtrl = TextEditingController();
+  final TextEditingController _regionCtrl = TextEditingController();
+  final TextEditingController _departementCtrl = TextEditingController();
+  final TextEditingController _communeCtrl = TextEditingController();
+
   String _activityType = 'Prestation de services'; // default
   String _clientele = 'Particuliers (B2C)';
   String _businessModel = 'Ponctuel';
@@ -91,6 +95,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   void dispose() {
     _autosaveDebounce?.cancel();
     _projectCtrl.dispose();
+    _regionCtrl.dispose();
+    _departementCtrl.dispose();
+    _communeCtrl.dispose();
     super.dispose();
   }
 
@@ -341,6 +348,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     _region = (t['region'] ?? '') as String;
     _departement = (t['departement'] ?? '') as String;
     _commune = (t['commune'] ?? '') as String;
+
+    _regionCtrl.text = _region;
+    _departementCtrl.text = _departement;
+    _communeCtrl.text = _commune;
 
     _ambition = (data['ambition'] ?? _ambition) as String;
     _caVise = ((data['caVise'] ?? 0) as num).toDouble();
@@ -909,6 +920,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           const Text("Les organismes locaux s’adaptent à votre région."),
           const SizedBox(height: 12),
           TextField(
+            controller: _regionCtrl,
             decoration: InputDecoration(
               labelText: "Région",
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
@@ -919,10 +931,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               setState(() => _region = v.trim());
               _onAnyFieldChanged();
             },
-            controller: TextEditingController(text: _region),
           ),
           const SizedBox(height: 10),
           TextField(
+            controller: _departementCtrl,
             decoration: InputDecoration(
               labelText: "Département (ex: 971)",
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
@@ -933,10 +945,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               setState(() => _departement = v.trim());
               _onAnyFieldChanged();
             },
-            controller: TextEditingController(text: _departement),
           ),
           const SizedBox(height: 10),
           TextField(
+            controller: _communeCtrl,
             decoration: InputDecoration(
               labelText: "Commune (optionnel)",
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
@@ -947,7 +959,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               setState(() => _commune = v.trim());
               _onAnyFieldChanged();
             },
-            controller: TextEditingController(text: _commune),
           ),
           const SizedBox(height: 12),
           const _InfoBox(
