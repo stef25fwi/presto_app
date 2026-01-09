@@ -87,8 +87,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _streamingActive = false;
 
   // TEMPORAIRE: désactivé jusqu'au déploiement Cloud Run + package record ne supporte pas startStream()
-  bool get _streamingEnabled => false; // TODO: Activer après déploiement backend
-  // bool get _streamingEnabled => !kIsWeb && kMicroIaStreamUrl.isNotEmpty;
+  bool get _streamingEnabled => !kIsWeb && kMicroIaStreamUrl.isNotEmpty;
 
   final List<String> _categories = const [
     'Jardinage',
@@ -658,13 +657,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   /// Streaming WebSocket: enregistrement + transcription + draft en temps réel
-  /// TEMPORAIRE: Désactivé - package record v6.1.2 ne supporte pas startStream()
-  /// TODO: Implémenter avec approche par chunks après déploiement backend
   Future<bool> _toggleStreamingRecording() async {
-    // Code temporairement désactivé jusqu'à migration vers package supportant streaming
-    return false; // Fallback vers legacy
-    
-    /* CODE ORIGINAL - À RÉACTIVER APRÈS MIGRATION PACKAGE
     if (_aiLoading) return true;
     if (_streamingActive) {
       await _stopStreamingRecording();
@@ -675,6 +668,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (user == null) return false;
 
     if (!await _audioRecorder.hasPermission()) {
+      if (!mounted) return false;
       showSuccessSnackBar(context, "Permission micro requise");
       return true;
     }
@@ -696,13 +690,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       await client.listen(
         onPartial: (text) {
-          if (text.trim().isNotEmpty) {
-            _descCtrl.text = text.trim();
+          if (text.trim().isNotEmpty && mounted) {
+            setState(() => _descCtrl.text = text.trim());
           }
         },
         onFinal: (transcript, draft, quality, modeUsed) {
-          if (transcript.trim().isNotEmpty) {
-            _descCtrl.text = transcript.trim();
+          if (transcript.trim().isNotEmpty && mounted) {
+            setState(() => _descCtrl.text = transcript.trim());
           }
           if (draft != null) {
             _applyDraftToForm(OfferDraft.fromMap(draft), transcript: transcript);
@@ -723,7 +717,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         categoryHint: (_category ?? '').trim(),
       );
 
-      final audioStream = await _audioRecorder.startStream(
+      // Démarrer enregistrement avec record package v6.1.2
+      await _audioRecorder.start(
         const RecordConfig(
           encoder: AudioEncoder.wav,
           sampleRate: 16000,
@@ -731,24 +726,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         ),
       );
 
-      _streamMicSub = audioStream.listen(
-        (chunk) => client.sendAudioChunk(chunk),
-        onError: (e) => _endStreamingError(e),
-        cancelOnError: true,
-      );
-
       _streamingActive = true;
 
+      // Limite la durée du streaming à 12s
       _streamTimeout = Timer(const Duration(seconds: 12), () {
-        if (_aiLoading) _endStreamingError(TimeoutException('Streaming timeout'));
+        if (_aiLoading && _streamingActive) {
+          _stopStreamingRecording();
+        }
       });
 
       return true;
     } catch (e) {
       _endStreamingError(e);
-      return false; // fallback vers legacy
+      return false;
     }
-    */
   }
 
   Future<void> _stopStreamingRecording() async {
