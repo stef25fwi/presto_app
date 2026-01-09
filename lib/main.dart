@@ -911,9 +911,7 @@ class _HomePageState extends State<HomePage>
   DateTime? _lastPresenceUpdate;
   DateTime? _sessionStartTime;
   bool _carouselEnabled = false;
-  bool _showBottomBar = true;
-  double _lastScrollPosition = 0;
-  bool _wasKeyboardVisible = false;
+  // Bottom bar désormais fixe (ne se masque plus au scroll/clavier)
 
   late final AnimationController _categoryController;
 
@@ -1113,15 +1111,7 @@ class _HomePageState extends State<HomePage>
   }
 
   void _onPageScroll(double offset) {
-    final isScrollingDown = offset > _lastScrollPosition;
-
-    if (isScrollingDown && _showBottomBar) {
-      setState(() => _showBottomBar = false);
-    } else if (!isScrollingDown && !_showBottomBar) {
-      setState(() => _showBottomBar = true);
-    }
-
-    _lastScrollPosition = offset;
+    // Intentionnel : bottom bar fixe sur toutes les pages.
   }
 
   void _listenDynamicKeywords() {
@@ -1187,41 +1177,6 @@ class _HomePageState extends State<HomePage>
     _presenceTimer?.cancel();
     _dynamicKeywordsSubscription?.cancel();
     super.dispose();
-  }
-
-  /// Force rebuild quand le clavier apparaît/disparaît
-  @override
-  void didChangeMetrics() {
-    super.didChangeMetrics();
-    if (!mounted) return;
-
-    // Utiliser View.of(context) au lieu de l'API window deprecated
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-
-      try {
-        final viewInsets = View.of(context).viewInsets.bottom;
-        // Seuil de 10px pour éviter les faux positifs
-        final isKeyboardVisible = viewInsets > 10;
-
-        // Détecter les changements de visibilité du clavier
-        if (_wasKeyboardVisible != isKeyboardVisible) {
-          // Le clavier vient de se fermer : restaurer la bottomBar
-          if (_wasKeyboardVisible && !isKeyboardVisible) {
-            setState(() {
-              _showBottomBar = true;
-            });
-          }
-          // Le clavier vient de s'ouvrir : on peut optionnellement cacher la bottom bar
-          // (actuellement géré par isKeyboardVisible dans le build)
-        }
-
-        _wasKeyboardVisible = isKeyboardVisible;
-      } catch (e) {
-        // Fallback si View.of(context) n'est pas disponible
-        debugPrint('didChangeMetrics error: $e');
-      }
-    });
   }
 
   /// Animation "bump" séquentielle sur les 6 catégories
@@ -1701,15 +1656,6 @@ class _HomePageState extends State<HomePage>
     final double effectiveBottomInset =
         isKeyboardVisible ? viewInsetsBottom : 0;
 
-    // Si le clavier est caché mais que la bottom bar était masquée (scroll), on la force à revenir en bas
-    if (!isKeyboardVisible && !_showBottomBar) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_showBottomBar) {
-          setState(() => _showBottomBar = true);
-        }
-      });
-    }
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoBlue),
       child: GestureDetector(
@@ -1743,80 +1689,71 @@ class _HomePageState extends State<HomePage>
                             const AccountPage(),
                           ],
                         ),
-                        if (!isKeyboardVisible)
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            child: AnimatedSlide(
-                              duration: const Duration(milliseconds: 250),
-                              curve: Curves.easeInOut,
-                              offset: _showBottomBar
-                                  ? Offset.zero
-                                  : const Offset(0, 1),
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  color: kPrestoOrange,
-                                  borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(24)),
-                                ),
-                                padding:
-                                    const EdgeInsets.fromLTRB(10, 4, 10, 6),
-                                child: SafeArea(
-                                  top: false,
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceAround,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Expanded(
-                                        child: _BottomNavItem(
-                                          icon: Icons.home,
-                                          label: "Accueil",
-                                          selected: _selectedIndex == 0,
-                                          onTap: () => _onBottomTap(0),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: _BottomNavItem(
-                                          icon: Icons.search,
-                                          label: "Je consulte\nles offres",
-                                          selected: _selectedIndex == 1,
-                                          onTap: () => _onBottomTap(1),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        flex: 1,
-                                        child: _BottomNavItem(
-                                          icon: Icons.add_circle_outline,
-                                          label: "Publier\nune offre",
-                                          isBig: true,
-                                          onTap: () => _onBottomTap(2),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: _BottomNavItem(
-                                          icon: Icons.chat_bubble_outline,
-                                          label: "Messages",
-                                          selected: _selectedIndex == 3,
-                                          onTap: () => _onBottomTap(3),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: _BottomNavItem(
-                                          icon: Icons.person_outline,
-                                          label: "Compte",
-                                          selected: _selectedIndex == 4,
-                                          onTap: () => _onBottomTap(4),
-                                        ),
-                                      ),
-                                    ],
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: kPrestoOrange,
+                              borderRadius:
+                                  BorderRadius.vertical(top: Radius.circular(24)),
+                            ),
+                            padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+                            child: SafeArea(
+                              top: false,
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: _BottomNavItem(
+                                      icon: Icons.home,
+                                      label: "Accueil",
+                                      selected: _selectedIndex == 0,
+                                      onTap: () => _onBottomTap(0),
+                                    ),
                                   ),
-                                ),
+                                  Expanded(
+                                    child: _BottomNavItem(
+                                      icon: Icons.search,
+                                      label: "Je consulte\nles offres",
+                                      selected: _selectedIndex == 1,
+                                      onTap: () => _onBottomTap(1),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 1,
+                                    child: _BottomNavItem(
+                                      icon: Icons.add_circle_outline,
+                                      label: "Publier\nune offre",
+                                      isBig: true,
+                                      onTap: () => _onBottomTap(2),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: _BottomNavItem(
+                                      icon: Icons.chat_bubble_outline,
+                                      label: "Messages",
+                                      selected: _selectedIndex == 3,
+                                      onTap: () => _onBottomTap(3),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: _BottomNavItem(
+                                      icon: Icons.person_outline,
+                                      label: "Compte",
+                                      selected: _selectedIndex == 4,
+                                      onTap: () => _onBottomTap(4),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
+                        ),
                       ],
                     ),
                   ),
@@ -1830,9 +1767,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildHomeContent() {
-    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-    final double bottomPadding =
-        (isKeyboardVisible || !_showBottomBar) ? 24 : 150;
+    const double bottomPadding = 150;
 
     return Container(
       color: Colors.white,
