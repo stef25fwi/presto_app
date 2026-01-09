@@ -24,7 +24,7 @@ class HomePageV2Option2 extends StatelessWidget {
           children: [
             // Top bar (logo centered + bell)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+              padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
               child: Row(
                 children: [
                   const SizedBox(width: 44), // to visually center logo
@@ -48,7 +48,7 @@ class HomePageV2Option2 extends StatelessWidget {
 
             // Search
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 0),
               child: _SearchBar(
                 hint: "Que cherchez-vous ?",
                 onChanged: (_) {},
@@ -60,7 +60,7 @@ class HomePageV2Option2 extends StatelessWidget {
 
             // Location row (Baie-Mahault • Autour de moi + chevron)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 0),
               child: _LocationBar(
                 leftText: "Baie-Mahault",
                 rightText: "Autour de moi",
@@ -72,7 +72,7 @@ class HomePageV2Option2 extends StatelessWidget {
 
             // Filter chips
             Padding(
-              padding: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.only(left: 0),
               child: SizedBox(
                 height: 40,
                 child: ListView(
@@ -112,7 +112,7 @@ class HomePageV2Option2 extends StatelessWidget {
             // Content scroll
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 90),
+                padding: const EdgeInsets.fromLTRB(0, 0, 0, 90),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
