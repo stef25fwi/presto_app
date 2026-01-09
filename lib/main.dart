@@ -4941,25 +4941,25 @@ Motif du signalement :
                               ),
                             ),
                           ),
+                          if (hasPhone)
+                            IconButton(
+                              tooltip: _isPhoneVisible
+                                  ? 'Masquer le numéro'
+                                  : 'Afficher le numéro',
+                              onPressed: () {
+                                setState(() {
+                                  _isPhoneVisible = !_isPhoneVisible;
+                                });
+                              },
+                              icon: Icon(
+                                _isPhoneVisible
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: Colors.black54,
+                              ),
+                            ),
                         ],
                       ),
-                      if (hasPhone && !_isPhoneVisible) ...[
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _isPhoneVisible = true;
-                              });
-                            },
-                            child: const Text(
-                              "Voir le numéro",
-                              style: TextStyle(fontWeight: FontWeight.w800),
-                            ),
-                          ),
-                        ),
-                      ],
                       // Bouton messagerie retiré
                     ],
                   ),
