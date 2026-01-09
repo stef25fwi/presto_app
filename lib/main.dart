@@ -6625,6 +6625,31 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // Toujours actif (améliore la qualité via Google STT côté serveur)
   final bool _useCloudStt = true;
 
+  /// Remplissage immédiat (latence perçue ↓) dès que la transcription est prête.
+  /// L'IA pourra ensuite affiner et remplacer.
+  void _applyFastDraftFromTranscript(String transcript) {
+    final t = transcript.trim();
+    if (t.isEmpty) return;
+
+    // Description: si vide, on met la transcription brute immédiatement.
+    if (_descriptionController.text.trim().isEmpty) {
+      _descriptionController.text = t;
+    }
+
+    // Titre: si vide, on extrait une 1ère ligne/sentence courte.
+    if (_titleController.text.trim().isEmpty) {
+      final firstLine = t.split('\n').first.trim();
+      final firstSentence = firstLine.split(RegExp(r'[.!?]')).first.trim();
+      final candidate = (firstSentence.isNotEmpty ? firstSentence : firstLine);
+
+      final title = candidate.length > 72 ? '${candidate.substring(0, 72).trim()}…' : candidate;
+      if (title.isNotEmpty) _titleController.text = title;
+    }
+
+    // Catégorie/ville/CP: volontairement pas “inventés” ici (on évite de mettre des infos fausses).
+    // ...existing code...
+  }
+
   @override
   void initState() {
     super.initState();
