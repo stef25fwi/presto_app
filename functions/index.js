@@ -1215,7 +1215,10 @@ async function providerGoogleSTT({ audioBuffer, languageCode, audioInfo }) {
         languageCodes: [languageCode || 'fr-FR'],
         model: 'chirp_3',
         autoDecodingConfig: {},
-        features: { automaticPunctuation: true },
+        features: { 
+          automaticPunctuation: true,
+          enableWordTimeOffsets: false, // Désactive pour gagner du temps
+        },
       },
       content: audioBuffer,
     });
@@ -1360,7 +1363,7 @@ async function withTimeout(promise, ms, label) {
 exports.microIaProcessAudio = onCall(
   {
     region: "europe-west1",
-    timeoutSeconds: 120,
+    timeoutSeconds: 40,
     secrets: [OPENAI_API_KEY], // ⚠️ garde EXACTEMENT ta constante existante
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
@@ -1535,7 +1538,7 @@ exports.microIaProcessAudio = onCall(
 
       // En ultra-rapide, on accepte plus souvent le premier résultat pour éviter d'enchaîner des tentatives.
       // On garde tout de même un fallback si le score est extrêmement bas (ex: texte vide).
-      const threshold = ultraFastEnabled ? 0.10 : cfg.qualityThreshold;
+      const threshold = ultraFastEnabled ? 0.05 : cfg.qualityThreshold;
       const fallbackEnabled = ultraFastEnabled ? true : cfg.fallbackEnabled;
 
       const needsOpenAI = tryOrder.some((m) => m !== "GOOGLE_ONLY");
@@ -1552,21 +1555,21 @@ exports.microIaProcessAudio = onCall(
           if (attemptMode === "GOOGLE_ONLY") {
             out = await withTimeout(
               providerGoogleSTT({ audioBuffer, languageCode: lang, audioInfo }),
-              ultraFastEnabled ? 12_000 : 25_000,
+              ultraFastEnabled ? 8_000 : 25_000,
               'google_stt'
             );
           } else if (attemptMode === "WHISPER_ONLY") {
             if (!openai) throw new Error("OpenAI client not initialized");
             out = await withTimeout(
               providerWhisper({ audioBuffer, languageCode: lang, openai }),
-              ultraFastEnabled ? 20_000 : 60_000,
+              ultraFastEnabled ? 15_000 : 60_000,
               'whisper'
             );
           } else {
             if (!openai) throw new Error("OpenAI client not initialized");
             out = await withTimeout(
               providerHybrid({ audioBuffer, languageCode: lang, openai, audioInfo }),
-              ultraFastEnabled ? 25_000 : 80_000,
+              ultraFastEnabled ? 20_000 : 80_000,
               'hybrid'
             );
           }

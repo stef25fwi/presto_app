@@ -16,7 +16,7 @@ class MicroIaService {
   }) async {
     final callable = _functions.httpsCallable(
       'microIaProcessAudio',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 75)),
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
     );
 
     try {

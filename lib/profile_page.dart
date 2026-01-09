@@ -1296,145 +1296,38 @@ class _AccountPageState extends State<AccountPage> {
 
         const SizedBox(height: 12),
 
-        // Section encadrée pour Mes messages, catégories et annonces favorites
+        // Section Mes Messages
         _buildMainSectionCard(
-          title: '⭐ Mes favoris & messages',
+          title: '💬 Mes messages',
           colorScheme: colorScheme,
           child: Column(
             children: [
-              // Mes Messages
-              _buildSubsectionTitle('💬 Mes messages', colorScheme),
-              Column(
-                children: [
-                  ListTile(
-                    leading: Icon(Icons.inbox_outlined, color: colorScheme.primary),
-                    title: const Text('Boîte de réception'),
-                    trailing: Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text('3',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                    onTap: () {
-                      // TODO: Navigation vers les messages
-                      showSuccessSnackBar(context, 'Fonctionnalité à venir');
-                    },
+              ListTile(
+                leading: Icon(Icons.inbox_outlined, color: colorScheme.primary),
+                title: const Text('Boîte de réception'),
+                trailing: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const Divider(height: 0),
-                  ListTile(
-                    leading: Icon(Icons.send_outlined, color: colorScheme.primary),
-                    title: const Text('Messages envoyés'),
-                    onTap: () {
-                      // TODO: Navigation vers messages envoyés
-                      showSuccessSnackBar(context, 'Fonctionnalité à venir');
-                    },
-                  ),
-                ],
+                  child: const Text('3',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                onTap: () {
+                  // TODO: Navigation vers les messages
+                  showSuccessSnackBar(context, 'Fonctionnalité à venir');
+                },
               ),
-
-              const SizedBox(height: 16),
-              const Divider(),
-              const SizedBox(height: 16),
-
-              // Mes Catégories Favorites
-              _buildSubsectionTitle('⭐ Mes catégories favorites', colorScheme),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_favoriteCategories.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        'Aucune catégorie favorite sélectionnée',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: colorScheme.onSurface.withValues(alpha: 0.6),
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ..._favoriteCategories.entries.map((entry) {
-                            final category = entry.key;
-                            final subcategories = entry.value;
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          category,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(Icons.close,
-                                            size: 20, color: colorScheme.error),
-                                        onPressed: () {
-                                          setState(() {
-                                            _favoriteCategories.remove(category);
-                                          });
-                                        },
-                                        tooltip: 'Supprimer',
-                                      ),
-                                    ],
-                                  ),
-                                  Wrap(
-                                    spacing: 6,
-                                    runSpacing: 6,
-                                    children: [
-                                      ...subcategories.map(
-                                        (sub) => Chip(
-                                          label: Text(sub,
-                                              style: const TextStyle(fontSize: 12)),
-                                          onDeleted: () {
-                                            setState(() {
-                                              _favoriteCategories[category]
-                                                  ?.remove(sub);
-                                              if (_favoriteCategories[category]
-                                                      ?.isEmpty ??
-                                                  false) {
-                                                _favoriteCategories
-                                                    .remove(category);
-                                              }
-                                            });
-                                          },
-                                          backgroundColor: colorScheme
-                                              .primaryContainer
-                                              .withValues(alpha: 0.3),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ],
-                      ),
-                    ),
-                  const Divider(height: 0),
-                  ListTile(
-                    leading: Icon(Icons.add, color: colorScheme.primary),
-                    title: const Text('Ajouter une catégorie'),
-                    onTap: _showAddCategoryDialog,
-                  ),
-                ],
+              const Divider(height: 0),
+              ListTile(
+                leading: Icon(Icons.send_outlined, color: colorScheme.primary),
+                title: const Text('Messages envoyés'),
+                onTap: () {
+                  // TODO: Navigation vers messages envoyés
+                  showSuccessSnackBar(context, 'Fonctionnalité à venir');
+                },
               ),
             ],
           ),
@@ -1512,14 +1405,12 @@ class _AccountPageState extends State<AccountPage> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: colorScheme.error,
-                      ),
+                      Icon(Icons.error_outline,
+                          size: 48, color: colorScheme.error),
                       const SizedBox(height: 8),
                       Text(
-                        'Erreur lors du chargement',
+                        'Erreur de chargement: ${snapshot.error}',
+                        textAlign: TextAlign.center,
                         style: TextStyle(color: colorScheme.error),
                       ),
                     ],
@@ -1533,30 +1424,18 @@ class _AccountPageState extends State<AccountPage> {
                 return Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          Icon(
-                            Icons.article_outlined,
-                            size: 64,
-                            color: colorScheme.primary.withValues(alpha: 0.3),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
+                          Icon(Icons.article_outlined,
+                              size: 48, color: colorScheme.primary.withValues(alpha: 0.3)),
+                          const SizedBox(height: 12),
+                          Text(
                             'Aucune annonce publiée',
                             style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Créez votre première annonce pour trouver des prestataires',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
                               fontSize: 14,
-                              color:
-                                  colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: colorScheme.onSurface.withValues(alpha: 0.6),
+                              fontStyle: FontStyle.italic,
                             ),
                           ),
                         ],
@@ -1564,11 +1443,10 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                     const Divider(height: 0),
                     ListTile(
-                      leading: Icon(Icons.add_circle_outline,
-                          color: colorScheme.primary),
-                      title: const Text('Créer une nouvelle annonce'),
+                      leading: Icon(Icons.add, color: colorScheme.primary),
+                      title: const Text('Publier une annonce'),
                       onTap: () {
-                        // TODO: Navigation vers création d'annonce
+                        // TODO: Navigation vers publier annonce
                         showSuccessSnackBar(context, 'Fonctionnalité à venir');
                       },
                     ),
@@ -1585,57 +1463,35 @@ class _AccountPageState extends State<AccountPage> {
                     separatorBuilder: (context, index) =>
                         const Divider(height: 0),
                     itemBuilder: (context, index) {
-                      final offer = offers[index];
-                      final data = offer.data() as Map<String, dynamic>;
-                      final offerId = offer.id;
-                      final title = data['title'] ?? 'Sans titre';
-                      final category = data['category'] ?? '';
-                      final budget = data['budget'];
+                      final doc = offers[index];
+                      final data = doc.data() as Map<String, dynamic>;
+                      final title = data['title']?.toString() ?? 'Sans titre';
+                      final category =
+                          data['category']?.toString() ?? 'Non catégorisé';
                       final createdAt = data['createdAt'] as Timestamp?;
-                      final dateStr = createdAt != null
-                          ? _formatDate(createdAt.toDate())
-                          : '';
 
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: colorScheme.primaryContainer,
-                          child: Icon(
-                            Icons.article,
-                            color: colorScheme.primary,
-                            size: 20,
-                          ),
+                          backgroundColor:
+                              colorScheme.primaryContainer.withValues(alpha: 0.5),
+                          child: Icon(Icons.work_outline,
+                              color: colorScheme.primary, size: 20),
                         ),
                         title: Text(
                           title,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                          maxLines: 2,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (category.isNotEmpty)
-                              Text(
-                                category,
+                            Text(category,
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: colorScheme.primary,
-                                ),
-                              ),
-                            if (budget != null)
+                                    fontSize: 12, color: colorScheme.primary)),
+                            if (createdAt != null)
                               Text(
-                                '$budget€',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            if (dateStr.isNotEmpty)
-                              Text(
-                                dateStr,
+                                _formatDate(createdAt.toDate()),
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: colorScheme.onSurface
@@ -1644,27 +1500,40 @@ class _AccountPageState extends State<AccountPage> {
                               ),
                           ],
                         ),
-                        trailing: IconButton(
-                          icon: Icon(Icons.delete_outline,
-                              color: colorScheme.error),
-                          tooltip: 'Supprimer',
-                          onPressed: () => _deleteOffer(offerId, title),
+                        trailing: PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert),
+                          onSelected: (value) {
+                            if (value == 'delete') {
+                              _deleteOffer(doc.id, title);
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete_outline, color: Colors.red),
+                                  SizedBox(width: 8),
+                                  Text('Supprimer',
+                                      style: TextStyle(color: Colors.red)),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                         onTap: () {
-                          // TODO: Navigation vers détail de l'annonce
-                          showSuccessSnackBar(
-                              context, 'Détail de l\'annonce à venir');
+                          // TODO: Navigation vers détail annonce
+                          showSuccessSnackBar(context, 'Détails à venir');
                         },
                       );
                     },
                   ),
                   const Divider(height: 0),
                   ListTile(
-                    leading: Icon(Icons.add_circle_outline,
-                        color: colorScheme.primary),
-                    title: const Text('Créer une nouvelle annonce'),
+                    leading: Icon(Icons.add, color: colorScheme.primary),
+                    title: const Text('Publier une nouvelle annonce'),
                     onTap: () {
-                      // TODO: Navigation vers création d'annonce
+                      // TODO: Navigation vers publier annonce
                       showSuccessSnackBar(context, 'Fonctionnalité à venir');
                     },
                   ),
@@ -1672,6 +1541,108 @@ class _AccountPageState extends State<AccountPage> {
               );
             },
           ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Section Mes Catégories Favorites
+        _buildMainSectionCard(
+          title: '⭐ Mes catégories favorites',
+          colorScheme: colorScheme,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (_favoriteCategories.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Aucune catégorie favorite sélectionnée',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ..._favoriteCategories.entries.map((entry) {
+                        final category = entry.key;
+                        final subcategories = entry.value;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      category,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.close,
+                                        size: 20, color: colorScheme.error),
+                                    onPressed: () {
+                                      setState(() {
+                                        _favoriteCategories.remove(category);
+                                      });
+                                    },
+                                    tooltip: 'Supprimer',
+                                  ),
+                                ],
+                              ),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  ...subcategories.map(
+                                    (sub) => Chip(
+                                      label: Text(sub,
+                                          style: const TextStyle(fontSize: 12)),
+                                      onDeleted: () {
+                                        setState(() {
+                                          _favoriteCategories[category]
+                                              ?.remove(sub);
+                                          if (_favoriteCategories[category]
+                                                  ?.isEmpty ??
+                                              false) {
+                                            _favoriteCategories
+                                                .remove(category);
+                                          }
+                                        });
+                                      },
+                                      backgroundColor: colorScheme
+                                          .primaryContainer
+                                          .withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ),
+              const Divider(height: 0),
+              ListTile(
+                leading: Icon(Icons.add, color: colorScheme.primary),
+                title: const Text('Ajouter une catégorie'),
+                onTap: _showAddCategoryDialog,
+              ),
             ],
           ),
         ),
