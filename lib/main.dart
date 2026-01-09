@@ -2993,60 +2993,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   // ✅ Logs analytics
   late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
 
-  @override
-  void initState() {
-    super.initState();
-
-    _scrollController.addListener(() {
-      widget.onScroll?.call(_scrollController.offset);
-      _maybeLoadMore();
-    });
-
-    final initialCategoryFilter = widget.categoryFilter?.trim();
-    if (initialCategoryFilter != null && initialCategoryFilter.isNotEmpty) {
-      _selectedCategory = initialCategoryFilter;
-      final matched = _matchKnownCategory(initialCategoryFilter);
-      if (matched != null) {
-        _filterCategory = matched;
-        _selectedCategory = matched;
-      }
-    } else {
-      _selectedCategory = 'Toutes catégories';
-    }
-
-    _selectedRegionCode = null; // Pas de région sélectionnée par défaut
-
-    // ✅ Si un searchQuery est fourni (barre de recherche Accueil),
-    // on essaie d'abord de le refléter dans le filtre Catégorie.
-    // Si aucune catégorie ne correspond, on garde le comportement "mot-clé".
-    final initialQuery = widget.searchQuery?.trim();
-    if (initialQuery != null && initialQuery.isNotEmpty) {
-      final matchedCategory = _matchKnownCategory(initialQuery);
-      if (matchedCategory != null) {
-        _filterCategory = matchedCategory;
-        _selectedCategory = matchedCategory;
-        _activeSearchQuery = null;
-        _keywordCtrl.clear();
-      } else {
-        _activeSearchQuery = initialQuery;
-        _keywordCtrl.text = initialQuery;
-      }
-    }
-
-    // Quand le code postal change, on essaie de déduire la région
-    _postalCodeController.addListener(_syncRegionWithPostalCode);
-
-    // Synchroniser la ville sélectionnée (si déjà connue) dans le champ visible
-    _filterCityController.addListener(_syncLocationFieldFromFilter);
-    _syncLocationFieldFromFilter();
-
-    // ✅ Écouter les changements de connectivité
-    _monitorConnectivity();
-
-    // ✅ Log la page consultée
-    _logPageView();
-  }
-
   /// ✅ Enregistre la visite de la page ConsultOffers
   Future<void> _logPageView() async {
     try {
@@ -3089,16 +3035,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   /// ✅ Enregistre quand l'utilisateur clique sur une offre
   Future<void> _logOfferClicked(String offerId, String title) async {
     try {
-      await _analytics.logSelectItem(
-        itemListId: 'offers_list',
-        itemListName: 'Offers List',
-        items: [
-          AnalyticsEventItem(
-            itemId: offerId,
-            itemName: title,
-            itemCategory: _filterCategory ?? 'unknown',
-          ),
-        ],
+      await _analytics.logEvent(
+        name: 'select_item',
+        parameters: {
+          'item_id': offerId,
+          'item_name': title,
+          'item_category': _filterCategory ?? 'unknown',
+        },
       );
     } catch (e) {
       debugPrint('[Analytics] logOfferClicked error: $e');
@@ -4725,16 +4668,15 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   /// ✅ Enregistre la visite d'une offre en détail
   Future<void> _logOfferViewed() async {
     try {
-      await _analytics.logViewItem(
-        currency: 'EUR',
-        value: (widget.budget is num) ? (widget.budget as num).toDouble() : 0.0,
-        items: [
-          AnalyticsEventItem(
-            itemId: widget.offerId,
-            itemName: widget.title,
-            itemCategory: widget.category,
-          ),
-        ],
+      await _analytics.logEvent(
+        name: 'view_item',
+        parameters: {
+          'item_id': widget.offerId,
+          'item_name': widget.title,
+          'item_category': widget.category,
+          'value': (widget.budget is num) ? (widget.budget as num).toDouble() : 0.0,
+          'currency': 'EUR',
+        },
       );
     } catch (e) {
       debugPrint('[Analytics] logOfferViewed error: $e');
@@ -4796,21 +4738,6 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
       return digits.isEmpty ? trimmed : '+$digits';
     }
 
-    final digits = trimmed.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) return '';
-
-    // Convention FR: 06XXXXXXXX / 07XXXXXXXX -> +33 6XXXXXXXX / +33 7XXXXXXXX
-    if (digits.length == 10 && digits.startsWith('0')) {
-      return '+33${digits.substring(1)}';
-    }
-    if (digits.length == 9 &&
-        (digits.startsWith('6') || digits.startsWith('7'))) {
-      return '+33$digits';
-    }
-
-    // Fallback: on affiche tel quel (sans espaces)
-    return digits;
-  }
     final digits = trimmed.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return '';
 
@@ -4916,8 +4843,10 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   }
 
   Future<void> _callPhone(BuildContext context) async {
-    // ✅ Log l'appel
     await _logPhoneCall();
+
+    final user = FirebaseAuth.instance.currentUser;
+    final bool isLoggedIn = user != null;
 
     if (widget.phone == null || widget.phone!.trim().isEmpty) {
       showSuccessSnackBar(context, "Aucun numéro disponible.");
@@ -4948,7 +4877,6 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   void _showActionSheet(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final bool isLoggedIn = user != null;
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: false,
@@ -5053,9 +4981,29 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(ctx);
-                    _callPhone(context);
+                    // Lancement direct de l'appel
+                    if (widget.phone == null || widget.phone!.trim().isEmpty) {
+                      showSuccessSnackBar(context, "Aucun numéro disponible.");
+                      return;
+                    }
+                    final dial = _toE164Like(widget.phone!.trim());
+                    final uri = Uri(scheme: 'tel', path: dial.isNotEmpty ? dial : widget.phone!.trim());
+                    try {
+                      final ok = await canLaunchUrl(uri);
+                      if (ok) {
+                        await launchUrl(uri);
+                      } else {
+                        if (context.mounted) {
+                          showSuccessSnackBar(context, "Impossible de lancer l'appel sur cet appareil.");
+                        }
+                      }
+                    } catch (_) {
+                      if (context.mounted) {
+                        showSuccessSnackBar(context, "Une erreur est survenue lors de l'appel.");
+                      }
+                    }
                   },
                   icon: const Icon(Icons.call),
                   label: const Text(
@@ -5111,6 +5059,61 @@ Motif du signalement :
       if (!context.mounted) return;
       showSuccessSnackBar(context, "Une erreur est survenue.");
     }
+  }
+
+  void _showActionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: false,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.black26,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            const Text(
+              "Choisir une action",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrestoOrange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _callPhone(context);
+                },
+                icon: const Icon(Icons.call),
+                label: const Text(
+                  "Appeler",
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -7103,19 +7106,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     required String budgetType,
   }) async {
     try {
-      await _analytics.logPurchase(
-        value: (budget != null && budget.isNotEmpty)
-            ? double.tryParse(budget) ?? 0.0
-            : 0.0,
-        currency: 'EUR',
-        transactionId: offerId,
-        items: [
-          AnalyticsEventItem(
-            itemId: offerId,
-            itemName: title,
-            itemCategory: category,
-          ),
-        ],
+      await _analytics.logEvent(
+        name: 'ecommerce_purchase',
+        parameters: {
+          'value': (budget != null && budget.isNotEmpty)
+              ? double.tryParse(budget) ?? 0.0
+              : 0.0,
+          'currency': 'EUR',
+          'transaction_id': offerId,
+          'items': [
+            {
+              'item_id': offerId,
+              'item_name': title,
+              'item_category': category,
+            },
+          ],
+        },
       );
 
       // ✅ Event personnalisé supplémentaire
