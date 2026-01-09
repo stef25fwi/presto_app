@@ -35,7 +35,7 @@ dependencies:
   web: ^1.0.0
   cross_file: ^0.3.4+2
   connectivity_plus: ^5.0.0  # ✅ Pour détecter offline/online
-  firebase_analytics: ^11.2.0  # ✅ Si absent, ajouter
+  firebase_analytics: ^12.1.0  # ✅ Si absent, ajouter
 
 dev_dependencies:
   flutter_test:

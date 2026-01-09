@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, debugPrint;
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -11,6 +12,7 @@ import '../services/micro_ia_service.dart';
 import '../features/publish_offer/ai_offer_service.dart';
 import '../features/micro_ia/web_audio_recorder_stub.dart'
     if (dart.library.html) '../features/micro_ia/web_audio_recorder.dart';
+import '../features/micro_ia/micro_ia_stream_client.dart';
 import '../utils/crashlytics_context.dart';
 import '../utils/retry.dart';
 import '../utils/friendly_snackbar.dart';
@@ -22,6 +24,7 @@ import '../constants.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
+const String kMicroIaStreamUrl = String.fromEnvironment('MICROIA_STREAM_URL', defaultValue: '');
 
 // Palette alignée avec la page "Je consulte": fond clair neutre + accents Presto
 const kPrestoBeige = Colors.white;
@@ -76,6 +79,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // Pour l'enregistrement audio premium
   late final AudioRecorder _audioRecorder;
   bool _recording = false;
+
+  // Streaming WebSocket
+  MicroIaStreamClient? _streamClient;
+  StreamSubscription<Uint8List>? _streamMicSub;
+  Timer? _streamTimeout;
+  bool _streamingActive = false;
+
+  bool get _streamingEnabled => !kIsWeb && kMicroIaStreamUrl.isNotEmpty;
 
   final List<String> _categories = const [
     'Jardinage',
@@ -206,6 +217,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _phoneFocus.dispose();
     _budgetFocus.dispose();
 
+    _streamTimeout?.cancel();
+    _streamMicSub?.cancel();
+    _streamClient?.close();
     _audioRecorder.dispose();
     super.dispose();
   }
@@ -303,6 +317,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   /// Enregistrement audio Premium avec transcription Chirp 3 EU + Rédaction Gemini
   Future<void> _togglePremiumRecording() async {
+    if (_streamingEnabled) {
+      final handled = await _toggleStreamingRecording();
+      if (handled) return;
+    }
+    await _togglePremiumRecordingLegacy();
+  }
+
+  /// Pipeline legacy: upload Storage + callable
+  Future<void> _togglePremiumRecordingLegacy() async {
     if (_aiLoading) return;
 
     if (kIsWeb) {
@@ -630,6 +653,125 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     } finally {
       if (mounted) setState(() => _aiLoading = false);
     }
+  }
+
+  /// Streaming WebSocket: enregistrement + transcription + draft en temps réel
+  Future<bool> _toggleStreamingRecording() async {
+    if (_aiLoading) return true;
+    if (_streamingActive) {
+      await _stopStreamingRecording();
+      return true;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
+    if (!await _audioRecorder.hasPermission()) {
+      showSuccessSnackBar(context, "Permission micro requise");
+      return true;
+    }
+
+    setState(() {
+      _recording = true;
+      _aiLoading = true;
+    });
+
+    try {
+      final token = await user.getIdToken();
+      if (token == null) throw Exception('Token null');
+      
+      final client = await MicroIaStreamClient.connect(
+        url: Uri.parse(kMicroIaStreamUrl),
+        token: token,
+      );
+      _streamClient = client;
+
+      await client.listen(
+        onPartial: (text) {
+          if (text.trim().isNotEmpty) {
+            _descCtrl.text = text.trim();
+          }
+        },
+        onFinal: (transcript, draft, quality, modeUsed) {
+          if (transcript.trim().isNotEmpty) {
+            _descCtrl.text = transcript.trim();
+          }
+          if (draft != null) {
+            _applyDraftToForm(OfferDraft.fromMap(draft), transcript: transcript);
+          }
+          _endStreamingSuccess(modeUsed, quality);
+        },
+        onError: (err) => _endStreamingError(err),
+        onDone: () {
+          if (_aiLoading) {
+            _endStreamingError(Exception('Flux terminé sans résultat'));
+          }
+        },
+      );
+
+      client.sendStart(
+        languageCode: 'fr-FR',
+        cityHint: _cityCtrl.text.trim(),
+        categoryHint: (_category ?? '').trim(),
+      );
+
+      final audioStream = await _audioRecorder.startStream(
+        const RecordConfig(
+          encoder: AudioEncoder.wav,
+          sampleRate: 16000,
+          numChannels: 1,
+        ),
+      );
+
+      _streamMicSub = audioStream.listen(
+        (chunk) => client.sendAudioChunk(chunk),
+        onError: (e) => _endStreamingError(e),
+        cancelOnError: true,
+      );
+
+      _streamingActive = true;
+
+      _streamTimeout = Timer(const Duration(seconds: 12), () {
+        if (_aiLoading) _endStreamingError(TimeoutException('Streaming timeout'));
+      });
+
+      return true;
+    } catch (e) {
+      _endStreamingError(e);
+      return false; // fallback vers legacy
+    }
+  }
+
+  Future<void> _stopStreamingRecording() async {
+    _streamTimeout?.cancel();
+    await _streamMicSub?.cancel();
+    await _audioRecorder.stop();
+    await _streamClient?.sendStop();
+    _streamingActive = false;
+    setState(() => _recording = false);
+  }
+
+  void _endStreamingSuccess(String? modeUsed, Map<String, dynamic>? quality) {
+    _streamTimeout?.cancel();
+    _streamingActive = false;
+    _aiLoading = false;
+    _recording = false;
+    setState(() {});
+    final score = ((quality?['score'] ?? 0.0) as num).toDouble();
+    final reasons = (quality?['reasons'] ?? []).toString();
+    showSuccessSnackBar(
+      context,
+      "IA (stream): ${modeUsed ?? ''} score=${(score * 100).toStringAsFixed(0)}% reasons=$reasons",
+    );
+  }
+
+  void _endStreamingError(Object err) {
+    _streamTimeout?.cancel();
+    _streamingActive = false;
+    _aiLoading = false;
+    _recording = false;
+    setState(() {});
+    showSuccessSnackBar(context, "Erreur streaming IA : $err");
   }
 
   void _publish() async {

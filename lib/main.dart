@@ -15,6 +15,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:record/record.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 import 'firebase_options.dart';
 import 'app_core.dart';
@@ -2924,8 +2925,6 @@ String? _extractFirstUrl(String text) {
   return match.group(0)?.replaceAll(RegExp(r'[)\],.]+$'), '');
 }
 
-import 'package:connectivity_plus/connectivity_plus.dart';
-
 /// ✅ Conversion d'erreur Firestore en message amical
 String _friendlyFirestoreErrorMessage(Object error) {
   if (error == null) return "Une erreur inconnue s'est produite";
@@ -4689,6 +4688,21 @@ class OfferDetailPage extends StatefulWidget {
   const OfferDetailPage({
     super.key,
     required this.title,
+    required this.location,
+    required this.category,
+    this.subcategory,
+    this.budget,
+    this.description,
+    this.phone,
+    this.imageUrls,
+    required this.annonceurId,
+    required this.offerId,
+  });
+
+  @override
+  State<OfferDetailPage> createState() => _OfferDetailPageState();
+}
+
 class _OfferDetailPageState extends State<OfferDetailPage> {
   bool _isPhoneVisible = false;
 
