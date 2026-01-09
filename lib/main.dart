@@ -399,7 +399,7 @@ Future<void> main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // � Logs de diagnostic Firebase
+    // 📋 Diagnostics
     debugPrint('=== Firebase Initialization ===');
     debugPrint('✓ Firebase initialized');
     debugPrint('✓ Auth instance: ${FirebaseAuth.instance.runtimeType}');
@@ -413,6 +413,19 @@ Future<void> main() async {
           '✓ Platform: ${defaultTargetPlatform.toString().split('.').last}');
     }
     debugPrint('');
+
+    // ✅ Activer la persistance Firestore (cache + offline)
+    if (!kIsWeb) {
+      try {
+        await FirebaseFirestore.instance.enableNetwork();
+        debugPrint('✓ Firestore persistence: Enabled');
+      } catch (e) {
+        debugPrint('⚠️ Firestore persistence error: $e');
+      }
+    } else {
+      // Web: persistance auto si IndexedDB disponible
+      debugPrint('✓ Firestore Web: Persistence (IndexedDB if available)');
+    }
 
     // ✅ Initialiser le service Firebase centralisé avec optimisations
     await FirebaseService.instance.initialize();
@@ -2904,11 +2917,245 @@ class _Debouncer {
   void dispose() => _t?.cancel();
 }
 
+/// Helper: extrait la première URL d'un message (erreurs Firestore incluent souvent un lien d'index)
+String? _extractFirstUrl(String text) {
+  final match = RegExp(r'https?://\S+').firstMatch(text);
+  if (match == null) return null;
+  return match.group(0)?.replaceAll(RegExp(r'[)\],.]+$'), '');
+}
+
+import 'package:connectivity_plus/connectivity_plus.dart';
+
+/// ✅ Conversion d'erreur Firestore en message amical
+String _friendlyFirestoreErrorMessage(Object error) {
+  if (error == null) return "Une erreur inconnue s'est produite";
+
+  final msg = error.toString().toLowerCase();
+
+  // ✅ failed-precondition : index manquant
+  if (msg.contains('failed-precondition') || msg.contains('index')) {
+    debugPrint('[Error] Firestore index missing: $error');
+    return "Mise à jour en cours, réessaie dans 1 minute";
+  }
+
+  // ✅ permission-denied : accès refusé
+  if (msg.contains('permission-denied') || msg.contains('permission')) {
+    debugPrint('[Error] Permission denied: $error');
+    return "Tu n'as pas accès à ces offres";
+  }
+
+  // ✅ unavailable : problème réseau
+  if (msg.contains('unavailable') ||
+      msg.contains('deadline-exceeded') ||
+      msg.contains('network')) {
+    debugPrint('[Error] Network issue: $error');
+    return "Problème réseau, réessaie";
+  }
+
+  // ✅ not-found
+  if (msg.contains('not-found') || msg.contains('not found')) {
+    debugPrint('[Error] Not found: $error');
+    return "Ressource introuvable";
+  }
+
+  // ✅ invalid-argument
+  if (msg.contains('invalid-argument') || msg.contains('invalid')) {
+    debugPrint('[Error] Invalid argument: $error');
+    return "Requête invalide, vérifie les filtres";
+  }
+
+  // Fallback : log technique complet en console
+  debugPrint('[Error] Unknown Firestore error: $error');
+  return "Une erreur s'est produite, réessaie";
+}
+
 class _ConsultOffersPageState extends State<ConsultOffersPage> {
+  // --- Normalisation (réduction index) ---
+  String _slugId(String input) {
+    final s = input
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[àâä]'), 'a')
+        .replaceAll('ç', 'c')
+        .replaceAll(RegExp(r'[éèêë]'), 'e')
+        .replaceAll(RegExp(r'[îï]'), 'i')
+        .replaceAll(RegExp(r'[ôö]'), 'o')
+        .replaceAll(RegExp(r'[ùûü]'), 'u')
+        .replaceAll('œ', 'oe')
+        .replaceAll(RegExp(r"[/\-'’']"), ' ')
+        .replaceAll(RegExp(r'[^a-z0-9 ]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim()
+        .replaceAll(' ', '-');
+    return s;
+  }
+
+  // ✅ Logs analytics
+  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _scrollController.addListener(() {
+      widget.onScroll?.call(_scrollController.offset);
+      _maybeLoadMore();
+    });
+
+    final initialCategoryFilter = widget.categoryFilter?.trim();
+    if (initialCategoryFilter != null && initialCategoryFilter.isNotEmpty) {
+      _selectedCategory = initialCategoryFilter;
+      final matched = _matchKnownCategory(initialCategoryFilter);
+      if (matched != null) {
+        _filterCategory = matched;
+        _selectedCategory = matched;
+      }
+    } else {
+      _selectedCategory = 'Toutes catégories';
+    }
+
+    _selectedRegionCode = null; // Pas de région sélectionnée par défaut
+
+    // ✅ Si un searchQuery est fourni (barre de recherche Accueil),
+    // on essaie d'abord de le refléter dans le filtre Catégorie.
+    // Si aucune catégorie ne correspond, on garde le comportement "mot-clé".
+    final initialQuery = widget.searchQuery?.trim();
+    if (initialQuery != null && initialQuery.isNotEmpty) {
+      final matchedCategory = _matchKnownCategory(initialQuery);
+      if (matchedCategory != null) {
+        _filterCategory = matchedCategory;
+        _selectedCategory = matchedCategory;
+        _activeSearchQuery = null;
+        _keywordCtrl.clear();
+      } else {
+        _activeSearchQuery = initialQuery;
+        _keywordCtrl.text = initialQuery;
+      }
+    }
+
+    // Quand le code postal change, on essaie de déduire la région
+    _postalCodeController.addListener(_syncRegionWithPostalCode);
+
+    // Synchroniser la ville sélectionnée (si déjà connue) dans le champ visible
+    _filterCityController.addListener(_syncLocationFieldFromFilter);
+    _syncLocationFieldFromFilter();
+
+    // ✅ Écouter les changements de connectivité
+    _monitorConnectivity();
+
+    // ✅ Log la page consultée
+    _logPageView();
+  }
+
+  /// ✅ Enregistre la visite de la page ConsultOffers
+  Future<void> _logPageView() async {
+    try {
+      await _analytics.logScreenView(
+        screenName: 'ConsultOffers',
+        screenClass: 'ConsultOffersPage',
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logPageView error: $e');
+    }
+  }
+
+  /// ✅ Enregistre les filtres appliqués
+  Future<void> _logFiltersApplied({
+    required String? category,
+    required String? region,
+    required String? department,
+    required String? city,
+    required String? searchQuery,
+    required int resultCount,
+  }) async {
+    try {
+      await _analytics.logEvent(
+        name: 'filters_applied',
+        parameters: {
+          'category': category ?? 'none',
+          'region': region ?? 'none',
+          'department': department ?? 'none',
+          'city': city ?? 'none',
+          'search_query': searchQuery ?? 'none',
+          'result_count': resultCount,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logFiltersApplied error: $e');
+    }
+  }
+
+  /// ✅ Enregistre quand l'utilisateur clique sur une offre
+  Future<void> _logOfferClicked(String offerId, String title) async {
+    try {
+      await _analytics.logSelectItem(
+        itemId: offerId,
+        itemName: title,
+        itemCategory: _filterCategory ?? 'unknown',
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logOfferClicked error: $e');
+    }
+  }
+
+  // ✅ Suivi du statut réseau
+  bool _isOnline = true;
+  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
+
+  String? _makeCategoryId(String? categoryLabel) {
+    final s = (categoryLabel ?? '').trim();
+    if (s.isEmpty || s == 'Toutes catégories') return null;
+    return _slugId(s);
+  }
+
+  String? _makeCityId({
+    required String cityName,
+    required String postalCode,
+  }) {
+    final city = cityName.trim();
+    final cp = postalCode.trim();
+    if (city.isEmpty || cp.length < 3) return null; // CP requis pour stabilité
+    return '${cp}_${_slugId(city)}';
+  }
+
+  String? _makeCityCategoryKey({required String? cityId, required String? categoryId}) {
+    if (cityId == null || categoryId == null) return null;
+    return '${cityId}_$categoryId';
+  }
+
+  // ✅ Range budget (AVANCÉ) — évite requêtes “impossibles” + explosion d’index
+  bool _advancedFilters = false;
+  final TextEditingController _budgetMinCtrl = TextEditingController();
+  final TextEditingController _budgetMaxCtrl = TextEditingController();
+  String? _budgetRangeWarning; // affiché dans l’UI si range désactivé
+
+  double? _parseBudgetBound(String raw) {
+    final s = raw.trim().replaceAll(' ', '').replaceAll(',', '.');
+    if (s.isEmpty) return null;
+    return double.tryParse(s);
+  }
+
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
   // ignore: unused_field
   final _formKey = GlobalKey<FormState>();
+
+  Future<void> _copyToClipboard(BuildContext context, String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Copié")),
+    );
+  }
+
+  Future<void> _openExternalUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    final ok = await canLaunchUrl(uri);
+    if (!ok) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
   final TextEditingController _keywordCtrl = TextEditingController();
   final TextEditingController _cityCtrl = TextEditingController();
 
@@ -2927,6 +3174,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     required bool hasLocation,
     required bool hasPostalCode,
     required bool hasSubcategory,
+    required bool hasBudgetRange,
   }) {
     final parts = <String>[
       'offers',
@@ -2935,7 +3183,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       if (hasLocation) 'where(location==)',
       if (hasPostalCode) 'where(postalCode==)',
       if (hasSubcategory) 'where(subcategory==)',
-      'orderBy(createdAt desc)',
+      if (hasBudgetRange) 'where(budgetValue>=/<=)',
+      if (hasBudgetRange) 'orderBy(budgetValue asc) + orderBy(createdAt desc)' else 'orderBy(createdAt desc)',
       'limit($_pageLimit)',
     ];
     return parts.join(' + ');
@@ -3119,6 +3368,28 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     // Synchroniser la ville sélectionnée (si déjà connue) dans le champ visible
     _filterCityController.addListener(_syncLocationFieldFromFilter);
     _syncLocationFieldFromFilter();
+
+    // ✅ Écouter les changements de connectivité
+    _monitorConnectivity();
+  }
+
+  void _monitorConnectivity() {
+    // Utiliser la librairie `connectivity_plus` pour détecter le réseau
+    // (à ajouter dans pubspec.yaml si absent)
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {
+      final isNowOnline = result != ConnectivityResult.none;
+      if (isNowOnline != _isOnline && mounted) {
+        setState(() {
+          _isOnline = isNowOnline;
+        });
+        if (isNowOnline) {
+          // Resync des données quand on retrouve du réseau
+          setState(() => _queryKey++);
+        }
+      }
+    });
   }
 
   void _maybeLoadMore() {
@@ -3138,6 +3409,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   @override
   void dispose() {
+    _connectivitySubscription.cancel();
     _filterDebounce.dispose();
     _locationController.dispose();
     _postalCodeController.dispose();
@@ -3148,6 +3420,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     _filterCityDebounce?.cancel();
     _keywordCtrl.dispose();
     _cityCtrl.dispose();
+    _budgetMinCtrl.dispose();
+    _budgetMaxCtrl.dispose();
     super.dispose();
   }
 
@@ -3155,28 +3429,55 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     Query<Map<String, dynamic>> query =
         FirebaseFirestore.instance.collection('offers');
 
+    query = query.where('isActive', isEqualTo: true);
+
     final loc = _locationController.text.trim();
     final cp = _postalCodeController.text.trim();
     final cat = _selectedCategory;
     final regionCode = _selectedRegionCode;
     final subcat = _selectedSubCategory;
 
-    // Nouveaux filtres du panneau
     final filterCat = _filterCategory;
     final filterRegCode = _filterRegionCode;
     final filterDeptCode = _filterDepartmentCode;
     final filterCity = _filterCityName?.trim();
 
-    // Filtre catégorie (panneau de filtres prioritaire)
-    final bool hasCategory = ((filterCat != null && filterCat.isNotEmpty) ||
-        (cat != null && cat.isNotEmpty && cat != 'Toutes catégories'));
-    if (filterCat != null && filterCat.isNotEmpty) {
-      query = query.where('category', isEqualTo: filterCat);
-    } else if (cat != null && cat.isNotEmpty && cat != 'Toutes catégories') {
-      query = query.where('category', isEqualTo: cat);
+    final String? categoryLabel =
+        (filterCat != null && filterCat.isNotEmpty) ? filterCat : cat;
+    final String? categoryId = _makeCategoryId(categoryLabel);
+
+    final String cityName =
+        (filterCity != null && filterCity.isNotEmpty) ? filterCity : loc;
+
+    // ✅ Si la ville vient de l'autocomplete, privilégier son CP (plus fiable que le champ global).
+    final String cpForCity = (filterCity != null &&
+            filterCity.isNotEmpty &&
+            _filterPostalCodeController.text.trim().isNotEmpty)
+        ? _filterPostalCodeController.text.trim()
+        : cp;
+
+    final String? cityId = _makeCityId(cityName: cityName, postalCode: cpForCity);
+
+    final String? cityCategoryKey =
+        _makeCityCategoryKey(cityId: cityId, categoryId: categoryId);
+
+    // ✅ Stratégie anti-explosion d’index :
+    // - si Ville+CP + Catégorie => 1 seul where(eq) sur cityCategoryKey
+    // - sinon cityId OU categoryId
+    if (cityCategoryKey != null) {
+      query = query.where('cityCategoryKey', isEqualTo: cityCategoryKey);
+    } else {
+      if (cityId != null) query = query.where('cityId', isEqualTo: cityId);
+      if (categoryId != null) query = query.where('categoryId', isEqualTo: categoryId);
     }
 
-    // Filtre région/département => dept==
+    // Filtre sous-catégorie (optionnel; gardé en “legacy” tant que pas de subcategoryId)
+    final bool hasSubcategory = (subcat != null && subcat.isNotEmpty);
+    if (hasSubcategory) {
+      query = query.where('subcategory', isEqualTo: subcat);
+    }
+
+    // Filtre région/département (inchangé, mais attention: ça recrée des combinaisons d’index)
     bool hasDept = false;
     if (filterRegCode != null && filterRegCode.isNotEmpty) {
       final depts = kRegionDepartments[filterRegCode] ?? [];
@@ -3196,42 +3497,51 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       query = query.where('dept', isEqualTo: filterDeptCode);
     }
 
-    // Ville => location==
-    final bool hasLocation = ((filterCity != null && filterCity.isNotEmpty) ||
-        loc.isNotEmpty);
-    if (filterCity != null && filterCity.isNotEmpty) {
-      query = query.where('location', isEqualTo: filterCity);
-    } else if (loc.isNotEmpty) {
-      query = query.where('location', isEqualTo: loc);
+    // ✅ Budget range (AVANCÉ) (inchangé)
+    final min = _parseBudgetBound(_budgetMinCtrl.text);
+    final max = _parseBudgetBound(_budgetMaxCtrl.text);
+    final bool wantsBudgetRange =
+        _advancedFilters && (min != null || max != null) && _budgetRangeWarning == null;
+
+    if (wantsBudgetRange) {
+      if (min != null) query = query.where('budgetValue', isGreaterThanOrEqualTo: min);
+      if (max != null) query = query.where('budgetValue', isLessThanOrEqualTo: max);
+      query = query.orderBy('budgetValue', descending: false);
+      query = query.orderBy('createdAt', descending: true);
+    } else {
+      query = query.orderBy('createdAt', descending: true);
     }
 
-    // Code postal => postalCode==
-    final bool hasPostalCode = cp.isNotEmpty;
-    if (cp.isNotEmpty) {
-      query = query.where('postalCode', isEqualTo: cp);
-    }
-
-    // Sous-catégorie => subcategory==
-    final bool hasSubcategory = (subcat != null && subcat.isNotEmpty);
-    if (subcat != null && subcat.isNotEmpty) {
-      query = query.where('subcategory', isEqualTo: subcat);
-    }
-
-    // Tri
-    query = query.orderBy('createdAt', descending: true);
-
-    // Limit
     query = query.limit(_pageLimit);
 
-    // Signature (audit index)
-    _lastOffersQuerySignature = _buildOffersQuerySignature(
-      hasCategory: hasCategory,
-      hasDept: hasDept,
-      hasLocation: hasLocation,
-      hasPostalCode: hasPostalCode,
-      hasSubcategory: hasSubcategory,
-    );
-    debugPrint('[OFFERS][QUERY] $_lastOffersQuerySignature');
+    // Signature (audit index) — minimaliste
+    _lastOffersQuerySignature = [
+      'offers',
+      'where(isActive==true)',
+      if (cityCategoryKey != null) 'where(cityCategoryKey==)',
+      if (cityCategoryKey == null && cityId != null) 'where(cityId==)',
+      if (cityCategoryKey == null && categoryId != null) 'where(categoryId==)',
+      if (hasDept) 'where(dept==)',
+      if (hasSubcategory) 'where(subcategory==)',
+      if (wantsBudgetRange) 'where(budgetValue>=/<=) + orderBy(budgetValue) + orderBy(createdAt desc)' else 'orderBy(createdAt desc)',
+      'limit($_pageLimit)',
+    ].join(' + ');
+
+    // ✅ Log la signature de la query (debug only)
+    if (kDebugMode) {
+      debugPrint('[OFFERS][QUERY] $_lastOffersQuerySignature');
+    }
+
+    // ✅ Log en Crashlytics en prod (non-fatal)
+    if (!kDebugMode && _lastOffersQuerySignature != null) {
+      try {
+        FirebaseCrashlytics.instance.log(
+          'Offers Query: $_lastOffersQuerySignature',
+        );
+      } catch (e) {
+        debugPrint('[Crashlytics] log error: $e');
+      }
+    }
 
     return query;
   }
@@ -3278,6 +3588,30 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     // Annule le debounce en cours pour éviter les conflits
     _filterDebounce._t?.cancel();
 
+    final min = _parseBudgetBound(_budgetMinCtrl.text);
+    final max = _parseBudgetBound(_budgetMaxCtrl.text);
+
+    // Compter les filtres égalité actifs (pour éviter explosion d’index si range)
+    final bool eqCat = (_filterCategory != null && _filterCategory!.isNotEmpty) ||
+        ((_selectedCategory ?? '').isNotEmpty && _selectedCategory != 'Toutes catégories');
+    final bool eqDept = (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
+        ((_filterRegionCode ?? '').isNotEmpty) ||
+        ((_selectedRegionCode ?? '').isNotEmpty);
+    final bool eqLoc = (_filterCityName != null && _filterCityName!.trim().isNotEmpty) ||
+        _locationController.text.trim().isNotEmpty;
+    final bool eqCp = _postalCodeController.text.trim().isNotEmpty;
+    final bool eqSub = (_selectedSubCategory != null && _selectedSubCategory!.isNotEmpty);
+
+    final int eqCount = <bool>[eqCat, eqDept, eqLoc, eqCp, eqSub].where((b) => b).length;
+
+    // ✅ Règle: range budget uniquement en “avancé” + idéalement peu de filtres == (sinon index explosion)
+    String? budgetWarning;
+    if (_advancedFilters && (min != null || max != null) && eqCount > 1) {
+      budgetWarning =
+          "Budget (avancé) désactivé : trop de filtres combinés. "
+          "Garde 0–1 filtre (ex: seulement Ville OU seulement Catégorie) pour éviter l’explosion d’index.";
+    }
+
     // Remonter en haut de la liste
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
@@ -3287,8 +3621,19 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       );
     }
 
+    // ✅ Log les filtres appliqués
+    _logFiltersApplied(
+      category: _filterCategory,
+      region: _filterRegionCode,
+      department: _filterDepartmentCode,
+      city: _filterCityName,
+      searchQuery: _activeSearchQuery,
+      resultCount: 0, // sera mis à jour après le StreamBuilder
+    );
+
     // Force le StreamBuilder à se reconstruire
     setState(() {
+      _budgetRangeWarning = budgetWarning;
       _activeSearchQuery =
           _keywordCtrl.text.trim().isEmpty ? null : _keywordCtrl.text.trim();
       _queryKey++;
@@ -4344,23 +4689,77 @@ class OfferDetailPage extends StatefulWidget {
   const OfferDetailPage({
     super.key,
     required this.title,
-    required this.location,
-    required this.category,
-    this.subcategory,
-    this.budget,
-    this.description,
-    this.phone,
-    this.imageUrls,
-    required this.annonceurId,
-    required this.offerId,
-  });
-
-  @override
-  State<OfferDetailPage> createState() => _OfferDetailPageState();
-}
-
 class _OfferDetailPageState extends State<OfferDetailPage> {
   bool _isPhoneVisible = false;
+
+  // ✅ Analytics
+  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _logOfferViewed();
+  }
+
+  /// ✅ Enregistre la visite d'une offre en détail
+  Future<void> _logOfferViewed() async {
+    try {
+      await _analytics.logViewItem(
+        itemId: widget.offerId,
+        itemName: widget.title,
+        itemCategory: widget.category,
+        value: (widget.budget is num) ? (widget.budget as num).toDouble() : 0.0,
+        currency: 'EUR',
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logOfferViewed error: $e');
+    }
+  }
+
+  /// ✅ Enregistre les partages
+  Future<void> _logShare(String platform) async {
+    try {
+      await _analytics.logShare(
+        contentType: 'offer',
+        itemId: widget.offerId,
+        method: platform,
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logShare error: $e');
+    }
+  }
+
+  /// ✅ Enregistre l'appel au numéro
+  Future<void> _logPhoneCall() async {
+    try {
+      await _analytics.logEvent(
+        name: 'phone_call_initiated',
+        parameters: {
+          'offer_id': widget.offerId,
+          'offer_title': widget.title,
+          'phone_masked': widget.phone?.substring(0, 2) ?? 'unknown',
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logPhoneCall error: $e');
+    }
+  }
+
+  /// ✅ Enregistre les messages envoyés
+  Future<void> _logMessageSent() async {
+    try {
+      await _analytics.logEvent(
+        name: 'message_initiated',
+        parameters: {
+          'offer_id': widget.offerId,
+          'offer_title': widget.title,
+          'recipient_id': widget.annonceurId,
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logMessageSent error: $e');
+    }
+  }
 
   String _toE164Like(String raw) {
     final trimmed = raw.trim();
@@ -4372,6 +4771,21 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
       return digits.isEmpty ? trimmed : '+$digits';
     }
 
+    final digits = trimmed.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return '';
+
+    // Convention FR: 06XXXXXXXX / 07XXXXXXXX -> +33 6XXXXXXXX / +33 7XXXXXXXX
+    if (digits.length == 10 && digits.startsWith('0')) {
+      return '+33${digits.substring(1)}';
+    }
+    if (digits.length == 9 &&
+        (digits.startsWith('6') || digits.startsWith('7'))) {
+      return '+33$digits';
+    }
+
+    // Fallback: on affiche tel quel (sans espaces)
+    return digits;
+  }
     final digits = trimmed.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return '';
 
@@ -4433,22 +4847,10 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
     final digits = formatted.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return '••••••••••';
 
-    // Masquage simple: conserve l'indicatif si présent, et 2 premiers chiffres du reste.
-    if (formatted.startsWith('+')) {
-      // ex: +33 6 .. => garder "+33 6" si possible
-      final parts =
-          formatted.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-      if (parts.length >= 2) {
-        return '${parts[0]} ${parts[1]} •• •• •• ••';
-      }
-      return '${formatted.substring(0, math.min(6, formatted.length))} •• •• •• ••';
-    }
-
-    final keep = digits.length >= 2 ? digits.substring(0, 2) : digits;
-    return '$keep •• •• •• ••';
-  }
-
   Future<void> _shareOn(BuildContext context, String platform) async {
+    // ✅ Log le partage
+    await _logShare(platform);
+
     final shareText =
         "${widget.title.trim()} – ${widget.location.trim()} | Rejoins Prest'o pour en savoir plus.";
     final shareUrl = Uri.parse('https://prestoo.app/offers');
@@ -4482,8 +4884,11 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
       showSuccessSnackBar(context, "Impossible de lancer le partage.");
     }
   }
-
+    if (uri == null) return;
   Future<void> _callPhone(BuildContext context) async {
+    // ✅ Log l'appel
+    await _logPhoneCall();
+
     if (widget.phone == null || widget.phone!.trim().isEmpty) {
       showSuccessSnackBar(context, "Aucun numéro disponible.");
       return;
@@ -4494,6 +4899,21 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
         Uri(scheme: 'tel', path: dial.isNotEmpty ? dial : widget.phone!.trim());
 
     try {
+      final ok = await canLaunchUrl(uri);
+      if (!context.mounted) return;
+
+      if (ok) {
+        await launchUrl(uri);
+        return;
+      }
+
+      showSuccessSnackBar(
+          context, "Impossible de lancer l’appel sur cet appareil.");
+    } catch (_) {
+      if (!context.mounted) return;
+      showSuccessSnackBar(context, "Une erreur est survenue lors de l’appel.");
+    }
+  }
       final ok = await canLaunchUrl(uri);
       if (!context.mounted) return;
 
@@ -5937,12 +6357,47 @@ class _ConversationPageState extends State<ConversationPage> {
 
   String? _currentUserName;
 
+  // ✅ Analytics
+  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
   @override
   void initState() {
     super.initState();
     _loadConversationMeta();
     _loadCurrentUserName();
     _markAsRead();
+    _logConversationViewed();
+  }
+
+  /// ✅ Enregistre la visite d'une conversation
+  Future<void> _logConversationViewed() async {
+    try {
+      await _analytics.logEvent(
+        name: 'conversation_viewed',
+        parameters: {
+          'conversation_id': widget.conversationId,
+          'offer_title': widget.offerTitle,
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logConversationViewed error: $e');
+    }
+  }
+
+  /// ✅ Enregistre les messages envoyés
+  Future<void> _logMessageSent(String messageText) async {
+    try {
+      await _analytics.logEvent(
+        name: 'message_sent',
+        parameters: {
+          'conversation_id': widget.conversationId,
+          'message_length': messageText.length,
+          'offer_title': widget.offerTitle,
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logMessageSent error: $e');
+    }
   }
 
   Future<void> _loadConversationMeta() async {
@@ -6620,6 +7075,95 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final ScrollController _scrollController = ScrollController();
 
   bool _isUrgent = false;
+
+  // ✅ Analytics
+  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
+  /// ✅ Enregistre la publication d'une offre
+  Future<void> _logOfferPublished({
+    required String offerId,
+    required String title,
+    required String category,
+    required String? budget,
+    required String budgetType,
+  }) async {
+    try {
+      await _analytics.logEcommercePurchase(
+        value: (budget != null && budget.isNotEmpty)
+            ? double.tryParse(budget) ?? 0.0
+            : 0.0,
+        currency: 'EUR',
+        transactionId: offerId,
+        items: [
+          AnalyticsEventItem(
+            itemId: offerId,
+            itemName: title,
+            itemCategory: category,
+          ),
+        ],
+      );
+
+      // ✅ Event personnalisé supplémentaire
+      await _analytics.logEvent(
+        name: 'offer_published',
+        parameters: {
+          'offer_id': offerId,
+          'title': title,
+          'category': category,
+          'budget_type': budgetType,
+          'has_photos': _selectedPhotos.isNotEmpty,
+          'photo_count': _selectedPhotos.length,
+          'is_urgent': _isUrgent,
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logOfferPublished error: $e');
+    }
+  }
+
+  String _slugId(String input) {
+    final s = input
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[àâä]'), 'a')
+        .replaceAll('ç', 'c')
+        .replaceAll(RegExp(r'[éèêë]'), 'e')
+        .replaceAll(RegExp(r'[îï]'), 'i')
+        .replaceAll(RegExp(r'[ôö]'), 'o')
+        .replaceAll(RegExp(r'[ùûü]'), 'u')
+        .replaceAll('œ', 'oe')
+        .replaceAll(RegExp(r"[/\-'’']"), ' ')
+        .replaceAll(RegExp(r'[^a-z0-9 ]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim()
+        .replaceAll(' ', '-');
+    return s;
+  }
+
+  String? _makeCategoryId(String? categoryLabel) {
+    final s = (categoryLabel ?? '').trim();
+    if (s.isEmpty) return null;
+    return _slugId(s);
+  }
+
+  String? _makeCityId({required String cityName, required String postalCode}) {
+    final city = cityName.trim();
+    final cp = postalCode.trim();
+    if (city.isEmpty || cp.length < 3) return null;
+    return '${cp}_${_slugId(city)}';
+  }
+
+  String _buildSearchKey({
+    required String title,
+    required String description,
+    required String category,
+    required String location,
+    required String postalCode,
+  }) {
+    // searchKey stocké déjà normalisé => filtrage client-side plus cheap
+    final raw = '$title $description $category $location $postalCode';
+    return _slugId(raw).replaceAll('-', ' '); // tokens séparés par espaces
+  }
 
   // Champs texte
   final TextEditingController _titleController = TextEditingController();

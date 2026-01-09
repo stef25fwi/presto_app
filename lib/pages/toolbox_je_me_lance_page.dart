@@ -24,6 +24,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:presto_app/services/toolbox_cache_service.dart';
 
+// -----------------------------------------------------------------------------
+// Firestore — Index “structurants” (app d’offres)
+// Objectif: couvrir les cas les plus fréquents sans explosion combinatoire.
+//
+// A) Base (tri date)
+//   - isActive + createdAt(desc)
+//   - status + createdAt(desc)          (si status: published/closed/etc)
+//
+// B) Filtres simples
+//   - city (ou location) + createdAt(desc)
+//   - category + createdAt(desc)
+//   - dept + createdAt(desc)            (si tu filtres par département)
+//   - postalCode + createdAt(desc)      (si tu filtres par CP)
+//
+// C) Filtres combinés (le plus fréquent)
+//   - city/location + category + createdAt(desc)
+//   - dept + category + createdAt(desc)
+//   - dept + city/location + createdAt(desc)
+//   - dept + city/location + category + createdAt(desc)
+//
+// D) Range (budget/price)
+//   ⚠️ where(price >= x) implique souvent orderBy(price) (+ parfois createdAt)
+//   - city/location + price(asc)
+//   - city/location + category + price(asc)
+//
+// Astuce:
+// - Si Firestore renvoie failed-precondition avec un lien d’index,
+//   dans le terminal: "$BROWSER" <url>
+// -----------------------------------------------------------------------------
+
 // Helper unique (partagé par _ToolboxJeMeLancePageState et _ErrorState)
 String? _extractFirstUrl(String text) {
   final match = RegExp(r'https?://\S+').firstMatch(text);
@@ -219,16 +249,21 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         _importDerived(derived);
         _step = step.clamp(1, 3);
 
-        // Répare `updatedAt` si absent/non-Timestamp (évite crashes orderBy futur)
+        // ✅ Répare `updatedAt` si absent/non-Timestamp (évite crashes orderBy futur)
         final updatedAt = map['updatedAt'];
         if (updatedAt == null || updatedAt is! Timestamp) {
+          final uid = user.uid;
+          final pid = _parcoursId!;
           unawaited(
             _db
                 .collection('users')
-                .doc(user.uid)
+                .doc(uid)
                 .collection('parcours')
-                .doc(_parcoursId)
-                .update({'updatedAt': FieldValue.serverTimestamp()}),
+                .doc(pid)
+                .set(
+              {'updatedAt': FieldValue.serverTimestamp()},
+              SetOptions(merge: true),
+            ),
           );
         }
       }
@@ -1197,17 +1232,17 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     if (code == 'failed-precondition') {
       if (url != null) {
         debugPrint('[Firestore] Index requis: $url');
-        debugPrint('Commande: \$BROWSER "$url"');
+        debugPrint('Commande: "\$BROWSER" $url'); // ✅ "$BROWSER" <url>
       }
       return [
         "Erreur Firestore (index requis).",
         "",
         "Pour corriger tout de suite :",
-        if (url != null) "1) Clique « Copier lien d’index »",
-        if (url != null) '2) Terminal: \$BROWSER "$url"',
+        if (url != null) "1) Clique « Copier lien d'index »",
+        if (url != null) '2) Terminal: "\$BROWSER" $url', // ✅ "$BROWSER" <url>
         "3) Firebase Console → Indexes → Create index",
         "4) Attends Building → Enabled",
-        "5) Relance l’app",
+        "5) Relance l'app",
         if (url != null) "",
         if (url != null) "Lien index: $url",
         "",
@@ -1223,24 +1258,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     }
     return "Erreur Firebase: $code${msg.isEmpty ? '' : '\n\n$msg'}";
   }
-
-  // -----------------------------------------------------------------------------
-// INDEX Firestore — "Consulter les offres" (ConsultOffersPage / _buildOffersQuery)
-// Collection: offers
-// where possibles (égalité uniquement ici) :
-//   - category == ...
-//   - dept == ...        (via région => dept.first OU via dept sélectionné)
-//   - location == ...
-//   - postalCode == ...
-//   - subcategory == ...
-// orderBy : createdAt desc (toujours)
-// => Toute combinaison (subset) de ces where + orderBy(createdAt desc) peut exiger
-//    un index composite.
-// Astuce pratique : quand l’erreur "failed-precondition" apparaît, copier l’URL
-// puis exécuter: "$BROWSER" "<url>"
-// -----------------------------------------------------------------------------
-
-// ...existing code...
 }
 
 class _ErrorState extends StatelessWidget {
@@ -1717,70 +1734,6 @@ class _CostRow extends StatelessWidget {
           Expanded(child: Text(label)),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)), // Plus épais
         ],
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  final String message;
-  final Future<void> Function() onRetry;
-  const _ErrorState({required this.message, required this.onRetry});
-
-  Future<void> _copy(BuildContext context) async {
-    await Clipboard.setData(ClipboardData(text: message));
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Détails copiés dans le presse-papiers")),
-    );
-  }
-
-  Future<void> _copyIndexLink(BuildContext context) async {
-    final url = _extractFirstUrl(message);
-    if (url == null) return;
-    await Clipboard.setData(ClipboardData(text: url));
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Lien d’index copié")),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final indexUrl = _extractFirstUrl(message);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 44),
-            const SizedBox(height: 10),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              alignment: WrapAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: () => onRetry(),
-                  child: const Text("Réessayer"),
-                ),
-                OutlinedButton(
-                  onPressed: () => _copy(context),
-                  child: const Text("Copier détails"),
-                ),
-                if (indexUrl != null)
-                  OutlinedButton(
-                    onPressed: () => _copyIndexLink(context),
-                    child: const Text("Copier lien d’index"),
-                  ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
