@@ -807,12 +807,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'ownerId': user.uid,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-        'status': 'active',
+        'status': 'pending_moderation',
+        // ✅ Modération
+        'moderation': {
+          'status': 'PENDING',
+          'checkedAt': FieldValue.serverTimestamp(),
+          'provider': 'system',
+        },
+        'visibility': {
+          'isPublic': false,
+          'publishedAt': null,
+        },
       });
 
       if (!mounted) return;
 
-      showSuccessSnackBar(context, "Offre publiée avec succès ✅");
+      showSuccessSnackBar(context, "Offre en attente de validation ⏳");
 
       Navigator.pop(context);
     } catch (e) {

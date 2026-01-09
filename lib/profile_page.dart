@@ -9,6 +9,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'utils/friendly_snackbar.dart';
 import 'constants.dart';
 import 'widgets/phone_input_field.dart';
+import 'widgets/user_moderation_status.dart';
 import 'pages/legal_info_page.dart';
 
 enum AuthMode { login, signup }
@@ -1332,6 +1333,11 @@ class _AccountPageState extends State<AccountPage> {
             ],
           ),
         ),
+
+        const SizedBox(height: 12),
+
+        // ✅ Widget Avertissements de modération
+        UserModerationStatus(userId: user.uid),
 
         const SizedBox(height: 12),
 

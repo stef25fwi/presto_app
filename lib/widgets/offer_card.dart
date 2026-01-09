@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'moderation_badge.dart';
 
 enum OfferMenuAction { edit, delete }
 
@@ -107,6 +108,15 @@ class OfferCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
+                  // ✅ Badge de modération
+                  if (data['status'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: ModerationBadge(
+                        status: data['status'] ?? 'approved',
+                        userMessage: data['moderation']?['userMessage'],
+                      ),
+                    ),
                   const SizedBox(height: 4),
                   Text(
                     subtitleLine,

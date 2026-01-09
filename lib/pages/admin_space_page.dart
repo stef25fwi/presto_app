@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../utils/friendly_snackbar.dart';
 import '../pages/admin/streaming_monitoring_page.dart';
+import '../pages/admin/moderation_page.dart';
 
 import '../constants.dart';
 
@@ -425,33 +426,52 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     badge: null,
                     iconColor: prestoBlue,
                   ),
-                  const _KpiTile(
+                  _KpiTile(
                     icon: Icons.campaign_rounded,
                     title: 'Offres',
-                    subtitle: '—',
+                    subtitle: 'Annonces publiées',
                     badge: null,
                     iconColor: prestoOrange,
+                    onTap: () {
+                      // Navigate to offers list
+                      // TODO: Implement offers management page
+                    },
                   ),
-                  const _KpiTile(
+                  _KpiTile(
                     icon: Icons.chat_bubble_rounded,
                     title: 'Messages',
-                    subtitle: '—',
+                    subtitle: 'Conversations',
                     badge: null,
                     iconColor: prestoBlue,
+                    onTap: () {
+                      // Navigate to messages
+                      // TODO: Implement messages management page
+                    },
                   ),
-                  const _KpiTile(
+                  _KpiTile(
                     icon: Icons.verified_user_rounded,
                     title: 'Modération',
-                    subtitle: '—',
+                    subtitle: 'Validation annonces',
                     badge: null,
                     iconColor: prestoBlue,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const ModerationPage(),
+                        ),
+                      );
+                    },
                   ),
-                  const _KpiTile(
+                  _KpiTile(
                     icon: Icons.workspace_premium_rounded,
                     title: 'Premium',
-                    subtitle: '—',
+                    subtitle: 'Gestion plans',
                     badge: null,
                     iconColor: prestoOrange,
+                    onTap: () {
+                      // Navigate to premium management
+                      // TODO: Implement premium management page
+                    },
                   ),
                   _KpiTile(
                     icon: Icons.tune_rounded,

@@ -1,6 +1,5 @@
 {
   "indexes": [
-    // A) Base (tri date)
     {
       "collectionGroup": "offers",
       "queryScope": "COLLECTION",
@@ -17,8 +16,6 @@
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
-
-    // B) Filtres simples
     {
       "collectionGroup": "offers",
       "queryScope": "COLLECTION",
@@ -59,8 +56,6 @@
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
-
-    // C) Filtres combinés (les plus fréquents)
     {
       "collectionGroup": "offers",
       "queryScope": "COLLECTION",
@@ -98,11 +93,6 @@
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     }
-
-    // D) Range (budget/price): à ajouter uniquement si vous faites where(price>=) + orderBy(price)
-    // ex:
-    // { location ASC, price ASC }
-    // { location ASC, category ASC, price ASC }
   ],
   "fieldOverrides": []
 }

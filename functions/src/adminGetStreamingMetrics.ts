@@ -31,9 +31,8 @@ interface StreamingMetrics {
   }>;
 }
 
-export const adminGetStreamingMetrics = functions
-  .region('europe-west1')
-  .https.onCall(async (data, context) => {
+export const adminGetStreamingMetrics = functions.https.onCall(
+  async (data: any, context: any) => {
     // Verify user is admin
     if (!context.auth) {
       throw new functions.https.HttpsError(
