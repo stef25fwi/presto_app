@@ -84,7 +84,6 @@ class MicroIaStreamClient {
 
   Future<void> sendStop() async {
     _socket.add(jsonEncode({'event': 'stop'}));
-    await _socket.flush();
   }
 
   Future<void> close() async {

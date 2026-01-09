@@ -2,6 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../utils/friendly_snackbar.dart';
+import '../pages/admin/streaming_monitoring_page.dart';
 
 import '../constants.dart';
 
@@ -462,6 +463,20 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (_) => const MicroIaTranscriptionPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _KpiTile(
+                    icon: Icons.speed_rounded,
+                    title: 'Streaming',
+                    subtitle: 'WebSocket monitoring',
+                    badge: null,
+                    iconColor: prestoOrange,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const StreamingMonitoringPage(),
                         ),
                       );
                     },
