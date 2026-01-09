@@ -1,14 +1,11 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as nodemailer from 'nodemailer';
+import { defineString } from 'firebase-functions/params';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER || '',
-    pass: process.env.GMAIL_PASSWORD || '',
-  },
-});
+// Define params for Gmail configuration
+const gmailUser = defineString('GMAIL_USER');
+const gmailPassword = defineString('GMAIL_PASSWORD');
 
 /**
  * Sends moderation warning email when an offer is rejected
@@ -44,9 +41,22 @@ export const sendModerationWarningEmail = functions
           return;
         }
 
+        // Get Gmail credentials from params
+        const user = await gmailUser.value();
+        const pass = await gmailPassword.value();
+
+        // Create transporter with current params
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: user,
+            pass: pass,
+          },
+        });
+
         // Send email
         await transporter.sendMail({
-          from: process.env.GMAIL_USER || '',
+          from: user,
           to: userEmail,
           subject: `[iliprestō] Annonce non conforme - ${title}`,
           html: `

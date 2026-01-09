@@ -36,25 +36,41 @@ Dans Firebase Console:
 
 ### 2.2 Configurer les variables d'environnement
 
-**Option A: Ligne de commande**
+⚠️ **Note:** Firebase a migré vers un nouveau système de paramètres. Voir [MODERATION_PARAMS_CONFIG.md](MODERATION_PARAMS_CONFIG.md) pour les détails.
+
+**Option A: Utiliser le script automatique (Recommandé)**
 ```bash
-cd /workspaces/presto_app
+cd /workspaces/presto_app/functions
 
-# Récupérer le compte Gmail à utiliser
-# Doit avoir 2FA activé pour créer App Password
+# 1. Créer .env.local avec vos credentials Gmail
+cat > .env.local << EOF
+GMAIL_USER=your-email@gmail.com
+GMAIL_PASSWORD=your-16-character-app-password
+EOF
 
-firebase functions:config:set \
-  gmail.user="your-email@gmail.com" \
-  gmail.password="your-16-char-app-password"
-
-# Vérifier la configuration
-firebase functions:config:get
+# 2. Exécuter le script de configuration
+chmod +x ../configure_params.sh
+../configure_params.sh
 ```
 
-**Option B: Firebase Console**
-1. Aller à Functions → Configuration
-2. Ajouter les variables dans l'onglet "Configuration"
-3. GMAIL_USER et GMAIL_PASSWORD
+**Option B: Configuration manuelle**
+```bash
+cd /workspaces/presto_app/functions
+
+firebase deploy \
+  --only functions:sendModerationWarningEmail,createModerationMessage,logModerationStats \
+  --set-env GMAIL_USER="your-email@gmail.com" \
+  --set-env GMAIL_PASSWORD="your-16-character-app-password"
+```
+
+**Option C: Firebase Console**
+1. Aller à Firebase Console → Cloud Functions
+2. Cliquer sur une fonction
+3. Aller à "Configuration" (Runtime settings)
+4. Ajouter les variables d'environnement:
+   - GMAIL_USER
+   - GMAIL_PASSWORD
+5. Redéployer via CLI: `firebase deploy --only functions`
 
 ### 2.3 Créer le compte de modération
 
