@@ -1200,12 +1200,14 @@ class _HomePageState extends State<HomePage>
       if (!mounted) return;
 
       try {
-        final isKeyboardVisible = View.of(context).viewInsets.bottom > 0;
+        final viewInsets = View.of(context).viewInsets.bottom;
+        // Seuil de 10px pour éviter les faux positifs
+        final isKeyboardVisible = viewInsets > 10;
 
         // Détecter les changements de visibilité du clavier
         if (_wasKeyboardVisible != isKeyboardVisible) {
           // Le clavier vient de se fermer : restaurer la bottomBar
-          if (!isKeyboardVisible) {
+          if (_wasKeyboardVisible && !isKeyboardVisible) {
             setState(() {
               _showBottomBar = true;
             });
@@ -1693,7 +1695,8 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     final viewInsetsBottom = MediaQuery.of(context).viewInsets.bottom;
-    final bool isKeyboardVisible = viewInsetsBottom > 0;
+    // Seuil de 10px pour éviter les faux positifs (résidus de padding)
+    final bool isKeyboardVisible = viewInsetsBottom > 10;
     // N'applique le padding clavier que s'il est réellement visible pour éviter que la bottom bar reste à mi-écran
     final double effectiveBottomInset =
         isKeyboardVisible ? viewInsetsBottom : 0;
