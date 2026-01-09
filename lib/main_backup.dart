@@ -2396,7 +2396,7 @@ class _EmptyOffers extends StatelessWidget {
 
 /// PAGE DÉTAIL OFFRE /////////////////////////////////////////////////
 
-class OfferDetailPage extends StatelessWidget {
+class OfferDetailPage extends StatefulWidget {
   final String title;
   final String location;
   final String category;
@@ -2416,8 +2416,15 @@ class OfferDetailPage extends StatelessWidget {
     this.imageUrls,
   });
 
+  @override
+  State<OfferDetailPage> createState() => _OfferDetailPageState();
+}
+
+class _OfferDetailPageState extends State<OfferDetailPage> {
+  bool _showPhone = false;
+
   Future<void> _callPhone(BuildContext context) async {
-    if (phone == null || phone!.trim().isEmpty) {
+    if (widget.phone == null || widget.phone!.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Aucun numéro disponible.")),
       );
@@ -2426,7 +2433,7 @@ class OfferDetailPage extends StatelessWidget {
 
     final uri = Uri(
       scheme: 'tel',
-      path: phone!.trim(),
+      path: widget.phone!.trim(),
     );
 
     try {
@@ -2557,9 +2564,9 @@ class OfferDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final budgetText =
-        budget == null ? "À définir" : "${budget!.toStringAsFixed(2)} €";
-    final bool hasPhone = phone != null && phone!.trim().isNotEmpty;
-    final List<String> photos = imageUrls ?? const [];
+        widget.budget == null ? "À définir" : "${widget.budget!.toStringAsFixed(2)} €";
+    final bool hasPhone = widget.phone != null && widget.phone!.trim().isNotEmpty;
+    final List<String> photos = widget.imageUrls ?? const [];
 
     return Scaffold(
       appBar: AppBar(
@@ -2593,7 +2600,7 @@ class OfferDetailPage extends StatelessWidget {
             const SizedBox(height: 8),
             _OfferMetaRow(
               icon: Icons.category_outlined,
-              text: category,
+              text: widget.category,
             ),
             const SizedBox(height: 8),
             _OfferMetaRow(
@@ -2601,9 +2608,35 @@ class OfferDetailPage extends StatelessWidget {
               text: budgetText,
             ),
             const SizedBox(height: 8),
-            _OfferMetaRow(
-              icon: Icons.phone_android_outlined,
-              text: hasPhone ? "Numéro disponible" : "Numéro non renseigné",
+            Row(
+              children: [
+                const Icon(Icons.phone_android_outlined, size: 20, color: Colors.black54),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _showPhone && hasPhone
+                        ? widget.phone!
+                        : (hasPhone ? "Numéro disponible" : "Numéro non renseigné"),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                if (hasPhone)
+                  IconButton(
+                    icon: Icon(
+                      _showPhone ? Icons.visibility : Icons.visibility_off,
+                      color: kPrestoOrange,
+                    ),
+                    tooltip: _showPhone ? "Masquer le numéro" : "Afficher le numéro",
+                    onPressed: () {
+                      setState(() {
+                        _showPhone = !_showPhone;
+                      });
+                    },
+                  ),
+              ],
             ),
 
             const SizedBox(height: 22),
@@ -2629,9 +2662,9 @@ class OfferDetailPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            (description == null || description!.trim().isEmpty)
+                            (widget.description == null || widget.description!.trim().isEmpty)
                                 ? "Aucune description détaillée fournie."
-                                : description!,
+                                : widget.description!,
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,

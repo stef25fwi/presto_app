@@ -806,7 +806,7 @@ class _AccountPageState extends State<AccountPage> {
             ),
           ),
           body: Container(
-            color: colorScheme.surface,
+            color: Colors.white,
             child: SafeArea(
               child: Scrollbar(
                 controller: _scrollController,
@@ -1442,11 +1442,56 @@ class _AccountPageState extends State<AccountPage> {
 
         const SizedBox(height: 12),
 
-        // Section Mes Annonces (reste séparée)
-        _buildMainSectionCard(
-          title: '📢 Mes annonces publiées',
-          colorScheme: colorScheme,
-          child: StreamBuilder<QuerySnapshot>(
+        // Section Mes Annonces publiées (style entreprise)
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color(0xFFFF6600).withValues(alpha: 0.2),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF6600).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.article_outlined,
+                      color: Color(0xFFFF6600),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Mes annonces publiées',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('offers')
                 .where('userId', isEqualTo: user.uid)
@@ -1626,6 +1671,8 @@ class _AccountPageState extends State<AccountPage> {
                 ],
               );
             },
+          ),
+            ],
           ),
         ),
 
@@ -1829,15 +1876,21 @@ class _AccountPageState extends State<AccountPage> {
     required ColorScheme colorScheme,
     required Widget child,
   }) {
-    return Card(
-      elevation: 3,
-      shadowColor: colorScheme.primary.withValues(alpha: 0.3),
-      shape: RoundedRectangleBorder(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: colorScheme.primary.withValues(alpha: 0.2),
+        border: Border.all(
+          color: const Color(0xFFFF6600).withValues(alpha: 0.2),
           width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1846,7 +1899,7 @@ class _AccountPageState extends State<AccountPage> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+              color: const Color(0xFFFF6600).withValues(alpha: 0.08),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
@@ -1854,10 +1907,10 @@ class _AccountPageState extends State<AccountPage> {
             ),
             child: Text(
               title,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: colorScheme.onPrimaryContainer,
+                color: Colors.black87,
               ),
             ),
           ),
