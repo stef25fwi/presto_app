@@ -2919,6 +2919,28 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   String? _selectedRegionCode;
   String? _selectedSubCategory;
 
+  String? _lastOffersQuerySignature;
+
+  String _buildOffersQuerySignature({
+    required bool hasCategory,
+    required bool hasDept,
+    required bool hasLocation,
+    required bool hasPostalCode,
+    required bool hasSubcategory,
+  }) {
+    final parts = <String>[
+      'offers',
+      if (hasCategory) 'where(category==)',
+      if (hasDept) 'where(dept==)',
+      if (hasLocation) 'where(location==)',
+      if (hasPostalCode) 'where(postalCode==)',
+      if (hasSubcategory) 'where(subcategory==)',
+      'orderBy(createdAt desc)',
+      'limit($_pageLimit)',
+    ];
+    return parts.join(' + ');
+  }
+
   final _Debouncer _filterDebounce =
       _Debouncer(delay: const Duration(milliseconds: 300));
 
@@ -3146,56 +3168,70 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     final filterCity = _filterCityName?.trim();
 
     // Filtre catégorie (panneau de filtres prioritaire)
+    final bool hasCategory = ((filterCat != null && filterCat.isNotEmpty) ||
+        (cat != null && cat.isNotEmpty && cat != 'Toutes catégories'));
     if (filterCat != null && filterCat.isNotEmpty) {
       query = query.where('category', isEqualTo: filterCat);
     } else if (cat != null && cat.isNotEmpty && cat != 'Toutes catégories') {
       query = query.where('category', isEqualTo: cat);
     }
 
-    // Filtre région (par code région) - utilise dept au lieu de region
+    // Filtre région/département => dept==
+    bool hasDept = false;
     if (filterRegCode != null && filterRegCode.isNotEmpty) {
-      // Les offres n'ont pas de champ 'region', on doit filtrer par dept
       final depts = kRegionDepartments[filterRegCode] ?? [];
       if (depts.isNotEmpty) {
-        // Pour Firestore, on ne peut pas faire un IN avec d'autres where
-        // On va juste prendre le premier dept pour l'instant (limitation)
+        hasDept = true;
         query = query.where('dept', isEqualTo: depts.first);
       }
     } else if (regionCode != null && regionCode.isNotEmpty) {
       final depts = kRegionDepartments[regionCode] ?? [];
       if (depts.isNotEmpty) {
+        hasDept = true;
         query = query.where('dept', isEqualTo: depts.first);
       }
     }
-
-    // Filtre département (utilise dept au lieu de departmentCode)
     if (filterDeptCode != null && filterDeptCode.isNotEmpty) {
+      hasDept = true;
       query = query.where('dept', isEqualTo: filterDeptCode);
     }
 
-    // Filtre ville (panneau de filtres prioritaire)
+    // Ville => location==
+    final bool hasLocation = ((filterCity != null && filterCity.isNotEmpty) ||
+        loc.isNotEmpty);
     if (filterCity != null && filterCity.isNotEmpty) {
       query = query.where('location', isEqualTo: filterCity);
     } else if (loc.isNotEmpty) {
       query = query.where('location', isEqualTo: loc);
     }
 
-    // Code postal
+    // Code postal => postalCode==
+    final bool hasPostalCode = cp.isNotEmpty;
     if (cp.isNotEmpty) {
       query = query.where('postalCode', isEqualTo: cp);
     }
 
-    // Sous-catégorie
+    // Sous-catégorie => subcategory==
+    final bool hasSubcategory = (subcat != null && subcat.isNotEmpty);
     if (subcat != null && subcat.isNotEmpty) {
       query = query.where('subcategory', isEqualTo: subcat);
     }
 
-    // ✅ Tri par date (avec index composites déployés)
-    // ✅ Maintenant possible même avec filtres grâce aux index dans firestore.indexes.json
+    // Tri
     query = query.orderBy('createdAt', descending: true);
 
-    // ✅ Limiter le nombre de résultats pour éviter les requêtes trop lourdes
+    // Limit
     query = query.limit(_pageLimit);
+
+    // Signature (audit index)
+    _lastOffersQuerySignature = _buildOffersQuerySignature(
+      hasCategory: hasCategory,
+      hasDept: hasDept,
+      hasLocation: hasLocation,
+      hasPostalCode: hasPostalCode,
+      hasSubcategory: hasSubcategory,
+    );
+    debugPrint('[OFFERS][QUERY] $_lastOffersQuerySignature');
 
     return query;
   }

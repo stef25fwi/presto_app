@@ -21,7 +21,15 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:presto_app/services/toolbox_cache_service.dart';
+
+// Helper unique (partagé par _ToolboxJeMeLancePageState et _ErrorState)
+String? _extractFirstUrl(String text) {
+  final match = RegExp(r'https?://\S+').firstMatch(text);
+  if (match == null) return null;
+  return match.group(0)?.replaceAll(RegExp(r'[)\],.]+$'), '');
+}
 
 class ToolboxJeMeLancePage extends StatefulWidget {
   const ToolboxJeMeLancePage({super.key});
@@ -245,7 +253,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
       setState(() {
         _loading = false;
-        _error = "Erreur de chargement : ${e.message ?? e.code}";
+        _error = _friendlyFirebaseError(e);
       });
     } catch (e) {
       setState(() {
@@ -295,12 +303,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
       if (mounted) setState(() => _saving = false);
     } on FirebaseException catch (e) {
-      // Ne bloque pas l'écran si Firestore est interdit; on continue en mode non persistant.
       if (mounted) {
         setState(() {
           _saving = false;
           if (e.code.toLowerCase() != 'permission-denied') {
-            _error = "Erreur de sauvegarde : ${e.message ?? e.code}";
+            _error = _friendlyFirebaseError(e);
           }
         });
       }
@@ -1181,6 +1188,123 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     });
     await _bootstrap(); // _bootstrap remettra _loading=false en fin de traitement
   }
+
+  String _friendlyFirebaseError(FirebaseException e) {
+    final code = e.code.toLowerCase();
+    final msg = (e.message ?? '').trim();
+    final url = msg.isEmpty ? null : _extractFirstUrl(msg);
+
+    if (code == 'failed-precondition') {
+      if (url != null) {
+        debugPrint('[Firestore] Index requis: $url');
+        debugPrint('Commande: \$BROWSER "$url"');
+      }
+      return [
+        "Erreur Firestore (index requis).",
+        "",
+        "Pour corriger tout de suite :",
+        if (url != null) "1) Clique « Copier lien d’index »",
+        if (url != null) '2) Terminal: \$BROWSER "$url"',
+        "3) Firebase Console → Indexes → Create index",
+        "4) Attends Building → Enabled",
+        "5) Relance l’app",
+        if (url != null) "",
+        if (url != null) "Lien index: $url",
+        "",
+        "Détails: $code${msg.isEmpty ? '' : ' — $msg'}",
+      ].join('\n');
+    }
+
+    if (code == 'permission-denied') {
+      return "Accès refusé (règles Firestore / App Check / auth). L’app peut continuer en mode local.\n\nDétails: $code${msg.isEmpty ? '' : ' — $msg'}";
+    }
+    if (code == 'unavailable' || code == 'deadline-exceeded') {
+      return "Réseau indisponible / délai dépassé. Réessaie.\n\nDétails: $code${msg.isEmpty ? '' : ' — $msg'}";
+    }
+    return "Erreur Firebase: $code${msg.isEmpty ? '' : '\n\n$msg'}";
+  }
+
+  // -----------------------------------------------------------------------------
+// INDEX Firestore — "Consulter les offres" (ConsultOffersPage / _buildOffersQuery)
+// Collection: offers
+// where possibles (égalité uniquement ici) :
+//   - category == ...
+//   - dept == ...        (via région => dept.first OU via dept sélectionné)
+//   - location == ...
+//   - postalCode == ...
+//   - subcategory == ...
+// orderBy : createdAt desc (toujours)
+// => Toute combinaison (subset) de ces where + orderBy(createdAt desc) peut exiger
+//    un index composite.
+// Astuce pratique : quand l’erreur "failed-precondition" apparaît, copier l’URL
+// puis exécuter: "$BROWSER" "<url>"
+// -----------------------------------------------------------------------------
+
+// ...existing code...
+}
+
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final Future<void> Function() onRetry;
+  const _ErrorState({required this.message, required this.onRetry});
+
+  Future<void> _copy(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: message));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Détails copiés dans le presse-papiers")),
+    );
+  }
+
+  Future<void> _copyIndexLink(BuildContext context) async {
+    final url = _extractFirstUrl(message);
+    if (url == null) return;
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Lien d’index copié")),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final indexUrl = _extractFirstUrl(message);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 44),
+            const SizedBox(height: 10),
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () => onRetry(),
+                  child: const Text("Réessayer"),
+                ),
+                OutlinedButton(
+                  onPressed: () => _copy(context),
+                  child: const Text("Copier détails"),
+                ),
+                if (indexUrl != null)
+                  OutlinedButton(
+                    onPressed: () => _copyIndexLink(context),
+                    child: const Text("Copier lien d’index"),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // -------------------------------------
@@ -1603,8 +1727,28 @@ class _ErrorState extends StatelessWidget {
   final Future<void> Function() onRetry;
   const _ErrorState({required this.message, required this.onRetry});
 
+  Future<void> _copy(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: message));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Détails copiés dans le presse-papiers")),
+    );
+  }
+
+  Future<void> _copyIndexLink(BuildContext context) async {
+    final url = _extractFirstUrl(message);
+    if (url == null) return;
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Lien d’index copié")),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final indexUrl = _extractFirstUrl(message);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -1615,9 +1759,25 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: 10),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () => onRetry(),
-              child: const Text("Réessayer"),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: () => onRetry(),
+                  child: const Text("Réessayer"),
+                ),
+                OutlinedButton(
+                  onPressed: () => _copy(context),
+                  child: const Text("Copier détails"),
+                ),
+                if (indexUrl != null)
+                  OutlinedButton(
+                    onPressed: () => _copyIndexLink(context),
+                    child: const Text("Copier lien d’index"),
+                  ),
+              ],
             ),
           ],
         ),
