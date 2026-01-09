@@ -3090,9 +3090,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   Future<void> _logOfferClicked(String offerId, String title) async {
     try {
       await _analytics.logSelectItem(
-        itemId: offerId,
-        itemName: title,
-        itemCategory: _filterCategory ?? 'unknown',
+        itemListId: 'offers_list',
+        itemListName: 'Offers List',
+        items: [
+          AnalyticsEventItem(
+            itemId: offerId,
+            itemName: title,
+            itemCategory: _filterCategory ?? 'unknown',
+          ),
+        ],
       );
     } catch (e) {
       debugPrint('[Analytics] logOfferClicked error: $e');
@@ -4720,11 +4726,15 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   Future<void> _logOfferViewed() async {
     try {
       await _analytics.logViewItem(
-        itemId: widget.offerId,
-        itemName: widget.title,
-        itemCategory: widget.category,
-        value: (widget.budget is num) ? (widget.budget as num).toDouble() : 0.0,
         currency: 'EUR',
+        value: (widget.budget is num) ? (widget.budget as num).toDouble() : 0.0,
+        items: [
+          AnalyticsEventItem(
+            itemId: widget.offerId,
+            itemName: widget.title,
+            itemCategory: widget.category,
+          ),
+        ],
       );
     } catch (e) {
       debugPrint('[Analytics] logOfferViewed error: $e');
@@ -4861,6 +4871,11 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
     final formatted = _formatPhoneWithIndicatif(raw);
     final digits = formatted.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return '••••••••••';
+    
+    // Masquer tous sauf les 2 derniers chiffres
+    if (digits.length <= 2) return digits;
+    return '••••••' + digits.substring(digits.length - 2);
+  }
 
   Future<void> _shareOn(BuildContext context, String platform) async {
     // ✅ Log le partage
@@ -4899,7 +4914,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
       showSuccessSnackBar(context, "Impossible de lancer le partage.");
     }
   }
-    if (uri == null) return;
+
   Future<void> _callPhone(BuildContext context) async {
     // ✅ Log l'appel
     await _logPhoneCall();
@@ -4914,21 +4929,6 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
         Uri(scheme: 'tel', path: dial.isNotEmpty ? dial : widget.phone!.trim());
 
     try {
-      final ok = await canLaunchUrl(uri);
-      if (!context.mounted) return;
-
-      if (ok) {
-        await launchUrl(uri);
-        return;
-      }
-
-      showSuccessSnackBar(
-          context, "Impossible de lancer l’appel sur cet appareil.");
-    } catch (_) {
-      if (!context.mounted) return;
-      showSuccessSnackBar(context, "Une erreur est survenue lors de l’appel.");
-    }
-  }
       final ok = await canLaunchUrl(uri);
       if (!context.mounted) return;
 
@@ -7103,7 +7103,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     required String budgetType,
   }) async {
     try {
-      await _analytics.logEcommercePurchase(
+      await _analytics.logPurchase(
         value: (budget != null && budget.isNotEmpty)
             ? double.tryParse(budget) ?? 0.0
             : 0.0,
