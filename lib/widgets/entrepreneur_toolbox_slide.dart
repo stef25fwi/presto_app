@@ -19,7 +19,7 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide> {
 
   @override
   Widget build(BuildContext context) {
-    final border = BorderRadius.circular(26);
+    final border = BorderRadius.zero;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
