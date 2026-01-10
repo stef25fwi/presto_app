@@ -657,13 +657,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   /// Streaming WebSocket: enregistrement + transcription + draft en temps réel
-  /// TEMPORAIRE: Désactivé - package record v6.1.2 ne supporte pas startStream()
-  /// TODO: Implémenter avec approche par chunks après déploiement backend
+  /// ✅ Streaming activé - WebSocket temps réel vers Micro IA
   Future<bool> _toggleStreamingRecording() async {
-    // Code temporairement désactivé jusqu'à migration vers package supportant streaming
-    return false; // Fallback vers legacy
-    
-    /* CODE ORIGINAL - À RÉACTIVER APRÈS MIGRATION PACKAGE
     if (_aiLoading) return true;
     if (_streamingActive) {
       await _stopStreamingRecording();
@@ -746,7 +741,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _endStreamingError(e);
       return false;
     }
-    */
   }
 
   Future<void> _stopStreamingRecording() async {
