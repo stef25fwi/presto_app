@@ -718,13 +718,30 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         categoryHint: (_category ?? '').trim(),
       );
 
-      // Démarrer enregistrement avec record package v6.1.2
-      await _audioRecorder.start(
+      // ✅ Streaming temps réel activé
+      final audioStream = await _audioRecorder.startStream(
         const RecordConfig(
-          encoder: AudioEncoder.wav,
+          encoder: AudioEncoder.pcm16bits,
           sampleRate: 16000,
           numChannels: 1,
         ),
+      );
+
+      // Écouter le stream et envoyer les chunks au WebSocket
+      _streamMicSub = audioStream.listen(
+        (chunk) {
+          if (_streamingActive && _streamClient != null) {
+            _streamClient!.sendAudioChunk(chunk);
+          }
+        },
+        onError: (err) {
+          debugPrint('[STREAMING] Audio stream error: $err');
+          _endStreamingError(err);
+        },
+        onDone: () {
+          debugPrint('[STREAMING] Audio stream done');
+        },
+        cancelOnError: true,
       );
 
       _streamingActive = true;
@@ -746,10 +763,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _stopStreamingRecording() async {
     _streamTimeout?.cancel();
     await _streamMicSub?.cancel();
+    _streamMicSub = null;
     await _audioRecorder.stop();
     await _streamClient?.sendStop();
     _streamingActive = false;
-    setState(() => _recording = false);
+    if (mounted) {
+      setState(() => _recording = false);
+    }
   }
 
   void _endStreamingSuccess(String? modeUsed, Map<String, dynamic>? quality) {
