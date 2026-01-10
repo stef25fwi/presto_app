@@ -4853,6 +4853,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
       return;
     }
 
+<<<<<<< HEAD
     final dial = _toE164Like(widget.phone!.trim());
     final uri =
         Uri(scheme: 'tel', path: dial.isNotEmpty ? dial : widget.phone!.trim());
@@ -5059,6 +5060,61 @@ Motif du signalement :
       if (!context.mounted) return;
       showSuccessSnackBar(context, "Une erreur est survenue.");
     }
+  }
+
+  void _showActionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: false,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: Colors.black26,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            const Text(
+              "Choisir une action",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrestoOrange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _callPhone(context);
+                },
+                icon: const Icon(Icons.call),
+                label: const Text(
+                  "Appeler",
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
