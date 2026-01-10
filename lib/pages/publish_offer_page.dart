@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -86,8 +87,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Timer? _streamTimeout;
   bool _streamingActive = false;
 
-  // ✅ Streaming activé pour micro IA
-  bool get _streamingEnabled => true;
+  // ✅ Streaming activé pour micro IA (désactivé sur Web)
+  bool get _streamingEnabled => !kIsWeb;
 
   final List<String> _categories = const [
     'Jardinage',
@@ -718,6 +719,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         categoryHint: (_category ?? '').trim(),
       );
 
+      // Créer un fichier temporaire pour l'enregistrement
+      final filePath = await createTempAudioPath(prefix: 'presto_stream', extension: 'wav');
+      
       // Démarrer enregistrement avec record package v6.1.2
       await _audioRecorder.start(
         const RecordConfig(
@@ -725,15 +729,50 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           sampleRate: 16000,
           numChannels: 1,
         ),
+        path: filePath,
       );
 
       _streamingActive = true;
+      
+      debugPrint('[STREAMING] Recording started to: $filePath');
 
-      // Limite la durée du streaming à 12s
-      _streamTimeout = Timer(const Duration(seconds: 12), () {
-        if (_aiLoading && _streamingActive) {
-          _stopStreamingRecording();
+      // Polling timer pour lire et envoyer les chunks
+      int lastPosition = 0;
+      int tickCount = 0;
+      _streamTimeout = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+        tickCount++;
+        
+        if (!_streamingActive) {
+          timer.cancel();
+          return;
         }
+        
+        // Limiter à 12 secondes
+        if (tickCount * 500 >= 12000) {
+          debugPrint('[STREAMING] 12-second timeout reached');
+          timer.cancel();
+          _stopStreamingRecording();
+          return;
+        }
+        
+        // Lecture asynchrone dans un microtask
+        Future(() async {
+          try {
+            final file = File(filePath);
+            if (await file.exists()) {
+              final bytes = await file.readAsBytes();
+              if (bytes.length > lastPosition) {
+                // Envoyer seulement les nouveaux bytes
+                final chunk = bytes.sublist(lastPosition);
+                _streamClient?.sendAudioChunk(chunk);
+                debugPrint('[STREAMING] Sent chunk: ${chunk.length} bytes (total: ${bytes.length})');
+                lastPosition = bytes.length;
+              }
+            }
+          } catch (e) {
+            debugPrint('[STREAMING] Error reading audio chunk: $e');
+          }
+        });
       });
 
       return true;
