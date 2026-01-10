@@ -739,7 +739,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       // Polling timer pour lire et envoyer les chunks
       int lastPosition = 0;
       int tickCount = 0;
-      _streamTimeout = Timer.periodic(const Duration(milliseconds: 500), (timer) async {
+      _streamTimeout = Timer.periodic(const Duration(milliseconds: 500), (timer) {
         tickCount++;
         
         if (!_streamingActive) {
@@ -747,27 +747,32 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           return;
         }
         
-        try {
-          final file = File(filePath);
-          if (await file.exists()) {
-            final bytes = await file.readAsBytes();
-            if (bytes.length > lastPosition) {
-              // Envoyer seulement les nouveaux bytes
-              final chunk = bytes.sublist(lastPosition);
-              _streamClient?.sendAudioChunk(chunk);
-              debugPrint('[STREAMING] Sent chunk: ${chunk.length} bytes (total: ${bytes.length})');
-              lastPosition = bytes.length;
-            }
-          }
-        } catch (e) {
-          debugPrint('[STREAMING] Error reading audio chunk: $e');
-        }
-        
         // Limiter à 12 secondes
         if (tickCount * 500 >= 12000) {
           debugPrint('[STREAMING] 12-second timeout reached');
-          await _stopStreamingRecording();
+          timer.cancel();
+          _stopStreamingRecording();
+          return;
         }
+        
+        // Lecture asynchrone dans un microtask
+        Future(() async {
+          try {
+            final file = File(filePath);
+            if (await file.exists()) {
+              final bytes = await file.readAsBytes();
+              if (bytes.length > lastPosition) {
+                // Envoyer seulement les nouveaux bytes
+                final chunk = bytes.sublist(lastPosition);
+                _streamClient?.sendAudioChunk(chunk);
+                debugPrint('[STREAMING] Sent chunk: ${chunk.length} bytes (total: ${bytes.length})');
+                lastPosition = bytes.length;
+              }
+            }
+          } catch (e) {
+            debugPrint('[STREAMING] Error reading audio chunk: $e');
+          }
+        });
       });
 
       return true;
