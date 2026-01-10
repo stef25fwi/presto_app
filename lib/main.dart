@@ -4853,7 +4853,6 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
       return;
     }
 
-<<<<<<< HEAD
     final dial = _toE164Like(widget.phone!.trim());
     final uri =
         Uri(scheme: 'tel', path: dial.isNotEmpty ? dial : widget.phone!.trim());
