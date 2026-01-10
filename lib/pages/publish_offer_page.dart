@@ -86,8 +86,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Timer? _streamTimeout;
   bool _streamingActive = false;
 
-  // TEMPORAIRE: désactivé jusqu'au déploiement Cloud Run + package record ne supporte pas startStream()
-  bool get _streamingEnabled => !kIsWeb && kMicroIaStreamUrl.isNotEmpty;
+  // ✅ Streaming activé pour micro IA
+  bool get _streamingEnabled => true;
 
   final List<String> _categories = const [
     'Jardinage',
