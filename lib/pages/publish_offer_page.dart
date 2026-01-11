@@ -21,6 +21,7 @@ import '../utils/recording_path.dart';
 import '../services/city_repo_compact.dart';
 import '../widgets/city_postal_autocomplete_compact.dart';
 import '../widgets/phone_input_field.dart';
+import '../widgets/recording_mic_button.dart';
 import '../constants.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
@@ -913,40 +914,58 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
               children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrestoBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                // 🎤 Bouton d'enregistrement vocal avec animations
+                if (!_aiLoading)
+                  SizedBox(
+                    width: double.infinity,
+                    child: RecordingMicButton(
+                      isRecording: _recording,
+                      onTap: _togglePremiumRecording,
+                      isDisabled: _aiLoading,
+                    ),
+                  )
+                else
+                  // État de chargement avec spinner
+                  SizedBox(
+                    width: double.infinity,
+                    child: Container(
+                      height: 110,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: kPrestoBlue,
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          Text(
+                            "🧠 Analyse en cours...",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    onPressed: _aiLoading ? null : _togglePremiumRecording,
-                    icon: _aiLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : Icon(
-                            _recording ? Icons.stop_circle : Icons.mic_rounded),
-                    label: Text(
-                      _aiLoading
-                          ? "Analyse en cours..."
-                          : (_recording
-                              ? "Arrêter l'enregistrement"
-                              : "Décrivez votre besoin"),
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
                   ),
-                ),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
