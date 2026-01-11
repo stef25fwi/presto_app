@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../utils/friendly_snackbar.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 
 const Color kPrestoOrange = Color(0xFFFF6600);
 
@@ -13,6 +15,8 @@ class ModerationPage extends StatefulWidget {
 
 class _ModerationPageState extends State<ModerationPage> {
   late final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late final FirebaseFunctions _functions =
+      FirebaseFunctions.instanceFor(region: 'europe-west1');
 
   int _rejectedCount = 0;
   int _pendingCount = 0;
@@ -284,8 +288,35 @@ class _ModerationPageState extends State<ModerationPage> {
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        // Envoyer un mail
-        // TODO: Implémenter l'envoi de mail via Cloud Function
+        // ✅ Envoyer un email via Cloud Function
+        try {
+          final userDoc = await _firestore.collection('users').doc(userId).get();
+          final userData = userDoc.data() ?? {};
+          final userEmail = userData['email'] as String?;
+          final userName = userData['displayName'] as String? ?? 'Utilisateur';
+          final offerTitle = offerData['title'] as String? ?? 'Votre annonce';
+
+          if (userEmail != null && userEmail.isNotEmpty) {
+            final callable = _functions.httpsCallable('sendModerationEmail');
+            await callable.call<dynamic>({
+              'userId': userId,
+              'email': userEmail,
+              'userName': userName,
+              'offerTitle': offerTitle,
+              'offerId': offerId,
+              'reason': reason,
+              'message': 'Votre annonce n\'a pas été publiée car elle ne respecte pas nos conditions d\'utilisation. Raison: $reason',
+            });
+          }
+        } catch (e) {
+          // Log l'erreur d'envoi d'email mais ne bloque pas le rejet
+          debugPrint('[Moderation] Email send error: $e');
+          if (!mounted) return;
+          showSuccessSnackBar(
+            context,
+            'Annonce rejetée mais erreur envoi email: $e',
+          );
+        }
       }
 
       if (!mounted) return;

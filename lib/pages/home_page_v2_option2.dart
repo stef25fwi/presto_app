@@ -239,18 +239,25 @@ class HomePageV2Option2 extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
 
-                          // Steps (compact)
+                          // Steps (compact) - Nouveau texte
                           const _StepCard(
                             number: 1,
-                            title: "Je publie une offre",
-                            subtitle: "Les prestataires proches sont notifiés",
+                            title: "Vous avez besoin de quelqu'un",
+                            subtitle: "Un coup de main, un job urgent, un service précis ?\nExpliquez simplement ce dont vous avez besoin.",
+                            showChevron: false,
+                          ),
+                          const SizedBox(height: 10),
+                          const _StepCard(
+                            number: 2,
+                            title: "Vous publiez votre annonce",
+                            subtitle: "En quelques secondes, votre annonce est diffusée\naux prestataires disponibles autour de vous.",
                             showChevron: false,
                           ),
                           const SizedBox(height: 10),
                           const _StepCard(
                             number: 3,
-                            title: "Je choisis et je valide",
-                            subtitle: "",
+                            title: "Les prestataires vous contactent",
+                            subtitle: "Les personnes intéressées reçoivent votre demande\ninstantanément et vous répondent dans la foulée.\nVous choisissez la personne qui vous convient.",
                             showChevron: true,
                           ),
                         ],

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../utils/friendly_snackbar.dart';
 import '../pages/admin/streaming_monitoring_page.dart';
 import '../pages/admin/moderation_page.dart';
+import '../pages/admin/offers_management_page.dart';
+import '../pages/admin/messages_management_page.dart';
 
 import '../constants.dart';
 
@@ -433,8 +435,11 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     badge: null,
                     iconColor: prestoOrange,
                     onTap: () {
-                      // Navigate to offers list
-                      // TODO: Implement offers management page
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const OffersManagementPage(),
+                        ),
+                      );
                     },
                   ),
                   _KpiTile(
@@ -444,8 +449,11 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     badge: null,
                     iconColor: prestoBlue,
                     onTap: () {
-                      // Navigate to messages
-                      // TODO: Implement messages management page
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const MessagesManagementPage(),
+                        ),
+                      );
                     },
                   ),
                   _KpiTile(

@@ -184,3 +184,128 @@ export const logModerationStats = functions
       );
     }
   });
+
+/**
+ * Cloud Function callable: Envoi d'email de modération au rejet d'annonce
+ */
+export const sendModerationEmail = functions.https.onCall(async (data, context) => {
+  // Vérifier l'authentification
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'User must be authenticated to call this function'
+    );
+  }
+
+  try {
+    const {
+      userId,
+      email,
+      userName = 'Utilisateur',
+      offerTitle = 'Votre annonce',
+      offerId,
+      reason = 'Non conformité',
+      message = 'Votre annonce n\'a pas pu être publiée.',
+    } = data;
+
+    // Valider les données requises
+    if (!email || !userId) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'Email et userId sont requis'
+      );
+    }
+
+    // Récupérer les credentials Gmail
+    const user = await gmailUser.value();
+    const pass = await gmailPassword.value();
+
+    // Créer le transporter Nodemailer
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user,
+        pass,
+      },
+    });
+
+    // Générer le HTML de l'email
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #FF6600; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }
+            .content { background-color: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
+            .reason-box { background-color: #fff; border-left: 4px solid #FF6600; padding: 15px; margin: 15px 0; }
+            .footer { color: #666; font-size: 12px; margin-top: 20px; text-align: center; }
+            .button { background-color: #FF6600; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; display: inline-block; margin: 10px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Notification de modération</h1>
+            </div>
+            <div class="content">
+              <p>Bonjour <strong>${userName}</strong>,</p>
+              
+              <p>Nous vous contactons concernant votre annonce :</p>
+              <p><strong>"${offerTitle}"</strong></p>
+              
+              <div class="reason-box">
+                <p><strong>Statut :</strong> Rejetée ❌</p>
+                <p><strong>Raison :</strong> ${reason}</p>
+              </div>
+              
+              <p>${message}</p>
+              
+              <h3>Que faire ?</h3>
+              <ul>
+                <li>Relisez vos informations</li>
+                <li>Assurez-vous que votre annonce respecte nos <a href="https://presto-app.fr/cgu">Conditions d'Utilisation</a></li>
+                <li>Reformulez votre annonce si nécessaire</li>
+                <li>Renvoyez-la pour validation</li>
+              </ul>
+              
+              <p>Pour toute question, n'hésitez pas à <a href="mailto:support@presto-app.fr">contacter notre équipe de support</a>.</p>
+              
+              <p>Cordialement,<br><strong>L'équipe iliprestō</strong></p>
+              
+              <div class="footer">
+                <p>ID Annonce: ${offerId}</p>
+                <p>Cet email a été envoyé automatiquement. Merci de ne pas y répondre directement.</p>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Envoyer l'email
+    await transporter.sendMail({
+      from: user,
+      to: email,
+      subject: `Annonce rejetée: "${offerTitle}"`,
+      html: emailHtml,
+      text: `${message}\n\nRaison: ${reason}\n\nCordialement, L'équipe iliprestō`,
+    });
+
+    console.log('Moderation email sent to', email);
+    return {
+      success: true,
+      message: 'Email envoyé avec succès',
+      email,
+    };
+  } catch (error) {
+    console.error('Error sending moderation email:', error);
+    throw new functions.https.HttpsError(
+      'internal',
+      `Erreur lors de l'envoi de l'email: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+});
+

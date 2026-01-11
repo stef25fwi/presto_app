@@ -1,0 +1,26 @@
+#!/bin/bash
+
+echo "🚀 Déploiement Presto - Mise à jour section 'Comment ça marche'"
+echo ""
+
+# Commit message
+cat << 'EOF'
+feat: update 'How it works' section with improved 3-step user journey
+
+Changes:
+- Replace old 2-step flow with comprehensive 3-step explanation
+- Step 1: "Vous avez besoin de quelqu'un" - Describe service needs
+- Step 2: "Vous publiez votre annonce" - Broadcast to nearby providers  
+- Step 3: "Les prestataires vous contactent" - Instant responses from providers
+- More engaging and clearer user experience flow
+- Better copy that emphasizes speed and simplicity
+
+Files modified:
+- lib/pages/home_page_v2_option2.dart (lines 243-259)
+- Added UPDATE_HOW_IT_WORKS.md documentation
+
+Status: ✅ Tested, no compilation errors
+EOF
+
+echo ""
+echo "════════════════════════════════════════════════════════════"
