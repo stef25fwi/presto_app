@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import * as nodemailer from 'nodemailer';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { defineString } from 'firebase-functions/params';
 
 // Define params for Gmail configuration
@@ -127,11 +128,9 @@ export const createModerationMessage = functions
 /**
  * Log moderation statistics
  */
-export const logModerationStats = functions
-  .https.onCall(async (request: any) => {
-    const context = request;
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
+export const logModerationStats = onCall(async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
         'unauthenticated',
         'User must be authenticated'
       );
@@ -142,11 +141,11 @@ export const logModerationStats = functions
       const adminDoc = await admin
         .firestore()
         .collection('admins')
-        .doc(context.auth.uid)
+        .doc(request.auth.uid)
         .get();
 
       if (!adminDoc.exists) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           'permission-denied',
           'Admin access required'
         );
@@ -178,7 +177,7 @@ export const logModerationStats = functions
       };
     } catch (error) {
       console.error('Error getting moderation stats:', error);
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'internal',
         'Error getting moderation statistics'
       );
@@ -188,10 +187,10 @@ export const logModerationStats = functions
 /**
  * Cloud Function callable: Envoi d'email de modération au rejet d'annonce
  */
-export const sendModerationEmail = functions.https.onCall(async (data, context) => {
+export const sendModerationEmail = onCall(async (request) => {
   // Vérifier l'authentification
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
+  if (!request.auth) {
+    throw new HttpsError(
       'unauthenticated',
       'User must be authenticated to call this function'
     );
@@ -206,11 +205,19 @@ export const sendModerationEmail = functions.https.onCall(async (data, context) 
       offerId,
       reason = 'Non conformité',
       message = 'Votre annonce n\'a pas pu être publiée.',
-    } = data;
+    } = request.data as {
+      userId: string;
+      email: string;
+      userName?: string;
+      offerTitle?: string;
+      offerId?: string;
+      reason?: string;
+      message?: string;
+    };
 
     // Valider les données requises
     if (!email || !userId) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'invalid-argument',
         'Email et userId sont requis'
       );
@@ -302,7 +309,7 @@ export const sendModerationEmail = functions.https.onCall(async (data, context) 
     };
   } catch (error) {
     console.error('Error sending moderation email:', error);
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
       'internal',
       `Erreur lors de l'envoi de l'email: ${error instanceof Error ? error.message : 'Unknown error'}`
     );

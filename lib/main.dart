@@ -3399,7 +3399,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   // ✅ Suivi du statut réseau
   bool _isOnline = true;
-  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
+  late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   String? _makeCategoryId(String? categoryLabel) {
     final s = (categoryLabel ?? '').trim();
@@ -3682,8 +3682,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     // (à ajouter dans pubspec.yaml si absent)
     _connectivitySubscription = Connectivity()
         .onConnectivityChanged
-        .listen((ConnectivityResult result) {
-      final isNowOnline = result != ConnectivityResult.none;
+        .listen((List<ConnectivityResult> results) {
+      final isNowOnline = results.any((r) => r != ConnectivityResult.none);
       if (isNowOnline != _isOnline && mounted) {
         setState(() {
           _isOnline = isNowOnline;
@@ -11393,6 +11393,15 @@ class _AccountPageState extends State<AccountPage> {
           break;
         case AuthorizationErrorCode.notInteractive:
           msg = "Authentification Apple non disponible en arrière-plan.";
+          break;
+        case AuthorizationErrorCode.credentialExport:
+          msg = "Export d'identifiants Apple non autorisé.";
+          break;
+        case AuthorizationErrorCode.credentialImport:
+          msg = "Import d'identifiants Apple non autorisé.";
+          break;
+        case AuthorizationErrorCode.matchedExcludedCredential:
+          msg = "Identifiants Apple exclus pour cette connexion.";
           break;
         case AuthorizationErrorCode.unknown:
           msg = "Erreur Apple inconnue. Réessaye.";

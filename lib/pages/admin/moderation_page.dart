@@ -20,6 +20,8 @@ class _ModerationPageState extends State<ModerationPage> {
 
   int _rejectedCount = 0;
   int _pendingCount = 0;
+  bool _isSendingEmail = false;
+  bool _isApproving = false;
 
   @override
   void initState() {
@@ -166,6 +168,7 @@ class _ModerationPageState extends State<ModerationPage> {
                         onApprove: () => _approveOffer(doc.id),
                         onReject: () => _rejectOffer(doc.id),
                         onRefresh: _loadStats,
+                        disabled: _isSendingEmail || _isApproving,
                       );
                     },
                   );
@@ -238,6 +241,12 @@ class _ModerationPageState extends State<ModerationPage> {
 
   Future<void> _approveOffer(String offerId) async {
     try {
+      if (mounted) {
+        setState(() => _isApproving = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Validation de l\'annonce en cours...')),
+        );
+      }
       await _firestore.collection('offers').doc(offerId).update({
         'moderation.status': 'APPROVED',
         'moderation.checkedAt': FieldValue.serverTimestamp(),
@@ -247,10 +256,12 @@ class _ModerationPageState extends State<ModerationPage> {
       });
 
       if (!mounted) return;
+      setState(() => _isApproving = false);
       showSuccessSnackBar(context, 'Annonce approuvée ✅');
       _loadStats();
     } catch (e) {
       if (!mounted) return;
+      setState(() => _isApproving = false);
       showSuccessSnackBar(context, 'Erreur: $e');
     }
   }
@@ -288,33 +299,21 @@ class _ModerationPageState extends State<ModerationPage> {
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        // ✅ Envoyer un email via Cloud Function
-        try {
-          final userDoc = await _firestore.collection('users').doc(userId).get();
-          final userData = userDoc.data() ?? {};
-          final userEmail = userData['email'] as String?;
-          final userName = userData['displayName'] as String? ?? 'Utilisateur';
-          final offerTitle = offerData['title'] as String? ?? 'Votre annonce';
+        // ✅ Envoyer un email via Cloud Function (gestion d'erreurs dédiée)
+        final userDoc = await _firestore.collection('users').doc(userId).get();
+        final userData = userDoc.data() ?? {};
+        final userEmail = userData['email'] as String?;
+        final userName = userData['displayName'] as String? ?? 'Utilisateur';
+        final offerTitle = offerData['title'] as String? ?? 'Votre annonce';
 
-          if (userEmail != null && userEmail.isNotEmpty) {
-            final callable = _functions.httpsCallable('sendModerationEmail');
-            await callable.call<dynamic>({
-              'userId': userId,
-              'email': userEmail,
-              'userName': userName,
-              'offerTitle': offerTitle,
-              'offerId': offerId,
-              'reason': reason,
-              'message': 'Votre annonce n\'a pas été publiée car elle ne respecte pas nos conditions d\'utilisation. Raison: $reason',
-            });
-          }
-        } catch (e) {
-          // Log l'erreur d'envoi d'email mais ne bloque pas le rejet
-          debugPrint('[Moderation] Email send error: $e');
-          if (!mounted) return;
-          showSuccessSnackBar(
-            context,
-            'Annonce rejetée mais erreur envoi email: $e',
+        if (userEmail != null && userEmail.isNotEmpty) {
+          await _sendModerationEmail(
+            userId: userId as String,
+            userEmail: userEmail,
+            userName: userName,
+            offerTitle: offerTitle,
+            offerId: offerId,
+            reason: reason,
           );
         }
       }
@@ -355,6 +354,65 @@ class _ModerationPageState extends State<ModerationPage> {
       ),
     );
     return result;
+  }
+
+  Future<void> _sendModerationEmail({
+    required String userId,
+    required String userEmail,
+    required String userName,
+    required String offerTitle,
+    required String offerId,
+    required String reason,
+  }) async {
+    try {
+      if (mounted) {
+        setState(() => _isSendingEmail = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Envoi de l\'email de notification...')),
+        );
+      }
+      final callable = _functions.httpsCallable('sendModerationEmail');
+      await callable.call<dynamic>({
+        'userId': userId,
+        'email': userEmail,
+        'userName': userName,
+        'offerTitle': offerTitle,
+        'offerId': offerId,
+        'reason': reason,
+        'message': 'Votre annonce n\'a pas été publiée car elle ne respecte pas nos conditions d\'utilisation. Raison: $reason',
+      });
+      if (mounted) {
+        setState(() => _isSendingEmail = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email de notification envoyé ✅')),
+        );
+      }
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('[Moderation] Email send error: ${e.code} - ${e.message}');
+      if (!mounted) return;
+      setState(() => _isSendingEmail = false);
+      showErrorSnackBar(context, _mapFunctionsErrorToMessage(e));
+    } catch (e) {
+      debugPrint('[Moderation] Email send unexpected error: $e');
+      if (!mounted) return;
+      setState(() => _isSendingEmail = false);
+      showErrorSnackBar(context, 'Erreur d\'envoi email: $e');
+    }
+  }
+
+  String _mapFunctionsErrorToMessage(FirebaseFunctionsException e) {
+    switch (e.code) {
+      case 'unauthenticated':
+        return 'Tu dois être connecté pour envoyer des emails de modération.';
+      case 'permission-denied':
+        return 'Accès admin requis pour l\'envoi d\'emails de modération.';
+      case 'invalid-argument':
+        return 'Données manquantes pour l\'email de modération (email/userId).';
+      case 'internal':
+        return 'Erreur serveur lors de l\'envoi de l\'email. Réessaie plus tard.';
+      default:
+        return e.message ?? 'Erreur inconnue lors de l\'envoi de l\'email.';
+    }
   }
 }
 
@@ -414,6 +472,7 @@ class _ModerationOfferCard extends StatelessWidget {
   final VoidCallback onApprove;
   final VoidCallback onReject;
   final VoidCallback onRefresh;
+  final bool disabled;
 
   const _ModerationOfferCard({
     required this.offerId,
@@ -421,6 +480,7 @@ class _ModerationOfferCard extends StatelessWidget {
     required this.onApprove,
     required this.onReject,
     required this.onRefresh,
+    this.disabled = false,
   });
 
   @override
@@ -500,7 +560,7 @@ class _ModerationOfferCard extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.close_rounded, size: 16),
-                  onPressed: onReject,
+                  onPressed: disabled ? null : onReject,
                   label: const Text('Rejeter'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
@@ -512,7 +572,7 @@ class _ModerationOfferCard extends StatelessWidget {
               Expanded(
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.check_rounded, size: 16),
-                  onPressed: onApprove,
+                  onPressed: disabled ? null : onApprove,
                   label: const Text('Approuver'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
@@ -522,6 +582,10 @@ class _ModerationOfferCard extends StatelessWidget {
               ),
             ],
           ),
+          if (disabled) ...[
+            const SizedBox(height: 8),
+            const LinearProgressIndicator(),
+          ],
         ],
       ),
     );
