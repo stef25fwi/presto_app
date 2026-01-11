@@ -1,35 +1,36 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# --- CONFIG ---
 BRANCH="main"
 PAGES_DIR="docs"
 BASE_HREF="/presto_app/"
 
+# Refuse de continuer si tu as des modifs non commit (évite les décalages)
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "❌ Working tree sale. Commit ou stash avant de déployer."
+  git status --porcelain
+  exit 1
+fi
+
 echo "==> Checkout & update $BRANCH"
 git checkout "$BRANCH"
-git pull --rebase
+git pull --rebase origin "$BRANCH"
 
 echo "==> Flutter build web (base-href: $BASE_HREF)"
 flutter clean
 flutter pub get
 flutter build web --release --base-href "$BASE_HREF"
 
-echo "==> Publish build/web -> $PAGES_DIR/"
-rm -rf "$PAGES_DIR"
+echo "==> Sync build/web -> $PAGES_DIR/"
 mkdir -p "$PAGES_DIR"
-cp -R build/web/* "$PAGES_DIR"/
-
-# Désactive Jekyll (évite des surprises avec des dossiers commençant par _)
+rsync -a --delete build/web/ "$PAGES_DIR"/
 touch "$PAGES_DIR/.nojekyll"
 
-# Optionnel: petit fichier de version pour vérifier ce qui est en prod
-date -u +"%Y-%m-%dT%H:%M:%SZ" > "$PAGES_DIR/version.txt"
-echo "$(git rev-parse --short HEAD)" >> "$PAGES_DIR/version.txt"
+echo "==> Commit docs/ only (if changed)"
+git add "$PAGES_DIR"
+git commit -m "Deploy web to GitHub Pages" || echo "No docs/ changes -> nothing to deploy."
 
-echo "==> Commit & push"
-git add -A
-git commit -m "deploy(pages): $(date -u +'%Y-%m-%dT%H:%MZ')" || true
+echo "==> Push"
 git push origin "$BRANCH"
 
-echo "✅ Done. URL: https://stef25fwi.github.io/presto_app/"
+echo "✅ Done. Pages will update only if docs/ changed."
