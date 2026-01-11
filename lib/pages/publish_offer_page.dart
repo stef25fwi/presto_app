@@ -727,6 +727,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         ),
       );
 
+      // Set streaming active before listener to avoid race condition
+      _streamingActive = true;
+
       // Écouter le stream et envoyer les chunks au WebSocket
       _streamMicSub = audioStream.listen(
         (chunk) {
@@ -743,8 +746,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         },
         cancelOnError: true,
       );
-
-      _streamingActive = true;
 
       // Limite la durée du streaming à 12s
       _streamTimeout = Timer(const Duration(seconds: 12), () {
@@ -764,11 +765,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _streamTimeout?.cancel();
     await _streamMicSub?.cancel();
     _streamMicSub = null;
-    await _audioRecorder.stop();
-    await _streamClient?.sendStop();
-    _streamingActive = false;
-    if (mounted) {
-      setState(() => _recording = false);
+    
+    // Use try-finally to ensure cleanup completes even if stop() fails
+    try {
+      await _audioRecorder.stop();
+    } finally {
+      await _streamClient?.sendStop();
+      _streamingActive = false;
+      if (mounted) {
+        setState(() => _recording = false);
+      }
     }
   }
 
