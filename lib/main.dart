@@ -17,16 +17,41 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:record/record.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'firebase_options.dart';
 import 'app_core.dart';
 import 'constants.dart';
+import 'app/theme.dart';
+import 'services/firebase_service.dart';
+import 'services/city_search.dart';
+import 'services/google_auth_service.dart';
+import 'services/notification_service.dart';
+import 'pages/toolbox_hub_page.dart';
+import 'pages/auth/presto_premium_auth_page.dart';
+import 'pages/pro_profile_page.dart';
+import 'pages/admin_space_page.dart';
+import 'pages/legal_info_page.dart';
+import 'pages/home_page_v2_option2.dart';
+import 'widgets/ad_banner.dart';
+import 'widgets/offer_card.dart';
+import 'widgets/random_asset_ticker.dart';
+import 'widgets/entrepreneur_toolbox_slide.dart';
+import 'features/ai_draft/ai_draft_service.dart';
+import 'features/micro_ia/web_audio_recorder.dart';
+import 'utils/friendly_snackbar.dart';
+import 'utils/crashlytics_context.dart';
+import 'utils/recording_path_web.dart' if (dart.library.io) 'utils/recording_path_io.dart';
+import 'dev/seed_offers.dart';
+import 'features/micro_ia/micro_ia_service.dart';
+import 'features/messaging/conversation_service.dart';
+import 'widgets/premium_ai_button.dart';
+import 'widgets/phone_input_field.dart';
 // ...existing code (autres imports)...
 
 // ✅ Remote Config singleton: expose 'audio_pipeline' pour l'UI
+/* ⚠️ À décommenter une fois flutter pub get réussi
 class PrestoRemoteConfig {
   static String audioPipeline = 'UNKNOWN';
 
@@ -52,9 +77,15 @@ class PrestoRemoteConfig {
     }
   }
 }
+*/
 
-import 'package:image_picker/image_picker.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+// Fallback class temporaire
+class PrestoRemoteConfig {
+  static String audioPipeline = 'HYBRID';
+  static Future<void> init() async {
+    // TODO: Implémenter une fois firebase_remote_config installé
+  }
+}
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);

@@ -45,13 +45,15 @@ class MicroIaStreamClient {
       }
       switch (m['event']) {
         case 'partial':
-          onPartial?.call((m['text'] ?? '').toString());
+          onPartial?.call((m['transcript'] ?? '').toString());
           break;
         case 'final':
           onFinal?.call(
             (m['transcript'] ?? '').toString(),
             m['draft'] is Map ? Map<String, dynamic>.from(m['draft']) : null,
-            m['quality'] is Map ? Map<String, dynamic>.from(m['quality']) : null,
+            m['quality'] is Map
+                ? Map<String, dynamic>.from(m['quality'])
+                : null,
             m['modeUsed']?.toString(),
           );
           break;
@@ -78,7 +80,7 @@ class MicroIaStreamClient {
   void sendAudioChunk(Uint8List chunk) {
     _socket.add(jsonEncode({
       'event': 'audio',
-      'pcm16': base64Encode(chunk),
+      'chunk': base64Encode(chunk),
     }));
   }
 

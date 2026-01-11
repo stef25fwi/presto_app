@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Test Micro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="/presto_app/">
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    #level { width: 300px; height: 20px; background: #eee; margin-top: 10px; position: relative; }
+    #bar { height: 100%; background: #4caf50; width: 0%; }
+    .row { margin: 8px 0; }
+    button { margin-right: 8px; }
+    #log { white-space: pre-wrap; background: #fafafa; border: 1px solid #ddd; padding: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Diagnostic Micro</h1>
+  <div class="row">
+    <button id="start">Start</button>
+    <button id="stop" disabled>Stop</button>
+  </div>
+  <div class="row">Status: <span id="status">idle</span></div>
+  <div class="row">Sample rate: <span id="sr">-</span> Hz</div>
+  <div class="row">Track état: <span id="track">-</span></div>
+  <div class="row">Niveau (RMS): <span id="rms">0</span></div>
+  <div id="level"><div id="bar"></div></div>
+  <h3>Logs</h3>
+  <div id="log"></div>
+
+<script>
+let stream = null, ctx = null, src = null, analyser = null, timer = null;
+
+function log(msg) {
+  const el = document.getElementById('log');
+  el.textContent += `${new Date().toISOString()} ${msg}\n`;
+}
+
+function setStatus(s) { document.getElementById('status').textContent = s; }
+
+async function start() {
+  try {
+    setStatus('requesting-permission');
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+    const track = stream.getAudioTracks()[0];
+    document.getElementById('track').textContent = track ? `${track.readyState}` : 'no-track';
+    log(`Track settings: ${track ? JSON.stringify(track.getSettings()) : 'n/a'}`);
+
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    document.getElementById('sr').textContent = ctx.sampleRate;
+    src = ctx.createMediaStreamSource(stream);
+    analyser = ctx.createAnalyser();
+    analyser.fftSize = 2048;
+    src.connect(analyser);
+
+    const buf = new Float32Array(analyser.frequencyBinCount);
+    timer = setInterval(() => {
+      analyser.getFloatTimeDomainData(buf);
+      // RMS
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+      const rms = Math.sqrt(sum / buf.length);
+      document.getElementById('rms').textContent = rms.toFixed(3);
+      const pct = Math.min(100, Math.max(0, Math.round(rms * 100)));
+      document.getElementById('bar').style.width = pct + '%';
+      setStatus('streaming');
+    }, 100);
+
+    document.getElementById('start').disabled = true;
+    document.getElementById('stop').disabled = false;
+    log('Micro démarré, streaming OK.');
+  } catch (e) {
+    log('Erreur: ' + e);
+    setStatus('error');
+  }
+}
+
+function stop() {
+  if (timer) { clearInterval(timer); timer = null; }
+  if (src) { try { src.disconnect(); } catch(_){} src = null; }
+  if (ctx) { try { ctx.close(); } catch(_){} ctx = null; }
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+  document.getElementById('start').disabled = false;
+  document.getElementById('stop').disabled = true;
+  setStatus('stopped');
+  log('Micro arrêté.');
+}
+
+document.getElementById('start').onclick = start;
+document.getElementById('stop').onclick = stop;
+</script>
+</body>
+</html>
