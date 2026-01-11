@@ -1371,7 +1371,7 @@ class _HomePageState extends State<HomePage>
     _latestOffersStream = FirebaseFirestore.instance
         .collection('offers')
         .orderBy('createdAt', descending: true)
-        .limit(3)
+        .limit(8)
         .snapshots();
 
     // Listener pour hide/show bottom bar au scroll
@@ -1600,14 +1600,6 @@ class _HomePageState extends State<HomePage>
     } finally {
       if (mounted) setState(() => _isSeeding = false);
     }
-  }
-
-  String _labelWhenFromTitle(String title) {
-    final lower = title.toLowerCase();
-    if (lower.contains('urgent')) return 'urgent';
-    if (lower.contains('ce soir')) return 'ce soir';
-    if (lower.contains('demain')) return 'demain';
-    return 'bientôt';
   }
 
   Widget _buildSmartSearchBar() {
@@ -2397,6 +2389,132 @@ class _HomePageState extends State<HomePage>
 
                 const SizedBox(height: 12),
 
+                // DERNIÈRES OFFRES - Section avec fond blanc
+                Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            "Dernières offres",
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () => _onBottomTap(1),
+                            child: const Text(
+                              "Voir tout",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: kPrestoBlue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                        stream: _latestOffersStream.map((snap) {
+                          PrestoMonitoring.I.trackOtherStream(
+                            key: 'home.latestOffers',
+                            docsCount: snap.docs.length,
+                          );
+                          return snap;
+                        }),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                                  ConnectionState.waiting &&
+                              !snapshot.hasData) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 10),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      kPrestoOrange),
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (snapshot.hasError) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final docs = snapshot.data?.docs ?? [];
+                          if (docs.isEmpty) {
+                            return const Text(
+                              "Aucune offre publiée pour le moment.",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            );
+                          }
+
+                          return _AutoScrollingOffersCarousel(
+                            offers: docs,
+                            onOfferTap: (doc) {
+                              final data = doc.data();
+                              final title =
+                                  (data['title'] ?? 'Sans titre') as String;
+                              final location = (data['location'] ??
+                                  'Lieu non précisé') as String;
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => OfferDetailPage(
+                                    offerId: doc.id,
+                                    title: title,
+                                    location: location,
+                                    category: (data['category'] ??
+                                            'Catégorie non précisée')
+                                        as String,
+                                    subcategory:
+                                        data['subcategory'] as String?,
+                                    budget: data['budget'] is num
+                                        ? data['budget'] as num
+                                        : null,
+                                    description:
+                                        (data['description'] ?? '') as String?,
+                                    phone: data['phone'] as String?,
+                                    imageUrls:
+                                        (data['imageUrls'] as List<dynamic>?)
+                                            ?.map((e) => e.toString())
+                                            .toList(),
+                                    annonceurId:
+                                        (data['userId'] ?? '') as String,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
                 // CATEGORIES COMPACTES
                 AnimatedBuilder(
                   animation: _categoryController,
@@ -2543,210 +2661,6 @@ class _HomePageState extends State<HomePage>
                         description:
                             "Vous échangez et choisissez la personne idéale pour le job.",
                         showLine: false,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                // DERNIÈRES OFFRES - Section avec fond blanc
-                Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            "Dernières offres",
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const Spacer(),
-                          TextButton(
-                            onPressed: () => _onBottomTap(1),
-                            child: const Text(
-                              "Voir tout",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: kPrestoBlue,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                        stream: _latestOffersStream.map((snap) {
-                          PrestoMonitoring.I.trackOtherStream(
-                            key: 'home.latestOffers',
-                            docsCount: snap.docs.length,
-                          );
-                          return snap;
-                        }),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                                  ConnectionState.waiting &&
-                              !snapshot.hasData) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 10),
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      kPrestoOrange),
-                                ),
-                              ),
-                            );
-                          }
-
-                          if (snapshot.hasError) {
-                            return const SizedBox.shrink();
-                          }
-
-                          final docs = snapshot.data?.docs ?? [];
-                          if (docs.isEmpty) {
-                            return const Text(
-                              "Aucune offre publiée pour le moment.",
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.black54,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            );
-                          }
-
-                          return Column(
-                            children: docs.map((d) {
-                              final data = d.data();
-                              final title =
-                                  (data['title'] ?? 'Sans titre') as String;
-                              final location = (data['location'] ??
-                                  'Lieu non précisé') as String;
-                              final whenLabel = _labelWhenFromTitle(title);
-
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: _TapScale(
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => OfferDetailPage(
-                                          offerId: d.id,
-                                          title: title,
-                                          location: location,
-                                          category: (data['category'] ??
-                                                  'Catégorie non précisée')
-                                              as String,
-                                          subcategory:
-                                              data['subcategory'] as String?,
-                                          budget: data['budget'] is num
-                                              ? data['budget'] as num
-                                              : null,
-                                          description: (data['description'] ??
-                                              '') as String?,
-                                          phone: data['phone'] as String?,
-                                          imageUrls: (data['imageUrls']
-                                                  as List<dynamic>?)
-                                              ?.map((e) => e.toString())
-                                              .toList(),
-                                          annonceurId:
-                                              (data['userId'] ?? '') as String,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.06),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 36,
-                                          height: 36,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFFFF3E0),
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          child: const Icon(
-                                            Icons.flash_on_outlined,
-                                            color: kPrestoOrange,
-                                            size: 20,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                title,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                "$location — $whenLabel",
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.black54,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        const Icon(
-                                          Icons.chevron_right,
-                                          size: 18,
-                                          color: Colors.black38,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          );
-                        },
                       ),
                     ],
                   ),
@@ -12798,6 +12712,196 @@ class _RecapRow extends StatelessWidget {
             value,
             style: const TextStyle(
               fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// CARROUSEL AUTO-DÉFILANT POUR LES DERNIÈRES OFFRES (2 lignes)
+// ============================================================================
+class _AutoScrollingOffersCarousel extends StatefulWidget {
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> offers;
+  final void Function(QueryDocumentSnapshot<Map<String, dynamic>>)? onOfferTap;
+
+  const _AutoScrollingOffersCarousel({
+    required this.offers,
+    this.onOfferTap,
+  });
+
+  @override
+  State<_AutoScrollingOffersCarousel> createState() =>
+      _AutoScrollingOffersCarouselState();
+}
+
+class _AutoScrollingOffersCarouselState
+    extends State<_AutoScrollingOffersCarousel> {
+  final ScrollController _scrollController = ScrollController();
+  Timer? _autoScrollTimer;
+  bool _isHovered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoScroll();
+  }
+
+  @override
+  void dispose() {
+    _autoScrollTimer?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoScroll() {
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
+      if (!_isHovered && _scrollController.hasClients) {
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        final currentScroll = _scrollController.offset;
+        
+        // Défilement continu de droite vers gauche
+        if (currentScroll >= maxScroll) {
+          // Retour instantané au début pour un effet infini
+          _scrollController.jumpTo(0);
+        } else {
+          _scrollController.jumpTo(currentScroll + 1);
+        }
+      }
+    });
+  }
+
+  String _labelWhenFromTitle(String title) {
+    final lower = title.toLowerCase();
+    if (lower.contains("aujourd'hui")) return "Aujourd'hui";
+    if (lower.contains('demain')) return 'Demain';
+    return 'Bientôt';
+  }
+
+  Widget _buildOfferCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data();
+    final title = (data['title'] ?? 'Sans titre') as String;
+    final location = (data['location'] ?? 'Lieu non précisé') as String;
+    final whenLabel = _labelWhenFromTitle(title);
+
+    return GestureDetector(
+      onTap: () => widget.onOfferTap?.call(doc),
+      child: Container(
+        width: 280,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 8,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3E0),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.flash_on_outlined,
+                color: kPrestoOrange,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    "$location — $whenLabel",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: Colors.black38,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Dupliquer les offres pour créer un effet de boucle infinie
+    final duplicatedOffers = [...widget.offers, ...widget.offers];
+
+    // Séparer en 2 lignes
+    final row1Offers = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    final row2Offers = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+
+    for (int i = 0; i < duplicatedOffers.length; i++) {
+      if (i % 2 == 0) {
+        row1Offers.add(duplicatedOffers[i]);
+      } else {
+        row2Offers.add(duplicatedOffers[i]);
+      }
+    }
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: Column(
+        children: [
+          // Ligne 1
+          SizedBox(
+            height: 60,
+            child: ListView.separated(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              itemCount: row1Offers.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, index) => _buildOfferCard(row1Offers[index]),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Ligne 2
+          SizedBox(
+            height: 60,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: row2Offers.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, index) => _buildOfferCard(row2Offers[index]),
             ),
           ),
         ],
