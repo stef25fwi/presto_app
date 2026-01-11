@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, debugPrint;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:io';
@@ -14,6 +16,7 @@ import '../features/publish_offer/ai_offer_service.dart';
 import '../features/micro_ia/web_audio_recorder_stub.dart'
     if (dart.library.html) '../features/micro_ia/web_audio_recorder.dart';
 import '../features/micro_ia/micro_ia_stream_client.dart';
+import '../widgets/recording_mic_button.dart';
 import '../utils/crashlytics_context.dart';
 import '../utils/retry.dart';
 import '../utils/friendly_snackbar.dart';
@@ -335,6 +338,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (_recording) {
         if (!mounted) return;
         setState(() => _recording = false);
+        
+        // Son de fin d'enregistrement
+        SystemSound.play(SystemSoundType.click);
 
         await _stopWebMicAndProcess();
       } else {
@@ -354,6 +360,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       // Arrêter l'enregistrement
       final path = await _audioRecorder.stop();
       if (!mounted) return;
+
+      // Son de fin d'enregistrement
+      SystemSound.play(SystemSoundType.click);
 
       setState(() {
         _recording = false;
@@ -996,40 +1005,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      // Bouton Premium avec enregistrement audio (Mobile uniquement)
-                      if (!kIsWeb) ...[
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: (_aiLoading || _recording)
-                                ? null
-                                : _togglePremiumRecording,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: kPrestoOrange,
-                              foregroundColor: Colors.white,
-                            ),
-                            icon: _recording
-                                ? const Icon(Icons.stop_circle,
-                                    color: Colors.white)
-                                : const Icon(Icons.mic, color: Colors.white),
-                            label: Text(_recording
-                                ? "Arrêter l'enregistrement"
-                                : "🎙️ Premium (Audio)"),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          "Premium : Transcription Chirp 3 + Rédaction IA avancée. Téléphone et budget restent à saisir manuellement.",
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
-                      ],
-                      if (kIsWeb) ...[
-                        const SizedBox(height: 6),
-                        const Text(
-                          "📱 L'enregistrement audio Premium est disponible sur l'app mobile. Téléphone et budget restent à saisir manuellement.",
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
-                      ],
+                      // Bouton micro IA (mobile & web) avec animation d'enregistrement
+                      RecordingMicButton(
+                        isRecording: _recording,
+                        isDisabled: _aiLoading,
+                        onTap: _togglePremiumRecording,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        kIsWeb
+                            ? "🌐 Web : Autorise le micro dans le navigateur. Premium : Transcription Chirp 3 + Rédaction IA avancée."
+                            : "Premium : Transcription Chirp 3 + Rédaction IA avancée. Téléphone et budget restent à saisir manuellement.",
+                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
                     ],
                   ),
                 ),
