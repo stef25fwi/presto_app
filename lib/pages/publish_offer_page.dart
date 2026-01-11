@@ -765,7 +765,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _streamTimeout?.cancel();
     await _streamMicSub?.cancel();
     _streamMicSub = null;
-    
+
     // Use try-finally to ensure cleanup completes even if stop() fails
     try {
       await _audioRecorder.stop();
