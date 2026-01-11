@@ -17,43 +17,54 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:record/record.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_remote_config/firebase_remote_config.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'firebase_options.dart';
 import 'app_core.dart';
 import 'constants.dart';
-import 'utils/crashlytics_context.dart';
-import 'utils/friendly_snackbar.dart';
-import 'utils/recording_path.dart';
-import 'features/micro_ia/micro_ia_service.dart';
-import 'features/micro_ia/web_audio_recorder_stub.dart'
-    if (dart.library.html) 'features/micro_ia/web_audio_recorder.dart';
-import 'services/firebase_service.dart';
-import 'features/messaging/conversation_service.dart';
-import 'widgets/premium_ai_button.dart';
-import 'widgets/ad_banner.dart';
-import 'widgets/offer_card.dart';
-import 'widgets/phone_input_field.dart';
-import 'package:presto_app/widgets/random_asset_ticker.dart';
-import 'widgets/entrepreneur_toolbox_slide.dart';
-import 'pages/toolbox_hub_page.dart';
-import 'services/city_search.dart';
-import 'services/ai_draft_service.dart';
-import 'services/notification_service.dart';
-import 'services/google_auth_service.dart';
-import 'pages/pro_profile_page.dart';
-import 'pages/auth/presto_premium_auth_page.dart';
-import 'pages/home_page_v2_option2.dart';
-import 'pages/legal_info_page.dart';
-import 'pages/admin_space_page.dart';
-import 'dev/seed_offers.dart';
+// ...existing code (autres imports)...
 
-import 'app/theme.dart';
+// ✅ Remote Config singleton: expose 'audio_pipeline' pour l'UI
+class PrestoRemoteConfig {
+  static String audioPipeline = 'UNKNOWN';
+
+  static Future<void> init() async {
+    final rc = FirebaseRemoteConfig.instance;
+
+    await rc.setConfigSettings(RemoteConfigSettings(
+      fetchTimeout: const Duration(seconds: 10),
+      minimumFetchInterval: const Duration(minutes: 5),
+    ));
+
+    await rc.setDefaults(<String, dynamic>{
+      'audio_pipeline': 'HYBRID',
+    });
+
+    try {
+      await rc.fetchAndActivate();
+      audioPipeline = rc.getString('audio_pipeline').trim().isEmpty
+          ? 'HYBRID'
+          : rc.getString('audio_pipeline').trim();
+    } catch (_) {
+      audioPipeline = 'HYBRID';
+    }
+  }
+}
 
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
+
+// ✅ Build stamp (pour vérifier en prod quel commit est réellement déployé)
+// Remplir via: flutter build/run ... --dart-define=APP_BUILD_SHA=... etc.
+const String kAppBuildSha = String.fromEnvironment('APP_BUILD_SHA', defaultValue: 'local');
+const String kAppBuildBranch = String.fromEnvironment('APP_BUILD_BRANCH', defaultValue: '');
+const String kAppBuildTimeUtc = String.fromEnvironment('APP_BUILD_TIME', defaultValue: '');
+const String kAppBuildTag = String.fromEnvironment('APP_BUILD_TAG', defaultValue: '');
 
 /// ✅ Fonction utilitaire pour récupérer le statut de présence d'utilisateurs
 Future<Map<String, dynamic>> getUserPresenceStatus(List<String> userIds) async {
@@ -117,6 +128,185 @@ class UserStatusIndicator extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// ✅ Monitoring local (session) — utilisé par le dashboard admin
+/// Objectif: rendre visibles les appels de récupération de données (Firestore/Functions)
+class PrestoMonitoring extends ChangeNotifier {
+  static final PrestoMonitoring I = PrestoMonitoring._();
+  PrestoMonitoring._();
+
+  bool enabled = true;
+  bool verboseLogs = false;
+
+  // Toggles par “pipeline”
+  bool monitorOffersStream = true;
+  bool monitorOffersFetchOnce = true;
+  bool monitorMessagesFetchOnce = true;
+  bool monitorFunctionsCalls = true;
+  bool monitorOtherStreams = true;
+
+  DateTime sessionStart = DateTime.now();
+
+  // Compteurs
+  int offersQueryBuildCount = 0;
+  int offersSnapshotsCount = 0;
+  int offersFetchOnceCount = 0;
+  int messagesFetchOnceCount = 0;
+  int functionsCallsCount = 0;
+  int errorsCount = 0;
+
+  // Autres streams Firestore (home/notifications/conversations/profils...)
+  int otherStreamsEvents = 0;
+  final Map<String, int> otherStreamEventCounts = <String, int>{};
+  final Map<String, int> otherStreamLastDocs = <String, int>{};
+  String? lastOtherStreamKey;
+  int lastOtherStreamDocs = 0;
+
+  // Derniers états
+  int lastOffersSnapshotDocs = 0;
+  int lastOffersFetchDocs = 0;
+  int lastMessagesFetchDocs = 0;
+  int lastOffersFetchMs = 0;
+  int lastMessagesFetchMs = 0;
+  int lastFunctionsCallMs = 0;
+  String? lastOffersQuerySignature;
+  String? lastError;
+
+  String get sessionDurationLabel {
+    final d = DateTime.now().difference(sessionStart);
+    if (d.inSeconds < 60) return '${d.inSeconds}s';
+    if (d.inMinutes < 60) return '${d.inMinutes}m ${d.inSeconds % 60}s';
+    return '${d.inHours}h ${d.inMinutes % 60}m';
+  }
+
+  void _maybeLog(String msg) {
+    if (!verboseLogs || !kDebugMode) return;
+    debugPrint('[MONITOR] $msg');
+  }
+
+  void setEnabled(bool v) {
+    enabled = v;
+    notifyListeners();
+  }
+
+  void setVerbose(bool v) {
+    verboseLogs = v;
+    notifyListeners();
+  }
+
+  void setMonitorOffersStream(bool v) {
+    monitorOffersStream = v;
+    notifyListeners();
+  }
+
+  void setMonitorOffersFetchOnce(bool v) {
+    monitorOffersFetchOnce = v;
+    notifyListeners();
+  }
+
+  void setMonitorMessagesFetchOnce(bool v) {
+    monitorMessagesFetchOnce = v;
+    notifyListeners();
+  }
+
+  void setMonitorFunctionsCalls(bool v) {
+    monitorFunctionsCalls = v;
+    notifyListeners();
+  }
+
+  void setMonitorOtherStreams(bool v) {
+    monitorOtherStreams = v;
+    notifyListeners();
+  }
+
+  void reset() {
+    sessionStart = DateTime.now();
+    offersQueryBuildCount = 0;
+    offersSnapshotsCount = 0;
+    offersFetchOnceCount = 0;
+    messagesFetchOnceCount = 0;
+    functionsCallsCount = 0;
+    errorsCount = 0;
+    lastOffersSnapshotDocs = 0;
+    lastOffersFetchDocs = 0;
+    lastMessagesFetchDocs = 0;
+    lastOffersFetchMs = 0;
+    lastMessagesFetchMs = 0;
+    lastFunctionsCallMs = 0;
+    lastOffersQuerySignature = null;
+    lastError = null;
+
+    otherStreamsEvents = 0;
+    otherStreamEventCounts.clear();
+    otherStreamLastDocs.clear();
+    lastOtherStreamKey = null;
+    lastOtherStreamDocs = 0;
+    notifyListeners();
+  }
+
+  void trackError(String scope, Object e) {
+    if (!enabled) return;
+    errorsCount++;
+    lastError = '$scope: ${e.toString()}';
+    _maybeLog('ERROR $lastError');
+    notifyListeners();
+  }
+
+  void trackOffersQueryBuild({String? signature}) {
+    if (!enabled || !monitorOffersStream) return;
+    offersQueryBuildCount++;
+    if (signature != null && signature.trim().isNotEmpty) {
+      lastOffersQuerySignature = signature;
+    }
+    _maybeLog('offers.query.build count=$offersQueryBuildCount');
+    notifyListeners();
+  }
+
+  void trackOffersSnapshot(int docsCount) {
+    if (!enabled || !monitorOffersStream) return;
+    offersSnapshotsCount++;
+    lastOffersSnapshotDocs = docsCount;
+    _maybeLog('offers.snapshot docs=$docsCount count=$offersSnapshotsCount');
+    notifyListeners();
+  }
+
+  void trackOffersFetchOnce({required int ms, required int docsCount}) {
+    if (!enabled || !monitorOffersFetchOnce) return;
+    offersFetchOnceCount++;
+    lastOffersFetchMs = ms;
+    lastOffersFetchDocs = docsCount;
+    _maybeLog('offers.fetchOnce ms=$ms docs=$docsCount');
+    notifyListeners();
+  }
+
+  void trackMessagesFetchOnce({required int ms, required int docsCount}) {
+    if (!enabled || !monitorMessagesFetchOnce) return;
+    messagesFetchOnceCount++;
+    lastMessagesFetchMs = ms;
+    lastMessagesFetchDocs = docsCount;
+    _maybeLog('messages.fetchOnce ms=$ms docs=$docsCount');
+    notifyListeners();
+  }
+
+  void trackFunctionsCall({required String name, required int ms}) {
+    if (!enabled || !monitorFunctionsCalls) return;
+    functionsCallsCount++;
+    lastFunctionsCallMs = ms;
+    _maybeLog('functions.call name=$name ms=$ms');
+    notifyListeners();
+  }
+
+  void trackOtherStream({required String key, required int docsCount}) {
+    if (!enabled || !monitorOtherStreams) return;
+    otherStreamsEvents++;
+    otherStreamEventCounts[key] = (otherStreamEventCounts[key] ?? 0) + 1;
+    otherStreamLastDocs[key] = docsCount;
+    lastOtherStreamKey = key;
+    lastOtherStreamDocs = docsCount;
+    _maybeLog('stream.other key=$key docs=$docsCount');
+    notifyListeners();
   }
 }
 
@@ -280,6 +470,55 @@ String? inferRegionFromPostalCode(String cp) {
 
 /// ============= WIDGETS HELPER POUR OfferDetailPage =============
 
+/// ✅ Pastille affichant le pipeline audio actif (Remote Config)
+class AudioPipelineBadge extends StatelessWidget {
+  const AudioPipelineBadge({super.key});
+
+  Color _colorFor(String v) {
+    switch (v.toUpperCase()) {
+      case 'STREAM':
+        return Colors.green;
+      case 'HYBRID':
+        return Colors.blue;
+      case 'CHUNK':
+        return Colors.orange;
+      case 'DISABLED':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final v = PrestoRemoteConfig.audioPipeline;
+    final c = _colorFor(v);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: c.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.withOpacity(0.28)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.graphic_eq, size: 16, color: c),
+          const SizedBox(width: 6),
+          Text(
+            v.isEmpty ? 'UNKNOWN' : v,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              color: c,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CardShell extends StatelessWidget {
   final Widget child;
   const _CardShell({required this.child});
@@ -431,6 +670,10 @@ Future<void> main() async {
 
     // ✅ Initialiser le service Firebase centralisé avec optimisations
     await FirebaseService.instance.initialize();
+
+    // ✅ Remote Config: charger le pipeline audio
+    await PrestoRemoteConfig.init();
+    debugPrint('[RC] audio_pipeline=${PrestoRemoteConfig.audioPipeline}');
 
     // 🔒 App Check
     // - Debug: provider debug (ajouter le debug token dans Firebase Console → App Check)
@@ -1004,6 +1247,46 @@ class _HomePageState extends State<HomePage>
     ),
   ];
 
+  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
+  void _goToSearch(String query) {
+    final q = query.trim();
+    if (q.isEmpty) return;
+    
+    // ✅ Log la recherche
+    _logSearch(q);
+    
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ConsultOffersPage(searchQuery: q),
+      ),
+    );
+  }
+
+  /// ✅ Enregistre la recherche effectuée
+  Future<void> _logSearch(String searchQuery) async {
+    try {
+      await _analytics.logSearch(searchTerm: searchQuery);
+    } catch (e) {
+      debugPrint('[Analytics] logSearch error: $e');
+    }
+  }
+
+  void _onBottomTap(int index) {
+    if (_selectedIndex == index) return;
+    
+    // ✅ Log le changement d'onglet
+    _analytics.logEvent(
+      name: 'tab_changed',
+      parameters: {
+        'previous_tab': _selectedIndex,
+        'new_tab': index,
+      },
+    );
+    
+    setState(() => _selectedIndex = index);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1204,21 +1487,6 @@ class _HomePageState extends State<HomePage>
       return 1.0 + 0.25 * (1 - (localT - 0.5) * (localT - 0.5) * 4);
     }
     return 1.0;
-  }
-
-  void _onBottomTap(int index) {
-    if (_selectedIndex == index) return;
-    setState(() => _selectedIndex = index);
-  }
-
-  void _goToSearch(String query) {
-    final q = query.trim();
-    if (q.isEmpty) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ConsultOffersPage(searchQuery: q),
-      ),
-    );
   }
 
   Iterable<String> _buildSearchSuggestions(TextEditingValue value) {
@@ -1452,7 +1720,14 @@ class _HomePageState extends State<HomePage>
           stream: FirebaseFirestore.instance
               .collection('conversations')
               .where('participants', arrayContains: user.uid)
-              .snapshots(),
+              .snapshots()
+              .map((snap) {
+                PrestoMonitoring.I.trackOtherStream(
+                  key: 'home.bell.conversations',
+                  docsCount: snap.docs.length,
+                );
+                return snap;
+              }),
           builder: (context, convSnapshot) {
             int unreadMessagesCount = 0;
 
@@ -1472,7 +1747,14 @@ class _HomePageState extends State<HomePage>
                   .collection('notifications')
                   .where('userId', isEqualTo: user.uid)
                   .where('read', isEqualTo: false)
-                  .snapshots(),
+                  .snapshots()
+                  .map((snap) {
+                    PrestoMonitoring.I.trackOtherStream(
+                      key: 'home.bell.notifications',
+                      docsCount: snap.docs.length,
+                    );
+                    return snap;
+                  }),
               builder: (context, notifSnapshot) {
                 int unreadNotificationsCount = 0;
 
@@ -1520,7 +1802,14 @@ class _HomePageState extends State<HomePage>
                 .where('userId', isEqualTo: userId)
                 .orderBy('createdAt', descending: true)
                 .limit(20)
-                .snapshots(),
+                .snapshots()
+                .map((snap) {
+                  PrestoMonitoring.I.trackOtherStream(
+                    key: 'home.dialog.notifications',
+                    docsCount: snap.docs.length,
+                  );
+                  return snap;
+                }),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
@@ -2274,7 +2563,13 @@ class _HomePageState extends State<HomePage>
                       ),
                       const SizedBox(height: 4),
                       StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                        stream: _latestOffersStream,
+                        stream: _latestOffersStream.map((snap) {
+                          PrestoMonitoring.I.trackOtherStream(
+                            key: 'home.latestOffers',
+                            docsCount: snap.docs.length,
+                          );
+                          return snap;
+                        }),
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                                   ConnectionState.waiting &&
@@ -2928,8 +3223,6 @@ String? _extractFirstUrl(String text) {
 
 /// ✅ Conversion d'erreur Firestore en message amical
 String _friendlyFirestoreErrorMessage(Object error) {
-  if (error == null) return "Une erreur inconnue s'est produite";
-
   final msg = error.toString().toLowerCase();
 
   // ✅ failed-precondition : index manquant
@@ -2992,6 +3285,31 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   // ✅ Logs analytics
   late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
+  /// ✅ Enregistre la recherche effectuée
+  Future<void> _logSearch(String searchQuery) async {
+    try {
+      await _analytics.logSearch(searchTerm: searchQuery);
+    } catch (e) {
+      debugPrint('[Analytics] logSearch error: $e');
+    }
+  }
+
+  /// ✅ Enregistre l'utilisation des filtres
+  Future<void> _logFilterUsage(String filterType, String filterValue) async {
+    try {
+      await _analytics.logEvent(
+        name: 'filter_applied',
+        parameters: {
+          'filter_type': filterType,
+          'filter_value': filterValue,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logFilterUsage error: $e');
+    }
+  }
 
   /// ✅ Enregistre la visite de la page ConsultOffers
   Future<void> _logPageView() async {
@@ -3275,6 +3593,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   void initState() {
     super.initState();
 
+    // ✅ Analytics: page view
+    _logPageView();
+
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
       _maybeLoadMore();
@@ -3309,6 +3630,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         _activeSearchQuery = initialQuery;
         _keywordCtrl.text = initialQuery;
       }
+
+      // ✅ Analytics: recherche (même si ça match une catégorie)
+      _logSearch(initialQuery);
     }
 
     // Quand le code postal change, on essaie de déduire la région
@@ -3464,17 +3788,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     query = query.limit(_pageLimit);
 
     // Signature (audit index) — minimaliste
-    _lastOffersQuerySignature = [
-      'offers',
-      'where(isActive==true)',
-      if (cityCategoryKey != null) 'where(cityCategoryKey==)',
-      if (cityCategoryKey == null && cityId != null) 'where(cityId==)',
-      if (cityCategoryKey == null && categoryId != null) 'where(categoryId==)',
-      if (hasDept) 'where(dept==)',
-      if (hasSubcategory) 'where(subcategory==)',
-      if (wantsBudgetRange) 'where(budgetValue>=/<=) + orderBy(budgetValue) + orderBy(createdAt desc)' else 'orderBy(createdAt desc)',
-      'limit($_pageLimit)',
-    ].join(' + ');
+    _lastOffersQuerySignature = _buildOffersQuerySignature(
+      hasCategory: categoryId != null,
+      hasDept: hasDept,
+      hasLocation: cityId != null || cityCategoryKey != null,
+      hasPostalCode: cpForCity.trim().isNotEmpty,
+      hasSubcategory: hasSubcategory,
+      hasBudgetRange: wantsBudgetRange,
+    );
 
     // ✅ Log la signature de la query (debug only)
     if (kDebugMode) {
@@ -3492,6 +3813,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       }
     }
 
+    // ✅ Monitoring local (dashboard admin)
+    PrestoMonitoring.I.trackOffersQueryBuild(signature: _lastOffersQuerySignature);
+
     return query;
   }
 
@@ -3500,6 +3824,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     if (_isLoading) return;
 
     setState(() => _isLoading = true);
+
+    final sw = Stopwatch()..start();
 
     if (resetPaging) {
       _lastDoc = null;
@@ -3517,12 +3843,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       // Charge une première page (adapter la limite si besoin)
       final snap = await query.limit(20).get();
 
+        sw.stop();
+        PrestoMonitoring.I
+          .trackOffersFetchOnce(ms: sw.elapsedMilliseconds, docsCount: snap.docs.length);
+
       if (snap.docs.isNotEmpty) {
         _lastDoc = snap.docs.last;
       }
 
       // Si tu conserves les résultats : setState(() => offers = ...);
     } catch (e) {
+      PrestoMonitoring.I.trackError('offers.fetchOnce', e);
       if (kDebugMode) {
         debugPrint('Erreur lors du chargement des offres: $e');
       }
@@ -3539,6 +3870,20 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     final min = _parseBudgetBound(_budgetMinCtrl.text);
     final max = _parseBudgetBound(_budgetMaxCtrl.text);
+
+    // ✅ Log l'utilisation des filtres
+    if (_filterCategory != null && _filterCategory!.isNotEmpty) {
+      _logFilterUsage('category', _filterCategory!);
+    }
+    if (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) {
+      _logFilterUsage('region', _filterRegionCode!);
+    }
+    if (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) {
+      _logFilterUsage('department', _filterDepartmentCode!);
+    }
+    if (_filterCityName != null && _filterCityName!.isNotEmpty) {
+      _logFilterUsage('city', _filterCityName!);
+    }
 
     // Compter les filtres égalité actifs (pour éviter explosion d’index si range)
     final bool eqCat = (_filterCategory != null && _filterCategory!.isNotEmpty) ||
@@ -3843,7 +4188,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                 child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   key: ValueKey(
                       _queryKey), // Force la reconstruction quand les filtres changent
-                  stream: _buildOffersQuery().snapshots(),
+                  stream: _buildOffersQuery().snapshots().map((snap) {
+                    PrestoMonitoring.I.trackOffersSnapshot(snap.docs.length);
+                    return snap;
+                  }),
                   builder: (context, snapshot) {
                     // ✅ Ne plus afficher le loader si on a déjà des données
                     if (snapshot.connectionState == ConnectionState.waiting &&
@@ -3859,6 +4207,16 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     if (snapshot.hasError) {
                       debugPrint('❌ [OFFERS] Error: ${snapshot.error}');
                       debugPrint('❌ [OFFERS] Stack: ${snapshot.stackTrace}');
+
+                      final err = snapshot.error;
+                      if (err != null) {
+                        PrestoMonitoring.I.trackError('offers.snapshots', err);
+                      }
+
+                      final friendly = err == null
+                          ? "Une erreur s'est produite, réessaie"
+                          : _friendlyFirestoreErrorMessage(err);
+                      final url = err == null ? null : _extractFirstUrl(err.toString());
 
                       return Center(
                         child: Padding(
@@ -3883,13 +4241,33 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                "${snapshot.error}",
+                                friendly,
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey.shade700,
                                 ),
                               ),
+                              if (url != null) ...[
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 10,
+                                  runSpacing: 10,
+                                  alignment: WrapAlignment.center,
+                                  children: [
+                                    OutlinedButton.icon(
+                                      onPressed: () => _openExternalUrl(url),
+                                      icon: const Icon(Icons.open_in_new),
+                                      label: const Text('Ouvrir le lien'),
+                                    ),
+                                    OutlinedButton.icon(
+                                      onPressed: () => _copyToClipboard(context, url),
+                                      icon: const Icon(Icons.copy),
+                                      label: const Text('Copier le lien'),
+                                    ),
+                                  ],
+                                ),
+                              ],
                               const SizedBox(height: 16),
                               ElevatedButton.icon(
                                 onPressed: () {
@@ -4053,6 +4431,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                   padding: const EdgeInsets.only(bottom: 12),
                                   child: GestureDetector(
                                     onTap: () {
+                                      _logOfferClicked(offerId, title);
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
                                           builder: (_) => OfferDetailPage(
@@ -4845,9 +5224,6 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   Future<void> _callPhone(BuildContext context) async {
     await _logPhoneCall();
 
-    final user = FirebaseAuth.instance.currentUser;
-    final bool isLoggedIn = user != null;
-
     if (widget.phone == null || widget.phone!.trim().isEmpty) {
       showSuccessSnackBar(context, "Aucun numéro disponible.");
       return;
@@ -4920,6 +5296,9 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                   ),
                   onPressed: () async {
                     Navigator.pop(ctx);
+
+                    // ✅ Analytics: message initié
+                    await _logMessageSent();
                     if (!isLoggedIn) {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -4983,27 +5362,9 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                   ),
                   onPressed: () async {
                     Navigator.pop(ctx);
-                    // Lancement direct de l'appel
-                    if (widget.phone == null || widget.phone!.trim().isEmpty) {
-                      showSuccessSnackBar(context, "Aucun numéro disponible.");
-                      return;
-                    }
-                    final dial = _toE164Like(widget.phone!.trim());
-                    final uri = Uri(scheme: 'tel', path: dial.isNotEmpty ? dial : widget.phone!.trim());
-                    try {
-                      final ok = await canLaunchUrl(uri);
-                      if (ok) {
-                        await launchUrl(uri);
-                      } else {
-                        if (context.mounted) {
-                          showSuccessSnackBar(context, "Impossible de lancer l'appel sur cet appareil.");
-                        }
-                      }
-                    } catch (_) {
-                      if (context.mounted) {
-                        showSuccessSnackBar(context, "Une erreur est survenue lors de l'appel.");
-                      }
-                    }
+
+                    // ✅ Utiliser le helper (avec analytics)
+                    await _callPhone(context);
                   },
                   icon: const Icon(Icons.call),
                   label: const Text(
@@ -5047,7 +5408,8 @@ Motif du signalement :
 
     try {
       final ok = await canLaunchUrl(uri);
-      if (!context.mounted) return;
+      // ✅ Corriger: vérifier mounted
+      if (!mounted) return;
 
       if (ok) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -5056,64 +5418,10 @@ Motif du signalement :
 
       showSuccessSnackBar(context, "Impossible d'ouvrir l'e-mail.");
     } catch (_) {
-      if (!context.mounted) return;
+      // ✅ Corriger: vérifier mounted
+      if (!mounted) return;
       showSuccessSnackBar(context, "Une erreur est survenue.");
     }
-  }
-
-  void _showActionSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: false,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.black26,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-            const Text(
-              "Choisir une action",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrestoOrange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  _callPhone(context);
-                },
-                icon: const Icon(Icons.call),
-                label: const Text(
-                  "Appeler",
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -5317,7 +5625,14 @@ Motif du signalement :
                     stream: FirebaseFirestore.instance
                         .collection('users')
                         .doc(widget.annonceurId)
-                        .snapshots(),
+                        .snapshots()
+                        .map((snap) {
+                          PrestoMonitoring.I.trackOtherStream(
+                            key: 'offerDetail.userDoc',
+                            docsCount: snap.exists ? 1 : 0,
+                          );
+                          return snap;
+                        }),
                     builder: (context, snap) {
                       final pseudo = _extractUserPseudo(snap.data?.data());
                       return TextButton.icon(
@@ -5679,7 +5994,14 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
               stream: FirebaseFirestore.instance
                   .collection('users')
                   .doc(widget.userId)
-                  .snapshots(),
+                  .snapshots()
+                  .map((snap) {
+                    PrestoMonitoring.I.trackOtherStream(
+                      key: 'userProfile.userDoc',
+                      docsCount: snap.exists ? 1 : 0,
+                    );
+                    return snap;
+                  }),
               builder: (context, snap) {
                 final pseudo = _extractUserPseudo(snap.data?.data());
                 return _CardShell(
@@ -6100,7 +6422,14 @@ class _MessagesPageState extends State<MessagesPage> {
                 .collection('conversations')
                 .where('participants', arrayContains: userId)
                 .orderBy('lastMessageAt', descending: true)
-                .snapshots(),
+                .snapshots()
+                .map((snap) {
+                  PrestoMonitoring.I.trackOtherStream(
+                    key: 'messages.list.conversations',
+                    docsCount: snap.docs.length,
+                  );
+                  return snap;
+                }),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(
@@ -6550,6 +6879,8 @@ class _ConversationPageState extends State<ConversationPage> {
         txn.update(convRef, update);
       });
 
+      // ✅ Analytics: message envoyé
+      await _logMessageSent(text);
       _markAsRead();
     } catch (e) {
       if (!mounted) return;
@@ -6558,12 +6889,17 @@ class _ConversationPageState extends State<ConversationPage> {
   }
 
   Future<List<Map<String, dynamic>>> _fetchMessagesOnce() async {
+    final sw = Stopwatch()..start();
     final snap = await _firestore
         .collection('conversations')
         .doc(widget.conversationId)
         .collection('messages')
         .orderBy('createdAt', descending: false)
         .get();
+
+    sw.stop();
+    PrestoMonitoring.I
+        .trackMessagesFetchOnce(ms: sw.elapsedMilliseconds, docsCount: snap.docs.length);
 
     return snap.docs.map((d) => d.data()).toList();
   }
@@ -6925,7 +7261,14 @@ class _ConversationPageState extends State<ConversationPage> {
                     .collection('messages')
                     .orderBy('createdAt', descending: true)
                     .limit(200)
-                    .snapshots(),
+                    .snapshots()
+                    .map((snap) {
+                      PrestoMonitoring.I.trackOtherStream(
+                        key: 'conversation.messages.stream',
+                        docsCount: snap.docs.length,
+                      );
+                      return snap;
+                    }),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting &&
                       !_isLoadingMeta) {
@@ -7089,6 +7432,262 @@ class PublishOfferPage extends StatefulWidget {
 }
 
 class _PublishOfferPageState extends State<PublishOfferPage> {
+  // ✅ NOUVEAU: Variables pour le streaming
+  final StreamController<String> _transcriptionStream = StreamController<String>.broadcast();
+  String _partialTranscript = '';
+  Timer? _streamingTimer;
+  bool _isStreaming = false;
+
+  // ✅ AJOUT: Subscription pour le stream audio
+  StreamSubscription<Uint8List>? _streamMicSub;
+
+  /// ✅ STREAMING RÉEL: Mobile avec startStream() + PCM16
+  Future<void> _startStreamingMic() async {
+    if (_isListening || _isStreaming) return;
+
+    if (kIsWeb) {
+      // ✅ WEB: Chunking mode (chunks toutes les 2 secondes)
+      // Note: Web enregistre des chunks et les envoie progressivement
+      try {
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid == null) {
+          showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
+          return;
+        }
+
+        await _webRec.start();
+        
+        setState(() {
+          _isListening = true;
+          _isStreaming = true; // Web: mode chunking (quasi temps-réel)
+          _partialTranscript = '';
+        });
+
+        debugPrint('[Streaming Web] Web recording started (chunked mode)');
+
+        // ✅ Chunking timer: toutes les 2 secondes
+        _streamingTimer?.cancel();
+        _streamingTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
+          if (!_isListening || !mounted) return;
+
+          try {
+            // ✅ Arrêter temporairement et récupérer le blob du chunk
+            final blob = await _webRec.stopToBlob();
+
+            debugPrint('[Streaming Web] Chunk blob acquired');
+
+            // ✅ Redémarrer pour le prochain chunk
+            await _webRec.start();
+
+            // ✅ Convertir blob en bytes et uploader
+            final chunkBytes = await webBlobToBytes(blob);
+            if (chunkBytes.isEmpty) {
+              debugPrint('[Streaming Web] Empty chunk bytes');
+              return;
+            }
+
+            final ts = DateTime.now().millisecondsSinceEpoch;
+            final chunkPath = 'stt_streaming/$uid/${ts}_chunk.webm';
+
+            final ref = FirebaseStorage.instance.ref(chunkPath);
+            await ref.putData(
+              chunkBytes,
+              SettableMetadata(contentType: 'audio/webm'),
+            );
+
+            debugPrint('[Streaming Web] Chunk uploaded: $chunkPath (${chunkBytes.length} bytes)');
+
+            // ✅ Transcription du chunk (async, non-bloquant)
+            MicroIaService.processAudio(
+              storagePath: chunkPath,
+              languageCode: 'fr-FR',
+              streamingMode: true,
+            ).then((result) {
+              if (!mounted) return;
+              
+              final text = (result['text'] ?? '').toString().trim();
+              if (text.isNotEmpty) {
+                final newTranscript = _partialTranscript.isEmpty
+                    ? text
+                    : '$_partialTranscript $text';
+                
+                // ✅ Envoyer au stream pour update UI
+                _transcriptionStream.add(newTranscript);
+                debugPrint('[Streaming Web] Chunk transcribed: "$text"');
+              }
+            }).catchError((e) {
+              debugPrint('[Streaming Web] Transcription error: $e');
+            });
+          } catch (e) {
+            debugPrint('[Streaming Web] Chunk processing error: $e');
+          }
+        });
+      } catch (e, st) {
+        await CrashlyticsContext.recordError(
+          e is Exception ? e : Exception(e.toString()),
+          st,
+          reason: 'Web streaming mic failed',
+          fatal: false,
+        );
+        if (!mounted) return;
+        showSuccessSnackBar(context, 'Erreur streaming micro: $e');
+      }
+      return;
+    }
+
+    // ✅ MOBILE: Streaming RÉEL avec startStream() + PCM16
+    try {
+      if (!await _recorder.hasPermission()) {
+        showSuccessSnackBar(context, 'Permission micro requise');
+        return;
+      }
+
+      // ✅ CHANGEMENT 1: startStream() retourne un Stream<Uint8List>
+      final stream = await _recorder.startStream(
+        const RecordConfig(
+          encoder: AudioEncoder.pcm16bits, // ✅ PCM16 (requis pour Google STT)
+          sampleRate: 16000, // ✅ 16kHz
+          numChannels: 1,
+        ),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isListening = true;
+        _isStreaming = true; // Mode streaming réel
+        _partialTranscript = '';
+      });
+
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+      int chunkBytes = 0;
+      final int chunkThreshold = 16000 * 2; // ~2 secondes à 16kHz
+
+      debugPrint('[Streaming Mobile] Stream started with PCM16');
+
+      // ✅ CHANGEMENT 2: Écouter le stream audio
+      _streamMicSub?.cancel();
+      _streamMicSub = stream.listen(
+        (Uint8List chunk) async {
+          if (!_isListening || !mounted) return;
+
+          try {
+            chunkBytes += chunk.length;
+
+            // Envoyer quand le seuil est atteint
+            if (chunkBytes >= chunkThreshold) {
+              final ts = DateTime.now().millisecondsSinceEpoch;
+              final chunkPath = 'stt_streaming/$uid/${ts}_chunk.pcm';
+
+              // ✅ CHANGEMENT 3: Upload du chunk PCM
+              final ref = FirebaseStorage.instance.ref(chunkPath);
+              await ref.putData(
+                chunk,
+                SettableMetadata(contentType: 'audio/pcm'),
+              );
+
+              debugPrint('[Streaming Mobile] Chunk uploaded: ${chunk.length} bytes at $chunkPath');
+
+              // ✅ Transcription du chunk (async, non-bloquant)
+              MicroIaService.processAudio(
+                storagePath: chunkPath,
+                languageCode: 'fr-FR',
+                streamingMode: true,
+              ).then((result) {
+                if (!mounted) return;
+                
+                final text = (result['text'] ?? '').toString().trim();
+                if (text.isNotEmpty) {
+                  final newTranscript = _partialTranscript.isEmpty
+                      ? text
+                      : '$_partialTranscript $text';
+                  
+                  // ✅ Envoyer au stream pour update UI
+                  _transcriptionStream.add(newTranscript);
+                  debugPrint('[Streaming Mobile] Chunk transcribed: "$text"');
+                }
+              }).catchError((e) {
+                debugPrint('[Streaming Mobile] Transcription error: $e');
+              });
+
+              chunkBytes = 0; // Reset
+            }
+          } catch (e) {
+            debugPrint('[Streaming Mobile] Chunk error: $e');
+          }
+        },
+        onError: (error) {
+          debugPrint('[Streaming Mobile] Stream error: $error');
+          if (mounted) {
+            setState(() {
+              _isListening = false;
+              _isStreaming = false;
+            });
+          }
+        },
+        onDone: () {
+          debugPrint('[Streaming Mobile] Stream done');
+          if (mounted) {
+            setState(() {
+              _isListening = false;
+              _isStreaming = false;
+            });
+          }
+        },
+        cancelOnError: false,
+      );
+    } catch (e) {
+      debugPrint('[Streaming Mobile] Start error: $e');
+      if (mounted) {
+        showSuccessSnackBar(context, 'Erreur streaming: $e');
+      }
+
+      // ✅ Fallback: enregistrement classique si streaming non supporté
+      await _startMic();
+    }
+  }
+
+  Future<void> _stopStreamingMic() async {
+    if (!_isListening) return;
+
+    _streamingTimer?.cancel();
+    _streamingTimer = null;
+
+    // Stop Web chunking
+    if (kIsWeb) {
+      try {
+        // Stopper l'enregistreur (on ignore le blob final)
+        await _webRec.stopToBlob();
+      } catch (_) {}
+
+      if (!mounted) return;
+      setState(() {
+        _isListening = false;
+        _isStreaming = false;
+      });
+      return;
+    }
+
+    // Stop Mobile streaming
+    try {
+      await _streamMicSub?.cancel();
+      _streamMicSub = null;
+    } catch (_) {}
+
+    try {
+      await _recorder.stop();
+    } catch (_) {}
+
+    if (!mounted) return;
+    setState(() {
+      _isListening = false;
+      _isStreaming = false;
+    });
+  }
+
+  /// ✅ MODIFIÉ: Utiliser _startStreamingMic() au lieu de _startMic()
+  /// ✅ MODIFIÉ: Bouton micro avec feedback streaming amélioré
+
   final _formKey = GlobalKey<FormState>();
   final ScrollController _scrollController = ScrollController();
 
@@ -7140,50 +7739,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     } catch (e) {
       debugPrint('[Analytics] logOfferPublished error: $e');
     }
-  }
-
-  String _slugId(String input) {
-    final s = input
-        .trim()
-        .toLowerCase()
-        .replaceAll(RegExp(r'[àâä]'), 'a')
-        .replaceAll('ç', 'c')
-        .replaceAll(RegExp(r'[éèêë]'), 'e')
-        .replaceAll(RegExp(r'[îï]'), 'i')
-        .replaceAll(RegExp(r'[ôö]'), 'o')
-        .replaceAll(RegExp(r'[ùûü]'), 'u')
-        .replaceAll('œ', 'oe')
-        .replaceAll(RegExp(r"[/\-'’']"), ' ')
-        .replaceAll(RegExp(r'[^a-z0-9 ]'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim()
-        .replaceAll(' ', '-');
-    return s;
-  }
-
-  String? _makeCategoryId(String? categoryLabel) {
-    final s = (categoryLabel ?? '').trim();
-    if (s.isEmpty) return null;
-    return _slugId(s);
-  }
-
-  String? _makeCityId({required String cityName, required String postalCode}) {
-    final city = cityName.trim();
-    final cp = postalCode.trim();
-    if (city.isEmpty || cp.length < 3) return null;
-    return '${cp}_${_slugId(city)}';
-  }
-
-  String _buildSearchKey({
-    required String title,
-    required String description,
-    required String category,
-    required String location,
-    required String postalCode,
-  }) {
-    // searchKey stocké déjà normalisé => filtrage client-side plus cheap
-    final raw = '$title $description $category $location $postalCode';
-    return _slugId(raw).replaceAll('-', ' '); // tokens séparés par espaces
   }
 
   // Champs texte
@@ -7338,6 +7893,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _budgetController.addListener(_recompute);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
+
+    // ✅ Écouter le stream de transcription
+    _transcriptionStream.stream.listen((text) {
+      if (!mounted) return;
+      setState(() {
+        _partialTranscript = text;
+        // Remplir les champs au fur et à mesure
+        _applyFastDraftFromTranscript(text);
+      });
+    });
   }
 
   bool _isValidPhoneFR(String raw) {
@@ -7579,6 +8144,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!_isListening) return;
     if (_isAnalyzing) return;
 
+    // ✅ Arrêter le timer de chunking web (streaming mode)
+    _streamingTimer?.cancel();
+    _streamingTimer = null;
+
     if (kIsWeb) {
       if (!mounted) return;
       setState(() {
@@ -7732,7 +8301,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: _stopMic,
+          onTap: _isStreaming ? _stopStreamingMic : _stopMic,
           borderRadius: BorderRadius.circular(20),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -7883,6 +8452,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   void dispose() {
+    _transcriptionStream.close();
+    _streamingTimer?.cancel();
+    _streamMicSub?.cancel(); // ✅ AJOUT: Cleanup du stream
+    _streamMicSub = null;
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
@@ -8335,6 +8908,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'createdAt': Timestamp.now(),
       });
 
+      // ✅ Analytics: publication
+      await _logOfferPublished(
+        offerId: docRef.id,
+        title: _titleController.text.trim(),
+        category: (_category ?? '').toString().trim(),
+        budget: _budgetController.text.trim(),
+        budgetType: _budgetType,
+      );
+
       // Créer des notifications pour les utilisateurs ayant cette catégorie en favori
       await _createNotificationsForFavorites(
         docRef.id,
@@ -8491,7 +9073,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     child: _isListening
                         ? _buildMicRecordingButton()
                         : PremiumAiButton(
-                            onPressed: _isAnalyzing ? null : _startMic,
+                            onPressed: _isAnalyzing ? null : _startStreamingMic,
                             label: 'Décrire mon besoin (IA)',
                             isLoading: _isAnalyzing,
                           ),
@@ -9096,29 +9678,11 @@ class _AccountPageState extends State<AccountPage> {
   final FirebaseFunctions _functions =
       FirebaseFunctions.instanceFor(region: 'europe-west1');
 
-  Future<void> _touchPresence({String? status}) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-    try {
-      final data = <String, dynamic>{
-        'lastSeenAt': FieldValue.serverTimestamp(),
-      };
-      if (status != null) {
-        data['status'] = status;
-      }
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-            data,
-            SetOptions(merge: true),
-          );
-    } catch (_) {
-      // best-effort
-    }
-  }
-
   Future<void> _trackLogin({
     String? authMethod,
     bool isNewUser = false,
   }) async {
+    final sw = Stopwatch()..start();
     try {
       // ✅ Métriques enrichies
       final platform = kIsWeb ? 'web' : defaultTargetPlatform.name;
@@ -9136,11 +9700,12 @@ class _AccountPageState extends State<AccountPage> {
         'isNewUser': isNewUser,
         'timestamp': DateTime.now().millisecondsSinceEpoch,
       });
+
+      sw.stop();
+      PrestoMonitoring.I.trackFunctionsCall(name: 'trackUserLogin', ms: sw.elapsedMilliseconds);
     } catch (e) {
+      PrestoMonitoring.I.trackError('trackUserLogin', e);
       debugPrint('[Tracking] Error: $e');
-    } finally {
-      // ✅ Marquer comme online après login
-      await _touchPresence(status: 'online');
     }
   }
 
@@ -9202,17 +9767,26 @@ class _AccountPageState extends State<AccountPage> {
   Future<Map<String, dynamic>>? _adminCfgFuture;
 
   Future<Map<String, dynamic>> _adminGetMicroIaConfig() async {
+    final sw = Stopwatch()..start();
     final callable = _functions.httpsCallable(
       'adminGetMicroIaConfig',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
     );
-    final res = await callable.call<dynamic>({});
-    return Map<String, dynamic>.from(res.data as Map);
+    try {
+      final res = await callable.call<dynamic>({});
+      sw.stop();
+      PrestoMonitoring.I.trackFunctionsCall(name: 'adminGetMicroIaConfig', ms: sw.elapsedMilliseconds);
+      return Map<String, dynamic>.from(res.data as Map);
+    } catch (e) {
+      PrestoMonitoring.I.trackError('adminGetMicroIaConfig', e);
+      rethrow;
+    }
   }
 
   Future<void> _adminSetMicroIaConfig() async {
     if (_adminSaving) return;
     setState(() => _adminSaving = true);
+    final sw = Stopwatch()..start();
     try {
       final callable = _functions.httpsCallable(
         'adminSetMicroIaConfig',
@@ -9225,6 +9799,9 @@ class _AccountPageState extends State<AccountPage> {
         'qualityThreshold': _adminMicroIaQualityThreshold,
         'languageCode': _adminMicroIaLanguageCode,
       });
+
+      sw.stop();
+      PrestoMonitoring.I.trackFunctionsCall(name: 'adminSetMicroIaConfig', ms: sw.elapsedMilliseconds);
 
       // ✅ Re-synchronise l'UI avec la config effectivement publiée.
       final data = (res.data is Map)
@@ -9249,14 +9826,441 @@ class _AccountPageState extends State<AccountPage> {
       });
       showSuccessSnackBar(context, 'Paramètres Micro-IA mis à jour');
     } on FirebaseFunctionsException catch (e) {
+      PrestoMonitoring.I.trackError('adminSetMicroIaConfig', e);
       if (!mounted) return;
       showSuccessSnackBar(context, e.message ?? 'Erreur admin');
     } catch (e) {
+      PrestoMonitoring.I.trackError('adminSetMicroIaConfig', e);
       if (!mounted) return;
       showSuccessSnackBar(context, 'Erreur admin: $e');
     } finally {
       if (mounted) setState(() => _adminSaving = false);
     }
+  }
+
+  Widget _buildAnalyticsMetricRow({
+    required String icon,
+    required String label,
+    required String subtitle,
+    required bool enabled,
+    required ValueChanged<bool> onToggle,
+    required String value,
+    String? hint,
+    Color color = kPrestoBlue,
+  }) {
+    final statusColor = enabled ? color : Colors.grey;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: enabled ? statusColor.withOpacity(0.07) : Colors.grey.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: statusColor.withOpacity(0.25)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (hint != null && hint.trim().isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    hint,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.black45,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ]
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: statusColor,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Switch(
+                value: enabled,
+                onChanged: (v) => onToggle(v),
+                activeColor: statusColor,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdminAnalyticsPanel() {
+    return AnimatedBuilder(
+      animation: PrestoMonitoring.I,
+      builder: (context, _) {
+        final m = PrestoMonitoring.I;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.teal.withOpacity(0.25)),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    '📊 Analytics / Monitoring (session)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.teal,
+                    ),
+                  ),
+                  const Spacer(),
+                  Switch(
+                    value: m.enabled,
+                    onChanged: (v) => m.setEnabled(v),
+                    activeColor: Colors.teal,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ],
+              ),
+              Text(
+                'Session: ${m.sessionDurationLabel} • erreurs: ${m.errorsCount}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              _buildAnalyticsMetricRow(
+                icon: '🧾',
+                label: 'Offres — Stream Firestore',
+                subtitle: 'snapshots() sur la query (temps réel)',
+                enabled: m.monitorOffersStream,
+                onToggle: (v) => m.setMonitorOffersStream(v),
+                value: '${m.offersSnapshotsCount} snap • ${m.lastOffersSnapshotDocs} docs',
+                hint: m.lastOffersQuerySignature,
+                color: kPrestoBlue,
+              ),
+              const SizedBox(height: 8),
+              _buildAnalyticsMetricRow(
+                icon: '📥',
+                label: 'Offres — Fetch once',
+                subtitle: 'get() ponctuel (debug/pagination)',
+                enabled: m.monitorOffersFetchOnce,
+                onToggle: (v) => m.setMonitorOffersFetchOnce(v),
+                value: '${m.offersFetchOnceCount} • ${m.lastOffersFetchMs}ms • ${m.lastOffersFetchDocs} docs',
+                color: kPrestoOrange,
+              ),
+              const SizedBox(height: 8),
+              _buildAnalyticsMetricRow(
+                icon: '💬',
+                label: 'Messages — Fetch once',
+                subtitle: 'get() messages d’une conversation',
+                enabled: m.monitorMessagesFetchOnce,
+                onToggle: (v) => m.setMonitorMessagesFetchOnce(v),
+                value: '${m.messagesFetchOnceCount} • ${m.lastMessagesFetchMs}ms • ${m.lastMessagesFetchDocs} docs',
+                color: Colors.purple,
+              ),
+              const SizedBox(height: 8),
+              _buildAnalyticsMetricRow(
+                icon: '⚡',
+                label: 'Cloud Functions',
+                subtitle: 'callable (admin/login/...)',
+                enabled: m.monitorFunctionsCalls,
+                onToggle: (v) => m.setMonitorFunctionsCalls(v),
+                value: '${m.functionsCallsCount} • ${m.lastFunctionsCallMs}ms',
+                hint: m.lastError,
+                color: Colors.teal,
+              ),
+              const SizedBox(height: 8),
+              _buildAnalyticsMetricRow(
+                icon: '🛰️',
+                label: 'Autres streams Firestore',
+                subtitle: 'notifications / conversations / profils / home',
+                enabled: m.monitorOtherStreams,
+                onToggle: (v) => m.setMonitorOtherStreams(v),
+                value: '${m.otherStreamsEvents} • ${m.lastOtherStreamDocs} docs',
+                hint: m.lastOtherStreamKey,
+                color: Colors.indigo,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: m.reset,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text(
+                      'Reset',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      const Text(
+                        'Logs',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Switch(
+                        value: m.verboseLogs,
+                        onChanged: (v) => m.setVerbose(v),
+                        activeColor: Colors.teal,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBuildVersionPanel() {
+    final mode = kReleaseMode
+        ? 'release'
+        : (kProfileMode ? 'profile' : 'debug');
+    final platform = kIsWeb ? 'web' : defaultTargetPlatform.name;
+    final sha = kAppBuildSha;
+    final shortSha = (sha.length > 12) ? sha.substring(0, 12) : sha;
+
+    final hasStamp = sha.isNotEmpty && sha != 'local';
+    final stampLine = [
+      if (kAppBuildTag.trim().isNotEmpty) 'tag: ${kAppBuildTag.trim()}',
+      if (kAppBuildBranch.trim().isNotEmpty) 'branch: ${kAppBuildBranch.trim()}',
+      if (kAppBuildTimeUtc.trim().isNotEmpty) 'build: ${kAppBuildTimeUtc.trim()} UTC',
+    ].join(' • ');
+
+    return Container(
+      decoration: BoxDecoration(
+        color: hasStamp ? Colors.green.withOpacity(0.06) : Colors.red.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: hasStamp ? Colors.green.withOpacity(0.25) : Colors.red.withOpacity(0.25),
+        ),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                '🧩 Version affichée',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: hasStamp ? Colors.green.shade800 : Colors.red.shade700,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '$platform • $mode',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SelectableText(
+            'sha: $shortSha',
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.2,
+              color: Colors.black87,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          if (stampLine.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              stampLine,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          if (!hasStamp) ...[
+            const SizedBox(height: 6),
+            const Text(
+              '⚠️ Build stamp non renseigné (utilise --dart-define).',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              TextButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: sha));
+                  if (!mounted) return;
+                  showSuccessSnackBar(context, 'SHA copié');
+                },
+                icon: const Icon(Icons.copy, size: 16),
+                label: const Text(
+                  'Copier SHA',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: kPrestoBlue,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                hasStamp ? 'OK' : 'LOCAL',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: hasStamp ? Colors.green.shade800 : Colors.red.shade700,
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  // ignore: unused_element
+  Widget _buildAudioPipelineRow({
+    required String icon,
+    required String label,
+    required String description,
+    required bool isActive,
+    required String status,
+  }) {
+    final statusColor = isActive
+        ? (status == 'ACTIVE' ? Colors.green : Colors.blue)
+        : Colors.grey;
+    final bgColor = isActive ? statusColor.withOpacity(0.1) : Colors.grey.withOpacity(0.05);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: statusColor.withOpacity(0.3),
+          width: 1.5,
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Status Badge avec Toggle
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: statusColor.withOpacity(0.4)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  status,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: statusColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ignore: unused_element
@@ -9412,6 +10416,8 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  _buildBuildVersionPanel(),
+                  const SizedBox(height: 12),
                   const Text(
                     'Micro-IA (transcription audio)',
                     style: TextStyle(
@@ -9420,7 +10426,59 @@ class _AccountPageState extends State<AccountPage> {
                       color: kPrestoOrange,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
+                  // ✅ AUDIO PIPELINE MONITOR
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '🎙️ Pipelines Audio Actifs',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.amber,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        // Mobile Streaming
+                        _buildAudioPipelineRow(
+                          icon: '📱',
+                          label: 'Mobile Streaming',
+                          description: 'PCM16 16kHz real-time',
+                          isActive: !kIsWeb,
+                          status: !kIsWeb ? 'READY' : 'N/A',
+                        ),
+                        const SizedBox(height: 8),
+                        // Web Chunking
+                        _buildAudioPipelineRow(
+                          icon: '🌐',
+                          label: 'Web Chunking',
+                          description: '2-sec chunks, stopToBlob()',
+                          isActive: kIsWeb,
+                          status: kIsWeb ? 'ACTIVE' : 'STANDBY',
+                        ),
+                        const SizedBox(height: 8),
+                        // Standard Recording
+                        _buildAudioPipelineRow(
+                          icon: '⏺️',
+                          label: 'Standard Recording',
+                          description: 'Fallback WAV 16k mono',
+                          isActive: true,
+                          status: 'AVAILABLE',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildAdminAnalyticsPanel(),
+                  const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: _adminMicroIaMode,
                     items: const [
