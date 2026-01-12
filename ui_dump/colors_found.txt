@@ -1,0 +1,200 @@
+lib/main.dart:92:const kPrestoOrange = Color(0xFFFF6600);
+lib/main.dart:93:const kPrestoBlue = Color(0xFF1A73E8);
+lib/main.dart:5476:      backgroundColor: const Color(0xFFF6F7F9),
+lib/main.dart:5688:                            backgroundColor: const Color(0xFFFFF3E8),
+lib/main.dart:5983:      backgroundColor: const Color(0xFFF6F7F9),
+lib/main.dart:6022:                            backgroundColor: const Color(0xFFFFF3E8),
+lib/main.dart:6369:    final bgColor = _isDarkMode ? const Color(0xFF1a1a1a) : Colors.white;
+lib/main.dart:6371:        _isDarkMode ? const Color(0xFF303030) : const Color(0xFFf0f0f0);
+lib/main.dart:6386:              _isDarkMode ? const Color(0xFF1a1a1a) : kPrestoOrange,
+lib/main.dart:6591:                                    ? const Color(0xFF454545)
+lib/main.dart:6592:                                    : const Color(0xFFFFF3E0),
+lib/main.dart:7204:                  color: const Color(0xFFFFF3E0),
+lib/main.dart:8306:            Color(0xFFE53935), // Rouge plus clair en haut
+lib/main.dart:8307:            Color(0xFFC62828), // Rouge plus profond en bas
+lib/main.dart:8313:            color: const Color(0xFFC62828).withOpacity(0.18),
+lib/main.dart:11556:                                  color: const Color(0xFFF5F5F5),
+lib/main.dart:11940:                                    fillColor: const Color(0xFFF9F9F9),
+lib/main.dart:11982:                                    fillColor: const Color(0xFFF9F9F9),
+lib/main.dart:12507:              backgroundColor: Color(0xFFFFF3E0),
+lib/main.dart:12935:                color: const Color(0xFFFFF3E0),
+lib/widgets/premium_ai_button.dart:40:            Color(0xFF2D84F6), // Bleu plus clair en haut
+lib/widgets/premium_ai_button.dart:41:            Color(0xFF1A73E8), // Bleu principal plus profond en bas
+lib/widgets/premium_ai_button.dart:48:            color: const Color(0xFF1A73E8).withValues(alpha: 0.18), // 15-20% opacity
+lib/widgets/cache_metrics_dashboard.dart:28:        backgroundColor: const Color(0xFFFF6600),
+lib/widgets/presto_info_icon_animated.dart:28:  static const Color kBlue = Color(0xFF1A73E8);
+lib/widgets/presto_info_icon_animated.dart:29:  static const Color kOrange = Color(0xFFFF6600);
+lib/widgets/premium_info_button.dart:108:                        color: Color(0x22000000),
+lib/widgets/premium_info_button.dart:146:                        color: Color(0x22000000),
+lib/widgets/recording_mic_button_demo.dart:29:        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1A73E8)),
+lib/widgets/recording_mic_button_demo.dart:91:                                  ? const Color(0xFFE53935)
+lib/widgets/recording_mic_button_demo.dart:92:                                  : const Color(0xFF1A73E8),
+lib/widgets/recording_mic_button.dart:83:            ? const Color(0xFFE53935) // Rouge vif pendant enregistrement
+lib/widgets/recording_mic_button.dart:84:            : const Color(0xFF1A73E8)); // Bleu Presto
+lib/widgets/random_asset_ticker.dart:248:            colors: [Color(0xFF121212), Color(0xFF2C2C2C)],
+lib/widgets/offer_card.dart:11:  static const Color _kPrestoBlue = Color(0xFF2196F3);
+lib/widgets/streaming_health_check.dart:20:  static const Color prestoOrange = Color(0xFFFF6600);
+lib/widgets/streaming_health_check.dart:96:        side: const BorderSide(color: Color(0xFFE8E8E8), width: 1),
+lib/widgets/ad_banner.dart:163:          color: const Color(0xFFFAFAFA),
+lib/widgets/ad_banner.dart:164:          border: Border.all(color: const Color(0xFFE0E0E0), width: 0.75),
+lib/widgets/entrepreneur_toolbox_slide.dart:15:  static const prestoOrange = Color(0xFFFF6600);
+lib/widgets/entrepreneur_toolbox_slide.dart:16:  static const prestoBlue = Color(0xFF1A73E8);
+lib/main_backup.dart:13:const kPrestoOrange = Color(0xFFFF6600);
+lib/main_backup.dart:14:const kPrestoBlue = Color(0xFF1A73E8);
+lib/main_backup.dart:92:        scaffoldBackgroundColor: const Color(0xFFFDF4EC),
+lib/main_backup.dart:707:              Color(0xFFFFA36C),
+lib/main_backup.dart:854:      backgroundColor: const Color(0xFFF9F2EA),
+lib/main_backup.dart:859:              colors: [Colors.white, Color(0xFFFDF4EC)],
+lib/main_backup.dart:928:                                    Color(0xFFFFA36C),
+lib/main_backup.dart:1158:                    color: const Color(0xFFE3F2FD),
+lib/main_backup.dart:1311:                                      color: const Color(0xFFFFF3E0),
+lib/main_backup.dart:2311:                          backgroundColor: Color(0xFFFFF3E0),
+lib/main_backup.dart:2844:          color: primary ? const Color(0xFFFFF3E0) : Colors.white,
+lib/main_backup.dart:3156:                            color: const Color(0xFFFFF3E0),
+lib/main_backup.dart:3552:                color: const Color(0xFFFFF3E0),
+lib/main_backup.dart:5090:                            backgroundColor: const Color(0xFFF5F5F5),
+lib/premium_ai_button_preview.dart:23:        backgroundColor: const Color(0xFF1A73E8),
+lib/premium_ai_button_preview.dart:183:                color: Color(0xFF1A73E8),
+lib/premium_ai_button_preview.dart:197:        color: const Color(0xFF1E1E1E),
+lib/premium_ai_button_preview.dart:216:              color: const Color(0xFF2D2D30),
+lib/premium_ai_button_preview.dart:230:                  color: Color(0xFFCE9178),
+lib/main.dart.save:14:const kPrestoOrange = Color(0xFFFF6600);
+lib/main.dart.save:15:const kPrestoBlue = Color(0xFF1A73E8);
+lib/main.dart.save:93:        scaffoldBackgroundColor: const Color(0xFFFDF4EC),
+lib/main.dart.save:709:      backgroundColor: const Color(0xFFF9F2EA),
+lib/main.dart.save:714:              colors: [Colors.white, Color(0xFFFDF4EC)],
+lib/main.dart.save:778:                                    Color(0xFFFFA36C),
+lib/main.dart.save:1033:                    color: const Color(0xFFE3F2FD),
+lib/main.dart.save:1186:                                      color: const Color(0xFFFFF3E0),
+lib/main.dart.save:2374:                          backgroundColor: Color(0xFFFFF3E0),
+lib/main.dart.save:2821:          color: primary ? const Color(0xFFFFF3E0) : Colors.white,
+lib/main.dart.save:3133:                            color: const Color(0xFFFFF3E0),
+lib/main.dart.save:3529:                color: const Color(0xFFFFF3E0),
+lib/main.dart.save:5099:                              backgroundColor: const Color(0xFFF5F5F5),
+lib/app_core.dart:4:const kPrestoOrange = Color(0xFFFF6600);
+lib/app_core.dart:5:const kPrestoBlue = Color(0xFF1A73E8);
+lib/profile_page.dart:1362:              color: const Color(0xFFFF6600).withValues(alpha: 0.2),
+lib/profile_page.dart:1381:                      color: const Color(0xFFFF6600).withValues(alpha: 0.1),
+lib/profile_page.dart:1386:                      color: Color(0xFFFF6600),
+lib/profile_page.dart:1858:          color: const Color(0xFFFF6600).withValues(alpha: 0.2),
+lib/profile_page.dart:1876:              color: const Color(0xFFFF6600).withValues(alpha: 0.08),
+lib/constants.dart:105:                  color: const Color(0xFFF4F4F4), // fond léger DROM
+lib/utils/friendly_snackbar.dart:6:const Color _kPrestoBlue = Color(0xFF1A73E8);
+lib/utils/friendly_snackbar.dart:76:              color: Color(0xFFD32F2F),
+lib/pages/admin_space_page.dart:53:  static const Color prestoOrange = Color(0xFFFF6600);
+lib/pages/admin_space_page.dart:54:  static const Color prestoBlue = Color(0xFF1A73E8);
+lib/pages/admin_space_page.dart:302:  static const Color prestoOrange = Color(0xFFFF6600);
+lib/pages/admin_space_page.dart:303:  static const Color prestoBlue = Color(0xFF1A73E8);
+lib/pages/home_page_v2_option2.dart:13:  static const prestoOrange = Color(0xFFFF6600);
+lib/pages/home_page_v2_option2.dart:14:  static const prestoBlue = Color(0xFF1A73E8);
+lib/pages/home_page_v2_option2.dart:15:  static const bg = Color(0xFFF6F8FC);
+lib/pages/home_page_v2_option2.dart:16:  static const textMuted = Color(0xFF6B7280);
+lib/pages/home_page_v2_option2.dart:529:                  Color(0xFFFFA36C),
+lib/pages/account/account_premium_page.dart:15:  static const prestoOrange = Color(0xFFFF6600);
+lib/pages/account/account_premium_page.dart:16:  static const textMuted = Color(0xFF6B7280);
+lib/pages/account/account_premium_page.dart:478:      backgroundColor: const Color(0xFFF8FAFC),
+lib/pages/account/account_premium_page.dart:666:                      color: const Color(0xFFFFF7ED),
+lib/pages/account/account_premium_page.dart:843:    const prestoOrange = Color(0xFFFF6600);
+lib/pages/account/account_premium_page.dart:919:        fillColor: const Color(0xFFF9FAFB),
+lib/pages/account/account_premium_page.dart:957:        fillColor: const Color(0xFFF9FAFB),
+lib/pages/account/account_premium_page.dart:980:    const prestoOrange = Color(0xFFFF6600);
+lib/pages/account/account_premium_page.dart:1015:    const prestoBlue = Color(0xFF1A73E8);
+lib/pages/account/account_premium_page.dart:1042:    const prestoOrange = Color(0xFFFF6600);
+lib/pages/account/account_premium_page.dart:1066:      const prestoOrange = Color(0xFFFF6600);
+lib/pages/account/account_premium_page.dart:1136:    const prestoOrange = Color(0xFFFF6600);
+lib/pages/toolbox_page.dart:14:  static const Color prestoOrange = Color(0xFFFF6A00);
+lib/pages/toolbox_page.dart:15:  static const Color prestoBlue = Color(0xFF1A73E8);
+lib/pages/toolbox_page.dart:16:  static const Color bg = Color(0xFFF6F7FB);
+lib/pages/toolbox_page.dart:18:  static const Color textPrimary = Color(0xFF0F172A);
+lib/pages/toolbox_page.dart:19:  static const Color textSecondary = Color(0xFF6B7280);
+lib/pages/toolbox_page.dart:20:  static const Color success = Color(0xFF16A34A);
+lib/pages/toolbox_page.dart:46:                  iconBg: const Color(0xFFFFE9DA),
+lib/pages/toolbox_page.dart:80:                  iconBg: const Color(0xFFE8F0FF),
+lib/pages/toolbox_page.dart:136:              Color(0x00FF6A00), // transparent
+lib/pages/toolbox_page.dart:166:                color: Color(0x14000000),
+lib/pages/toolbox_page.dart:224:            color: Color(0x1A000000),
+lib/pages/toolbox_page.dart:330:        color: const Color(0xFFF9FAFB),
+lib/pages/toolbox_page.dart:332:        border: Border.all(color: const Color(0xFFE5E7EB)),
+lib/pages/toolbox_page.dart:423:                color: Color(0x22000000),
+lib/pages/toolbox_page.dart:464:            color: Color(0x12000000),
+lib/pages/toolbox_page.dart:476:              color: const Color(0xFFF3F4F6),
+lib/pages/pro_profile_page.dart:8:const kPrestoOrange = Color(0xFFFF6600);
+lib/pages/toolbox_je_me_lance_page.dart:73:  static const Color kOrange = Color(0xFFFF6600);
+lib/pages/toolbox_je_me_lance_page.dart:74:  static const Color kBlue = Color(0xFF1A73E8);
+lib/pages/toolbox_je_me_lance_page.dart:75:  static const Color kBg = Color(0xFFF6F7FB);
+lib/pages/toolbox_je_me_lance_page.dart:76:  static const Color kCardBg = Color(0xFFE8E8E8); // Gris clair pour les tuiles
+lib/pages/toolbox_je_me_lance_page.dart:1340:          ? const Color(0xFF1A73E8)
+lib/pages/toolbox_je_me_lance_page.dart:1342:              ? const Color(0xFF1A73E8)
+lib/pages/toolbox_je_me_lance_page.dart:1535:            color: selected ? const Color(0xFF1A73E8) : Colors.grey.shade300,
+lib/pages/toolbox_je_me_lance_page.dart:1542:                    selected ? const Color(0xFF1A73E8) : Colors.grey.shade700),
+lib/pages/toolbox_hub_page.dart:21:  static const Color prestoOrange = Color(0xFFFF6600);
+lib/pages/toolbox_hub_page.dart:22:  static const Color prestoBlue = Color(0xFF1A73E8);
+lib/pages/toolbox_hub_page.dart:27:      backgroundColor: const Color(0xFFF3F4F6),
+lib/pages/toolbox_hub_page.dart:40:              bg: Color(0xFFFFE6D6),
+lib/pages/toolbox_hub_page.dart:65:              bg: Color(0xFFE7F0FF),
+lib/pages/toolbox_hub_page.dart:245:                      size: 18, color: Color(0xFF2EAD6B)),
+lib/pages/legal_info_page.dart:13:  static const Color kOrange = Color(0xFFFF6600);
+lib/pages/legal_info_page.dart:14:  static const Color kBg = Color(0xFFFFFFFF);
+lib/pages/legal_info_page.dart:474:                  color: Color(0xFF2B2623),
+lib/pages/legal_info_page.dart:522:        border: Border.all(color: const Color(0xFFE6E1DC)),
+lib/pages/legal_info_page.dart:561:                      color: isActive ? orange : const Color(0xFF8A817B),
+lib/pages/legal_info_page.dart:598:            style: const TextStyle(color: Color(0xFF7C7772)),
+lib/pages/legal_info_page.dart:648:                          style: TextStyle(color: Color(0xFF7C7772)),
+lib/pages/legal_info_page.dart:665:                  color: const Color(0xFFFFF1E8),
+lib/pages/legal_info_page.dart:667:                  border: Border.all(color: const Color(0xFFFFD6BF)),
+lib/pages/legal_info_page.dart:677:                          color: const Color(0xFF4A3F39),
+lib/pages/legal_info_page.dart:690:                style: const TextStyle(fontSize: 12, color: Color(0xFF8A817B)),
+lib/pages/legal_info_page.dart:726:              style: TextStyle(color: Color(0xFF7C7772)),
+lib/pages/legal_info_page.dart:736:                    color: const Color(0xFFFFF7F2),
+lib/pages/legal_info_page.dart:738:                    border: Border.all(color: const Color(0xFFE6E1DC)),
+lib/pages/legal_info_page.dart:749:                          color: Color(0xFF3A332F),
+lib/pages/pricing_calculator_page.dart:15:const Color kPrestoOrange = Color(0xFFFF6600);
+lib/pages/pricing_calculator_page.dart:16:const Color kPrestoBlue = Color(0xFF1A73E8);
+lib/pages/pricing_calculator_page.dart:29:        scaffoldBackgroundColor: const Color(0xFFF5F6F8),
+lib/pages/pricing_calculator_page.dart:138:    final border = selected ? accent : const Color(0xFFE5E7EB);
+lib/pages/pricing_calculator_page.dart:152:              color: Color(0x11000000),
+lib/pages/pricing_calculator_page.dart:201:          color: selected ? accent : const Color(0xFFBDBDBD),
+lib/pages/pricing_calculator_page.dart:740:        Color(0xFF9CA3AF),
+lib/pages/pricing_calculator_page.dart:748:        Color(0xFFF59E0B),
+lib/pages/pricing_calculator_page.dart:755:        Color(0xFF22C55E),
+lib/pages/pricing_calculator_page.dart:761:      Color(0xFFEF4444),
+lib/pages/pricing_calculator_page.dart:835:            color: Color(0x12000000),
+lib/pages/pricing_calculator_page.dart:939:              fillColor: const Color(0xFFF3F4F6),
+lib/pages/pricing_calculator_page.dart:1007:        color: const Color(0xFFEFF2F6),
+lib/pages/pricing_calculator_page.dart:1068:        color: const Color(0xFFF3F4F6),
+lib/pages/pricing_calculator_page.dart:1134:                    color: Color(0x22000000),
+lib/pages/pricing_calculator_page.dart:1176:            color: Color(0x12000000),
+lib/pages/pricing_calculator_page.dart:1193:              color: const Color(0xFFFFF3E8),
+lib/pages/pricing_calculator_page.dart:1269:            color: Color(0x12000000),
+lib/pages/pricing_calculator_page.dart:1350:        border: Border.all(color: const Color(0xFFE5E7EB)),
+lib/pages/pricing_calculator_page.dart:1396:        fillColor: const Color(0xFFF3F4F6),
+lib/pages/auth/presto_premium_auth_page.dart:33:  static const prestoOrange = Color(0xFFFF6600);
+lib/pages/auth/presto_premium_auth_page.dart:34:  // static const prestoBlue = Color(0xFF1A73E8); // Non utilisé actuellement
+lib/pages/auth/presto_premium_auth_page.dart:35:  static const textMuted = Color(0xFF6B7280);
+lib/pages/auth/presto_premium_auth_page.dart:170:      backgroundColor: const Color(0xFFF8FAFC),
+lib/pages/auth/presto_premium_auth_page.dart:566:            color: Color(0xFF111827),
+lib/pages/auth/presto_premium_auth_page.dart:600:    final bg = isApple ? const Color(0xFF1F2329) : Colors.white;
+lib/pages/auth/presto_premium_auth_page.dart:601:    final fg = isApple ? Colors.white : const Color(0xFF111827);
+lib/pages/auth/presto_premium_auth_page.dart:704:        fillColor: const Color(0xFFF7F8FA),
+lib/pages/auth/presto_premium_auth_page.dart:738:          color: const Color(0xFFFF6600),
+lib/pages/auth/presto_premium_auth_page.dart:776:          color: Color(0xFF1A73E8),
+lib/pages/auth/presto_premium_auth_page.dart:793:        color: const Color(0xFFFFF3E8),
+lib/pages/auth/presto_premium_auth_page.dart:797:      child: const Icon(Icons.work, color: Color(0xFFB45309), size: 26),
+lib/pages/messages/conversation_page.dart:29:  static const Color kPrestoOrange = Color(0xFFFF6600);
+lib/pages/messages/conversations_list_page.dart:9:const kPrestoOrange = Color(0xFFFF6600);
+lib/pages/publish_offer_page.dart:27:const kPrestoOrange = Color(0xFFFF6600);
+lib/pages/publish_offer_page.dart:28:const kPrestoBlue = Color(0xFF1A73E8);
+lib/pages/publish_offer_page.dart:34:const kBorder = Color(0xFFE5E7EB);
+lib/pages/publish_offer_page.dart:1149:                  style: TextStyle(fontSize: 12, color: Color(0xFF7A7A7A)),
+lib/pages/publish_offer_page.dart:1192:                        colors: [kPrestoBlue, Color(0xFF0D47A1)],
+lib/pages/admin/streaming_monitoring_page.dart:12:  static const Color prestoOrange = Color(0xFFFF6600);
+lib/pages/admin/streaming_monitoring_page.dart:13:  static const Color prestoBlue = Color(0xFF1A73E8);
+lib/pages/admin/streaming_monitoring_page.dart:225:                                backgroundColor: Color(0xFFE8F5E9),
+lib/pages/admin/offers_management_page.dart:6:const Color kPrestoOrange = Color(0xFFFF6600);
+lib/pages/admin/offers_management_page.dart:7:const Color kPrestoBlue = Color(0xFF1A73E8);
+lib/pages/admin/messages_management_page.dart:6:const Color kPrestoOrange = Color(0xFFFF6600);
+lib/pages/admin/messages_management_page.dart:7:const Color kPrestoBlue = Color(0xFF1A73E8);
+lib/pages/admin/moderation_page.dart:6:const Color kPrestoOrange = Color(0xFFFF6600);
+lib/app/theme.dart:4:  const prestoOrange = Color(0xFFFF6600);
+lib/app/theme.dart:5:  const prestoBlue = Color(0xFF1A73E8);
+lib/app/theme.dart:18:    scaffoldBackgroundColor: const Color(0xFFFDF4EC),

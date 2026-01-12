@@ -18,10 +18,6 @@ Le Client ID contient des `xxxxxxxxxx` au lieu du vrai ID.
 ### 2. ⚠️ Domaines non autorisés
 
 Firebase Console → Authentication → Settings → Authorized domains
-- Localhost (pour dev)
-- GitHub Pages (pour prod)
-- Codespaces URLs
-
 ### 3. ⚠️ Google Sign-In pas activé
 
 Firebase Console → Authentication → Sign-in method → Google (Disabled)

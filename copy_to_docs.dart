@@ -17,10 +17,10 @@ void main() async {
     final destFile = File('${destDir.path}/$fileName');
 
     if (sourceFile.existsSync()) {
-      print('Copie: $fileName');
+      stdout.writeln('Copie: $fileName');
       sourceFile.copySync(destFile.path);
     } else {
-      print('⚠️  Fichier non trouvé: ${sourceFile.path}');
+      stdout.writeln('⚠️  Fichier non trouvé: ${sourceFile.path}');
     }
   }
 
@@ -32,19 +32,19 @@ void main() async {
     final destSubDir = Directory('${destDir.path}/$dirName');
 
     if (sourceSubDir.existsSync()) {
-      print('Copie du répertoire: $dirName');
+      stdout.writeln('Copie du répertoire: $dirName');
       if (destSubDir.existsSync()) {
         destSubDir.deleteSync(recursive: true);
       }
       _copyDirectory(sourceSubDir, destSubDir);
     } else {
-      print('⚠️  Répertoire non trouvé: ${sourceSubDir.path}');
+      stdout.writeln('⚠️  Répertoire non trouvé: ${sourceSubDir.path}');
     }
   }
 
   // Créer .nojekyll
   final noJekyllFile = File('${destDir.path}/.nojekyll');
-  print('Création: .nojekyll');
+  stdout.writeln('Création: .nojekyll');
   noJekyllFile.writeAsStringSync('');
 
   // Créer 404.html pour GitHub Pages
@@ -59,7 +59,7 @@ void main() async {
         while (i >= 0) {
             if (pathparts[i] !== '') {
                 pathparts.splice(i + 1, pathparts.length - i - 1);
-                location.replace(pathparts.join('/') + '/?p=' + location.pathname.slice(1).replace(/\\\//g, '~') + location.search);
+                location.replace(pathparts.join('/') + '/?p=' + location.pathname.slice(1).replace(/\\//g, '~') + location.search);
                 return;
             }
             i--;
@@ -71,10 +71,10 @@ void main() async {
 ''';
 
   final file404 = File('${destDir.path}/404.html');
-  print('Création: 404.html');
+  stdout.writeln('Création: 404.html');
   file404.writeAsStringSync(html404Content);
 
-  print('\n✅ Copie terminée!');
+  stdout.writeln('\n✅ Copie terminée!');
 }
 
 void _copyDirectory(Directory source, Directory destination) {

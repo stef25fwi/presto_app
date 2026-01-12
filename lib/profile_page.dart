@@ -11,6 +11,7 @@ import 'constants.dart';
 import 'widgets/phone_input_field.dart';
 import 'widgets/user_moderation_status.dart';
 import 'pages/legal_info_page.dart';
+import 'services/messaging_service.dart';
 
 enum AuthMode { login, signup }
 
@@ -1306,19 +1307,30 @@ class _AccountPageState extends State<AccountPage> {
               ListTile(
                 leading: Icon(Icons.inbox_outlined, color: colorScheme.primary),
                 title: const Text('Boîte de réception'),
-                trailing: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text('3',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                trailing: StreamBuilder<int>(
+                  stream: _getUnreadMessagesStream(),
+                  builder: (context, snapshot) {
+                    final unreadCount = snapshot.data ?? 0;
+                    if (unreadCount == 0) return const SizedBox.shrink();
+                    
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '$unreadCount',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  },
                 ),
                 onTap: () {
-                  // TODO: Navigation vers les messages
-                  showSuccessSnackBar(context, 'Fonctionnalité à venir');
+                  Navigator.of(context).pushNamed('/messages');
                 },
               ),
               const Divider(height: 0),
@@ -1326,8 +1338,7 @@ class _AccountPageState extends State<AccountPage> {
                 leading: Icon(Icons.send_outlined, color: colorScheme.primary),
                 title: const Text('Messages envoyés'),
                 onTap: () {
-                  // TODO: Navigation vers messages envoyés
-                  showSuccessSnackBar(context, 'Fonctionnalité à venir');
+                  Navigator.of(context).pushNamed('/messages');
                 },
               ),
             ],
@@ -2019,4 +2030,23 @@ class _AccountPageState extends State<AccountPage> {
       ),
     );
   }
+
+  /// Stream pour compter les messages non lus
+  Stream<int> _getUnreadMessagesStream() {
+    final messagingService = MessagingService();
+    return messagingService.getConversationsStream().asyncMap((snapshot) async {
+      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+      if (currentUserId == null) return 0;
+
+      int total = 0;
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final unreadMap = data['unreadCount'] as Map<String, dynamic>?;
+        final unread = unreadMap?[currentUserId] as int? ?? 0;
+        total += unread;
+      }
+      return total;
+    });
+  }
 }
+

@@ -7,22 +7,22 @@ void main() async {
   // Supprimer docs/ et le recréer
   if (docsDir.existsSync()) {
     docsDir.deleteSync(recursive: true);
-    print('✅ Répertoire docs/ supprimé');
+    stdout.writeln('✅ Répertoire docs/ supprimé');
   }
 
   docsDir.createSync(recursive: true);
-  print('✅ Répertoire docs/ créé');
+  stdout.writeln('✅ Répertoire docs/ créé');
 
   // Copier tous les fichiers de build/web vers docs/
   await _copyDirectory(buildWebDir, docsDir);
-  print('✅ Fichiers copiés de build/web vers docs/');
+  stdout.writeln('✅ Fichiers copiés de build/web vers docs/');
 
   // Lister les fichiers
-  print('\n📁 Fichiers dans docs/:');
+  stdout.writeln('\n📁 Fichiers dans docs/:');
   final files = docsDir.listSync(recursive: true);
   for (var file in files.take(20)) {
     if (file is File) {
-      print('  - ${file.path}');
+      stdout.writeln('  - ${file.path}');
     }
   }
 }

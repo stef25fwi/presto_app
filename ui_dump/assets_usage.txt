@@ -1,0 +1,5 @@
+lib/widgets/random_asset_ticker.dart:157:          await precacheImage(AssetImage(asset), context);
+lib/widgets/random_asset_ticker.dart:300:      child: Image.asset(
+lib/main_backup.dart:800:                            child: Image.asset(
+lib/main_backup.dart:1001:                                            ? Image.asset(
+lib/main.dart.save:876:                                            ? Image.asset(

@@ -257,9 +257,9 @@ class _MessagesManagementPageState extends State<MessagesManagementPage> {
 
   Widget _buildFilterButtons() {
     final filters = [
-      ('all', 'Toutes (${_totalConversations})', null),
-      ('unread', 'Non lues (${_unreadConversations})', Colors.orange),
-      ('archived', 'Archivées (${_archivedConversations})', Colors.grey),
+      ('all', 'Toutes ($_totalConversations)', null),
+      ('unread', 'Non lues ($_unreadConversations)', Colors.orange),
+      ('archived', 'Archivées ($_archivedConversations)', Colors.grey),
     ];
 
     return SingleChildScrollView(

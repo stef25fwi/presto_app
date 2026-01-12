@@ -1,0 +1,721 @@
+lib/main.dart:546:            style: TextStyle(
+lib/main.dart:656:          style: TextStyle(
+lib/main.dart:1113:                        style: TextStyle(
+lib/main.dart:1126:                    style: TextStyle(
+lib/main.dart:1150:                        style: TextStyle(
+lib/main.dart:1171:                        style: TextStyle(
+lib/main.dart:1665:              hintStyle: const TextStyle(
+lib/main.dart:1710:                      style: const TextStyle(
+lib/main.dart:1820:          style: TextStyle(
+lib/main.dart:1851:                  style: TextStyle(fontWeight: FontWeight.bold),
+lib/main.dart:1873:                      style: TextStyle(
+lib/main.dart:1880:                      style: TextStyle(
+lib/main.dart:2138:                            style: TextStyle(
+lib/main.dart:2231:                                          style: TextStyle(
+lib/main.dart:2244:                                          style: TextStyle(
+lib/main.dart:2257:                                          style: TextStyle(
+lib/main.dart:2309:                                              style: const TextStyle(
+lib/main.dart:2320:                                              style: const TextStyle(
+lib/main.dart:2333:                                              style: const TextStyle(
+lib/main.dart:2420:                            style: TextStyle(
+lib/main.dart:2430:                              style: TextStyle(
+lib/main.dart:2476:                                    style: TextStyle(
+lib/main.dart:2486:                                    style: TextStyle(
+lib/main.dart:2521:                              style: TextStyle(
+lib/main.dart:2690:                        style: TextStyle(
+lib/main.dart:2832:              style: const TextStyle(
+lib/main.dart:3010:                style: TextStyle(
+lib/main.dart:3083:                  style: const TextStyle(
+lib/main.dart:3124:                  style: const TextStyle(
+lib/main.dart:3159:                    style: const TextStyle(
+lib/main.dart:3168:                    style: const TextStyle(
+lib/main.dart:4103:                        style: TextStyle(
+lib/main.dart:4122:                          style: const TextStyle(
+lib/main.dart:4251:                                style: TextStyle(
+lib/main.dart:4261:                                style: TextStyle(
+lib/main.dart:4351:                                  style: TextStyle(
+lib/main.dart:4390:                                style: const TextStyle(
+lib/main.dart:4743:                      style: const TextStyle(
+lib/main.dart:4998:              style: TextStyle(
+lib/main.dart:5007:              style: TextStyle(
+lib/main.dart:5299:                style: TextStyle(
+lib/main.dart:5358:                    style: const TextStyle(
+lib/main.dart:5386:                    style: TextStyle(
+lib/main.dart:5518:                        style: TextStyle(
+lib/main.dart:5583:                    textStyle: const TextStyle(
+lib/main.dart:5670:                          textStyle: const TextStyle(
+lib/main.dart:6051:                            textStyle: const TextStyle(
+lib/main.dart:6329:                style: TextStyle(
+lib/main.dart:6350:                  style: TextStyle(fontWeight: FontWeight.w800),
+lib/main.dart:6412:                        style: const TextStyle(color: Colors.black87),
+lib/main.dart:6470:                          style: TextStyle(
+lib/main.dart:6480:                          style: const TextStyle(
+lib/main.dart:6521:                          style: TextStyle(
+lib/main.dart:6531:                          style: TextStyle(
+lib/main.dart:6610:                                    style: TextStyle(
+lib/main.dart:6621:                                    style: TextStyle(
+lib/main.dart:6642:                                  style: TextStyle(
+lib/main.dart:6663:                                      style: const TextStyle(
+lib/main.dart:6980:                style: const TextStyle(
+lib/main.dart:7034:              style: TextStyle(fontWeight: FontWeight.w700),
+lib/main.dart:7038:              style: TextStyle(fontSize: 14),
+lib/main.dart:7113:              style: TextStyle(fontWeight: FontWeight.w700),
+lib/main.dart:7123:                    style: TextStyle(
+lib/main.dart:7141:                        style: const TextStyle(
+lib/main.dart:7144:                          fontFamily: 'monospace',
+lib/main.dart:7299:                          style: TextStyle(
+lib/main.dart:7357:                                  style: const TextStyle(
+lib/main.dart:7366:                                style: TextStyle(
+lib/main.dart:7377:                                  style: TextStyle(
+lib/main.dart:7946:        const TextStyle(fontSize: 16, color: Colors.black87);
+lib/main.dart:7956:            style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700),
+lib/main.dart:8021:                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+lib/main.dart:8026:                style: TextStyle(fontSize: 14, color: Colors.black87),
+lib/main.dart:8625:                      style: TextStyle(
+lib/main.dart:8634:                    style: TextStyle(
+lib/main.dart:8684:                          style: TextStyle(color: Colors.black87),
+lib/main.dart:8718:                    style: const TextStyle(
+lib/main.dart:9115:                      style: TextStyle(
+lib/main.dart:9141:                                style: TextStyle(
+lib/main.dart:9184:                              style: const TextStyle(
+lib/main.dart:9322:                        style: TextStyle(
+lib/main.dart:9330:                        style: TextStyle(
+lib/main.dart:9375:                    style: TextStyle(fontWeight: FontWeight.w600),
+lib/main.dart:9452:                        style: TextStyle(fontWeight: FontWeight.w700),
+lib/main.dart:9538:                    style: TextStyle(color: Colors.black54),
+lib/main.dart:9610:            style: const TextStyle(
+lib/main.dart:9633:                      style: const TextStyle(
+lib/main.dart:9652:                    style: const TextStyle(
+lib/main.dart:9885:          Text(icon, style: const TextStyle(fontSize: 18)),
+lib/main.dart:9893:                  style: const TextStyle(
+lib/main.dart:9902:                  style: const TextStyle(
+lib/main.dart:9914:                    style: const TextStyle(
+lib/main.dart:9930:                style: TextStyle(
+lib/main.dart:9970:                    style: TextStyle(
+lib/main.dart:9987:                style: const TextStyle(
+lib/main.dart:10058:                      style: TextStyle(fontWeight: FontWeight.w800),
+lib/main.dart:10066:                        style: TextStyle(
+lib/main.dart:10126:                style: TextStyle(
+lib/main.dart:10135:                style: const TextStyle(
+lib/main.dart:10146:            style: const TextStyle(
+lib/main.dart:10157:              style: const TextStyle(
+lib/main.dart:10168:              style: TextStyle(
+lib/main.dart:10187:                  style: TextStyle(fontWeight: FontWeight.w800),
+lib/main.dart:10198:                style: TextStyle(
+lib/main.dart:10237:          Text(icon, style: const TextStyle(fontSize: 18)),
+lib/main.dart:10245:                  style: const TextStyle(
+lib/main.dart:10253:                  style: TextStyle(
+lib/main.dart:10285:                  style: TextStyle(
+lib/main.dart:10331:              style: const TextStyle(
+lib/main.dart:10357:        final disabledHintStyle = TextStyle(
+lib/main.dart:10377:              style: TextStyle(
+lib/main.dart:10386:              style: TextStyle(
+lib/main.dart:10412:                    style: TextStyle(
+lib/main.dart:10432:                          style: TextStyle(
+lib/main.dart:10441:                          style: const TextStyle(
+lib/main.dart:10456:                    style: TextStyle(
+lib/main.dart:10476:                          style: TextStyle(
+lib/main.dart:10550:                      style: TextStyle(fontSize: 12),
+lib/main.dart:10561:                    style: const TextStyle(
+lib/main.dart:10613:                                  const TextStyle(fontWeight: FontWeight.w800),
+lib/main.dart:10625:                              style: TextStyle(fontWeight: FontWeight.w800),
+lib/main.dart:10632:                    style: TextStyle(fontSize: 11, color: Colors.black45),
+lib/main.dart:11000:                          style: TextStyle(
+lib/main.dart:11015:                        style: const TextStyle(
+lib/main.dart:11061:                  style: TextStyle(
+lib/main.dart:11097:                          style: TextStyle(
+lib/main.dart:11111:                          style: const TextStyle(
+lib/main.dart:11128:                        style: const TextStyle(
+lib/main.dart:11536:                              style: const TextStyle(
+lib/main.dart:11544:                              style: const TextStyle(
+lib/main.dart:11564:                                      style: TextStyle(
+lib/main.dart:11591:                                      style: const TextStyle(
+lib/main.dart:11615:                                        style: TextStyle(
+lib/main.dart:11629:                              style: TextStyle(
+lib/main.dart:11641:                        style: TextStyle(
+lib/main.dart:11822:                                  style: const TextStyle(
+lib/main.dart:11835:                        style: TextStyle(
+lib/main.dart:11859:                              style: TextStyle(
+lib/main.dart:11878:                                  style: TextStyle(
+lib/main.dart:11890:                        style: TextStyle(
+lib/main.dart:11902:                        style: TextStyle(
+lib/main.dart:11927:                                style: TextStyle(
+lib/main.dart:11959:                                          style: const TextStyle(
+lib/main.dart:12000:                                          style: const TextStyle(
+lib/main.dart:12045:                                          style: TextStyle(
+lib/main.dart:12102:                                    style: TextStyle(
+lib/main.dart:12115:                              style: TextStyle(
+lib/main.dart:12145:                                  style: TextStyle(
+lib/main.dart:12164:                            style: TextStyle(
+lib/main.dart:12220:                      style: TextStyle(
+lib/main.dart:12231:                style: TextStyle(
+lib/main.dart:12255:                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
+lib/main.dart:12416:          style: const TextStyle(
+lib/main.dart:12432:          style: TextStyle(
+lib/main.dart:12489:                    style: const TextStyle(fontWeight: FontWeight.w700),
+lib/main.dart:12515:              style: const TextStyle(
+lib/main.dart:12522:              style: const TextStyle(
+lib/main.dart:12539:                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
+lib/main.dart:12582:                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
+lib/main.dart:12795:            style: TextStyle(
+lib/main.dart:12801:            style: const TextStyle(
+lib/main.dart:12953:                    style: const TextStyle(
+lib/main.dart:12963:                    style: const TextStyle(
+lib/widgets/city_postal_autocomplete_compact.dart:84:            title: Text("Choisir le code postal", style: TextStyle(fontWeight: FontWeight.w700)),
+lib/widgets/offline_banner.dart:37:                    style: TextStyle(
+lib/widgets/offline_banner.dart:46:                    style: TextStyle(
+lib/widgets/offline_banner.dart:150:            style: TextStyle(
+lib/widgets/cache_metrics_dashboard.dart:58:              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+lib/widgets/cache_metrics_dashboard.dart:100:                style: TextStyle(color: Colors.grey[600]),
+lib/widgets/cache_metrics_dashboard.dart:115:                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+lib/widgets/cache_metrics_dashboard.dart:145:              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+lib/widgets/cache_metrics_dashboard.dart:209:            style: TextStyle(
+lib/widgets/cache_metrics_dashboard.dart:215:            style: TextStyle(
+lib/widgets/presto_info_icon_animated.dart:150:                          style: TextStyle(
+lib/widgets/premium_info_button.dart:156:                    style: const TextStyle(
+lib/widgets/recording_mic_button_demo.dart:58:                          style: TextStyle(
+lib/widgets/recording_mic_button_demo.dart:66:                          style: TextStyle(
+lib/widgets/recording_mic_button_demo.dart:87:                            style: TextStyle(
+lib/widgets/recording_mic_button_demo.dart:115:                          style: TextStyle(
+lib/widgets/recording_mic_button_demo.dart:160:                          style: TextStyle(
+lib/widgets/recording_mic_button_demo.dart:170:                          style: TextStyle(
+lib/widgets/recording_mic_button_demo.dart:188:                          style: TextStyle(
+lib/widgets/recording_mic_button_demo.dart:206:                          style: TextStyle(
+lib/widgets/recording_mic_button_demo.dart:239:                          style: TextStyle(
+lib/widgets/recording_mic_button_demo.dart:283:                            style: TextStyle(
+lib/widgets/recording_mic_button_demo.dart:284:                              fontFamily: 'monospace',
+lib/widgets/recording_mic_button_demo.dart:310:            style: const TextStyle(
+lib/widgets/recording_mic_button_demo.dart:319:              style: TextStyle(
+lib/widgets/user_moderation_status.dart:63:                      style: TextStyle(
+lib/widgets/user_moderation_status.dart:76:                  style: TextStyle(
+lib/widgets/user_moderation_status.dart:87:                  style: TextStyle(
+lib/widgets/recording_mic_button.dart:178:                          style: const TextStyle(
+lib/widgets/recording_mic_button.dart:193:                          style: const TextStyle(
+lib/widgets/random_asset_ticker.dart:264:              style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
+lib/widgets/random_asset_ticker.dart:270:              style: TextStyle(color: Colors.white54, fontSize: 12),
+lib/widgets/moderation_badge.dart:33:                style: TextStyle(
+lib/widgets/moderation_badge.dart:60:                  style: TextStyle(
+lib/widgets/offer_card.dart:109:                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+lib/widgets/offer_card.dart:125:                    style: const TextStyle(fontSize: 13),
+lib/widgets/offer_card.dart:134:                            style: const TextStyle(fontSize: 12),
+lib/widgets/offer_card.dart:236:          style: TextStyle(
+lib/widgets/streaming_health_check.dart:120:                        style: const TextStyle(
+lib/widgets/streaming_health_check.dart:123:                          fontFamily: 'monospace',
+lib/widgets/streaming_health_check.dart:158:                              style: TextStyle(
+lib/widgets/streaming_health_check.dart:171:                        style: const TextStyle(
+lib/widgets/streaming_health_check.dart:197:                        style: TextStyle(
+lib/widgets/streaming_health_check.dart:200:                          fontFamily: 'monospace',
+lib/widgets/phone_input_field.dart:149:                    style: const TextStyle(fontSize: 14),
+lib/widgets/phone_input_field.dart:286:                      style: const TextStyle(fontSize: 13),
+lib/widgets/city_postal_autocomplete_field.dart:210:                style: const TextStyle(fontWeight: FontWeight.w800)),
+lib/widgets/entrepreneur_toolbox_slide.dart:139:                                  style: TextStyle(
+lib/widgets/entrepreneur_toolbox_slide.dart:152:                                  style: TextStyle(
+lib/widgets/entrepreneur_toolbox_slide.dart:227:                style: TextStyle(
+lib/widgets/entrepreneur_toolbox_slide.dart:296:        style: TextStyle(
+lib/main_backup.dart:107:          labelStyle: const TextStyle(
+lib/main_backup.dart:111:          hintStyle: const TextStyle(
+lib/main_backup.dart:185:                    style: TextStyle(
+lib/main_backup.dart:197:                  style: TextStyle(
+lib/main_backup.dart:221:                          TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+lib/main_backup.dart:242:                          TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+lib/main_backup.dart:619:            hintStyle: const TextStyle(
+lib/main_backup.dart:680:                              style: const TextStyle(
+lib/main_backup.dart:734:                    style: TextStyle(
+lib/main_backup.dart:753:                      style: const TextStyle(
+lib/main_backup.dart:764:                    style: TextStyle(
+lib/main_backup.dart:829:                              style: const TextStyle(
+lib/main_backup.dart:830:                                fontFamily: "RobotoMono",
+lib/main_backup.dart:878:                            style: TextStyle(
+lib/main_backup.dart:957:                                            style: const TextStyle(
+lib/main_backup.dart:966:                                            style: const TextStyle(
+lib/main_backup.dart:976:                                            style: const TextStyle(
+lib/main_backup.dart:1168:                        style: TextStyle(
+lib/main_backup.dart:1206:                      style: TextStyle(
+lib/main_backup.dart:1216:                        style: TextStyle(
+lib/main_backup.dart:1250:                        style: TextStyle(
+lib/main_backup.dart:1330:                                          style: const TextStyle(
+lib/main_backup.dart:1340:                                          style: const TextStyle(
+lib/main_backup.dart:1574:              style: const TextStyle(
+lib/main_backup.dart:1647:                            style: const TextStyle(
+lib/main_backup.dart:1663:              style: const TextStyle(
+lib/main_backup.dart:1729:                style: TextStyle(
+lib/main_backup.dart:1774:            style: const TextStyle(
+lib/main_backup.dart:1838:                style: const TextStyle(
+lib/main_backup.dart:1887:              style: const TextStyle(
+lib/main_backup.dart:1900:                  style: const TextStyle(
+lib/main_backup.dart:1908:                  style: const TextStyle(
+lib/main_backup.dart:2126:                        style: const TextStyle(
+lib/main_backup.dart:2198:                        style: const TextStyle(
+lib/main_backup.dart:2219:                        style: const TextStyle(
+lib/main_backup.dart:2254:                        style: const TextStyle(
+lib/main_backup.dart:2319:                          style: const TextStyle(
+lib/main_backup.dart:2324:                          style: const TextStyle(
+lib/main_backup.dart:2374:              style: TextStyle(
+lib/main_backup.dart:2383:              style: TextStyle(
+lib/main_backup.dart:2486:                style: TextStyle(
+lib/main_backup.dart:2524:                    style: const TextStyle(
+lib/main_backup.dart:2550:                    style: TextStyle(
+lib/main_backup.dart:2588:              style: const TextStyle(
+lib/main_backup.dart:2620:                    style: const TextStyle(
+lib/main_backup.dart:2646:              style: TextStyle(
+lib/main_backup.dart:2668:                            style: const TextStyle(
+lib/main_backup.dart:2683:    style: TextStyle(
+lib/main_backup.dart:2716:  style: TextStyle(
+lib/main_backup.dart:2744:            style: const TextStyle(
+lib/main_backup.dart:2762:  style: TextStyle(
+lib/main_backup.dart:2788:            style: TextStyle(
+lib/main_backup.dart:2826:                  style: TextStyle(
+lib/main_backup.dart:2919:            style: const TextStyle(
+lib/main_backup.dart:2979:                style: TextStyle(
+lib/main_backup.dart:3000:                  style: TextStyle(fontWeight: FontWeight.w800),
+lib/main_backup.dart:3061:                  style: const TextStyle(
+lib/main_backup.dart:3088:                      style: TextStyle(
+lib/main_backup.dart:3097:                      style: TextStyle(
+lib/main_backup.dart:3173:                                style: const TextStyle(
+lib/main_backup.dart:3183:                                style: TextStyle(
+lib/main_backup.dart:3203:                              style: const TextStyle(
+lib/main_backup.dart:3222:                                  style: const TextStyle(
+lib/main_backup.dart:3505:                style: const TextStyle(
+lib/main_backup.dart:3622:                        style: TextStyle(
+lib/main_backup.dart:3684:                                style: const TextStyle(
+lib/main_backup.dart:3693:                              style: TextStyle(
+lib/main_backup.dart:3705:                                style: TextStyle(
+lib/main_backup.dart:3901:                  style: TextStyle(
+lib/main_backup.dart:3924:                style: TextStyle(
+lib/main_backup.dart:3932:                style: const TextStyle(
+lib/main_backup.dart:3968:                    style: TextStyle(
+lib/main_backup.dart:4033:                            style: TextStyle(
+lib/main_backup.dart:4076:                      style: TextStyle(
+lib/main_backup.dart:4089:                      style: const TextStyle(
+lib/main_backup.dart:4136:                      style: const TextStyle(
+lib/main_backup.dart:4163:                            style: const TextStyle(
+lib/main_backup.dart:4199:                            style: const TextStyle(
+lib/main_backup.dart:4257:                      style: const TextStyle(
+lib/main_backup.dart:4273:                      style: const TextStyle(
+lib/main_backup.dart:4310:                          style: TextStyle(
+lib/main_backup.dart:4320:                      style: TextStyle(
+lib/main_backup.dart:4651:                  style: const TextStyle(
+lib/main_backup.dart:4659:                  style: TextStyle(
+lib/main_backup.dart:4745:                                  style: const TextStyle(
+lib/main_backup.dart:4767:                      style: const TextStyle(
+lib/main_backup.dart:4779:                  style: TextStyle(
+lib/main_backup.dart:4802:                      style: TextStyle(
+lib/main_backup.dart:4825:                      style: TextStyle(
+lib/main_backup.dart:4890:                      style: TextStyle(
+lib/main_backup.dart:4920:                        style: const TextStyle(
+lib/main_backup.dart:4928:                        style: const TextStyle(
+lib/main_backup.dart:4937:                        style: TextStyle(
+lib/main_backup.dart:4952:                  style: TextStyle(
+lib/main_backup.dart:5026:                            style: const TextStyle(
+lib/main_backup.dart:5042:                  style: TextStyle(
+lib/main_backup.dart:5066:                        style: TextStyle(
+lib/main_backup.dart:5080:                              style: TextStyle(
+lib/main_backup.dart:5099:                        style: TextStyle(
+lib/main_backup.dart:5113:                  style: TextStyle(
+lib/main_backup.dart:5159:                            style: const TextStyle(
+lib/main_backup.dart:5188:                            style: TextStyle(
+lib/main_backup.dart:5222:                                style: const TextStyle(
+lib/main_backup.dart:5233:                                style: const TextStyle(
+lib/main_backup.dart:5280:                      style: TextStyle(
+lib/main_backup.dart:5334:              style: const TextStyle(
+lib/main_backup.dart:5344:              style: const TextStyle(
+lib/premium_ai_button_preview.dart:34:              style: TextStyle(
+lib/premium_ai_button_preview.dart:43:              style: TextStyle(
+lib/premium_ai_button_preview.dart:107:          style: const TextStyle(
+lib/premium_ai_button_preview.dart:116:          style: const TextStyle(
+lib/premium_ai_button_preview.dart:141:            style: TextStyle(
+lib/premium_ai_button_preview.dart:171:              style: const TextStyle(
+lib/premium_ai_button_preview.dart:181:              style: const TextStyle(
+lib/premium_ai_button_preview.dart:184:                fontFamily: 'monospace',
+lib/premium_ai_button_preview.dart:205:            style: TextStyle(
+lib/premium_ai_button_preview.dart:227:                style: TextStyle(
+lib/premium_ai_button_preview.dart:228:                  fontFamily: 'monospace',
+lib/main.dart.save:108:          labelStyle: const TextStyle(
+lib/main.dart.save:112:          hintStyle: const TextStyle(
+lib/main.dart.save:186:                    style: TextStyle(
+lib/main.dart.save:198:                  style: TextStyle(
+lib/main.dart.save:222:                          TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+lib/main.dart.save:243:                          TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+lib/main.dart.save:626:            hintStyle: const TextStyle(
+lib/main.dart.save:687:                              style: const TextStyle(
+lib/main.dart.save:734:                            style: TextStyle(
+lib/main.dart.save:807:                                            style: const TextStyle(
+lib/main.dart.save:828:                                                style: const TextStyle(
+lib/main.dart.save:839:                                              style: const TextStyle(
+lib/main.dart.save:849:                                            style: const TextStyle(
+lib/main.dart.save:1043:                        style: TextStyle(
+lib/main.dart.save:1081:                      style: TextStyle(
+lib/main.dart.save:1091:                        style: TextStyle(
+lib/main.dart.save:1125:                        style: TextStyle(
+lib/main.dart.save:1205:                                          style: const TextStyle(
+lib/main.dart.save:1215:                                          style: const TextStyle(
+lib/main.dart.save:1350:              style: const TextStyle(
+lib/main.dart.save:1401:              style: const TextStyle(
+lib/main.dart.save:1415:                style: const TextStyle(
+lib/main.dart.save:1423:                style: const TextStyle(
+lib/main.dart.save:1497:                style: const TextStyle(
+lib/main.dart.save:1637:              style: const TextStyle(
+lib/main.dart.save:1710:                            style: const TextStyle(
+lib/main.dart.save:1726:              style: const TextStyle(
+lib/main.dart.save:1792:                style: TextStyle(
+lib/main.dart.save:1837:            style: const TextStyle(
+lib/main.dart.save:1901:                style: const TextStyle(
+lib/main.dart.save:1950:              style: const TextStyle(
+lib/main.dart.save:1963:                  style: const TextStyle(
+lib/main.dart.save:1971:                  style: const TextStyle(
+lib/main.dart.save:2124:          style: const TextStyle(fontWeight: FontWeight.w700),
+lib/main.dart.save:2189:                        style: const TextStyle(
+lib/main.dart.save:2261:                        style: const TextStyle(
+lib/main.dart.save:2282:                        style: const TextStyle(
+lib/main.dart.save:2317:                        style: const TextStyle(
+lib/main.dart.save:2382:                          style: const TextStyle(
+lib/main.dart.save:2387:                          style: const TextStyle(
+lib/main.dart.save:2437:              style: TextStyle(
+lib/main.dart.save:2446:              style: TextStyle(
+lib/main.dart.save:2542:                style: TextStyle(
+lib/main.dart.save:2580:                    style: const TextStyle(
+lib/main.dart.save:2606:                    style: TextStyle(
+lib/main.dart.save:2631:          style: TextStyle(fontWeight: FontWeight.w700),
+lib/main.dart.save:2644:              style: const TextStyle(
+lib/main.dart.save:2676:              style: TextStyle(
+lib/main.dart.save:2698:                            style: const TextStyle(
+lib/main.dart.save:2708:                            style: TextStyle(
+lib/main.dart.save:2740:                            style: TextStyle(
+lib/main.dart.save:2765:                                      style: TextStyle(
+lib/main.dart.save:2803:                  style: TextStyle(
+lib/main.dart.save:2896:            style: const TextStyle(
+lib/main.dart.save:2936:          style: TextStyle(fontWeight: FontWeight.w700),
+lib/main.dart.save:2956:                style: TextStyle(
+lib/main.dart.save:2977:                  style: TextStyle(fontWeight: FontWeight.w800),
+lib/main.dart.save:3000:          style: TextStyle(fontWeight: FontWeight.w700),
+lib/main.dart.save:3038:                  style: const TextStyle(
+lib/main.dart.save:3065:                      style: TextStyle(
+lib/main.dart.save:3074:                      style: TextStyle(
+lib/main.dart.save:3150:                                style: const TextStyle(
+lib/main.dart.save:3160:                                style: TextStyle(
+lib/main.dart.save:3180:                              style: const TextStyle(
+lib/main.dart.save:3199:                                  style: const TextStyle(
+lib/main.dart.save:3482:                style: const TextStyle(
+lib/main.dart.save:3543:                style: const TextStyle(
+lib/main.dart.save:3598:                        style: TextStyle(
+lib/main.dart.save:3660:                                style: const TextStyle(
+lib/main.dart.save:3669:                              style: TextStyle(
+lib/main.dart.save:3681:                                style: TextStyle(
+lib/main.dart.save:3874:                  style: TextStyle(
+lib/main.dart.save:3897:                style: TextStyle(
+lib/main.dart.save:3905:                style: const TextStyle(
+lib/main.dart.save:3941:                    style: TextStyle(
+lib/main.dart.save:3966:          style: TextStyle(fontWeight: FontWeight.w700),
+lib/main.dart.save:4006:                            style: TextStyle(
+lib/main.dart.save:4049:                      style: TextStyle(
+lib/main.dart.save:4062:                      style: const TextStyle(
+lib/main.dart.save:4109:                      style: const TextStyle(
+lib/main.dart.save:4136:                            style: const TextStyle(
+lib/main.dart.save:4172:                            style: const TextStyle(
+lib/main.dart.save:4230:                      style: const TextStyle(
+lib/main.dart.save:4246:                      style: const TextStyle(
+lib/main.dart.save:4283:                          style: TextStyle(
+lib/main.dart.save:4293:                      style: TextStyle(
+lib/main.dart.save:4620:          style: TextStyle(fontWeight: FontWeight.w700),
+lib/main.dart.save:4637:                  style: const TextStyle(
+lib/main.dart.save:4645:                  style: TextStyle(
+lib/main.dart.save:4731:                                  style: const TextStyle(
+lib/main.dart.save:4753:                      style: const TextStyle(
+lib/main.dart.save:4765:                  style: TextStyle(
+lib/main.dart.save:4788:                      style: TextStyle(
+lib/main.dart.save:4811:                      style: TextStyle(
+lib/main.dart.save:4843:          style: TextStyle(fontWeight: FontWeight.w700),
+lib/main.dart.save:4876:                        style: TextStyle(
+lib/main.dart.save:4903:                        style: TextStyle(
+lib/main.dart.save:4933:                          style: const TextStyle(
+lib/main.dart.save:4941:                          style: const TextStyle(
+lib/main.dart.save:4950:                          style: TextStyle(
+lib/main.dart.save:4964:                    style: TextStyle(
+lib/main.dart.save:5036:                              style: const TextStyle(
+lib/main.dart.save:5051:                    style: TextStyle(
+lib/main.dart.save:5075:                          style: TextStyle(
+lib/main.dart.save:5089:                                style: TextStyle(
+lib/main.dart.save:5108:                          style: TextStyle(
+lib/main.dart.save:5130:                        style: TextStyle(
+lib/main.dart.save:5184:              style: const TextStyle(
+lib/main.dart.save:5194:              style: const TextStyle(
+lib/profile_page.dart:503:                style: TextStyle(fontWeight: FontWeight.w600),
+lib/profile_page.dart:514:                  style: const TextStyle(
+lib/profile_page.dart:523:                style: TextStyle(
+lib/profile_page.dart:596:              style: TextStyle(fontWeight: FontWeight.w600),
+lib/profile_page.dart:606:              style: TextStyle(
+lib/profile_page.dart:754:                style: const TextStyle(
+lib/profile_page.dart:755:                  fontFamily: 'monospace',
+lib/profile_page.dart:841:          style: TextStyle(
+lib/profile_page.dart:850:          style: TextStyle(
+lib/profile_page.dart:881:                      style: TextStyle(
+lib/profile_page.dart:905:                      style: TextStyle(
+lib/profile_page.dart:1042:                        style: const TextStyle(
+lib/profile_page.dart:1085:            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+lib/profile_page.dart:1112:                style: TextStyle(
+lib/profile_page.dart:1145:                    style: const TextStyle(
+lib/profile_page.dart:1156:                        style: TextStyle(
+lib/profile_page.dart:1327:                        style: const TextStyle(fontWeight: FontWeight.bold),
+lib/profile_page.dart:1394:                      style: TextStyle(
+lib/profile_page.dart:1431:                        style: TextStyle(color: colorScheme.error),
+lib/profile_page.dart:1452:                            style: TextStyle(
+lib/profile_page.dart:1501:                          style: const TextStyle(fontWeight: FontWeight.w600),
+lib/profile_page.dart:1507:                                style: TextStyle(
+lib/profile_page.dart:1512:                                style: TextStyle(
+lib/profile_page.dart:1535:                                      style: TextStyle(color: Colors.red)),
+lib/profile_page.dart:1579:                    style: TextStyle(
+lib/profile_page.dart:1605:                                      style: const TextStyle(
+lib/profile_page.dart:1630:                                          style: const TextStyle(fontSize: 12)),
+lib/profile_page.dart:1807:                  style: TextStyle(color: colorScheme.error),
+lib/profile_page.dart:1884:              style: const TextStyle(
+lib/profile_page.dart:1912:              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+lib/profile_page.dart:1916:                style: const TextStyle(fontSize: 12),
+lib/profile_page.dart:1981:                          style: const TextStyle(
+lib/profile_page.dart:1995:                              Text(sub, style: const TextStyle(fontSize: 13)),
+lib/constants.dart:4:const TextStyle kPrestoAppBarTitleStyle = TextStyle(
+lib/constants.dart:90:          style: const TextStyle(fontWeight: FontWeight.w700),
+lib/utils/friendly_snackbar.dart:42:              style: const TextStyle(
+lib/utils/friendly_snackbar.dart:89:              style: const TextStyle(
+lib/pages/admin_space_page.dart:551:              style: TextStyle(
+lib/pages/admin_space_page.dart:598:                    style: TextStyle(
+lib/pages/admin_space_page.dart:620:                        style: TextStyle(
+lib/pages/admin_space_page.dart:641:                    style: const TextStyle(
+lib/pages/admin_space_page.dart:659:                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
+lib/pages/admin_space_page.dart:680:                    style: TextStyle(
+lib/pages/admin_space_page.dart:688:                  style: const TextStyle(
+lib/pages/admin_space_page.dart:742:                      style: const TextStyle(
+lib/pages/admin_space_page.dart:756:                    style: const TextStyle(
+lib/pages/admin_space_page.dart:767:                      style: const TextStyle(
+lib/pages/admin_space_page.dart:839:                    style: TextStyle(
+lib/pages/admin_space_page.dart:911:                                style: TextStyle(
+lib/pages/admin_space_page.dart:1006:                        style: TextStyle(
+lib/pages/admin_space_page.dart:1014:                        style: TextStyle(
+lib/pages/admin_space_page.dart:1034:              style: TextStyle(
+lib/pages/admin_space_page.dart:1057:                    style: const TextStyle(
+lib/pages/admin_space_page.dart:1094:                  textStyle: const TextStyle(
+lib/pages/admin_space_page.dart:1123:                    style: TextStyle(
+lib/pages/admin_space_page.dart:1134:              style: TextStyle(
+lib/pages/admin_space_page.dart:1176:            style: TextStyle(
+lib/pages/admin_space_page.dart:1207:            style: const TextStyle(
+lib/pages/admin_space_page.dart:1252:              style: TextStyle(
+lib/pages/home_page_v2_option2.dart:136:                            style: TextStyle(
+lib/pages/home_page_v2_option2.dart:147:                            style: TextStyle(
+lib/pages/home_page_v2_option2.dart:220:                                  style: TextStyle(
+lib/pages/home_page_v2_option2.dart:231:                                  style: TextStyle(
+lib/pages/home_page_v2_option2.dart:293:          style: TextStyle(
+lib/pages/home_page_v2_option2.dart:299:            TextSpan(text: "ili", style: TextStyle(color: HomePageV2Option2.prestoOrange)),
+lib/pages/home_page_v2_option2.dart:300:            TextSpan(text: "presto", style: TextStyle(color: HomePageV2Option2.prestoOrange)),
+lib/pages/home_page_v2_option2.dart:303:              style: TextStyle(color: HomePageV2Option2.prestoOrange, fontWeight: FontWeight.w900),
+lib/pages/home_page_v2_option2.dart:380:          hintStyle: TextStyle(
+lib/pages/home_page_v2_option2.dart:427:                style: const TextStyle(
+lib/pages/home_page_v2_option2.dart:437:              style: const TextStyle(
+lib/pages/home_page_v2_option2.dart:490:          style: TextStyle(
+lib/pages/home_page_v2_option2.dart:562:                    style: const TextStyle(
+lib/pages/home_page_v2_option2.dart:572:                    style: TextStyle(
+lib/pages/home_page_v2_option2.dart:596:                        style: const TextStyle(
+lib/pages/home_page_v2_option2.dart:666:                  style: const TextStyle(
+lib/pages/home_page_v2_option2.dart:679:            style: const TextStyle(
+lib/pages/home_page_v2_option2.dart:732:              style: const TextStyle(
+lib/pages/home_page_v2_option2.dart:746:                  style: const TextStyle(
+lib/pages/home_page_v2_option2.dart:756:                    style: const TextStyle(
+lib/pages/home_page_v2_option2.dart:832:                    style: TextStyle(
+lib/pages/home_page_v2_option2.dart:858:                    style: TextStyle(
+lib/pages/account/account_premium_page.dart:315:                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+lib/pages/account/account_premium_page.dart:320:                      style: const TextStyle(color: textMuted, fontSize: 13.5),
+lib/pages/account/account_premium_page.dart:337:                      style: const TextStyle(fontSize: 14.5, height: 1.35),
+lib/pages/account/account_premium_page.dart:469:        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+lib/pages/account/account_premium_page.dart:485:          style: TextStyle(fontWeight: FontWeight.w800),
+lib/pages/account/account_premium_page.dart:512:                              style: const TextStyle(
+lib/pages/account/account_premium_page.dart:520:                              style: const TextStyle(
+lib/pages/account/account_premium_page.dart:549:                    style: const TextStyle(fontSize: 13.2, color: textMuted, height: 1.3),
+lib/pages/account/account_premium_page.dart:675:                          style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w800),
+lib/pages/account/account_premium_page.dart:680:                          style: TextStyle(fontSize: 12.8, color: textMuted),
+lib/pages/account/account_premium_page.dart:721:                    style: TextStyle(fontSize: 13.2, color: textMuted, height: 1.3),
+lib/pages/account/account_premium_page.dart:832:      style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w900),
+lib/pages/account/account_premium_page.dart:854:          style: const TextStyle(
+lib/pages/account/account_premium_page.dart:882:        style: TextStyle(
+lib/pages/account/account_premium_page.dart:999:                style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900),
+lib/pages/account/account_premium_page.dart:1028:          style: const TextStyle(color: Colors.white, fontSize: 14.8, fontWeight: FontWeight.w900),
+lib/pages/account/account_premium_page.dart:1055:          style: TextStyle(),
+lib/pages/account/account_premium_page.dart:1079:            style: const TextStyle(
+lib/pages/account/account_premium_page.dart:1110:          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14.5),
+lib/pages/account/account_premium_page.dart:1172:                      child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+lib/pages/account/account_premium_page.dart:1183:                          style: TextStyle(
+lib/pages/account/account_premium_page.dart:1195:                  style: TextStyle(fontSize: 13.4, color: Colors.grey.shade700, height: 1.25),
+lib/pages/account/account_premium_page.dart:1210:                      style: const TextStyle(
+lib/pages/toolbox_page.dart:32:          style: TextStyle(fontWeight: FontWeight.w700),
+lib/pages/toolbox_page.dart:178:            style: const TextStyle(
+lib/pages/toolbox_page.dart:252:                      style: const TextStyle(
+lib/pages/toolbox_page.dart:262:                      style: const TextStyle(
+lib/pages/toolbox_page.dart:278:            style: const TextStyle(
+lib/pages/toolbox_page.dart:304:                style: const TextStyle(
+lib/pages/toolbox_page.dart:384:            style: const TextStyle(
+lib/pages/toolbox_page.dart:432:              style: const TextStyle(
+lib/pages/toolbox_page.dart:485:              style: const TextStyle(
+lib/pages/pro_profile_page.dart:208:                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+lib/pages/pro_profile_page.dart:233:                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+lib/pages/pro_profile_page.dart:265:                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+lib/pages/pro_profile_page.dart:307:                    style: TextStyle(fontWeight: FontWeight.w800),
+lib/pages/toolbox_je_me_lance_page.dart:706:                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+lib/pages/toolbox_je_me_lance_page.dart:1158:                style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+lib/pages/toolbox_je_me_lance_page.dart:1359:              style: TextStyle(color: txtColor, fontWeight: FontWeight.bold),
+lib/pages/toolbox_je_me_lance_page.dart:1364:              style: TextStyle(color: Colors.grey.shade700, fontSize: 12)),
+lib/pages/toolbox_je_me_lance_page.dart:1428:                  style: const TextStyle(
+lib/pages/toolbox_je_me_lance_page.dart:1437:                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w600),
+lib/pages/toolbox_je_me_lance_page.dart:1489:                  style: const TextStyle(
+lib/pages/toolbox_je_me_lance_page.dart:1497:                  style: TextStyle(color: Colors.grey.shade700),
+lib/pages/toolbox_je_me_lance_page.dart:1546:                  style: const TextStyle(fontWeight: FontWeight.w700)), // Plus épais
+lib/pages/toolbox_je_me_lance_page.dart:1581:                Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)), // Plus épais
+lib/pages/toolbox_je_me_lance_page.dart:1583:                Text(text, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
+lib/pages/toolbox_je_me_lance_page.dart:1599:    return Text(text, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)); // Plus épais
+lib/pages/toolbox_je_me_lance_page.dart:1687:        Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold))),
+lib/pages/toolbox_je_me_lance_page.dart:1695:          child: Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+lib/pages/toolbox_je_me_lance_page.dart:1735:          Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)), // Plus épais
+lib/pages/toolbox_hub_page.dart:149:                        style: const TextStyle(
+lib/pages/toolbox_hub_page.dart:157:                        style: const TextStyle(
+lib/pages/toolbox_hub_page.dart:165:                        style: TextStyle(
+lib/pages/toolbox_hub_page.dart:194:                  style: const TextStyle(
+lib/pages/toolbox_hub_page.dart:250:                      style: const TextStyle(
+lib/pages/legal_info_page.dart:471:                style: const TextStyle(
+lib/pages/legal_info_page.dart:487:                      style: TextStyle(color: orange, fontWeight: FontWeight.w700),
+lib/pages/legal_info_page.dart:559:                    style: TextStyle(
+lib/pages/legal_info_page.dart:592:          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+lib/pages/legal_info_page.dart:598:            style: const TextStyle(color: Color(0xFF7C7772)),
+lib/pages/legal_info_page.dart:640:                          style: TextStyle(
+lib/pages/legal_info_page.dart:648:                          style: TextStyle(color: Color(0xFF7C7772)),
+lib/pages/legal_info_page.dart:676:                        style: TextStyle(
+lib/pages/legal_info_page.dart:690:                style: const TextStyle(fontSize: 12, color: Color(0xFF8A817B)),
+lib/pages/legal_info_page.dart:721:              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+lib/pages/legal_info_page.dart:726:              style: TextStyle(color: Color(0xFF7C7772)),
+lib/pages/legal_info_page.dart:747:                        style: const TextStyle(
+lib/pages/pricing_calculator_page.dart:28:        fontFamily: 'Roboto',
+lib/pages/pricing_calculator_page.dart:73:                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+lib/pages/pricing_calculator_page.dart:167:                      style: const TextStyle(
+lib/pages/pricing_calculator_page.dart:173:                      style: const TextStyle(
+lib/pages/pricing_calculator_page.dart:308:              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+lib/pages/pricing_calculator_page.dart:568:              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+lib/pages/pricing_calculator_page.dart:799:            style: const TextStyle(
+lib/pages/pricing_calculator_page.dart:866:                          style: const TextStyle(
+lib/pages/pricing_calculator_page.dart:874:                          style: const TextStyle(
+lib/pages/pricing_calculator_page.dart:926:            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+lib/pages/pricing_calculator_page.dart:946:              suffixStyle: const TextStyle(fontWeight: FontWeight.w800),
+lib/pages/pricing_calculator_page.dart:971:          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+lib/pages/pricing_calculator_page.dart:1024:                  style: TextStyle(
+lib/pages/pricing_calculator_page.dart:1044:                  style: TextStyle(
+lib/pages/pricing_calculator_page.dart:1078:              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+lib/pages/pricing_calculator_page.dart:1150:              style: const TextStyle(
+lib/pages/pricing_calculator_page.dart:1202:                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+lib/pages/pricing_calculator_page.dart:1207:                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+lib/pages/pricing_calculator_page.dart:1210:                const Text('TTC', style: TextStyle(fontWeight: FontWeight.w900)),
+lib/pages/pricing_calculator_page.dart:1232:            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+lib/pages/pricing_calculator_page.dart:1235:        Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+lib/pages/pricing_calculator_page.dart:1283:                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+lib/pages/pricing_calculator_page.dart:1291:            style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w700),
+lib/pages/pricing_calculator_page.dart:1296:            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+lib/pages/pricing_calculator_page.dart:1313:                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: levelColor),
+lib/pages/pricing_calculator_page.dart:1322:            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+lib/pages/pricing_calculator_page.dart:1357:            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+lib/pages/pricing_calculator_page.dart:1403:        labelStyle: const TextStyle(fontWeight: FontWeight.w800),
+lib/pages/auth/presto_premium_auth_page.dart:216:                          style: TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:256:                                    style: TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:327:                                              style: TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:367:                                      style: TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:378:                                style: TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:399:                                    style: TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:420:                      style: TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:429:                          style: TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:437:                          style: TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:490:                style: const TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:499:                style: TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:563:          style: TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:632:                    style: TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:666:        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+lib/pages/auth/presto_premium_auth_page.dart:752:                style: const TextStyle(
+lib/pages/auth/presto_premium_auth_page.dart:775:        style: const TextStyle(
+lib/pages/messages/conversation_page.dart:251:                      style: TextStyle(
+lib/pages/messages/conversation_page.dart:317:                                style: TextStyle(
+lib/pages/messages/conversation_page.dart:326:                                  style: TextStyle(
+lib/pages/messages/conversations_list_page.dart:46:            style: TextStyle(fontWeight: FontWeight.w600),
+lib/pages/messages/conversations_list_page.dart:137:                      style: TextStyle(fontWeight: FontWeight.w600),
+lib/pages/messages/conversations_list_page.dart:175:                              style: const TextStyle(fontWeight: FontWeight.w700),
+lib/pages/messages/conversations_list_page.dart:180:                            style: TextStyle(
+lib/pages/messages/conversations_list_page.dart:192:                            style: TextStyle(
+lib/pages/messages/conversations_list_page.dart:205:                                  style: const TextStyle(
+lib/pages/messages/conversations_list_page.dart:223:                                    style: const TextStyle(
+lib/pages/messages/conversations_list_page.dart:302:                style: const TextStyle(
+lib/pages/publish_offer_page.dart:253:            style: TextStyle(fontWeight: FontWeight.w700),
+lib/pages/publish_offer_page.dart:965:                            style: TextStyle(
+lib/pages/publish_offer_page.dart:994:                          style: TextStyle(fontWeight: FontWeight.w700)),
+lib/pages/publish_offer_page.dart:1016:                        style: const TextStyle(fontSize: 12, color: Colors.black54),
+lib/pages/publish_offer_page.dart:1142:                          TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+lib/pages/publish_offer_page.dart:1149:                  style: TextStyle(fontSize: 12, color: Color(0xFF7A7A7A)),
+lib/pages/publish_offer_page.dart:1212:            style: const TextStyle(
+lib/pages/admin/streaming_monitoring_page.dart:84:          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+lib/pages/admin/streaming_monitoring_page.dart:120:                          style: const TextStyle(
+lib/pages/admin/streaming_monitoring_page.dart:212:                                style: TextStyle(
+lib/pages/admin/streaming_monitoring_page.dart:221:                                labelStyle: TextStyle(
+lib/pages/admin/streaming_monitoring_page.dart:232:                            style: TextStyle(
+lib/pages/admin/streaming_monitoring_page.dart:233:                              fontFamily: 'monospace',
+lib/pages/admin/streaming_monitoring_page.dart:246:                                style: TextStyle(
+lib/pages/admin/streaming_monitoring_page.dart:273:                            style: TextStyle(
+lib/pages/admin/streaming_monitoring_page.dart:289:                                style: TextStyle(
+lib/pages/admin/streaming_monitoring_page.dart:317:                              style: TextStyle(
+lib/pages/admin/streaming_monitoring_page.dart:381:                style: const TextStyle(
+lib/pages/admin/streaming_monitoring_page.dart:390:                style: const TextStyle(
+lib/pages/admin/offers_management_page.dart:102:            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+lib/pages/admin/offers_management_page.dart:270:              labelStyle: TextStyle(
+lib/pages/admin/offers_management_page.dart:302:                style: const TextStyle(color: Colors.red),
+lib/pages/admin/offers_management_page.dart:324:                    style: TextStyle(
+lib/pages/admin/offers_management_page.dart:377:                                style: const TextStyle(
+lib/pages/admin/offers_management_page.dart:391:                                    style: const TextStyle(
+lib/pages/admin/offers_management_page.dart:402:                                    style: const TextStyle(
+lib/pages/admin/offers_management_page.dart:416:                            style: TextStyle(
+lib/pages/admin/offers_management_page.dart:438:                          style: const TextStyle(
+lib/pages/admin/offers_management_page.dart:448:                              style: const TextStyle(
+lib/pages/admin/offers_management_page.dart:547:                  style: TextStyle(
+lib/pages/admin/offers_management_page.dart:555:                  style: const TextStyle(
+lib/pages/admin/messages_management_page.dart:93:            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+lib/pages/admin/messages_management_page.dart:286:              labelStyle: TextStyle(
+lib/pages/admin/messages_management_page.dart:318:                style: const TextStyle(color: Colors.red),
+lib/pages/admin/messages_management_page.dart:340:                    style: TextStyle(
+lib/pages/admin/messages_management_page.dart:403:                                      style: TextStyle(
+lib/pages/admin/messages_management_page.dart:420:                                        style: const TextStyle(
+lib/pages/admin/messages_management_page.dart:434:                                style: TextStyle(
+lib/pages/admin/messages_management_page.dart:448:                              style: TextStyle(fontSize: 11),
+lib/pages/admin/messages_management_page.dart:463:                          style: const TextStyle(
+lib/pages/admin/messages_management_page.dart:474:                          style: const TextStyle(
+lib/pages/admin/messages_management_page.dart:566:                  style: TextStyle(
+lib/pages/admin/messages_management_page.dart:574:                  style: const TextStyle(
+lib/pages/admin/moderation_page.dart:73:          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+lib/pages/admin/moderation_page.dart:150:                          style: TextStyle(color: Colors.black54),
+lib/pages/admin/moderation_page.dart:215:                          style: TextStyle(color: Colors.black54),
+lib/pages/admin/moderation_page.dart:447:            style: const TextStyle(
+lib/pages/admin/moderation_page.dart:456:            style: const TextStyle(
+lib/pages/admin/moderation_page.dart:510:                      style: const TextStyle(
+lib/pages/admin/moderation_page.dart:520:                      style: const TextStyle(
+lib/pages/admin/moderation_page.dart:537:                  style: TextStyle(
+lib/pages/admin/moderation_page.dart:549:            style: const TextStyle(
+lib/pages/admin/moderation_page.dart:621:                  style: const TextStyle(
+lib/pages/admin/moderation_page.dart:638:                  style: TextStyle(
+lib/pages/admin/moderation_page.dart:650:            style: const TextStyle(
+lib/pages/admin/moderation_page.dart:660:              style: const TextStyle(
+lib/app/theme.dart:32:      labelStyle: const TextStyle(
+lib/app/theme.dart:36:      hintStyle: const TextStyle(
+lib/profile_page:127:          style: TextStyle(
+lib/profile_page:136:          style: TextStyle(
+lib/profile_page:164:                      style: TextStyle(
+lib/profile_page:184:                      style: TextStyle(
+lib/profile_page:312:                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+lib/profile_page:356:            style: const TextStyle(fontWeight: FontWeight.w600),
+lib/profile_page:383:                style: TextStyle(
+lib/profile_page:414:                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+lib/profile_page:423:                        style: TextStyle(
+lib/profile_page:673:                    style: TextStyle(
+lib/profile_page:693:                                  style: const TextStyle(
+lib/profile_page:716:                                  label: Text(sub, style: const TextStyle(fontSize: 12)),
+lib/profile_page:790:                  style: TextStyle(color: colorScheme.error),
+lib/profile_page:810:        style: const TextStyle(
+lib/profile_page:830:              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+lib/profile_page:834:                style: const TextStyle(fontSize: 12),
+lib/profile_page:896:                        style: const TextStyle(
+lib/profile_page:908:                        title: Text(sub, style: const TextStyle(fontSize: 13)),

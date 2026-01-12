@@ -27,8 +27,10 @@ service cloud.firestore {
 
     function isPublicOffer() {
       // Public si explicitement public OU si "status" legacy = active
+      // ✅ Supporte aussi isActive pour compatibilité
       return (resource.data.visibility.isPublic == true)
-        || (resource.data.status == 'active');
+        || (resource.data.status == 'active')
+        || (resource.data.isActive == true);
     }
 
     // ⛔️ Server-only: rate limits (Functions)
@@ -39,6 +41,12 @@ service cloud.firestore {
     // ⛔️ Admins config (Functions)
     match /admins/{adminId} {
       allow read, write: if false;
+    }
+
+    // ✅ Config: lecture publique, écriture admin uniquement
+    match /config/{configDoc} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // ✅ Users: chaque utilisateur gère son doc

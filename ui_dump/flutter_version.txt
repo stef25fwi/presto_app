@@ -1,0 +1,4 @@
+Flutter 3.38.5 • channel [user-branch] • unknown source
+Framework • revision f6ff1529fd (5 weeks ago) • 2025-12-11 11:50:07 -0500
+Engine • hash c108a94d7a8273e112339e6c6833daa06e723a54 (revision 1527ae0ec5) (31 days ago) • 2025-12-11 15:04:31.000Z
+Tools • Dart 3.10.4 • DevTools 2.51.1

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../utils/friendly_snackbar.dart';
-import 'package:flutter/foundation.dart' show debugPrint;
 
 const Color kPrestoOrange = Color(0xFFFF6600);
 

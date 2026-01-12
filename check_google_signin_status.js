@@ -195,7 +195,7 @@ if (passed === total) {
   console.log('');
   console.log('Configuration Firebase Console à vérifier:');
   console.log('  - Google Sign-In: activé');
-  console.log('  - Authorized domains: localhost + stef25fwi.github.io');
+  console.log('  - Authorized domains: localhost + stef25fwi.github.io + presto-app-74abe.web.app');
   console.log('  - OAuth consent screen: configuré');
   console.log('');
 } else if (passed >= total - 1) {

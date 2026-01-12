@@ -34,20 +34,23 @@ import 'pages/pro_profile_page.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/home_page_v2_option2.dart';
+import 'pages/messages/conversation_page.dart';
 import 'widgets/ad_banner.dart';
 import 'widgets/offer_card.dart';
 import 'widgets/random_asset_ticker.dart';
 import 'widgets/entrepreneur_toolbox_slide.dart';
+import 'widgets/last_offers_section.dart';
 import 'features/ai_draft/ai_draft_service.dart';
 import 'features/micro_ia/web_audio_recorder.dart';
 import 'utils/friendly_snackbar.dart';
 import 'utils/crashlytics_context.dart';
-import 'utils/recording_path_web.dart' if (dart.library.io) 'utils/recording_path_io.dart';
+import 'utils/recording_path_web.dart'
+    if (dart.library.io) 'utils/recording_path_io.dart';
 import 'dev/seed_offers.dart';
 import 'features/micro_ia/micro_ia_service.dart';
-import 'features/messaging/conversation_service.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/phone_input_field.dart';
+import 'widgets/splashscreen_loader.dart';
 // ...existing code (autres imports)...
 
 // ✅ Remote Config singleton: expose 'audio_pipeline' pour l'UI
@@ -83,7 +86,8 @@ class PrestoRemoteConfig {
 class PrestoRemoteConfig {
   static String audioPipeline = 'HYBRID';
   static Future<void> init() async {
-    // TODO: Implémenter une fois firebase_remote_config installé
+    // Fallback: utilise la valeur par défaut HYBRID
+    // Décommenter la classe ci-dessus une fois firebase_remote_config installé
   }
 }
 
@@ -92,10 +96,14 @@ const kPrestoBlue = Color(0xFF1A73E8);
 
 // ✅ Build stamp (pour vérifier en prod quel commit est réellement déployé)
 // Remplir via: flutter build/run ... --dart-define=APP_BUILD_SHA=... etc.
-const String kAppBuildSha = String.fromEnvironment('APP_BUILD_SHA', defaultValue: 'local');
-const String kAppBuildBranch = String.fromEnvironment('APP_BUILD_BRANCH', defaultValue: '');
-const String kAppBuildTimeUtc = String.fromEnvironment('APP_BUILD_TIME', defaultValue: '');
-const String kAppBuildTag = String.fromEnvironment('APP_BUILD_TAG', defaultValue: '');
+const String kAppBuildSha =
+    String.fromEnvironment('APP_BUILD_SHA', defaultValue: 'local');
+const String kAppBuildBranch =
+    String.fromEnvironment('APP_BUILD_BRANCH', defaultValue: '');
+const String kAppBuildTimeUtc =
+    String.fromEnvironment('APP_BUILD_TIME', defaultValue: '');
+const String kAppBuildTag =
+    String.fromEnvironment('APP_BUILD_TAG', defaultValue: '');
 
 /// ✅ Fonction utilitaire pour récupérer le statut de présence d'utilisateurs
 Future<Map<String, dynamic>> getUserPresenceStatus(List<String> userIds) async {
@@ -350,10 +358,9 @@ SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
         isDarkBackground ? Brightness.light : Brightness.dark,
     // iOS: Brightness.dark => icônes claires
     statusBarBrightness: isDarkBackground ? Brightness.dark : Brightness.light,
-    systemNavigationBarColor: backgroundColor,
-    systemNavigationBarDividerColor: backgroundColor,
-    systemNavigationBarIconBrightness:
-        isDarkBackground ? Brightness.light : Brightness.dark,
+    systemNavigationBarColor: kPrestoBlue,
+    systemNavigationBarDividerColor: kPrestoBlue,
+    systemNavigationBarIconBrightness: Brightness.light,
   );
 }
 
@@ -877,7 +884,9 @@ class PrestoApp extends StatelessWidget {
             const EntrepreneurCalculatorPage(),
       },
       theme: buildPrestoTheme(),
-      home: const SplashScreen(),
+      home: const SplashscreenLoader(
+        child: SplashScreen(),
+      ),
     );
   }
 }
@@ -1283,10 +1292,10 @@ class _HomePageState extends State<HomePage>
   void _goToSearch(String query) {
     final q = query.trim();
     if (q.isEmpty) return;
-    
+
     // ✅ Log la recherche
     _logSearch(q);
-    
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ConsultOffersPage(searchQuery: q),
@@ -1305,7 +1314,7 @@ class _HomePageState extends State<HomePage>
 
   void _onBottomTap(int index) {
     if (_selectedIndex == index) return;
-    
+
     // ✅ Log le changement d'onglet
     _analytics.logEvent(
       name: 'tab_changed',
@@ -1314,7 +1323,7 @@ class _HomePageState extends State<HomePage>
         'new_tab': index,
       },
     );
-    
+
     setState(() => _selectedIndex = index);
   }
 
@@ -1745,12 +1754,12 @@ class _HomePageState extends State<HomePage>
               .where('participants', arrayContains: user.uid)
               .snapshots()
               .map((snap) {
-                PrestoMonitoring.I.trackOtherStream(
-                  key: 'home.bell.conversations',
-                  docsCount: snap.docs.length,
-                );
-                return snap;
-              }),
+            PrestoMonitoring.I.trackOtherStream(
+              key: 'home.bell.conversations',
+              docsCount: snap.docs.length,
+            );
+            return snap;
+          }),
           builder: (context, convSnapshot) {
             int unreadMessagesCount = 0;
 
@@ -1772,12 +1781,12 @@ class _HomePageState extends State<HomePage>
                   .where('read', isEqualTo: false)
                   .snapshots()
                   .map((snap) {
-                    PrestoMonitoring.I.trackOtherStream(
-                      key: 'home.bell.notifications',
-                      docsCount: snap.docs.length,
-                    );
-                    return snap;
-                  }),
+                PrestoMonitoring.I.trackOtherStream(
+                  key: 'home.bell.notifications',
+                  docsCount: snap.docs.length,
+                );
+                return snap;
+              }),
               builder: (context, notifSnapshot) {
                 int unreadNotificationsCount = 0;
 
@@ -1827,12 +1836,12 @@ class _HomePageState extends State<HomePage>
                 .limit(20)
                 .snapshots()
                 .map((snap) {
-                  PrestoMonitoring.I.trackOtherStream(
-                    key: 'home.dialog.notifications',
-                    docsCount: snap.docs.length,
-                  );
-                  return snap;
-                }),
+              PrestoMonitoring.I.trackOtherStream(
+                key: 'home.dialog.notifications',
+                docsCount: snap.docs.length,
+              );
+              return snap;
+            }),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
@@ -2405,111 +2414,9 @@ class _HomePageState extends State<HomePage>
                       ),
                     ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            "Dernières offres",
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const Spacer(),
-                          TextButton(
-                            onPressed: () => _onBottomTap(1),
-                            child: const Text(
-                              "Voir tout",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: kPrestoBlue,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                        stream: _latestOffersStream.map((snap) {
-                          PrestoMonitoring.I.trackOtherStream(
-                            key: 'home.latestOffers',
-                            docsCount: snap.docs.length,
-                          );
-                          return snap;
-                        }),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                                  ConnectionState.waiting &&
-                              !snapshot.hasData) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 10),
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      kPrestoOrange),
-                                ),
-                              ),
-                            );
-                          }
-
-                          if (snapshot.hasError) {
-                            return const SizedBox.shrink();
-                          }
-
-                          final docs = snapshot.data?.docs ?? [];
-                          if (docs.isEmpty) {
-                            return const Text(
-                              "Aucune offre publiée pour le moment.",
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.black54,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            );
-                          }
-
-                          return _AutoScrollingOffersCarousel(
-                            offers: docs,
-                            onOfferTap: (doc) {
-                              final data = doc.data();
-                              final title =
-                                  (data['title'] ?? 'Sans titre') as String;
-                              final location = (data['location'] ??
-                                  'Lieu non précisé') as String;
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => OfferDetailPage(
-                                    offerId: doc.id,
-                                    title: title,
-                                    location: location,
-                                    category: (data['category'] ??
-                                            'Catégorie non précisée')
-                                        as String,
-                                    subcategory:
-                                        data['subcategory'] as String?,
-                                    budget: data['budget'] is num
-                                        ? data['budget'] as num
-                                        : null,
-                                    description:
-                                        (data['description'] ?? '') as String?,
-                                    phone: data['phone'] as String?,
-                                    imageUrls:
-                                        (data['imageUrls'] as List<dynamic>?)
-                                            ?.map((e) => e.toString())
-                                            .toList(),
-                                    annonceurId:
-                                        (data['userId'] ?? '') as String,
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ],
+                  child: LastOffersSection(
+                    offersStream: _latestOffersStream,
+                    onSeeAll: () => _onBottomTap(1),
                   ),
                 ),
 
@@ -3331,13 +3238,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return '${cp}_${_slugId(city)}';
   }
 
-  String? _makeCityCategoryKey({required String? cityId, required String? categoryId}) {
+  String? _makeCityCategoryKey(
+      {required String? cityId, required String? categoryId}) {
     if (cityId == null || categoryId == null) return null;
     return '${cityId}_$categoryId';
   }
 
   // ✅ Range budget (AVANCÉ) — évite requêtes “impossibles” + explosion d’index
-  bool _advancedFilters = false;
+  final bool _advancedFilters = false;
   final TextEditingController _budgetMinCtrl = TextEditingController();
   final TextEditingController _budgetMaxCtrl = TextEditingController();
   String? _budgetRangeWarning; // affiché dans l’UI si range désactivé
@@ -3368,6 +3276,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     if (!ok) return;
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
+
   final TextEditingController _keywordCtrl = TextEditingController();
   final TextEditingController _cityCtrl = TextEditingController();
 
@@ -3396,7 +3305,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       if (hasPostalCode) 'where(postalCode==)',
       if (hasSubcategory) 'where(subcategory==)',
       if (hasBudgetRange) 'where(budgetValue>=/<=)',
-      if (hasBudgetRange) 'orderBy(budgetValue asc) + orderBy(createdAt desc)' else 'orderBy(createdAt desc)',
+      if (hasBudgetRange)
+        'orderBy(budgetValue asc) + orderBy(createdAt desc)'
+      else
+        'orderBy(createdAt desc)',
       'limit($_pageLimit)',
     ];
     return parts.join(' + ');
@@ -3674,7 +3586,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         ? _filterPostalCodeController.text.trim()
         : cp;
 
-    final String? cityId = _makeCityId(cityName: cityName, postalCode: cpForCity);
+    final String? cityId =
+        _makeCityId(cityName: cityName, postalCode: cpForCity);
 
     final String? cityCategoryKey =
         _makeCityCategoryKey(cityId: cityId, categoryId: categoryId);
@@ -3686,7 +3599,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       query = query.where('cityCategoryKey', isEqualTo: cityCategoryKey);
     } else {
       if (cityId != null) query = query.where('cityId', isEqualTo: cityId);
-      if (categoryId != null) query = query.where('categoryId', isEqualTo: categoryId);
+      if (categoryId != null)
+        query = query.where('categoryId', isEqualTo: categoryId);
     }
 
     // Filtre sous-catégorie (optionnel; gardé en “legacy” tant que pas de subcategoryId)
@@ -3718,12 +3632,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     // ✅ Budget range (AVANCÉ) (inchangé)
     final min = _parseBudgetBound(_budgetMinCtrl.text);
     final max = _parseBudgetBound(_budgetMaxCtrl.text);
-    final bool wantsBudgetRange =
-        _advancedFilters && (min != null || max != null) && _budgetRangeWarning == null;
+    final bool wantsBudgetRange = _advancedFilters &&
+        (min != null || max != null) &&
+        _budgetRangeWarning == null;
 
     if (wantsBudgetRange) {
-      if (min != null) query = query.where('budgetValue', isGreaterThanOrEqualTo: min);
-      if (max != null) query = query.where('budgetValue', isLessThanOrEqualTo: max);
+      if (min != null)
+        query = query.where('budgetValue', isGreaterThanOrEqualTo: min);
+      if (max != null)
+        query = query.where('budgetValue', isLessThanOrEqualTo: max);
       query = query.orderBy('budgetValue', descending: false);
       query = query.orderBy('createdAt', descending: true);
     } else {
@@ -3759,7 +3676,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     }
 
     // ✅ Monitoring local (dashboard admin)
-    PrestoMonitoring.I.trackOffersQueryBuild(signature: _lastOffersQuerySignature);
+    PrestoMonitoring.I
+        .trackOffersQueryBuild(signature: _lastOffersQuerySignature);
 
     return query;
   }
@@ -3788,9 +3706,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       // Charge une première page (adapter la limite si besoin)
       final snap = await query.limit(20).get();
 
-        sw.stop();
-        PrestoMonitoring.I
-          .trackOffersFetchOnce(ms: sw.elapsedMilliseconds, docsCount: snap.docs.length);
+      sw.stop();
+      PrestoMonitoring.I.trackOffersFetchOnce(
+          ms: sw.elapsedMilliseconds, docsCount: snap.docs.length);
 
       if (snap.docs.isNotEmpty) {
         _lastDoc = snap.docs.last;
@@ -3831,23 +3749,28 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     }
 
     // Compter les filtres égalité actifs (pour éviter explosion d’index si range)
-    final bool eqCat = (_filterCategory != null && _filterCategory!.isNotEmpty) ||
-        ((_selectedCategory ?? '').isNotEmpty && _selectedCategory != 'Toutes catégories');
-    final bool eqDept = (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
-        ((_filterRegionCode ?? '').isNotEmpty) ||
-        ((_selectedRegionCode ?? '').isNotEmpty);
-    final bool eqLoc = (_filterCityName != null && _filterCityName!.trim().isNotEmpty) ||
-        _locationController.text.trim().isNotEmpty;
+    final bool eqCat =
+        (_filterCategory != null && _filterCategory!.isNotEmpty) ||
+            ((_selectedCategory ?? '').isNotEmpty &&
+                _selectedCategory != 'Toutes catégories');
+    final bool eqDept =
+        (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
+            ((_filterRegionCode ?? '').isNotEmpty) ||
+            ((_selectedRegionCode ?? '').isNotEmpty);
+    final bool eqLoc =
+        (_filterCityName != null && _filterCityName!.trim().isNotEmpty) ||
+            _locationController.text.trim().isNotEmpty;
     final bool eqCp = _postalCodeController.text.trim().isNotEmpty;
-    final bool eqSub = (_selectedSubCategory != null && _selectedSubCategory!.isNotEmpty);
+    final bool eqSub =
+        (_selectedSubCategory != null && _selectedSubCategory!.isNotEmpty);
 
-    final int eqCount = <bool>[eqCat, eqDept, eqLoc, eqCp, eqSub].where((b) => b).length;
+    final int eqCount =
+        <bool>[eqCat, eqDept, eqLoc, eqCp, eqSub].where((b) => b).length;
 
     // ✅ Règle: range budget uniquement en “avancé” + idéalement peu de filtres == (sinon index explosion)
     String? budgetWarning;
     if (_advancedFilters && (min != null || max != null) && eqCount > 1) {
-      budgetWarning =
-          "Budget (avancé) désactivé : trop de filtres combinés. "
+      budgetWarning = "Budget (avancé) désactivé : trop de filtres combinés. "
           "Garde 0–1 filtre (ex: seulement Ville OU seulement Catégorie) pour éviter l’explosion d’index.";
     }
 
@@ -4161,7 +4084,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       final friendly = err == null
                           ? "Une erreur s'est produite, réessaie"
                           : _friendlyFirestoreErrorMessage(err);
-                      final url = err == null ? null : _extractFirstUrl(err.toString());
+                      final url =
+                          err == null ? null : _extractFirstUrl(err.toString());
 
                       return Center(
                         child: Padding(
@@ -4206,7 +4130,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                       label: const Text('Ouvrir le lien'),
                                     ),
                                     OutlinedButton.icon(
-                                      onPressed: () => _copyToClipboard(context, url),
+                                      onPressed: () =>
+                                          _copyToClipboard(context, url),
                                       icon: const Icon(Icons.copy),
                                       label: const Text('Copier le lien'),
                                     ),
@@ -4998,7 +4923,8 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
           'item_id': widget.offerId,
           'item_name': widget.title,
           'item_category': widget.category,
-          'value': (widget.budget is num) ? (widget.budget as num).toDouble() : 0.0,
+          'value':
+              (widget.budget is num) ? (widget.budget as num).toDouble() : 0.0,
           'currency': 'EUR',
         },
       );
@@ -5122,7 +5048,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
     final formatted = _formatPhoneWithIndicatif(raw);
     final digits = formatted.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return '••••••••••';
-    
+
     // Masquer tous sauf les 2 derniers chiffres
     if (digits.length <= 2) return digits;
     return '••••••${digits.substring(digits.length - 2)}';
@@ -5168,6 +5094,8 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
 
   Future<void> _callPhone(BuildContext context) async {
     await _logPhoneCall();
+
+    if (!context.mounted) return;
 
     if (widget.phone == null || widget.phone!.trim().isEmpty) {
       showSuccessSnackBar(context, "Aucun numéro disponible.");
@@ -5244,6 +5172,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
 
                     // ✅ Analytics: message initié
                     await _logMessageSent();
+                    if (!context.mounted) return;
                     if (!isLoggedIn) {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -5263,20 +5192,14 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                       return;
                     }
 
-                    // Cherche ou crée la conversation entre l'utilisateur courant et l'annonceur
-                    final conversationId =
-                        await ConversationService().getOrCreateConversationId(
-                      currentUserId: user.uid,
-                      otherUserId: annonceurId,
-                    );
-
                     if (!context.mounted) return;
 
+                    // Navigation vers la page de conversation avec Firebase
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => ConversationPage(
-                          conversationId: conversationId,
-                          offerTitle: widget.title,
+                          otherUserId: annonceurId,
+                          otherUserName: 'Annonceur',
                         ),
                       ),
                     );
@@ -5353,8 +5276,7 @@ Motif du signalement :
 
     try {
       final ok = await canLaunchUrl(uri);
-      // ✅ Corriger: vérifier mounted
-      if (!mounted) return;
+      if (!context.mounted) return;
 
       if (ok) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -5363,8 +5285,7 @@ Motif du signalement :
 
       showSuccessSnackBar(context, "Impossible d'ouvrir l'e-mail.");
     } catch (_) {
-      // ✅ Corriger: vérifier mounted
-      if (!mounted) return;
+      if (!context.mounted) return;
       showSuccessSnackBar(context, "Une erreur est survenue.");
     }
   }
@@ -5572,12 +5493,12 @@ Motif du signalement :
                         .doc(widget.annonceurId)
                         .snapshots()
                         .map((snap) {
-                          PrestoMonitoring.I.trackOtherStream(
-                            key: 'offerDetail.userDoc',
-                            docsCount: snap.exists ? 1 : 0,
-                          );
-                          return snap;
-                        }),
+                      PrestoMonitoring.I.trackOtherStream(
+                        key: 'offerDetail.userDoc',
+                        docsCount: snap.exists ? 1 : 0,
+                      );
+                      return snap;
+                    }),
                     builder: (context, snap) {
                       final pseudo = _extractUserPseudo(snap.data?.data());
                       return TextButton.icon(
@@ -5894,19 +5815,14 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
       return;
     }
 
-    final conversationId =
-        await ConversationService().getOrCreateConversationId(
-      currentUserId: user.uid,
-      otherUserId: widget.userId,
-    );
-
     if (!context.mounted) return;
 
+    // Navigation vers la page de conversation avec Firebase
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ConversationPage(
-          conversationId: conversationId,
-          offerTitle: 'Profil',
+          otherUserId: widget.userId,
+          otherUserName: 'Utilisateur',
         ),
       ),
     );
@@ -5941,12 +5857,12 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
                   .doc(widget.userId)
                   .snapshots()
                   .map((snap) {
-                    PrestoMonitoring.I.trackOtherStream(
-                      key: 'userProfile.userDoc',
-                      docsCount: snap.exists ? 1 : 0,
-                    );
-                    return snap;
-                  }),
+                PrestoMonitoring.I.trackOtherStream(
+                  key: 'userProfile.userDoc',
+                  docsCount: snap.exists ? 1 : 0,
+                );
+                return snap;
+              }),
               builder: (context, snap) {
                 final pseudo = _extractUserPseudo(snap.data?.data());
                 return _CardShell(
@@ -6369,12 +6285,12 @@ class _MessagesPageState extends State<MessagesPage> {
                 .orderBy('lastMessageAt', descending: true)
                 .snapshots()
                 .map((snap) {
-                  PrestoMonitoring.I.trackOtherStream(
-                    key: 'messages.list.conversations',
-                    docsCount: snap.docs.length,
-                  );
-                  return snap;
-                }),
+              PrestoMonitoring.I.trackOtherStream(
+                key: 'messages.list.conversations',
+                docsCount: snap.docs.length,
+              );
+              return snap;
+            }),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(
@@ -6505,7 +6421,6 @@ class _MessagesPageState extends State<MessagesPage> {
                         MaterialPageRoute(
                           builder: (_) => ConversationPage(
                             conversationId: conversationId,
-                            offerTitle: offerTitle,
                           ),
                         ),
                       );
@@ -6623,7 +6538,9 @@ class _MessagesPageState extends State<MessagesPage> {
   }
 }
 
-/// PAGE CONVERSATION (CHAT) /////////////////////////////////
+/*
+/// PAGE CONVERSATION (CHAT) - ANCIENNE VERSION - REMPLACÉE PAR pages/messages/conversation_page.dart
+/// NE PAS UTILISER - CONSERVÉE POUR RÉFÉRENCE UNIQUEMENT
 
 class ConversationPage extends StatefulWidget {
   final String conversationId;
@@ -6843,8 +6760,8 @@ class _ConversationPageState extends State<ConversationPage> {
         .get();
 
     sw.stop();
-    PrestoMonitoring.I
-        .trackMessagesFetchOnce(ms: sw.elapsedMilliseconds, docsCount: snap.docs.length);
+    PrestoMonitoring.I.trackMessagesFetchOnce(
+        ms: sw.elapsedMilliseconds, docsCount: snap.docs.length);
 
     return snap.docs.map((d) => d.data()).toList();
   }
@@ -7208,12 +7125,12 @@ class _ConversationPageState extends State<ConversationPage> {
                     .limit(200)
                     .snapshots()
                     .map((snap) {
-                      PrestoMonitoring.I.trackOtherStream(
-                        key: 'conversation.messages.stream',
-                        docsCount: snap.docs.length,
-                      );
-                      return snap;
-                    }),
+                  PrestoMonitoring.I.trackOtherStream(
+                    key: 'conversation.messages.stream',
+                    docsCount: snap.docs.length,
+                  );
+                  return snap;
+                }),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting &&
                       !_isLoadingMeta) {
@@ -7361,6 +7278,7 @@ class _ConversationPageState extends State<ConversationPage> {
     );
   }
 }
+*/
 
 /// PAGE PUBLIER UNE OFFRE //////////////////////////////////////////////////
 
@@ -7378,7 +7296,8 @@ class PublishOfferPage extends StatefulWidget {
 
 class _PublishOfferPageState extends State<PublishOfferPage> {
   // ✅ NOUVEAU: Variables pour le streaming
-  final StreamController<String> _transcriptionStream = StreamController<String>.broadcast();
+  final StreamController<String> _transcriptionStream =
+      StreamController<String>.broadcast();
   String _partialTranscript = '';
   Timer? _streamingTimer;
   bool _isStreaming = false;
@@ -7401,7 +7320,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         }
 
         await _webRec.start();
-        
+
         setState(() {
           _isListening = true;
           _isStreaming = true; // Web: mode chunking (quasi temps-réel)
@@ -7440,7 +7359,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               SettableMetadata(contentType: 'audio/webm'),
             );
 
-            debugPrint('[Streaming Web] Chunk uploaded: $chunkPath (${chunkBytes.length} bytes)');
+            debugPrint(
+                '[Streaming Web] Chunk uploaded: $chunkPath (${chunkBytes.length} bytes)');
 
             // ✅ Transcription du chunk (async, non-bloquant)
             MicroIaService.processAudio(
@@ -7449,13 +7369,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               streamingMode: true,
             ).then((result) {
               if (!mounted) return;
-              
+
               final text = (result['text'] ?? '').toString().trim();
               if (text.isNotEmpty) {
                 final newTranscript = _partialTranscript.isEmpty
                     ? text
                     : '$_partialTranscript $text';
-                
+
                 // ✅ Envoyer au stream pour update UI
                 _transcriptionStream.add(newTranscript);
                 debugPrint('[Streaming Web] Chunk transcribed: "$text"');
@@ -7482,7 +7402,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     // ✅ MOBILE: Streaming RÉEL avec startStream() + PCM16
     try {
-      if (!await _recorder.hasPermission()) {
+      final hasPermission = await _recorder.hasPermission();
+      if (!mounted) return;
+
+      if (!hasPermission) {
+        if (!mounted) return;
         showSuccessSnackBar(context, 'Permission micro requise');
         return;
       }
@@ -7531,7 +7455,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 SettableMetadata(contentType: 'audio/pcm'),
               );
 
-              debugPrint('[Streaming Mobile] Chunk uploaded: ${chunk.length} bytes at $chunkPath');
+              debugPrint(
+                  '[Streaming Mobile] Chunk uploaded: ${chunk.length} bytes at $chunkPath');
 
               // ✅ Transcription du chunk (async, non-bloquant)
               MicroIaService.processAudio(
@@ -7540,13 +7465,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 streamingMode: true,
               ).then((result) {
                 if (!mounted) return;
-                
+
                 final text = (result['text'] ?? '').toString().trim();
                 if (text.isNotEmpty) {
                   final newTranscript = _partialTranscript.isEmpty
                       ? text
                       : '$_partialTranscript $text';
-                  
+
                   // ✅ Envoyer au stream pour update UI
                   _transcriptionStream.add(newTranscript);
                   debugPrint('[Streaming Mobile] Chunk transcribed: "$text"');
@@ -7751,7 +7676,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   // ✅ Extraction ville: soit via CP (fiable), soit via motif "à <ville>"
-  CityRecord? _extractCityRecordFromTranscript(String transcript, {String? cp}) {
+  CityRecord? _extractCityRecordFromTranscript(String transcript,
+      {String? cp}) {
     if (cp != null && cp.trim().isNotEmpty) {
       return CitySearch.instance.pickBestForPostalCode(cp.trim());
     }
@@ -7808,7 +7734,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _locationController.text = cityRec.name;
 
         // si CP vide mais la ville en a un, on complète
-        if (_postalCodeController.text.trim().isEmpty && cityRec.cp.isNotEmpty) {
+        if (_postalCodeController.text.trim().isEmpty &&
+            cityRec.cp.isNotEmpty) {
           _postalCodeController.text = cityRec.cp;
         }
 
@@ -9647,7 +9574,8 @@ class _AccountPageState extends State<AccountPage> {
       });
 
       sw.stop();
-      PrestoMonitoring.I.trackFunctionsCall(name: 'trackUserLogin', ms: sw.elapsedMilliseconds);
+      PrestoMonitoring.I.trackFunctionsCall(
+          name: 'trackUserLogin', ms: sw.elapsedMilliseconds);
     } catch (e) {
       PrestoMonitoring.I.trackError('trackUserLogin', e);
       debugPrint('[Tracking] Error: $e');
@@ -9720,7 +9648,8 @@ class _AccountPageState extends State<AccountPage> {
     try {
       final res = await callable.call<dynamic>({});
       sw.stop();
-      PrestoMonitoring.I.trackFunctionsCall(name: 'adminGetMicroIaConfig', ms: sw.elapsedMilliseconds);
+      PrestoMonitoring.I.trackFunctionsCall(
+          name: 'adminGetMicroIaConfig', ms: sw.elapsedMilliseconds);
       return Map<String, dynamic>.from(res.data as Map);
     } catch (e) {
       PrestoMonitoring.I.trackError('adminGetMicroIaConfig', e);
@@ -9746,7 +9675,8 @@ class _AccountPageState extends State<AccountPage> {
       });
 
       sw.stop();
-      PrestoMonitoring.I.trackFunctionsCall(name: 'adminSetMicroIaConfig', ms: sw.elapsedMilliseconds);
+      PrestoMonitoring.I.trackFunctionsCall(
+          name: 'adminSetMicroIaConfig', ms: sw.elapsedMilliseconds);
 
       // ✅ Re-synchronise l'UI avec la config effectivement publiée.
       final data = (res.data is Map)
@@ -9797,7 +9727,9 @@ class _AccountPageState extends State<AccountPage> {
 
     return Container(
       decoration: BoxDecoration(
-        color: enabled ? statusColor.withOpacity(0.07) : Colors.grey.withOpacity(0.05),
+        color: enabled
+            ? statusColor.withOpacity(0.07)
+            : Colors.grey.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: statusColor.withOpacity(0.25)),
       ),
@@ -9913,14 +9845,14 @@ class _AccountPageState extends State<AccountPage> {
                 ),
               ),
               const SizedBox(height: 10),
-
               _buildAnalyticsMetricRow(
                 icon: '🧾',
                 label: 'Offres — Stream Firestore',
                 subtitle: 'snapshots() sur la query (temps réel)',
                 enabled: m.monitorOffersStream,
                 onToggle: (v) => m.setMonitorOffersStream(v),
-                value: '${m.offersSnapshotsCount} snap • ${m.lastOffersSnapshotDocs} docs',
+                value:
+                    '${m.offersSnapshotsCount} snap • ${m.lastOffersSnapshotDocs} docs',
                 hint: m.lastOffersQuerySignature,
                 color: kPrestoBlue,
               ),
@@ -9931,7 +9863,8 @@ class _AccountPageState extends State<AccountPage> {
                 subtitle: 'get() ponctuel (debug/pagination)',
                 enabled: m.monitorOffersFetchOnce,
                 onToggle: (v) => m.setMonitorOffersFetchOnce(v),
-                value: '${m.offersFetchOnceCount} • ${m.lastOffersFetchMs}ms • ${m.lastOffersFetchDocs} docs',
+                value:
+                    '${m.offersFetchOnceCount} • ${m.lastOffersFetchMs}ms • ${m.lastOffersFetchDocs} docs',
                 color: kPrestoOrange,
               ),
               const SizedBox(height: 8),
@@ -9941,7 +9874,8 @@ class _AccountPageState extends State<AccountPage> {
                 subtitle: 'get() messages d’une conversation',
                 enabled: m.monitorMessagesFetchOnce,
                 onToggle: (v) => m.setMonitorMessagesFetchOnce(v),
-                value: '${m.messagesFetchOnceCount} • ${m.lastMessagesFetchMs}ms • ${m.lastMessagesFetchDocs} docs',
+                value:
+                    '${m.messagesFetchOnceCount} • ${m.lastMessagesFetchMs}ms • ${m.lastMessagesFetchDocs} docs',
                 color: Colors.purple,
               ),
               const SizedBox(height: 8),
@@ -9962,7 +9896,8 @@ class _AccountPageState extends State<AccountPage> {
                 subtitle: 'notifications / conversations / profils / home',
                 enabled: m.monitorOtherStreams,
                 onToggle: (v) => m.setMonitorOtherStreams(v),
-                value: '${m.otherStreamsEvents} • ${m.lastOtherStreamDocs} docs',
+                value:
+                    '${m.otherStreamsEvents} • ${m.lastOtherStreamDocs} docs',
                 hint: m.lastOtherStreamKey,
                 color: Colors.indigo,
               ),
@@ -10007,9 +9942,8 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildBuildVersionPanel() {
-    final mode = kReleaseMode
-        ? 'release'
-        : (kProfileMode ? 'profile' : 'debug');
+    final mode =
+        kReleaseMode ? 'release' : (kProfileMode ? 'profile' : 'debug');
     final platform = kIsWeb ? 'web' : defaultTargetPlatform.name;
     final sha = kAppBuildSha;
     final shortSha = (sha.length > 12) ? sha.substring(0, 12) : sha;
@@ -10017,16 +9951,22 @@ class _AccountPageState extends State<AccountPage> {
     final hasStamp = sha.isNotEmpty && sha != 'local';
     final stampLine = [
       if (kAppBuildTag.trim().isNotEmpty) 'tag: ${kAppBuildTag.trim()}',
-      if (kAppBuildBranch.trim().isNotEmpty) 'branch: ${kAppBuildBranch.trim()}',
-      if (kAppBuildTimeUtc.trim().isNotEmpty) 'build: ${kAppBuildTimeUtc.trim()} UTC',
+      if (kAppBuildBranch.trim().isNotEmpty)
+        'branch: ${kAppBuildBranch.trim()}',
+      if (kAppBuildTimeUtc.trim().isNotEmpty)
+        'build: ${kAppBuildTimeUtc.trim()} UTC',
     ].join(' • ');
 
     return Container(
       decoration: BoxDecoration(
-        color: hasStamp ? Colors.green.withOpacity(0.06) : Colors.red.withOpacity(0.05),
+        color: hasStamp
+            ? Colors.green.withOpacity(0.06)
+            : Colors.red.withOpacity(0.05),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: hasStamp ? Colors.green.withOpacity(0.25) : Colors.red.withOpacity(0.25),
+          color: hasStamp
+              ? Colors.green.withOpacity(0.25)
+              : Colors.red.withOpacity(0.25),
         ),
       ),
       padding: const EdgeInsets.all(12),
@@ -10102,7 +10042,8 @@ class _AccountPageState extends State<AccountPage> {
                 ),
                 style: TextButton.styleFrom(
                   foregroundColor: kPrestoBlue,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 ),
               ),
               const Spacer(),
@@ -10132,7 +10073,8 @@ class _AccountPageState extends State<AccountPage> {
     final statusColor = isActive
         ? (status == 'ACTIVE' ? Colors.green : Colors.blue)
         : Colors.grey;
-    final bgColor = isActive ? statusColor.withOpacity(0.1) : Colors.grey.withOpacity(0.05);
+    final bgColor =
+        isActive ? statusColor.withOpacity(0.1) : Colors.grey.withOpacity(0.05);
 
     return Container(
       decoration: BoxDecoration(
@@ -12725,11 +12667,9 @@ class _RecapRow extends StatelessWidget {
 // ============================================================================
 class _AutoScrollingOffersCarousel extends StatefulWidget {
   final List<QueryDocumentSnapshot<Map<String, dynamic>>> offers;
-  final void Function(QueryDocumentSnapshot<Map<String, dynamic>>)? onOfferTap;
 
   const _AutoScrollingOffersCarousel({
     required this.offers,
-    this.onOfferTap,
   });
 
   @override
@@ -12738,36 +12678,53 @@ class _AutoScrollingOffersCarousel extends StatefulWidget {
 }
 
 class _AutoScrollingOffersCarouselState
-    extends State<_AutoScrollingOffersCarousel> {
-  final ScrollController _scrollController = ScrollController();
+    extends State<_AutoScrollingOffersCarousel> with TickerProviderStateMixin {
+  final ScrollController _scrollController1 = ScrollController();
+  final ScrollController _scrollController2 = ScrollController();
   Timer? _autoScrollTimer;
   bool _isHovered = false;
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..forward();
     _startAutoScroll();
   }
 
   @override
   void dispose() {
     _autoScrollTimer?.cancel();
-    _scrollController.dispose();
+    _scrollController1.dispose();
+    _scrollController2.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   void _startAutoScroll() {
     _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
-      if (!_isHovered && _scrollController.hasClients) {
-        final maxScroll = _scrollController.position.maxScrollExtent;
-        final currentScroll = _scrollController.offset;
-        
-        // Défilement continu de droite vers gauche
-        if (currentScroll >= maxScroll) {
-          // Retour instantané au début pour un effet infini
-          _scrollController.jumpTo(0);
-        } else {
-          _scrollController.jumpTo(currentScroll + 1);
+      if (!_isHovered) {
+        // Ligne 1 : défilement normal de gauche à droite
+        if (_scrollController1.hasClients) {
+          final maxScroll = _scrollController1.position.maxScrollExtent;
+          final currentScroll = _scrollController1.offset;
+          if (currentScroll >= maxScroll) {
+            _scrollController1.jumpTo(0);
+          } else {
+            _scrollController1.jumpTo(currentScroll + 1);
+          }
+        }
+        // Ligne 2 : défilement inverse (droite à gauche) pour effet quinconce
+        if (_scrollController2.hasClients) {
+          final currentScroll = _scrollController2.offset;
+          if (currentScroll <= 0) {
+            _scrollController2.jumpTo(_scrollController2.position.maxScrollExtent);
+          } else {
+            _scrollController2.jumpTo(currentScroll - 1);
+          }
         }
       }
     });
@@ -12780,81 +12737,127 @@ class _AutoScrollingOffersCarouselState
     return 'Bientôt';
   }
 
-  Widget _buildOfferCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+  Widget _buildOfferCard(QueryDocumentSnapshot<Map<String, dynamic>> doc, int index) {
     final data = doc.data();
     final title = (data['title'] ?? 'Sans titre') as String;
     final location = (data['location'] ?? 'Lieu non précisé') as String;
     final whenLabel = _labelWhenFromTitle(title);
 
-    return GestureDetector(
-      onTap: () => widget.onOfferTap?.call(doc),
-      child: Container(
-        width: 280,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 8,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF3E0),
-                borderRadius: BorderRadius.circular(12),
+    final animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Interval(
+        (index * 0.1).clamp(0.0, 1.0),
+        ((index * 0.1) + 0.5).clamp(0.0, 1.0),
+        curve: Curves.easeOut,
+      ),
+    );
+
+    return FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.3),
+          end: Offset.zero,
+        ).animate(animation),
+        child: GestureDetector(
+          onTap: () {
+            final offerId = doc.id;
+            final category = (data['category'] ?? 'Catégorie non précisée') as String;
+            final budget = data['budget'];
+            final description = (data['description'] ?? '') as String;
+            final phone = data['phone'] == null ? null : data['phone'] as String;
+
+            final List<String> imageUrls =
+                (data['imageUrls'] as List<dynamic>? ?? [])
+                    .map((e) => e.toString())
+                    .toList();
+
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => OfferDetailPage(
+                  offerId: offerId,
+                  title: title,
+                  location: location,
+                  category: category,
+                  subcategory: (data['subcategory'] ?? '') as String?,
+                  budget: budget is num ? budget : null,
+                  description: description.isEmpty ? null : description,
+                  phone: phone,
+                  imageUrls: imageUrls.isEmpty ? null : imageUrls,
+                  annonceurId: (data['userId'] ?? '') as String,
+                ),
               ),
-              child: const Icon(
-                Icons.flash_on_outlined,
-                color: kPrestoOrange,
-                size: 20,
-              ),
+            );
+          },
+          child: Container(
+            width: 280,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3E0),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    "$location — $whenLabel",
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: const Icon(
+                    Icons.flash_on_outlined,
+                    color: kPrestoOrange,
+                    size: 20,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "$location — $whenLabel",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: Colors.black38,
+                ),
+              ],
             ),
-            const SizedBox(width: 4),
-            const Icon(
-              Icons.chevron_right,
-              size: 18,
-              color: Colors.black38,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -12882,26 +12885,28 @@ class _AutoScrollingOffersCarouselState
       onExit: (_) => setState(() => _isHovered = false),
       child: Column(
         children: [
-          // Ligne 1
+          // Ligne 1 - défilement vers la droite
           SizedBox(
             height: 60,
             child: ListView.separated(
-              controller: _scrollController,
+              controller: _scrollController1,
               scrollDirection: Axis.horizontal,
               itemCount: row1Offers.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, index) => _buildOfferCard(row1Offers[index]),
+              itemBuilder: (_, index) => _buildOfferCard(row1Offers[index], index),
             ),
           ),
           const SizedBox(height: 8),
-          // Ligne 2
+          // Ligne 2 - défilement inversé vers la gauche (quinconce)
           SizedBox(
             height: 60,
             child: ListView.separated(
+              controller: _scrollController2,
               scrollDirection: Axis.horizontal,
+              reverse: true,
               itemCount: row2Offers.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, index) => _buildOfferCard(row2Offers[index]),
+              itemBuilder: (_, index) => _buildOfferCard(row2Offers[index], index),
             ),
           ),
         ],

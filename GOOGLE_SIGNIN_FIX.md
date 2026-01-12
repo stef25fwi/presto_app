@@ -55,7 +55,10 @@ Pour que Google Sign-In fonctionne correctement, assure-toi que :
 
 2. **Le domaine est autorisé** :
    - Firebase Console → Authentication → Settings → Authorized domains
-   - Ajoute ton domaine (ex: `stef25fwi.github.io` pour GitHub Pages)
+   - Ajoute tes domaines:
+     - `stef25fwi.github.io` (GitHub Pages)
+     - `presto-app-74abe.web.app` (Firebase Hosting)
+     - `presto-app-74abe.firebaseapp.com` (souvent déjà présent)
 
 3. **Client ID OAuth Web configuré** :
    - Firebase Console → Authentication → Sign-in method → Google → Web SDK configuration

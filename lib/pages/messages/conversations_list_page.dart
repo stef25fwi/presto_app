@@ -1,37 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../constants.dart';
-import '../../utils/friendly_snackbar.dart';
+import '../../services/messaging_service.dart';
+import 'conversation_page.dart';
 
 /// On redéfinit juste la couleur orange Prestō ici
 const kPrestoOrange = Color(0xFFFF6600);
-
-class Conversation {
-  Conversation({
-    required this.id,
-    required this.contactName,
-    required this.messages,
-    this.unreadCount = 0,
-  });
-
-  final String id;
-  final String contactName;
-  final List<Message> messages;
-  int unreadCount;
-
-  Message get latestMessage => messages.last;
-}
-
-class Message {
-  const Message({
-    required this.text,
-    required this.sentAt,
-    required this.isMine,
-  });
-
-  final String text;
-  final DateTime sentAt;
-  final bool isMine;
-}
 
 /// Page liste des conversations avec recherche, tri par date et badges d'alertes
 class ConversationsListPage extends StatefulWidget {
@@ -43,13 +18,7 @@ class ConversationsListPage extends StatefulWidget {
 
 class _ConversationsListPageState extends State<ConversationsListPage> {
   final TextEditingController _searchController = TextEditingController();
-  late final List<Conversation> _conversations;
-
-  @override
-  void initState() {
-    super.initState();
-    _conversations = _seedConversations();
-  }
+  final MessagingService _messagingService = MessagingService();
 
   @override
   void dispose() {
@@ -57,39 +26,28 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     super.dispose();
   }
 
-  int get _totalUnread => _conversations.fold<int>(0, (sum, c) => sum + c.unreadCount);
-
-  List<Conversation> get _filteredAndSorted {
-    final query = _searchController.text.trim().toLowerCase();
-
-    final filtered = _conversations.where((conversation) {
-      if (query.isEmpty) return true;
-      final inContact = conversation.contactName.toLowerCase().contains(query);
-      final inMessages = conversation.messages.any(
-        (message) => message.text.toLowerCase().contains(query),
-      );
-      return inContact || inMessages;
-    }).toList();
-
-    filtered.sort(
-      (a, b) => b.latestMessage.sentAt.compareTo(a.latestMessage.sentAt),
-    );
-
-    return filtered;
-  }
-
-  void _markAsRead(String conversationId) {
-    setState(() {
-      final idx = _conversations.indexWhere((c) => c.id == conversationId);
-      if (idx != -1) {
-        _conversations[idx].unreadCount = 0;
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final conversations = _filteredAndSorted;
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (currentUserId == null) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: kPrestoOrange,
+          foregroundColor: Colors.white,
+          title: const Text(
+            "Mes messages",
+            style: kPrestoAppBarTitleStyle,
+          ),
+        ),
+        body: const Center(
+          child: Text(
+            'Veuillez vous connecter pour voir vos messages',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -100,9 +58,15 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           style: kPrestoAppBarTitleStyle,
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: _BellBadge(totalUnread: _totalUnread),
+          StreamBuilder<int>(
+            stream: _getTotalUnreadStream(),
+            builder: (context, snapshot) {
+              final totalUnread = snapshot.data ?? 0;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _BellBadge(totalUnread: totalUnread),
+              );
+            },
           ),
         ],
       ),
@@ -114,7 +78,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               controller: _searchController,
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                hintText: "Rechercher un mot dans vos conversations",
+                hintText: "Rechercher dans vos conversations",
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchController.text.isEmpty
                     ? null
@@ -136,82 +100,175 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             ),
           ),
           Expanded(
-            child: conversations.isEmpty
-                ? const Center(
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: _messagingService.getConversationsStream(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Erreur: ${snapshot.error}'),
+                  );
+                }
+
+                if (!snapshot.hasData) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                    ),
+                  );
+                }
+
+                final conversations = snapshot.data!.docs;
+
+                // Filtre par recherche
+                final searchQuery = _searchController.text.trim().toLowerCase();
+                final filteredConversations = conversations.where((doc) {
+                  if (searchQuery.isEmpty) return true;
+
+                  final data = doc.data();
+                  final lastMessage = (data['lastMessage'] ?? '').toString().toLowerCase();
+
+                  return lastMessage.contains(searchQuery);
+                }).toList();
+
+                if (filteredConversations.isEmpty) {
+                  return const Center(
                     child: Text(
                       "Aucune conversation trouvée",
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
-                  )
-                : ListView.separated(
-                    itemCount: conversations.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, index) {
-                      final conversation = conversations[index];
-                      final lastMessage = conversation.latestMessage;
+                  );
+                }
 
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: kPrestoOrange.withOpacity(0.15),
-                          foregroundColor: kPrestoOrange,
-                          child: Text(
-                            conversation.contactName.isNotEmpty
-                                ? conversation.contactName[0].toUpperCase()
-                                : '?',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                        title: Text(
-                          conversation.contactName,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        subtitle: Text(
-                          lastMessage.text,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              _formatTimestamp(lastMessage.sentAt),
-                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                return ListView.separated(
+                  itemCount: filteredConversations.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final doc = filteredConversations[index];
+                    final data = doc.data();
+
+                    final participants = List<String>.from(data['participants'] ?? []);
+                    final otherUserId = participants.firstWhere(
+                      (id) => id != currentUserId,
+                      orElse: () => '',
+                    );
+
+                    final lastMessage = data['lastMessage'] ?? '';
+                    final lastMessageAt = (data['lastMessageAt'] as Timestamp?)?.toDate();
+                    final unreadMap = data['unreadCount'] as Map<String, dynamic>?;
+                    final unreadCount = unreadMap?[currentUserId] as int? ?? 0;
+
+                    return FutureBuilder<Map<String, dynamic>?>(
+                      future: _messagingService.getUserInfo(otherUserId),
+                      builder: (context, userSnapshot) {
+                        final userName = userSnapshot.data?['displayName'] ??
+                            userSnapshot.data?['name'] ??
+                            'Utilisateur';
+
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: kPrestoOrange.withOpacity(0.15),
+                            foregroundColor: kPrestoOrange,
+                            child: Text(
+                              userName.isNotEmpty
+                                  ? userName[0].toUpperCase()
+                                  : '?',
+                              style: const TextStyle(fontWeight: FontWeight.w700),
                             ),
-                            if (conversation.unreadCount > 0)
-                              Container(
-                                margin: const EdgeInsets.only(top: 6),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.shade600,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  '${conversation.unreadCount}',
+                          ),
+                          title: Text(
+                            userName,
+                            style: TextStyle(
+                              fontWeight: unreadCount > 0
+                                  ? FontWeight.w800
+                                  : FontWeight.w700,
+                            ),
+                          ),
+                          subtitle: Text(
+                            lastMessage.isEmpty
+                                ? 'Aucun message'
+                                : lastMessage,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: unreadCount > 0
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              if (lastMessageAt != null)
+                                Text(
+                                  _formatTimestamp(lastMessageAt),
                                   style: const TextStyle(
-                                    color: Colors.white,
                                     fontSize: 12,
-                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
                                   ),
                                 ),
+                              if (unreadCount > 0)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.shade600,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '$unreadCount',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          onTap: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ConversationPage(
+                                  conversationId: doc.id,
+                                  otherUserName: userName,
+                                ),
                               ),
-                          ],
-                        ),
-                        onTap: () async {
-                          _markAsRead(conversation.id);
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ConversationPage(conversation: conversation),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Stream<int> _getTotalUnreadStream() async* {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      yield 0;
+      return;
+    }
+
+    await for (final snapshot in _messagingService.getConversationsStream()) {
+      int total = 0;
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final unreadMap = data['unreadCount'] as Map<String, dynamic>?;
+        final unread = unreadMap?[currentUserId] as int? ?? 0;
+        total += unread;
+      }
+      yield total;
+    }
   }
 }
 
@@ -255,125 +312,6 @@ class _BellBadge extends StatelessWidget {
   }
 }
 
-class ConversationPage extends StatelessWidget {
-  const ConversationPage({super.key, required this.conversation});
-
-  final Conversation conversation;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: kPrestoOrange,
-        foregroundColor: Colors.white,
-        title: Text(
-          conversation.contactName,
-          style: kPrestoAppBarTitleStyle,
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              String? message;
-              if (value == 'add') {
-                message = 'Contact ajouté à votre carnet.';
-              } else if (value == 'report') {
-                message = 'Signalement transmis. Merci pour votre alerte.';
-              }
-              if (message != null) {
-                showSuccessSnackBar(context, message);
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(
-                value: 'add',
-                child: Text('Ajouter à mes contacts'),
-              ),
-              PopupMenuItem(
-                value: 'report',
-                child: Text('Signaler'),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: conversation.messages.length,
-              itemBuilder: (context, index) {
-                final message = conversation.messages[index];
-                final alignment = message.isMine ? Alignment.centerRight : Alignment.centerLeft;
-                final bubbleColor = message.isMine ? kPrestoOrange.withOpacity(0.12) : Colors.grey.shade200;
-                final textColor = message.isMine ? Colors.black : Colors.black87;
-
-                return Align(
-                  alignment: alignment,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 320),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: bubbleColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            message.text,
-                            style: TextStyle(color: textColor, fontSize: 14),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _formatTimestamp(message.sentAt),
-                            style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          SafeArea(
-            minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    enabled: false,
-                    decoration: InputDecoration(
-                      hintText: "Envoyer un message (bientôt disponible)",
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                IconButton(
-                  onPressed: null,
-                  icon: const Icon(Icons.send),
-                  color: kPrestoOrange,
-                  tooltip: "Envoi bientôt disponible",
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 String _formatTimestamp(DateTime date) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
@@ -384,60 +322,4 @@ String _formatTimestamp(DateTime date) {
   }
 
   return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
-}
-
-List<Conversation> _seedConversations() {
-  return [
-    Conversation(
-      id: 'conv-1',
-      contactName: 'Camille',
-      unreadCount: 2,
-      messages: [
-        Message(
-          text: 'Hello ! Merci pour ton dernier retour.',
-          sentAt: DateTime(2025, 1, 20, 9, 30),
-          isMine: false,
-        ),
-        Message(
-          text: "Dispo pour avancer sur la prestation ?",
-          sentAt: DateTime(2025, 1, 20, 9, 34),
-          isMine: false,
-        ),
-      ],
-    ),
-    Conversation(
-      id: 'conv-2',
-      contactName: 'Alexandre',
-      unreadCount: 1,
-      messages: [
-        Message(
-          text: 'Parfait, je passe demain matin.',
-          sentAt: DateTime(2025, 1, 19, 18, 12),
-          isMine: true,
-        ),
-        Message(
-          text: "Top, j'aurai les pièces.",
-          sentAt: DateTime(2025, 1, 19, 19, 5),
-          isMine: false,
-        ),
-      ],
-    ),
-    Conversation(
-      id: 'conv-3',
-      contactName: 'Sophie',
-      unreadCount: 0,
-      messages: [
-        Message(
-          text: 'Merci pour la prestation, à bientôt !',
-          sentAt: DateTime(2025, 1, 18, 14, 42),
-          isMine: false,
-        ),
-        Message(
-          text: 'Avec plaisir, bonne journée.',
-          sentAt: DateTime(2025, 1, 18, 14, 55),
-          isMine: true,
-        ),
-      ],
-    ),
-  ];
 }

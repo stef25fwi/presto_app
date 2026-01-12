@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 /// Options Firebase pour le Web (Flutter)
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
-    // On cible ton build Web (GitHub Pages)
+    // Options utilisées pour le Web (quel que soit l'hébergeur : GitHub Pages ou Firebase Hosting)
     return const FirebaseOptions(
       apiKey: 'AIzaSyB-Oo_86VpG_refQU7my0qk10tQFQDU-Fo',
       authDomain: 'presto-app-74abe.firebaseapp.com',

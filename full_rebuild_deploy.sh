@@ -1,8 +1,22 @@
 #!/bin/bash
 
+set -euo pipefail
+
+require_cmd() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "❌ Commande manquante: $1"
+    echo "   Veuillez l'installer ou vérifier le PATH."
+    exit 1
+  fi
+}
+
 echo "🚀 Rebuild + Redeploy COMPLET"
 echo "════════════════════════════════════════════════════════════"
 cd /workspaces/presto_app
+
+# Pré-vérifications des outils
+require_cmd flutter
+require_cmd firebase
 
 # 1. Clean total
 echo "1️⃣ Nettoyage complet..."
@@ -17,7 +31,13 @@ flutter pub get
 # 3. Build web (sans web-renderer flag pour compatibilité)
 echo ""
 echo "3️⃣ Build Flutter Web..."
-flutter build web --release --base-href="/"
+flutter build web --release --base-href=/
+
+# Vérifier la présence des fichiers de sortie
+if [ ! -f "build/web/index.html" ]; then
+  echo "❌ Échec du build: build/web/index.html introuvable"
+  exit 1
+fi
 
 # 4. Ajouter page de test
 echo ""
@@ -61,12 +81,16 @@ EOF
 echo ""
 echo "5️⃣ Vérifications..."
 if [ -f "build/web/index.html" ]; then
-  echo "Base href: $(grep 'base href' build/web/index.html)"
+  echo "Base href: $(grep -E '<base href' build/web/index.html || echo 'non défini')"
 else
   echo "Base href: index.html introuvable"
 fi
 echo "Fichiers: $(ls -1 build/web/ 2>/dev/null | wc -l) fichiers"
-echo "main.dart.js: $(du -h build/web/main.dart.js 2>/dev/null | cut -f1 || echo 'MANQUANT')"
+if [ -f "build/web/main.dart.js" ]; then
+  echo "main.dart.js: $(du -h build/web/main.dart.js 2>/dev/null | awk '{print $1}')"
+else
+  echo "main.dart.js: MANQUANT"
+fi
 
 # 6. Deploy
 echo ""
