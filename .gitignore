@@ -47,3 +47,27 @@ node_modules/
 
 # Firebase CLI local cache
 .firebase/
+
+# Flutter
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+coverage/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Dumps / logs / temp
+dumps/
+*.log
+*.wav
+*.flac
+*.patch
+*.tar.gz
+
+# Node
+**/node_modules/

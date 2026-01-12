@@ -2396,13 +2396,13 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 4),
 
                 // DERNIÈRES OFFRES - Section avec fond blanc
                 Container(
                   width: double.infinity,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(18),
@@ -2420,7 +2420,7 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
 
-                const SizedBox(height: 18),
+                const SizedBox(height: 12),
 
                 // CATEGORIES COMPACTES
                 AnimatedBuilder(
