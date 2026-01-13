@@ -3233,9 +3233,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   DocumentSnapshot<Map<String, dynamic>>? _lastDoc;
   bool _isLoading = false;
 
-  // + Pagination progressive
-  static const int _initialLimit = 20;
-  static const int _pageSize = 20;
+  // + Pagination progressive (moins brutale: 10 par page au lieu de 20)
+  static const int _initialLimit = 10;
+  static const int _pageSize = 10;
   static const int _maxLimit = 100;
   int _pageLimit = _initialLimit;
 
@@ -3263,6 +3263,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   // ✅ Cache de normalisation pour améliorer la performance de recherche
   final Map<String, String> _normalizedTextCache = {};
+
+  // ✅ Cache des résultats Firestore pour éviter les re-queries
+  Map<String, List<DocumentSnapshot<Map<String, dynamic>>>>? _queryResultsCache;
+  String? _lastCachedQuerySignature;
+  Timer? _cacheInvalidationTimer;
 
   /// Normalise un texte pour la recherche (diacritiques, casse, séparateurs)
   String _normalizeText(String input) {
@@ -3401,6 +3406,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     // Quand le code postal change, on essaie de déduire la région
     _postalCodeController.addListener(_syncRegionWithPostalCode);
+
+    // ✅ Précharger les données région/département
+    _preloadRegionDeptData();
 
     // Synchroniser la ville sélectionnée (si déjà connue) dans le champ visible
     _filterCityController.addListener(_syncLocationFieldFromFilter);
