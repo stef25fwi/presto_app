@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:presto_app/main.dart' show OfferDetailPage;
 
 class LastOffersSection extends StatelessWidget {
   final VoidCallback? onSeeAll;
@@ -21,7 +23,35 @@ class LastOffersSection extends StatelessWidget {
         stream: offersStream,
         builder: (context, snapshot) {
           final docs = snapshot.data?.docs ?? const [];
-          final items = docs.take(2).toList(growable: false);
+          // Prendre max 10 offres
+          final items = docs.take(10).toList(growable: false);
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  "Dernières offres près de chez vous",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SizedBox(height: 12),
+                _OffersSkeleton(),
+              ],
+            );
+          }
+
+          if (items.isEmpty) {
+            return Text(
+              "Aucune offre pour le moment.",
+              style: TextStyle(
+                color: Colors.black.withOpacity(0.6),
+                fontWeight: FontWeight.w600,
+              ),
+            );
+          }
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,19 +80,7 @@ class LastOffersSection extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-
-              if (snapshot.connectionState == ConnectionState.waiting)
-                const _OffersSkeleton()
-              else if (items.isEmpty)
-                Text(
-                  "Aucune offre pour le moment.",
-                  style: TextStyle(
-                    color: Colors.black.withOpacity(0.6),
-                    fontWeight: FontWeight.w600,
-                  ),
-                )
-              else
-                ..._buildOfferRowsFromDocs(items),
+              _AnimatedOffersCarousel(docs: items),
             ],
           );
         },
@@ -122,53 +140,14 @@ class LastOffersSection extends StatelessWidget {
     );
   }
 
+  // ignore: unused_element
   List<Widget> _buildOfferRowsFromDocs(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
   ) {
-    final rows = <Widget>[];
-    for (var i = 0; i < docs.length; i++) {
-      final data = docs[i].data();
-
-      final title = (data['title'] ?? data['jobTitle'] ?? 'Offre').toString();
-      final city = (data['city'] ?? data['location'] ?? '').toString().trim();
-      final startText = (data['startText'] ?? data['startDateText'] ?? '')
-          .toString()
-          .trim();
-      final locationText = [
-        if (city.isNotEmpty) city,
-        if (startText.isNotEmpty) startText,
-      ].join(' — ');
-
-      String? imageUrl;
-      final rawImages = data['images'];
-      if (rawImages is List && rawImages.isNotEmpty) {
-        final first = rawImages.first;
-        if (first is String && first.trim().isNotEmpty) {
-          imageUrl = first.trim();
-        }
-      }
-      imageUrl ??= (data['imageUrl'] ?? data['coverUrl'] ?? '').toString();
-      if (imageUrl.trim().isEmpty) {
-        imageUrl =
-            'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=60';
-      }
-
-      rows.add(
-        _OfferRow(
-          title: title,
-          location: locationText.isEmpty ? 'Proche de vous' : locationText,
-          imageUrl: imageUrl,
-          tags: const [
-            _Tag(label: 'Nouveau', icon: Icons.fiber_new_rounded, primary: true),
-          ],
-        ),
-      );
-      if (i != docs.length - 1) {
-        rows.add(const SizedBox(height: 6));
-      }
-    }
-    return rows;
+    // This method is no longer used; _AnimatedOffersCarousel handles display
+    return [];
   }
+
 }
 
 class _OffersSkeleton extends StatelessWidget {
@@ -377,6 +356,261 @@ class _TagChip extends StatelessWidget {
               fontSize: 12.5,
               fontWeight: FontWeight.w800,
               color: fg,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ============================================================================
+/// ANIMATED CAROUSEL - Auto-scrolling 10 offers on 2 rows
+/// ============================================================================
+class _AnimatedOffersCarousel extends StatefulWidget {
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs;
+
+  const _AnimatedOffersCarousel({required this.docs});
+
+  @override
+  State<_AnimatedOffersCarousel> createState() =>
+      _AnimatedOffersCarouselState();
+}
+
+class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
+    with TickerProviderStateMixin {
+  final ScrollController _scrollController1 = ScrollController();
+  final ScrollController _scrollController2 = ScrollController();
+  Timer? _autoScrollTimer;
+  bool _isHovered = false;
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..forward();
+    _startAutoScroll();
+  }
+
+  @override
+  void dispose() {
+    _autoScrollTimer?.cancel();
+    _scrollController1.dispose();
+    _scrollController2.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoScroll() {
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
+      if (!_isHovered) {
+        // Row 1: scroll left-to-right
+        if (_scrollController1.hasClients) {
+          final maxScroll = _scrollController1.position.maxScrollExtent;
+          final currentScroll = _scrollController1.offset;
+          if (currentScroll >= maxScroll) {
+            _scrollController1.jumpTo(0);
+          } else {
+            _scrollController1.jumpTo(currentScroll + 1);
+          }
+        }
+        // Row 2: scroll right-to-left (opposite)
+        if (_scrollController2.hasClients) {
+          final currentScroll = _scrollController2.offset;
+          if (currentScroll <= 0) {
+            _scrollController2.jumpTo(_scrollController2.position.maxScrollExtent);
+          } else {
+            _scrollController2.jumpTo(currentScroll - 1);
+          }
+        }
+      }
+    });
+  }
+
+  Widget _buildOfferCard(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+    int index,
+  ) {
+    final data = doc.data();
+    final title = (data['title'] ?? data['jobTitle'] ?? 'Sans titre').toString();
+    final city = (data['city'] ?? data['location'] ?? '').toString().trim();
+    final startText = (data['startText'] ?? data['startDateText'] ?? '')
+        .toString()
+        .trim();
+    final locationText = [
+      if (city.isNotEmpty) city,
+      if (startText.isNotEmpty) startText,
+    ].join(' — ');
+
+    String? imageUrl;
+    final rawImages = data['images'];
+    if (rawImages is List && rawImages.isNotEmpty) {
+      final first = rawImages.first;
+      if (first is String && first.trim().isNotEmpty) {
+        imageUrl = first.trim();
+      }
+    }
+    imageUrl ??= (data['imageUrl'] ?? data['coverUrl'] ?? '').toString();
+    if (imageUrl.isEmpty) {
+      imageUrl =
+          'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=600&q=60';
+    }
+
+    final animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Interval(
+        (index * 0.08).clamp(0.0, 1.0),
+        ((index * 0.08) + 0.4).clamp(0.0, 1.0),
+        curve: Curves.easeOut,
+      ),
+    );
+
+    return FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.2),
+          end: Offset.zero,
+        ).animate(animation),
+        child: GestureDetector(
+          onTap: () {
+            final offerId = doc.id;
+            final category = (data['category'] ?? 'Catégorie non précisée').toString();
+            final budget = data['budget'];
+            final description = (data['description'] ?? '').toString();
+            final phone =
+                data['phone'] == null ? null : data['phone'].toString();
+
+            final List<String> imageUrls = (data['imageUrls'] as List<dynamic>? ?? [])
+                .map((e) => e.toString())
+                .toList();
+
+            // ignore: use_build_context_synchronously
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => OfferDetailPage(
+                  offerId: offerId,
+                  title: title,
+                  location: locationText.isEmpty ? 'Proche' : locationText,
+                  category: category,
+                  subcategory: (data['subcategory'] ?? '').toString(),
+                  budget: budget is num ? budget : null,
+                  description: description.isEmpty ? null : description,
+                  phone: phone,
+                  imageUrls: imageUrls.isEmpty ? null : imageUrls,
+                  annonceurId: (data['userId'] ?? '').toString(),
+                ),
+              ),
+            );
+          },
+          child: Container(
+            width: 160,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    imageUrl,
+                    width: double.infinity,
+                    height: 80,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        locationText.isEmpty ? 'Proche' : locationText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Duplicate for infinite scroll effect
+    final duplicated = [...widget.docs, ...widget.docs];
+
+    // Split into 2 rows
+    final row1 = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    final row2 = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+
+    for (int i = 0; i < duplicated.length; i++) {
+      if (i % 2 == 0) {
+        row1.add(duplicated[i]);
+      } else {
+        row2.add(duplicated[i]);
+      }
+    }
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: Column(
+        children: [
+          // Row 1
+          SizedBox(
+            height: 140,
+            child: ListView.separated(
+              controller: _scrollController1,
+              scrollDirection: Axis.horizontal,
+              itemCount: row1.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, index) => _buildOfferCard(row1[index], index),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Row 2
+          SizedBox(
+            height: 140,
+            child: ListView.separated(
+              controller: _scrollController2,
+              scrollDirection: Axis.horizontal,
+              itemCount: row2.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, index) => _buildOfferCard(row2[index], index),
             ),
           ),
         ],
