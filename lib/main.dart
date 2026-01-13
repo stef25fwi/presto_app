@@ -34,6 +34,7 @@ import 'pages/pro_profile_page.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/home_page_v2_option2.dart';
+import 'pages/splash_screen_v2.dart';
 import 'pages/messages/conversation_page.dart';
 import 'widgets/ad_banner.dart';
 import 'widgets/offer_card.dart';
@@ -47,10 +48,8 @@ import 'utils/crashlytics_context.dart';
 import 'utils/recording_path_web.dart'
     if (dart.library.io) 'utils/recording_path_io.dart';
 import 'dev/seed_offers.dart';
-import 'features/micro_ia/micro_ia_service.dart';
-import 'widgets/premium_ai_button.dart';
-import 'widgets/phone_input_field.dart';
-import 'widgets/splashscreen_loader.dart';
+import 'pages/splash_screen_v2.dart';
+import 'pages/splash_screen_router.dart';
 // ...existing code (autres imports)...
 
 // ✅ Remote Config singleton: expose 'audio_pipeline' pour l'UI
@@ -884,9 +883,7 @@ class PrestoApp extends StatelessWidget {
             const EntrepreneurCalculatorPage(),
       },
       theme: buildPrestoTheme(),
-      home: const SplashscreenLoader(
-        child: SplashScreen(),
-      ),
+      home: const SplashScreenRouter(),
     );
   }
 }
