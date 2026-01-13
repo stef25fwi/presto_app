@@ -379,8 +379,7 @@ class _AnimatedOffersCarousel extends StatefulWidget {
 
 class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
     with TickerProviderStateMixin {
-  final ScrollController _scrollController1 = ScrollController();
-  final ScrollController _scrollController2 = ScrollController();
+  final ScrollController _scrollController = ScrollController();
   Timer? _autoScrollTimer;
   bool _isHovered = false;
   late AnimationController _animationController;
@@ -398,8 +397,7 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
   @override
   void dispose() {
     _autoScrollTimer?.cancel();
-    _scrollController1.dispose();
-    _scrollController2.dispose();
+      _scrollController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -407,23 +405,14 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
   void _startAutoScroll() {
     _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
       if (!_isHovered) {
-        // Row 1: scroll left-to-right
-        if (_scrollController1.hasClients) {
-          final maxScroll = _scrollController1.position.maxScrollExtent;
-          final currentScroll = _scrollController1.offset;
+          // Scroll left-to-right
+          if (_scrollController.hasClients) {
+            final maxScroll = _scrollController.position.maxScrollExtent;
+            final currentScroll = _scrollController.offset;
           if (currentScroll >= maxScroll) {
-            _scrollController1.jumpTo(0);
+              _scrollController.jumpTo(0);
           } else {
-            _scrollController1.jumpTo(currentScroll + 1);
-          }
-        }
-        // Row 2: scroll right-to-left (opposite)
-        if (_scrollController2.hasClients) {
-          final currentScroll = _scrollController2.offset;
-          if (currentScroll <= 0) {
-            _scrollController2.jumpTo(_scrollController2.position.maxScrollExtent);
-          } else {
-            _scrollController2.jumpTo(currentScroll - 1);
+              _scrollController.jumpTo(currentScroll + 1);
           }
         }
       }
@@ -573,47 +562,18 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
     // Duplicate for infinite scroll effect
     final duplicated = [...widget.docs, ...widget.docs];
 
-    // Split into 2 rows
-    final row1 = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-    final row2 = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-
-    for (int i = 0; i < duplicated.length; i++) {
-      if (i % 2 == 0) {
-        row1.add(duplicated[i]);
-      } else {
-        row2.add(duplicated[i]);
-      }
-    }
-
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: Column(
-        children: [
-          // Row 1
-          SizedBox(
-            height: 140,
-            child: ListView.separated(
-              controller: _scrollController1,
-              scrollDirection: Axis.horizontal,
-              itemCount: row1.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, index) => _buildOfferCard(row1[index], index),
-            ),
+        child: SizedBox(
+          height: 140,
+          child: ListView.separated(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            itemCount: duplicated.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (_, index) => _buildOfferCard(duplicated[index], index),
           ),
-          const SizedBox(height: 8),
-          // Row 2
-          SizedBox(
-            height: 140,
-            child: ListView.separated(
-              controller: _scrollController2,
-              scrollDirection: Axis.horizontal,
-              itemCount: row2.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, index) => _buildOfferCard(row2[index], index),
-            ),
-          ),
-        ],
       ),
     );
   }

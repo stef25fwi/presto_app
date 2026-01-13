@@ -4,5 +4,20 @@
     "@google-cloud/speech": "^7.2.1",
     "firebase-admin": "^13.6.0",
     "openai": "^6.15.0"
-  }
+  },
+  "name": "presto_app",
+  "version": "1.0.0",
+  "description": "A new Flutter project.",
+  "main": "fix_offers_isactive.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
