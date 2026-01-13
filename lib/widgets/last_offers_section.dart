@@ -30,7 +30,7 @@ class LastOffersSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
                 Text(
-                  "Dernières annonces publiées",
+                  "Dernières offres près de chez vous",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
@@ -59,7 +59,7 @@ class LastOffersSection extends StatelessWidget {
                 children: [
                   const Expanded(
                     child: Text(
-                      "Dernières annonces publiées",
+                      "Dernières offres près de chez vous",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
@@ -93,7 +93,7 @@ class LastOffersSection extends StatelessWidget {
           children: [
             const Expanded(
               child: Text(
-                "Dernières annonces publiées",
+                "Dernières offres près de chez vous",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
