@@ -12,7 +12,7 @@ class MicroIaService {
     try {
       final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
       final callable = functions.httpsCallable(
-        'transcribeAudio',
+        'microIaProcessAudio',
         options: HttpsCallableOptions(
           timeout: streamingMode
               ? const Duration(seconds: 10) // ✅ Timeout plus court en streaming

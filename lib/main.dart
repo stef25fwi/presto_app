@@ -508,6 +508,48 @@ String? inferRegionFromPostalCode(String cp) {
   return null;
 }
 
+/// ============= HELPER NAVIGATION VERS OFFERDETAILPAGE =============
+
+/// ✅ Helper pour naviguer vers la page de détail d'une offre
+/// Extrait et mappe correctement tous les champs depuis les données Firestore
+void navigateToOfferDetail(
+  BuildContext context,
+  String offerId,
+  Map<String, dynamic> data,
+) {
+  final title = (data['title'] ?? 'Sans titre').toString();
+  final location = (data['location'] ?? 'Lieu non précisé').toString();
+  final category = (data['category'] ?? 'Catégorie non précisée').toString();
+  final budget = data['budget'];
+  final description = (data['description'] ?? '').toString();
+  final phone = data['phone']?.toString();
+  
+  final sub = (data['subCategory'] ?? data['subcategory'] ?? '').toString().trim();
+  
+  final List<String> imageUrls = (data['imageUrls'] as List<dynamic>? ?? [])
+      .map((e) => e.toString())
+      .toList();
+  
+  final annonceurId = (data['userId'] ?? data['annonceurId'] ?? '').toString();
+
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => OfferDetailPage(
+        offerId: offerId,
+        title: title,
+        location: location,
+        category: category,
+        subcategory: sub.isEmpty ? null : sub,
+        budget: budget is num ? budget : null,
+        description: description.isEmpty ? null : description,
+        phone: phone,
+        imageUrls: imageUrls.isEmpty ? null : imageUrls,
+        annonceurId: annonceurId,
+      ),
+    ),
+  );
+}
+
 /// ============= WIDGETS HELPER POUR OfferDetailPage =============
 
 /// ✅ Pastille affichant le pipeline audio actif (Remote Config)
@@ -4277,62 +4319,18 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
                               final title =
                                   (data['title'] ?? 'Sans titre') as String;
-                              final location = (data['location'] ??
-                                  'Lieu non précisé') as String;
-                              final category = (data['category'] ??
-                                  'Catégorie non précisée') as String;
-                              final budget = data['budget'];
-                              final description =
-                                  (data['description'] ?? '') as String;
-                              final phone = data['phone'] == null
-                                  ? null
-                                  : data['phone'] as String;
-
-                                final sub = (data['subCategory'] ??
-                                    data['subcategory'] ??
-                                    '')
-                                  .toString()
-                                  .trim();
-
-                              final List<String> imageUrls =
-                                  (data['imageUrls'] as List<dynamic>? ?? [])
-                                      .map((e) => e.toString())
-                                      .toList();
 
                               return RepaintBoundary(
                                 child: Padding(
                                   padding: const EdgeInsets.only(bottom: 12),
-                                  child: GestureDetector(
+                                  child: OfferCard(
+                                    offerId: offerId,
+                                    data: data,
+                                    showActionsMenu: false,
                                     onTap: () {
                                       _logOfferClicked(offerId, title);
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => OfferDetailPage(
-                                            offerId: offerId,
-                                            title: title,
-                                            location: location,
-                                            category: category,
-                                            subcategory: sub.isEmpty ? null : sub,
-                                            budget:
-                                                budget is num ? budget : null,
-                                            description: description.isEmpty
-                                                ? null
-                                                : description,
-                                            phone: phone,
-                                            imageUrls: imageUrls.isEmpty
-                                                ? null
-                                                : imageUrls,
-                                            annonceurId: (data['userId'] ?? '')
-                                                as String,
-                                          ),
-                                        ),
-                                      );
+                                      navigateToOfferDetail(context, offerId, data);
                                     },
-                                    child: OfferCard(
-                                      offerId: offerId,
-                                      data: data,
-                                      showActionsMenu: false,
-                                    ),
                                   ),
                                 ),
                               );
@@ -7919,6 +7917,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _isSubmitting = false;
   bool _isAnalyzing = false;
   bool _isListening = false;
+  
+  // ✅ Niveau audio pour le widget RecordingMicButton (0.0 → 1.0)
+  double _audioLevel = 0.0;
 
   bool _attemptedSubmit = false; // affiche erreurs après tentative
   bool _publishLocked = false; // lock après tentative invalide
@@ -8038,7 +8039,30 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _partialTranscript = text;
         // Remplir les champs au fur et à mesure
         _applyFastDraftFromTranscript(text);
+        
+        // ✅ Simuler un niveau audio basé sur l'activité de transcription
+        // Quand du texte arrive, le niveau monte, puis redescend progressivement
+        if (text.isNotEmpty && text.length > _partialTranscript.length) {
+          _audioLevel = 0.7 + (math.Random().nextDouble() * 0.3); // 0.7-1.0
+        }
       });
+    });
+    
+    // ✅ Décrémenter progressivement le niveau audio quand pas de nouvelle transcription
+    Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_isListening && _audioLevel > 0.1) {
+        setState(() {
+          _audioLevel = (_audioLevel - 0.05).clamp(0.0, 1.0);
+        });
+      } else if (!_isListening && _audioLevel > 0.0) {
+        setState(() {
+          _audioLevel = 0.0;
+        });
+      }
     });
   }
 
@@ -9167,7 +9191,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     child: _isListening
                         ? RecordingMicButton(
                             isRecording: true,
-                            isDisabled: _isAnalyzing,
+                            level: _audioLevel,
                             onTap: _isStreaming ? _stopStreamingMic : _stopMic,
                           )
                         : PremiumAiButton(

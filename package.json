@@ -16,7 +16,10 @@
   },
   "scripts": {
     "fix:offers-active": "node fix_offers_isactive.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy:web": "bash scripts/deploy_pages.sh",
+    "deploy:firebase": "flutter build web --release && firebase deploy --only hosting",
+    "build:web": "flutter build web --release"
   },
   "keywords": [],
   "author": "",

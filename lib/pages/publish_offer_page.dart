@@ -81,6 +81,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // Pour l'enregistrement audio premium
   late final AudioRecorder _audioRecorder;
   bool _recording = false;
+  
+  // ✅ Niveau audio pour le widget RecordingMicButton (0.0 → 1.0)
+  double _audioLevel = 0.0;
 
   // Streaming WebSocket
   MicroIaStreamClient? _streamClient;
@@ -108,6 +111,24 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     super.initState();
     _repo = widget.repo ?? CityRepoCompact();
     _audioRecorder = AudioRecorder();
+    
+    // ✅ Simuler le niveau audio pendant l'enregistrement
+    Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_recording && _audioLevel > 0.1) {
+        setState(() {
+          // Variation aléatoire pour simuler l'activité vocale
+          _audioLevel = (0.3 + (0.7 * (DateTime.now().millisecondsSinceEpoch % 100) / 100.0)).clamp(0.0, 1.0);
+        });
+      } else if (!_recording && _audioLevel > 0.0) {
+        setState(() {
+          _audioLevel = 0.0;
+        });
+      }
+    });
   }
 
   Future<void> trace(String step, Map<String, dynamic> data) async {
@@ -928,8 +949,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     width: double.infinity,
                     child: RecordingMicButton(
                       isRecording: _recording,
+                      level: _audioLevel,
                       onTap: _togglePremiumRecording,
-                      isDisabled: _aiLoading,
                     ),
                   )
                 else
@@ -1007,7 +1028,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       // Bouton micro IA (mobile & web) avec animation d'enregistrement
                       RecordingMicButton(
                         isRecording: _recording,
-                        isDisabled: _aiLoading,
+                        level: _audioLevel,
                         onTap: _togglePremiumRecording,
                       ),
                       const SizedBox(height: 6),

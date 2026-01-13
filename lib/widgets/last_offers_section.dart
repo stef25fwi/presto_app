@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:presto_app/main.dart' show OfferDetailPage;
+import 'package:presto_app/main.dart' show navigateToOfferDetail;
 
 class LastOffersSection extends StatelessWidget {
   final VoidCallback? onSeeAll;
@@ -354,23 +354,8 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
   }
 
   void _openOffer(BuildContext context, QueryDocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data();
-    final title = (data['title'] ?? data['jobTitle'] ?? 'Sans titre').toString();
-    final location = (data['city'] ?? data['location'] ?? 'N/A').toString();
-    final category = (data['category'] ?? 'Général').toString();
-    final annonceurId = (data['annonceurId'] ?? data['userId'] ?? '').toString();
-    
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => OfferDetailPage(
-          offerId: doc.id,
-          title: title,
-          location: location,
-          category: category,
-          annonceurId: annonceurId,
-        ),
-      ),
-    );
+    // ✅ Utiliser le helper global pour la navigation cohérente
+    navigateToOfferDetail(context, doc.id, doc.data());
   }
 
   @override

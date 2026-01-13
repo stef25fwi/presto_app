@@ -17,6 +17,9 @@ class OfferCard extends StatelessWidget {
   /// Callbacks (utilisés uniquement si showActionsMenu = true)
   final void Function(String offerId, Map<String, dynamic> data)? onEdit;
   final void Function(String offerId, String title)? onDelete;
+  
+  /// ✅ Callback pour rendre la carte cliquable
+  final VoidCallback? onTap;
 
   const OfferCard({
     super.key,
@@ -25,6 +28,7 @@ class OfferCard extends StatelessWidget {
     required this.showActionsMenu,
     this.onEdit,
     this.onDelete,
+    this.onTap,
   });
 
   String _ageLabelFromCreatedAt(dynamic createdAt) {
@@ -54,34 +58,38 @@ class OfferCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = (data['title'] ?? '').toString().trim();
-    final city = (data['city'] ?? '').toString().trim();
+    // ✅ Utiliser 'location' (champ Firestore correct) au lieu de 'city'
+    final location = (data['location'] ?? data['city'] ?? '').toString().trim();
     final category = (data['category'] ?? '').toString().trim();
-    final price = data['price'];
-    final bool isUrgent = data['urgent'] == true;
+    // ✅ Utiliser 'budget' (champ Firestore correct) au lieu de 'price'
+    final budget = data['budget'] ?? data['price'];
+    final bool isUrgent = data['urgent'] == true || data['isUrgent'] == true;
 
     final createdAt = data['createdAt'] ?? data['created_at'];
     final ageLabel = _ageLabelFromCreatedAt(createdAt);
 
     final subtitleLine = [
-      if (city.isNotEmpty) city,
+      if (location.isNotEmpty) location,
       if (category.isNotEmpty) category,
-      if (price != null && price.toString().isNotEmpty) '${price.toString()} €',
+      if (budget != null && budget.toString().isNotEmpty) '${budget.toString()} €',
     ].join(' · ');
 
     return Padding(
       padding: const EdgeInsets.all(0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border(
-            left: BorderSide(
-              color: _kPrestoBlue, // Bleu
-              width: 10,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border(
+              left: BorderSide(
+                color: _kPrestoBlue, // Bleu
+                width: 10,
+              ),
             ),
-          ),
-          boxShadow: [
+            boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
@@ -169,6 +177,7 @@ class OfferCard extends StatelessWidget {
             else
               const SizedBox(width: 0), // ✅ supprime totalement le "..."
           ],
+        ),
         ),
       ),
     );

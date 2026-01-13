@@ -1,24 +1,33 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-/// Bouton d'enregistrement audio avec animations fluides et indicateurs visuels
+/// Bouton d'enregistrement audio avec animations basées sur le niveau audio réel
 /// 
 /// Fonctionnalités:
 /// - Animation de pulsation du micro pendant l'enregistrement
-/// - Barres audio animées avec hauteurs aléatoires qui changent en temps réel
+/// - Barres audio animées basées sur le niveau réel (0.0 → 1.0)
+/// - Lissage du niveau pour un rendu fluide (attaque/relâchement)
 /// - Transition fluide entre les états (inactif/enregistrement)
-/// - Retour haptique lors du clic
-/// - Accessibilité améliorée
+/// - Design moderne bleu/rouge avec textes personnalisables
 class RecordingMicButton extends StatefulWidget {
   final bool isRecording;
+  final double level; // ✅ 0.0 → 1.0 (volume micro)
   final VoidCallback onTap;
-  final bool isDisabled;
+
+  final String idleTitle;
+  final String idleSubtitle;
+  final String recTitle;
+  final String recSubtitle;
 
   const RecordingMicButton({
     super.key,
     required this.isRecording,
+    required this.level,
     required this.onTap,
-    this.isDisabled = false,
+    this.idleTitle = "🎤 Dicter mon annonce (IA)",
+    this.idleSubtitle = "Parlez, l'IA s'occupe du reste",
+    this.recTitle = "🔴 Enregistrement…",
+    this.recSubtitle = "Parlez maintenant",
   });
 
   @override
@@ -27,204 +36,156 @@ class RecordingMicButton extends StatefulWidget {
 
 class _RecordingMicButtonState extends State<RecordingMicButton>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  final Random _random = Random();
-  
-  // Liste de hauteurs aléatoires qui se régénèrent à chaque frame
-  final List<double> _barHeights = List.generate(8, (_) => 10.0);
+  late final AnimationController _pulse;
+  double _smoothLevel = 0.0;
+
+  // Facteurs fixes pour donner une forme "onde" agréable
+  static const List<double> _shape = [
+    0.45, 0.60, 0.80, 1.00, 0.90, 0.75, 0.95, 1.00, 0.70, 0.55,
+  ];
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _pulse = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
-    )..addListener(() {
-        // Mettre à jour les hauteurs des barres à chaque frame pour un effet fluide
-        if (widget.isRecording && mounted) {
-          setState(() {
-            for (int i = 0; i < _barHeights.length; i++) {
-              _barHeights[i] = 10 + _random.nextInt(30).toDouble();
-            }
-          });
-        }
-      });
-    
-    if (widget.isRecording) {
-      _controller.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void didUpdateWidget(RecordingMicButton oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isRecording != oldWidget.isRecording) {
-      if (widget.isRecording) {
-        _controller.repeat(reverse: true);
-      } else {
-        _controller.stop();
-        _controller.reset();
-      }
-    }
+      duration: const Duration(milliseconds: 650),
+    )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _pulse.dispose();
     super.dispose();
   }
 
   @override
+  void didUpdateWidget(covariant RecordingMicButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // ✅ Lissage (évite des barres trop "nervous")
+    // attaque rapide, relâchement plus lent (effet vu-mètre)
+    final input = widget.level.clamp(0.0, 1.0);
+    const attack = 0.35;
+    const release = 0.12;
+
+    if (input > _smoothLevel) {
+      _smoothLevel = _smoothLevel + (input - _smoothLevel) * attack;
+    } else {
+      _smoothLevel = _smoothLevel + (input - _smoothLevel) * release;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isDisabled = widget.isDisabled;
-    final backgroundColor = isDisabled
-        ? Colors.grey.shade400
-        : (widget.isRecording
-            ? const Color(0xFFE53935) // Rouge vif pendant enregistrement
-            : const Color(0xFF1A73E8)); // Bleu Presto
+    final Color bg = widget.isRecording
+        ? const Color(0xFFE53935) // 🔴 rouge punchy
+        : const Color(0xFF1A73E8); // 🔵 bleu
 
-    final pulseT = widget.isRecording ? _controller.value : 0.0;
-    final haloBlur = 12 + (12 * pulseT); // halo pulsé
-    final haloSpread = 3 + (4 * pulseT);
-
-    return Semantics(
-      button: true,
-      enabled: !isDisabled,
-      label: widget.isRecording
-          ? "Arrêter l'enregistrement vocal"
-          : "Démarrer la dictée vocale de votre annonce",
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: isDisabled ? null : widget.onTap,
+    return GestureDetector(
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        height: 110,
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: bg,
           borderRadius: BorderRadius.circular(30),
-          splashColor: Colors.white.withOpacity(0.3),
-          highlightColor: Colors.white.withOpacity(0.1),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            padding: const EdgeInsets.all(4),
-            decoration: widget.isRecording
-                ? BoxDecoration(
-                    borderRadius: BorderRadius.circular(34),
-                    boxShadow: [
-                      BoxShadow(
-                        color: backgroundColor.withOpacity(0.28),
-                        blurRadius: haloBlur,
-                        spreadRadius: haloSpread,
-                      ),
-                    ],
-                  )
-                : null,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOutCubic,
-              height: 110,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: [
-                  BoxShadow(
-                    color: backgroundColor.withOpacity(0.4),
-                    blurRadius: 16,
-                    offset: const Offset(0, 8),
-                    spreadRadius: widget.isRecording ? 2 : 0,
-                  ),
-                  const BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-              children: [
-                // 🎤 Icône micro avec animation de pulsation
-                ScaleTransition(
-                  scale: widget.isRecording
-                      ? Tween(begin: 1.0, end: 1.25).animate(
-                          CurvedAnimation(
-                            parent: _controller,
-                            curve: Curves.easeInOut,
-                          ),
-                        )
-                      : const AlwaysStoppedAnimation(1.0),
-                  child: Icon(
-                    widget.isRecording ? Icons.mic : Icons.mic_rounded,
-                    color: Colors.white,
-                    size: 36,
-                    semanticLabel: widget.isRecording
-                        ? 'Enregistrement en cours'
-                        : 'Micro',
-                  ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.20),
+              blurRadius: 14,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // 🎤 Micro (pulsé si recording)
+            ScaleTransition(
+              scale: widget.isRecording
+                  ? Tween(begin: 1.0, end: 1.18).animate(
+                      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
+                    )
+                  : const AlwaysStoppedAnimation(1),
+              child: Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.14),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(width: 16),
-
-                // 📊 Barres audio animées (uniquement pendant enregistrement)
-                if (widget.isRecording)
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: List.generate(_barHeights.length, (index) {
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 100),
-                          width: 6,
-                          height: _barHeights[index],
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        );
-                      }),
-                    ),
-                  )
-                else
-                  const Spacer(),
-
-                // 📝 Texte d'état
-                const SizedBox(width: 12),
-                Flexible(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          widget.isRecording
-                              ? "🔴 Enregistrement…"
-                              : "🎤 Dicter mon annonce",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          widget.isRecording
-                              ? "Parlez maintenant"
-                              : "Parlez, l'IA écrit pour vous",
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                            height: 1.2,
-                          ),
-                          textAlign: TextAlign.end,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                child: const Icon(Icons.mic_rounded, color: Colors.white, size: 32),
               ),
             ),
-          ),
+
+            const SizedBox(width: 16),
+
+            // 📊 Barres (selon vrai volume)
+            Expanded(
+              child: widget.isRecording
+                  ? AnimatedBuilder(
+                      animation: _pulse,
+                      builder: (_, __) {
+                        final t = _pulse.value; // 0..1
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: List.generate(_shape.length, (i) {
+                            // Petite modulation pour éviter un aspect "plat"
+                            final wobble = 0.10 * sin((t * 2 * pi) + i);
+                            final amp = (_smoothLevel + wobble).clamp(0.0, 1.0);
+
+                            // Hauteurs
+                            const minH = 10.0;
+                            const maxH = 46.0;
+                            final h = minH + (maxH - minH) * amp * _shape[i];
+
+                            return Container(
+                              width: 6,
+                              height: h,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.95),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            );
+                          }),
+                        );
+                      },
+                    )
+                  : const SizedBox.shrink(),
+            ),
+
+            const SizedBox(width: 12),
+
+            // 📝 Texte d'état
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  widget.isRecording ? widget.recTitle : widget.idleTitle,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.isRecording ? widget.recSubtitle : widget.idleSubtitle,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.78),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.right,
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
