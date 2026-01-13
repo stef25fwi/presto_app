@@ -84,10 +84,12 @@ class PrestoRemoteConfig {
 
 // Fallback class temporaire
 class PrestoRemoteConfig {
+  // Fa.llback: utilise la valeur par défaut HYBRID
+  // Décommenter la classe ci-dessus une fois firebase_remote_config installé
   static String audioPipeline = 'HYBRID';
+
   static Future<void> init() async {
-    // Fallback: utilise la valeur par défaut HYBRID
-    // Décommenter la classe ci-dessus une fois firebase_remote_config installé
+    // no-op
   }
 }
 
@@ -1313,6 +1315,15 @@ class _HomePageState extends State<HomePage>
   }
 
   void _onBottomTap(int index) {
+    // Bottom bar: 4 onglets (0..3). L'accès "Compte" se fait via navigation dédiée.
+    if (index == 4) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const AccountPage()),
+      );
+      return;
+    }
+
+    if (index < 0 || index > 3) return;
     if (_selectedIndex == index) return;
 
     // ✅ Log le changement d'onglet
@@ -1335,6 +1346,7 @@ class _HomePageState extends State<HomePage>
     SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
 
     _selectedIndex = widget.initialIndex;
+    if (_selectedIndex > 3) _selectedIndex = 0;
     _sessionStartTime = DateTime.now();
     WidgetsBinding.instance.addObserver(this);
 
@@ -1728,6 +1740,7 @@ class _HomePageState extends State<HomePage>
   }
 
   /// Cloche : pastille = nombre de messages non lus + notifications d'offres
+  // ignore: unused_element
   Widget _buildNotificationBell() {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
@@ -1813,6 +1826,7 @@ class _HomePageState extends State<HomePage>
   }
 
   /// Affiche un dialogue avec les notifications récentes
+  // ignore: unused_element
   void _showNotificationsDialog(BuildContext context, String userId) {
     showDialog(
       context: context,
@@ -2028,7 +2042,6 @@ class _HomePageState extends State<HomePage>
                             ConsultOffersPage(onScroll: _onPageScroll),
                             PublishOfferPage(onScroll: _onPageScroll),
                             const MessagesPage(),
-                            const AccountPage(),
                           ],
                         ),
                       ),
@@ -2080,14 +2093,6 @@ class _HomePageState extends State<HomePage>
                                     label: "Messages",
                                     selected: _selectedIndex == 3,
                                     onTap: () => _onBottomTap(3),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _BottomNavItem(
-                                    icon: Icons.person_outline,
-                                    label: "Compte",
-                                    selected: _selectedIndex == 4,
-                                    onTap: () => _onBottomTap(4),
                                   ),
                                 ),
                               ],
@@ -2149,7 +2154,7 @@ class _HomePageState extends State<HomePage>
                         ),
                       ),
                     ),
-                    _buildNotificationBell(),
+                    _buildAccountHeaderIcon(),
                   ],
                 ),
 
@@ -2422,6 +2427,19 @@ class _HomePageState extends State<HomePage>
 
                 const SizedBox(height: 12),
 
+                // COMMENT ÇA MARCHE
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.asset(
+                    'assets/images/comment_ca_marche_4K.png',
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    semanticLabel: 'Comment ça marche',
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
                 // CATEGORIES COMPACTES
                 AnimatedBuilder(
                   animation: _categoryController,
@@ -2525,23 +2543,39 @@ class _HomePageState extends State<HomePage>
                   },
                 ),
 
-                const SizedBox(height: 18),
-
-                // COMMENT ÇA MARCHE
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    'assets/images/comment_ca_marche_4K.png',
-                    fit: BoxFit.contain,
-                    width: double.infinity,
-                    semanticLabel: 'Comment ça marche',
-                  ),
-                ),
-
                 const SizedBox(height: 20),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAccountHeaderIcon() {
+    return _TapScale(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const AccountPage()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.person_outline,
+          size: 22,
+          color: Colors.black87,
         ),
       ),
     );
@@ -4790,6 +4824,46 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   void initState() {
     super.initState();
     _logOfferViewed();
+    _incrementOfferViewsCount();
+  }
+
+  Future<void> _incrementOfferViewsCount() async {
+    if (widget.offerId.trim().isEmpty) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      const minInterval = Duration(minutes: 30);
+      final offers = FirebaseFirestore.instance.collection('offers');
+      final offerRef = offers.doc(widget.offerId);
+      final viewRef = offerRef.collection('views').doc(user.uid);
+
+      await FirebaseFirestore.instance.runTransaction((tx) async {
+        final viewSnap = await tx.get(viewRef);
+
+        if (viewSnap.exists) {
+          final data = viewSnap.data();
+          final last = data?['lastViewedAt'];
+          if (last is Timestamp) {
+            final dt = last.toDate();
+            final diff = DateTime.now().difference(dt);
+            if (diff < minInterval) return;
+          }
+        }
+
+        tx.update(offerRef, {'viewsCount': FieldValue.increment(1)});
+
+        if (viewSnap.exists) {
+          tx.update(viewRef, {'lastViewedAt': FieldValue.serverTimestamp()});
+        } else {
+          tx.set(viewRef, {'lastViewedAt': FieldValue.serverTimestamp()});
+        }
+      });
+    } catch (e) {
+      // Ne bloque jamais l'UX si la règle / le doc n'autorise pas l'update.
+      debugPrint('[Firestore] increment viewsCount error: $e');
+    }
   }
 
   /// ✅ Enregistre la visite d'une offre en détail
@@ -6026,6 +6100,149 @@ class MessagesPage extends StatefulWidget {
 class _MessagesPageState extends State<MessagesPage> {
   bool _isDarkMode = false;
 
+  void _openNotificationsOrPromptLogin(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      showSuccessSnackBar(
+        context,
+        "Connecte-toi à ton compte pour consulter tes notifications.",
+      );
+      return;
+    }
+
+    _showNotificationsDialog(context, user.uid);
+  }
+
+  void _showNotificationsDialog(BuildContext context, String userId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Notifications',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance
+                .collection('notifications')
+                .where('userId', isEqualTo: userId)
+                .orderBy('createdAt', descending: true)
+                .limit(20)
+                .snapshots()
+                .map((snap) {
+              PrestoMonitoring.I.trackOtherStream(
+                key: 'messages.dialog.notifications',
+                docsCount: snap.docs.length,
+              );
+              return snap;
+            }),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final notifications = snapshot.data!.docs;
+
+              if (notifications.isEmpty) {
+                return const Text(
+                  'Aucune notification pour le moment.',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                );
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                itemCount: notifications.length,
+                itemBuilder: (context, index) {
+                  final notif = notifications[index];
+                  final data = notif.data();
+                  final title = data['title'] as String? ?? '';
+                  final message = data['message'] as String? ?? '';
+                  final isRead = data['read'] as bool? ?? false;
+                  final offerId = data['offerId'] as String?;
+
+                  return ListTile(
+                    leading: Icon(
+                      Icons.announcement,
+                      color: isRead ? Colors.grey : Colors.green,
+                    ),
+                    title: Text(
+                      title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isRead ? Colors.grey.shade700 : Colors.black,
+                      ),
+                    ),
+                    subtitle: Text(
+                      message,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: isRead
+                            ? Colors.grey.shade600
+                            : Colors.grey.shade800,
+                      ),
+                    ),
+                    onTap: () async {
+                      if (!isRead) {
+                        await FirebaseFirestore.instance
+                            .collection('notifications')
+                            .doc(notif.id)
+                            .update({'read': true});
+                      }
+
+                      if (offerId != null && context.mounted) {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const ConsultOffersPage(),
+                          ),
+                        );
+                      }
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final batch = FirebaseFirestore.instance.batch();
+              final notifs = await FirebaseFirestore.instance
+                  .collection('notifications')
+                  .where('userId', isEqualTo: userId)
+                  .where('read', isEqualTo: false)
+                  .get();
+
+              for (final doc in notifs.docs) {
+                batch.update(doc.reference, {'read': true});
+              }
+
+              await batch.commit();
+
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text('Tout marquer comme lu'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fermer'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildNeedAccount(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -6118,6 +6335,33 @@ class _MessagesPageState extends State<MessagesPage> {
               _isDarkMode ? const Color(0xFF1a1a1a) : kPrestoOrange,
           foregroundColor: Colors.white,
           actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: FirebaseAuth.instance.currentUser == null
+                    ? null
+                    : FirebaseFirestore.instance
+                        .collection('notifications')
+                        .where('userId',
+                            isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+                        .where('read', isEqualTo: false)
+                        .snapshots()
+                        .map((snap) {
+                        PrestoMonitoring.I.trackOtherStream(
+                          key: 'messages.bell.notifications',
+                          docsCount: snap.docs.length,
+                        );
+                        return snap;
+                      }),
+                builder: (context, snapshot) {
+                  final unread = snapshot.data?.docs.length ?? 0;
+                  return _TapScale(
+                    onTap: () => _openNotificationsOrPromptLogin(context),
+                    child: _NotificationBellBase(badgeCount: unread),
+                  );
+                },
+              ),
+            ),
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert),
               color: Colors.white,
@@ -12599,7 +12843,8 @@ class _AutoScrollingOffersCarouselState
         if (_scrollController2.hasClients) {
           final currentScroll = _scrollController2.offset;
           if (currentScroll <= 0) {
-            _scrollController2.jumpTo(_scrollController2.position.maxScrollExtent);
+            _scrollController2
+                .jumpTo(_scrollController2.position.maxScrollExtent);
           } else {
             _scrollController2.jumpTo(currentScroll - 1);
           }
@@ -12615,7 +12860,8 @@ class _AutoScrollingOffersCarouselState
     return 'Bientôt';
   }
 
-  Widget _buildOfferCard(QueryDocumentSnapshot<Map<String, dynamic>> doc, int index) {
+  Widget _buildOfferCard(
+      QueryDocumentSnapshot<Map<String, dynamic>> doc, int index) {
     final data = doc.data();
     final title = (data['title'] ?? 'Sans titre') as String;
     final location = (data['location'] ?? 'Lieu non précisé') as String;
@@ -12640,10 +12886,12 @@ class _AutoScrollingOffersCarouselState
         child: GestureDetector(
           onTap: () {
             final offerId = doc.id;
-            final category = (data['category'] ?? 'Catégorie non précisée') as String;
+            final category =
+                (data['category'] ?? 'Catégorie non précisée') as String;
             final budget = data['budget'];
             final description = (data['description'] ?? '') as String;
-            final phone = data['phone'] == null ? null : data['phone'] as String;
+            final phone =
+                data['phone'] == null ? null : data['phone'] as String;
 
             final List<String> imageUrls =
                 (data['imageUrls'] as List<dynamic>? ?? [])
@@ -12771,7 +13019,8 @@ class _AutoScrollingOffersCarouselState
               scrollDirection: Axis.horizontal,
               itemCount: row1Offers.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, index) => _buildOfferCard(row1Offers[index], index),
+              itemBuilder: (_, index) =>
+                  _buildOfferCard(row1Offers[index], index),
             ),
           ),
           const SizedBox(height: 8),
@@ -12784,7 +13033,8 @@ class _AutoScrollingOffersCarouselState
               reverse: true,
               itemCount: row2Offers.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, index) => _buildOfferCard(row2Offers[index], index),
+              itemBuilder: (_, index) =>
+                  _buildOfferCard(row2Offers[index], index),
             ),
           ),
         ],

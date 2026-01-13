@@ -327,6 +327,21 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
   bool _isHovered = false;
   late AnimationController _animationController;
 
+  int? _readViewsCount(Map<String, dynamic> data) {
+    final dynamic raw = data['viewsCount'] ??
+        data['viewCount'] ??
+        data['views'] ??
+        data['consultations'] ??
+        data['consultationsCount'] ??
+        data['seenCount'];
+
+    if (raw == null) return null;
+    if (raw is int) return raw;
+    if (raw is num) return raw.toInt();
+    if (raw is String) return int.tryParse(raw);
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -373,6 +388,7 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
     final startText =
         (data['startText'] ?? data['startDateText'] ?? '').toString().trim();
     final isUrgent = data['urgent'] == true || data['is_urgent'] == true;
+    final viewsCount = _readViewsCount(data);
     final locationText = [
       if (city.isNotEmpty) city,
       if (startText.isNotEmpty) startText,
@@ -440,40 +456,54 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
                 ),
               ],
             ),
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (isUrgent) ...[
                   const _UrgentTextBadge(),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                 ],
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        locationText.isEmpty ? 'Proche' : locationText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  locationText.isEmpty ? 'Proche' : locationText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.visibility_outlined,
+                      size: 12,
+                      color: Colors.black.withOpacity(0.55),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${viewsCount ?? 0}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.black.withOpacity(0.55),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -492,7 +522,7 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: SizedBox(
-        height: 110,
+        height: 102,
         child: ListView.separated(
           controller: _scrollController,
           scrollDirection: Axis.horizontal,

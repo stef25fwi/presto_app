@@ -3,6 +3,26 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function intOrZero(v) {
+      return (v is int) ? v : 0;
+    }
+
+    function canTouchOwnViewLog(offerId) {
+      return isSignedIn()
+        && existsAfter(/databases/$(database)/documents/offers/$(offerId)/views/$(uid()))
+        && getAfter(/databases/$(database)/documents/offers/$(offerId)/views/$(uid())).data.lastViewedAt == request.time;
+    }
+
+    function isViewsCountIncrementOnly(offerId) {
+      // Autorise uniquement l'incrément de viewsCount (+1) et rien d'autre.
+      // ✅ Nécessite un utilisateur connecté + log views/{uid} écrit dans la même transaction.
+      return isSignedIn()
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['viewsCount'])
+        && request.resource.data.viewsCount is int
+        && request.resource.data.viewsCount == (intOrZero(resource.data.viewsCount) + 1)
+        && canTouchOwnViewLog(offerId);
+    }
+
     function isSignedIn() {
       return request.auth != null;
     }
@@ -99,11 +119,37 @@ service cloud.firestore {
         && (!('ownerId' in request.resource.data) || request.resource.data.ownerId == uid());
 
       // ✅ Update uniquement propriétaire (et champs server-only protégés)
-      allow update: if isSignedIn()
-        && isOwnerByField(resource.data)
-        // Interdit d'éditer des champs réservés aux Functions
-        && !( 'moderation' in request.resource.data )
-        && !( 'visibility' in request.resource.data );
+      allow update: if (
+          isSignedIn()
+          && isOwnerByField(resource.data)
+          // Interdit d'éditer des champs réservés aux Functions
+          && !( 'moderation' in request.resource.data )
+          && !( 'visibility' in request.resource.data )
+        )
+        || isViewsCountIncrementOnly(offerId);
+
+      // Log de consultation par user (anti-doublon)
+      match /views/{viewerId} {
+        function isSelf() {
+          return isSignedIn() && viewerId == uid();
+        }
+
+        allow read: if isSelf();
+
+        // Création: 1 doc / user avec timestamp serveur
+        allow create: if isSelf()
+          && request.resource.data.keys().hasOnly(['lastViewedAt'])
+          && request.resource.data.lastViewedAt == request.time;
+
+        // Update seulement si 30 minutes se sont écoulées
+        allow update: if isSelf()
+          && request.resource.data.keys().hasOnly(['lastViewedAt'])
+          && request.resource.data.lastViewedAt == request.time
+          && (resource.data.lastViewedAt is timestamp)
+          && (request.time - resource.data.lastViewedAt) >= duration.value(30, 'm');
+
+        allow delete: if false;
+      }
 
       // ✅ Delete uniquement propriétaire
       // NOTE: request.resource n'existe pas sur delete, donc on ne doit pas le référencer ici.
