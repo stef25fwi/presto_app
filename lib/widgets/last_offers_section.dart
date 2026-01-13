@@ -15,6 +15,14 @@ class LastOffersSection extends StatelessWidget {
 
   static const prestoBlue = Color(0xFF1A73E8);
 
+  void _openOfferDetails(BuildContext context, String offerId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => OfferDetailPage(offerId: offerId),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (offersStream != null) {
@@ -353,6 +361,14 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
     _startAutoScroll();
   }
 
+  void _openOffer(BuildContext context, String offerId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => OfferDetailPage(offerId: offerId),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _autoScrollTimer?.cancel();
@@ -412,57 +428,21 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
           begin: const Offset(0, 0.2),
           end: Offset.zero,
         ).animate(animation),
-        child: GestureDetector(
-          onTap: () {
-            final offerId = doc.id;
-            final category =
-                (data['category'] ?? 'Catégorie non précisée').toString();
-            final budget = data['budget'];
-            final description = (data['description'] ?? '').toString();
-            final phone =
-                data['phone'] == null ? null : data['phone'].toString();
-
-            final List<String> imageUrls =
-                (data['imageUrls'] as List<dynamic>? ?? [])
-                    .map((e) => e.toString())
-                    .toList();
-
-            final sub =
-              (data['subCategory'] ?? data['subcategory'] ?? '').toString().trim();
-
-            // ignore: use_build_context_synchronously
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => OfferDetailPage(
-                  offerId: offerId,
-                  title: title,
-                  location: locationText.isEmpty ? 'Proche' : locationText,
-                  category: category,
-                  subcategory: sub.isEmpty ? null : sub,
-                  budget: budget is num ? budget : null,
-                  description: description.isEmpty ? null : description,
-                  phone: phone,
-                  imageUrls: imageUrls.isEmpty ? null : imageUrls,
-                  annonceurId: (data['userId'] ?? '').toString(),
-                ),
+        child: Container(
+          width: 160,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-            );
-          },
-          child: Container(
-            width: 160,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.all(6),
-            child: Column(
+            ],
+          ),
+          padding: const EdgeInsets.all(6),
+          child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -543,8 +523,14 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
             scrollDirection: Axis.horizontal,
             itemCount: duplicated.length,
             separatorBuilder: (_, __) => const SizedBox(width: 8),
-            itemBuilder: (_, index) =>
-                _buildOfferCard(duplicated[index], index),
+            itemBuilder: (_, index) {
+              final doc = duplicated[index];
+              return InkWell(
+                onTap: () => _openOffer(context, doc.id),
+                borderRadius: BorderRadius.circular(12),
+                child: _buildOfferCard(doc, index),
+              );
+            },
           ),
         ),
       ),

@@ -4007,8 +4007,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       final friendly = err == null
                           ? "Une erreur s'est produite, réessaie"
                           : _friendlyFirestoreErrorMessage(err);
-                      final url =
-                          err == null ? null : _extractFirstUrl(err.toString());
 
                       return Center(
                         child: Padding(
@@ -4040,27 +4038,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                   color: Colors.grey.shade700,
                                 ),
                               ),
-                              if (url != null) ...[
-                                const SizedBox(height: 10),
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 10,
-                                  alignment: WrapAlignment.center,
-                                  children: [
-                                    OutlinedButton.icon(
-                                      onPressed: () => _openExternalUrl(url),
-                                      icon: const Icon(Icons.open_in_new),
-                                      label: const Text('Ouvrir le lien'),
-                                    ),
-                                    OutlinedButton.icon(
-                                      onPressed: () =>
-                                          _copyToClipboard(context, url),
-                                      icon: const Icon(Icons.copy),
-                                      label: const Text('Copier le lien'),
-                                    ),
-                                  ],
-                                ),
-                              ],
                               const SizedBox(height: 16),
                               ElevatedButton.icon(
                                 onPressed: () {
