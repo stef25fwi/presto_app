@@ -2197,7 +2197,7 @@ class _HomePageState extends State<HomePage>
                                 return SizedBox.expand(
                                   child: Container(
                                     decoration: const BoxDecoration(
-                                      color: Colors.black,
+                                      color: Colors.white,
                                     ),
                                     child: RepaintBoundary(
                                       child: RandomAssetTicker(
@@ -7516,15 +7516,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _startStreamingMic() async {
     if (_isListening || _isStreaming) return;
 
+    // 🔒 Storage STT/streaming requiert un utilisateur authentifié.
+    final loggedIn = await _ensureLoggedInForPublish();
+    if (!loggedIn) return;
+
     if (kIsWeb) {
       // ✅ WEB: Chunking mode (chunks toutes les 2 secondes)
       // Note: Web enregistre des chunks et les envoie progressivement
       try {
-        final uid = FirebaseAuth.instance.currentUser?.uid;
-        if (uid == null) {
-          showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
-          return;
-        }
+        final uid = FirebaseAuth.instance.currentUser!.uid;
 
         await _webRec.start();
 
@@ -7635,7 +7635,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _partialTranscript = '';
       });
 
-      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+      final uid = FirebaseAuth.instance.currentUser!.uid;
       int chunkBytes = 0;
       final int chunkThreshold = 16000 * 2; // ~2 secondes à 16kHz
 
@@ -8209,16 +8209,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _startMic() async {
     if (_isListening) return;
 
+    // 🔒 Storage STT requiert un utilisateur authentifié.
+    final loggedIn = await _ensureLoggedInForPublish();
+    if (!loggedIn) return;
+
     // ✅ Micro global: on ne fait PLUS speech_to_text (trop variable)
     // On enregistre uniquement en WAV 16k mono, puis _stopMic() déclenchera _uploadAndTranscribe() (MicroIA).
     if (kIsWeb) {
       try {
-        final uid = FirebaseAuth.instance.currentUser?.uid;
-        if (uid == null) {
-          if (!mounted) return;
-          showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
-          return;
-        }
+        final uid = FirebaseAuth.instance.currentUser!.uid;
 
         await CrashlyticsContext.setUserId(uid);
         await CrashlyticsContext.setKey('flow', 'webMic');
@@ -8414,7 +8413,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // Upload vers Firebase Storage puis appel de la Cloud Function.
     // ✅ Forcer le pipeline MicroIA (WAV 16k mono) + génération de draft.
     final user = FirebaseAuth.instance.currentUser;
-    final uid = user?.uid ?? 'anonymous';
+    if (user == null) {
+      throw Exception('Non authentifié');
+    }
+    final uid = user.uid;
     final xfile = XFile(localPath);
     final audioBytes = await xfile.readAsBytes();
     if (audioBytes.isEmpty) {
