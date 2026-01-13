@@ -436,6 +436,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final out = await MicroIaService.processAudio(
         storagePath: storagePath,
         languageCode: 'fr-FR',
+        streamingMode: true,
       );
 
       final transcript = (out['text'] ?? '').toString();
@@ -580,6 +581,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final out = await MicroIaService.processAudio(
         storagePath: fileName, // le path dans le bucket
         languageCode: 'fr-FR',
+        streamingMode: true,
       );
 
       debugPrint(

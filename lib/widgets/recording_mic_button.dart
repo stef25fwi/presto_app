@@ -83,6 +83,10 @@ class _RecordingMicButtonState extends State<RecordingMicButton>
             ? const Color(0xFFE53935) // Rouge vif pendant enregistrement
             : const Color(0xFF1A73E8)); // Bleu Presto
 
+    final pulseT = widget.isRecording ? _controller.value : 0.0;
+    final haloBlur = 12 + (12 * pulseT); // halo pulsé
+    final haloSpread = 3 + (4 * pulseT);
+
     return Semantics(
       button: true,
       enabled: !isDisabled,
@@ -97,28 +101,44 @@ class _RecordingMicButtonState extends State<RecordingMicButton>
           splashColor: Colors.white.withOpacity(0.3),
           highlightColor: Colors.white.withOpacity(0.1),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOutCubic,
-            height: 110,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: backgroundColor.withOpacity(0.4),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                  spreadRadius: widget.isRecording ? 2 : 0,
-                ),
-                const BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 8,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            padding: const EdgeInsets.all(4),
+            decoration: widget.isRecording
+                ? BoxDecoration(
+                    borderRadius: BorderRadius.circular(34),
+                    boxShadow: [
+                      BoxShadow(
+                        color: backgroundColor.withOpacity(0.28),
+                        blurRadius: haloBlur,
+                        spreadRadius: haloSpread,
+                      ),
+                    ],
+                  )
+                : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOutCubic,
+              height: 110,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: backgroundColor.withOpacity(0.4),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                    spreadRadius: widget.isRecording ? 2 : 0,
+                  ),
+                  const BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
               children: [
                 // 🎤 Icône micro avec animation de pulsation
                 ScaleTransition(
@@ -202,6 +222,7 @@ class _RecordingMicButtonState extends State<RecordingMicButton>
                   ),
                 ),
               ],
+              ),
             ),
           ),
         ),
