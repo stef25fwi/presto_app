@@ -9,3 +9,6 @@ npm-debug.log*
 
 # Dépendances
 node_modules/
+
+# Firebase Admin service account (NE JAMAIS COMMIT)
+serviceAccount.json

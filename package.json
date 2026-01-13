@@ -15,6 +15,7 @@
     "test": "test"
   },
   "scripts": {
+    "fix:offers-active": "node fix_offers_isactive.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

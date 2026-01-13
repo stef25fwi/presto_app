@@ -325,6 +325,7 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
   final ScrollController _scrollController = ScrollController();
   Timer? _autoScrollTimer;
   bool _isHovered = false;
+  bool _isTouching = false;
   late AnimationController _animationController;
 
   int? _readViewsCount(Map<String, dynamic> data) {
@@ -361,8 +362,9 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
   }
 
   void _startAutoScroll() {
+    _autoScrollTimer?.cancel();
     _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
-      if (!_isHovered) {
+      if (!_isHovered && !_isTouching) {
         // Scroll left-to-right
         if (_scrollController.hasClients) {
           final maxScroll = _scrollController.position.maxScrollExtent;
@@ -521,14 +523,26 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: SizedBox(
-        height: 102,
-        child: ListView.separated(
-          controller: _scrollController,
-          scrollDirection: Axis.horizontal,
-          itemCount: duplicated.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (_, index) => _buildOfferCard(duplicated[index], index),
+      child: Listener(
+        onPointerDown: (_) {
+          _isTouching = true;
+        },
+        onPointerUp: (_) {
+          _isTouching = false;
+        },
+        onPointerCancel: (_) {
+          _isTouching = false;
+        },
+        child: SizedBox(
+          height: 102,
+          child: ListView.separated(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            itemCount: duplicated.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (_, index) =>
+                _buildOfferCard(duplicated[index], index),
+          ),
         ),
       ),
     );

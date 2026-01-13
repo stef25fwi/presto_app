@@ -2,9 +2,42 @@
 
 ## Problème Identifié
 
-La page "Je consulte les offres" ne chargeait pas les annonces car les règles Firestore ne reconnaissaient pas le champ `isActive` utilisé par le code.
+La page "Je consulte les offres" ne chargeait pas les annonces car la requête Flutter filtre sur `isActive == true`, alors que des annonces existantes en base n’avaient pas le champ `isActive` (schéma legacy).
+
+Conséquence: même si les règles autorisent la lecture, la requête ne retourne **aucun document** si les annonces ne contiennent pas `isActive: true`.
 
 ## Solution Appliquée
+
+### 0. (Le plus important) Backfill des annonces existantes
+
+Pour que les annonces *déjà créées* s’affichent dans "Je consulte", il faut backfiller `isActive` (et idéalement `status`) sur les documents legacy.
+
+Un script est fourni: `fix_offers_isactive.js`.
+
+Prérequis:
+- `npm install`
+- Un service account Firebase Admin (JSON)
+
+Exécution (recommandée en 2 temps):
+
+```bash
+# 1) Télécharger un service account depuis la console Firebase
+#    Project Settings -> Service Accounts -> Generate new private key
+
+# 2) Le placer ici (recommandé): functions/serviceAccount.json
+#    ou exporter le chemin via la variable d'env:
+export GOOGLE_APPLICATION_CREDENTIALS="/chemin/serviceAccount.json"
+
+# 3) Vérifier ce qui sera modifié (aucune écriture)
+npm run fix:offers-active -- --dry-run
+
+# 4) Appliquer le backfill
+npm run fix:offers-active
+```
+
+Notes:
+- Le script **ne force pas** `isActive=true` si le champ existe déjà (ex: `isActive=false`), pour éviter de réactiver une annonce volontairement désactivée.
+- Le script ajoute aussi `status: 'active'` si absent, pour homogénéiser le schéma.
 
 ### 1. Modification des Règles Firestore
 
@@ -76,6 +109,8 @@ query = query.where('isActive', isEqualTo: true);
 
 Cette requête fonctionnera maintenant grâce à la règle mise à jour.
 
+⚠️ Mais pour obtenir des résultats, les documents doivent aussi avoir `isActive: true` (d'où le backfill ci-dessus).
+
 ## Explications Techniques
 
 ### Pourquoi ça ne fonctionnait pas ?
@@ -97,7 +132,15 @@ Mais le code Flutter filtrait sur `isActive`, qui n'était pas reconnu !
 
 ### Solution
 
-Ajout de `|| (resource.data.isActive == true)` dans la fonction pour supporter les trois formats:
+1) Le code Flutter filtrait sur `isActive == true`.
+2) Des annonces existantes n'avaient pas `isActive` (format legacy: `status` ou `visibility`).
+
+Donc la requête renvoyait 0 document.
+
+### Solution
+
+- Backfill des documents existants pour ajouter `isActive: true`.
+- (En complément) Ajout de `|| (resource.data.isActive == true)` dans `isPublicOffer()` pour supporter les trois formats côté règles:
 1. `visibility.isPublic` (nouveau format)
 2. `status == 'active'` (ancien format legacy)
 3. `isActive == true` (format actuel utilisé par le code)

@@ -48,6 +48,10 @@ node_modules/
 # Firebase CLI local cache
 .firebase/
 
+# Firebase Admin service account (NE JAMAIS COMMIT)
+functions/serviceAccount.json
+**/serviceAccount.json
+
 # Flutter
 .dart_tool/
 build/

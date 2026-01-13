@@ -8890,6 +8890,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'description': _descriptionController.text.trim(),
         'category': _category,
         'subCategory': _selectedSubCategory,
+        'status': 'active',
+        'isActive': true,
         'urgent': _isUrgent,
         'location': _locationController.text.trim(),
         'postalCode': _postalCodeController.text.trim(),
