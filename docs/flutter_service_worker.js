@@ -3,11 +3,11 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"assets/assets/carousel_home/11.png": "b332e3860c7e4677961cf4c4c614de39",
-"assets/assets/carousel_home/02.png": "ae14a6c18a4f60a927dc582fda34dcff",
+const RESOURCES = {"assets/assets/images/comment_ca_marche_4K.png": "1aeea4d7169918f7727e8a4e8de545a5",
+"assets/assets/carousel_home/11.png": "b332e3860c7e4677961cf4c4c614de39",
 "assets/assets/carousel_home/12.png": "83390ea893973279b102da8b056a85c9",
 "assets/assets/carousel_home/08.png": "1a154996c170a1bdf7ee24189484f498",
-"assets/assets/carousel_home/01.png": "b76ff324a62722c5ff5403cdc45bed10",
+"assets/assets/carousel_home/01.png": "62ac2a45bcfd6c197ba91163ebbbc96f",
 "assets/assets/carousel_home/03.png": "d789bb08f3407df273bd3dda029da25b",
 "assets/assets/carousel_home/04.png": "52703156e083b4b4e39b550b39098aff",
 "assets/assets/carousel_home/06.png": "39ab314bef53dc1659bc70df11f8255c",
@@ -134,9 +134,9 @@ const RESOURCES = {"assets/assets/carousel_home/11.png": "b332e3860c7e4677961cf4
 "assets/packages/record_web/assets/js/record.fixwebmduration.js": "1f0108ea80c8951ba702ced40cf8cdce",
 "assets/packages/record_web/assets/js/record.worklet.js": "6d247986689d283b7e45ccdf7214c2ff",
 "assets/NOTICES": "8823ddd189d7a7da2d26fddbe054c5e8",
-"assets/fonts/MaterialIcons-Regular.otf": "f1e51fabf39bbaf1b5ba1d85ca7fe3f0",
-"assets/AssetManifest.bin": "031e6c44cca0ed2e0c81f52c6b2fb922",
-"assets/AssetManifest.bin.json": "0d70233a973ee77e650e866c6d8b516b",
+"assets/fonts/MaterialIcons-Regular.otf": "b364d143801d659a7812c4f672bd4455",
+"assets/AssetManifest.bin": "c859c2df7a2ab6ec6ac47f2d499393db",
+"assets/AssetManifest.bin.json": "3b32f3052429b2b28f7a46a31ab44ed4",
 "assets/FontManifest.json": "c75f7af11fb9919e042ad2ee704db319",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "icons/Icon-192.png": "ac9a721a12bbc803b44f645561ecb1e1",
@@ -158,8 +158,8 @@ const RESOURCES = {"assets/assets/carousel_home/11.png": "b332e3860c7e4677961cf4
 "maintenance.html": "1afb247fe209a9f58d40a189880aa95a",
 "index.html": "c229c5ae58039081cf9ebfa5ddc8b779",
 "/": "c229c5ae58039081cf9ebfa5ddc8b779",
-"main.dart.js": "a6a3d4ca77736d718bdd711e8994384f",
-"flutter_bootstrap.js": "7e23e5a48bc8a43f1ce571e3e2c47aa4",
+"main.dart.js": "7b34508a2ac2a2b5cd231778976282ef",
+"flutter_bootstrap.js": "c34a17014f9d473bd7489c86c88f7a0e",
 "version.json": "8df3cd3c7c223f3ebda8fbb9cdf0967f",
 "manifest.json": "b8e012f650576f16cebd94a9a9003fb4",
 "flutter.js": "24bc71911b75b5f8135c949e27a2984e"};

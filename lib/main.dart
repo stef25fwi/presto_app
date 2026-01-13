@@ -40,7 +40,6 @@ import 'widgets/offer_card.dart';
 import 'widgets/random_asset_ticker.dart';
 import 'widgets/entrepreneur_toolbox_slide.dart';
 import 'widgets/last_offers_section.dart';
-import 'widgets/comment_ca_marche_section.dart';
 import 'features/ai_draft/ai_draft_service.dart';
 import 'features/micro_ia/web_audio_recorder.dart';
 import 'utils/friendly_snackbar.dart';
@@ -2529,17 +2528,14 @@ class _HomePageState extends State<HomePage>
                 const SizedBox(height: 18),
 
                 // COMMENT ÇA MARCHE
-                CommentCaMarcheSection(
-                  onChercheQuelquUn: () {
-                    Navigator.of(context).pushNamed('/publish');
-                  },
-                  onChercheUnJob: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const ConsultOffersPage(),
-                      ),
-                    );
-                  },
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.asset(
+                    'assets/images/comment_ca_marche_4K.png',
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    semanticLabel: 'Comment ça marche',
+                  ),
                 ),
 
                 const SizedBox(height: 20),
