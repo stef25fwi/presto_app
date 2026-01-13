@@ -1,0 +1,1658 @@
+[
+  {
+    "name": "AIGUEBELETTE LE LAC",
+    "cp": "73610",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "AILLON LE JEUNE",
+    "cp": "73340",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "AILLON LE VIEUX",
+    "cp": "73340",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "AIME LA PLAGNE",
+    "cp": "73210",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "AITON",
+    "cp": "73220",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "AIX LES BAINS",
+    "cp": "73100",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ALBERTVILLE",
+    "cp": "73200",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ALBIEZ LE JEUNE",
+    "cp": "73300",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ALBIEZ MONTROND",
+    "cp": "73300",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ALLONDAZ",
+    "cp": "73200",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "APREMONT",
+    "cp": "73190",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ARBIN",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ARGENTINE",
+    "cp": "73220",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ARITH",
+    "cp": "73340",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ARVILLARD",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ATTIGNAT ONCIN",
+    "cp": "73610",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "AUSSOIS",
+    "cp": "73500",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "AVRESSIEUX",
+    "cp": "73240",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "AVRIEUX",
+    "cp": "73500",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "AYN",
+    "cp": "73470",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BARBERAZ",
+    "cp": "73000",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BARBY",
+    "cp": "73230",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BASSENS",
+    "cp": "73000",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BEAUFORT",
+    "cp": "73270",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BELLECOMBE EN BAUGES",
+    "cp": "73340",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BELMONT TRAMONET",
+    "cp": "73330",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BESSANS",
+    "cp": "73480",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BETTON BETTONET",
+    "cp": "73390",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BILLIEME",
+    "cp": "73170",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BONNEVAL SUR ARC",
+    "cp": "73480",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BONVILLARD",
+    "cp": "73460",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BONVILLARET",
+    "cp": "73220",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BOURDEAU",
+    "cp": "73370",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BOURG ST MAURICE",
+    "cp": "73700",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BOURGET EN HUILE",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BOURGNEUF",
+    "cp": "73390",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BOZEL",
+    "cp": "73350",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BRIDES LES BAINS",
+    "cp": "73570",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "BRISON ST INNOCENT",
+    "cp": "73100",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CESARCHES",
+    "cp": "73200",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CEVINS",
+    "cp": "73730",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CHALLES LES EAUX",
+    "cp": "73190",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CHAMBERY",
+    "cp": "73000",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CHAMOUSSET",
+    "cp": "73390",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CHAMOUX SUR GELON",
+    "cp": "73390",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CHAMP LAURENT",
+    "cp": "73390",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CHAMPAGNEUX",
+    "cp": "73240",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CHAMPAGNY EN VANOISE",
+    "cp": "73350",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CHANAZ",
+    "cp": "73310",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUNEUF",
+    "cp": "73390",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CHIGNIN",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CHINDRIEUX",
+    "cp": "73310",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CLERY",
+    "cp": "73460",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "COGNIN",
+    "cp": "73160",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "COHENNOZ",
+    "cp": "73400",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "COHENNOZ",
+    "cp": "73590",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "COISE ST JEAN PIED GAUTHIER",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CONJUX",
+    "cp": "73310",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CORBEL",
+    "cp": "73160",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "COURCHEVEL",
+    "cp": "73120",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CREST VOLAND",
+    "cp": "73590",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CRUET",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "CURIENNE",
+    "cp": "73190",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "DETRIER",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "DOMESSIN",
+    "cp": "73330",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "DOUCY EN BAUGES",
+    "cp": "73630",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "DRUMETTAZ CLARAFOND",
+    "cp": "73420",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "DULLIN",
+    "cp": "73610",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ECOLE",
+    "cp": "73630",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ENTRELACS",
+    "cp": "73410",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ENTREMONT LE VIEUX",
+    "cp": "73670",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "EPIERRE",
+    "cp": "73220",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ESSERTS BLAY",
+    "cp": "73540",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "FEISSONS SUR SALINS",
+    "cp": "73350",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "FLUMET",
+    "cp": "73590",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "FONTCOUVERTE LA TOUSSUIRE",
+    "cp": "73300",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "FOURNEAUX",
+    "cp": "73500",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "FRENEY",
+    "cp": "73500",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "FRETERIVE",
+    "cp": "73250",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "FRONTENEX",
+    "cp": "73460",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "GERBAIX",
+    "cp": "73470",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "GILLY SUR ISERE",
+    "cp": "73200",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "GRAND AIGUEBLANCHE",
+    "cp": "73260",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "GRESY SUR AIX",
+    "cp": "73100",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "GRESY SUR ISERE",
+    "cp": "73460",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "GRIGNON",
+    "cp": "73200",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "HAUTECOUR",
+    "cp": "73600",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "HAUTELUCE",
+    "cp": "73620",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "HAUTEVILLE",
+    "cp": "73390",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "JACOB BELLECOMBETTE",
+    "cp": "73000",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "JARRIER",
+    "cp": "73300",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "JARSY",
+    "cp": "73630",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "JONGIEUX",
+    "cp": "73170",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA BALME",
+    "cp": "73170",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA BATHIE",
+    "cp": "73540",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA BAUCHE",
+    "cp": "73360",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA BIOLLE",
+    "cp": "73410",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA BRIDOIRE",
+    "cp": "73520",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA CHAMBRE",
+    "cp": "73130",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE",
+    "cp": "73660",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE BLANCHE",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE DU MONT DU CHAT",
+    "cp": "73370",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE ST MARTIN",
+    "cp": "73170",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA CHAVANNE",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA COMPOTE",
+    "cp": "73630",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA CROIX DE LA ROCHETTE",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA GIETTAZ",
+    "cp": "73590",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA LECHERE",
+    "cp": "73260",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA MOTTE EN BAUGES",
+    "cp": "73340",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA MOTTE SERVOLEX",
+    "cp": "73290",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA PLAGNE TARENTAISE",
+    "cp": "73210",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA RAVOIRE",
+    "cp": "73490",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA TABLE",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA THUILE",
+    "cp": "73190",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA TOUR EN MAURIENNE",
+    "cp": "73300",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LA TRINITE",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LAISSAUD",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LANDRY",
+    "cp": "73210",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LE BOURGET DU LAC",
+    "cp": "73370",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LE CHATELARD",
+    "cp": "73630",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LE NOYER",
+    "cp": "73340",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LE PONT DE BEAUVOISIN",
+    "cp": "73330",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LE PONTET",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LE VERNEIL",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LEPIN LE LAC",
+    "cp": "73610",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LES ALLUES",
+    "cp": "73550",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LES AVANCHERS VALMOREL",
+    "cp": "73260",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LES BELLEVILLE",
+    "cp": "73440",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LES BELLEVILLE",
+    "cp": "73600",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LES CHAPELLES",
+    "cp": "73700",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LES CHAVANNES EN MAURIENNE",
+    "cp": "73660",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LES DESERTS",
+    "cp": "73230",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LES ECHELLES",
+    "cp": "73360",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LES MOLLETTES",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LESCHERAINES",
+    "cp": "73340",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LOISIEUX",
+    "cp": "73170",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "LUCEY",
+    "cp": "73170",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MARCIEUX",
+    "cp": "73470",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MARTHOD",
+    "cp": "73400",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MERCURY",
+    "cp": "73200",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MERY",
+    "cp": "73420",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MEYRIEUX TROUET",
+    "cp": "73170",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MODANE",
+    "cp": "73500",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MONTAGNOLE",
+    "cp": "73000",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MONTAGNY",
+    "cp": "73350",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MONTAILLEUR",
+    "cp": "73460",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MONTCEL",
+    "cp": "73100",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MONTENDRY",
+    "cp": "73390",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MONTGILBERT",
+    "cp": "73220",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MONTHION",
+    "cp": "73200",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MONTMELIAN",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MONTRICHER ALBANNE",
+    "cp": "73870",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MONTSAPEY",
+    "cp": "73220",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MONTVALEZAN",
+    "cp": "73700",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MONTVERNIER",
+    "cp": "73300",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MOTZ",
+    "cp": "73310",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MOUTIERS",
+    "cp": "73600",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MOUXY",
+    "cp": "73100",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "MYANS",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "NANCES",
+    "cp": "73470",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "NOTRE DAME DE BELLECOMBE",
+    "cp": "73590",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "NOTRE DAME DES MILLIERES",
+    "cp": "73460",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "NOTRE DAME DU CRUET",
+    "cp": "73130",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "NOTRE DAME DU PRE",
+    "cp": "73600",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "NOVALAISE",
+    "cp": "73470",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ONTEX",
+    "cp": "73310",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ORELLE",
+    "cp": "73140",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "PALLUD",
+    "cp": "73200",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "PEISEY NANCROIX",
+    "cp": "73210",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "PLANAISE",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "PLANAY",
+    "cp": "73350",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "PLANCHERINE",
+    "cp": "73200",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "PORTE DE SAVOIE",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "PRALOGNAN LA VANOISE",
+    "cp": "73710",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "PRESLE",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "PUGNY CHATENOD",
+    "cp": "73100",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "PUYGROS",
+    "cp": "73190",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "QUEIGE",
+    "cp": "73720",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ROCHEFORT",
+    "cp": "73240",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ROGNAIX",
+    "cp": "73730",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ROTHERENS",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "RUFFIEUX",
+    "cp": "73310",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "SALINS FONTAINE",
+    "cp": "73600",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "SEEZ",
+    "cp": "73700",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "SERRIERES EN CHAUTAGNE",
+    "cp": "73310",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "SONNAZ",
+    "cp": "73000",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST ALBAN D HURTIERES",
+    "cp": "73220",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST ALBAN DE MONTBEL",
+    "cp": "73610",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST ALBAN DES VILLARDS",
+    "cp": "73130",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST ALBAN LEYSSE",
+    "cp": "73230",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST ANDRE",
+    "cp": "73500",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST AVRE",
+    "cp": "73130",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST BALDOPH",
+    "cp": "73190",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST BERON",
+    "cp": "73520",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST CASSIN",
+    "cp": "73160",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST CHRISTOPHE",
+    "cp": "73360",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST COLOMBAN DES VILLARDS",
+    "cp": "73130",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE DE CUINES",
+    "cp": "73130",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST FRANC",
+    "cp": "73360",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST FRANCOIS DE SALES",
+    "cp": "73340",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST FRANCOIS LONGCHAMP",
+    "cp": "73130",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST GENIX LES VILLAGES",
+    "cp": "73240",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES D HURTIERES",
+    "cp": "73220",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN D ARVES",
+    "cp": "73530",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN D ARVEY",
+    "cp": "73230",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DE CHEVELU",
+    "cp": "73170",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DE COUZ",
+    "cp": "73160",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DE LA PORTE",
+    "cp": "73250",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DE MAURIENNE",
+    "cp": "73300",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST JEOIRE PRIEURE",
+    "cp": "73190",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST JULIEN MONT DENIS",
+    "cp": "73870",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER",
+    "cp": "73220",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST MARCEL",
+    "cp": "73600",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN D ARC",
+    "cp": "73140",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DE LA PORTE",
+    "cp": "73140",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN SUR LA CHAMBRE",
+    "cp": "73130",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL DE MAURIENNE",
+    "cp": "73140",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST NICOLAS LA CHAPELLE",
+    "cp": "73590",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST OFFENGE",
+    "cp": "73100",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST OURS",
+    "cp": "73410",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST PANCRACE",
+    "cp": "73300",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL SUR ISERE",
+    "cp": "73730",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL SUR YENNE",
+    "cp": "73170",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE D ALBIGNY",
+    "cp": "73250",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE D ALVEY",
+    "cp": "73170",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE D ENTREMONT",
+    "cp": "73670",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DE BELLEVILLE",
+    "cp": "73220",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DE CURTILLE",
+    "cp": "73310",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DE GENEBROZ",
+    "cp": "73360",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST PIERRE DE SOUCY",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST REMY DE MAURIENNE",
+    "cp": "73660",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST SORLIN D ARVES",
+    "cp": "73530",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST SULPICE",
+    "cp": "73160",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST THIBAUD DE COUZ",
+    "cp": "73160",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "ST VITAL",
+    "cp": "73460",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "STE FOY TARENTAISE",
+    "cp": "73640",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "STE HELENE DU LAC",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "STE HELENE SUR ISERE",
+    "cp": "73460",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE D ALVEY",
+    "cp": "73240",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE DE CUINES",
+    "cp": "73130",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "STE REINE",
+    "cp": "73630",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "THENESOL",
+    "cp": "73200",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "THOIRY",
+    "cp": "73230",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "TIGNES",
+    "cp": "73320",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "TOURNON",
+    "cp": "73460",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "TOURS EN SAVOIE",
+    "cp": "73790",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "TRAIZE",
+    "cp": "73170",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "TRESSERVE",
+    "cp": "73100",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "TREVIGNIN",
+    "cp": "73100",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "UGINE",
+    "cp": "73400",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VAL CENIS",
+    "cp": "73480",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VAL CENIS",
+    "cp": "73500",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VAL D ARC",
+    "cp": "73220",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VAL D ISERE",
+    "cp": "73150",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VALGELON LA ROCHETTE",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VALLOIRE",
+    "cp": "73450",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VALMEINIER",
+    "cp": "73450",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VENTHON",
+    "cp": "73200",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VEREL DE MONTBEL",
+    "cp": "73330",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VEREL PRAGONDRAN",
+    "cp": "73230",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VERRENS ARVEY",
+    "cp": "73460",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VERTHEMEX",
+    "cp": "73170",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VILLARD D HERY",
+    "cp": "73800",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VILLARD LEGER",
+    "cp": "73390",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VILLARD SALLET",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VILLARD SUR DORON",
+    "cp": "73270",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VILLAREMBERT",
+    "cp": "73300",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VILLARGONDRAN",
+    "cp": "73300",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VILLARODIN BOURGET",
+    "cp": "73500",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VILLAROGER",
+    "cp": "73640",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VILLAROUX",
+    "cp": "73110",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VIMINES",
+    "cp": "73160",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VIONS",
+    "cp": "73310",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VIVIERS DU LAC",
+    "cp": "73420",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "VOGLANS",
+    "cp": "73420",
+    "dept": "73",
+    "region": ""
+  },
+  {
+    "name": "YENNE",
+    "cp": "73170",
+    "dept": "73",
+    "region": ""
+  }
+]

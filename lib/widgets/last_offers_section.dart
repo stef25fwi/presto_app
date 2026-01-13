@@ -15,14 +15,6 @@ class LastOffersSection extends StatelessWidget {
 
   static const prestoBlue = Color(0xFF1A73E8);
 
-  void _openOfferDetails(BuildContext context, String offerId) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => OfferDetailPage(offerId: offerId),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     if (offersStream != null) {
@@ -361,10 +353,22 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
     _startAutoScroll();
   }
 
-  void _openOffer(BuildContext context, String offerId) {
+  void _openOffer(BuildContext context, QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data();
+    final title = (data['title'] ?? data['jobTitle'] ?? 'Sans titre').toString();
+    final location = (data['city'] ?? data['location'] ?? 'N/A').toString();
+    final category = (data['category'] ?? 'Général').toString();
+    final annonceurId = (data['annonceurId'] ?? data['userId'] ?? '').toString();
+    
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => OfferDetailPage(offerId: offerId),
+        builder: (_) => OfferDetailPage(
+          offerId: doc.id,
+          title: title,
+          location: location,
+          category: category,
+          annonceurId: annonceurId,
+        ),
       ),
     );
   }
@@ -443,55 +447,54 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
           ),
           padding: const EdgeInsets.all(6),
           child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (isUrgent) ...[
-                  const _UrgentTextBadge(),
-                  const SizedBox(height: 4),
-                ],
-                Text(
-                  title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  locationText.isEmpty ? 'Proche' : locationText,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.visibility_outlined,
-                      size: 12,
-                      color: Colors.black.withOpacity(0.55),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${viewsCount ?? 0}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.black.withOpacity(0.55),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isUrgent) ...[
+                const _UrgentTextBadge(),
+                const SizedBox(height: 4),
               ],
-            ),
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                locationText.isEmpty ? 'Proche' : locationText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.visibility_outlined,
+                    size: 12,
+                    color: Colors.black.withOpacity(0.55),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${viewsCount ?? 0}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.black.withOpacity(0.55),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -526,7 +529,7 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
             itemBuilder: (_, index) {
               final doc = duplicated[index];
               return InkWell(
-                onTap: () => _openOffer(context, doc.id),
+                onTap: () => _openOffer(context, doc),
                 borderRadius: BorderRadius.circular(12),
                 child: _buildOfferCard(doc, index),
               );

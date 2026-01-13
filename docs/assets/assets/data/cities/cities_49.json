@@ -1,0 +1,1292 @@
+[
+  {
+    "name": "ALLONNES",
+    "cp": "49650",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ANGERS",
+    "cp": "49000",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ANGERS",
+    "cp": "49100",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ANGRIE",
+    "cp": "49440",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ANTOIGNE",
+    "cp": "49260",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ARMAILLE",
+    "cp": "49420",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ARTANNES SUR THOUET",
+    "cp": "49260",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "AUBIGNE SUR LAYON",
+    "cp": "49540",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "AVRILLE",
+    "cp": "49240",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BARACE",
+    "cp": "49430",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BAUGE EN ANJOU",
+    "cp": "49150",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BEAUCOUZE",
+    "cp": "49070",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BEAUFORT EN ANJOU",
+    "cp": "49250",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BEAULIEU SUR LAYON",
+    "cp": "49750",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BEAUPREAU EN MAUGES",
+    "cp": "49110",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BEAUPREAU EN MAUGES",
+    "cp": "49450",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BEAUPREAU EN MAUGES",
+    "cp": "49510",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BEAUPREAU EN MAUGES",
+    "cp": "49600",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BECON LES GRANITS",
+    "cp": "49370",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BEGROLLES EN MAUGES",
+    "cp": "49122",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BEHUARD",
+    "cp": "49170",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BELLEVIGNE EN LAYON",
+    "cp": "49380",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BELLEVIGNE EN LAYON",
+    "cp": "49750",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BELLEVIGNE LES CHATEAUX",
+    "cp": "49260",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BELLEVIGNE LES CHATEAUX",
+    "cp": "49400",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BLAISON ST SULPICE",
+    "cp": "49320",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BLOU",
+    "cp": "49160",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BOUCHEMAINE",
+    "cp": "49080",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BOUILLE MENARD",
+    "cp": "49520",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BOURG L EVEQUE",
+    "cp": "49520",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BRAIN SUR ALLONNES",
+    "cp": "49650",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BRIOLLAY",
+    "cp": "49125",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BRISSAC LOIRE AUBANCE",
+    "cp": "49250",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BRISSAC LOIRE AUBANCE",
+    "cp": "49320",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "BROSSAY",
+    "cp": "49700",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CANDE",
+    "cp": "49440",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CANTENAY EPINARD",
+    "cp": "49460",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CARBAY",
+    "cp": "49420",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CERNUSSON",
+    "cp": "49310",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHALLAIN LA POTHERIE",
+    "cp": "49440",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHALONNES SUR LOIRE",
+    "cp": "49290",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHAMBELLAY",
+    "cp": "49220",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHAMPTOCE SUR LOIRE",
+    "cp": "49123",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHANTELOUP LES BOIS",
+    "cp": "49340",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHAUDEFONDS SUR LAYON",
+    "cp": "49290",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHAZE SUR ARGOS",
+    "cp": "49500",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHEFFES",
+    "cp": "49125",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHEMILLE EN ANJOU",
+    "cp": "49120",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHEMILLE EN ANJOU",
+    "cp": "49310",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHEMILLE EN ANJOU",
+    "cp": "49670",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHEMILLE EN ANJOU",
+    "cp": "49750",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHENILLE CHAMPTEUSSE",
+    "cp": "49220",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CHOLET",
+    "cp": "49300",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CIZAY LA MADELEINE",
+    "cp": "49700",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CLERE SUR LAYON",
+    "cp": "49560",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CORNILLE LES CAVES",
+    "cp": "49140",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CORON",
+    "cp": "49690",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "CORZE",
+    "cp": "49140",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "COURCHAMPS",
+    "cp": "49260",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "COURLEON",
+    "cp": "49390",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "DENEE",
+    "cp": "49190",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "DENEZE SOUS DOUE",
+    "cp": "49700",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "DISTRE",
+    "cp": "49400",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "DOUE EN ANJOU",
+    "cp": "49700",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "DURTAL",
+    "cp": "49430",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ECOUFLANT",
+    "cp": "49000",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ECUILLE",
+    "cp": "49460",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "EPIEDS",
+    "cp": "49260",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ERDRE EN ANJOU",
+    "cp": "49220",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ERDRE EN ANJOU",
+    "cp": "49370",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ETRICHE",
+    "cp": "49330",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "FENEU",
+    "cp": "49460",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "FONTEVRAUD L ABBAYE",
+    "cp": "49590",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "GENNES VAL DE LOIRE",
+    "cp": "49160",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "GENNES VAL DE LOIRE",
+    "cp": "49320",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "GENNES VAL DE LOIRE",
+    "cp": "49350",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "GREZ NEUVILLE",
+    "cp": "49220",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "HUILLE LEZIGNE",
+    "cp": "49430",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "INGRANDES LE FRESNE SUR LOIRE",
+    "cp": "49123",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "JARZE VILLAGES",
+    "cp": "49140",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "JUVARDEIL",
+    "cp": "49330",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LA BREILLE LES PINS",
+    "cp": "49390",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE ST LAUD",
+    "cp": "49140",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LA JAILLE YVON",
+    "cp": "49220",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LA LANDE CHASLES",
+    "cp": "49150",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LA MENITRE",
+    "cp": "49250",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LA PELLERINE",
+    "cp": "49490",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LA PLAINE",
+    "cp": "49360",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LA POSSONNIERE",
+    "cp": "49170",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LA ROMAGNE",
+    "cp": "49740",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LA SEGUINIERE",
+    "cp": "49280",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LA TESSOUALLE",
+    "cp": "49280",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LE COUDRAY MACOUARD",
+    "cp": "49260",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LE LION D ANGERS",
+    "cp": "49220",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LE MAY SUR EVRE",
+    "cp": "49122",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LE PLESSIS GRAMMOIRE",
+    "cp": "49124",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LE PUY NOTRE DAME",
+    "cp": "49260",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LES BOIS D ANJOU",
+    "cp": "49250",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LES CERQUEUX",
+    "cp": "49360",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LES GARENNES SUR LOIRE",
+    "cp": "49320",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LES GARENNES SUR LOIRE",
+    "cp": "49610",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LES HAUTS D ANJOU",
+    "cp": "49330",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LES PONTS DE CE",
+    "cp": "49130",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LES RAIRIES",
+    "cp": "49430",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LES ULMES",
+    "cp": "49700",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LOIRE",
+    "cp": "49440",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LOIRE AUTHION",
+    "cp": "49140",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LOIRE AUTHION",
+    "cp": "49250",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LOIRE AUTHION",
+    "cp": "49630",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LOIRE AUTHION",
+    "cp": "49800",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LONGUE JUMELLES",
+    "cp": "49160",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LONGUENEE EN ANJOU",
+    "cp": "49220",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LONGUENEE EN ANJOU",
+    "cp": "49770",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LOURESSE ROCHEMENIER",
+    "cp": "49700",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LYS HAUT LAYON",
+    "cp": "49310",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LYS HAUT LAYON",
+    "cp": "49540",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "LYS HAUT LAYON",
+    "cp": "49560",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MARCE",
+    "cp": "49140",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MAUGES SUR LOIRE",
+    "cp": "49110",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MAUGES SUR LOIRE",
+    "cp": "49290",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MAUGES SUR LOIRE",
+    "cp": "49410",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MAUGES SUR LOIRE",
+    "cp": "49570",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MAUGES SUR LOIRE",
+    "cp": "49620",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MAULEVRIER",
+    "cp": "49360",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MAZE MILON",
+    "cp": "49140",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MAZE MILON",
+    "cp": "49630",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MAZIERES EN MAUGES",
+    "cp": "49280",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MIRE",
+    "cp": "49330",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNE LES RAIRIES",
+    "cp": "49430",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MONTILLIERS",
+    "cp": "49310",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL BELLAY",
+    "cp": "49260",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL JUIGNE",
+    "cp": "49460",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL SUR LOIR",
+    "cp": "49140",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL SUR MAINE",
+    "cp": "49220",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MONTREVAULT SUR EVRE",
+    "cp": "49110",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MONTREVAULT SUR EVRE",
+    "cp": "49270",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MONTREVAULT SUR EVRE",
+    "cp": "49600",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MONTSOREAU",
+    "cp": "49730",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MORANNES SUR SARTHE DAUMERAY",
+    "cp": "49640",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MOULIHERNE",
+    "cp": "49390",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MOZE SUR LOUET",
+    "cp": "49610",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "MURS ERIGNE",
+    "cp": "49610",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "NEUILLE",
+    "cp": "49680",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "NOYANT VILLAGES",
+    "cp": "49390",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "NOYANT VILLAGES",
+    "cp": "49490",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "NUAILLE",
+    "cp": "49340",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "OMBREE D ANJOU",
+    "cp": "49420",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "OMBREE D ANJOU",
+    "cp": "49520",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "OREE D ANJOU",
+    "cp": "49270",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "OREE D ANJOU",
+    "cp": "49530",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "PARNAY",
+    "cp": "49730",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "PASSAVANT SUR LAYON",
+    "cp": "49560",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "RIVES DU LOIR EN ANJOU",
+    "cp": "49140",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ROCHEFORT SUR LOIRE",
+    "cp": "49190",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ROU MARSON",
+    "cp": "49400",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SARRIGNE",
+    "cp": "49800",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SAUMUR",
+    "cp": "49400",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SAVENNIERES",
+    "cp": "49170",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SCEAUX D ANJOU",
+    "cp": "49330",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SEGRE EN ANJOU BLEU",
+    "cp": "49500",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SEGRE EN ANJOU BLEU",
+    "cp": "49520",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SEICHES SUR LE LOIR",
+    "cp": "49140",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SERMAISE",
+    "cp": "49140",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SEVREMOINE",
+    "cp": "49230",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SEVREMOINE",
+    "cp": "49450",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SEVREMOINE",
+    "cp": "49660",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SEVREMOINE",
+    "cp": "49710",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SOMLOIRE",
+    "cp": "49360",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SOULAINES SUR AUBANCE",
+    "cp": "49610",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SOULAIRE ET BOURG",
+    "cp": "49460",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "SOUZAY CHAMPIGNY",
+    "cp": "49400",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST AUGUSTIN DES BOIS",
+    "cp": "49170",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST BARTHELEMY D ANJOU",
+    "cp": "49124",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST CHRISTOPHE DU BOIS",
+    "cp": "49280",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST CLEMENT DE LA PLACE",
+    "cp": "49370",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST CLEMENT DES LEVEES",
+    "cp": "49350",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES SUR LOIRE",
+    "cp": "49170",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN DES PRES",
+    "cp": "49170",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN DE LA CROIX",
+    "cp": "49130",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST JUST SUR DIVE",
+    "cp": "49260",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST LAMBERT LA POTHERIE",
+    "cp": "49070",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER DE LINIERES",
+    "cp": "49070",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER DE LINIERES",
+    "cp": "49170",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER SOUS CHOLET",
+    "cp": "49280",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST MACAIRE DU BOIS",
+    "cp": "49260",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN DU FOUILLOUX",
+    "cp": "49170",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST MELAINE SUR AUBANCE",
+    "cp": "49610",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST PAUL DU BOIS",
+    "cp": "49310",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "ST PHILBERT DU PEUPLE",
+    "cp": "49160",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "STE GEMMES SUR LOIRE",
+    "cp": "49130",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "TERRANJOU",
+    "cp": "49380",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "TERRANJOU",
+    "cp": "49540",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "THORIGNE D ANJOU",
+    "cp": "49220",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "TIERCE",
+    "cp": "49125",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "TOUTLEMONDE",
+    "cp": "49360",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "TRELAZE",
+    "cp": "49800",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "TREMENTINES",
+    "cp": "49340",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "TUFFALUN",
+    "cp": "49700",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "TURQUANT",
+    "cp": "49730",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VAL D ERDRE AUXENCE",
+    "cp": "49370",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VAL D ERDRE AUXENCE",
+    "cp": "49440",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VAL DU LAYON",
+    "cp": "49190",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VAL DU LAYON",
+    "cp": "49750",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VARENNES SUR LOIRE",
+    "cp": "49730",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VARRAINS",
+    "cp": "49400",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VAUDELNAY",
+    "cp": "49260",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VERNANTES",
+    "cp": "49390",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VERNOIL LE FOURRIER",
+    "cp": "49390",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VERRIE",
+    "cp": "49400",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VERRIERES EN ANJOU",
+    "cp": "49112",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VERRIERES EN ANJOU",
+    "cp": "49480",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VEZINS",
+    "cp": "49340",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VILLEBERNIER",
+    "cp": "49400",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "VIVY",
+    "cp": "49680",
+    "dept": "49",
+    "region": ""
+  },
+  {
+    "name": "YZERNAY",
+    "cp": "49360",
+    "dept": "49",
+    "region": ""
+  }
+]
