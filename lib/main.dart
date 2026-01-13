@@ -2055,7 +2055,7 @@ class _HomePageState extends State<HomePage>
                             borderRadius:
                                 BorderRadius.vertical(top: Radius.circular(24)),
                           ),
-                          padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+                          padding: const EdgeInsets.fromLTRB(10, 2, 10, 4),
                           child: SafeArea(
                             top: false,
                             child: Row(
@@ -2112,7 +2112,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildHomeContent() {
-    const double bottomPadding = 150;
+    const double bottomPadding = 130;
 
     return Container(
       color: Colors.white,
@@ -2821,7 +2821,7 @@ class _BottomNavItemState extends State<_BottomNavItem>
             ScaleTransition(
               scale: _scaleAnimation,
               child: Container(
-                padding: EdgeInsets.all(widget.isBig ? 6 : 4),
+                padding: EdgeInsets.all(widget.isBig ? 5 : 3),
                 decoration: BoxDecoration(
                   color: widget.isBig
                       ? Colors.white
@@ -2833,7 +2833,7 @@ class _BottomNavItemState extends State<_BottomNavItem>
                       ? [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.35),
-                            blurRadius: 16,
+                            blurRadius: 14,
                             offset: const Offset(0, 4),
                           ),
                         ]
@@ -2841,27 +2841,27 @@ class _BottomNavItemState extends State<_BottomNavItem>
                           ? [
                               BoxShadow(
                                 color: Colors.white.withOpacity(0.5),
-                                blurRadius: 12,
-                                spreadRadius: 3,
+                                blurRadius: 10,
+                                spreadRadius: 2,
                               ),
                             ]
                           : null,
                 ),
                 child: Icon(
                   widget.icon,
-                  size: widget.isBig ? 28 : 24,
+                  size: widget.isBig ? 26 : 22,
                   color: widget.isBig ? kPrestoOrange : color,
                 ),
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             SizedBox(
-              width: 70,
+              width: 66,
               child: Text(
                 widget.label,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   color: color,
                   fontWeight: fontWeight,
                   height: 1.2,
