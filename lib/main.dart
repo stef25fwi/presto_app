@@ -3265,6 +3265,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   final Map<String, String> _normalizedTextCache = {};
 
   // ✅ Cache des résultats Firestore pour éviter les re-queries
+  // ignore: unused_field
   Map<String, List<DocumentSnapshot<Map<String, dynamic>>>>? _queryResultsCache;
   String? _lastCachedQuerySignature;
   Timer? _cacheInvalidationTimer;
@@ -3442,8 +3443,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     if (_pageLimit >= _maxLimit) return;
 
     final position = _scrollController.position;
-    // Seuil simple: quand on approche du bas, on augmente la limite.
-    const thresholdPx = 400.0;
+    // Seuil : quand on approche du bas (500px), on augmente la limite progressivement
+    const thresholdPx = 500.0;
     if (position.maxScrollExtent - position.pixels > thresholdPx) return;
 
     setState(() {
@@ -3452,10 +3453,45 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     });
   }
 
+  /// ✅ Précharge les données région/département au démarrage
+  Future<void> _preloadRegionDeptData() async {
+    try {
+      // Simplement accéder à la map pour la forcer en mémoire
+      debugPrint('[ConsultOffers] Préchargement région/département (${_deptToRegion.length} entrées)');
+    } catch (e) {
+      debugPrint('[ConsultOffers] Erreur préchargement: $e');
+    }
+  }
+
+  /// ✅ Cache les résultats Firestore pour éviter les re-queries inutiles (template pour utilisation future)
+  // ignore: unused_element
+  List<DocumentSnapshot<Map<String, dynamic>>> _getCachedOrFreshResults(
+    String querySignature,
+    List<DocumentSnapshot<Map<String, dynamic>>> freshResults,
+  ) {
+    // Si la signature a changé, invalider le cache
+    if (_lastCachedQuerySignature != querySignature) {
+      _queryResultsCache = null;
+      _lastCachedQuerySignature = querySignature;
+      _cacheInvalidationTimer?.cancel();
+      
+      // Cache expire après 5 minutes
+      _cacheInvalidationTimer = Timer(const Duration(minutes: 5), () {
+        _queryResultsCache = null;
+        _lastCachedQuerySignature = null;
+      });
+    }
+
+    // Mettre en cache les résultats
+    _queryResultsCache = {'results': freshResults};
+    return freshResults;
+  }
+
   @override
   void dispose() {
     _connectivitySubscription.cancel();
     _filterDebounce.dispose();
+    _cacheInvalidationTimer?.cancel();  // ✅ Nettoyer le timer de cache
     _locationController.dispose();
     _postalCodeController.dispose();
     _scrollController.dispose();
