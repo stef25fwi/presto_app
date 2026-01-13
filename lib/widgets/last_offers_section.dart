@@ -427,6 +427,9 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
                     .map((e) => e.toString())
                     .toList();
 
+            final sub =
+              (data['subCategory'] ?? data['subcategory'] ?? '').toString().trim();
+
             // ignore: use_build_context_synchronously
             Navigator.of(context).push(
               MaterialPageRoute(
@@ -435,7 +438,7 @@ class _AnimatedOffersCarouselState extends State<_AnimatedOffersCarousel>
                   title: title,
                   location: locationText.isEmpty ? 'Proche' : locationText,
                   category: category,
-                  subcategory: (data['subcategory'] ?? '').toString(),
+                  subcategory: sub.isEmpty ? null : sub,
                   budget: budget is num ? budget : null,
                   description: description.isEmpty ? null : description,
                   phone: phone,

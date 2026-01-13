@@ -3077,26 +3077,6 @@ String _friendlyFirestoreErrorMessage(Object error) {
 }
 
 class _ConsultOffersPageState extends State<ConsultOffersPage> {
-  // --- Normalisation (réduction index) ---
-  String _slugId(String input) {
-    final s = input
-        .trim()
-        .toLowerCase()
-        .replaceAll(RegExp(r'[àâä]'), 'a')
-        .replaceAll('ç', 'c')
-        .replaceAll(RegExp(r'[éèêë]'), 'e')
-        .replaceAll(RegExp(r'[îï]'), 'i')
-        .replaceAll(RegExp(r'[ôö]'), 'o')
-        .replaceAll(RegExp(r'[ùûü]'), 'u')
-        .replaceAll('œ', 'oe')
-        .replaceAll(RegExp(r"[/\-'’']"), ' ')
-        .replaceAll(RegExp(r'[^a-z0-9 ]'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim()
-        .replaceAll(' ', '-');
-    return s;
-  }
-
   // ✅ Logs analytics
   late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
 
@@ -3184,27 +3164,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   bool _isOnline = true;
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
-  String? _makeCategoryId(String? categoryLabel) {
-    final s = (categoryLabel ?? '').trim();
-    if (s.isEmpty || s == 'Toutes catégories') return null;
-    return _slugId(s);
-  }
-
-  String? _makeCityId({
-    required String cityName,
-    required String postalCode,
-  }) {
-    final city = cityName.trim();
-    final cp = postalCode.trim();
-    if (city.isEmpty || cp.length < 3) return null; // CP requis pour stabilité
-    return '${cp}_${_slugId(city)}';
-  }
-
-  String? _makeCityCategoryKey(
-      {required String? cityId, required String? categoryId}) {
-    if (cityId == null || categoryId == null) return null;
-    return '${cityId}_$categoryId';
-  }
+  // (helpers categoryId/cityId retirés: filtrage robuste côté client)
 
   // ✅ Range budget (AVANCÉ) — évite requêtes “impossibles” + explosion d’index
   final bool _advancedFilters = false;
@@ -3523,73 +3483,44 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     query = query.where('isActive', isEqualTo: true);
 
-    final loc = _locationController.text.trim();
+    // ⚠️ Important: ne pas dépendre de champs "dérivés" (cityId/categoryId/dept/regionCode)
+    // car ils ne sont pas garantis sur les anciennes annonces.
+    // On ne garde en Firestore query que des filtres sûrs (champs existants),
+    // puis on complète en filtrage client-side.
+
     final cp = _postalCodeController.text.trim();
     final cat = _selectedCategory;
-    final regionCode = _selectedRegionCode;
     final subcat = _selectedSubCategory;
 
     final filterCat = _filterCategory;
-    final filterRegCode = _filterRegionCode;
-    final filterDeptCode = _filterDepartmentCode;
-    final filterCity = _filterCityName?.trim();
 
     final String? categoryLabel =
         (filterCat != null && filterCat.isNotEmpty) ? filterCat : cat;
-    final String? categoryId = _makeCategoryId(categoryLabel);
-
-    final String cityName =
-        (filterCity != null && filterCity.isNotEmpty) ? filterCity : loc;
-
-    // ✅ Si la ville vient de l'autocomplete, privilégier son CP (plus fiable que le champ global).
-    final String cpForCity = (filterCity != null &&
-            filterCity.isNotEmpty &&
-            _filterPostalCodeController.text.trim().isNotEmpty)
-        ? _filterPostalCodeController.text.trim()
-        : cp;
-
-    final String? cityId =
-        _makeCityId(cityName: cityName, postalCode: cpForCity);
-
-    final String? cityCategoryKey =
-        _makeCityCategoryKey(cityId: cityId, categoryId: categoryId);
-
-    // ✅ Stratégie anti-explosion d’index :
-    // - si Ville+CP + Catégorie => 1 seul where(eq) sur cityCategoryKey
-    // - sinon cityId OU categoryId
-    if (cityCategoryKey != null) {
-      query = query.where('cityCategoryKey', isEqualTo: cityCategoryKey);
-    } else {
-      if (cityId != null) query = query.where('cityId', isEqualTo: cityId);
-      if (categoryId != null)
-        query = query.where('categoryId', isEqualTo: categoryId);
+    final bool hasCategory = (categoryLabel != null &&
+        categoryLabel.isNotEmpty &&
+        categoryLabel != 'Toutes catégories');
+    if (hasCategory) {
+      query = query.where('category', isEqualTo: categoryLabel);
     }
 
-    // Filtre sous-catégorie (optionnel; gardé en “legacy” tant que pas de subcategoryId)
+    // Sous-catégorie: champ Firestore actuellement utilisé = "subCategory".
     final bool hasSubcategory = (subcat != null && subcat.isNotEmpty);
     if (hasSubcategory) {
-      query = query.where('subcategory', isEqualTo: subcat);
+      query = query.where('subCategory', isEqualTo: subcat);
     }
 
-    // Filtre région/département (inchangé, mais attention: ça recrée des combinaisons d’index)
-    bool hasDept = false;
-    if (filterRegCode != null && filterRegCode.isNotEmpty) {
-      final depts = kRegionDepartments[filterRegCode] ?? [];
-      if (depts.isNotEmpty) {
-        hasDept = true;
-        query = query.where('dept', isEqualTo: depts.first);
-      }
-    } else if (regionCode != null && regionCode.isNotEmpty) {
-      final depts = kRegionDepartments[regionCode] ?? [];
-      if (depts.isNotEmpty) {
-        hasDept = true;
-        query = query.where('dept', isEqualTo: depts.first);
-      }
+    // Code postal: filtre exact si saisi.
+    // (Région/Département/Ville seront filtrés client-side pour éviter des indexes impossibles.)
+    final bool hasPostal = cp.isNotEmpty;
+    if (hasPostal) {
+      query = query.where('postalCode', isEqualTo: cp);
     }
-    if (filterDeptCode != null && filterDeptCode.isNotEmpty) {
-      hasDept = true;
-      query = query.where('dept', isEqualTo: filterDeptCode);
-    }
+
+    // Flags uniquement pour la signature/monitoring (même si le filtrage final est client-side)
+    final bool hasDept =
+        (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
+            (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) ||
+            (_selectedRegionCode != null && _selectedRegionCode!.isNotEmpty);
 
     // ✅ Budget range (AVANCÉ) (inchangé)
     final min = _parseBudgetBound(_budgetMinCtrl.text);
@@ -3613,10 +3544,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     // Signature (audit index) — minimaliste
     _lastOffersQuerySignature = _buildOffersQuerySignature(
-      hasCategory: categoryId != null,
+      hasCategory: hasCategory,
       hasDept: hasDept,
-      hasLocation: cityId != null || cityCategoryKey != null,
-      hasPostalCode: cpForCity.trim().isNotEmpty,
+      hasLocation: _locationController.text.trim().isNotEmpty ||
+          (_filterCityName?.trim().isNotEmpty ?? false),
+      hasPostalCode: hasPostal,
       hasSubcategory: hasSubcategory,
       hasBudgetRange: wantsBudgetRange,
     );
@@ -4121,6 +4053,103 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
                         snapshot.data?.docs ?? [];
 
+                    // ✅ Filtrage client-side des filtres "structurels" (robuste sur données legacy)
+                    final selectedCategory =
+                        (_filterCategory != null && _filterCategory!.isNotEmpty)
+                            ? _filterCategory
+                            : ((_selectedCategory ?? '').isNotEmpty &&
+                                    _selectedCategory != 'Toutes catégories')
+                                ? _selectedCategory
+                                : null;
+
+                    final selectedSubCategory =
+                        (_selectedSubCategory != null &&
+                                _selectedSubCategory!.isNotEmpty)
+                            ? _selectedSubCategory
+                            : null;
+
+                    final selectedDept =
+                        (_filterDepartmentCode != null &&
+                                _filterDepartmentCode!.isNotEmpty)
+                            ? _filterDepartmentCode
+                            : null;
+
+                    final selectedRegion =
+                        (_filterRegionCode != null &&
+                                _filterRegionCode!.isNotEmpty)
+                            ? _filterRegionCode
+                            : ((_selectedRegionCode ?? '').isNotEmpty)
+                                ? _selectedRegionCode
+                                : null;
+
+                    final cityNeedle =
+                        (_filterCityName != null &&
+                                _filterCityName!.trim().isNotEmpty)
+                            ? _normalizeText(_filterCityName!)
+                            : (_locationController.text.trim().isNotEmpty)
+                                ? _normalizeText(_locationController.text)
+                                : null;
+
+                    final cpNeedle = _postalCodeController.text.trim();
+
+                    if (selectedCategory != null) {
+                      docs = docs.where((d) {
+                        final data = d.data();
+                        final c = (data['category'] ?? '').toString().trim();
+                        return c == selectedCategory;
+                      }).toList();
+                    }
+
+                    if (selectedSubCategory != null) {
+                      docs = docs.where((d) {
+                        final data = d.data();
+                        final sc =
+                            (data['subCategory'] ?? '').toString().trim();
+                        return sc == selectedSubCategory;
+                      }).toList();
+                    }
+
+                    if (cpNeedle.isNotEmpty) {
+                      docs = docs.where((d) {
+                        final data = d.data();
+                        final offerCp =
+                            (data['postalCode'] ?? '').toString().trim();
+                        return offerCp == cpNeedle;
+                      }).toList();
+                    }
+
+                    if (selectedDept != null || selectedRegion != null) {
+                      docs = docs.where((d) {
+                        final data = d.data();
+                        final offerCp =
+                            (data['postalCode'] ?? '').toString().trim();
+                        final offerDept = _deptFromPostal(offerCp);
+
+                        if (selectedDept != null && offerDept != selectedDept) {
+                          return false;
+                        }
+
+                        if (selectedRegion != null) {
+                          final offerRegion = _deptToRegion[offerDept];
+                          if (offerRegion == null ||
+                              offerRegion != selectedRegion) {
+                            return false;
+                          }
+                        }
+
+                        return true;
+                      }).toList();
+                    }
+
+                    if (cityNeedle != null && cityNeedle.isNotEmpty) {
+                      docs = docs.where((d) {
+                        final data = d.data();
+                        final offerCity =
+                            _normalizeText((data['location'] ?? '').toString());
+                        return offerCity.contains(cityNeedle);
+                      }).toList();
+                    }
+
                     // ✅ Filtrage client-side optimisé avec normalisation
                     if (_activeSearchQuery != null &&
                         _activeSearchQuery!.trim().isNotEmpty) {
@@ -4253,6 +4282,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                   ? null
                                   : data['phone'] as String;
 
+                                final sub = (data['subCategory'] ??
+                                    data['subcategory'] ??
+                                    '')
+                                  .toString()
+                                  .trim();
+
                               final List<String> imageUrls =
                                   (data['imageUrls'] as List<dynamic>? ?? [])
                                       .map((e) => e.toString())
@@ -4271,8 +4306,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                             title: title,
                                             location: location,
                                             category: category,
-                                            subcategory: (data['subcategory'] ??
-                                                '') as String?,
+                                            subcategory: sub.isEmpty ? null : sub,
                                             budget:
                                                 budget is num ? budget : null,
                                             description: description.isEmpty
