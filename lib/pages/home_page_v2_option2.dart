@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 /// ------------------------------------------------------------
 /// ACCUEIL "OPTION 2" (Marque forte équilibrée)
 /// - Page prête à coller telle quelle
-/// - Ouvrable via appui long sur le logo "iliprestō"
+/// - Anciennement ouvrable via appui long sur le logo "iliprestō"
 /// ------------------------------------------------------------
 
 class HomePageV2Option2 extends StatelessWidget {
@@ -30,12 +30,7 @@ class HomePageV2Option2 extends StatelessWidget {
                   const SizedBox(width: 44), // to visually center logo
                   Expanded(
                     child: Center(
-                      child: _LogoIlipresto(
-                        onLongPress: () {
-                          // Retour à la page principale
-                          Navigator.of(context).pop();
-                        },
-                      ),
+                      child: const _LogoIlipresto(),
                     ),
                   ),
                   _CircleIconButton(
@@ -278,32 +273,28 @@ class HomePageV2Option2 extends StatelessWidget {
 }
 
 /// ------------------------------------------------------------
-/// Logo avec appui long
+/// Logo (sans appui long)
 /// ------------------------------------------------------------
 class _LogoIlipresto extends StatelessWidget {
-  final VoidCallback? onLongPress;
-  const _LogoIlipresto({this.onLongPress});
+  const _LogoIlipresto();
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onLongPress: onLongPress,
-      child: RichText(
-        text: const TextSpan(
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.2,
-          ),
-          children: [
-            TextSpan(text: "ili", style: TextStyle(color: HomePageV2Option2.prestoOrange)),
-            TextSpan(text: "presto", style: TextStyle(color: HomePageV2Option2.prestoOrange)),
-            TextSpan(
-              text: "ō",
-              style: TextStyle(color: HomePageV2Option2.prestoOrange, fontWeight: FontWeight.w900),
-            ),
-          ],
+    return RichText(
+      text: const TextSpan(
+        style: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.2,
         ),
+        children: [
+          TextSpan(text: "ili", style: TextStyle(color: HomePageV2Option2.prestoOrange)),
+          TextSpan(text: "presto", style: TextStyle(color: HomePageV2Option2.prestoOrange)),
+          TextSpan(
+            text: "ō",
+            style: TextStyle(color: HomePageV2Option2.prestoOrange, fontWeight: FontWeight.w900),
+          ),
+        ],
       ),
     );
   }

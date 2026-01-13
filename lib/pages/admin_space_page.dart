@@ -6,7 +6,6 @@ import '../pages/admin/streaming_monitoring_page.dart';
 import '../pages/admin/moderation_page.dart';
 import '../pages/admin/offers_management_page.dart';
 import '../pages/admin/messages_management_page.dart';
-import '../pages/admin/splashscreen_management_page.dart';
 
 import '../constants.dart';
 
@@ -506,20 +505,6 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
                           builder: (_) => const StreamingMonitoringPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  _KpiTile(
-                    icon: Icons.photo_library_rounded,
-                    title: 'Splashscreen',
-                    subtitle: 'Versions V1, V2, V3',
-                    badge: null,
-                    iconColor: prestoBlue,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const SplashscreenManagementPage(),
                         ),
                       );
                     },

@@ -33,7 +33,6 @@ import 'pages/auth/presto_premium_auth_page.dart';
 import 'pages/pro_profile_page.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/legal_info_page.dart';
-import 'pages/home_page_v2_option2.dart';
 import 'pages/messages/conversation_page.dart';
 import 'widgets/ad_banner.dart';
 import 'widgets/offer_card.dart';
@@ -47,12 +46,10 @@ import 'utils/friendly_snackbar.dart';
 import 'utils/crashlytics_context.dart';
 import 'utils/recording_path_web.dart'
     if (dart.library.io) 'utils/recording_path_io.dart';
-import 'dev/seed_offers.dart';
 import 'features/micro_ia/micro_ia_service.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/recording_mic_button.dart';
 import 'widgets/phone_input_field.dart';
-import 'widgets/splashscreen_loader.dart';
 // ...existing code (autres imports)...
 
 // ✅ Remote Config singleton: expose 'audio_pipeline' pour l'UI
@@ -888,9 +885,7 @@ class PrestoApp extends StatelessWidget {
             const EntrepreneurCalculatorPage(),
       },
       theme: buildPrestoTheme(),
-      home: const SplashscreenLoader(
-        child: SplashScreen(),
-      ),
+      home: const SplashScreen(),
     );
   }
 }
@@ -1105,25 +1100,15 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  GestureDetector(
-                    onLongPress: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HomePageV2Option2(),
-                        ),
-                      );
-                    },
-                    child: ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: const Text(
-                        'iliprestō',
-                        style: TextStyle(
-                          fontSize: 54,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 1.3,
-                        ),
+                  ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: const Text(
+                      'iliprestō',
+                      style: TextStyle(
+                        fontSize: 54,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 1.3,
                       ),
                     ),
                   ),
@@ -1219,8 +1204,6 @@ class _HomePageState extends State<HomePage>
 
   // Taille de police de référence pour les titres des slides (alignée sur le slide 1)
   static const double _homeSlideTitleFontSize = 24;
-
-  bool _isSeeding = false;
 
   /// Contrôle l'affichage des suggestions de recherche
   bool _showSearchSuggestions = true;
@@ -1557,72 +1540,6 @@ class _HomePageState extends State<HomePage>
     }
 
     return all.where((s) => s.toLowerCase().contains(text)).take(8);
-  }
-
-  Future<void> _seedSampleOffers() async {
-    if (_isSeeding) return;
-    setState(() => _isSeeding = true);
-
-    try {
-      if (mounted) {
-        showSuccessSnackBar(context, "Reset + seed des offres en cours…");
-      }
-
-      await resetAndSeedOffers();
-
-      // Compat legacy : certaines vues utilisent encore `location` / `postalCode`.
-      // On les remplit à partir de `city` / `cp` si absents.
-      final fs = FirebaseFirestore.instance;
-      final col = fs.collection(kOffersCollection);
-      final snap = await col.get();
-
-      WriteBatch batch = fs.batch();
-      int ops = 0;
-      Future<void> commitIfNeeded() async {
-        if (ops == 0) return;
-        await batch.commit();
-        batch = fs.batch();
-        ops = 0;
-      }
-
-      for (final doc in snap.docs) {
-        final data = doc.data();
-        final city = (data['city'] ?? '').toString();
-        final cp = (data['cp'] ?? '').toString();
-
-        final needsLocation =
-            !(data.containsKey('location')) || (data['location'] == null);
-        final needsPostalCode =
-            !(data.containsKey('postalCode')) || (data['postalCode'] == null);
-
-        if (!needsLocation && !needsPostalCode) continue;
-        if (city.isEmpty && cp.isEmpty) continue;
-
-        final patch = <String, dynamic>{};
-        if (needsLocation && city.isNotEmpty) patch['location'] = city;
-        if (needsPostalCode && cp.isNotEmpty) patch['postalCode'] = cp;
-
-        if (patch.isEmpty) continue;
-
-        batch.set(doc.reference, patch, SetOptions(merge: true));
-        ops++;
-        if (ops >= 450) {
-          await commitIfNeeded();
-        }
-      }
-      await commitIfNeeded();
-
-      if (mounted) {
-        showSuccessSnackBar(
-            context, "Offres de test réinitialisées et injectées ✅");
-      }
-    } catch (e) {
-      if (mounted) {
-        showSuccessSnackBar(context, "Erreur lors du seed des offres : $e");
-      }
-    } finally {
-      if (mounted) setState(() => _isSeeding = false);
-    }
   }
 
   Widget _buildSmartSearchBar() {
@@ -2141,17 +2058,14 @@ class _HomePageState extends State<HomePage>
                     _buildInfoIcon(),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: GestureDetector(
-                        onLongPress: _seedSampleOffers,
-                        child: const Center(
-                          child: Text(
-                            "iliprestō",
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w900,
-                              color: kPrestoOrange,
-                              letterSpacing: 0.5,
-                            ),
+                      child: const Center(
+                        child: Text(
+                          "iliprestō",
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: kPrestoOrange,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
