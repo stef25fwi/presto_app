@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:presto_app/pages/toolbox_page.dart';
@@ -50,7 +51,15 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide> {
               height: 220,
               decoration: BoxDecoration(
                 borderRadius: border,
-                color: prestoOrange,
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFFF5A00),
+                    prestoOrange,
+                    Color(0xFFFF7A1A),
+                  ],
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.18),
@@ -63,6 +72,15 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide> {
                 borderRadius: border,
                 child: Stack(
                   children: [
+                    // ===== Grain léger (texture) =====
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(
+                          painter: _PrestoGrainPainter(),
+                        ),
+                      ),
+                    ),
+
                     // ===== Décors bulles / bokeh (premium) =====
                     Positioned(
                       right: -52,
@@ -115,21 +133,11 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Chips PRO + Nouveau
-                                Row(
-                                  children: [
-                                    _chip(
-                                      "PRO",
-                                      bg: Colors.white.withOpacity(0.18),
-                                      fg: Colors.white,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    _chip(
-                                      "Nouveau",
-                                      bg: Colors.white,
-                                      fg: prestoOrange,
-                                    ),
-                                  ],
+                                // Chip "Nouveau" (badge PRO retiré)
+                                _chip(
+                                  "Nouveau",
+                                  bg: Colors.white,
+                                  fg: prestoOrange,
                                 ),
 
                                 const SizedBox(height: 14),
@@ -316,4 +324,41 @@ class _EntrepreneurToolboxSlideState extends State<EntrepreneurToolboxSlide> {
       ),
     );
   }
+}
+
+class _PrestoGrainPainter extends CustomPainter {
+  const _PrestoGrainPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Texture très subtile : micro points clairs + foncés.
+    // Seed fixe pour éviter tout scintillement.
+    final r = math.Random(1337);
+
+    final light = Paint()..style = PaintingStyle.fill;
+    final dark = Paint()..style = PaintingStyle.fill;
+
+    // Densité ajustée pour un rendu “texturé” sans coût excessif.
+    const lightCount = 220;
+    const darkCount = 140;
+
+    for (var i = 0; i < lightCount; i++) {
+      final dx = r.nextDouble() * size.width;
+      final dy = r.nextDouble() * size.height;
+      final radius = 0.35 + r.nextDouble() * 1.05;
+      light.color = Colors.white.withOpacity(0.03 + r.nextDouble() * 0.05);
+      canvas.drawCircle(Offset(dx, dy), radius, light);
+    }
+
+    for (var i = 0; i < darkCount; i++) {
+      final dx = r.nextDouble() * size.width;
+      final dy = r.nextDouble() * size.height;
+      final radius = 0.35 + r.nextDouble() * 1.0;
+      dark.color = Colors.black.withOpacity(0.02 + r.nextDouble() * 0.04);
+      canvas.drawCircle(Offset(dx, dy), radius, dark);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

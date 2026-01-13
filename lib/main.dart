@@ -1282,10 +1282,10 @@ class _HomePageState extends State<HomePage>
       icon: Icons.business_center_outlined,
     ),
     _HomeSlide(
-      title: "iliprestō",
-      subtitle: "Qui sommes-nous ? Mentions légales, confidentialité, CGU.",
+      title: "À propos d'iliprestō",
+      subtitle: "Mentions légales, confidentialité et CGU.",
       badge: "Infos",
-      icon: Icons.info_outline,
+      icon: null,
     ),
   ];
 
@@ -2229,48 +2229,42 @@ class _HomePageState extends State<HomePage>
                                       horizontal: 18,
                                       vertical: 18,
                                     ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: const [
-                                        Text(
-                                          "DISPONIBLE",
-                                          style: TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                            letterSpacing: 1.2,
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: const [
+                                          // ✅ Phrase principale centrée
+                                          Text(
+                                            bigText,
+                                            textAlign: TextAlign.center,
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize:
+                                                  _homeSlideTitleFontSize,
+                                              fontWeight: FontWeight.w900,
+                                              height: 1.25,
+                                            ),
                                           ),
-                                        ),
-                                        SizedBox(height: 10),
-                                        // ✅ Phrase principale en très gros sur toute la largeur
-                                        Text(
-                                          bigText,
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize:
-                                                _homeSlideTitleFontSize, // taille bien grosse
-                                            fontWeight: FontWeight.w900,
-                                            height: 1.25,
+                                          SizedBox(height: 12),
+                                          Text(
+                                            "Une personne disponible près de chez vous, en quelques minutes.",
+                                            textAlign: TextAlign.center,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              height: 1.3,
+                                            ),
                                           ),
-                                        ),
-                                        SizedBox(height: 12),
-                                        Text(
-                                          "Une personne disponible près de chez vous, en quelques minutes.",
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            height: 1.3,
-                                          ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 );
@@ -2293,6 +2287,9 @@ class _HomePageState extends State<HomePage>
                                     }
                                   : null;
 
+                              final bool isLastInfoSlide =
+                                  slideIndex == (_slides.length - 1);
+
                               final slideBody = Container(
                                 height: double.infinity,
                                 decoration: const BoxDecoration(
@@ -2303,62 +2300,115 @@ class _HomePageState extends State<HomePage>
                                     horizontal: 16,
                                     vertical: 12,
                                   ),
-                                  child: Row(
-                                    children: [
-                                      // Texte
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
+                                  child: isLastInfoSlide
+                                      ? Center(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                slide.badge.toUpperCase(),
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  letterSpacing: 0.6,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              Text(
+                                                slide.title,
+                                                textAlign: TextAlign.center,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize:
+                                                      _homeSlideTitleFontSize,
+                                                  fontWeight: FontWeight.w900,
+                                                  height: 1.2,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              Text(
+                                                slide.subtitle,
+                                                textAlign: TextAlign.center,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  height: 1.25,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      : Row(
                                           children: [
-                                            Text(
-                                              slide.badge.toUpperCase(),
-                                              style: const TextStyle(
-                                                color: Colors.white70,
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
+                                            // Texte
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Text(
+                                                    slide.badge.toUpperCase(),
+                                                    style: const TextStyle(
+                                                      color: Colors.white70,
+                                                      fontSize: 11,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    slide.title,
+                                                    maxLines: 3,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize:
+                                                          _homeSlideTitleFontSize,
+                                                      fontWeight:
+                                                          FontWeight.w900,
+                                                      height: 1.25,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Text(
+                                                    slide.subtitle,
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                      color: Colors.white70,
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              slide.title,
-                                              maxLines: 3,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize:
-                                                    _homeSlideTitleFontSize,
-                                                fontWeight: FontWeight.w900,
-                                                height: 1.25,
+
+                                            // 👉 Illustration (icône) sur les slides texte
+                                            if (slideIndex != 0) ...[
+                                              const SizedBox(width: 8),
+                                              _buildSlideIllustration(
+                                                slide,
+                                                index,
                                               ),
-                                            ),
-                                            const SizedBox(height: 6),
-                                            Text(
-                                              slide.subtitle,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: Colors.white70,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
+                                            ],
                                           ],
                                         ),
-                                      ),
-
-                                      // 👉 Illustration (icône) sur les slides texte
-                                      if (slideIndex != 0) ...[
-                                        const SizedBox(width: 8),
-                                        _buildSlideIllustration(
-                                          slide,
-                                          index,
-                                        ),
-                                      ],
-                                    ],
-                                  ),
                                 ),
                               );
 
