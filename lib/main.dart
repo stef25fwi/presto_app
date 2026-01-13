@@ -49,6 +49,7 @@ import 'utils/recording_path_web.dart'
 import 'dev/seed_offers.dart';
 import 'features/micro_ia/micro_ia_service.dart';
 import 'widgets/premium_ai_button.dart';
+import 'widgets/recording_mic_button.dart';
 import 'widgets/phone_input_field.dart';
 import 'widgets/splashscreen_loader.dart';
 // ...existing code (autres imports)...
@@ -7726,6 +7727,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _stopStreamingMic() async {
     if (!_isListening) return;
 
+    // ✅ UX: petit son quand l'enregistrement s'arrête
+    _playStopClickSound();
+
     _streamingTimer?.cancel();
     _streamingTimer = null;
 
@@ -7741,6 +7745,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _isListening = false;
         _isStreaming = false;
       });
+
+      // ✅ Finaliser la rédaction IA à partir de la transcription partielle
+      await _finalizeAiDraftFromTranscript(_partialTranscript);
       return;
     }
 
@@ -7759,6 +7766,53 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _isListening = false;
       _isStreaming = false;
     });
+
+    // ✅ Finaliser la rédaction IA à partir de la transcription partielle
+    await _finalizeAiDraftFromTranscript(_partialTranscript);
+  }
+
+  void _playStopClickSound() {
+    try {
+      SystemSound.play(SystemSoundType.click);
+    } catch (_) {
+      // Best-effort: certains environnements (web) peuvent ne pas supporter.
+    }
+  }
+
+  Future<void> _finalizeAiDraftFromTranscript(String transcript) async {
+    final t = transcript.trim();
+    if (t.isEmpty) return;
+
+    if (!mounted) return;
+    setState(() => _isAnalyzing = true);
+
+    try {
+      final draft = await _aiService.generateOfferDraft(text: t);
+      if (!mounted) return;
+
+      if (draft['success'] == true) {
+        setState(() {
+          final title = (draft['title'] as String? ?? '').trim();
+          final category = (draft['category'] as String? ?? '').trim();
+          final description = (draft['description'] as String? ?? '').trim();
+          final location = (draft['location'] as String? ?? '').trim();
+          final postalCode = (draft['postalCode'] as String? ?? '').trim();
+
+          if (title.isNotEmpty) _titleController.text = title;
+          if (description.isNotEmpty) _descriptionController.text = description;
+          if (category.isNotEmpty) {
+            _category = category;
+            _selectedSubCategory = null;
+          }
+          if (location.isNotEmpty) _locationController.text = location;
+          if (postalCode.isNotEmpty) _postalCodeController.text = postalCode;
+        });
+      }
+    } catch (_) {
+      // Best-effort: ne bloque pas l'UX si l'IA échoue.
+    } finally {
+      if (mounted) setState(() => _isAnalyzing = false);
+    }
   }
 
   /// ✅ MODIFIÉ: Utiliser _startStreamingMic() au lieu de _startMic()
@@ -8222,6 +8276,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!_isListening) return;
     if (_isAnalyzing) return;
 
+    // ✅ UX: petit son quand l'enregistrement s'arrête
+    _playStopClickSound();
+
     // ✅ Arrêter le timer de chunking web (streaming mode)
     _streamingTimer?.cancel();
     _streamingTimer = null;
@@ -8351,56 +8408,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     if (!mounted) return;
     showSuccessSnackBar(context, 'Aucun audio disponible');
-  }
-
-  /// Construire le bouton d'enregistrement au micro avec indicateur visuel
-  Widget _buildMicRecordingButton() {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.92,
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFE53935), // Rouge plus clair en haut
-            Color(0xFFC62828), // Rouge plus profond en bas
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFC62828).withOpacity(0.18),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _isStreaming ? _stopStreamingMic : _stopMic,
-          borderRadius: BorderRadius.circular(20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.stop_circle, color: Colors.white, size: 20),
-              const SizedBox(width: 10),
-              Text(
-                'Appuyer pour arrêter',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 17,
-                      letterSpacing: 0.3,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _uploadAndTranscribe(String localPath) async {
@@ -9151,65 +9158,63 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   // Bouton Premium AI avec enregistrement audio
                   Center(
                     child: _isListening
-                        ? _buildMicRecordingButton()
+                        ? RecordingMicButton(
+                            isRecording: true,
+                            isDisabled: _isAnalyzing,
+                            onTap: _isStreaming ? _stopStreamingMic : _stopMic,
+                          )
                         : PremiumAiButton(
                             onPressed: _isAnalyzing ? null : _startStreamingMic,
                             label: 'Décrire mon besoin (IA)',
                             isLoading: _isAnalyzing,
                           ),
                   ),
-                  if (_isListening) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _PulsingDot(delay: 0),
-                        const SizedBox(width: 8),
-                        _PulsingDot(delay: 200),
-                        const SizedBox(width: 8),
-                        _PulsingDot(delay: 400),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Enregistrement en cours...',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (_useCloudStt && !kIsWeb)
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: kPrestoBlue.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                                color: kPrestoBlue.withOpacity(0.25)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(Icons.cloud_done,
-                                  size: 16, color: kPrestoBlue),
-                              SizedBox(width: 6),
-                              Text(
-                                'Qualité audio améliorée (Cloud)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: kPrestoBlue,
-                                ),
+                  if (_isListening && _useCloudStt && !kIsWeb) ...[
+                    const SizedBox(height: 10),
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: kPrestoBlue.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(999),
+                          border:
+                              Border.all(color: kPrestoBlue.withOpacity(0.25)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.cloud_done, size: 16, color: kPrestoBlue),
+                            SizedBox(width: 6),
+                            Text(
+                              'Qualité audio améliorée (Cloud)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: kPrestoBlue,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
+                  ],
+                  if (_isListening && _partialTranscript.trim().isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.black12),
+                      ),
+                      child: Text(
+                        _partialTranscript.trim(),
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13, color: Colors.black87),
+                      ),
+                    ),
                   ],
                   if (_isAnalyzing) ...[
                     const SizedBox(height: 8),
