@@ -40,6 +40,7 @@ import 'widgets/offer_card.dart';
 import 'widgets/random_asset_ticker.dart';
 import 'widgets/entrepreneur_toolbox_slide.dart';
 import 'widgets/last_offers_section.dart';
+import 'widgets/comment_ca_marche_section.dart';
 import 'features/ai_draft/ai_draft_service.dart';
 import 'features/micro_ia/web_audio_recorder.dart';
 import 'utils/friendly_snackbar.dart';
@@ -2528,49 +2529,17 @@ class _HomePageState extends State<HomePage>
                 const SizedBox(height: 18),
 
                 // COMMENT ÇA MARCHE
-                Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Comment ça marche ?",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: kPrestoBlue,
-                        ),
+                CommentCaMarcheSection(
+                  onChercheQuelquUn: () {
+                    Navigator.of(context).pushNamed('/publish');
+                  },
+                  onChercheUnJob: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ConsultOffersPage(),
                       ),
-                      SizedBox(height: 16),
-                      _HowItWorksStepWithProgress(
-                        stepNumber: 1,
-                        title: "Je publie une offre",
-                        description:
-                            "En quelques lignes, vous décrivez votre besoin et votre lieu.",
-                        showLine: true,
-                      ),
-                      _HowItWorksStepWithProgress(
-                        stepNumber: 2,
-                        title: "Mon offre est diffusée instantanément",
-                        description:
-                            "Les prestataires proches sont notifiés et voient immédiatement votre offre.",
-                        showLine: true,
-                      ),
-                      _HowItWorksStepWithProgress(
-                        stepNumber: 3,
-                        title: "Ils me contactent aussitôt",
-                        description:
-                            "Vous échangez et choisissez la personne idéale pour le job.",
-                        showLine: false,
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 20),
@@ -2944,93 +2913,6 @@ class _NotificationBellBase extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-/// BLOC COMMENT ÇA MARCHE /////////////////////////////////////////////////
-class _HowItWorksStepWithProgress extends StatelessWidget {
-  final int stepNumber;
-  final String title;
-  final String description;
-  final bool showLine;
-
-  const _HowItWorksStepWithProgress({
-    required this.stepNumber,
-    required this.title,
-    required this.description,
-    required this.showLine,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Column(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: kPrestoOrange,
-                child: Text(
-                  stepNumber.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              if (showLine)
-                Expanded(
-                  child: Container(
-                    width: 3,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          kPrestoOrange,
-                          kPrestoOrange.withOpacity(0.3),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: showLine ? 12 : 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: kPrestoBlue,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.black87,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
