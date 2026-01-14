@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, debugPrint;
+  show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -81,15 +81,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // Pour l'enregistrement audio premium
   late final AudioRecorder _audioRecorder;
   bool _recording = false;
-  
-  // ✅ Niveau audio pour le widget RecordingMicButton (0.0 → 1.0)
-  double _audioLevel = 0.0;
-
-  // Streaming WebSocket
-  MicroIaStreamClient? _streamClient;
   StreamSubscription<Uint8List>? _streamMicSub;
   Timer? _streamTimeout;
   bool _streamingActive = false;
+  MicroIaStreamClient? _streamClient;
+  double _micLevel = 0.0;
 
   // ✅ Streaming activé pour micro IA (désactivé sur Web)
   bool get _streamingEnabled => !kIsWeb;
@@ -111,51 +107,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     super.initState();
     _repo = widget.repo ?? CityRepoCompact();
     _audioRecorder = AudioRecorder();
-    
-    // ✅ Simuler le niveau audio pendant l'enregistrement
-    Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      if (_recording && _audioLevel > 0.1) {
-        setState(() {
-          // Variation aléatoire pour simuler l'activité vocale
-          _audioLevel = (0.3 + (0.7 * (DateTime.now().millisecondsSinceEpoch % 100) / 100.0)).clamp(0.0, 1.0);
-        });
-      } else if (!_recording && _audioLevel > 0.0) {
-        setState(() {
-          _audioLevel = 0.0;
-        });
-      }
-    });
   }
 
-  Future<void> trace(String step, Map<String, dynamic> data) async {
+  /// Trace utilitaire best-effort pour suivre le flux audio / IA.
+  Future<void> trace(String event, Map<String, Object?> payload) async {
     try {
-      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
-      await FirebaseFirestore.instance.collection('debug_microia').add({
-        'uid': uid,
-        'step': step,
-        'data': data,
-        'ts': FieldValue.serverTimestamp(),
-        'platform': kIsWeb ? 'web' : defaultTargetPlatform.toString(),
+      await CrashlyticsContext.setKeys({
+        'publish_trace_event': event,
+        'publish_trace_payload': payload.toString(),
       });
-    } catch (e) {
-      debugPrint('[debug_microia] trace failed: $e');
+    } catch (_) {
+      // Best effort uniquement : ne jamais casser le flux utilisateur pour la trace.
     }
-  }
-
-  // ignore: unused_element
-  TextEditingController _activeController() {
-    if (_titleFocus.hasFocus) return _titleCtrl;
-    if (_descFocus.hasFocus) return _descCtrl;
-    if (_cityFocus.hasFocus) return _cityCtrl;
-    if (_cpFocus.hasFocus) return _cpCtrl;
-    if (_phoneFocus.hasFocus) return _phoneCtrl;
-    if (_budgetFocus.hasFocus) return _budgetCtrl;
-    // Par défaut : description (logique "décrire le besoin")
-    return _descCtrl;
+    debugPrint('[PublishOfferPage][' '$event' '] $payload');
   }
 
   void _applyDraftToForm(OfferDraft draft, {String? transcript}) {
@@ -797,6 +761,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 _streamClient?.sendAudioChunk(chunk);
                 debugPrint('[STREAMING] Sent chunk: ${chunk.length} bytes (total: ${bytes.length})');
                 lastPosition = bytes.length;
+
+                // Mettre à jour le niveau audio pour l'UI (0.0 → 1.0)
+                final level = _estimateLevelFromPcm(chunk);
+                if (mounted && _recording) {
+                  setState(() {
+                    const double attack = 0.45;
+                    const double release = 0.18;
+                    final double current = _micLevel;
+                    final double target = level;
+                    final double alpha = target > current ? attack : release;
+                    _micLevel = (current + (target - current) * alpha)
+                        .clamp(0.0, 1.0);
+                  });
+                }
               }
             }
           } catch (e) {
@@ -818,7 +796,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     await _audioRecorder.stop();
     await _streamClient?.sendStop();
     _streamingActive = false;
-    setState(() => _recording = false);
+    setState(() {
+      _recording = false;
+      _micLevel = 0.0;
+    });
   }
 
   void _endStreamingSuccess(String? modeUsed, Map<String, dynamic>? quality) {
@@ -826,6 +807,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _streamingActive = false;
     _aiLoading = false;
     _recording = false;
+    _micLevel = 0.0;
     setState(() {});
     final score = ((quality?['score'] ?? 0.0) as num).toDouble();
     final reasons = (quality?['reasons'] ?? []).toString();
@@ -840,8 +822,30 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _streamingActive = false;
     _aiLoading = false;
     _recording = false;
+    _micLevel = 0.0;
     setState(() {});
     showSuccessSnackBar(context, "Erreur streaming IA : $err");
+  }
+
+  /// Estimation simple du niveau audio à partir de données PCM 16 bits little‑endian.
+  double _estimateLevelFromPcm(Uint8List bytes) {
+    if (bytes.length < 4) return 0.0;
+
+    int maxAbs = 0;
+    for (int i = 0; i + 1 < bytes.length; i += 2) {
+      int sample = bytes[i] | (bytes[i + 1] << 8);
+      if ((sample & 0x8000) != 0) {
+        sample = sample - 0x10000;
+      }
+      final int absSample = sample.abs();
+      if (absSample > maxAbs) {
+        maxAbs = absSample;
+      }
+    }
+
+    if (maxAbs == 0) return 0.0;
+    final double level = maxAbs / 32768.0;
+    return level.clamp(0.0, 1.0);
   }
 
   void _publish() async {
@@ -949,8 +953,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     width: double.infinity,
                     child: RecordingMicButton(
                       isRecording: _recording,
-                      level: _audioLevel,
                       onTap: _togglePremiumRecording,
+                      isDisabled: _aiLoading,
+                      level: _micLevel,
                     ),
                   )
                 else
@@ -970,31 +975,31 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             offset: Offset(0, 4),
                           ),
                         ],
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          ),
-                          SizedBox(width: 16),
-                          Text(
-                            "🧠 Analyse en cours...",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                       ),
+                       child: Row(
+                         mainAxisAlignment: MainAxisAlignment.center,
+                         children: const [
+                           SizedBox(
+                             width: 24,
+                             height: 24,
+                             child: CircularProgressIndicator(
+                               strokeWidth: 2.5,
+                               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                             ),
+                           ),
+                           SizedBox(width: 16),
+                           Text(
+                             "🧠 Analyse en cours...",
+                             style: TextStyle(
+                               color: Colors.white,
+                               fontSize: 16,
+                               fontWeight: FontWeight.w700,
+                             ),
+                           ),
+                         ],
+                       ),
+                     ),
+                   ),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -1028,7 +1033,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       // Bouton micro IA (mobile & web) avec animation d'enregistrement
                       RecordingMicButton(
                         isRecording: _recording,
-                        level: _audioLevel,
+                        isDisabled: _aiLoading,
+                        level: _micLevel,
                         onTap: _togglePremiumRecording,
                       ),
                       const SizedBox(height: 6),

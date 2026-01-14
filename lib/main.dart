@@ -7917,9 +7917,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _isSubmitting = false;
   bool _isAnalyzing = false;
   bool _isListening = false;
-  
-  // ✅ Niveau audio pour le widget RecordingMicButton (0.0 → 1.0)
-  double _audioLevel = 0.0;
 
   bool _attemptedSubmit = false; // affiche erreurs après tentative
   bool _publishLocked = false; // lock après tentative invalide
@@ -8039,30 +8036,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _partialTranscript = text;
         // Remplir les champs au fur et à mesure
         _applyFastDraftFromTranscript(text);
-        
-        // ✅ Simuler un niveau audio basé sur l'activité de transcription
-        // Quand du texte arrive, le niveau monte, puis redescend progressivement
-        if (text.isNotEmpty && text.length > _partialTranscript.length) {
-          _audioLevel = 0.7 + (math.Random().nextDouble() * 0.3); // 0.7-1.0
-        }
       });
-    });
-    
-    // ✅ Décrémenter progressivement le niveau audio quand pas de nouvelle transcription
-    Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      if (_isListening && _audioLevel > 0.1) {
-        setState(() {
-          _audioLevel = (_audioLevel - 0.05).clamp(0.0, 1.0);
-        });
-      } else if (!_isListening && _audioLevel > 0.0) {
-        setState(() {
-          _audioLevel = 0.0;
-        });
-      }
     });
   }
 
@@ -9191,7 +9165,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     child: _isListening
                         ? RecordingMicButton(
                             isRecording: true,
-                            level: _audioLevel,
+                            isDisabled: _isAnalyzing,
                             onTap: _isStreaming ? _stopStreamingMic : _stopMic,
                           )
                         : PremiumAiButton(
