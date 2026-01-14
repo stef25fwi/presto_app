@@ -1,0 +1,302 @@
+[
+  {
+    "name": "BELEP",
+    "cp": "98811",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "BOULOUPARI",
+    "cp": "98812",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "BOURAIL",
+    "cp": "98870",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "CANALA",
+    "cp": "98813",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "DUMBEA",
+    "cp": "98830",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "DUMBEA",
+    "cp": "98835",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "DUMBEA",
+    "cp": "98836",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "DUMBEA",
+    "cp": "98837",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "DUMBEA",
+    "cp": "98839",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "FARINO",
+    "cp": "98881",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "HIENGHENE",
+    "cp": "98815",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "HOUAILOU",
+    "cp": "98816",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "HOUAILOU",
+    "cp": "98838",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "KAALA GOMEN",
+    "cp": "98817",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "KONE",
+    "cp": "98859",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "KONE",
+    "cp": "98860",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "KOUAOUA",
+    "cp": "98818",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "KOUMAC",
+    "cp": "98850",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "L ILE DES PINS",
+    "cp": "98832",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "LA FOA",
+    "cp": "98880",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "LE MONT DORE",
+    "cp": "98809",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "LE MONT DORE",
+    "cp": "98810",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "LE MONT DORE",
+    "cp": "98874",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "LE MONT DORE",
+    "cp": "98875",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "LE MONT DORE",
+    "cp": "98876",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "LIFOU",
+    "cp": "98820",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "LIFOU",
+    "cp": "98884",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "LIFOU",
+    "cp": "98885",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "MARE",
+    "cp": "98828",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "MARE",
+    "cp": "98878",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "MOINDOU",
+    "cp": "98819",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "NOUMEA",
+    "cp": "98800",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "OUEGOA",
+    "cp": "98821",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "OUVEA",
+    "cp": "98814",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "PAITA",
+    "cp": "98840",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "PAITA",
+    "cp": "98889",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "PAITA",
+    "cp": "98890",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "POINDIMIE",
+    "cp": "98822",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "PONERIHOUEN",
+    "cp": "98823",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "POUEBO",
+    "cp": "98824",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "POUEMBOUT",
+    "cp": "98825",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "POUM",
+    "cp": "98826",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "POYA",
+    "cp": "98827",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "POYA",
+    "cp": "98877",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "SARRAMEA",
+    "cp": "98882",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "THIO",
+    "cp": "98829",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "TOUHO",
+    "cp": "98831",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "VOH",
+    "cp": "98833",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "VOH",
+    "cp": "98883",
+    "dept": "988",
+    "region": ""
+  },
+  {
+    "name": "YATE",
+    "cp": "98834",
+    "dept": "988",
+    "region": ""
+  }
+]
