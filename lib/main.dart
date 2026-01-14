@@ -1,56 +1,105 @@
 import 'dart:async';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'dart:math' as math;
+import 'package:presto_app/pages/offer_detail_page.dart';
 
 import 'package:flutter/foundation.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:flutter/material.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:flutter/services.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:record/record.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 
 import 'firebase_options.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'app_core.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'constants.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'app/theme.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'services/firebase_service.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'services/city_search.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'services/google_auth_service.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'services/notification_service.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'pages/toolbox_hub_page.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'pages/auth/presto_premium_auth_page.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'pages/pro_profile_page.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'pages/admin_space_page.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'pages/legal_info_page.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'pages/home_page_v2_option2.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'pages/messages/conversation_page.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'widgets/ad_banner.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'widgets/offer_card.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'widgets/random_asset_ticker.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'widgets/entrepreneur_toolbox_slide.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'widgets/last_offers_section.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'features/ai_draft/ai_draft_service.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'features/micro_ia/web_audio_recorder.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'utils/friendly_snackbar.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'utils/crashlytics_context.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'utils/recording_path_web.dart'
+import 'package:presto_app/pages/offer_detail_page.dart';
     if (dart.library.io) 'utils/recording_path_io.dart';
 import 'dev/seed_offers.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'features/micro_ia/micro_ia_service.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'widgets/premium_ai_button.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'widgets/recording_mic_button.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 import 'widgets/phone_input_field.dart';
+import 'package:presto_app/pages/offer_detail_page.dart';
 // ...existing code (autres imports)...
 
 // ✅ Remote Config singleton: expose 'audio_pipeline' pour l'UI
@@ -3055,13 +3104,6 @@ class _Debouncer {
   void dispose() => _t?.cancel();
 }
 
-/// Helper: extrait la première URL d'un message (erreurs Firestore incluent souvent un lien d'index)
-String? _extractFirstUrl(String text) {
-  final match = RegExp(r'https?://\S+').firstMatch(text);
-  if (match == null) return null;
-  return match.group(0)?.replaceAll(RegExp(r'[)\],.]+$'), '');
-}
-
 /// ✅ Conversion d'erreur Firestore en message amical
 String _friendlyFirestoreErrorMessage(Object error) {
   final msg = error.toString().toLowerCase();
@@ -3209,22 +3251,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   final TextEditingController _postalCodeController = TextEditingController();
   // ignore: unused_field
   final _formKey = GlobalKey<FormState>();
-
-  Future<void> _copyToClipboard(BuildContext context, String text) async {
-    await Clipboard.setData(ClipboardData(text: text));
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Copié")),
-    );
-  }
-
-  Future<void> _openExternalUrl(String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    final ok = await canLaunchUrl(uri);
-    if (!ok) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
 
   final TextEditingController _keywordCtrl = TextEditingController();
   final TextEditingController _cityCtrl = TextEditingController();
@@ -4870,914 +4896,6 @@ class _EmptyOffers extends StatelessWidget {
       ),
     );
   }
-}
-
-class OfferDetailPage extends StatefulWidget {
-  final String title;
-  final String location;
-  final String category;
-  final String? subcategory;
-  final num? budget;
-  final String? description;
-  final String? phone;
-  final List<String>? imageUrls;
-  final String annonceurId;
-  final String offerId;
-
-  const OfferDetailPage({
-    super.key,
-    required this.title,
-    required this.location,
-    required this.category,
-    this.subcategory,
-    this.budget,
-    this.description,
-    this.phone,
-    this.imageUrls,
-    required this.annonceurId,
-    required this.offerId,
-  });
-
-  @override
-  State<OfferDetailPage> createState() => _OfferDetailPageState();
-}
-
-class _OfferDetailPageState extends State<OfferDetailPage> {
-  bool _isPhoneVisible = false;
-
-  // ✅ Analytics
-  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
-
-  @override
-  void initState() {
-    super.initState();
-    _logOfferViewed();
-    _incrementOfferViewsCount();
-  }
-
-  Future<void> _incrementOfferViewsCount() async {
-    if (widget.offerId.trim().isEmpty) return;
-
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    try {
-      const minInterval = Duration(minutes: 30);
-      final offers = FirebaseFirestore.instance.collection('offers');
-      final offerRef = offers.doc(widget.offerId);
-      final viewRef = offerRef.collection('views').doc(user.uid);
-
-      await FirebaseFirestore.instance.runTransaction((tx) async {
-        final viewSnap = await tx.get(viewRef);
-
-        if (viewSnap.exists) {
-          final data = viewSnap.data();
-          final last = data?['lastViewedAt'];
-          if (last is Timestamp) {
-            final dt = last.toDate();
-            final diff = DateTime.now().difference(dt);
-            if (diff < minInterval) return;
-          }
-        }
-
-        tx.update(offerRef, {'viewsCount': FieldValue.increment(1)});
-
-        if (viewSnap.exists) {
-          tx.update(viewRef, {'lastViewedAt': FieldValue.serverTimestamp()});
-        } else {
-          tx.set(viewRef, {'lastViewedAt': FieldValue.serverTimestamp()});
-        }
-      });
-    } catch (e) {
-      // Ne bloque jamais l'UX si la règle / le doc n'autorise pas l'update.
-      debugPrint('[Firestore] increment viewsCount error: $e');
-    }
-  }
-
-  /// ✅ Enregistre la visite d'une offre en détail
-  Future<void> _logOfferViewed() async {
-    try {
-      await _analytics.logEvent(
-        name: 'view_item',
-        parameters: {
-          'item_id': widget.offerId,
-          'item_name': widget.title,
-          'item_category': widget.category,
-          'value':
-              (widget.budget is num) ? (widget.budget as num).toDouble() : 0.0,
-          'currency': 'EUR',
-        },
-      );
-    } catch (e) {
-      debugPrint('[Analytics] logOfferViewed error: $e');
-    }
-  }
-
-  /// ✅ Enregistre les partages
-  Future<void> _logShare(String platform) async {
-    try {
-      await _analytics.logShare(
-        contentType: 'offer',
-        itemId: widget.offerId,
-        method: platform,
-      );
-    } catch (e) {
-      debugPrint('[Analytics] logShare error: $e');
-    }
-  }
-
-  /// ✅ Enregistre l'appel au numéro
-  Future<void> _logPhoneCall() async {
-    try {
-      await _analytics.logEvent(
-        name: 'phone_call_initiated',
-        parameters: {
-          'offer_id': widget.offerId,
-          'offer_title': widget.title,
-          'phone_masked': widget.phone?.substring(0, 2) ?? 'unknown',
-        },
-      );
-    } catch (e) {
-      debugPrint('[Analytics] logPhoneCall error: $e');
-    }
-  }
-
-  /// ✅ Enregistre les messages envoyés
-  Future<void> _logMessageSent() async {
-    try {
-      await _analytics.logEvent(
-        name: 'message_initiated',
-        parameters: {
-          'offer_id': widget.offerId,
-          'offer_title': widget.title,
-          'recipient_id': widget.annonceurId,
-        },
-      );
-    } catch (e) {
-      debugPrint('[Analytics] logMessageSent error: $e');
-    }
-  }
-
-  String _toE164Like(String raw) {
-    final trimmed = raw.trim();
-    if (trimmed.isEmpty) return '';
-
-    // Si déjà en +..., on conserve juste + et les chiffres.
-    if (trimmed.startsWith('+')) {
-      final digits = trimmed.replaceAll(RegExp(r'\D'), '');
-      return digits.isEmpty ? trimmed : '+$digits';
-    }
-
-    final digits = trimmed.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) return '';
-
-    // Convention FR: 06XXXXXXXX / 07XXXXXXXX -> +33 6XXXXXXXX / +33 7XXXXXXXX
-    if (digits.length == 10 && digits.startsWith('0')) {
-      return '+33${digits.substring(1)}';
-    }
-    if (digits.length == 9 &&
-        (digits.startsWith('6') || digits.startsWith('7'))) {
-      return '+33$digits';
-    }
-
-    // Fallback: on affiche tel quel (sans espaces)
-    return digits;
-  }
-
-  String _formatPhoneWithIndicatif(String raw) {
-    final trimmed = raw.trim();
-    if (trimmed.isEmpty) return '';
-
-    // Si l'utilisateur a déjà renseigné un indicatif, on affiche le numéro complet
-    // tel qu'il l'a saisi (en normalisant uniquement les espaces).
-    if (trimmed.startsWith('+')) {
-      return trimmed.replaceAll(RegExp(r'\s+'), ' ');
-    }
-
-    final e164 = _toE164Like(trimmed);
-    if (e164.isEmpty) return '';
-
-    // Format lisible pour +33
-    if (e164.startsWith('+33') && e164.length == 12) {
-      final n = e164.substring(3); // 9 digits
-      return '+33 ${n.substring(0, 1)} ${n.substring(1, 3)} ${n.substring(3, 5)} ${n.substring(5, 7)} ${n.substring(7, 9)}';
-    }
-
-    return e164;
-  }
-
-  String _extractUserPseudo(Map<String, dynamic>? data) {
-    if (data == null) return 'Profil';
-    final candidates = <String?>[
-      data['pseudo']?.toString(),
-      data['username']?.toString(),
-      data['displayName']?.toString(),
-      data['name']?.toString(),
-    ];
-    for (final v in candidates) {
-      final s = (v ?? '').trim();
-      if (s.isNotEmpty) return s;
-    }
-    return 'Profil';
-  }
-
-  String _maskPhone(String value) {
-    final raw = value.trim();
-    if (raw.isEmpty) return raw;
-
-    final formatted = _formatPhoneWithIndicatif(raw);
-    final digits = formatted.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) return '••••••••••';
-
-    // Masquer tous sauf les 2 derniers chiffres
-    if (digits.length <= 2) return digits;
-    return '••••••${digits.substring(digits.length - 2)}';
-  }
-
-  Future<void> _shareOn(BuildContext context, String platform) async {
-    // ✅ Log le partage
-    await _logShare(platform);
-
-    final shareText =
-        "${widget.title.trim()} – ${widget.location.trim()} | Rejoins Prest'o pour en savoir plus.";
-    final shareUrl = Uri.parse('https://prestoo.app/offers');
-
-    final encodedText = Uri.encodeComponent(shareText);
-    final encodedUrl = Uri.encodeComponent(shareUrl.toString());
-
-    Uri? uri;
-    if (platform == 'whatsapp') {
-      uri = Uri.parse('https://wa.me/?text=$encodedText%20$encodedUrl');
-    } else if (platform == 'facebook') {
-      uri = Uri.parse(
-          'https://www.facebook.com/sharer/sharer.php?u=$encodedUrl&quote=$encodedText');
-    } else if (platform == 'instagram') {
-      // Instagram n'offre pas de partage web direct : on ouvre l'app/web pour laisser l'utilisateur coller le texte.
-      uri = Uri.parse('https://www.instagram.com/?text=$encodedText');
-    }
-
-    if (uri == null) return;
-
-    try {
-      final ok = await canLaunchUrl(uri);
-      if (!context.mounted) return;
-      if (!ok) {
-        showSuccessSnackBar(context, "Partage indisponible sur cet appareil.");
-        return;
-      }
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      if (!context.mounted) return;
-      showSuccessSnackBar(context, "Impossible de lancer le partage.");
-    }
-  }
-
-  Future<void> _callPhone(BuildContext context) async {
-    await _logPhoneCall();
-
-    if (!context.mounted) return;
-
-    if (widget.phone == null || widget.phone!.trim().isEmpty) {
-      showSuccessSnackBar(context, "Aucun numéro disponible.");
-      return;
-    }
-
-    final dial = _toE164Like(widget.phone!.trim());
-    final uri =
-        Uri(scheme: 'tel', path: dial.isNotEmpty ? dial : widget.phone!.trim());
-
-    try {
-      final ok = await canLaunchUrl(uri);
-      if (!context.mounted) return;
-
-      if (ok) {
-        await launchUrl(uri);
-        return;
-      }
-
-      showSuccessSnackBar(
-          context, "Impossible de lancer l’appel sur cet appareil.");
-    } catch (_) {
-      if (!context.mounted) return;
-      showSuccessSnackBar(context, "Une erreur est survenue lors de l’appel.");
-    }
-  }
-
-  void _showActionSheet(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    final bool isLoggedIn = user != null;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: false,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.black26,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-              const Text(
-                "Que souhaites-tu faire ?",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrestoOrange,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  onPressed: () async {
-                    Navigator.pop(ctx);
-
-                    // ✅ Analytics: message initié
-                    await _logMessageSent();
-                    if (!context.mounted) return;
-                    if (!isLoggedIn) {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const AccountPage(),
-                        ),
-                      );
-                      return;
-                    }
-
-                    // Utilise l'identifiant de l'annonceur passé au détail de l'offre
-                    final annonceurId = widget.annonceurId;
-                    if (annonceurId.isEmpty) {
-                      showSuccessSnackBar(
-                        context,
-                        "Impossible de retrouver l'annonceur.",
-                      );
-                      return;
-                    }
-
-                    if (!context.mounted) return;
-
-                    // Navigation vers la page de conversation avec Firebase
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ConversationPage(
-                          otherUserId: annonceurId,
-                          otherUserName: 'Annonceur',
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.chat_bubble_outline),
-                  label: Text(
-                    isLoggedIn
-                        ? "Envoyer un message"
-                        : "Envoyer un message / Se connecter",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrestoBlue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  onPressed: () async {
-                    Navigator.pop(ctx);
-
-                    // ✅ Utiliser le helper (avec analytics)
-                    await _callPhone(context);
-                  },
-                  icon: const Icon(Icons.call),
-                  label: const Text(
-                    "Appeler le numéro",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _reportOffer(BuildContext context) async {
-    final subject =
-        Uri.encodeComponent("Annonce signalée – ID ${widget.offerId}");
-    final reportLink = 'https://prestoo.app/offers/${widget.offerId}';
-    final bodyText = """
-Bonjour,
-
-Je souhaite signaler l'annonce suivante.
-
-ID Firebase : ${widget.offerId}
-Titre : ${widget.title.trim()}
-Lieu : ${widget.location.trim()}
-Catégorie : ${widget.category}
-
-Lien : $reportLink
-
-Motif du signalement :
-- 
-""";
-    final body = Uri.encodeComponent(bodyText);
-    final uri =
-        Uri.parse('mailto:contact@ilipresto.fr?subject=$subject&body=$body');
-
-    try {
-      final ok = await canLaunchUrl(uri);
-      if (!context.mounted) return;
-
-      if (ok) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-        return;
-      }
-
-      showSuccessSnackBar(context, "Impossible d'ouvrir l'e-mail.");
-    } catch (_) {
-      if (!context.mounted) return;
-      showSuccessSnackBar(context, "Une erreur est survenue.");
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    // --- helpers format / extraction ---
-    String formatPrice(num? b) {
-      if (b == null) return "—";
-      final v = b.toDouble();
-      return "${v.toStringAsFixed(0)} €";
-    }
-
-    String extractDuration(String title) {
-      // Ex: "Ménage 2h" => "2h" | "DJ 90 min" => "90 min"
-      final reg = RegExp(r'(\d+\s*(h|min))', caseSensitive: false);
-      final m = reg.firstMatch(title);
-      return m?.group(1)?.replaceAll(' ', '') ?? "—";
-    }
-
-    final String priceText = formatPrice(widget.budget);
-    final String durationText = extractDuration(widget.title);
-    final String city = widget.location;
-
-    final bool hasPhone =
-        widget.phone != null && widget.phone!.trim().isNotEmpty;
-    final String rawPhone = hasPhone ? widget.phone!.trim() : '';
-    final String formattedPhone =
-        hasPhone ? _formatPhoneWithIndicatif(rawPhone) : '';
-    final String phoneText = hasPhone
-        ? (_isPhoneVisible ? formattedPhone : _maskPhone(formattedPhone))
-        : "Numéro non renseigné";
-    final String rawDescription = (widget.description ?? '').trim();
-    final String descriptionText = rawDescription.isEmpty
-        ? "Aucune description détaillée fournie."
-        : rawDescription;
-
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: const Color(0xFFF6F7F9),
-
-      appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-        leading: const BackButton(),
-        title: const Text(
-          "Détail de l’offre",
-          style: kPrestoAppBarTitleStyle,
-        ),
-        centerTitle: true,
-        backgroundColor: kPrestoOrange,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.menu),
-            color: Colors.white,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            onSelected: (value) {
-              if (value == 'report') {
-                _reportOffer(context);
-              }
-            },
-            itemBuilder: (ctx) => [
-              PopupMenuItem<String>(
-                value: 'report',
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade300, width: 1),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.flag_outlined,
-                          color: Colors.red.shade700, size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Signaler',
-                        style: TextStyle(
-                          color: Colors.red.shade700,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-
-      // ✅ CTA sticky comme le mockup
-      bottomSheet: SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 14,
-                offset: const Offset(0, -4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Réponse rapide • Paiement selon accord",
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.schedule, size: 16, color: Colors.grey.shade600),
-                  const SizedBox(width: 6),
-                  Text(
-                    "Récemment en ligne",
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrestoOrange,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  // ✅ garde ta logique : action sheet (message/appel)
-                  onPressed: () => _showActionSheet(context),
-                  child: const Text("Accepter l’offre"),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-
-      body: AnimatedPadding(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(0, 14, 0,
-                180), // espace pour bottomSheet, cartes pleine largeur
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ✅ Section principale avec infos clés
-                _keyInfoCard(context, theme, city, priceText, widget.category,
-                    durationText),
-
-                const SizedBox(height: 16),
-
-                // ✅ DESCRIPTION (carte)
-                _SectionCard(
-                  title: "Description",
-                  child: Text(
-                    descriptionText,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey.shade800,
-                      height: 1.35,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // ✅ CONTACT (carte)
-                _SectionCard(
-                  title: "Contact",
-                  trailing:
-                      StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                    stream: FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(widget.annonceurId)
-                        .snapshots()
-                        .map((snap) {
-                      PrestoMonitoring.I.trackOtherStream(
-                        key: 'offerDetail.userDoc',
-                        docsCount: snap.exists ? 1 : 0,
-                      );
-                      return snap;
-                    }),
-                    builder: (context, snap) {
-                      final pseudo = _extractUserPseudo(snap.data?.data());
-                      return TextButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => UserPublicProfilePage(
-                                userId: widget.annonceurId,
-                                initialPseudo: pseudo,
-                              ),
-                            ),
-                          );
-                        },
-                        icon:
-                            const Icon(Icons.person_outline_rounded, size: 18),
-                        style: TextButton.styleFrom(
-                          foregroundColor: kPrestoBlue,
-                          backgroundColor: kPrestoBlue.withOpacity(0.08),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(999)),
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        label: Text(
-                          pseudo,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    },
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 18,
-                            backgroundColor: const Color(0xFFFFF3E8),
-                            child: Icon(
-                              Icons.call,
-                              size: 18,
-                              color: Colors.orange.shade800,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              phoneText,
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          if (hasPhone)
-                            IconButton(
-                              tooltip: _isPhoneVisible
-                                  ? 'Masquer le numéro'
-                                  : 'Afficher le numéro',
-                              onPressed: () {
-                                setState(() {
-                                  _isPhoneVisible = !_isPhoneVisible;
-                                });
-                              },
-                              icon: Icon(
-                                _isPhoneVisible
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                                color: Colors.black54,
-                              ),
-                            ),
-                        ],
-                      ),
-                      // Bouton messagerie retiré
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // ✅ PUBLICITÉ - Carrousel pleine largeur sans rebord
-                AdBanner(
-                  margin: EdgeInsets.zero,
-                  placeholderHeight: kIsWeb ? 220.0 : 140.0,
-                  placeholderFolderPrefix: 'assets/carousel_home/',
-                  flat: true,
-                  animatePlaceholder: false,
-                ),
-
-                const SizedBox(height: 14),
-
-                // ✅ PARTAGER (carte) -> boutons comme mockup
-                _SectionCard(
-                  title: "Partager l’annonce",
-                  trailing: const Icon(Icons.chevron_right),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _ShareButton(
-                          icon: SvgPicture.network(
-                            'https://cdn.simpleicons.org/whatsapp',
-                            width: 18,
-                            height: 18,
-                            placeholderBuilder: (context) => Icon(
-                                Icons.chat_bubble_outline,
-                                size: 18,
-                                color: Colors.grey.shade800),
-                          ),
-                          label: "WhatsApp",
-                          onPressed: () => _shareOn(context, 'whatsapp'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _ShareButton(
-                          icon: SvgPicture.network(
-                            'https://cdn.simpleicons.org/facebook',
-                            width: 18,
-                            height: 18,
-                            placeholderBuilder: (context) => Icon(
-                                Icons.facebook,
-                                size: 18,
-                                color: Colors.grey.shade800),
-                          ),
-                          label: "Facebook",
-                          onPressed: () => _shareOn(context, 'facebook'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _ShareButton(
-                          icon: const Icon(Icons.link,
-                              size: 18, color: Colors.grey),
-                          label: "Copier le lien",
-                          onPressed: () {
-                            // si tu veux, tu peux faire Clipboard.setData(...)
-                            // mais pour rester simple, on peut réutiliser un share "instagram" ou snackbar
-                            showSuccessSnackBar(
-                                context, "Lien copié (à brancher).");
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // -------------------------
-  // SECTION 1 – En-tête ultra lisible
-  // -------------------------
-  // (supprimé) _headerCard inactif : bloc retiré pour éviter erreurs de compilation.
-
-  // -------------------------
-  // SECTION 2 – Bloc infos clés
-  // -------------------------
-  Widget _keyInfoCard(BuildContext context, ThemeData theme, String city,
-      String priceText, String categoryText, String durationText) {
-    return _CardShell(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Titre
-          Text(
-            widget.title.trim(),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w900,
-              height: 1.15,
-            ),
-          ),
-          const SizedBox(height: 14),
-          // Prix + "pour X heures" (conditionnellement)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                priceText,
-                style: theme.textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: kPrestoOrange,
-                  height: 1,
-                ),
-              ),
-              if (durationText != "—") ...[
-                const SizedBox(width: 10),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 3),
-                  child: Text(
-                    "pour $durationText",
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 14),
-          const Divider(height: 1),
-          const SizedBox(height: 14),
-
-          // Infos secondaires avec icônes
-          _infoRow(Icons.place_outlined, city, theme),
-          const SizedBox(height: 12),
-          _infoRow(Icons.local_shipping_outlined, categoryText, theme),
-        ],
-      ),
-    );
-  }
-
-  Widget _infoRow(IconData icon, String text, ThemeData theme) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.grey.shade600, size: 22),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: Colors.black87,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // (supprimé) _pill inactif : retiré car non référencé.
 }
 
 class UserPublicProfilePage extends StatefulWidget {
