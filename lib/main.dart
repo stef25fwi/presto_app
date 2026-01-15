@@ -82,10 +82,10 @@ class PrestoRemoteConfig {
 
 // Fallback class temporaire
 class PrestoRemoteConfig {
-  stati
-    // Fa.llback: utilise la valeur par défaut HYBRID
+  static String audioPipeline = 'HYBRID';
+  static Future<void> init() async {}
+    // Fallback: utilise la valeur par défaut HYBRID
     // Décommenter la classe ci-dessus une fois firebase_remote_config installé
-  }
 }
 
 const kPrestoOrange = Color(0xFFFF6600);
@@ -5484,65 +5484,15 @@ Motif du signalement :
                       Icon(Icons.flag_outlined,
                           color: Colors.red.shade700, size: 18),
                       const SizedBox(width: 8),
-            // ✅ CTA sticky comme le mockup
-      bottomSheet: SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 14,
-                offset: const Offset(0, -4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Réponse rapide • Paiement selon accord",
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.schedule, size: 16, color: Colors.grey.shade600),
-                  const SizedBox(width: 6),
-                  Text(
-                    "Récemment en ligne",
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
+                      Text(
+                        'Signaler',
+                        style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kPrestoOrange,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  // ✅ garde ta logique : action sheet (message/appel)
-                  onPressed: () => _showActionSheet(context),
-                  child: const Text("Accepter l’offre"),
                 ),
               ),
             ],
@@ -5550,93 +5500,44 @@ Motif du signalement :
         ),
       ),
 
-      body: AnimatedPadding(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(0, 14, 0,
-                180), // espace pour bottomSheet, cartes pleine largeur
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ✅ Section principale avec infos clés
-                _keyInfoCard(context, theme, city, priceText, widget.category,
-                    durationText),
-
-                const SizedBox(height: 16),
-
-                // ✅ DESCRIPTION (carte)
-                _SectionCard(
-                  title: "Description",
-                  child: Text(
-                    descriptionText,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey.shade800,
-                      height: 1.35,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+        body: Stack(
+          children: [
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(0, 14, 0, 160),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(height: 1), // placeholder
+                  ],
                 ),
+              ),
+            ),
 
-                const SizedBox(height: 14),
-
-                // ✅ CONTACT (carte)
-                _SectionCard(
-                  title: "Contact",
-                  trailing:
-                      StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                    stream: FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(widget.annonceurId)
-                        .snapshots()
-                        .map((snap) {
-                      PrestoMonitoring.I.trackOtherStream(
-                        key: 'offerDetail.userDoc',
-                        docsCount: snap.exists ? 1 : 0,
-                      );
-                      return snap;
-                    }),
-                    builder: (context, snap) {
-                      final pseudo = _extractUserPseudo(snap.data?.data());
-                      return TextButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => UserPublicProfilePage(
-                                userId: widget.annonceurId,
-                                initialPseudo: pseudo,
-                              ),
-                            ),
-                          );
-                        },
-                        icon:
-                            const Icon(Icons.person_outline_rounded, size: 18),
-                        style: TextButton.styleFrom(
-                          foregroundColor: kPrestoBlue,
-                          backgroundColor: kPrestoBlue.withOpacity(0.08),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(999)),
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        label: Text(
-                          pseudo,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    },
+        // ✅ CTA sticky en bas
+        Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 14,
+                    offset: const Offset(0, -4),
                   ),
-                  child: Column(
-                    children: [
-                      Row(
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Réponse rapide • Paiement selon accord",
                         children: [
                           CircleAvatar(
                             radius: 18,
