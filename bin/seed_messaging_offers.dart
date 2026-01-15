@@ -33,5 +33,6 @@ String _parseUserId(List<String> args) {
 }
 
 void _usage() {
-  stderr.writeln('Usage: dart run bin/seed_messaging_offers.dart --userId=<UID>');
+  stderr
+      .writeln('Usage: dart run bin/seed_messaging_offers.dart --userId=<UID>');
 }

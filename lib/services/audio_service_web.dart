@@ -3,13 +3,13 @@ import 'dart:async';
 
 class AudioRecorder {
   Future<bool> hasPermission() async => false;
-  
+
   Future<void> start(RecordConfig config, {String? path}) async {
     throw UnsupportedError('Audio recording not supported on web');
   }
-  
+
   Future<String?> stop() async => null;
-  
+
   void dispose() {}
 }
 
@@ -17,7 +17,7 @@ class RecordConfig {
   final AudioEncoder encoder;
   final int sampleRate;
   final int numChannels;
-  
+
   const RecordConfig({
     required this.encoder,
     required this.sampleRate,

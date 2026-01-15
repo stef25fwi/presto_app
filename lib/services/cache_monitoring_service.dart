@@ -3,30 +3,32 @@ import 'package:flutter/foundation.dart';
 
 /// Metrics pour monitorer le système de cache des journeys boîte à outils
 class CacheMetrics {
-  int totalRequests = 0;      // Total de requêtes
-  int cacheHits = 0;          // Nombre de hits (trouvé en cache)
-  int cacheMisses = 0;        // Nombre de misses (pas en cache, généré)
-  int cacheErrors = 0;        // Nombre d'erreurs d'accès cache
-  
+  int totalRequests = 0; // Total de requêtes
+  int cacheHits = 0; // Nombre de hits (trouvé en cache)
+  int cacheMisses = 0; // Nombre de misses (pas en cache, généré)
+  int cacheErrors = 0; // Nombre d'erreurs d'accès cache
+
   Duration totalAccessTime = Duration.zero;
   Duration avgAccessTime = Duration.zero;
 
   /// Hit rate en pourcentage
-  double get hitRate => totalRequests == 0 ? 0 : (cacheHits / totalRequests) * 100;
+  double get hitRate =>
+      totalRequests == 0 ? 0 : (cacheHits / totalRequests) * 100;
 
   /// Miss rate en pourcentage
-  double get missRate => totalRequests == 0 ? 0 : (cacheMisses / totalRequests) * 100;
+  double get missRate =>
+      totalRequests == 0 ? 0 : (cacheMisses / totalRequests) * 100;
 
   /// Résumé en JSON pour logging
   Map<String, dynamic> toJson() => {
-    'total_requests': totalRequests,
-    'cache_hits': cacheHits,
-    'cache_misses': cacheMisses,
-    'cache_errors': cacheErrors,
-    'hit_rate_percent': hitRate.toStringAsFixed(2),
-    'miss_rate_percent': missRate.toStringAsFixed(2),
-    'avg_access_time_ms': avgAccessTime.inMilliseconds,
-  };
+        'total_requests': totalRequests,
+        'cache_hits': cacheHits,
+        'cache_misses': cacheMisses,
+        'cache_errors': cacheErrors,
+        'hit_rate_percent': hitRate.toStringAsFixed(2),
+        'miss_rate_percent': missRate.toStringAsFixed(2),
+        'avg_access_time_ms': avgAccessTime.inMilliseconds,
+      };
 
   @override
   String toString() => '''
@@ -47,8 +49,9 @@ class CacheMetrics {
 
 /// Service de monitoring pour le cache
 class CacheMonitoringService {
-  static final CacheMonitoringService _instance = CacheMonitoringService._internal();
-  
+  static final CacheMonitoringService _instance =
+      CacheMonitoringService._internal();
+
   final CacheMetrics metrics = CacheMetrics();
   final _db = FirebaseFirestore.instance;
 
@@ -67,7 +70,7 @@ class CacheMonitoringService {
     metrics.totalRequests++;
     metrics.cacheHits++;
     _recordAccessTime(accessTime);
-    
+
     debugPrint('✅ Cache HIT (${accessTime.inMilliseconds}ms)');
   }
 
@@ -76,15 +79,16 @@ class CacheMonitoringService {
     metrics.totalRequests++;
     metrics.cacheMisses++;
     _recordAccessTime(accessTime);
-    
-    debugPrint('⚠️ Cache MISS (${accessTime.inMilliseconds}ms) - Génération lancée');
+
+    debugPrint(
+        '⚠️ Cache MISS (${accessTime.inMilliseconds}ms) - Génération lancée');
   }
 
   /// Enregistrer une erreur d'accès
   void recordCacheError(String reason) {
     metrics.totalRequests++;
     metrics.cacheErrors++;
-    
+
     debugPrint('❌ Cache ERROR: $reason');
   }
 
@@ -94,14 +98,15 @@ class CacheMonitoringService {
     if (_accessTimes.length > _maxStoredTimes) {
       _accessTimes.removeAt(0);
     }
-    
+
     // Calcul de la moyenne
     if (_accessTimes.isNotEmpty) {
       final sum = _accessTimes.fold<int>(
         0,
         (prev, current) => prev + current.inMilliseconds,
       );
-      metrics.avgAccessTime = Duration(milliseconds: sum ~/ _accessTimes.length);
+      metrics.avgAccessTime =
+          Duration(milliseconds: sum ~/ _accessTimes.length);
     }
   }
 

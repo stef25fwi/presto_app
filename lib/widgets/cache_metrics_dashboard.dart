@@ -59,15 +59,21 @@ class _CacheMetricsDashboardState extends State<CacheMetricsDashboard> {
             ),
             const SizedBox(height: 12),
             _metricRow('Total requêtes', m.totalRequests.toString()),
-            _metricRow('Hits (cache)', m.cacheHits.toString(), color: Colors.green),
-            _metricRow('Misses (générés)', m.cacheMisses.toString(), color: Colors.orange),
+            _metricRow('Hits (cache)', m.cacheHits.toString(),
+                color: Colors.green),
+            _metricRow('Misses (générés)', m.cacheMisses.toString(),
+                color: Colors.orange),
             _metricRow('Erreurs', m.cacheErrors.toString(), color: Colors.red),
             const Divider(height: 20),
-            _metricRow('Hit rate', '${m.hitRate.toStringAsFixed(1)}%', 
+            _metricRow(
+              'Hit rate',
+              '${m.hitRate.toStringAsFixed(1)}%',
               color: m.hitRate >= 50 ? Colors.green : Colors.orange,
               bold: true,
             ),
-            _metricRow('Miss rate', '${m.missRate.toStringAsFixed(1)}%',
+            _metricRow(
+              'Miss rate',
+              '${m.missRate.toStringAsFixed(1)}%',
               color: m.missRate >= 50 ? Colors.orange : Colors.green,
               bold: true,
             ),
@@ -116,11 +122,16 @@ class _CacheMetricsDashboardState extends State<CacheMetricsDashboard> {
                 ),
                 const SizedBox(height: 12),
                 _metricRow('Total requêtes', '${stats['total_requests']}'),
-                _metricRow('Hits', '${stats['total_hits']}', color: Colors.green),
-                _metricRow('Misses', '${stats['total_misses']}', color: Colors.orange),
-                _metricRow('Erreurs', '${stats['total_errors']}', color: Colors.red),
+                _metricRow('Hits', '${stats['total_hits']}',
+                    color: Colors.green),
+                _metricRow('Misses', '${stats['total_misses']}',
+                    color: Colors.orange),
+                _metricRow('Erreurs', '${stats['total_errors']}',
+                    color: Colors.red),
                 const Divider(height: 20),
-                _metricRow('Hit rate', '${(stats['hit_rate'] as double).toStringAsFixed(1)}%',
+                _metricRow(
+                  'Hit rate',
+                  '${(stats['hit_rate'] as double).toStringAsFixed(1)}%',
                   color: stats['hit_rate'] >= 50 ? Colors.green : Colors.orange,
                   bold: true,
                 ),
@@ -151,7 +162,8 @@ class _CacheMetricsDashboardState extends State<CacheMetricsDashboard> {
                 onPressed: () {
                   _monitoring.printMetrics();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Metrics affichées en console')),
+                    const SnackBar(
+                        content: Text('Metrics affichées en console')),
                   );
                 },
                 icon: const Icon(Icons.print),

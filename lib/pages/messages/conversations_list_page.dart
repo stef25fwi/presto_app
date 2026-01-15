@@ -57,7 +57,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     super.dispose();
   }
 
-  int get _totalUnread => _conversations.fold<int>(0, (sum, c) => sum + c.unreadCount);
+  int get _totalUnread =>
+      _conversations.fold<int>(0, (sum, c) => sum + c.unreadCount);
 
   List<Conversation> get _filteredAndSorted {
     final query = _searchController.text.trim().toLowerCase();
@@ -176,12 +177,14 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                           children: [
                             Text(
                               _formatTimestamp(lastMessage.sentAt),
-                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.grey),
                             ),
                             if (conversation.unreadCount > 0)
                               Container(
                                 margin: const EdgeInsets.only(top: 6),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: Colors.red.shade600,
                                   borderRadius: BorderRadius.circular(12),
@@ -201,7 +204,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                           _markAsRead(conversation.id);
                           await Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => ConversationPage(conversation: conversation),
+                              builder: (_) =>
+                                  ConversationPage(conversation: conversation),
                             ),
                           );
                         },
@@ -305,9 +309,14 @@ class ConversationPage extends StatelessWidget {
               itemCount: conversation.messages.length,
               itemBuilder: (context, index) {
                 final message = conversation.messages[index];
-                final alignment = message.isMine ? Alignment.centerRight : Alignment.centerLeft;
-                final bubbleColor = message.isMine ? kPrestoOrange.withOpacity(0.12) : Colors.grey.shade200;
-                final textColor = message.isMine ? Colors.black : Colors.black87;
+                final alignment = message.isMine
+                    ? Alignment.centerRight
+                    : Alignment.centerLeft;
+                final bubbleColor = message.isMine
+                    ? kPrestoOrange.withOpacity(0.12)
+                    : Colors.grey.shade200;
+                final textColor =
+                    message.isMine ? Colors.black : Colors.black87;
 
                 return Align(
                   alignment: alignment,
@@ -315,7 +324,8 @@ class ConversationPage extends StatelessWidget {
                     constraints: const BoxConstraints(maxWidth: 320),
                     child: Container(
                       margin: const EdgeInsets.symmetric(vertical: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         color: bubbleColor,
                         borderRadius: BorderRadius.circular(12),
@@ -330,7 +340,8 @@ class ConversationPage extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             _formatTimestamp(message.sentAt),
-                            style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+                            style: TextStyle(
+                                color: Colors.grey.shade600, fontSize: 11),
                           ),
                         ],
                       ),

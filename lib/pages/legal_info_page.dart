@@ -17,8 +17,18 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
 
   String _formatDateFr(DateTime d) {
     const months = [
-      'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-      'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+      'janvier',
+      'février',
+      'mars',
+      'avril',
+      'mai',
+      'juin',
+      'juillet',
+      'août',
+      'septembre',
+      'octobre',
+      'novembre',
+      'décembre'
     ];
     return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
@@ -160,9 +170,11 @@ Service : Firebase Hosting
 """,
             ),
             onDownloadPdf: () {
-              _launchUrl(Uri.parse('https://ilipresto.fr/mentions-legales.pdf'));
+              _launchUrl(
+                  Uri.parse('https://ilipresto.fr/mentions-legales.pdf'));
             },
-            lastUpdateText: "Dernière mise à jour : ${_formatDateFr(DateTime.now())}",
+            lastUpdateText:
+                "Dernière mise à jour : ${_formatDateFr(DateTime.now())}",
           ),
         ];
 
@@ -290,7 +302,8 @@ Si vous estimez, après nous avoir contactés, que vos droits ne sont pas respec
             subtitle: "Règles d'utilisation de la plateforme.",
             onTap: () {
               final now = DateTime.now();
-              final d = "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
+              final d =
+                  "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
               _openSection(
                 title: "Objet des CGU",
                 content: """
@@ -484,10 +497,12 @@ class _LegalSectionPage extends StatelessWidget {
                     icon: Icon(Icons.open_in_new_rounded, color: orange),
                     label: Text(
                       "Déposer une réclamation auprès de la CNIL",
-                      style: TextStyle(color: orange, fontWeight: FontWeight.w700),
+                      style:
+                          TextStyle(color: orange, fontWeight: FontWeight.w700),
                     ),
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                     ),
                   ),
                 ),
@@ -536,7 +551,8 @@ class _SegmentTabs extends StatelessWidget {
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: isActive ? orange.withOpacity(0.12) : Colors.transparent,
+                  color:
+                      isActive ? orange.withOpacity(0.12) : Colors.transparent,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: isActive ? orange : Colors.transparent,
@@ -586,7 +602,8 @@ class _InfoTileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _CardShell(
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         title: Text(
           title,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
@@ -660,7 +677,8 @@ class _HostingCard extends StatelessWidget {
               onTap: onDownloadPdf,
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF1E8),
                   borderRadius: BorderRadius.circular(14),
@@ -731,7 +749,8 @@ class _QuestionCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
                 onTap: onTapEmail,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF7F2),
                     borderRadius: BorderRadius.circular(999),

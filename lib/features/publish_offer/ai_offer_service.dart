@@ -57,8 +57,9 @@ class AiOfferService {
     required String currentCategory,
     FirebaseFunctions? functions,
   }) async {
-    final callable = (functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'))
-        .httpsCallable(
+    final callable =
+        (functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'))
+            .httpsCallable(
       'generateOfferDraft',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
     );
@@ -81,8 +82,9 @@ class AiOfferService {
     required String city,
     FirebaseFunctions? functions,
   }) async {
-    final callable = (functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'))
-        .httpsCallable(
+    final callable =
+        (functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'))
+            .httpsCallable(
       'transcribeAndDraftOffer',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 90)),
     );

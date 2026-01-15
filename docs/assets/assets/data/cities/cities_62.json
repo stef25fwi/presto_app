@@ -1,0 +1,5330 @@
+[
+  {
+    "name": "ABLAIN ST NAZAIRE",
+    "cp": "62153",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ABLAINZEVELLE",
+    "cp": "62116",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ACHEVILLE",
+    "cp": "62320",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ACHICOURT",
+    "cp": "62217",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ACHIET LE GRAND",
+    "cp": "62121",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ACHIET LE PETIT",
+    "cp": "62121",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ACQ",
+    "cp": "62144",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ACQUIN WESTBECOURT",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ADINFER",
+    "cp": "62116",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AFFRINGUES",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AGNEZ LES DUISANS",
+    "cp": "62161",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AGNIERES",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AGNY",
+    "cp": "62217",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AIRE SUR LA LYS",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AIRON NOTRE DAME",
+    "cp": "62180",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AIRON ST VAAST",
+    "cp": "62180",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AIX EN ERGNY",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AIX EN ISSART",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AIX NOULETTE",
+    "cp": "62160",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ALEMBON",
+    "cp": "62850",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ALETTE",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ALINCTHUN",
+    "cp": "62142",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ALLOUAGNE",
+    "cp": "62157",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ALQUINES",
+    "cp": "62850",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AMBLETEUSE",
+    "cp": "62164",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AMBRICOURT",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AMBRINES",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AMES",
+    "cp": "62190",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AMETTES",
+    "cp": "62260",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AMPLIER",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ANDRES",
+    "cp": "62340",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ANGRES",
+    "cp": "62143",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ANNAY",
+    "cp": "62880",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ANNEQUIN",
+    "cp": "62149",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ANNEZIN",
+    "cp": "62232",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ANVIN",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ANZIN ST AUBIN",
+    "cp": "62223",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ARDRES",
+    "cp": "62610",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ARLEUX EN GOHELLE",
+    "cp": "62580",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ARQUES",
+    "cp": "62510",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ARRAS",
+    "cp": "62000",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ATHIES",
+    "cp": "62223",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ATTIN",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUBIGNY EN ARTOIS",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUBIN ST VAAST",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUBROMETZ",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUCHEL",
+    "cp": "62260",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUCHY AU BOIS",
+    "cp": "62190",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUCHY LES HESDIN",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUCHY LES MINES",
+    "cp": "62138",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUDEMBERT",
+    "cp": "62250",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUDINCTHUN",
+    "cp": "62560",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUDINGHEN",
+    "cp": "62179",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUDREHEM",
+    "cp": "62890",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUDRESSELLES",
+    "cp": "62164",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUDRUICQ",
+    "cp": "62370",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUMERVAL",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUTINGUES",
+    "cp": "62610",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AUXI LE CHATEAU",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AVERDOINGT",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AVESNES",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AVESNES LE COMTE",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AVESNES LES BAPAUME",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AVION",
+    "cp": "62210",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AVONDANCE",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AVROULT",
+    "cp": "62560",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AYETTE",
+    "cp": "62116",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "AZINCOURT",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BAILLEUL AUX CORNAILLES",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BAILLEUL LES PERNES",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BAILLEUL SIR BERTHOULT",
+    "cp": "62580",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BAILLEULMONT",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BAILLEULVAL",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BAINCTHUN",
+    "cp": "62360",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BAINGHEN",
+    "cp": "62850",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BAJUS",
+    "cp": "62150",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BALINGHEM",
+    "cp": "62610",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BANCOURT",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BAPAUME",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BARALLE",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BARASTRE",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BARLIN",
+    "cp": "62620",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BARLY",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BASSEUX",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BAVINCOURT",
+    "cp": "62158",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BAYENGHEM LES EPERLECQUES",
+    "cp": "62910",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BAYENGHEM LES SENINGHEM",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BAZINGHEN",
+    "cp": "62250",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEALENCOURT",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEAUDRICOURT",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEAUFORT BLAVINCOURT",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEAULENCOURT",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEAUMERIE ST MARTIN",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEAUMETZ LES AIRE",
+    "cp": "62960",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEAUMETZ LES CAMBRAI",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEAUMETZ LES LOGES",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEAURAINS",
+    "cp": "62217",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEAURAINVILLE",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEAUVOIR WAVANS",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEAUVOIS",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BECOURT",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEHAGNIES",
+    "cp": "62121",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BELLE ET HOULLEFORT",
+    "cp": "62142",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BELLEBRUNE",
+    "cp": "62142",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BELLINGHEM",
+    "cp": "62129",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BELLONNE",
+    "cp": "62490",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BENIFONTAINE",
+    "cp": "62410",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BERCK",
+    "cp": "62600",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BERGUENEUSE",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BERLENCOURT LE CAUROY",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BERLES AU BOIS",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BERLES MONCHEL",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BERMICOURT",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BERNEVILLE",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BERNIEULLES",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BERTINCOURT",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BETHONSART",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BETHUNE",
+    "cp": "62400",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEUGIN",
+    "cp": "62150",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEUGNATRE",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEUGNY",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEUSSENT",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEUTIN",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEUVREQUEN",
+    "cp": "62250",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEUVRY",
+    "cp": "62660",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BEZINGHEM",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BIACHE ST VAAST",
+    "cp": "62118",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BIEFVILLERS LES BAPAUME",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BIENVILLERS AU BOIS",
+    "cp": "62111",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BIHUCOURT",
+    "cp": "62121",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BILLY BERCLAU",
+    "cp": "62138",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BILLY MONTIGNY",
+    "cp": "62420",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BIMONT",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BLAIRVILLE",
+    "cp": "62173",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BLANGERVAL BLANGERMONT",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BLANGY SUR TERNOISE",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BLENDECQUES",
+    "cp": "62575",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BLEQUIN",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BLESSY",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BLINGEL",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOFFLES",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOIRY BECQUERELLE",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOIRY NOTRE DAME",
+    "cp": "62156",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOIRY ST MARTIN",
+    "cp": "62175",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOIRY STE RICTRUDE",
+    "cp": "62175",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOIS BERNARD",
+    "cp": "62320",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOISDINGHEM",
+    "cp": "62500",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOISJEAN",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOISLEUX AU MONT",
+    "cp": "62175",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOISLEUX ST MARC",
+    "cp": "62175",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOMY",
+    "cp": "62960",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BONNIERES",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BONNINGUES LES ARDRES",
+    "cp": "62890",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BONNINGUES LES CALAIS",
+    "cp": "62340",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOUBERS LES HESMOND",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOUBERS SUR CANCHE",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOUIN PLUMOISON",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOULOGNE SUR MER",
+    "cp": "62200",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOUQUEHAULT",
+    "cp": "62340",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOURECQ",
+    "cp": "62190",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOURET SUR CANCHE",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOURLON",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOURNONVILLE",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOURS",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOURSIN",
+    "cp": "62132",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOURTHES",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOUVELINGHEM",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOUVIGNY BOYEFFLES",
+    "cp": "62172",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOYAVAL",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BOYELLES",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BREBIERES",
+    "cp": "62117",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BREMES",
+    "cp": "62610",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BREVILLERS",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BREXENT ENOCQ",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BRIAS",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BRIMEUX",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BRUAY LA BUISSIERE",
+    "cp": "62700",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BRUNEMBERT",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BUCQUOY",
+    "cp": "62116",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BUIRE AU BOIS",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BUIRE LE SEC",
+    "cp": "62870",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BUISSY",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BULLECOURT",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BULLY LES MINES",
+    "cp": "62160",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BUNEVILLE",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BURBURE",
+    "cp": "62151",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BUS",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "BUSNES",
+    "cp": "62350",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAFFIERS",
+    "cp": "62132",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAGNICOURT",
+    "cp": "62182",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CALAIS",
+    "cp": "62100",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CALONNE RICOUART",
+    "cp": "62470",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CALONNE SUR LA LYS",
+    "cp": "62350",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAMBLAIN CHATELAIN",
+    "cp": "62470",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAMBLAIN L ABBE",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAMBLIGNEUL",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAMBRIN",
+    "cp": "62149",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAMIERS",
+    "cp": "62176",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAMPAGNE LES BOULONNAIS",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAMPAGNE LES GUINES",
+    "cp": "62340",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAMPAGNE LES HESDIN",
+    "cp": "62870",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAMPAGNE LES WARDRECQUES",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAMPIGNEULLES LES GRANDES",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAMPIGNEULLES LES PETITES",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CANETTEMONT",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CANLERS",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAPELLE FERMONT",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAPELLE LES HESDIN",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CARENCY",
+    "cp": "62144",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CARLY",
+    "cp": "62830",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CARVIN",
+    "cp": "62220",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAUCHY A LA TOUR",
+    "cp": "62260",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAUCOURT",
+    "cp": "62150",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAUMONT",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CAVRON ST MARTIN",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CHELERS",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CHERIENNES",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CHERISY",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CHOCQUES",
+    "cp": "62920",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CLAIRMARAIS",
+    "cp": "62500",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CLENLEU",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CLERQUES",
+    "cp": "62890",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CLETY",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COLEMBERT",
+    "cp": "62142",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COLLINE BEAUMONT",
+    "cp": "62180",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CONCHIL LE TEMPLE",
+    "cp": "62180",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CONCHY SUR CANCHE",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CONDETTE",
+    "cp": "62360",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CONTES",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CONTEVILLE EN TERNOIS",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CONTEVILLE LES BOULOGNE",
+    "cp": "62126",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COQUELLES",
+    "cp": "62231",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CORBEHEM",
+    "cp": "62112",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CORMONT",
+    "cp": "62630",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COUIN",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COULLEMONT",
+    "cp": "62158",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COULOGNE",
+    "cp": "62137",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COULOMBY",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COUPELLE NEUVE",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COUPELLE VIEILLE",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COURCELLES LE COMTE",
+    "cp": "62121",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COURCELLES LES LENS",
+    "cp": "62970",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COURRIERES",
+    "cp": "62710",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COURSET",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COUTURELLE",
+    "cp": "62158",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "COYECQUES",
+    "cp": "62560",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CREMAREST",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CREPY",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CREQUY",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CROISETTE",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CROISILLES",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CROIX EN TERNOIS",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CUCQ",
+    "cp": "62780",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "CUINCHY",
+    "cp": "62149",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DAINVILLE",
+    "cp": "62000",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DANNES",
+    "cp": "62187",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DELETTES",
+    "cp": "62129",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DENIER",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DENNEBROEUCQ",
+    "cp": "62560",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DESVRES",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DIEVAL",
+    "cp": "62460",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DIVION",
+    "cp": "62460",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DOHEM",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DOUCHY LES AYETTE",
+    "cp": "62116",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DOUDEAUVILLE",
+    "cp": "62830",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DOURGES",
+    "cp": "62119",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DOURIEZ",
+    "cp": "62870",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DOUVRIN",
+    "cp": "62138",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DROCOURT",
+    "cp": "62320",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DROUVIN LE MARAIS",
+    "cp": "62131",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DUISANS",
+    "cp": "62161",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "DURY",
+    "cp": "62156",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ECHINGHEN",
+    "cp": "62360",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ECLIMEUX",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ECOIVRES",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ECOURT ST QUENTIN",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ECOUST ST MEIN",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ECQUEDECQUES",
+    "cp": "62190",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ECQUES",
+    "cp": "62129",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ECUIRES",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ECURIE",
+    "cp": "62223",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ELEU DIT LEAUWETTE",
+    "cp": "62300",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ELNES",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "EMBRY",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ENQUIN LEZ GUINEGATTE",
+    "cp": "62145",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ENQUIN SUR BAILLONS",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "EPERLECQUES",
+    "cp": "62910",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "EPINOY",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "EPS",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "EQUIHEN PLAGE",
+    "cp": "62224",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "EQUIRRE",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ERGNY",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ERIN",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ERNY ST JULIEN",
+    "cp": "62960",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ERVILLERS",
+    "cp": "62121",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ESCALLES",
+    "cp": "62179",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ESCOEUILLES",
+    "cp": "62850",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ESQUERDES",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ESSARS",
+    "cp": "62400",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ESTEVELLES",
+    "cp": "62880",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ESTREE",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ESTREE BLANCHE",
+    "cp": "62145",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ESTREE CAUCHY",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ESTREE WAMIN",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ESTREELLES",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ETAING",
+    "cp": "62156",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ETAPLES",
+    "cp": "62630",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ETERPIGNY",
+    "cp": "62156",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ETRUN",
+    "cp": "62161",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "EVIN MALMAISON",
+    "cp": "62141",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FAMECHON",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FAMPOUX",
+    "cp": "62118",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FARBUS",
+    "cp": "62580",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FAUQUEMBERGUES",
+    "cp": "62560",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FAVREUIL",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FEBVIN PALFART",
+    "cp": "62960",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FERFAY",
+    "cp": "62260",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FERQUES",
+    "cp": "62250",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FESTUBERT",
+    "cp": "62149",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FEUCHY",
+    "cp": "62223",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FICHEUX",
+    "cp": "62173",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FIEFS",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FIENNES",
+    "cp": "62132",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FILLIEVRES",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FLECHIN",
+    "cp": "62960",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FLERS",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FLEURBAIX",
+    "cp": "62840",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FLEURY",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FLORINGHEM",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FONCQUEVILLERS",
+    "cp": "62111",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE L ETALON",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE LES BOULANS",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE LES CROISILLES",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FONTAINE LES HERMANS",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FORTEL EN ARTOIS",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FOSSEUX",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FOUFFLIN RICAMETZ",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FOUQUEREUIL",
+    "cp": "62232",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FOUQUIERES LES BETHUNE",
+    "cp": "62232",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FOUQUIERES LES LENS",
+    "cp": "62740",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FRAMECOURT",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FREMICOURT",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FRENCQ",
+    "cp": "62630",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FRESNES LES MONTAUBAN",
+    "cp": "62490",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FRESNICOURT LE DOLMEN",
+    "cp": "62150",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FRESNOY",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FRESNOY EN GOHELLE",
+    "cp": "62580",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FRESSIN",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FRETHUN",
+    "cp": "62185",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FREVENT",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FREVILLERS",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FREVIN CAPELLE",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "FRUGES",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GALAMETZ",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GAUCHIN LEGAL",
+    "cp": "62150",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GAUCHIN VERLOINGT",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GAUDIEMPRE",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GAVRELLE",
+    "cp": "62580",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GENNES IVERGNY",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GIVENCHY EN GOHELLE",
+    "cp": "62580",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GIVENCHY LE NOBLE",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GIVENCHY LES LA BASSEE",
+    "cp": "62149",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GOMIECOURT",
+    "cp": "62121",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GOMMECOURT",
+    "cp": "62111",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GONNEHEM",
+    "cp": "62920",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GOSNAY",
+    "cp": "62199",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GOUVES",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GOUY EN ARTOIS",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GOUY EN TERNOIS",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GOUY SERVINS",
+    "cp": "62530",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GOUY SOUS BELLONNE",
+    "cp": "62112",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GOUY ST ANDRE",
+    "cp": "62870",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GRAINCOURT LES HAVRINCOURT",
+    "cp": "62147",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GRAND RULLECOURT",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GRENAY",
+    "cp": "62160",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GREVILLERS",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GRIGNY",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GRINCOURT LES PAS",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GROFFLIERS",
+    "cp": "62600",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GUARBECQUE",
+    "cp": "62330",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GUEMAPPE",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GUEMPS",
+    "cp": "62370",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GUIGNY",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GUINECOURT",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GUINES",
+    "cp": "62340",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "GUISY",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HABARCQ",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HAILLICOURT",
+    "cp": "62940",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HAISNES",
+    "cp": "62138",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HALINGHEN",
+    "cp": "62830",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HALLINES",
+    "cp": "62570",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HALLOY",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HAM EN ARTOIS",
+    "cp": "62190",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HAMBLAIN LES PRES",
+    "cp": "62118",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HAMELINCOURT",
+    "cp": "62121",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HAMES BOUCRES",
+    "cp": "62340",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HANNESCAMPS",
+    "cp": "62111",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HAPLINCOURT",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HARAVESNES",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HARDINGHEN",
+    "cp": "62132",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HARNES",
+    "cp": "62440",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HAUCOURT",
+    "cp": "62156",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HAUT LOQUIN",
+    "cp": "62850",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HAUTE AVESNES",
+    "cp": "62144",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HAUTECLOQUE",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HAUTEVILLE",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HAVRINCOURT",
+    "cp": "62147",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HEBUTERNE",
+    "cp": "62111",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HELFAUT",
+    "cp": "62570",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HENDECOURT LES CAGNICOURT",
+    "cp": "62182",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HENDECOURT LES RANSART",
+    "cp": "62175",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HENIN BEAUMONT",
+    "cp": "62110",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HENIN SUR COJEUL",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HENINEL",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HENNEVEUX",
+    "cp": "62142",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HENU",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HERBINGHEN",
+    "cp": "62850",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HERICOURT",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HERLIN LE SEC",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HERLINCOURT",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HERLY",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HERMAVILLE",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HERMELINGHEN",
+    "cp": "62132",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HERMIES",
+    "cp": "62147",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HERMIN",
+    "cp": "62150",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HERNICOURT",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HERSIN COUPIGNY",
+    "cp": "62530",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HERVELINGHEN",
+    "cp": "62179",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HESDIGNEUL LES BETHUNE",
+    "cp": "62196",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HESDIGNEUL LES BOULOGNE",
+    "cp": "62360",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HESDIN L ABBE",
+    "cp": "62360",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HESDIN LA FORET",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HESMOND",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HESTRUS",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HEUCHIN",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HEURINGHEM",
+    "cp": "62575",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HEZECQUES",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HINGES",
+    "cp": "62232",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HOCQUINGHEN",
+    "cp": "62850",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HOUCHIN",
+    "cp": "62620",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HOUDAIN",
+    "cp": "62150",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HOULLE",
+    "cp": "62910",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HOUVIN HOUVIGNEUL",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HUBERSENT",
+    "cp": "62630",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HUCLIER",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HUCQUELIERS",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HULLUCH",
+    "cp": "62410",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HUMBERCAMPS",
+    "cp": "62158",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HUMBERT",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HUMEROEUILLE",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "HUMIERES",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "INCHY EN ARTOIS",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "INCOURT",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "INXENT",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ISBERGUES",
+    "cp": "62330",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ISQUES",
+    "cp": "62360",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "IVERGNY",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "IZEL LES EQUERCHIN",
+    "cp": "62490",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "IZEL LES HAMEAU",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "JOURNY",
+    "cp": "62850",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LA CALOTTERIE",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LA CAPELLE LES BOULOGNE",
+    "cp": "62360",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LA CAUCHIE",
+    "cp": "62158",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LA COMTE",
+    "cp": "62150",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LA COUTURE",
+    "cp": "62136",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LA HERLIERE",
+    "cp": "62158",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LA LOGE",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LA MADELAINE SOUS MONTREUIL",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LA THIEULOYE",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LABEUVRIERE",
+    "cp": "62122",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LABOURSE",
+    "cp": "62113",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LABROYE",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LACRES",
+    "cp": "62830",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LAGNICOURT MARCEL",
+    "cp": "62159",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LAIRES",
+    "cp": "62960",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LAMBRES",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LANDRETHUN LE NORD",
+    "cp": "62250",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LANDRETHUN LES ARDRES",
+    "cp": "62610",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LAPUGNOY",
+    "cp": "62122",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LATTRE ST QUENTIN",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LAVENTIE",
+    "cp": "62840",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LE PARCQ",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LE PONCHEL",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LE PORTEL",
+    "cp": "62480",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LE QUESNOY EN ARTOIS",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LE SARS",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LE SOUICH",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LE TOUQUET PARIS PLAGE",
+    "cp": "62520",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LE TRANSLOY",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LE WAST",
+    "cp": "62142",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LEBIEZ",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LEBUCQUIERE",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LECHELLE",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LEDINGHEM",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LEFAUX",
+    "cp": "62630",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LEFOREST",
+    "cp": "62790",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LENS",
+    "cp": "62300",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LEPINE",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LES ATTAQUES",
+    "cp": "62730",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LESPESSES",
+    "cp": "62190",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LESPINOY",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LESTREM",
+    "cp": "62136",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LEUBRINGHEN",
+    "cp": "62250",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LEULINGHEM",
+    "cp": "62500",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LEULINGHEN BERNES",
+    "cp": "62250",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LIBERCOURT",
+    "cp": "62820",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LICQUES",
+    "cp": "62850",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LIENCOURT",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LIERES",
+    "cp": "62190",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LIETTRES",
+    "cp": "62145",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LIEVIN",
+    "cp": "62800",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LIGNEREUIL",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LIGNY LES AIRE",
+    "cp": "62960",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LIGNY ST FLOCHEL",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LIGNY SUR CANCHE",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LIGNY THILLOY",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LILLERS",
+    "cp": "62190",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LINGHEM",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LINZEUX",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LISBOURG",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LOCON",
+    "cp": "62400",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LOISON SOUS LENS",
+    "cp": "62218",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LOISON SUR CREQUOISE",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LONGFOSSE",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LONGUENESSE",
+    "cp": "62219",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LONGUEVILLE",
+    "cp": "62142",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LONGVILLIERS",
+    "cp": "62630",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LOOS EN GOHELLE",
+    "cp": "62750",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LORGIES",
+    "cp": "62840",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LOTTINGHEN",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LOUCHES",
+    "cp": "62610",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LOZINGHEM",
+    "cp": "62540",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LUGY",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "LUMBRES",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MAGNICOURT EN COMTE",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MAGNICOURT SUR CANCHE",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MAINTENAY",
+    "cp": "62870",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MAISNIL",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MAISNIL LES RUITZ",
+    "cp": "62620",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MAISONCELLE",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MAIZIERES",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MAMETZ",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MANIN",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MANINGHEM",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MANINGHEN HENNE",
+    "cp": "62250",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MARANT",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MARCK",
+    "cp": "62730",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MARCONNELLE",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MARENLA",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MARESQUEL ECQUEMICOURT",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MAREST",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MARESVILLE",
+    "cp": "62630",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MARLES LES MINES",
+    "cp": "62540",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MARLES SUR CANCHE",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MAROEUIL",
+    "cp": "62161",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MARQUAY",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MARQUION",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MARQUISE",
+    "cp": "62250",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MARTINPUICH",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MATRINGHEM",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MAZINGARBE",
+    "cp": "62670",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MAZINGHEM",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MENCAS",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MENNEVILLE",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MENTQUE NORTBECOURT",
+    "cp": "62890",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MERCATEL",
+    "cp": "62217",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MERCK ST LIEVIN",
+    "cp": "62560",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MERICOURT",
+    "cp": "62680",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MERLIMONT",
+    "cp": "62155",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "METZ EN COUTURE",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MEURCHIN",
+    "cp": "62410",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MINGOVAL",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONCHEAUX LES FREVENT",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONCHEL SUR CANCHE",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONCHIET",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONCHY AU BOIS",
+    "cp": "62111",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONCHY BRETON",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONCHY CAYEUX",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONCHY LE PREUX",
+    "cp": "62118",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONDICOURT",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONT BERNANCHON",
+    "cp": "62350",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONT ST ELOI",
+    "cp": "62144",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONTCAVREL",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONTENESCOURT",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONTIGNY EN GOHELLE",
+    "cp": "62640",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL SUR MER",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MONTS EN TERNOIS",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MORCHIES",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MORINGHEM",
+    "cp": "62910",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MORVAL",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MORY",
+    "cp": "62159",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MOULLE",
+    "cp": "62910",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MOURIEZ",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MOYENNEVILLE",
+    "cp": "62121",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "MUNCQ NIEURLET",
+    "cp": "62890",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NABRINGHEN",
+    "cp": "62142",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NEDON",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NEDONCHEL",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NEMPONT ST FIRMIN",
+    "cp": "62180",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NESLES",
+    "cp": "62152",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NEUFCHATEL HARDELOT",
+    "cp": "62152",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NEULETTE",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NEUVE CHAPELLE",
+    "cp": "62840",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE AU CORNET",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE BOURJONVAL",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE SOUS MONTREUIL",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE ST VAAST",
+    "cp": "62580",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NEUVILLE VITASSE",
+    "cp": "62217",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NEUVIREUIL",
+    "cp": "62580",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NIELLES LES ARDRES",
+    "cp": "62610",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NIELLES LES BLEQUIN",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NIELLES LES CALAIS",
+    "cp": "62185",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NOEUX LES AUXI",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NOEUX LES MINES",
+    "cp": "62290",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NORDAUSQUES",
+    "cp": "62890",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NOREUIL",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NORRENT FONTES",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NORT LEULINGHEM",
+    "cp": "62890",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NORTKERQUE",
+    "cp": "62370",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NOUVELLE EGLISE",
+    "cp": "62370",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NOYELLE VION",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NOYELLES GODAULT",
+    "cp": "62950",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NOYELLES LES HUMIERES",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NOYELLES LES VERMELLES",
+    "cp": "62980",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NOYELLES SOUS BELLONNE",
+    "cp": "62490",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NOYELLES SOUS LENS",
+    "cp": "62221",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NOYELLETTE",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "NUNCQ HAUTECOTE",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "OBLINGHEM",
+    "cp": "62920",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "OEUF EN TERNOIS",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "OFFEKERQUE",
+    "cp": "62370",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "OFFIN",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "OFFRETHUN",
+    "cp": "62250",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "OIGNIES",
+    "cp": "62590",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "OISY LE VERGER",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "OPPY",
+    "cp": "62580",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ORVILLE",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "OSTREVILLE",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "OURTON",
+    "cp": "62460",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "OUTREAU",
+    "cp": "62230",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "OUVE WIRQUIN",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "OYE PLAGE",
+    "cp": "62215",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PALLUEL",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PARENTY",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PAS EN ARTOIS",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PELVES",
+    "cp": "62118",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PENIN",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PERNES",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PERNES LES BOULOGNE",
+    "cp": "62126",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PEUPLINGUES",
+    "cp": "62231",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PIERREMONT",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PIHEM",
+    "cp": "62570",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PIHEN LES GUINES",
+    "cp": "62340",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PITTEFAUX",
+    "cp": "62126",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PLANQUES",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PLOUVAIN",
+    "cp": "62118",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "POLINCOVE",
+    "cp": "62370",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "POMMERA",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "POMMIER",
+    "cp": "62111",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PONT A VENDIN",
+    "cp": "62880",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PREDEFIN",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PRESSY",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PREURES",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PRONVILLE EN ARTOIS",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "PUISIEUX",
+    "cp": "62116",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "QUEANT",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "QUELMES",
+    "cp": "62500",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "QUERCAMPS",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "QUERNES",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "QUESQUES",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "QUESTRECQUES",
+    "cp": "62830",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "QUIERY LA MOTTE",
+    "cp": "62490",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "QUIESTEDE",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "QUILEN",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "QUOEUX HAUT MAINIL",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RACQUINGHEM",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RADINGHEM",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RAMECOURT",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RANG DU FLIERS",
+    "cp": "62180",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RANSART",
+    "cp": "62173",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RAYE SUR AUTHIE",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "REBERGUES",
+    "cp": "62850",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "REBREUVE RANCHICOURT",
+    "cp": "62150",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "REBREUVE SUR CANCHE",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "REBREUVIETTE",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RECLINGHEM",
+    "cp": "62560",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RECOURT",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RECQUES SUR COURSE",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RECQUES SUR HEM",
+    "cp": "62890",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "REGNAUVILLE",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RELY",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "REMILLY WIRQUIN",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "REMY",
+    "cp": "62156",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RENTY",
+    "cp": "62560",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RETY",
+    "cp": "62720",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RICHEBOURG",
+    "cp": "62136",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RIENCOURT LES BAPAUME",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RIENCOURT LES CAGNICOURT",
+    "cp": "62182",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RIMBOVAL",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RINXENT",
+    "cp": "62720",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RIVIERE",
+    "cp": "62173",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ROBECQ",
+    "cp": "62350",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ROCLINCOURT",
+    "cp": "62223",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ROCQUIGNY",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RODELINGHEM",
+    "cp": "62610",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ROELLECOURT",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ROEUX",
+    "cp": "62118",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ROLLANCOURT",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ROMBLY",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ROQUETOIRE",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ROUGEFAY",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ROUSSENT",
+    "cp": "62870",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ROUVROY",
+    "cp": "62320",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ROYON",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RUISSEAUVILLE",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RUITZ",
+    "cp": "62620",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RUMAUCOURT",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RUMILLY",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RUMINGHEM",
+    "cp": "62370",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "RUYAULCOURT",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SACHIN",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAILLY AU BOIS",
+    "cp": "62111",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAILLY EN OSTREVENT",
+    "cp": "62490",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAILLY LABOURSE",
+    "cp": "62113",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAILLY SUR LA LYS",
+    "cp": "62840",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAINS EN GOHELLE",
+    "cp": "62114",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAINS LES FRESSIN",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAINS LES MARQUION",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAINS LES PERNES",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SALLAUMINES",
+    "cp": "62430",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SALPERWICK",
+    "cp": "62500",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAMER",
+    "cp": "62830",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SANGATTE",
+    "cp": "62231",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SANGHEN",
+    "cp": "62850",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAPIGNIES",
+    "cp": "62121",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SARS LE BOIS",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SARTON",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAUCHY CAUCHY",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAUCHY LESTREE",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAUDEMONT",
+    "cp": "62860",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAULCHOY",
+    "cp": "62870",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAULTY",
+    "cp": "62158",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SAVY BERLETTE",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SELLES",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SEMPY",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SENINGHEM",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SENLECQUES",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SENLIS",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SERICOURT",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SERQUES",
+    "cp": "62910",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SERVINS",
+    "cp": "62530",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SETQUES",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SIBIVILLE",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SIMENCOURT",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SIRACOURT",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SOMBRIN",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SORRUS",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SOUASTRE",
+    "cp": "62111",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SOUCHEZ",
+    "cp": "62153",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST AMAND",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST AUBIN",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST AUGUSTIN",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST AUGUSTIN",
+    "cp": "62129",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST DENOEUX",
+    "cp": "62990",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST ETIENNE AU MONT",
+    "cp": "62360",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST FLORIS",
+    "cp": "62350",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST FOLQUIN",
+    "cp": "62370",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE COTTES",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST INGLEVERT",
+    "cp": "62250",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST JOSSE",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST LAURENT BLANGY",
+    "cp": "62223",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST LEONARD",
+    "cp": "62360",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN BOULOGNE",
+    "cp": "62280",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN CHOQUEL",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN D HARDINGHEM",
+    "cp": "62560",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN LEZ TATINGHEM",
+    "cp": "62500",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST MARTIN SUR COJEUL",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL SOUS BOIS",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST MICHEL SUR TERNOISE",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST NICOLAS",
+    "cp": "62223",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST OMER",
+    "cp": "62500",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST OMER CAPELLE",
+    "cp": "62162",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST POL SUR TERNOISE",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST REMY AU BOIS",
+    "cp": "62870",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST TRICAT",
+    "cp": "62185",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ST VENANT",
+    "cp": "62350",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "STE CATHERINE",
+    "cp": "62223",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE KERQUE",
+    "cp": "62370",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SURQUES",
+    "cp": "62850",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "SUS ST LEGER",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TANGRY",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TARDINGHEN",
+    "cp": "62179",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TENEUR",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TERNAS",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "THELUS",
+    "cp": "62580",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "THEROUANNE",
+    "cp": "62129",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "THIEMBRONNE",
+    "cp": "62560",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "THIEVRES",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TIGNY NOYELLE",
+    "cp": "62180",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TILLOY LES HERMAVILLE",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TILLOY LES MOFFLAINES",
+    "cp": "62217",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TILLY CAPELLE",
+    "cp": "62134",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TILQUES",
+    "cp": "62500",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TINCQUES",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TINGRY",
+    "cp": "62830",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TOLLENT",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TORCY",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TORTEFONTAINE",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TORTEQUESNE",
+    "cp": "62490",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TOURNEHEM SUR LA HEM",
+    "cp": "62890",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TRAMECOURT",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TRESCAULT",
+    "cp": "62147",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TROISVAUX",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "TUBERSENT",
+    "cp": "62630",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VACQUERIE LE BOUCQ",
+    "cp": "62270",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VACQUERIETTE ERQUIERES",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VALHUON",
+    "cp": "62550",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VAUDRICOURT",
+    "cp": "62131",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VAUDRINGHEM",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VAULX",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VAULX VRAUCOURT",
+    "cp": "62159",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VELU",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VENDIN LE VIEIL",
+    "cp": "62880",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VENDIN LES BETHUNE",
+    "cp": "62232",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VERCHIN",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VERCHOCQ",
+    "cp": "62560",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VERLINCTHUN",
+    "cp": "62830",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VERMELLES",
+    "cp": "62980",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VERQUIGNEUL",
+    "cp": "62113",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VERQUIN",
+    "cp": "62131",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VERTON",
+    "cp": "62180",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VIEIL HESDIN",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VIEIL MOUTIER",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VIEILLE CHAPELLE",
+    "cp": "62136",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VIEILLE EGLISE",
+    "cp": "62162",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VILLERS AU BOIS",
+    "cp": "62144",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VILLERS AU FLOS",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VILLERS BRULIN",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VILLERS CHATEL",
+    "cp": "62690",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VILLERS L HOPITAL",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VILLERS LES CAGNICOURT",
+    "cp": "62182",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VILLERS SIR SIMON",
+    "cp": "62127",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VIMY",
+    "cp": "62580",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VINCLY",
+    "cp": "62310",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VIOLAINES",
+    "cp": "62138",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VIS EN ARTOIS",
+    "cp": "62156",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "VITRY EN ARTOIS",
+    "cp": "62490",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WABEN",
+    "cp": "62180",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WACQUINGHEN",
+    "cp": "62250",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WAIL",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WAILLY",
+    "cp": "62217",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WAILLY BEAUCAMP",
+    "cp": "62170",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WAMBERCOURT",
+    "cp": "62140",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WAMIN",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WANCOURT",
+    "cp": "62128",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WANQUETIN",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WARDRECQUES",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WARLENCOURT EAUCOURT",
+    "cp": "62450",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WARLINCOURT LES PAS",
+    "cp": "62760",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WARLUS",
+    "cp": "62123",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WARLUZEL",
+    "cp": "62810",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WAVRANS SUR L AA",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WAVRANS SUR TERNOISE",
+    "cp": "62130",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WESTREHEM",
+    "cp": "62960",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WICQUINGHEM",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WIDEHEM",
+    "cp": "62630",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WIERRE AU BOIS",
+    "cp": "62830",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WIERRE EFFROY",
+    "cp": "62720",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WILLEMAN",
+    "cp": "62770",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WILLENCOURT",
+    "cp": "62390",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WILLERVAL",
+    "cp": "62580",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WIMEREUX",
+    "cp": "62930",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WIMILLE",
+    "cp": "62126",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WINGLES",
+    "cp": "62410",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WIRWIGNES",
+    "cp": "62240",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WISMES",
+    "cp": "62380",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WISQUES",
+    "cp": "62219",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WISSANT",
+    "cp": "62179",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WITTERNESSE",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WITTES",
+    "cp": "62120",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "WIZERNES",
+    "cp": "62570",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "YTRES",
+    "cp": "62124",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ZOTEUX",
+    "cp": "62650",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ZOUAFQUES",
+    "cp": "62890",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ZUDAUSQUES",
+    "cp": "62500",
+    "dept": "62",
+    "region": ""
+  },
+  {
+    "name": "ZUTKERQUE",
+    "cp": "62370",
+    "dept": "62",
+    "region": ""
+  }
+]

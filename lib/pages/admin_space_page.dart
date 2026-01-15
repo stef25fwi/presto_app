@@ -42,7 +42,8 @@ class MicroIaTranscriptionPage extends StatefulWidget {
   const MicroIaTranscriptionPage({super.key});
 
   @override
-  State<MicroIaTranscriptionPage> createState() => _MicroIaTranscriptionPageState();
+  State<MicroIaTranscriptionPage> createState() =>
+      _MicroIaTranscriptionPageState();
 }
 
 class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
@@ -82,10 +83,10 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
       final fallback = data['fallbackEnabled'] == true;
       final threshold = (data['qualityThreshold'] as num?)?.toDouble() ?? 0.62;
       final lang = (data['languageCode'] ?? 'fr-FR').toString().trim();
-        final audioQualityStr = (data['audioQuality'] ??
-            data['audio_quality'] ??
-            data['microia_audio_quality'] ??
-            'MEDIUM')
+      final audioQualityStr = (data['audioQuality'] ??
+              data['audio_quality'] ??
+              data['microia_audio_quality'] ??
+              'MEDIUM')
           .toString();
       final ultraFast = (data['ultraFastEnabled'] ??
               data['microia_ultra_fast_enabled'] ??
@@ -173,17 +174,17 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
       final threshold =
           (data['qualityThreshold'] as num?)?.toDouble() ?? _quality;
       final languageCode = (data['languageCode'] ?? lang).toString();
-        final audioQualityStr = (data['audioQuality'] ??
-            data['audio_quality'] ??
-            data['microia_audio_quality'] ??
-            microIaAudioQualityToRcValue(_audioQuality))
+      final audioQualityStr = (data['audioQuality'] ??
+              data['audio_quality'] ??
+              data['microia_audio_quality'] ??
+              microIaAudioQualityToRcValue(_audioQuality))
           .toString();
-        final ultraFast = (data['ultraFastEnabled'] ??
-                data['microia_ultra_fast_enabled'] ??
-                data['microia_ultrafast_enabled'] ??
-                data['microia_ultra_fast'] ??
-                _ultraFastEnabled) ==
-            true;
+      final ultraFast = (data['ultraFastEnabled'] ??
+              data['microia_ultra_fast_enabled'] ??
+              data['microia_ultrafast_enabled'] ??
+              data['microia_ultra_fast'] ??
+              _ultraFastEnabled) ==
+          true;
 
       setState(() {
         _mode = _modeFromRemote(modeStr.toUpperCase());
@@ -249,7 +250,8 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
                   ultraFastEnabled: _ultraFastEnabled,
                   languages: _languages,
                   onModeChanged: (m) => setState(() => _mode = m),
-                  onUltraFastChanged: (v) => setState(() => _ultraFastEnabled = v),
+                  onUltraFastChanged: (v) =>
+                      setState(() => _ultraFastEnabled = v),
                   onAudioQualityChanged: (q) async {
                     final prev = _audioQuality;
                     setState(() => _audioQuality = q);
@@ -257,12 +259,13 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
                     try {
                       final callable = _functions.httpsCallable(
                         'adminSetMicroIaConfig',
-                        options:
-                            HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+                        options: HttpsCallableOptions(
+                            timeout: const Duration(seconds: 30)),
                       );
 
-                      final lang =
-                          _languages.isNotEmpty ? _languages.first.trim() : 'fr-FR';
+                      final lang = _languages.isNotEmpty
+                          ? _languages.first.trim()
+                          : 'fr-FR';
 
                       await callable.call<dynamic>({
                         'mode': _modeToRemote(_mode),
@@ -282,7 +285,8 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
                   },
                   onFallbackChanged: (v) => setState(() => _fallback = v),
                   onQualityChanged: (v) => setState(() => _quality = v),
-                  onAddLanguage: () => _snack('Ajouter une langue (à brancher)'),
+                  onAddLanguage: () =>
+                      _snack('Ajouter une langue (à brancher)'),
                   onRemoveLanguage: (code) =>
                       setState(() => _languages.remove(code)),
                   onSave: _saving ? null : _save,
@@ -346,10 +350,10 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     final windowMinutes = (_userStats?['windowMinutes'] as num?)?.toInt();
 
     final usersSubtitle = _userStatsLoading
-      ? 'Chargement…'
-      : (totalAccounts == null || onlineUsers == null || proLogins == null)
-        ? '—'
-        : 'Total: $totalAccounts\nEn ligne: $onlineUsers (${windowMinutes ?? 5} min)\nConnexions Pro: $proLogins';
+        ? 'Chargement…'
+        : (totalAccounts == null || onlineUsers == null || proLogins == null)
+            ? '—'
+            : 'Total: $totalAccounts\nEn ligne: $onlineUsers (${windowMinutes ?? 5} min)\nConnexions Pro: $proLogins';
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -392,7 +396,6 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     ),
               ),
               const SizedBox(height: 14),
-
               _ProfileCard(
                 prestoBlue: prestoBlue,
                 uid: user?.uid ?? '(non connecté)',
@@ -404,9 +407,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   showSuccessSnackBar(context, 'UID copié');
                 },
               ),
-
               const SizedBox(height: 14),
-
               GridView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -545,8 +546,8 @@ class _ProfileCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 18,
                   backgroundColor: Colors.grey.shade200,
-                  child: const Icon(Icons.person_rounded,
-                      color: Colors.black54),
+                  child:
+                      const Icon(Icons.person_rounded, color: Colors.black54),
                 ),
                 const SizedBox(width: 10),
                 const Expanded(
@@ -611,8 +612,8 @@ class _ProfileCard extends StatelessWidget {
                     side: const BorderSide(color: Colors.black12),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 10),
                     textStyle: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
@@ -687,8 +688,8 @@ class _KpiTile extends StatelessWidget {
                 Align(
                   alignment: Alignment.topRight,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(999),
@@ -804,7 +805,6 @@ class _MicroIaCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-
             LayoutBuilder(
               builder: (_, constraints) {
                 final isWide = constraints.maxWidth >= 360;
@@ -859,8 +859,9 @@ class _MicroIaCard extends StatelessWidget {
                               Icon(
                                 Icons.bolt_rounded,
                                 size: 18,
-                                color:
-                                    ultraFastEnabled ? prestoOrange : Colors.black54,
+                                color: ultraFastEnabled
+                                    ? prestoOrange
+                                    : Colors.black54,
                               ),
                               const SizedBox(width: 6),
                               const Text(
@@ -888,14 +889,12 @@ class _MicroIaCard extends StatelessWidget {
                 );
               },
             ),
-
             const SizedBox(height: 16),
             Text(
               "Qualité audio",
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-
             LayoutBuilder(
               builder: (_, constraints) {
                 final isWide = constraints.maxWidth >= 360;
@@ -938,9 +937,7 @@ class _MicroIaCard extends StatelessWidget {
                 );
               },
             ),
-
             const SizedBox(height: 12),
-
             Row(
               children: [
                 Container(
@@ -983,9 +980,7 @@ class _MicroIaCard extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 10),
-
             const Text(
               'Qualité minimum',
               style: TextStyle(
@@ -1019,9 +1014,7 @@ class _MicroIaCard extends StatelessWidget {
                 )
               ],
             ),
-
             const SizedBox(height: 6),
-
             Wrap(
               spacing: 10,
               runSpacing: 10,
@@ -1034,9 +1027,7 @@ class _MicroIaCard extends StatelessWidget {
                 _AddChip(onTap: onAddLanguage),
               ],
             ),
-
             const SizedBox(height: 14),
-
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -1066,13 +1057,10 @@ class _MicroIaCard extends StatelessWidget {
                     : const Text('Enregistrer les changements'),
               ),
             ),
-
             const SizedBox(height: 12),
-
             Row(
               children: [
-                Icon(Icons.check_circle_rounded,
-                    color: Colors.green.shade700),
+                Icon(Icons.check_circle_rounded, color: Colors.green.shade700),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
@@ -1172,8 +1160,7 @@ class _LangChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
             child: const Padding(
               padding: EdgeInsets.all(2),
-              child: Icon(Icons.close_rounded,
-                  size: 16, color: Colors.black54),
+              child: Icon(Icons.close_rounded, size: 16, color: Colors.black54),
             ),
           ),
         ],

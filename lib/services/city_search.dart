@@ -92,7 +92,7 @@ class CitySearch {
   String _normalize(String input) {
     final lower = input.toLowerCase();
     const accents = 'àâäáãåçèéêëìíîïñòóôöõùúûüýÿ\'`^¨';
-    const plain =  'aaaaaaceeeeiiiinooooouuuuyy ';
+    const plain = 'aaaaaaceeeeiiiinooooouuuuyy ';
 
     final buffer = StringBuffer();
     for (int i = 0; i < lower.length; i++) {

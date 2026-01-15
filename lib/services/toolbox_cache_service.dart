@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'cache_monitoring_service.dart';
 
 /// Service de cache pour les parcours de boîte à outils
-/// 
+///
 /// Structure Firestore:
 ///   /toolbox_journeys/{journeyId}
 ///     - type_projet: string
@@ -23,7 +23,8 @@ class ToolboxCacheService {
 
   /// Génère un hash unique pour les critères
   /// Format: "type_projet|domaine|region"
-  String _generateCriteriaHash(String typeProjet, String domaine, String region) {
+  String _generateCriteriaHash(
+      String typeProjet, String domaine, String region) {
     final criteria = '$typeProjet|$domaine|$region';
     // Simple hash: on peut utiliser crypto.md5 si besoin
     // Pour l'instant, on utilise juste la concaténation
@@ -38,10 +39,10 @@ class ToolboxCacheService {
     required String region,
   }) async {
     final startTime = DateTime.now();
-    
+
     try {
       final criteriaHash = _generateCriteriaHash(typeProjet, domaine, region);
-      
+
       // Chercher dans l'index
       final indexQuery = await _db
           .collection('toolbox_journey_index')
@@ -61,10 +62,8 @@ class ToolboxCacheService {
       }
 
       // Récupérer le parcours complet
-      final journeyDoc = await _db
-          .collection('toolbox_journeys')
-          .doc(journeyId)
-          .get();
+      final journeyDoc =
+          await _db.collection('toolbox_journeys').doc(journeyId).get();
 
       if (journeyDoc.exists) {
         // ✅ Cache HIT
@@ -72,7 +71,7 @@ class ToolboxCacheService {
         _monitoring.recordCacheHit(elapsed);
         return journeyDoc.data();
       }
-      
+
       return null;
     } catch (e) {
       _monitoring.recordCacheError('fetchExistingJourney: $e');

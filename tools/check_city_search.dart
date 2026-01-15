@@ -8,18 +8,107 @@ import 'dart:io';
 
 /// Même liste de départements que pour tes fichiers cities_XX.json
 const List<String> kDeptCodes = <String>[
-  "01","02","03","04","05","06","07","08","09",
-  "10","11","12","13","14","15","16","17","18","19",
-  "21","22","23","24","25","26","27","28","29",
-  "2A","2B",
-  "30","31","32","33","34","35","36","37","38","39",
-  "40","41","42","43","44","45","46","47","48","49",
-  "50","51","52","53","54","55","56","57","58","59",
-  "60","61","62","63","64","65","66","67","68","69",
-  "70","71","72","73","74","75","76","77","78","79",
-  "80","81","82","83","84","85","86","87","88","89","90",
-  "91","92","93","94","95",
-  "971","972","973","974","976",
+  "01",
+  "02",
+  "03",
+  "04",
+  "05",
+  "06",
+  "07",
+  "08",
+  "09",
+  "10",
+  "11",
+  "12",
+  "13",
+  "14",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "21",
+  "22",
+  "23",
+  "24",
+  "25",
+  "26",
+  "27",
+  "28",
+  "29",
+  "2A",
+  "2B",
+  "30",
+  "31",
+  "32",
+  "33",
+  "34",
+  "35",
+  "36",
+  "37",
+  "38",
+  "39",
+  "40",
+  "41",
+  "42",
+  "43",
+  "44",
+  "45",
+  "46",
+  "47",
+  "48",
+  "49",
+  "50",
+  "51",
+  "52",
+  "53",
+  "54",
+  "55",
+  "56",
+  "57",
+  "58",
+  "59",
+  "60",
+  "61",
+  "62",
+  "63",
+  "64",
+  "65",
+  "66",
+  "67",
+  "68",
+  "69",
+  "70",
+  "71",
+  "72",
+  "73",
+  "74",
+  "75",
+  "76",
+  "77",
+  "78",
+  "79",
+  "80",
+  "81",
+  "82",
+  "83",
+  "84",
+  "85",
+  "86",
+  "87",
+  "88",
+  "89",
+  "90",
+  "91",
+  "92",
+  "93",
+  "94",
+  "95",
+  "971",
+  "972",
+  "973",
+  "974",
+  "976",
 ];
 
 /// Normalisation identique à CityPostalService._normalize
@@ -86,7 +175,7 @@ List<String> searchCities(
 
   for (final MapEntry<String, String> entry in cityToCp.entries) {
     final String cityLower = entry.key; // ex: "trois rivieres"
-    final String cpRaw = entry.value;   // ex: "97114" ou "97114;97190"
+    final String cpRaw = entry.value; // ex: "97114" ou "97114;97190"
     final String norm = cityNorm[cityLower] ?? normalize(cityLower);
     final String cpDigits = digitsOnly(cpRaw); // ex: "97114" ou "9711497190"
 
@@ -95,8 +184,7 @@ List<String> searchCities(
         cityLower.contains(q) || norm.contains(qNorm) || norm == qNorm;
 
     // 🔍 Match par code postal (on ne garde que les chiffres)
-    final bool matchByCp =
-        qDigits.isNotEmpty && cpDigits.startsWith(qDigits);
+    final bool matchByCp = qDigits.isNotEmpty && cpDigits.startsWith(qDigits);
 
     if (matchByName || matchByCp) {
       final String display = cityLower.isEmpty
@@ -177,8 +265,9 @@ Future<void> main() async {
 
   // 2a) chaque ville doit être retrouvée par son nom
   cityToCp.forEach((String cityLower, String cp) {
-    final String display =
-        cityLower.isEmpty ? cityLower : cityLower[0].toUpperCase() + cityLower.substring(1);
+    final String display = cityLower.isEmpty
+        ? cityLower
+        : cityLower[0].toUpperCase() + cityLower.substring(1);
 
     final List<String> results =
         searchCities(cityToCp, cityNorm, display, maxResults: 1000);
@@ -208,7 +297,8 @@ Future<void> main() async {
   if (citiesBadByName.isEmpty) {
     print("✅ Toutes les villes sont retrouvées par recherche sur leur nom.");
   } else {
-    print("❌ Villes non retrouvées via recherche par nom (${citiesBadByName.length}) :");
+    print(
+        "❌ Villes non retrouvées via recherche par nom (${citiesBadByName.length}) :");
     for (final String line in citiesBadByName.take(200)) {
       print("   - $line");
     }

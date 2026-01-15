@@ -27,7 +27,8 @@ class NotificationService {
       sound: true,
     );
 
-    debugPrint('[Notifications] Permission status: ${settings.authorizationStatus}');
+    debugPrint(
+        '[Notifications] Permission status: ${settings.authorizationStatus}');
 
     // Handler pour les messages en background
     FirebaseMessaging.onBackgroundMessage(_backgroundHandler);
@@ -59,9 +60,11 @@ class NotificationService {
   /// Handler pour les messages reçus en background (app fermée)
   static Future<void> _backgroundHandler(RemoteMessage message) async {
     debugPrint('[Notifications-Background] Message reçu: ${message.messageId}');
-    debugPrint('[Notifications-Background] Title: ${message.notification?.title}');
-    debugPrint('[Notifications-Background] Body: ${message.notification?.body}');
-    
+    debugPrint(
+        '[Notifications-Background] Title: ${message.notification?.title}');
+    debugPrint(
+        '[Notifications-Background] Body: ${message.notification?.body}');
+
     // Traiter le message
     _handleMessage(message);
   }
@@ -69,9 +72,11 @@ class NotificationService {
   /// Handler pour les messages reçus en foreground (app ouverte)
   void _foregroundHandler(RemoteMessage message) {
     debugPrint('[Notifications-Foreground] Message reçu: ${message.messageId}');
-    debugPrint('[Notifications-Foreground] Title: ${message.notification?.title}');
-    debugPrint('[Notifications-Foreground] Body: ${message.notification?.body}');
-    
+    debugPrint(
+        '[Notifications-Foreground] Title: ${message.notification?.title}');
+    debugPrint(
+        '[Notifications-Foreground] Body: ${message.notification?.body}');
+
     // Afficher une notification locale ou mettre à jour l'UI
     if (message.notification != null) {
       debugPrint('[Notifications-Foreground] Contient une notification');
@@ -88,11 +93,11 @@ class NotificationService {
   static void _handleMessage(RemoteMessage message) {
     // Exemple : redirection basée sur le type de notification
     final messageData = message.data;
-    
+
     if (messageData.containsKey('type')) {
       final type = messageData['type'];
       debugPrint('[Notifications] Type de notification: $type');
-      
+
       // Redirection selon le type
       switch (type) {
         case 'new_message':

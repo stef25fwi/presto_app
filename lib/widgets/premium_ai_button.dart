@@ -45,7 +45,8 @@ class _PremiumAiButtonState extends State<PremiumAiButton> {
         // Ombre douce
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1A73E8).withValues(alpha: 0.18), // 15-20% opacity
+            color: const Color(0xFF1A73E8)
+                .withValues(alpha: 0.18), // 15-20% opacity
             blurRadius: 14, // Entre 12-16
             offset: const Offset(0, 4),
             spreadRadius: 0,

@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 
 class RandomAssetTicker extends StatefulWidget {
   final String folderPrefix; // ex: 'assets/carousel_home/'
-  final Duration interval;   // ex: 3s
+  final Duration interval; // ex: 3s
   final BoxFit fit;
   final int antiRepeatWindow;
   final bool enabled;
@@ -62,13 +62,14 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
       final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
       final allAssets = manifest.listAssets();
 
-      final images = allAssets
-          .where((p) => p.startsWith(widget.folderPrefix))
-          .where((p) {
-            final x = p.toLowerCase();
-            return x.endsWith('.png') || x.endsWith('.jpg') || x.endsWith('.jpeg') || x.endsWith('.webp');
-          })
-          .toList();
+      final images =
+          allAssets.where((p) => p.startsWith(widget.folderPrefix)).where((p) {
+        final x = p.toLowerCase();
+        return x.endsWith('.png') ||
+            x.endsWith('.jpg') ||
+            x.endsWith('.jpeg') ||
+            x.endsWith('.webp');
+      }).toList();
 
       // Affiche toujours le "slide 1" en premier si présent (ex: 01.png),
       // puis garde un ordre aléatoire pour le reste.
@@ -160,11 +161,14 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
     if (_assets.length == 1) return _assets.first;
 
     final excluded = Set<String>.from(_lastShown)..addAll(_failedAssets);
-    List<String> candidates = _assets.where((a) => !excluded.contains(a)).toList();
+    List<String> candidates =
+        _assets.where((a) => !excluded.contains(a)).toList();
 
     if (candidates.isEmpty) {
       final current = _current;
-      candidates = _assets.where((a) => a != current && !_failedAssets.contains(a)).toList();
+      candidates = _assets
+          .where((a) => a != current && !_failedAssets.contains(a))
+          .toList();
       if (candidates.isEmpty) {
         candidates = _assets.where((a) => !_failedAssets.contains(a)).toList();
       }
@@ -224,8 +228,11 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
     }
 
     if (_assets.isEmpty || _current == null) {
-      final bool allFailed = _assets.isNotEmpty && _failedAssets.length == _assets.length;
-      final String message = allFailed ? 'Toutes les images sont indisponibles.' : 'Aucune image trouvée.';
+      final bool allFailed =
+          _assets.isNotEmpty && _failedAssets.length == _assets.length;
+      final String message = allFailed
+          ? 'Toutes les images sont indisponibles.'
+          : 'Aucune image trouvée.';
       return Container(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -240,12 +247,14 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.image_not_supported_outlined, color: Colors.white70, size: 36),
+            const Icon(Icons.image_not_supported_outlined,
+                color: Colors.white70, size: 36),
             const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                  color: Colors.white70, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
             const Text(
