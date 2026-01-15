@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Docs: Dry-run déplacer les .md racine -> docs_md",
+      "type": "shell",
+      "command": "python3 tools/move_root_md_to_docs_md.py --dry-run",
+      "problemMatcher": []
+    },
+    {
+      "label": "Docs: Déplacer les .md racine -> docs_md",
+      "type": "shell",
+      "command": "python3 tools/move_root_md_to_docs_md.py",
+      "problemMatcher": []
+    },
+    {
+      "label": "Docs: Déplacer (garder README.md)",
+      "type": "shell",
+      "command": "python3 tools/move_root_md_to_docs_md.py --keep README.md",
+      "problemMatcher": []
+    }
+  ]
+}

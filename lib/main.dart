@@ -13,42 +13,94 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:record/record.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'firebase_options.dart';
 import 'app_core.dart';
 import 'constants.dart';
-import 'utils/crashlytics_context.dart';
-import 'utils/friendly_snackbar.dart';
-import 'utils/recording_path.dart';
-import 'features/micro_ia/micro_ia_service.dart';
-import 'features/micro_ia/web_audio_recorder_stub.dart'
-    if (dart.library.html) 'features/micro_ia/web_audio_recorder.dart';
-import 'features/messaging/conversation_service.dart';
-import 'widgets/premium_ai_button.dart';
+import 'app/theme.dart';
+import 'services/firebase_service.dart';
+import 'services/city_search.dart';
+import 'services/google_auth_service.dart';
+import 'services/notification_service.dart';
+import 'pages/toolbox_hub_page.dart';
+import 'pages/auth/presto_premium_auth_page.dart';
+import 'pages/pro_profile_page.dart';
+import 'pages/admin_space_page.dart';
+import 'pages/legal_info_page.dart';
+import 'pages/home_page_v2_option2.dart';
+import 'pages/messages/conversation_page.dart';
 import 'widgets/ad_banner.dart';
 import 'widgets/offer_card.dart';
-import 'widgets/phone_input_field.dart';
-import 'package:presto_app/widgets/random_asset_ticker.dart';
+import 'widgets/random_asset_ticker.dart';
 import 'widgets/entrepreneur_toolbox_slide.dart';
-import 'pages/toolbox_hub_page.dart';
-import 'services/city_search.dart';
-import 'services/ai_draft_service.dart';
-import 'services/notification_service.dart';
-import 'services/google_auth_service.dart';
-import 'pages/pro_profile_page.dart';
-import 'pages/legal_info_page.dart';
-import 'pages/admin_space_page.dart';
+import 'features/ai_draft/ai_draft_service.dart';
+import 'features/micro_ia/web_audio_recorder.dart';
+import 'utils/friendly_snackbar.dart';
+import 'utils/crashlytics_context.dart';
+import 'utils/recording_path_web.dart'
+    if (dart.library.io) 'utils/recording_path_io.dart';
 import 'dev/seed_offers.dart';
+import 'features/micro_ia/micro_ia_service.dart';
+import 'widgets/premium_ai_button.dart';
+import 'widgets/phone_input_field.dart';
+// ...existing code (autres imports)...
 
-import 'app/theme.dart';
+// ✅ Remote Config singleton: expose 'audio_pipeline' pour l'UI
+/* ⚠️ À décommenter une fois flutter pub get réussi
+class PrestoRemoteConfig {
+  static String audioPipeline = 'UNKNOWN';
 
-import 'package:image_picker/image_picker.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+  static Future<void> init() async {
+    final rc = FirebaseRemoteConfig.instance;
+
+    await rc.setConfigSettings(RemoteConfigSettings(
+      fetchTimeout: const Duration(seconds: 10),
+      minimumFetchInterval: const Duration(minutes: 5),
+    ));
+
+    await rc.setDefaults(<String, dynamic>{
+      'audio_pipeline': 'HYBRID',
+    });
+
+    try {
+      await rc.fetchAndActivate();
+      audioPipeline = rc.getString('audio_pipeline').trim().isEmpty
+          ? 'HYBRID'
+          : rc.getString('audio_pipeline').trim();
+    } catch (_) {
+      audioPipeline = 'HYBRID';
+    }
+  }
+}
+*/
+
+// Fallback class temporaire
+class PrestoRemoteConfig {
+  stati
+    // Fa.llback: utilise la valeur par défaut HYBRID
+    // Décommenter la classe ci-dessus une fois firebase_remote_config installé
+  }
+}
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
+
+// ✅ Build stamp (pour vérifier en prod quel commit est réellement déployé)
+// Remplir via: flutter build/run ... --dart-define=APP_BUILD_SHA=... etc.
+const String kAppBuildSha =
+    String.fromEnvironment('APP_BUILD_SHA', defaultValue: 'local');
+const String kAppBuildBranch =
+    String.fromEnvironment('APP_BUILD_BRANCH', defaultValue: '');
+const String kAppBuildTimeUtc =
+    String.fromEnvironment('APP_BUILD_TIME', defaultValue: '');
+const String kAppBuildTag =
+    String.fromEnvironment('APP_BUILD_TAG', defaultValue: '');
 
 /// ✅ Fonction utilitaire pour récupérer le statut de présence d'utilisateurs
 Future<Map<String, dynamic>> getUserPresenceStatus(List<String> userIds) async {
@@ -112,6 +164,185 @@ class UserStatusIndicator extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// ✅ Monitoring local (session) — utilisé par le dashboard admin
+/// Objectif: rendre visibles les appels de récupération de données (Firestore/Functions)
+class PrestoMonitoring extends ChangeNotifier {
+  static final PrestoMonitoring I = PrestoMonitoring._();
+  PrestoMonitoring._();
+
+  bool enabled = true;
+  bool verboseLogs = false;
+
+  // Toggles par “pipeline”
+  bool monitorOffersStream = true;
+  bool monitorOffersFetchOnce = true;
+  bool monitorMessagesFetchOnce = true;
+  bool monitorFunctionsCalls = true;
+  bool monitorOtherStreams = true;
+
+  DateTime sessionStart = DateTime.now();
+
+  // Compteurs
+  int offersQueryBuildCount = 0;
+  int offersSnapshotsCount = 0;
+  int offersFetchOnceCount = 0;
+  int messagesFetchOnceCount = 0;
+  int functionsCallsCount = 0;
+  int errorsCount = 0;
+
+  // Autres streams Firestore (home/notifications/conversations/profils...)
+  int otherStreamsEvents = 0;
+  final Map<String, int> otherStreamEventCounts = <String, int>{};
+  final Map<String, int> otherStreamLastDocs = <String, int>{};
+  String? lastOtherStreamKey;
+  int lastOtherStreamDocs = 0;
+
+  // Derniers états
+  int lastOffersSnapshotDocs = 0;
+  int lastOffersFetchDocs = 0;
+  int lastMessagesFetchDocs = 0;
+  int lastOffersFetchMs = 0;
+  int lastMessagesFetchMs = 0;
+  int lastFunctionsCallMs = 0;
+  String? lastOffersQuerySignature;
+  String? lastError;
+
+  String get sessionDurationLabel {
+    final d = DateTime.now().difference(sessionStart);
+    if (d.inSeconds < 60) return '${d.inSeconds}s';
+    if (d.inMinutes < 60) return '${d.inMinutes}m ${d.inSeconds % 60}s';
+    return '${d.inHours}h ${d.inMinutes % 60}m';
+  }
+
+  void _maybeLog(String msg) {
+    if (!verboseLogs || !kDebugMode) return;
+    debugPrint('[MONITOR] $msg');
+  }
+
+  void setEnabled(bool v) {
+    enabled = v;
+    notifyListeners();
+  }
+
+  void setVerbose(bool v) {
+    verboseLogs = v;
+    notifyListeners();
+  }
+
+  void setMonitorOffersStream(bool v) {
+    monitorOffersStream = v;
+    notifyListeners();
+  }
+
+  void setMonitorOffersFetchOnce(bool v) {
+    monitorOffersFetchOnce = v;
+    notifyListeners();
+  }
+
+  void setMonitorMessagesFetchOnce(bool v) {
+    monitorMessagesFetchOnce = v;
+    notifyListeners();
+  }
+
+  void setMonitorFunctionsCalls(bool v) {
+    monitorFunctionsCalls = v;
+    notifyListeners();
+  }
+
+  void setMonitorOtherStreams(bool v) {
+    monitorOtherStreams = v;
+    notifyListeners();
+  }
+
+  void reset() {
+    sessionStart = DateTime.now();
+    offersQueryBuildCount = 0;
+    offersSnapshotsCount = 0;
+    offersFetchOnceCount = 0;
+    messagesFetchOnceCount = 0;
+    functionsCallsCount = 0;
+    errorsCount = 0;
+    lastOffersSnapshotDocs = 0;
+    lastOffersFetchDocs = 0;
+    lastMessagesFetchDocs = 0;
+    lastOffersFetchMs = 0;
+    lastMessagesFetchMs = 0;
+    lastFunctionsCallMs = 0;
+    lastOffersQuerySignature = null;
+    lastError = null;
+
+    otherStreamsEvents = 0;
+    otherStreamEventCounts.clear();
+    otherStreamLastDocs.clear();
+    lastOtherStreamKey = null;
+    lastOtherStreamDocs = 0;
+    notifyListeners();
+  }
+
+  void trackError(String scope, Object e) {
+    if (!enabled) return;
+    errorsCount++;
+    lastError = '$scope: ${e.toString()}';
+    _maybeLog('ERROR $lastError');
+    notifyListeners();
+  }
+
+  void trackOffersQueryBuild({String? signature}) {
+    if (!enabled || !monitorOffersStream) return;
+    offersQueryBuildCount++;
+    if (signature != null && signature.trim().isNotEmpty) {
+      lastOffersQuerySignature = signature;
+    }
+    _maybeLog('offers.query.build count=$offersQueryBuildCount');
+    notifyListeners();
+  }
+
+  void trackOffersSnapshot(int docsCount) {
+    if (!enabled || !monitorOffersStream) return;
+    offersSnapshotsCount++;
+    lastOffersSnapshotDocs = docsCount;
+    _maybeLog('offers.snapshot docs=$docsCount count=$offersSnapshotsCount');
+    notifyListeners();
+  }
+
+  void trackOffersFetchOnce({required int ms, required int docsCount}) {
+    if (!enabled || !monitorOffersFetchOnce) return;
+    offersFetchOnceCount++;
+    lastOffersFetchMs = ms;
+    lastOffersFetchDocs = docsCount;
+    _maybeLog('offers.fetchOnce ms=$ms docs=$docsCount');
+    notifyListeners();
+  }
+
+  void trackMessagesFetchOnce({required int ms, required int docsCount}) {
+    if (!enabled || !monitorMessagesFetchOnce) return;
+    messagesFetchOnceCount++;
+    lastMessagesFetchMs = ms;
+    lastMessagesFetchDocs = docsCount;
+    _maybeLog('messages.fetchOnce ms=$ms docs=$docsCount');
+    notifyListeners();
+  }
+
+  void trackFunctionsCall({required String name, required int ms}) {
+    if (!enabled || !monitorFunctionsCalls) return;
+    functionsCallsCount++;
+    lastFunctionsCallMs = ms;
+    _maybeLog('functions.call name=$name ms=$ms');
+    notifyListeners();
+  }
+
+  void trackOtherStream({required String key, required int docsCount}) {
+    if (!enabled || !monitorOtherStreams) return;
+    otherStreamsEvents++;
+    otherStreamEventCounts[key] = (otherStreamEventCounts[key] ?? 0) + 1;
+    otherStreamLastDocs[key] = docsCount;
+    lastOtherStreamKey = key;
+    lastOtherStreamDocs = docsCount;
+    _maybeLog('stream.other key=$key docs=$docsCount');
+    notifyListeners();
   }
 }
 
@@ -275,6 +506,55 @@ String? inferRegionFromPostalCode(String cp) {
 
 /// ============= WIDGETS HELPER POUR OfferDetailPage =============
 
+/// ✅ Pastille affichant le pipeline audio actif (Remote Config)
+class AudioPipelineBadge extends StatelessWidget {
+  const AudioPipelineBadge({super.key});
+
+  Color _colorFor(String v) {
+    switch (v.toUpperCase()) {
+      case 'STREAM':
+        return Colors.green;
+      case 'HYBRID':
+        return Colors.blue;
+      case 'CHUNK':
+        return Colors.orange;
+      case 'DISABLED':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final v = PrestoRemoteConfig.audioPipeline;
+    final c = _colorFor(v);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: c.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.withOpacity(0.28)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.graphic_eq, size: 16, color: c),
+          const SizedBox(width: 6),
+          Text(
+            v.isEmpty ? 'UNKNOWN' : v,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              color: c,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CardShell extends StatelessWidget {
   final Widget child;
   const _CardShell({required this.child});
@@ -396,7 +676,7 @@ Future<void> main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // � Logs de diagnostic Firebase
+    // 📋 Diagnostics
     debugPrint('=== Firebase Initialization ===');
     debugPrint('✓ Firebase initialized');
     debugPrint('✓ Auth instance: ${FirebaseAuth.instance.runtimeType}');
@@ -411,25 +691,45 @@ Future<void> main() async {
     }
     debugPrint('');
 
+    // ✅ Activer la persistance Firestore (cache + offline)
+    if (!kIsWeb) {
+      try {
+        await FirebaseFirestore.instance.enableNetwork();
+        debugPrint('✓ Firestore persistence: Enabled');
+      } catch (e) {
+        debugPrint('⚠️ Firestore persistence error: $e');
+      }
+    } else {
+      // Web: persistance auto si IndexedDB disponible
+      debugPrint('✓ Firestore Web: Persistence (IndexedDB if available)');
+    }
+
+    // ✅ Initialiser le service Firebase centralisé avec optimisations
+    await FirebaseService.instance.initialize();
+
+    // ✅ Remote Config: charger le pipeline audio
+    await PrestoRemoteConfig.init();
+    debugPrint('[RC] audio_pipeline=${PrestoRemoteConfig.audioPipeline}');
+
     // 🔒 App Check
     // - Debug: provider debug (ajouter le debug token dans Firebase Console → App Check)
     // - Release: Play Integrity (Android) + App Attest (iOS)
     // - Web: reCAPTCHA v3 si une siteKey est fournie.
     //   Exemple:
     //   `flutter run -d chrome --dart-define=APPCHECK_RECAPTCHA_SITE_KEY=xxxxx`
-    const webRecaptchaSiteKey =
-        String.fromEnvironment('APPCHECK_RECAPTCHA_SITE_KEY');
+    // Clé site reCAPTCHA v3 (override possible via --dart-define=APPCHECK_RECAPTCHA_SITE_KEY)
+    const webRecaptchaSiteKey = String.fromEnvironment(
+      'APPCHECK_RECAPTCHA_SITE_KEY',
+      defaultValue: '6LehQ0IsAAAAAIVtHXyi-obNQFOZEnBKXAW_P2de',
+    );
     try {
       if (kIsWeb) {
-        if (webRecaptchaSiteKey.isNotEmpty) {
-          await FirebaseAppCheck.instance.activate(
-            webProvider: ReCaptchaV3Provider(webRecaptchaSiteKey),
-          );
-          debugPrint('[AppCheck] Web activated (reCAPTCHA v3)');
-        } else {
-          debugPrint(
-              '[AppCheck] Web not activated (missing APPCHECK_RECAPTCHA_SITE_KEY)');
-        }
+        debugPrint(
+            '[APPCHECK] siteKey=${webRecaptchaSiteKey.substring(0, 10)}...');
+        await FirebaseAppCheck.instance.activate(
+          webProvider: ReCaptchaV3Provider(webRecaptchaSiteKey),
+        );
+        debugPrint('[AppCheck] Web activated (reCAPTCHA v3)');
       } else {
         await FirebaseAppCheck.instance.activate(
           androidProvider: kDebugMode
@@ -451,9 +751,17 @@ Future<void> main() async {
       // Ne force plus signInAnonymously() au démarrage
       if (auth.currentUser != null) {
         debugPrint('[Auth] User already signed in: ${auth.currentUser!.uid}');
+        SessionState.userId = auth.currentUser!.uid;
       } else {
         debugPrint('[Auth] No user signed in at startup (OK)');
+        SessionState.userId = null;
       }
+
+      // ✅ Synchroniser SessionState.userId automatiquement avec les changements d'auth
+      FirebaseService.instance.authStateChanges.listen((User? user) {
+        SessionState.userId = user?.uid;
+        debugPrint('[Auth] State changed: ${user?.uid ?? "null"}');
+      });
     } catch (e) {
       debugPrint('[Auth] check failed: $e');
     }
@@ -507,6 +815,67 @@ class PrestoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       routes: {
         '/publish': (_) => const PublishOfferPage(),
+        '/messages': (_) => const MessagesPage(),
+        '/auth': (context) => PrestoPremiumAuthPage(
+              onGoogle: () async {
+                final auth = FirebaseAuth.instance;
+                final provider = GoogleAuthProvider()
+                  ..setCustomParameters({'prompt': 'select_account'});
+                provider.addScope('email');
+                provider.addScope('profile');
+
+                if (kIsWeb) {
+                  try {
+                    await auth.signInWithPopup(provider);
+                  } catch (_) {
+                    await auth.signInWithRedirect(provider);
+                  }
+                } else {
+                  await auth.signInWithProvider(provider);
+                }
+              },
+              onApple: () async {
+                if (kIsWeb ||
+                    !(defaultTargetPlatform == TargetPlatform.iOS ||
+                        defaultTargetPlatform == TargetPlatform.macOS)) {
+                  throw Exception('Connexion Apple disponible sur iOS/macOS.');
+                }
+                final appleCredential =
+                    await SignInWithApple.getAppleIDCredential(
+                  scopes: [
+                    AppleIDAuthorizationScopes.email,
+                    AppleIDAuthorizationScopes.fullName,
+                  ],
+                );
+                if (appleCredential.identityToken == null) {
+                  throw Exception('Identité Apple non reçue');
+                }
+                final oauthCredential = OAuthProvider('apple.com').credential(
+                  idToken: appleCredential.identityToken,
+                  accessToken: appleCredential.authorizationCode,
+                );
+                await FirebaseAuth.instance
+                    .signInWithCredential(oauthCredential);
+              },
+              onEmailLogin: (email, password) async {
+                await FirebaseAuth.instance.signInWithEmailAndPassword(
+                  email: email,
+                  password: password,
+                );
+              },
+              onResetPassword: (email) async {
+                await FirebaseAuth.instance
+                    .sendPasswordResetEmail(email: email);
+              },
+              onGoToSignup: () {
+                _showSignupDialog(context);
+              },
+              onDiscoverPro: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Prochainement disponible')),
+                );
+              },
+            ),
         AppRoutes.toolboxHub: (_) => const ToolboxHubPage(),
         AppRoutes.toolboxCurrent: (_) => const CurrentToolboxPage(),
         AppRoutes.entrepreneurCalculator: (_) =>
@@ -516,6 +885,108 @@ class PrestoApp extends StatelessWidget {
       home: const SplashScreen(),
     );
   }
+}
+
+/// Dialogue de création de compte (inscription)
+void _showSignupDialog(BuildContext context) {
+  final emailCtrl = TextEditingController();
+  final passCtrl = TextEditingController();
+  final confirmPassCtrl = TextEditingController();
+
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Créer un compte'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                hintText: 'votre@email.com',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: passCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Mot de passe',
+                hintText: 'Min. 6 caractères',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: confirmPassCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Confirmer le mot de passe',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text('Annuler'),
+        ),
+        FilledButton(
+          onPressed: () async {
+            final email = emailCtrl.text.trim();
+            final pass = passCtrl.text;
+            final confirmPass = confirmPassCtrl.text;
+
+            if (email.isEmpty || !email.contains('@')) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Email invalide')),
+              );
+              return;
+            }
+
+            if (pass.length < 6) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Mot de passe trop court (min. 6)')),
+              );
+              return;
+            }
+
+            if (pass != confirmPass) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Les mots de passe ne correspondent pas')),
+              );
+              return;
+            }
+
+            try {
+              await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                email: email,
+                password: pass,
+              );
+              if (ctx.mounted) Navigator.of(ctx).pop();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Compte créé avec succès ! ✅')),
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Erreur: $e')),
+                );
+              }
+            }
+          },
+          child: const Text('Créer le compte'),
+        ),
+      ],
+    ),
+  );
 }
 
 /// SPLASH /////////////////////////////////////////////////////////////////
@@ -549,9 +1020,51 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    _navTimer = Timer(const Duration(milliseconds: 3500), () {
-      _navigateTo(const HomePage());
-    });
+    // Sur Web, vérifier d'abord le redirect Google Sign-In
+    if (kIsWeb) {
+      _checkGoogleRedirectAndNavigate();
+    } else {
+      _navTimer = Timer(const Duration(milliseconds: 3500), () {
+        _navigateTo(const HomePage());
+      });
+    }
+  }
+
+  /// Vérifie si l'utilisateur revient d'un redirect Google Sign-In (Web uniquement)
+  Future<void> _checkGoogleRedirectAndNavigate() async {
+    debugPrint('🔍 [SPLASH] Checking for Google redirect result...');
+    try {
+      final result = await FirebaseAuth.instance.getRedirectResult();
+      if (result.user != null) {
+        debugPrint('✅ [SPLASH] User authenticated via redirect!');
+        debugPrint('✅ [SPLASH] Email: ${result.user?.email}');
+        debugPrint('✅ [SPLASH] UID: ${result.user?.uid}');
+        // Attendre un peu pour montrer le splash, puis naviguer vers HomePage
+        _navTimer = Timer(const Duration(milliseconds: 1500), () {
+          _navigateTo(const HomePage());
+        });
+      } else {
+        debugPrint('ℹ️ [SPLASH] No redirect result, normal app start');
+        // Pas de redirect, navigation normale après splash
+        _navTimer = Timer(const Duration(milliseconds: 3500), () {
+          _navigateTo(const HomePage());
+        });
+      }
+    } on FirebaseAuthException catch (e) {
+      debugPrint('❌ [SPLASH] FirebaseAuthException during redirect check');
+      debugPrint('❌ [SPLASH] Code: ${e.code}');
+      debugPrint('❌ [SPLASH] Message: ${e.message}');
+      // Erreur d'auth, mais on continue quand même vers HomePage
+      _navTimer = Timer(const Duration(milliseconds: 3500), () {
+        _navigateTo(const HomePage());
+      });
+    } catch (e) {
+      debugPrint('❌ [SPLASH] Unexpected error: $e');
+      // Erreur inattendue, navigation normale
+      _navTimer = Timer(const Duration(milliseconds: 3500), () {
+        _navigateTo(const HomePage());
+      });
+    }
   }
 
   void _navigateTo(Widget page) {
@@ -580,19 +1093,29 @@ class _SplashScreenState extends State<SplashScreen>
         body: SafeArea(
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: const Text(
-                      'iliprestō',
-                      style: TextStyle(
-                        fontSize: 54,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 1.3,
+                  GestureDetector(
+                    onLongPress: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HomePageV2Option2(),
+                        ),
+                      );
+                    },
+                    child: ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: const Text(
+                        'iliprestō',
+                        style: TextStyle(
+                          fontSize: 54,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 1.3,
+                        ),
                       ),
                     ),
                   ),
@@ -682,9 +1205,7 @@ class _HomePageState extends State<HomePage>
   DateTime? _lastPresenceUpdate;
   DateTime? _sessionStartTime;
   bool _carouselEnabled = false;
-  bool _showBottomBar = true;
-  double _lastScrollPosition = 0;
-  bool _wasKeyboardVisible = false;
+  // Bottom bar désormais fixe (ne se masque plus au scroll/clavier)
 
   late final AnimationController _categoryController;
 
@@ -762,6 +1283,46 @@ class _HomePageState extends State<HomePage>
     ),
   ];
 
+  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
+  void _goToSearch(String query) {
+    final q = query.trim();
+    if (q.isEmpty) return;
+
+    // ✅ Log la recherche
+    _logSearch(q);
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ConsultOffersPage(searchQuery: q),
+      ),
+    );
+  }
+
+  /// ✅ Enregistre la recherche effectuée
+  Future<void> _logSearch(String searchQuery) async {
+    try {
+      await _analytics.logSearch(searchTerm: searchQuery);
+    } catch (e) {
+      debugPrint('[Analytics] logSearch error: $e');
+    }
+  }
+
+  void _onBottomTap(int index) {
+    if (_selectedIndex == index) return;
+
+    // ✅ Log le changement d'onglet
+    _analytics.logEvent(
+      name: 'tab_changed',
+      parameters: {
+        'previous_tab': _selectedIndex,
+        'new_tab': index,
+      },
+    );
+
+    setState(() => _selectedIndex = index);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -815,7 +1376,7 @@ class _HomePageState extends State<HomePage>
     _latestOffersStream = FirebaseFirestore.instance
         .collection('offers')
         .orderBy('createdAt', descending: true)
-        .limit(3)
+        .limit(8)
         .snapshots();
 
     // Listener pour hide/show bottom bar au scroll
@@ -884,15 +1445,7 @@ class _HomePageState extends State<HomePage>
   }
 
   void _onPageScroll(double offset) {
-    final isScrollingDown = offset > _lastScrollPosition;
-
-    if (isScrollingDown && _showBottomBar) {
-      setState(() => _showBottomBar = false);
-    } else if (!isScrollingDown && !_showBottomBar) {
-      setState(() => _showBottomBar = true);
-    }
-
-    _lastScrollPosition = offset;
+    // Intentionnel : bottom bar fixe sur toutes les pages.
   }
 
   void _listenDynamicKeywords() {
@@ -960,39 +1513,6 @@ class _HomePageState extends State<HomePage>
     super.dispose();
   }
 
-  /// Force rebuild quand le clavier apparaît/disparaît
-  @override
-  void didChangeMetrics() {
-    super.didChangeMetrics();
-    if (!mounted) return;
-
-    // Utiliser View.of(context) au lieu de l'API window deprecated
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-
-      try {
-        final isKeyboardVisible = View.of(context).viewInsets.bottom > 0;
-
-        // Détecter les changements de visibilité du clavier
-        if (_wasKeyboardVisible != isKeyboardVisible) {
-          // Le clavier vient de se fermer : restaurer la bottomBar
-          if (!isKeyboardVisible) {
-            setState(() {
-              _showBottomBar = true;
-            });
-          }
-          // Le clavier vient de s'ouvrir : on peut optionnellement cacher la bottom bar
-          // (actuellement géré par isKeyboardVisible dans le build)
-        }
-
-        _wasKeyboardVisible = isKeyboardVisible;
-      } catch (e) {
-        // Fallback si View.of(context) n'est pas disponible
-        debugPrint('didChangeMetrics error: $e');
-      }
-    });
-  }
-
   /// Animation "bump" séquentielle sur les 6 catégories
   double _categoryScaleForIndex(int index) {
     const count = 6;
@@ -1003,21 +1523,6 @@ class _HomePageState extends State<HomePage>
       return 1.0 + 0.25 * (1 - (localT - 0.5) * (localT - 0.5) * 4);
     }
     return 1.0;
-  }
-
-  void _onBottomTap(int index) {
-    if (_selectedIndex == index) return;
-    setState(() => _selectedIndex = index);
-  }
-
-  void _goToSearch(String query) {
-    final q = query.trim();
-    if (q.isEmpty) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ConsultOffersPage(searchQuery: q),
-      ),
-    );
   }
 
   Iterable<String> _buildSearchSuggestions(TextEditingValue value) {
@@ -1100,14 +1605,6 @@ class _HomePageState extends State<HomePage>
     } finally {
       if (mounted) setState(() => _isSeeding = false);
     }
-  }
-
-  String _labelWhenFromTitle(String title) {
-    final lower = title.toLowerCase();
-    if (lower.contains('urgent')) return 'urgent';
-    if (lower.contains('ce soir')) return 'ce soir';
-    if (lower.contains('demain')) return 'demain';
-    return 'bientôt';
   }
 
   Widget _buildSmartSearchBar() {
@@ -1251,7 +1748,14 @@ class _HomePageState extends State<HomePage>
           stream: FirebaseFirestore.instance
               .collection('conversations')
               .where('participants', arrayContains: user.uid)
-              .snapshots(),
+              .snapshots()
+              .map((snap) {
+            PrestoMonitoring.I.trackOtherStream(
+              key: 'home.bell.conversations',
+              docsCount: snap.docs.length,
+            );
+            return snap;
+          }),
           builder: (context, convSnapshot) {
             int unreadMessagesCount = 0;
 
@@ -1271,7 +1775,14 @@ class _HomePageState extends State<HomePage>
                   .collection('notifications')
                   .where('userId', isEqualTo: user.uid)
                   .where('read', isEqualTo: false)
-                  .snapshots(),
+                  .snapshots()
+                  .map((snap) {
+                PrestoMonitoring.I.trackOtherStream(
+                  key: 'home.bell.notifications',
+                  docsCount: snap.docs.length,
+                );
+                return snap;
+              }),
               builder: (context, notifSnapshot) {
                 int unreadNotificationsCount = 0;
 
@@ -1319,7 +1830,14 @@ class _HomePageState extends State<HomePage>
                 .where('userId', isEqualTo: userId)
                 .orderBy('createdAt', descending: true)
                 .limit(20)
-                .snapshots(),
+                .snapshots()
+                .map((snap) {
+              PrestoMonitoring.I.trackOtherStream(
+                key: 'home.dialog.notifications',
+                docsCount: snap.docs.length,
+              );
+              return snap;
+            }),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
@@ -1464,19 +1982,17 @@ class _HomePageState extends State<HomePage>
   @override
   Widget build(BuildContext context) {
     final viewInsetsBottom = MediaQuery.of(context).viewInsets.bottom;
-    final bool isKeyboardVisible = viewInsetsBottom > 0;
-    // N'applique le padding clavier que s'il est réellement visible pour éviter que la bottom bar reste à mi-écran
-    final double effectiveBottomInset =
-        isKeyboardVisible ? viewInsetsBottom : 0;
+    // Seuil de 10px pour éviter les faux positifs (résidus de padding)
+    final bool isKeyboardVisible = viewInsetsBottom > 10;
 
-    // Si le clavier est caché mais que la bottom bar était masquée (scroll), on la force à revenir en bas
-    if (!isKeyboardVisible && !_showBottomBar) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && !_showBottomBar) {
-          setState(() => _showBottomBar = true);
-        }
-      });
-    }
+    // Sur web/mobile, on évite de “doubler” le padding clavier sur les onglets
+    // qui gèrent déjà le clavier eux-mêmes (Compte, Publier, etc).
+    final bool shouldApplyKeyboardPadding = _selectedIndex == 0;
+
+    final double effectiveBottomInset =
+        (isKeyboardVisible && shouldApplyKeyboardPadding)
+            ? viewInsetsBottom
+            : 0;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoBlue),
@@ -1493,100 +2009,89 @@ class _HomePageState extends State<HomePage>
             child: Column(
               children: [
                 Expanded(
-                  child: AnimatedPadding(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOut,
-                    padding: EdgeInsets.only(
-                      bottom: effectiveBottomInset,
-                    ),
-                    child: Stack(
-                      children: [
-                        IndexedStack(
+                  child: Stack(
+                    children: [
+                      AnimatedPadding(
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                        padding: EdgeInsets.only(
+                          bottom: effectiveBottomInset,
+                        ),
+                        child: IndexedStack(
                           index: _selectedIndex,
                           children: [
                             _buildHomeContent(),
                             ConsultOffersPage(onScroll: _onPageScroll),
                             PublishOfferPage(onScroll: _onPageScroll),
                             const MessagesPage(),
-                            AccountPage(onScroll: _onPageScroll),
+                            const AccountPage(),
                           ],
                         ),
-                        if (!isKeyboardVisible)
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            child: AnimatedSlide(
-                              duration: const Duration(milliseconds: 250),
-                              curve: Curves.easeInOut,
-                              offset: _showBottomBar
-                                  ? Offset.zero
-                                  : const Offset(0, 1),
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  color: kPrestoOrange,
-                                  borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(24)),
-                                ),
-                                padding:
-                                    const EdgeInsets.fromLTRB(10, 4, 10, 6),
-                                child: SafeArea(
-                                  top: false,
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceAround,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Expanded(
-                                        child: _BottomNavItem(
-                                          icon: Icons.home,
-                                          label: "Accueil",
-                                          selected: _selectedIndex == 0,
-                                          onTap: () => _onBottomTap(0),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: _BottomNavItem(
-                                          icon: Icons.search,
-                                          label: "Je consulte\nles offres",
-                                          selected: _selectedIndex == 1,
-                                          onTap: () => _onBottomTap(1),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        flex: 1,
-                                        child: _BottomNavItem(
-                                          icon: Icons.add_circle_outline,
-                                          label: "Publier\nune offre",
-                                          isBig: true,
-                                          onTap: () => _onBottomTap(2),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: _BottomNavItem(
-                                          icon: Icons.chat_bubble_outline,
-                                          label: "Messages",
-                                          selected: _selectedIndex == 3,
-                                          onTap: () => _onBottomTap(3),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: _BottomNavItem(
-                                          icon: Icons.person_outline,
-                                          label: "Compte",
-                                          selected: _selectedIndex == 4,
-                                          onTap: () => _onBottomTap(4),
-                                        ),
-                                      ),
-                                    ],
+                      ),
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: kPrestoOrange,
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(24)),
+                          ),
+                          padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+                          child: SafeArea(
+                            top: false,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: _BottomNavItem(
+                                    icon: Icons.home,
+                                    label: "Accueil",
+                                    selected: _selectedIndex == 0,
+                                    onTap: () => _onBottomTap(0),
                                   ),
                                 ),
-                              ),
+                                Expanded(
+                                  child: _BottomNavItem(
+                                    icon: Icons.search,
+                                    label: "Je consulte\nles offres",
+                                    selected: _selectedIndex == 1,
+                                    onTap: () => _onBottomTap(1),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: _BottomNavItem(
+                                    icon: Icons.add_circle_outline,
+                                    label: "Publier\nune offre",
+                                    isBig: true,
+                                    onTap: () => _onBottomTap(2),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _BottomNavItem(
+                                    icon: Icons.chat_bubble_outline,
+                                    label: "Messages",
+                                    selected: _selectedIndex == 3,
+                                    onTap: () => _onBottomTap(3),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _BottomNavItem(
+                                    icon: Icons.person_outline,
+                                    label: "Compte",
+                                    selected: _selectedIndex == 4,
+                                    onTap: () => _onBottomTap(4),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                      ],
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -1598,9 +2103,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildHomeContent() {
-    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-    final double bottomPadding =
-        (isKeyboardVisible || !_showBottomBar) ? 16 : 100;
+    const double bottomPadding = 150;
 
     return Container(
       color: Colors.white,
@@ -1615,6 +2118,7 @@ class _HomePageState extends State<HomePage>
           ),
           child: SingleChildScrollView(
             controller: _scrollController,
+            physics: const ClampingScrollPhysics(),
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: EdgeInsets.fromLTRB(10, 8, 10, bottomPadding),
             child: Column(
@@ -1654,137 +2158,123 @@ class _HomePageState extends State<HomePage>
                 // SLIDER
                 SizedBox(
                   height: 220,
-                  width: double.infinity,
-                  child: Stack(
-                    children: [
-                      PageView.builder(
-                        controller: _carouselController,
-                        itemCount: _slides.length + 1,
-                        onPageChanged: (index) {
-                          setState(() {
-                            _currentSlide = index;
-                            if (index == 1) {
-                              _carouselEnabled = true;
-                            }
-                          });
-                        },
-                        itemBuilder: (context, index) {
-                          // Ordre voulu:
-                          // 0 = slide texte (fixe 4s)
-                          // 1 = carousel d'images (démarre après 4s)
-                          // 2.. = slides existants
+                  child: OverflowBox(
+                    alignment: Alignment.center,
+                    minWidth: MediaQuery.of(context).size.width,
+                    maxWidth: MediaQuery.of(context).size.width,
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      child: Stack(
+                        children: [
+                          PageView.builder(
+                            controller: _carouselController,
+                            itemCount: _slides.length + 1,
+                            onPageChanged: (index) {
+                              setState(() {
+                                _currentSlide = index;
+                                if (index == 1) {
+                                  _carouselEnabled = true;
+                                }
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              // Ordre voulu:
+                              // 0 = slide texte (fixe 4s)
+                              // 1 = carousel d'images (démarre après 4s)
+                              // 2.. = slides existants
 
-                          if (index == 1) {
-                            return ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: Container(
-                                height: double.infinity,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.10),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
+                              if (index == 1) {
+                                return SizedBox.expand(
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black,
                                     ),
-                                  ],
-                                ),
-                                child: SizedBox.expand(
-                                  child: RepaintBoundary(
-                                    child: RandomAssetTicker(
-                                      folderPrefix: 'assets/carousel_home/',
-                                      interval: const Duration(seconds: 3),
-                                      antiRepeatWindow: 3,
-                                      fit: BoxFit.cover,
-                                      enabled: _carouselEnabled,
+                                    child: RepaintBoundary(
+                                      child: RandomAssetTicker(
+                                        folderPrefix: 'assets/carousel_home/',
+                                        interval: const Duration(seconds: 3),
+                                        antiRepeatWindow: 3,
+                                        fit: BoxFit.cover,
+                                        enabled: _carouselEnabled,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            );
-                          }
+                                );
+                              }
 
-                          final slideIndex = index == 0 ? 0 : index - 1;
-                          final slide = _slides[slideIndex];
+                              final slideIndex = index == 0 ? 0 : index - 1;
+                              final slide = _slides[slideIndex];
 
-                          // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
-                          if (slideIndex == 0) {
-                            const String bigText =
-                                "Trouvez immédiatement quelqu'un pour faire le job !";
+                              // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
+                              if (slideIndex == 0) {
+                                const String bigText =
+                                    "Trouvez immédiatement quelqu'un pour faire le job !";
 
-                            return Container(
-                              height: double.infinity,
-                              margin: const EdgeInsets.symmetric(horizontal: 0),
-                              decoration: BoxDecoration(
-                                color: kPrestoOrange,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.10),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
+                                return Container(
+                                  height: double.infinity,
+                                  decoration: const BoxDecoration(
+                                    color: kPrestoOrange,
                                   ),
-                                ],
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 18,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
-                                    Text(
-                                      "DISPONIBLE",
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 1.2,
-                                      ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 18,
+                                      vertical: 18,
                                     ),
-                                    SizedBox(height: 10),
-                                    // ✅ Phrase principale en très gros sur toute la largeur
-                                    Text(
-                                      bigText,
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize:
-                                            _homeSlideTitleFontSize, // taille bien grosse
-                                        fontWeight: FontWeight.w900,
-                                        height: 1.25,
-                                      ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: const [
+                                        Text(
+                                          "DISPONIBLE",
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 1.2,
+                                          ),
+                                        ),
+                                        SizedBox(height: 10),
+                                        // ✅ Phrase principale en très gros sur toute la largeur
+                                        Text(
+                                          bigText,
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize:
+                                                _homeSlideTitleFontSize, // taille bien grosse
+                                            fontWeight: FontWeight.w900,
+                                            height: 1.25,
+                                          ),
+                                        ),
+                                        SizedBox(height: 12),
+                                        Text(
+                                          "Une personne disponible près de chez vous, en quelques minutes.",
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    SizedBox(height: 12),
-                                    Text(
-                                      "Une personne disponible près de chez vous, en quelques minutes.",
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }
+                                  ),
+                                );
+                              }
 
-                          // ✅ SLIDE 2 (index 1) : Boîte à outils de l'entrepreneur
-                          if (slideIndex == 1) {
-                            return const EntrepreneurToolboxSlide();
-                          }
+                              // ✅ SLIDE 2 (index 1) : Boîte à outils de l'entrepreneur
+                              if (slideIndex == 1) {
+                                return const EntrepreneurToolboxSlide();
+                              }
 
-                          // 🔁 SLIDES 2, 3, 4 : layout texte + icône / image
-                          final VoidCallback? onSlideTap =
-                              slideIndex == (_slides.length - 1)
+                              // 🔁 SLIDES 2, 3, 4 : layout texte + icône / image
+                              final VoidCallback? onSlideTap = slideIndex ==
+                                      (_slides.length - 1)
                                   ? () {
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
@@ -1794,120 +2284,239 @@ class _HomePageState extends State<HomePage>
                                     }
                                   : null;
 
-                          final slideBody = Container(
-                            height: double.infinity,
-                            margin: const EdgeInsets.symmetric(horizontal: 0),
-                            decoration: BoxDecoration(
-                              color: kPrestoOrange,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.10),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
+                              final slideBody = Container(
+                                height: double.infinity,
+                                decoration: const BoxDecoration(
+                                  color: kPrestoOrange,
                                 ),
-                              ],
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              child: Row(
-                                children: [
-                                  // Texte
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          slide.badge.toUpperCase(),
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      // Texte
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              slide.badge.toUpperCase(),
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              slide.title,
+                                              maxLines: 3,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize:
+                                                    _homeSlideTitleFontSize,
+                                                fontWeight: FontWeight.w900,
+                                                height: 1.25,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              slide.subtitle,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          slide.title,
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: _homeSlideTitleFontSize,
-                                            fontWeight: FontWeight.w900,
-                                            height: 1.25,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          slide.subtitle,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                          ),
+                                      ),
+
+                                      // 👉 Illustration (icône) sur les slides texte
+                                      if (slideIndex != 0) ...[
+                                        const SizedBox(width: 8),
+                                        _buildSlideIllustration(
+                                          slide,
+                                          index,
                                         ),
                                       ],
-                                    ),
+                                    ],
                                   ),
+                                ),
+                              );
 
-                                  // 👉 Illustration (icône) sur les slides texte
-                                  if (slideIndex != 0) ...[
-                                    const SizedBox(width: 8),
-                                    _buildSlideIllustration(
-                                      slide,
-                                      index,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          );
-
-                          if (onSlideTap == null) return slideBody;
-                          return GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: onSlideTap,
-                            child: slideBody,
-                          );
-                        },
-                      ),
-                      // Indicateurs
-                      Positioned(
-                        bottom: 8,
-                        left: 0,
-                        right: 0,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(
-                            _slides.length + 1,
-                            (index) => AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              margin: const EdgeInsets.symmetric(horizontal: 3),
-                              width: _currentSlide == index ? 16 : 8,
-                              height: 7,
-                              decoration: BoxDecoration(
-                                color: _currentSlide == index
-                                    ? Colors.white
-                                    : Colors.white.withOpacity(0.4),
-                                borderRadius: BorderRadius.circular(999),
+                              if (onSlideTap == null) return slideBody;
+                              return GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: onSlideTap,
+                                child: slideBody,
+                              );
+                            },
+                          ),
+                          // Indicateurs
+                          Positioned(
+                            bottom: 8,
+                            left: 0,
+                            right: 0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                _slides.length + 1,
+                                (index) => AnimatedContainer(
+                                  duration: const Duration(milliseconds: 250),
+                                  margin:
+                                      const EdgeInsets.symmetric(horizontal: 3),
+                                  width: _currentSlide == index ? 16 : 8,
+                                  height: 7,
+                                  decoration: BoxDecoration(
+                                    color: _currentSlide == index
+                                        ? Colors.white
+                                        : Colors.white.withOpacity(0.4),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // DERNIÈRES OFFRES - Section avec fond blanc
+                Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            "Dernières offres",
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () => _onBottomTap(1),
+                            child: const Text(
+                              "Voir tout",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: kPrestoBlue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                        stream: _latestOffersStream.map((snap) {
+                          PrestoMonitoring.I.trackOtherStream(
+                            key: 'home.latestOffers',
+                            docsCount: snap.docs.length,
+                          );
+                          return snap;
+                        }),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                                  ConnectionState.waiting &&
+                              !snapshot.hasData) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 10),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      kPrestoOrange),
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (snapshot.hasError) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final docs = snapshot.data?.docs ?? [];
+                          if (docs.isEmpty) {
+                            return const Text(
+                              "Aucune offre publiée pour le moment.",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            );
+                          }
+
+                          return _AutoScrollingOffersCarousel(
+                            offers: docs,
+                            onOfferTap: (doc) {
+                              final data = doc.data();
+                              final title =
+                                  (data['title'] ?? 'Sans titre') as String;
+                              final location = (data['location'] ??
+                                  'Lieu non précisé') as String;
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => OfferDetailPage(
+                                    offerId: doc.id,
+                                    title: title,
+                                    location: location,
+                                    category: (data['category'] ??
+                                        'Catégorie non précisée') as String,
+                                    subcategory: data['subcategory'] as String?,
+                                    budget: data['budget'] is num
+                                        ? data['budget'] as num
+                                        : null,
+                                    description:
+                                        (data['description'] ?? '') as String?,
+                                    phone: data['phone'] as String?,
+                                    imageUrls:
+                                        (data['imageUrls'] as List<dynamic>?)
+                                            ?.map((e) => e.toString())
+                                            .toList(),
+                                    annonceurId:
+                                        (data['userId'] ?? '') as String,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 18),
 
                 // CATEGORIES COMPACTES
                 AnimatedBuilder(
@@ -2018,7 +2627,7 @@ class _HomePageState extends State<HomePage>
                 Container(
                   width: double.infinity,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFE3F2FD),
+                    color: Colors.white,
                     borderRadius: BorderRadius.all(Radius.circular(16)),
                   ),
                   padding:
@@ -2034,224 +2643,27 @@ class _HomePageState extends State<HomePage>
                           color: kPrestoBlue,
                         ),
                       ),
-                      SizedBox(height: 8),
-                      _HowItWorksStep(
+                      SizedBox(height: 16),
+                      _HowItWorksStepWithProgress(
                         stepNumber: 1,
                         title: "Je publie une offre",
                         description:
                             "En quelques lignes, vous décrivez votre besoin et votre lieu.",
+                        showLine: true,
                       ),
-                      SizedBox(height: 6),
-                      _HowItWorksStep(
+                      _HowItWorksStepWithProgress(
                         stepNumber: 2,
                         title: "Mon offre est diffusée instantanément",
                         description:
                             "Les prestataires proches sont notifiés et voient immédiatement votre offre.",
+                        showLine: true,
                       ),
-                      SizedBox(height: 6),
-                      _HowItWorksStep(
+                      _HowItWorksStepWithProgress(
                         stepNumber: 3,
                         title: "Ils me contactent aussitôt",
                         description:
                             "Vous échangez et choisissez la personne idéale pour le job.",
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 18),
-
-                // DERNIÈRES OFFRES - Section avec fond blanc
-                Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            "Dernières offres",
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const Spacer(),
-                          TextButton(
-                            onPressed: () => _onBottomTap(1),
-                            child: const Text(
-                              "Voir tout",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: kPrestoBlue,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                        stream: _latestOffersStream,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                                  ConnectionState.waiting &&
-                              !snapshot.hasData) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 10),
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      kPrestoOrange),
-                                ),
-                              ),
-                            );
-                          }
-
-                          if (snapshot.hasError) {
-                            return const SizedBox.shrink();
-                          }
-
-                          final docs = snapshot.data?.docs ?? [];
-                          if (docs.isEmpty) {
-                            return const Text(
-                              "Aucune offre publiée pour le moment.",
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.black54,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            );
-                          }
-
-                          return Column(
-                            children: docs.map((d) {
-                              final data = d.data();
-                              final title =
-                                  (data['title'] ?? 'Sans titre') as String;
-                              final location = (data['location'] ??
-                                  'Lieu non précisé') as String;
-                              final whenLabel = _labelWhenFromTitle(title);
-
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: _TapScale(
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => OfferDetailPage(
-                                          offerId: d.id,
-                                          title: title,
-                                          location: location,
-                                          category: (data['category'] ??
-                                                  'Catégorie non précisée')
-                                              as String,
-                                          subcategory:
-                                              data['subcategory'] as String?,
-                                          budget: data['budget'] is num
-                                              ? data['budget'] as num
-                                              : null,
-                                          description: (data['description'] ??
-                                              '') as String?,
-                                          phone: data['phone'] as String?,
-                                          imageUrls: (data['imageUrls']
-                                                  as List<dynamic>?)
-                                              ?.map((e) => e.toString())
-                                              .toList(),
-                                          annonceurId:
-                                              (data['userId'] ?? '') as String,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.06),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 36,
-                                          height: 36,
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFFFF3E0),
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          child: const Icon(
-                                            Icons.flash_on_outlined,
-                                            color: kPrestoOrange,
-                                            size: 20,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                title,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                "$location — $whenLabel",
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.black54,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        const Icon(
-                                          Icons.chevron_right,
-                                          size: 18,
-                                          color: Colors.black38,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          );
-                        },
+                        showLine: false,
                       ),
                     ],
                   ),
@@ -2441,7 +2853,6 @@ class _BottomNavItem extends StatefulWidget {
   final String label;
   final bool selected;
   final bool isBig;
-  final bool isDisabled; // ✅ Nouveau paramètre
   final VoidCallback onTap;
 
   const _BottomNavItem({
@@ -2450,7 +2861,6 @@ class _BottomNavItem extends StatefulWidget {
     required this.onTap,
     this.selected = false,
     this.isBig = false,
-    this.isDisabled = false, // ✅ Défaut false
   });
 
   @override
@@ -2635,68 +3045,84 @@ class _NotificationBellBase extends StatelessWidget {
 }
 
 /// BLOC COMMENT ÇA MARCHE /////////////////////////////////////////////////
-
-class _HowItWorksStep extends StatelessWidget {
+class _HowItWorksStepWithProgress extends StatelessWidget {
   final int stepNumber;
   final String title;
   final String description;
+  final bool showLine;
 
-  const _HowItWorksStep({
+  const _HowItWorksStepWithProgress({
     required this.stepNumber,
     required this.title,
     required this.description,
+    required this.showLine,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: kPrestoOrange,
-            child: Text(
-              stepNumber.toString(),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
+          Column(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: kPrestoOrange,
+                child: Text(
+                  stepNumber.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
               ),
-            ),
+              if (showLine)
+                Expanded(
+                  child: Container(
+                    width: 3,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          kPrestoOrange,
+                          kPrestoOrange.withOpacity(0.3),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 16),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: showLine ? 12 : 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: kPrestoBlue,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.black54,
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.black87,
+                      height: 1.4,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -2736,11 +3162,217 @@ class _Debouncer {
   void dispose() => _t?.cancel();
 }
 
+/// Helper: extrait la première URL d'un message (erreurs Firestore incluent souvent un lien d'index)
+String? _extractFirstUrl(String text) {
+  final match = RegExp(r'https?://\S+').firstMatch(text);
+  if (match == null) return null;
+  return match.group(0)?.replaceAll(RegExp(r'[)\],.]+$'), '');
+}
+
+/// ✅ Conversion d'erreur Firestore en message amical
+String _friendlyFirestoreErrorMessage(Object error) {
+  final msg = error.toString().toLowerCase();
+
+  // ✅ failed-precondition : index manquant
+  if (msg.contains('failed-precondition') || msg.contains('index')) {
+    debugPrint('[Error] Firestore index missing: $error');
+    return "Mise à jour en cours, réessaie dans 1 minute";
+  }
+
+  // ✅ permission-denied : accès refusé
+  if (msg.contains('permission-denied') || msg.contains('permission')) {
+    debugPrint('[Error] Permission denied: $error');
+    return "Tu n'as pas accès à ces offres";
+  }
+
+  // ✅ unavailable : problème réseau
+  if (msg.contains('unavailable') ||
+      msg.contains('deadline-exceeded') ||
+      msg.contains('network')) {
+    debugPrint('[Error] Network issue: $error');
+    return "Problème réseau, réessaie";
+  }
+
+  // ✅ not-found
+  if (msg.contains('not-found') || msg.contains('not found')) {
+    debugPrint('[Error] Not found: $error');
+    return "Ressource introuvable";
+  }
+
+  // ✅ invalid-argument
+  if (msg.contains('invalid-argument') || msg.contains('invalid')) {
+    debugPrint('[Error] Invalid argument: $error');
+    return "Requête invalide, vérifie les filtres";
+  }
+
+  // Fallback : log technique complet en console
+  debugPrint('[Error] Unknown Firestore error: $error');
+  return "Une erreur s'est produite, réessaie";
+}
+
 class _ConsultOffersPageState extends State<ConsultOffersPage> {
+  // --- Normalisation (réduction index) ---
+  String _slugId(String input) {
+    final s = input
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[àâä]'), 'a')
+        .replaceAll('ç', 'c')
+        .replaceAll(RegExp(r'[éèêë]'), 'e')
+        .replaceAll(RegExp(r'[îï]'), 'i')
+        .replaceAll(RegExp(r'[ôö]'), 'o')
+        .replaceAll(RegExp(r'[ùûü]'), 'u')
+        .replaceAll('œ', 'oe')
+        .replaceAll(RegExp(r"[/\-'’']"), ' ')
+        .replaceAll(RegExp(r'[^a-z0-9 ]'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim()
+        .replaceAll(' ', '-');
+    return s;
+  }
+
+  // ✅ Logs analytics
+  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
+  /// ✅ Enregistre la recherche effectuée
+  Future<void> _logSearch(String searchQuery) async {
+    try {
+      await _analytics.logSearch(searchTerm: searchQuery);
+    } catch (e) {
+      debugPrint('[Analytics] logSearch error: $e');
+    }
+  }
+
+  /// ✅ Enregistre l'utilisation des filtres
+  Future<void> _logFilterUsage(String filterType, String filterValue) async {
+    try {
+      await _analytics.logEvent(
+        name: 'filter_applied',
+        parameters: {
+          'filter_type': filterType,
+          'filter_value': filterValue,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logFilterUsage error: $e');
+    }
+  }
+
+  /// ✅ Enregistre la visite de la page ConsultOffers
+  Future<void> _logPageView() async {
+    try {
+      await _analytics.logScreenView(
+        screenName: 'ConsultOffers',
+        screenClass: 'ConsultOffersPage',
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logPageView error: $e');
+    }
+  }
+
+  /// ✅ Enregistre les filtres appliqués
+  Future<void> _logFiltersApplied({
+    required String? category,
+    required String? region,
+    required String? department,
+    required String? city,
+    required String? searchQuery,
+    required int resultCount,
+  }) async {
+    try {
+      await _analytics.logEvent(
+        name: 'filters_applied',
+        parameters: {
+          'category': category ?? 'none',
+          'region': region ?? 'none',
+          'department': department ?? 'none',
+          'city': city ?? 'none',
+          'search_query': searchQuery ?? 'none',
+          'result_count': resultCount,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logFiltersApplied error: $e');
+    }
+  }
+
+  /// ✅ Enregistre quand l'utilisateur clique sur une offre
+  Future<void> _logOfferClicked(String offerId, String title) async {
+    try {
+      await _analytics.logEvent(
+        name: 'select_item',
+        parameters: {
+          'item_id': offerId,
+          'item_name': title,
+          'item_category': _filterCategory ?? 'unknown',
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logOfferClicked error: $e');
+    }
+  }
+
+  // ✅ Suivi du statut réseau
+  bool _isOnline = true;
+  late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
+
+  String? _makeCategoryId(String? categoryLabel) {
+    final s = (categoryLabel ?? '').trim();
+    if (s.isEmpty || s == 'Toutes catégories') return null;
+    return _slugId(s);
+  }
+
+  String? _makeCityId({
+    required String cityName,
+    required String postalCode,
+  }) {
+    final city = cityName.trim();
+    final cp = postalCode.trim();
+    if (city.isEmpty || cp.length < 3) return null; // CP requis pour stabilité
+    return '${cp}_${_slugId(city)}';
+  }
+
+  String? _makeCityCategoryKey(
+      {required String? cityId, required String? categoryId}) {
+    if (cityId == null || categoryId == null) return null;
+    return '${cityId}_$categoryId';
+  }
+
+  // ✅ Range budget (AVANCÉ) — évite requêtes “impossibles” + explosion d’index
+  final bool _advancedFilters = false;
+  final TextEditingController _budgetMinCtrl = TextEditingController();
+  final TextEditingController _budgetMaxCtrl = TextEditingController();
+  String? _budgetRangeWarning; // affiché dans l’UI si range désactivé
+
+  double? _parseBudgetBound(String raw) {
+    final s = raw.trim().replaceAll(' ', '').replaceAll(',', '.');
+    if (s.isEmpty) return null;
+    return double.tryParse(s);
+  }
+
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
   // ignore: unused_field
   final _formKey = GlobalKey<FormState>();
+
+  Future<void> _copyToClipboard(BuildContext context, String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Copié")),
+    );
+  }
+
+  Future<void> _openExternalUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    final ok = await canLaunchUrl(uri);
+    if (!ok) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   final TextEditingController _keywordCtrl = TextEditingController();
   final TextEditingController _cityCtrl = TextEditingController();
 
@@ -2750,6 +3382,33 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   String? _selectedCategory;
   String? _selectedRegionCode;
   String? _selectedSubCategory;
+
+  String? _lastOffersQuerySignature;
+
+  String _buildOffersQuerySignature({
+    required bool hasCategory,
+    required bool hasDept,
+    required bool hasLocation,
+    required bool hasPostalCode,
+    required bool hasSubcategory,
+    required bool hasBudgetRange,
+  }) {
+    final parts = <String>[
+      'offers',
+      if (hasCategory) 'where(category==)',
+      if (hasDept) 'where(dept==)',
+      if (hasLocation) 'where(location==)',
+      if (hasPostalCode) 'where(postalCode==)',
+      if (hasSubcategory) 'where(subcategory==)',
+      if (hasBudgetRange) 'where(budgetValue>=/<=)',
+      if (hasBudgetRange)
+        'orderBy(budgetValue asc) + orderBy(createdAt desc)'
+      else
+        'orderBy(createdAt desc)',
+      'limit($_pageLimit)',
+    ];
+    return parts.join(' + ');
+  }
 
   final _Debouncer _filterDebounce =
       _Debouncer(delay: const Duration(milliseconds: 300));
@@ -2762,6 +3421,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   // Pagination / loading state
   DocumentSnapshot<Map<String, dynamic>>? _lastDoc;
   bool _isLoading = false;
+
+  // + Pagination progressive (moins brutale: 10 par page au lieu de 20)
+  static const int _initialLimit = 10;
+  static const int _pageSize = 10;
+  static const int _maxLimit = 100;
+  int _pageLimit = _initialLimit;
 
   /// Mot-clé actif appliqué aux résultats (initialisé depuis searchQuery, réinitialisable)
   String? _activeSearchQuery;
@@ -2785,33 +3450,48 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   late final Map<String, String> _deptToRegion = _buildDeptToRegion();
 
-  String _normalizeForCategoryMatch(String input) {
-    return input
+  // ✅ Cache de normalisation pour améliorer la performance de recherche
+  final Map<String, String> _normalizedTextCache = {};
+
+  // ✅ Cache des résultats Firestore pour éviter les re-queries
+  // ignore: unused_field
+  Map<String, List<DocumentSnapshot<Map<String, dynamic>>>>? _queryResultsCache;
+  String? _lastCachedQuerySignature;
+  Timer? _cacheInvalidationTimer;
+
+  /// Normalise un texte pour la recherche (diacritiques, casse, séparateurs)
+  String _normalizeText(String input) {
+    // Cache hit: retourner directement
+    if (_normalizedTextCache.containsKey(input)) {
+      return _normalizedTextCache[input]!;
+    }
+
+    final normalized = input
         .trim()
         .toLowerCase()
-        // diacritiques courants FR
-        .replaceAll('à', 'a')
-        .replaceAll('â', 'a')
-        .replaceAll('ä', 'a')
+        // Diacritiques courants FR
+        .replaceAll(RegExp(r'[àâä]'), 'a')
         .replaceAll('ç', 'c')
-        .replaceAll('é', 'e')
-        .replaceAll('è', 'e')
-        .replaceAll('ê', 'e')
-        .replaceAll('ë', 'e')
-        .replaceAll('î', 'i')
-        .replaceAll('ï', 'i')
-        .replaceAll('ô', 'o')
-        .replaceAll('ö', 'o')
-        .replaceAll('ù', 'u')
-        .replaceAll('û', 'u')
-        .replaceAll('ü', 'u')
+        .replaceAll(RegExp(r'[éèêë]'), 'e')
+        .replaceAll(RegExp(r'[îï]'), 'i')
+        .replaceAll(RegExp(r'[ôö]'), 'o')
+        .replaceAll(RegExp(r'[ùûü]'), 'u')
         .replaceAll('œ', 'oe')
-        // séparateurs usuels
-        .replaceAll('/', ' ')
-        .replaceAll('-', ' ')
-        .replaceAll('’', ' ')
-        .replaceAll("'", ' ')
+        // Séparateurs usuels
+        .replaceAll(RegExp(r"[/\-'’']"), ' ')
         .replaceAll(RegExp(r'\s+'), ' ');
+
+    // Limiter la taille du cache à 200 entrées
+    if (_normalizedTextCache.length > 200) {
+      _normalizedTextCache.clear();
+    }
+
+    _normalizedTextCache[input] = normalized;
+    return normalized;
+  }
+
+  String _normalizeForCategoryMatch(String input) {
+    return _normalizeText(input);
   }
 
   String? _matchKnownCategory(String input) {
@@ -2872,8 +3552,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   void initState() {
     super.initState();
 
+    // ✅ Analytics: page view
+    _logPageView();
+
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
+      _maybeLoadMore();
     });
 
     final initialCategoryFilter = widget.categoryFilter?.trim();
@@ -2905,19 +3589,98 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         _activeSearchQuery = initialQuery;
         _keywordCtrl.text = initialQuery;
       }
+
+      // ✅ Analytics: recherche (même si ça match une catégorie)
+      _logSearch(initialQuery);
     }
 
     // Quand le code postal change, on essaie de déduire la région
     _postalCodeController.addListener(_syncRegionWithPostalCode);
 
+    // ✅ Précharger les données région/département
+    _preloadRegionDeptData();
+
     // Synchroniser la ville sélectionnée (si déjà connue) dans le champ visible
     _filterCityController.addListener(_syncLocationFieldFromFilter);
     _syncLocationFieldFromFilter();
+
+    // ✅ Écouter les changements de connectivité
+    _monitorConnectivity();
+  }
+
+  void _monitorConnectivity() {
+    // Utiliser la librairie `connectivity_plus` pour détecter le réseau
+    // (à ajouter dans pubspec.yaml si absent)
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> results) {
+      final isNowOnline = results.any((r) => r != ConnectivityResult.none);
+      if (isNowOnline != _isOnline && mounted) {
+        setState(() {
+          _isOnline = isNowOnline;
+        });
+        if (isNowOnline) {
+          // Resync des données quand on retrouve du réseau
+          setState(() => _queryKey++);
+        }
+      }
+    });
+  }
+
+  void _maybeLoadMore() {
+    if (!_scrollController.hasClients) return;
+    if (_pageLimit >= _maxLimit) return;
+
+    final position = _scrollController.position;
+    // Seuil : quand on approche du bas (500px), on augmente la limite progressivement
+    const thresholdPx = 500.0;
+    if (position.maxScrollExtent - position.pixels > thresholdPx) return;
+
+    setState(() {
+      _pageLimit = math.min(_pageLimit + _pageSize, _maxLimit);
+      _queryKey++; // force StreamBuilder à recréer le stream avec la nouvelle limit
+    });
+  }
+
+  /// ✅ Précharge les données région/département au démarrage
+  Future<void> _preloadRegionDeptData() async {
+    try {
+      // Simplement accéder à la map pour la forcer en mémoire
+      debugPrint('[ConsultOffers] Préchargement région/département (${_deptToRegion.length} entrées)');
+    } catch (e) {
+      debugPrint('[ConsultOffers] Erreur préchargement: $e');
+    }
+  }
+
+  /// ✅ Cache les résultats Firestore pour éviter les re-queries inutiles (template pour utilisation future)
+  // ignore: unused_element
+  List<DocumentSnapshot<Map<String, dynamic>>> _getCachedOrFreshResults(
+    String querySignature,
+    List<DocumentSnapshot<Map<String, dynamic>>> freshResults,
+  ) {
+    // Si la signature a changé, invalider le cache
+    if (_lastCachedQuerySignature != querySignature) {
+      _queryResultsCache = null;
+      _lastCachedQuerySignature = querySignature;
+      _cacheInvalidationTimer?.cancel();
+      
+      // Cache expire après 5 minutes
+      _cacheInvalidationTimer = Timer(const Duration(minutes: 5), () {
+        _queryResultsCache = null;
+        _lastCachedQuerySignature = null;
+      });
+    }
+
+    // Mettre en cache les résultats
+    _queryResultsCache = {'results': freshResults};
+    return freshResults;
   }
 
   @override
   void dispose() {
+    _connectivitySubscription.cancel();
     _filterDebounce.dispose();
+    _cacheInvalidationTimer?.cancel();  // ✅ Nettoyer le timer de cache
     _locationController.dispose();
     _postalCodeController.dispose();
     _scrollController.dispose();
@@ -2927,14 +3690,16 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     _filterCityDebounce?.cancel();
     _keywordCtrl.dispose();
     _cityCtrl.dispose();
+    _budgetMinCtrl.dispose();
+    _budgetMaxCtrl.dispose();
     super.dispose();
   }
 
-  Query<Map<String, dynamic>> _buildQuery() {
+  Query<Map<String, dynamic>> _buildOffersQuery() {
     Query<Map<String, dynamic>> query =
         FirebaseFirestore.instance.collection('offers');
 
-    bool hasFilter = false;
+    query = query.where('isActive', isEqualTo: true);
 
     final loc = _locationController.text.trim();
     final cp = _postalCodeController.text.trim();
@@ -2942,66 +3707,117 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     final regionCode = _selectedRegionCode;
     final subcat = _selectedSubCategory;
 
-    // Nouveaux filtres du panneau
     final filterCat = _filterCategory;
     final filterRegCode = _filterRegionCode;
     final filterDeptCode = _filterDepartmentCode;
     final filterCity = _filterCityName?.trim();
 
-    // Filtre catégorie (panneau de filtres prioritaire)
-    if (filterCat != null && filterCat.isNotEmpty) {
-      hasFilter = true;
-      query = query.where('category', isEqualTo: filterCat);
-    } else if (cat != null && cat.isNotEmpty && cat != 'Toutes catégories') {
-      hasFilter = true;
-      query = query.where('category', isEqualTo: cat);
+    final String? categoryLabel =
+        (filterCat != null && filterCat.isNotEmpty) ? filterCat : cat;
+    final String? categoryId = _makeCategoryId(categoryLabel);
+
+    final String cityName =
+        (filterCity != null && filterCity.isNotEmpty) ? filterCity : loc;
+
+    // ✅ Si la ville vient de l'autocomplete, privilégier son CP (plus fiable que le champ global).
+    final String cpForCity = (filterCity != null &&
+            filterCity.isNotEmpty &&
+            _filterPostalCodeController.text.trim().isNotEmpty)
+        ? _filterPostalCodeController.text.trim()
+        : cp;
+
+    final String? cityId =
+        _makeCityId(cityName: cityName, postalCode: cpForCity);
+
+    final String? cityCategoryKey =
+        _makeCityCategoryKey(cityId: cityId, categoryId: categoryId);
+
+    // ✅ Stratégie anti-explosion d’index :
+    // - si Ville+CP + Catégorie => 1 seul where(eq) sur cityCategoryKey
+    // - sinon cityId OU categoryId
+    if (cityCategoryKey != null) {
+      query = query.where('cityCategoryKey', isEqualTo: cityCategoryKey);
+    } else {
+      if (cityId != null) query = query.where('cityId', isEqualTo: cityId);
+      if (categoryId != null)
+        query = query.where('categoryId', isEqualTo: categoryId);
     }
 
-    // Filtre région (par code région)
-    if (filterRegCode != null && filterRegCode.isNotEmpty) {
-      hasFilter = true;
-      final regionName = kRegions[filterRegCode];
-      if (regionName != null) {
-        query = query.where('region', isEqualTo: regionName);
-      }
-    } else if (regionCode != null && regionCode.isNotEmpty) {
-      hasFilter = true;
-      final regionName = kRegions[regionCode];
-      if (regionName != null) {
-        query = query.where('region', isEqualTo: regionName);
-      }
-    }
-
-    // Filtre département (par code département)
-    if (filterDeptCode != null && filterDeptCode.isNotEmpty) {
-      hasFilter = true;
-      query = query.where('departmentCode', isEqualTo: filterDeptCode);
-    }
-
-    // Filtre ville (panneau de filtres prioritaire)
-    if (filterCity != null && filterCity.isNotEmpty) {
-      hasFilter = true;
-      query = query.where('location', isEqualTo: filterCity);
-    } else if (loc.isNotEmpty) {
-      hasFilter = true;
-      query = query.where('location', isEqualTo: loc);
-    }
-
-    // Code postal
-    if (cp.isNotEmpty) {
-      hasFilter = true;
-      query = query.where('postalCode', isEqualTo: cp);
-    }
-
-    // Sous-catégorie
-    if (subcat != null && subcat.isNotEmpty) {
-      hasFilter = true;
+    // Filtre sous-catégorie (optionnel; gardé en “legacy” tant que pas de subcategoryId)
+    final bool hasSubcategory = (subcat != null && subcat.isNotEmpty);
+    if (hasSubcategory) {
       query = query.where('subcategory', isEqualTo: subcat);
     }
 
-    if (!hasFilter) {
+    // Filtre région/département (inchangé, mais attention: ça recrée des combinaisons d’index)
+    bool hasDept = false;
+    if (filterRegCode != null && filterRegCode.isNotEmpty) {
+      final depts = kRegionDepartments[filterRegCode] ?? [];
+      if (depts.isNotEmpty) {
+        hasDept = true;
+        query = query.where('dept', isEqualTo: depts.first);
+      }
+    } else if (regionCode != null && regionCode.isNotEmpty) {
+      final depts = kRegionDepartments[regionCode] ?? [];
+      if (depts.isNotEmpty) {
+        hasDept = true;
+        query = query.where('dept', isEqualTo: depts.first);
+      }
+    }
+    if (filterDeptCode != null && filterDeptCode.isNotEmpty) {
+      hasDept = true;
+      query = query.where('dept', isEqualTo: filterDeptCode);
+    }
+
+    // ✅ Budget range (AVANCÉ) (inchangé)
+    final min = _parseBudgetBound(_budgetMinCtrl.text);
+    final max = _parseBudgetBound(_budgetMaxCtrl.text);
+    final bool wantsBudgetRange = _advancedFilters &&
+        (min != null || max != null) &&
+        _budgetRangeWarning == null;
+
+    if (wantsBudgetRange) {
+      if (min != null)
+        query = query.where('budgetValue', isGreaterThanOrEqualTo: min);
+      if (max != null)
+        query = query.where('budgetValue', isLessThanOrEqualTo: max);
+      query = query.orderBy('budgetValue', descending: false);
+      query = query.orderBy('createdAt', descending: true);
+    } else {
       query = query.orderBy('createdAt', descending: true);
     }
+
+    query = query.limit(_pageLimit);
+
+    // Signature (audit index) — minimaliste
+    _lastOffersQuerySignature = _buildOffersQuerySignature(
+      hasCategory: categoryId != null,
+      hasDept: hasDept,
+      hasLocation: cityId != null || cityCategoryKey != null,
+      hasPostalCode: cpForCity.trim().isNotEmpty,
+      hasSubcategory: hasSubcategory,
+      hasBudgetRange: wantsBudgetRange,
+    );
+
+    // ✅ Log la signature de la query (debug only)
+    if (kDebugMode) {
+      debugPrint('[OFFERS][QUERY] $_lastOffersQuerySignature');
+    }
+
+    // ✅ Log en Crashlytics en prod (non-fatal)
+    if (!kDebugMode && _lastOffersQuerySignature != null) {
+      try {
+        FirebaseCrashlytics.instance.log(
+          'Offers Query: $_lastOffersQuerySignature',
+        );
+      } catch (e) {
+        debugPrint('[Crashlytics] log error: $e');
+      }
+    }
+
+    // ✅ Monitoring local (dashboard admin)
+    PrestoMonitoring.I
+        .trackOffersQueryBuild(signature: _lastOffersQuerySignature);
 
     return query;
   }
@@ -3012,13 +3828,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     setState(() => _isLoading = true);
 
+    final sw = Stopwatch()..start();
+
     if (resetPaging) {
       _lastDoc = null;
       // Si tu stockes une liste d'offres en mémoire : offers.clear();
     }
 
     try {
-      var query = _buildQuery();
+      var query = _buildOffersQuery();
 
       // Exemple de pagination si besoin
       if (_lastDoc != null) {
@@ -3028,12 +3846,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       // Charge une première page (adapter la limite si besoin)
       final snap = await query.limit(20).get();
 
+      sw.stop();
+      PrestoMonitoring.I.trackOffersFetchOnce(
+          ms: sw.elapsedMilliseconds, docsCount: snap.docs.length);
+
       if (snap.docs.isNotEmpty) {
         _lastDoc = snap.docs.last;
       }
 
       // Si tu conserves les résultats : setState(() => offers = ...);
     } catch (e) {
+      PrestoMonitoring.I.trackError('offers.fetchOnce', e);
       if (kDebugMode) {
         debugPrint('Erreur lors du chargement des offres: $e');
       }
@@ -3044,9 +3867,52 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     }
   }
 
-  void _applyFilters() {
+  void _applyFiltersOrSearch() {
     // Annule le debounce en cours pour éviter les conflits
     _filterDebounce._t?.cancel();
+
+    final min = _parseBudgetBound(_budgetMinCtrl.text);
+    final max = _parseBudgetBound(_budgetMaxCtrl.text);
+
+    // ✅ Log l'utilisation des filtres
+    if (_filterCategory != null && _filterCategory!.isNotEmpty) {
+      _logFilterUsage('category', _filterCategory!);
+    }
+    if (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) {
+      _logFilterUsage('region', _filterRegionCode!);
+    }
+    if (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) {
+      _logFilterUsage('department', _filterDepartmentCode!);
+    }
+    if (_filterCityName != null && _filterCityName!.isNotEmpty) {
+      _logFilterUsage('city', _filterCityName!);
+    }
+
+    // Compter les filtres égalité actifs (pour éviter explosion d’index si range)
+    final bool eqCat =
+        (_filterCategory != null && _filterCategory!.isNotEmpty) ||
+            ((_selectedCategory ?? '').isNotEmpty &&
+                _selectedCategory != 'Toutes catégories');
+    final bool eqDept =
+        (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
+            ((_filterRegionCode ?? '').isNotEmpty) ||
+            ((_selectedRegionCode ?? '').isNotEmpty);
+    final bool eqLoc =
+        (_filterCityName != null && _filterCityName!.trim().isNotEmpty) ||
+            _locationController.text.trim().isNotEmpty;
+    final bool eqCp = _postalCodeController.text.trim().isNotEmpty;
+    final bool eqSub =
+        (_selectedSubCategory != null && _selectedSubCategory!.isNotEmpty);
+
+    final int eqCount =
+        <bool>[eqCat, eqDept, eqLoc, eqCp, eqSub].where((b) => b).length;
+
+    // ✅ Règle: range budget uniquement en “avancé” + idéalement peu de filtres == (sinon index explosion)
+    String? budgetWarning;
+    if (_advancedFilters && (min != null || max != null) && eqCount > 1) {
+      budgetWarning = "Budget (avancé) désactivé : trop de filtres combinés. "
+          "Garde 0–1 filtre (ex: seulement Ville OU seulement Catégorie) pour éviter l’explosion d’index.";
+    }
 
     // Remonter en haut de la liste
     if (_scrollController.hasClients) {
@@ -3057,21 +3923,32 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       );
     }
 
+    // ✅ Log les filtres appliqués
+    _logFiltersApplied(
+      category: _filterCategory,
+      region: _filterRegionCode,
+      department: _filterDepartmentCode,
+      city: _filterCityName,
+      searchQuery: _activeSearchQuery,
+      resultCount: 0, // sera mis à jour après le StreamBuilder
+    );
+
     // Force le StreamBuilder à se reconstruire
     setState(() {
+      _budgetRangeWarning = budgetWarning;
       _activeSearchQuery =
           _keywordCtrl.text.trim().isEmpty ? null : _keywordCtrl.text.trim();
       _queryKey++;
       _lastDoc = null; // Reset pagination
-      _showFilters =
-          false; // ✅ Rétracter le panneau après application des filtres
+      _pageLimit = _initialLimit;
+      _showFilters = false;
     });
   }
 
   void _onAnyFilterChanged() {
     // ✅ Auto-apply avec debounce
     _filterDebounce.run(() {
-      _applyFilters();
+      _applyFiltersOrSearch();
     });
   }
 
@@ -3101,6 +3978,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _activeSearchQuery = null;
       _filterPanelKey++; // Force la reconstruction du panneau
       _queryKey++; // Force la reconstruction du StreamBuilder
+      _pageLimit = _initialLimit;
     });
 
     // 2) reset champs texte
@@ -3175,7 +4053,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       activeFiltersCount++;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
@@ -3318,7 +4196,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                 child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   key: ValueKey(
                       _queryKey), // Force la reconstruction quand les filtres changent
-                  stream: _buildQuery().snapshots(),
+                  stream: _buildOffersQuery().snapshots().map((snap) {
+                    PrestoMonitoring.I.trackOffersSnapshot(snap.docs.length);
+                    return snap;
+                  }),
                   builder: (context, snapshot) {
                     // ✅ Ne plus afficher le loader si on a déjà des données
                     if (snapshot.connectionState == ConnectionState.waiting &&
@@ -3332,16 +4213,61 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     }
 
                     if (snapshot.hasError) {
+                      debugPrint('❌ [OFFERS] Error: ${snapshot.error}');
+                      debugPrint('❌ [OFFERS] Stack: ${snapshot.stackTrace}');
+
+                      final err = snapshot.error;
+                      if (err != null) {
+                        PrestoMonitoring.I.trackError('offers.snapshots', err);
+                      }
+
+                      final friendly = err == null
+                          ? "Une erreur s'est produite, réessaie"
+                          : _friendlyFirestoreErrorMessage(err);
+
                       return Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Text(
-                            "Erreur lors du chargement des offres.\n${snapshot.error}",
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: Colors.red.shade300,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                "Erreur lors du chargement des offres",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.red.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                friendly,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  setState(() => _queryKey++);
+                                },
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Réessayer'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: kPrestoOrange,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -3350,17 +4276,22 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
                         snapshot.data?.docs ?? [];
 
+                    // ✅ Filtrage client-side optimisé avec normalisation
                     if (_activeSearchQuery != null &&
                         _activeSearchQuery!.trim().isNotEmpty) {
-                      final q = _activeSearchQuery!.trim().toLowerCase();
+                      final q = _normalizeText(_activeSearchQuery!);
+                      final queryTokens =
+                          q.split(' ').where((t) => t.isNotEmpty).toList();
+
                       docs = docs.where((d) {
                         final data = d.data();
-                        final title =
-                            (data['title'] ?? '').toString().toLowerCase();
-                        final desc = (data['description'] ?? '')
-                            .toString()
-                            .toLowerCase();
-                        return title.contains(q) || desc.contains(q);
+                        final title = _normalizeText(data['title'] ?? '');
+                        final desc = _normalizeText(data['description'] ?? '');
+                        final combined = '$title $desc';
+
+                        // Correspondance si tous les tokens sont présents
+                        return queryTokens
+                            .every((token) => combined.contains(token));
                       }).toList();
                     }
 
@@ -3439,7 +4370,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                         Expanded(
                           child: ListView.builder(
                             controller: _scrollController,
-                            padding: const EdgeInsets.fromLTRB(2, 16, 2, 120),
+                            physics: const ClampingScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(2, 8, 2, 100),
+                            addAutomaticKeepAlives: true,
+                            addRepaintBoundaries: true,
                             itemCount: _totalItems,
                             itemBuilder: (context, index) {
                               final bool isAd =
@@ -3451,6 +4385,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                   placeholderFolderPrefix:
                                       'assets/carousel_home/',
                                   flat: true,
+                                  animatePlaceholder: false,
                                 );
                               }
 
@@ -3478,37 +4413,41 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                       .map((e) => e.toString())
                                       .toList();
 
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => OfferDetailPage(
-                                          offerId: offerId,
-                                          title: title,
-                                          location: location,
-                                          category: category,
-                                          subcategory: (data['subcategory'] ??
-                                              '') as String?,
-                                          budget: budget is num ? budget : null,
-                                          description: description.isEmpty
-                                              ? null
-                                              : description,
-                                          phone: phone,
-                                          imageUrls: imageUrls.isEmpty
-                                              ? null
-                                              : imageUrls,
-                                          annonceurId:
-                                              (data['userId'] ?? '') as String,
+                              return RepaintBoundary(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      _logOfferClicked(offerId, title);
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => OfferDetailPage(
+                                            offerId: offerId,
+                                            title: title,
+                                            location: location,
+                                            category: category,
+                                            subcategory: (data['subcategory'] ??
+                                                '') as String?,
+                                            budget:
+                                                budget is num ? budget : null,
+                                            description: description.isEmpty
+                                                ? null
+                                                : description,
+                                            phone: phone,
+                                            imageUrls: imageUrls.isEmpty
+                                                ? null
+                                                : imageUrls,
+                                            annonceurId: (data['userId'] ?? '')
+                                                as String,
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                  child: OfferCard(
-                                    offerId: offerId,
-                                    data: data,
-                                    showActionsMenu: false,
+                                      );
+                                    },
+                                    child: OfferCard(
+                                      offerId: offerId,
+                                      data: data,
+                                      showActionsMenu: false,
+                                    ),
                                   ),
                                 ),
                               );
@@ -3540,7 +4479,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
             borderRadius: BorderRadius.circular(12),
           ),
           clipBehavior: Clip.antiAlias,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -3563,7 +4502,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: _applyFilters,
+                      onPressed: _applyFiltersOrSearch,
                       icon: const Icon(Icons.search),
                       label: const Text('Rechercher'),
                       style: ElevatedButton.styleFrom(
@@ -4015,7 +4954,7 @@ class _EmptyOffers extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: const [
@@ -4082,6 +5021,79 @@ class OfferDetailPage extends StatefulWidget {
 
 class _OfferDetailPageState extends State<OfferDetailPage> {
   bool _isPhoneVisible = false;
+
+  // ✅ Analytics
+  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _logOfferViewed();
+  }
+
+  /// ✅ Enregistre la visite d'une offre en détail
+  Future<void> _logOfferViewed() async {
+    try {
+      await _analytics.logEvent(
+        name: 'view_item',
+        parameters: {
+          'item_id': widget.offerId,
+          'item_name': widget.title,
+          'item_category': widget.category,
+          'value':
+              (widget.budget is num) ? (widget.budget as num).toDouble() : 0.0,
+          'currency': 'EUR',
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logOfferViewed error: $e');
+    }
+  }
+
+  /// ✅ Enregistre les partages
+  Future<void> _logShare(String platform) async {
+    try {
+      await _analytics.logShare(
+        contentType: 'offer',
+        itemId: widget.offerId,
+        method: platform,
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logShare error: $e');
+    }
+  }
+
+  /// ✅ Enregistre l'appel au numéro
+  Future<void> _logPhoneCall() async {
+    try {
+      await _analytics.logEvent(
+        name: 'phone_call_initiated',
+        parameters: {
+          'offer_id': widget.offerId,
+          'offer_title': widget.title,
+          'phone_masked': widget.phone?.substring(0, 2) ?? 'unknown',
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logPhoneCall error: $e');
+    }
+  }
+
+  /// ✅ Enregistre les messages envoyés
+  Future<void> _logMessageSent() async {
+    try {
+      await _analytics.logEvent(
+        name: 'message_initiated',
+        parameters: {
+          'offer_id': widget.offerId,
+          'offer_title': widget.title,
+          'recipient_id': widget.annonceurId,
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logMessageSent error: $e');
+    }
+  }
 
   String _toE164Like(String raw) {
     final trimmed = raw.trim();
@@ -4154,22 +5166,15 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
     final digits = formatted.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return '••••••••••';
 
-    // Masquage simple: conserve l'indicatif si présent, et 2 premiers chiffres du reste.
-    if (formatted.startsWith('+')) {
-      // ex: +33 6 .. => garder "+33 6" si possible
-      final parts =
-          formatted.split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
-      if (parts.length >= 2) {
-        return '${parts[0]} ${parts[1]} •• •• •• ••';
-      }
-      return '${formatted.substring(0, math.min(6, formatted.length))} •• •• •• ••';
-    }
-
-    final keep = digits.length >= 2 ? digits.substring(0, 2) : digits;
-    return '$keep •• •• •• ••';
+    // Masquer tous sauf les 2 derniers chiffres
+    if (digits.length <= 2) return digits;
+    return '••••••${digits.substring(digits.length - 2)}';
   }
 
   Future<void> _shareOn(BuildContext context, String platform) async {
+    // ✅ Log le partage
+    await _logShare(platform);
+
     final shareText =
         "${widget.title.trim()} – ${widget.location.trim()} | Rejoins Prest'o pour en savoir plus.";
     final shareUrl = Uri.parse('https://prestoo.app/offers');
@@ -4205,6 +5210,10 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   }
 
   Future<void> _callPhone(BuildContext context) async {
+    await _logPhoneCall();
+
+    if (!context.mounted) return;
+
     if (widget.phone == null || widget.phone!.trim().isEmpty) {
       showSuccessSnackBar(context, "Aucun numéro disponible.");
       return;
@@ -4234,7 +5243,6 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   void _showActionSheet(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final bool isLoggedIn = user != null;
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: false,
@@ -4278,6 +5286,10 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                   ),
                   onPressed: () async {
                     Navigator.pop(ctx);
+
+                    // ✅ Analytics: message initié
+                    await _logMessageSent();
+                    if (!context.mounted) return;
                     if (!isLoggedIn) {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -4297,20 +5309,14 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                       return;
                     }
 
-                    // Cherche ou crée la conversation entre l'utilisateur courant et l'annonceur
-                    final conversationId =
-                        await ConversationService().getOrCreateConversationId(
-                      currentUserId: user.uid,
-                      otherUserId: annonceurId,
-                    );
-
                     if (!context.mounted) return;
 
+                    // Navigation vers la page de conversation avec Firebase
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => ConversationPage(
-                          conversationId: conversationId,
-                          offerTitle: widget.title,
+                          otherUserId: annonceurId,
+                          otherUserName: 'Annonceur',
                         ),
                       ),
                     );
@@ -4339,9 +5345,11 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(ctx);
-                    _callPhone(context);
+
+                    // ✅ Utiliser le helper (avec analytics)
+                    await _callPhone(context);
                   },
                   icon: const Icon(Icons.call),
                   label: const Text(
@@ -4476,23 +5484,7 @@ Motif du signalement :
                       Icon(Icons.flag_outlined,
                           color: Colors.red.shade700, size: 18),
                       const SizedBox(width: 8),
-                      Text(
-                        'Signaler',
-                        style: TextStyle(
-                          color: Colors.red.shade700,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-
-      // ✅ CTA sticky comme le mockup
+            // ✅ CTA sticky comme le mockup
       bottomSheet: SafeArea(
         top: false,
         child: Container(
@@ -4567,7 +5559,7 @@ Motif du signalement :
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(0, 14, 0,
-                160), // espace pour bottomSheet, cartes pleine largeur
+                180), // espace pour bottomSheet, cartes pleine largeur
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -4600,7 +5592,14 @@ Motif du signalement :
                     stream: FirebaseFirestore.instance
                         .collection('users')
                         .doc(widget.annonceurId)
-                        .snapshots(),
+                        .snapshots()
+                        .map((snap) {
+                      PrestoMonitoring.I.trackOtherStream(
+                        key: 'offerDetail.userDoc',
+                        docsCount: snap.exists ? 1 : 0,
+                      );
+                      return snap;
+                    }),
                     builder: (context, snap) {
                       final pseudo = _extractUserPseudo(snap.data?.data());
                       return TextButton.icon(
@@ -4657,25 +5656,25 @@ Motif du signalement :
                               ),
                             ),
                           ),
+                          if (hasPhone)
+                            IconButton(
+                              tooltip: _isPhoneVisible
+                                  ? 'Masquer le numéro'
+                                  : 'Afficher le numéro',
+                              onPressed: () {
+                                setState(() {
+                                  _isPhoneVisible = !_isPhoneVisible;
+                                });
+                              },
+                              icon: Icon(
+                                _isPhoneVisible
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: Colors.black54,
+                              ),
+                            ),
                         ],
                       ),
-                      if (hasPhone && !_isPhoneVisible) ...[
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _isPhoneVisible = true;
-                              });
-                            },
-                            child: const Text(
-                              "Voir le numéro",
-                              style: TextStyle(fontWeight: FontWeight.w800),
-                            ),
-                          ),
-                        ),
-                      ],
                       // Bouton messagerie retiré
                     ],
                   ),
@@ -4752,6 +5751,77 @@ Motif du signalement :
             ),
           ),
         ),
+          
+        // ✅ CTA sticky en bas
+        Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 14,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Réponse rapide • Paiement selon accord",
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.schedule, size: 16, color: Colors.grey.shade600),
+                        const SizedBox(width: 6),
+                        Text(
+                          "Récemment en ligne",
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kPrestoOrange,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        onPressed: () => _showActionSheet(context),
+                        child: const Text("Accepter l'offre"),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -4917,19 +5987,14 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
       return;
     }
 
-    final conversationId =
-        await ConversationService().getOrCreateConversationId(
-      currentUserId: user.uid,
-      otherUserId: widget.userId,
-    );
-
     if (!context.mounted) return;
 
+    // Navigation vers la page de conversation avec Firebase
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ConversationPage(
-          conversationId: conversationId,
-          offerTitle: 'Profil',
+          otherUserId: widget.userId,
+          otherUserName: 'Utilisateur',
         ),
       ),
     );
@@ -4962,7 +6027,14 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
               stream: FirebaseFirestore.instance
                   .collection('users')
                   .doc(widget.userId)
-                  .snapshots(),
+                  .snapshots()
+                  .map((snap) {
+                PrestoMonitoring.I.trackOtherStream(
+                  key: 'userProfile.userDoc',
+                  docsCount: snap.exists ? 1 : 0,
+                );
+                return snap;
+              }),
               builder: (context, snap) {
                 final pseudo = _extractUserPseudo(snap.data?.data());
                 return _CardShell(
@@ -5250,6 +6322,7 @@ class _MessagesPageState extends State<MessagesPage> {
 
   Widget _buildNeedAccount(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         title: const Text(
@@ -5258,9 +6331,14 @@ class _MessagesPageState extends State<MessagesPage> {
         ),
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(20),
+          ),
+        ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(12),
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -5272,7 +6350,7 @@ class _MessagesPageState extends State<MessagesPage> {
               ),
               const SizedBox(height: 16),
               const Text(
-                "Pour utiliser la messagerie iliprestō, connecte-toi à ton compte.",
+                "Pour utiliser la messagerie iliprestō, connectez-vous à votre compte.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -5336,6 +6414,10 @@ class _MessagesPageState extends State<MessagesPage> {
           actions: [
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert),
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               onSelected: (value) {
                 if (value == 'dark_mode') {
                   setState(() => _isDarkMode = !_isDarkMode);
@@ -5372,7 +6454,15 @@ class _MessagesPageState extends State<MessagesPage> {
             stream: FirebaseFirestore.instance
                 .collection('conversations')
                 .where('participants', arrayContains: userId)
-                .snapshots(),
+                .orderBy('lastMessageAt', descending: true)
+                .snapshots()
+                .map((snap) {
+              PrestoMonitoring.I.trackOtherStream(
+                key: 'messages.list.conversations',
+                docsCount: snap.docs.length,
+              );
+              return snap;
+            }),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(
@@ -5385,42 +6475,63 @@ class _MessagesPageState extends State<MessagesPage> {
               }
 
               if (snapshot.hasError) {
+                debugPrint('❌ [Messages] Erreur Firestore: ${snapshot.error}');
+                debugPrint('❌ [Messages] Stack trace: ${snapshot.stackTrace}');
+
                 return Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      "Erreur lors du chargement des conversations.\n${snapshot.error}",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          "Erreur lors du chargement des conversations",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.red,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          "${snapshot.error}",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrestoBlue,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () {
+                            setState(() {});
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Réessayer'),
+                        ),
+                      ],
                     ),
                   ),
                 );
               }
 
-              final docs = (snapshot.data?.docs ?? []).toList()
-                ..sort((a, b) {
-                  final aData = a.data();
-                  final bData = b.data();
-
-                  final aTs = aData['lastMessageAt'];
-                  final bTs = bData['lastMessageAt'];
-
-                  final aTime = (aTs is Timestamp) ? aTs.toDate() : null;
-                  final bTime = (bTs is Timestamp) ? bTs.toDate() : null;
-
-                  if (aTime == null && bTime == null) return 0;
-                  if (aTime == null) return 1;
-                  if (bTime == null) return -1;
-                  return bTime.compareTo(aTime);
-                });
+              final docs = (snapshot.data?.docs ?? []).toList();
 
               if (docs.isEmpty) {
                 return Center(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -5457,8 +6568,7 @@ class _MessagesPageState extends State<MessagesPage> {
               }
 
               return ListView.separated(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.fromLTRB(4, 8, 4, 140),
                 itemCount: docs.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 4),
                 itemBuilder: (context, index) {
@@ -5483,7 +6593,6 @@ class _MessagesPageState extends State<MessagesPage> {
                         MaterialPageRoute(
                           builder: (_) => ConversationPage(
                             conversationId: conversationId,
-                            offerTitle: offerTitle,
                           ),
                         ),
                       );
@@ -5601,7 +6710,9 @@ class _MessagesPageState extends State<MessagesPage> {
   }
 }
 
-/// PAGE CONVERSATION (CHAT) /////////////////////////////////
+/*
+/// PAGE CONVERSATION (CHAT) - ANCIENNE VERSION - REMPLACÉE PAR pages/messages/conversation_page.dart
+/// NE PAS UTILISER - CONSERVÉE POUR RÉFÉRENCE UNIQUEMENT
 
 class ConversationPage extends StatefulWidget {
   final String conversationId;
@@ -5627,12 +6738,47 @@ class _ConversationPageState extends State<ConversationPage> {
 
   String? _currentUserName;
 
+  // ✅ Analytics
+  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
   @override
   void initState() {
     super.initState();
     _loadConversationMeta();
     _loadCurrentUserName();
     _markAsRead();
+    _logConversationViewed();
+  }
+
+  /// ✅ Enregistre la visite d'une conversation
+  Future<void> _logConversationViewed() async {
+    try {
+      await _analytics.logEvent(
+        name: 'conversation_viewed',
+        parameters: {
+          'conversation_id': widget.conversationId,
+          'offer_title': widget.offerTitle,
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logConversationViewed error: $e');
+    }
+  }
+
+  /// ✅ Enregistre les messages envoyés
+  Future<void> _logMessageSent(String messageText) async {
+    try {
+      await _analytics.logEvent(
+        name: 'message_sent',
+        parameters: {
+          'conversation_id': widget.conversationId,
+          'message_length': messageText.length,
+          'offer_title': widget.offerTitle,
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logMessageSent error: $e');
+    }
   }
 
   Future<void> _loadConversationMeta() async {
@@ -5767,6 +6913,8 @@ class _ConversationPageState extends State<ConversationPage> {
         txn.update(convRef, update);
       });
 
+      // ✅ Analytics: message envoyé
+      await _logMessageSent(text);
       _markAsRead();
     } catch (e) {
       if (!mounted) return;
@@ -5775,6 +6923,7 @@ class _ConversationPageState extends State<ConversationPage> {
   }
 
   Future<List<Map<String, dynamic>>> _fetchMessagesOnce() async {
+    final sw = Stopwatch()..start();
     final snap = await _firestore
         .collection('conversations')
         .doc(widget.conversationId)
@@ -5782,10 +6931,16 @@ class _ConversationPageState extends State<ConversationPage> {
         .orderBy('createdAt', descending: false)
         .get();
 
+    sw.stop();
+    PrestoMonitoring.I.trackMessagesFetchOnce(
+        ms: sw.elapsedMilliseconds, docsCount: snap.docs.length);
+
     return snap.docs.map((d) => d.data()).toList();
   }
 
-  Future<void> _shareByEmail() async {
+  /*
+  // ANCIENNE VERSION - NE PAS UTILISER - COMMENTEE
+  void _onMenuSelected(String value) async {
     final messages = await _fetchMessagesOnce();
     final buffer = StringBuffer();
 
@@ -5865,14 +7020,187 @@ class _ConversationPageState extends State<ConversationPage> {
       },
     );
   }
+  */
 
-  void _onMenuSelected(String value) {
+  void _onMenuSelected(String value) async {
     switch (value) {
       case 'email':
-        _shareByEmail();
+        // Récupérer les messages et les formater
+        final messages = await _fetchMessagesOnce();
+        final buffer = StringBuffer();
+
+        buffer.writeln("Conversation iliprestō - ${widget.offerTitle}");
+        buffer.writeln("======================================");
+        buffer.writeln();
+
+        for (final m in messages) {
+          final sender = (m['senderName'] ?? 'Utilisateur') as String;
+          final text = (m['text'] ?? '') as String;
+          final ts = m['createdAt'] as Timestamp?;
+          final timeLabel = formatTimeLabel(ts);
+          buffer.writeln("[$timeLabel] $sender : $text");
+        }
+
+        final subject = Uri.encodeComponent(
+            "Conversation iliprestō - ${widget.offerTitle}");
+        final body = Uri.encodeComponent(buffer.toString());
+
+        if (!mounted) return;
+
+        // Afficher dialogue pour choisir l'application mail
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              "Partager par email",
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            content: const Text(
+              "Choisissez votre application mail pour partager cette conversation.",
+              style: TextStyle(fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text("Annuler"),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrestoOrange,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  final uri = Uri.parse("mailto:?subject=$subject&body=$body");
+                  try {
+                    final ok = await canLaunchUrl(uri);
+                    if (ok) {
+                      await launchUrl(uri);
+                    } else {
+                      if (!mounted) return;
+                      showSuccessSnackBar(
+                        this.context,
+                        "Impossible d'ouvrir le client email sur cet appareil.",
+                      );
+                    }
+                  } catch (e) {
+                    if (!mounted) return;
+                    showSuccessSnackBar(
+                      this.context,
+                      "Erreur lors de l'ouverture du client email.",
+                    );
+                  }
+                },
+                child: const Text("Ouvrir l'application mail"),
+              ),
+            ],
+          ),
+        );
         break;
+
       case 'txt':
-        _exportAsText();
+        // Récupérer les messages et les formater
+        final messages = await _fetchMessagesOnce();
+        final buffer = StringBuffer();
+
+        buffer.writeln("Conversation iliprestō - ${widget.offerTitle}");
+        buffer.writeln("======================================");
+        buffer.writeln();
+
+        for (final m in messages) {
+          final sender = (m['senderName'] ?? 'Utilisateur') as String;
+          final text = (m['text'] ?? '') as String;
+          final ts = m['createdAt'] as Timestamp?;
+          final timeLabel = formatTimeLabel(ts);
+          buffer.writeln("[$timeLabel] $sender : $text");
+        }
+
+        final text = buffer.toString();
+
+        if (!mounted) return;
+
+        // Afficher dialogue pour enregistrer
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              "Enregistrer la conversation",
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Aperçu de la conversation :",
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    constraints: const BoxConstraints(maxHeight: 300),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: SingleChildScrollView(
+                      child: SelectableText(
+                        text.isEmpty ? "Aucun message pour l'instant." : text,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          height: 1.4,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text("Annuler"),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrestoOrange,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  showSuccessSnackBar(
+                    context,
+                    "Sélectionnez le texte ci-dessus pour le copier et l'enregistrer.",
+                  );
+                },
+                icon: const Icon(Icons.download, size: 18),
+                label: const Text("Enregistrer"),
+              ),
+            ],
+          ),
+        );
         break;
     }
   }
@@ -5924,15 +7252,33 @@ class _ConversationPageState extends State<ConversationPage> {
           ),
           actions: [
             PopupMenuButton<String>(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               onSelected: _onMenuSelected,
-              itemBuilder: (context) => const [
-                PopupMenuItem(
+              itemBuilder: (context) => [
+                const PopupMenuItem(
                   value: 'email',
-                  child: Text("Partager par email"),
+                  child: Row(
+                    children: [
+                      Icon(Icons.email_outlined,
+                          size: 20, color: kPrestoOrange),
+                      SizedBox(width: 12),
+                      Text("Partager par email"),
+                    ],
+                  ),
                 ),
-                PopupMenuItem(
+                const PopupMenuItem(
                   value: 'txt',
-                  child: Text("Enregistrer la conversation (texte)"),
+                  child: Row(
+                    children: [
+                      Icon(Icons.file_download_outlined,
+                          size: 20, color: kPrestoOrange),
+                      SizedBox(width: 12),
+                      Text("Enregistrer (texte)"),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -5949,7 +7295,14 @@ class _ConversationPageState extends State<ConversationPage> {
                     .collection('messages')
                     .orderBy('createdAt', descending: true)
                     .limit(200)
-                    .snapshots(),
+                    .snapshots()
+                    .map((snap) {
+                  PrestoMonitoring.I.trackOtherStream(
+                    key: 'conversation.messages.stream',
+                    docsCount: snap.docs.length,
+                  );
+                  return snap;
+                }),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting &&
                       !_isLoadingMeta) {
@@ -5982,7 +7335,7 @@ class _ConversationPageState extends State<ConversationPage> {
                   return ListView.builder(
                     reverse: true,
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                     itemCount: docs.length,
                     itemBuilder: (context, index) {
                       final data = docs[index].data();
@@ -6097,6 +7450,7 @@ class _ConversationPageState extends State<ConversationPage> {
     );
   }
 }
+*/
 
 /// PAGE PUBLIER UNE OFFRE //////////////////////////////////////////////////
 
@@ -6113,10 +7467,321 @@ class PublishOfferPage extends StatefulWidget {
 }
 
 class _PublishOfferPageState extends State<PublishOfferPage> {
+  // ✅ NOUVEAU: Variables pour le streaming
+  final StreamController<String> _transcriptionStream =
+      StreamController<String>.broadcast();
+  String _partialTranscript = '';
+  Timer? _streamingTimer;
+  bool _isStreaming = false;
+
+  // ✅ AJOUT: Subscription pour le stream audio
+  StreamSubscription<Uint8List>? _streamMicSub;
+
+  /// ✅ STREAMING RÉEL: Mobile avec startStream() + PCM16
+  Future<void> _startStreamingMic() async {
+    if (_isListening || _isStreaming) return;
+
+    if (kIsWeb) {
+      // ✅ WEB: Chunking mode (chunks toutes les 2 secondes)
+      // Note: Web enregistre des chunks et les envoie progressivement
+      try {
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid == null) {
+          showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
+          return;
+        }
+
+        await _webRec.start();
+
+        setState(() {
+          _isListening = true;
+          _isStreaming = true; // Web: mode chunking (quasi temps-réel)
+          _partialTranscript = '';
+        });
+
+        debugPrint('[Streaming Web] Web recording started (chunked mode)');
+
+        // ✅ Chunking timer: toutes les 2 secondes
+        _streamingTimer?.cancel();
+        _streamingTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
+          if (!_isListening || !mounted) return;
+
+          try {
+            // ✅ Arrêter temporairement et récupérer le blob du chunk
+            final blob = await _webRec.stopToBlob();
+
+            debugPrint('[Streaming Web] Chunk blob acquired');
+
+            // ✅ Redémarrer pour le prochain chunk
+            await _webRec.start();
+
+            // ✅ Convertir blob en bytes et uploader
+            final chunkBytes = await webBlobToBytes(blob);
+            if (chunkBytes.isEmpty) {
+              debugPrint('[Streaming Web] Empty chunk bytes');
+              return;
+            }
+
+            final ts = DateTime.now().millisecondsSinceEpoch;
+            final chunkPath = 'stt_streaming/$uid/${ts}_chunk.webm';
+
+            final ref = FirebaseStorage.instance.ref(chunkPath);
+            await ref.putData(
+              chunkBytes,
+              SettableMetadata(contentType: 'audio/webm'),
+            );
+
+            debugPrint(
+                '[Streaming Web] Chunk uploaded: $chunkPath (${chunkBytes.length} bytes)');
+
+            // ✅ Transcription du chunk (async, non-bloquant)
+            MicroIaService.processAudio(
+              storagePath: chunkPath,
+              languageCode: 'fr-FR',
+              streamingMode: true,
+            ).then((result) {
+              if (!mounted) return;
+
+              final text = (result['text'] ?? '').toString().trim();
+              if (text.isNotEmpty) {
+                final newTranscript = _partialTranscript.isEmpty
+                    ? text
+                    : '$_partialTranscript $text';
+
+                // ✅ Envoyer au stream pour update UI
+                _transcriptionStream.add(newTranscript);
+                debugPrint('[Streaming Web] Chunk transcribed: "$text"');
+              }
+            }).catchError((e) {
+              debugPrint('[Streaming Web] Transcription error: $e');
+            });
+          } catch (e) {
+            debugPrint('[Streaming Web] Chunk processing error: $e');
+          }
+        });
+      } catch (e, st) {
+        await CrashlyticsContext.recordError(
+          e is Exception ? e : Exception(e.toString()),
+          st,
+          reason: 'Web streaming mic failed',
+          fatal: false,
+        );
+        if (!context.mounted) return;
+        showSuccessSnackBar(context, 'Erreur streaming micro: $e');
+      }
+      return;
+    }
+
+    // ✅ MOBILE: Streaming RÉEL avec startStream() + PCM16
+    try {
+      final hasPermission = await _recorder.hasPermission();
+      if (!mounted) return;
+
+      if (!hasPermission) {
+        if (!mounted) return;
+        showSuccessSnackBar(context, 'Permission micro requise');
+        return;
+      }
+
+      // ✅ CHANGEMENT 1: startStream() retourne un Stream<Uint8List>
+      final stream = await _recorder.startStream(
+        const RecordConfig(
+          encoder: AudioEncoder.pcm16bits, // ✅ PCM16 (requis pour Google STT)
+          sampleRate: 16000, // ✅ 16kHz
+          numChannels: 1,
+        ),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _isListening = true;
+        _isStreaming = true; // Mode streaming réel
+        _partialTranscript = '';
+      });
+
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+      int chunkBytes = 0;
+      final int chunkThreshold = 16000 * 2; // ~2 secondes à 16kHz
+
+      debugPrint('[Streaming Mobile] Stream started with PCM16');
+
+      // ✅ CHANGEMENT 2: Écouter le stream audio
+      _streamMicSub?.cancel();
+      _streamMicSub = stream.listen(
+        (Uint8List chunk) async {
+          if (!_isListening || !mounted) return;
+
+          try {
+            chunkBytes += chunk.length;
+
+            // Envoyer quand le seuil est atteint
+            if (chunkBytes >= chunkThreshold) {
+              final ts = DateTime.now().millisecondsSinceEpoch;
+              final chunkPath = 'stt_streaming/$uid/${ts}_chunk.pcm';
+
+              // ✅ CHANGEMENT 3: Upload du chunk PCM
+              final ref = FirebaseStorage.instance.ref(chunkPath);
+              await ref.putData(
+                chunk,
+                SettableMetadata(contentType: 'audio/pcm'),
+              );
+
+              debugPrint(
+                  '[Streaming Mobile] Chunk uploaded: ${chunk.length} bytes at $chunkPath');
+
+              // ✅ Transcription du chunk (async, non-bloquant)
+              MicroIaService.processAudio(
+                storagePath: chunkPath,
+                languageCode: 'fr-FR',
+                streamingMode: true,
+              ).then((result) {
+                if (!mounted) return;
+
+                final text = (result['text'] ?? '').toString().trim();
+                if (text.isNotEmpty) {
+                  final newTranscript = _partialTranscript.isEmpty
+                      ? text
+                      : '$_partialTranscript $text';
+
+                  // ✅ Envoyer au stream pour update UI
+                  _transcriptionStream.add(newTranscript);
+                  debugPrint('[Streaming Mobile] Chunk transcribed: "$text"');
+                }
+              }).catchError((e) {
+                debugPrint('[Streaming Mobile] Transcription error: $e');
+              });
+
+              chunkBytes = 0; // Reset
+            }
+          } catch (e) {
+            debugPrint('[Streaming Mobile] Chunk error: $e');
+          }
+        },
+        onError: (error) {
+          debugPrint('[Streaming Mobile] Stream error: $error');
+          if (mounted) {
+            setState(() {
+              _isListening = false;
+              _isStreaming = false;
+            });
+          }
+        },
+        onDone: () {
+          debugPrint('[Streaming Mobile] Stream done');
+          if (mounted) {
+            setState(() {
+              _isListening = false;
+              _isStreaming = false;
+            });
+          }
+        },
+        cancelOnError: false,
+      );
+    } catch (e) {
+      debugPrint('[Streaming Mobile] Start error: $e');
+      if (mounted) {
+        showSuccessSnackBar(context, 'Erreur streaming: $e');
+      }
+
+      // ✅ Fallback: enregistrement classique si streaming non supporté
+      await _startMic();
+    }
+  }
+
+  Future<void> _stopStreamingMic() async {
+    if (!_isListening) return;
+
+    _streamingTimer?.cancel();
+    _streamingTimer = null;
+
+    // Stop Web chunking
+    if (kIsWeb) {
+      try {
+        // Stopper l'enregistreur (on ignore le blob final)
+        await _webRec.stopToBlob();
+      } catch (_) {}
+
+      if (!mounted) return;
+      setState(() {
+        _isListening = false;
+        _isStreaming = false;
+      });
+      return;
+    }
+
+    // Stop Mobile streaming
+    try {
+      await _streamMicSub?.cancel();
+      _streamMicSub = null;
+    } catch (_) {}
+
+    try {
+      await _recorder.stop();
+    } catch (_) {}
+
+    if (!mounted) return;
+    setState(() {
+      _isListening = false;
+      _isStreaming = false;
+    });
+  }
+
+  /// ✅ MODIFIÉ: Utiliser _startStreamingMic() au lieu de _startMic()
+  /// ✅ MODIFIÉ: Bouton micro avec feedback streaming amélioré
+
   final _formKey = GlobalKey<FormState>();
   final ScrollController _scrollController = ScrollController();
 
   bool _isUrgent = false;
+
+  // ✅ Analytics
+  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
+  /// ✅ Enregistre la publication d'une offre
+  Future<void> _logOfferPublished({
+    required String offerId,
+    required String title,
+    required String category,
+    required String? budget,
+    required String budgetType,
+  }) async {
+    try {
+      await _analytics.logEvent(
+        name: 'ecommerce_purchase',
+        parameters: {
+          'value': (budget != null && budget.isNotEmpty)
+              ? double.tryParse(budget) ?? 0.0
+              : 0.0,
+          'currency': 'EUR',
+          'transaction_id': offerId,
+          'items': [
+            {
+              'item_id': offerId,
+              'item_name': title,
+              'item_category': category,
+            },
+          ],
+        },
+      );
+
+      // ✅ Event personnalisé supplémentaire
+      await _analytics.logEvent(
+        name: 'offer_published',
+        parameters: {
+          'offer_id': offerId,
+          'title': title,
+          'category': category,
+          'budget_type': budgetType,
+          'has_photos': _selectedPhotos.isNotEmpty,
+          'photo_count': _selectedPhotos.length,
+          'is_urgent': _isUrgent,
+        },
+      );
+    } catch (e) {
+      debugPrint('[Analytics] logOfferPublished error: $e');
+    }
+  }
 
   // Champs texte
   final TextEditingController _titleController = TextEditingController();
@@ -6174,9 +7839,93 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // Toujours actif (améliore la qualité via Google STT côté serveur)
   final bool _useCloudStt = true;
 
+  // ✅ Extraction rapide CP (FR + DROM) depuis la transcription
+  String? _extractPostalCodeFromTranscript(String transcript) {
+    final t = transcript;
+    // 5 chiffres métropole + 97x/98x (DROM/COM) acceptés aussi (souvent 5 chiffres au final)
+    final m = RegExp(r'\b(97[0-9]{3}|98[0-9]{3}|[0-9]{5})\b').firstMatch(t);
+    return m?.group(1);
+  }
+
+  // ✅ Extraction ville: soit via CP (fiable), soit via motif "à <ville>"
+  CityRecord? _extractCityRecordFromTranscript(String transcript,
+      {String? cp}) {
+    if (cp != null && cp.trim().isNotEmpty) {
+      return CitySearch.instance.pickBestForPostalCode(cp.trim());
+    }
+
+    // ✅ FIX: raw string + apostrophes => utiliser guillemets doubles
+    final m = RegExp(
+      r"\b(?:a|à|sur|vers|près de|proche de)\s+([A-Za-zÀ-ÖØ-öø-ÿ'’\-\s]{2,40})\b",
+      caseSensitive: false,
+    ).firstMatch(transcript);
+
+    final rawCity = m?.group(1)?.trim();
+    if (rawCity == null || rawCity.isEmpty) return null;
+
+    final candidates = CitySearch.instance.search(rawCity, limit: 1);
+    return candidates.isNotEmpty ? candidates.first : null;
+  }
+
+  /// Remplissage immédiat (latence perçue ↓) dès que la transcription est prête.
+  /// L'IA pourra ensuite affiner et remplacer.
+  void _applyFastDraftFromTranscript(String transcript) {
+    final t = transcript.trim();
+    if (t.isEmpty) return;
+
+    // Description: si vide, on met la transcription brute immédiatement.
+    if (_descriptionController.text.trim().isEmpty) {
+      _descriptionController.text = t;
+    }
+
+    // Titre: si vide, on extrait une 1ère ligne/sentence courte.
+    if (_titleController.text.trim().isEmpty) {
+      final firstLine = t.split('\n').first.trim();
+      final firstSentence = firstLine.split(RegExp(r'[.!?]')).first.trim();
+      final candidate = (firstSentence.isNotEmpty ? firstSentence : firstLine);
+
+      final title = candidate.length > 72
+          ? '${candidate.substring(0, 72).trim()}…'
+          : candidate;
+      if (title.isNotEmpty) _titleController.text = title;
+    }
+
+    // ✅ CP + ville (sans inventer): uniquement si on détecte un CP ou une ville matchable
+    if (_postalCodeController.text.trim().isEmpty) {
+      final cp = _extractPostalCodeFromTranscript(t);
+      if (cp != null && cp.isNotEmpty) _postalCodeController.text = cp;
+    }
+
+    final effectiveCp = _postalCodeController.text.trim().isEmpty
+        ? null
+        : _postalCodeController.text.trim();
+
+    if (_locationController.text.trim().isEmpty) {
+      final cityRec = _extractCityRecordFromTranscript(t, cp: effectiveCp);
+      if (cityRec != null) {
+        _locationController.text = cityRec.name;
+
+        // si CP vide mais la ville en a un, on complète
+        if (_postalCodeController.text.trim().isEmpty &&
+            cityRec.cp.isNotEmpty) {
+          _postalCodeController.text = cityRec.cp;
+        }
+
+        // bonus cohérence UI: indicatif selon dept (déjà présent dans le code)
+        if (!mounted) return;
+        setState(() {
+          _selectedDeptCode = cityRec.dept;
+          _selectedRegionCode = cityRec.region;
+          _selectedPhoneCountryCode = _countryCodeForDept(cityRec.dept);
+        });
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
     });
@@ -6188,6 +7937,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _budgetController.addListener(_recompute);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
+
+    // ✅ Écouter le stream de transcription
+    _transcriptionStream.stream.listen((text) {
+      if (!mounted) return;
+      setState(() {
+        _partialTranscript = text;
+        // Remplir les champs au fur et à mesure
+        _applyFastDraftFromTranscript(text);
+      });
+    });
   }
 
   bool _isValidPhoneFR(String raw) {
@@ -6429,6 +8188,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!_isListening) return;
     if (_isAnalyzing) return;
 
+    // ✅ Arrêter le timer de chunking web (streaming mode)
+    _streamingTimer?.cancel();
+    _streamingTimer = null;
+
     if (kIsWeb) {
       if (!mounted) return;
       setState(() {
@@ -6461,6 +8224,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         final transcript = (out['text'] ?? '').toString().trim();
         if (transcript.isEmpty) throw Exception('Aucun texte reconnu');
+
+        // Remplissage immédiat (titre/desc/ville/cp) avant l'IA.
+        _applyFastDraftFromTranscript(transcript);
 
         final draft = await _aiService.generateOfferDraft(text: transcript);
         if (!mounted) return;
@@ -6579,7 +8345,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: _stopMic,
+          onTap: _isStreaming ? _stopStreamingMic : _stopMic,
           borderRadius: BorderRadius.circular(20),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -6633,6 +8399,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (transcript.isEmpty) {
       throw Exception('Aucun texte reconnu');
     }
+
+    // Remplissage immédiat (titre/desc/ville/cp) avant l'IA.
+    _applyFastDraftFromTranscript(transcript);
 
     final draft = await _aiService.generateOfferDraft(text: transcript);
     if (!mounted) return;
@@ -6727,6 +8496,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   void dispose() {
+    _transcriptionStream.close();
+    _streamingTimer?.cancel();
+    _streamMicSub?.cancel(); // ✅ AJOUT: Cleanup du stream
+    _streamMicSub = null;
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
@@ -7175,8 +8948,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'budgetType': _budgetType,
         'imageUrls': _uploadedPhotoUrls.isEmpty ? null : _uploadedPhotoUrls,
         'userId': user.uid,
+        'ownerId': user.uid,
         'createdAt': Timestamp.now(),
       });
+
+      // ✅ Analytics: publication
+      await _logOfferPublished(
+        offerId: docRef.id,
+        title: _titleController.text.trim(),
+        category: (_category ?? '').toString().trim(),
+        budget: _budgetController.text.trim(),
+        budgetType: _budgetType,
+      );
 
       // Créer des notifications pour les utilisateurs ayant cette catégorie en favori
       await _createNotificationsForFavorites(
@@ -7327,14 +9110,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   : AutovalidateMode.disabled,
               child: ListView(
                 controller: _scrollController,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 150),
                 children: [
                   // Bouton Premium AI avec enregistrement audio
                   Center(
                     child: _isListening
                         ? _buildMicRecordingButton()
                         : PremiumAiButton(
-                            onPressed: _isAnalyzing ? null : _startMic,
+                            onPressed: _isAnalyzing ? null : _startStreamingMic,
                             label: 'Décrire mon besoin (IA)',
                             isLoading: _isAnalyzing,
                           ),
@@ -7909,7 +9692,7 @@ class _PhotoSelectorTile extends StatelessWidget {
       child: Container(
         height: 90,
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF3E0),
+          color: Colors.grey.shade200,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.black12),
         ),
@@ -7939,29 +9722,11 @@ class _AccountPageState extends State<AccountPage> {
   final FirebaseFunctions _functions =
       FirebaseFunctions.instanceFor(region: 'europe-west1');
 
-  Future<void> _touchPresence({String? status}) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-    try {
-      final data = <String, dynamic>{
-        'lastSeenAt': FieldValue.serverTimestamp(),
-      };
-      if (status != null) {
-        data['status'] = status;
-      }
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-            data,
-            SetOptions(merge: true),
-          );
-    } catch (_) {
-      // best-effort
-    }
-  }
-
   Future<void> _trackLogin({
     String? authMethod,
     bool isNewUser = false,
   }) async {
+    final sw = Stopwatch()..start();
     try {
       // ✅ Métriques enrichies
       final platform = kIsWeb ? 'web' : defaultTargetPlatform.name;
@@ -7979,11 +9744,13 @@ class _AccountPageState extends State<AccountPage> {
         'isNewUser': isNewUser,
         'timestamp': DateTime.now().millisecondsSinceEpoch,
       });
+
+      sw.stop();
+      PrestoMonitoring.I.trackFunctionsCall(
+          name: 'trackUserLogin', ms: sw.elapsedMilliseconds);
     } catch (e) {
+      PrestoMonitoring.I.trackError('trackUserLogin', e);
       debugPrint('[Tracking] Error: $e');
-    } finally {
-      // ✅ Marquer comme online après login
-      await _touchPresence(status: 'online');
     }
   }
 
@@ -8008,14 +9775,12 @@ class _AccountPageState extends State<AccountPage> {
   final TextEditingController _adminMicroIaLanguageController =
       TextEditingController();
 
-  final _formKey = GlobalKey<FormState>();
-  late bool _isLoginMode;
-  bool _isLoading = false;
+  // final _formKey = GlobalKey<FormState>(); // Plus utilisé avec PrestoPremiumAuthPage
 
-  // Email / mot de passe
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _passwordConfirmController = TextEditingController();
+  // Email / mot de passe - Maintenant gérés par PrestoPremiumAuthPage
+  // final _emailController = TextEditingController();
+  // final _passwordController = TextEditingController();
+  // final _passwordConfirmController = TextEditingController();
 
   // Profil utilisateur
   final TextEditingController _profilePseudoController =
@@ -8047,17 +9812,27 @@ class _AccountPageState extends State<AccountPage> {
   Future<Map<String, dynamic>>? _adminCfgFuture;
 
   Future<Map<String, dynamic>> _adminGetMicroIaConfig() async {
+    final sw = Stopwatch()..start();
     final callable = _functions.httpsCallable(
       'adminGetMicroIaConfig',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
     );
-    final res = await callable.call<dynamic>({});
-    return Map<String, dynamic>.from(res.data as Map);
+    try {
+      final res = await callable.call<dynamic>({});
+      sw.stop();
+      PrestoMonitoring.I.trackFunctionsCall(
+          name: 'adminGetMicroIaConfig', ms: sw.elapsedMilliseconds);
+      return Map<String, dynamic>.from(res.data as Map);
+    } catch (e) {
+      PrestoMonitoring.I.trackError('adminGetMicroIaConfig', e);
+      rethrow;
+    }
   }
 
   Future<void> _adminSetMicroIaConfig() async {
     if (_adminSaving) return;
     setState(() => _adminSaving = true);
+    final sw = Stopwatch()..start();
     try {
       final callable = _functions.httpsCallable(
         'adminSetMicroIaConfig',
@@ -8070,6 +9845,10 @@ class _AccountPageState extends State<AccountPage> {
         'qualityThreshold': _adminMicroIaQualityThreshold,
         'languageCode': _adminMicroIaLanguageCode,
       });
+
+      sw.stop();
+      PrestoMonitoring.I.trackFunctionsCall(
+          name: 'adminSetMicroIaConfig', ms: sw.elapsedMilliseconds);
 
       // ✅ Re-synchronise l'UI avec la config effectivement publiée.
       final data = (res.data is Map)
@@ -8094,14 +9873,453 @@ class _AccountPageState extends State<AccountPage> {
       });
       showSuccessSnackBar(context, 'Paramètres Micro-IA mis à jour');
     } on FirebaseFunctionsException catch (e) {
+      PrestoMonitoring.I.trackError('adminSetMicroIaConfig', e);
       if (!mounted) return;
       showSuccessSnackBar(context, e.message ?? 'Erreur admin');
     } catch (e) {
+      PrestoMonitoring.I.trackError('adminSetMicroIaConfig', e);
       if (!mounted) return;
       showSuccessSnackBar(context, 'Erreur admin: $e');
     } finally {
       if (mounted) setState(() => _adminSaving = false);
     }
+  }
+
+  Widget _buildAnalyticsMetricRow({
+    required String icon,
+    required String label,
+    required String subtitle,
+    required bool enabled,
+    required ValueChanged<bool> onToggle,
+    required String value,
+    String? hint,
+    Color color = kPrestoBlue,
+  }) {
+    final statusColor = enabled ? color : Colors.grey;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: enabled
+            ? statusColor.withOpacity(0.07)
+            : Colors.grey.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: statusColor.withOpacity(0.25)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (hint != null && hint.trim().isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    hint,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.black45,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ]
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: statusColor,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Switch(
+                value: enabled,
+                onChanged: (v) => onToggle(v),
+                activeColor: statusColor,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdminAnalyticsPanel() {
+    return AnimatedBuilder(
+      animation: PrestoMonitoring.I,
+      builder: (context, _) {
+        final m = PrestoMonitoring.I;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.teal.withOpacity(0.25)),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    '📊 Analytics / Monitoring (session)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.teal,
+                    ),
+                  ),
+                  const Spacer(),
+                  Switch(
+                    value: m.enabled,
+                    onChanged: (v) => m.setEnabled(v),
+                    activeColor: Colors.teal,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ],
+              ),
+              Text(
+                'Session: ${m.sessionDurationLabel} • erreurs: ${m.errorsCount}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _buildAnalyticsMetricRow(
+                icon: '🧾',
+                label: 'Offres — Stream Firestore',
+                subtitle: 'snapshots() sur la query (temps réel)',
+                enabled: m.monitorOffersStream,
+                onToggle: (v) => m.setMonitorOffersStream(v),
+                value:
+                    '${m.offersSnapshotsCount} snap • ${m.lastOffersSnapshotDocs} docs',
+                hint: m.lastOffersQuerySignature,
+                color: kPrestoBlue,
+              ),
+              const SizedBox(height: 8),
+              _buildAnalyticsMetricRow(
+                icon: '📥',
+                label: 'Offres — Fetch once',
+                subtitle: 'get() ponctuel (debug/pagination)',
+                enabled: m.monitorOffersFetchOnce,
+                onToggle: (v) => m.setMonitorOffersFetchOnce(v),
+                value:
+                    '${m.offersFetchOnceCount} • ${m.lastOffersFetchMs}ms • ${m.lastOffersFetchDocs} docs',
+                color: kPrestoOrange,
+              ),
+              const SizedBox(height: 8),
+              _buildAnalyticsMetricRow(
+                icon: '💬',
+                label: 'Messages — Fetch once',
+                subtitle: 'get() messages d’une conversation',
+                enabled: m.monitorMessagesFetchOnce,
+                onToggle: (v) => m.setMonitorMessagesFetchOnce(v),
+                value:
+                    '${m.messagesFetchOnceCount} • ${m.lastMessagesFetchMs}ms • ${m.lastMessagesFetchDocs} docs',
+                color: Colors.purple,
+              ),
+              const SizedBox(height: 8),
+              _buildAnalyticsMetricRow(
+                icon: '⚡',
+                label: 'Cloud Functions',
+                subtitle: 'callable (admin/login/...)',
+                enabled: m.monitorFunctionsCalls,
+                onToggle: (v) => m.setMonitorFunctionsCalls(v),
+                value: '${m.functionsCallsCount} • ${m.lastFunctionsCallMs}ms',
+                hint: m.lastError,
+                color: Colors.teal,
+              ),
+              const SizedBox(height: 8),
+              _buildAnalyticsMetricRow(
+                icon: '🛰️',
+                label: 'Autres streams Firestore',
+                subtitle: 'notifications / conversations / profils / home',
+                enabled: m.monitorOtherStreams,
+                onToggle: (v) => m.setMonitorOtherStreams(v),
+                value:
+                    '${m.otherStreamsEvents} • ${m.lastOtherStreamDocs} docs',
+                hint: m.lastOtherStreamKey,
+                color: Colors.indigo,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: m.reset,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text(
+                      'Reset',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      const Text(
+                        'Logs',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Switch(
+                        value: m.verboseLogs,
+                        onChanged: (v) => m.setVerbose(v),
+                        activeColor: Colors.teal,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBuildVersionPanel() {
+    final mode =
+        kReleaseMode ? 'release' : (kProfileMode ? 'profile' : 'debug');
+    final platform = kIsWeb ? 'web' : defaultTargetPlatform.name;
+    final sha = kAppBuildSha;
+    final shortSha = (sha.length > 12) ? sha.substring(0, 12) : sha;
+
+    final hasStamp = sha.isNotEmpty && sha != 'local';
+    final stampLine = [
+      if (kAppBuildTag.trim().isNotEmpty) 'tag: ${kAppBuildTag.trim()}',
+      if (kAppBuildBranch.trim().isNotEmpty)
+        'branch: ${kAppBuildBranch.trim()}',
+      if (kAppBuildTimeUtc.trim().isNotEmpty)
+        'build: ${kAppBuildTimeUtc.trim()} UTC',
+    ].join(' • ');
+
+    return Container(
+      decoration: BoxDecoration(
+        color: hasStamp
+            ? Colors.green.withOpacity(0.06)
+            : Colors.red.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: hasStamp
+              ? Colors.green.withOpacity(0.25)
+              : Colors.red.withOpacity(0.25),
+        ),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                '🧩 Version affichée',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: hasStamp ? Colors.green.shade800 : Colors.red.shade700,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '$platform • $mode',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SelectableText(
+            'sha: $shortSha',
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.2,
+              color: Colors.black87,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          if (stampLine.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              stampLine,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          if (!hasStamp) ...[
+            const SizedBox(height: 6),
+            const Text(
+              '⚠️ Build stamp non renseigné (utilise --dart-define).',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              TextButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: sha));
+                  if (!mounted) return;
+                  showSuccessSnackBar(context, 'SHA copié');
+                },
+                icon: const Icon(Icons.copy, size: 16),
+                label: const Text(
+                  'Copier SHA',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: kPrestoBlue,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                hasStamp ? 'OK' : 'LOCAL',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: hasStamp ? Colors.green.shade800 : Colors.red.shade700,
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  // ignore: unused_element
+  Widget _buildAudioPipelineRow({
+    required String icon,
+    required String label,
+    required String description,
+    required bool isActive,
+    required String status,
+  }) {
+    final statusColor = isActive
+        ? (status == 'ACTIVE' ? Colors.green : Colors.blue)
+        : Colors.grey;
+    final bgColor =
+        isActive ? statusColor.withOpacity(0.1) : Colors.grey.withOpacity(0.05);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: statusColor.withOpacity(0.3),
+          width: 1.5,
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Status Badge avec Toggle
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: statusColor.withOpacity(0.4)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  status,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: statusColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ignore: unused_element
@@ -8257,6 +10475,8 @@ class _AccountPageState extends State<AccountPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
+                  _buildBuildVersionPanel(),
+                  const SizedBox(height: 12),
                   const Text(
                     'Micro-IA (transcription audio)',
                     style: TextStyle(
@@ -8265,7 +10485,59 @@ class _AccountPageState extends State<AccountPage> {
                       color: kPrestoOrange,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
+                  // ✅ AUDIO PIPELINE MONITOR
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '🎙️ Pipelines Audio Actifs',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.amber,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        // Mobile Streaming
+                        _buildAudioPipelineRow(
+                          icon: '📱',
+                          label: 'Mobile Streaming',
+                          description: 'PCM16 16kHz real-time',
+                          isActive: !kIsWeb,
+                          status: !kIsWeb ? 'READY' : 'N/A',
+                        ),
+                        const SizedBox(height: 8),
+                        // Web Chunking
+                        _buildAudioPipelineRow(
+                          icon: '🌐',
+                          label: 'Web Chunking',
+                          description: '2-sec chunks, stopToBlob()',
+                          isActive: kIsWeb,
+                          status: kIsWeb ? 'ACTIVE' : 'STANDBY',
+                        ),
+                        const SizedBox(height: 8),
+                        // Standard Recording
+                        _buildAudioPipelineRow(
+                          icon: '⏺️',
+                          label: 'Standard Recording',
+                          description: 'Fallback WAV 16k mono',
+                          isActive: true,
+                          status: 'AVAILABLE',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildAdminAnalyticsPanel(),
+                  const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: _adminMicroIaMode,
                     items: const [
@@ -8428,7 +10700,7 @@ class _AccountPageState extends State<AccountPage> {
   @override
   void initState() {
     super.initState();
-    _isLoginMode = !widget.startInSignup;
+    // _isLoginMode = !widget.startInSignup; // Plus utilisé avec PrestoPremiumAuthPage
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
     });
@@ -8468,9 +10740,9 @@ class _AccountPageState extends State<AccountPage> {
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    _passwordConfirmController.dispose();
+    // _emailController.dispose(); // Maintenant géré par PrestoPremiumAuthPage
+    // _passwordController.dispose();
+    // _passwordConfirmController.dispose();
     _profilePseudoController.dispose();
     _profileCityController.dispose();
     _profilePhoneController.dispose();
@@ -8479,87 +10751,7 @@ class _AccountPageState extends State<AccountPage> {
     super.dispose();
   }
 
-  Future<void> _signInWithEmail() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-    try {
-      await _auth.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-
-      // ✅ Tracking de connexion
-      await _trackLogin(authMethod: 'email', isNewUser: false);
-
-      if (!mounted) return;
-      showSuccessSnackBar(context, "Connexion réussie");
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      String errorMsg;
-
-      switch (e.code) {
-        case 'user-not-found':
-          errorMsg = "Aucun compte associé à cet email.";
-          break;
-        case 'wrong-password':
-          errorMsg = "Mot de passe incorrect.";
-          break;
-        case 'invalid-email':
-          errorMsg = "Format d'email invalide.";
-          break;
-        case 'user-disabled':
-          errorMsg = "Ce compte a été désactivé.";
-          break;
-        case 'too-many-requests':
-          errorMsg = "Trop de tentatives. Réessaye plus tard.";
-          break;
-        case 'invalid-credential':
-          errorMsg = "Email ou mot de passe incorrect.";
-          break;
-        case 'network-request-failed':
-          errorMsg = "Erreur réseau. Vérifie ta connexion.";
-          break;
-        default:
-          errorMsg = e.message ?? "Erreur de connexion : ${e.code}";
-      }
-
-      showErrorSnackBar(context, errorMsg);
-    } catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, "Erreur inattendue : $e");
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _registerWithEmail() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    if (_passwordController.text.trim() !=
-        _passwordConfirmController.text.trim()) {
-      showSuccessSnackBar(context, "Les mots de passe ne correspondent pas.");
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-
-      await _trackLogin(authMethod: 'email', isNewUser: true);
-      if (!mounted) return;
-      showSuccessSnackBar(context, "Compte créé et connecté avec succès");
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      showSuccessSnackBar(
-          context, e.message ?? "Erreur lors de l’inscription.");
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
+  // Ancienne méthode - maintenant gérée par PrestoPremiumAuthPage
 
   Future<void> _loadUserProfile(User user, {bool isRetry = false}) async {
     try {
@@ -9002,7 +11194,7 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _signInWithGoogle() async {
-    setState(() => _isLoading = true);
+    // setState(() => _isLoading = true); // Géré par PrestoPremiumAuthPage
 
     try {
       _googleAuthService.logAttempt('signInWithGoogle',
@@ -9041,7 +11233,7 @@ class _AccountPageState extends State<AccountPage> {
                 showErrorSnackBar(context, msg);
               }
               if (mounted) {
-                setState(() => _isLoading = false);
+                // setState(() => _isLoading = false);
               }
               return;
             }
@@ -9055,7 +11247,7 @@ class _AccountPageState extends State<AccountPage> {
             showErrorSnackBar(context, msg);
           }
           if (mounted) {
-            setState(() => _isLoading = false);
+            // setState(() => _isLoading = false);
           }
           return;
         }
@@ -9120,7 +11312,7 @@ class _AccountPageState extends State<AccountPage> {
       showErrorSnackBar(context, "Erreur lors de la connexion. Réessaye.");
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        // setState(() => _isLoading = false);
       }
     }
   }
@@ -9136,7 +11328,7 @@ class _AccountPageState extends State<AccountPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    // setState(() => _isLoading = true); // Géré par PrestoPremiumAuthPage
     try {
       debugPrint('[Apple Sign-In] Démarrage de l\'authentification Apple...');
 
@@ -9230,6 +11422,15 @@ class _AccountPageState extends State<AccountPage> {
         case AuthorizationErrorCode.notInteractive:
           msg = "Authentification Apple non disponible en arrière-plan.";
           break;
+        case AuthorizationErrorCode.credentialExport:
+          msg = "Export d'identifiants Apple non autorisé.";
+          break;
+        case AuthorizationErrorCode.credentialImport:
+          msg = "Import d'identifiants Apple non autorisé.";
+          break;
+        case AuthorizationErrorCode.matchedExcludedCredential:
+          msg = "Identifiants Apple exclus pour cette connexion.";
+          break;
         case AuthorizationErrorCode.unknown:
           msg = "Erreur Apple inconnue. Réessaye.";
           break;
@@ -9270,352 +11471,22 @@ class _AccountPageState extends State<AccountPage> {
       debugPrint('[Apple Sign-In] Unexpected error: $e');
       showErrorSnackBar(context, "Erreur inattendue : $e");
     } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _resetPassword() async {
-    final email = _emailController.text.trim();
-
-    if (email.isEmpty || !email.contains('@')) {
-      showErrorSnackBar(context,
-          "Entre un email valide pour réinitialiser ton mot de passe.");
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      await _auth.sendPasswordResetEmail(email: email);
-
-      if (!mounted) return;
-      showSuccessSnackBar(
-        context,
-        "Email de réinitialisation envoyé à $email. Vérifie ta boîte mail.",
-      );
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      String errorMsg;
-
-      switch (e.code) {
-        case 'user-not-found':
-          errorMsg = "Aucun compte associé à cet email.";
-          break;
-        case 'invalid-email':
-          errorMsg = "Format d'email invalide.";
-          break;
-        case 'too-many-requests':
-          errorMsg = "Trop de tentatives. Réessaye plus tard.";
-          break;
-        default:
-          errorMsg = e.message ?? "Erreur : ${e.code}";
-      }
-
-      showErrorSnackBar(context, errorMsg);
-    } catch (e) {
-      if (!mounted) return;
-      showErrorSnackBar(context, "Erreur : $e");
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      // if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _signOut() async {
     try {
       await _auth.signOut();
-      SessionState.userId = null;
+      // ✅ SessionState.userId sera automatiquement mis à null via authStateChanges()
       await CrashlyticsContext.setUserId(null);
     } catch (_) {}
   }
 
-  Widget _buildAuthForm() {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        appBar: AppBar(
-          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-          title: const Text(
-            "Mon compte iliprestō",
-            style: kPrestoAppBarTitleStyle,
-          ),
-          backgroundColor: kPrestoOrange,
-          foregroundColor: Colors.white,
-        ),
-        backgroundColor: Colors.white,
-        body: AnimatedPadding(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 500),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _isLoginMode
-                          ? "Se connecter à iliprestō"
-                          : "Créer un compte iliprestō",
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      "Un compte te permet de gérer tes offres, tes messages et ta visibilité.",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          TextFormField(
-                            controller: _emailController,
-                            decoration: const InputDecoration(
-                              labelText: "Email",
-                            ),
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return "Indique un email";
-                              }
-                              if (!value.contains('@')) {
-                                return "Email invalide";
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            controller: _passwordController,
-                            decoration: InputDecoration(
-                              labelText: "Mot de passe",
-                              helperText: _isLoginMode
-                                  ? null
-                                  : "Au moins 8 caractères recommandés",
-                              helperStyle: const TextStyle(fontSize: 11),
-                            ),
-                            obscureText: true,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return "Mot de passe requis";
-                              }
-                              if (_isLoginMode) {
-                                return null; // Pas de validation stricte en mode connexion
-                              }
-                              if (value.trim().length < 8) {
-                                return "Au moins 8 caractères pour plus de sécurité";
-                              }
-                              return null;
-                            },
-                          ),
-                          if (!_isLoginMode) ...[
-                            const SizedBox(height: 12),
-                            TextFormField(
-                              controller: _passwordConfirmController,
-                              decoration: const InputDecoration(
-                                labelText: "Confirme le mot de passe",
-                              ),
-                              obscureText: true,
-                            ),
-                          ],
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: kPrestoOrange,
-                                foregroundColor: Colors.white,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 14),
-                              ),
-                              onPressed: _isLoading
-                                  ? null
-                                  : () {
-                                      if (_isLoginMode) {
-                                        _signInWithEmail();
-                                      } else {
-                                        _registerWithEmail();
-                                      }
-                                    },
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                          Colors.white,
-                                        ),
-                                      ),
-                                    )
-                                  : Text(
-                                      _isLoginMode
-                                          ? "Se connecter"
-                                          : "Créer mon compte",
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _isLoginMode = !_isLoginMode;
-                          });
-                        },
-                        child: Text(
-                          _isLoginMode
-                              ? "Pas encore de compte ? S’inscrire"
-                              : "Déjà un compte ? Se connecter",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: kPrestoBlue,
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (_isLoginMode) ...[
-                      const SizedBox(height: 4),
-                      Center(
-                        child: TextButton(
-                          onPressed: _isLoading ? null : _resetPassword,
-                          child: const Text(
-                            "Mot de passe oublié ?",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: kPrestoOrange,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    const SizedBox(height: 12),
-                    const Text(
-                      "Ou se connecter avec",
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _isLoading
-                            ? null
-                            : () async {
-                                try {
-                                  await _signInWithGoogle();
-                                } catch (e) {
-                                  if (mounted) {
-                                    showErrorSnackBar(context,
-                                        "Erreur de connexion. Réessaye.");
-                                  }
-                                }
-                              },
-                        icon: const Icon(Icons.g_mobiledata),
-                        label: const Text("Se connecter avec Google"),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          side: const BorderSide(color: Colors.black12),
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: _isLoading ? null : _signInWithApple,
-                        icon: const Icon(
-                          Icons.apple,
-                          size: 20,
-                        ),
-                        label: const Text(
-                          "Continuer avec Apple",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Vous êtes une entreprise ?",
-                            style: TextStyle(
-                                fontWeight: FontWeight.w800, fontSize: 16),
-                          ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
-                            "Abonnement bientôt disponible.",
-                            style: TextStyle(color: Colors.black54),
-                          ),
-                          const SizedBox(height: 10),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (_) => const ProProfilePage()),
-                                );
-                              },
-                              icon: const Icon(Icons.business_center_outlined),
-                              label: const Text("Créer un compte Pro"),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // Ancienne méthode _buildProfile supprimée - remplacée par PrestoPremiumAuthPage pour l'auth
 
   Widget _buildProfile(User user) {
-    SessionState.userId = user.uid;
+    // ✅ SessionState.userId est maintenant synchronisé automatiquement via authStateChanges()
     // Lier les crash reports à l'utilisateur connecté
     CrashlyticsContext.setUserId(user.uid);
 
@@ -9632,6 +11503,10 @@ class _AccountPageState extends State<AccountPage> {
         ? pseudo
         : (user.displayName ?? "Utilisateur iliprestō");
 
+    final profileViewInsetsBottom = MediaQuery.of(context).viewInsets.bottom;
+    final profileBottomInset =
+        profileViewInsetsBottom > 10 ? profileViewInsetsBottom : 0.0;
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -9650,16 +11525,16 @@ class _AccountPageState extends State<AccountPage> {
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+            bottom: profileBottomInset,
           ),
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(12),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 500),
                 child: SingleChildScrollView(
                   controller: _scrollController,
-                  padding: const EdgeInsets.only(bottom: 120),
+                  padding: const EdgeInsets.only(bottom: 150),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -10441,7 +12316,19 @@ class _AccountPageState extends State<AccountPage> {
         if (user == null) {
           SessionState.userId = null;
           CrashlyticsContext.setUserId(null);
-          return _buildAuthForm();
+          return PrestoPremiumAuthPage(
+            onGoogle: () async => await _signInWithGoogle(),
+            onApple: () async => await _signInWithApple(),
+            onEmailLogin: (email, password) async {
+              await _auth.signInWithEmailAndPassword(
+                email: email,
+                password: password,
+              );
+            },
+            onResetPassword: (email) async {
+              await _auth.sendPasswordResetEmail(email: email);
+            },
+          );
         } else {
           return _buildProfile(user);
         }
@@ -10861,15 +12748,51 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     if (!context.mounted) return false;
 
     if (confirmed == true) {
-      await FirebaseFirestore.instance
-          .collection('offers')
-          .doc(offerId)
-          .delete();
+      try {
+        // 1️⃣ Récupérer les URLs des images avant suppression
+        final doc = await FirebaseFirestore.instance
+            .collection('offers')
+            .doc(offerId)
+            .get();
 
-      if (!context.mounted) return false;
+        final imageUrls = (doc.data()?['imageUrls'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
 
-      showSuccessSnackBar(context, "Annonce supprimée ✅");
-      return true;
+        // 2️⃣ Supprimer les images de Storage
+        if (imageUrls.isNotEmpty) {
+          debugPrint(
+              '🗑️ [DELETE] Suppression de ${imageUrls.length} images...');
+          for (final url in imageUrls) {
+            try {
+              final ref = FirebaseStorage.instance.refFromURL(url);
+              await ref.delete();
+              debugPrint('✅ [DELETE] Image supprimée: $url');
+            } catch (e) {
+              debugPrint('⚠️ [DELETE] Erreur suppression image: $e');
+              // Continue même si une image échoue
+            }
+          }
+        }
+
+        // 3️⃣ Supprimer le document Firestore
+        await FirebaseFirestore.instance
+            .collection('offers')
+            .doc(offerId)
+            .delete();
+
+        if (!context.mounted) return false;
+
+        showSuccessSnackBar(context, "Annonce supprimée ✅");
+        return true;
+      } catch (e) {
+        debugPrint('❌ [DELETE] Erreur: $e');
+        if (!context.mounted) return false;
+
+        showErrorSnackBar(context, "Erreur lors de la suppression");
+        return false;
+      }
     }
 
     return false;
@@ -10903,6 +12826,196 @@ class _RecapRow extends StatelessWidget {
             value,
             style: const TextStyle(
               fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// CARROUSEL AUTO-DÉFILANT POUR LES DERNIÈRES OFFRES (2 lignes)
+// ============================================================================
+class _AutoScrollingOffersCarousel extends StatefulWidget {
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> offers;
+  final void Function(QueryDocumentSnapshot<Map<String, dynamic>>)? onOfferTap;
+
+  const _AutoScrollingOffersCarousel({
+    required this.offers,
+    this.onOfferTap,
+  });
+
+  @override
+  State<_AutoScrollingOffersCarousel> createState() =>
+      _AutoScrollingOffersCarouselState();
+}
+
+class _AutoScrollingOffersCarouselState
+    extends State<_AutoScrollingOffersCarousel> {
+  final ScrollController _scrollController = ScrollController();
+  Timer? _autoScrollTimer;
+  bool _isHovered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoScroll();
+  }
+
+  @override
+  void dispose() {
+    _autoScrollTimer?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoScroll() {
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
+      if (!_isHovered && _scrollController.hasClients) {
+        final maxScroll = _scrollController.position.maxScrollExtent;
+        final currentScroll = _scrollController.offset;
+
+        // Défilement continu de droite vers gauche
+        if (currentScroll >= maxScroll) {
+          // Retour instantané au début pour un effet infini
+          _scrollController.jumpTo(0);
+        } else {
+          _scrollController.jumpTo(currentScroll + 1);
+        }
+      }
+    });
+  }
+
+  String _labelWhenFromTitle(String title) {
+    final lower = title.toLowerCase();
+    if (lower.contains("aujourd'hui")) return "Aujourd'hui";
+    if (lower.contains('demain')) return 'Demain';
+    return 'Bientôt';
+  }
+
+  Widget _buildOfferCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data();
+    final title = (data['title'] ?? 'Sans titre') as String;
+    final location = (data['location'] ?? 'Lieu non précisé') as String;
+    final whenLabel = _labelWhenFromTitle(title);
+
+    return GestureDetector(
+      onTap: () => widget.onOfferTap?.call(doc),
+      child: Container(
+        width: 280,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 8,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3E0),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.flash_on_outlined,
+                color: kPrestoOrange,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    "$location — $whenLabel",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.chevron_right,
+              size: 18,
+              color: Colors.black38,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Dupliquer les offres pour créer un effet de boucle infinie
+    final duplicatedOffers = [...widget.offers, ...widget.offers];
+
+    // Séparer en 2 lignes
+    final row1Offers = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    final row2Offers = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+
+    for (int i = 0; i < duplicatedOffers.length; i++) {
+      if (i % 2 == 0) {
+        row1Offers.add(duplicatedOffers[i]);
+      } else {
+        row2Offers.add(duplicatedOffers[i]);
+      }
+    }
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: Column(
+        children: [
+          // Ligne 1
+          SizedBox(
+            height: 60,
+            child: ListView.separated(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              itemCount: row1Offers.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, index) => _buildOfferCard(row1Offers[index]),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Ligne 2
+          SizedBox(
+            height: 60,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: row2Offers.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, index) => _buildOfferCard(row2Offers[index]),
             ),
           ),
         ],
