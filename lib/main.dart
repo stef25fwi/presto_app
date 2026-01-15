@@ -13,10 +13,10 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
+// import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:record/record.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+// import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -24,17 +24,17 @@ import 'firebase_options.dart';
 import 'app_core.dart';
 import 'constants.dart';
 import 'app/theme.dart';
-import 'services/firebase_service.dart';
+// import 'services/firebase_service.dart';
 import 'services/city_search.dart';
 import 'services/google_auth_service.dart';
 import 'services/notification_service.dart';
 import 'pages/toolbox_hub_page.dart';
-import 'pages/auth/presto_premium_auth_page.dart';
+// import 'pages/auth/presto_premium_auth_page.dart';
 import 'pages/pro_profile_page.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/legal_info_page.dart';
-import 'pages/home_page_v2_option2.dart';
-import 'pages/messages/conversation_page.dart';
+// import 'pages/home_page_v2_option2.dart';
+// import 'pages/messages/conversation_page.dart';
 import 'widgets/ad_banner.dart';
 import 'widgets/offer_card.dart';
 import 'widgets/random_asset_ticker.dart';
@@ -705,7 +705,7 @@ Future<void> main() async {
     }
 
     // ✅ Initialiser le service Firebase centralisé avec optimisations
-    await FirebaseService.instance.initialize();
+    // await FirebaseService.instance.initialize();
 
     // ✅ Remote Config: charger le pipeline audio
     await PrestoRemoteConfig.init();
@@ -758,10 +758,12 @@ Future<void> main() async {
       }
 
       // ✅ Synchroniser SessionState.userId automatiquement avec les changements d'auth
+      /*
       FirebaseService.instance.authStateChanges.listen((User? user) {
         SessionState.userId = user?.uid;
         debugPrint('[Auth] State changed: ${user?.uid ?? "null"}');
       });
+      */
     } catch (e) {
       debugPrint('[Auth] check failed: $e');
     }
@@ -816,6 +818,7 @@ class PrestoApp extends StatelessWidget {
       routes: {
         '/publish': (_) => const PublishOfferPage(),
         '/messages': (_) => const MessagesPage(),
+        /*
         '/auth': (context) => PrestoPremiumAuthPage(
               onGoogle: () async {
                 final auth = FirebaseAuth.instance;
@@ -876,6 +879,7 @@ class PrestoApp extends StatelessWidget {
                 );
               },
             ),
+        */
         AppRoutes.toolboxHub: (_) => const ToolboxHubPage(),
         AppRoutes.toolboxCurrent: (_) => const CurrentToolboxPage(),
         AppRoutes.entrepreneurCalculator: (_) =>
@@ -1097,6 +1101,7 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  /*
                   GestureDetector(
                     onLongPress: () {
                       Navigator.push(
@@ -1119,6 +1124,20 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ),
                   ),
+                  */
+                  ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: const Text(
+                      'iliprestō',
+                      style: TextStyle(
+                        fontSize: 54,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 1.3,
+                      ),
+                    ),
+                  ),
+                  // */
                   const SizedBox(height: 28),
                   const Text(
                     'Trouvez un prestataire\nillico presto!',
@@ -1283,7 +1302,7 @@ class _HomePageState extends State<HomePage>
     ),
   ];
 
-  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  // late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
 
   void _goToSearch(String query) {
     final q = query.trim();
@@ -5497,12 +5516,11 @@ Motif du signalement :
               ),
             ],
           ),
-        ),
+        ],
       ),
-
-        body: Stack(
-          children: [
-            SafeArea(
+      body: Stack(
+        children: [
+          SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(0, 14, 0, 160),
                 child: Column(
@@ -5513,147 +5531,8 @@ Motif du signalement :
                 ),
               ),
             ),
-
-        // ✅ CTA sticky en bas
-        Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 14,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "Réponse rapide • Paiement selon accord",
-                        children: [
-                          CircleAvatar(
-                            radius: 18,
-                            backgroundColor: const Color(0xFFFFF3E8),
-                            child: Icon(
-                              Icons.call,
-                              size: 18,
-                              color: Colors.orange.shade800,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              phoneText,
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          if (hasPhone)
-                            IconButton(
-                              tooltip: _isPhoneVisible
-                                  ? 'Masquer le numéro'
-                                  : 'Afficher le numéro',
-                              onPressed: () {
-                                setState(() {
-                                  _isPhoneVisible = !_isPhoneVisible;
-                                });
-                              },
-                              icon: Icon(
-                                _isPhoneVisible
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                                color: Colors.black54,
-                              ),
-                            ),
-                        ],
-                      ),
-                      // Bouton messagerie retiré
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // ✅ PUBLICITÉ - Carrousel pleine largeur sans rebord
-                AdBanner(
-                  margin: EdgeInsets.zero,
-                  placeholderHeight: kIsWeb ? 220.0 : 140.0,
-                  placeholderFolderPrefix: 'assets/carousel_home/',
-                  flat: true,
-                  animatePlaceholder: false,
-                ),
-
-                const SizedBox(height: 14),
-
-                // ✅ PARTAGER (carte) -> boutons comme mockup
-                _SectionCard(
-                  title: "Partager l’annonce",
-                  trailing: const Icon(Icons.chevron_right),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _ShareButton(
-                          icon: SvgPicture.network(
-                            'https://cdn.simpleicons.org/whatsapp',
-                            width: 18,
-                            height: 18,
-                            placeholderBuilder: (context) => Icon(
-                                Icons.chat_bubble_outline,
-                                size: 18,
-                                color: Colors.grey.shade800),
-                          ),
-                          label: "WhatsApp",
-                          onPressed: () => _shareOn(context, 'whatsapp'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _ShareButton(
-                          icon: SvgPicture.network(
-                            'https://cdn.simpleicons.org/facebook',
-                            width: 18,
-                            height: 18,
-                            placeholderBuilder: (context) => Icon(
-                                Icons.facebook,
-                                size: 18,
-                                color: Colors.grey.shade800),
-                          ),
-                          label: "Facebook",
-                          onPressed: () => _shareOn(context, 'facebook'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _ShareButton(
-                          icon: const Icon(Icons.link,
-                              size: 18, color: Colors.grey),
-                          label: "Copier le lien",
-                          onPressed: () {
-                            // si tu veux, tu peux faire Clipboard.setData(...)
-                            // mais pour rester simple, on peut réutiliser un share "instagram" ou snackbar
-                            showSuccessSnackBar(
-                                context, "Lien copié (à brancher).");
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
           
-        // ✅ CTA sticky en bas
+        // CTA sticky en bas
         Positioned(
             bottom: 0,
             left: 0,
@@ -6490,6 +6369,7 @@ class _MessagesPageState extends State<MessagesPage> {
 
                   return _TapScale(
                     onTap: () {
+                      /*
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => ConversationPage(
@@ -6497,6 +6377,7 @@ class _MessagesPageState extends State<MessagesPage> {
                           ),
                         ),
                       );
+                      */
                     },
                     child: Card(
                       color: bubbleColor,
