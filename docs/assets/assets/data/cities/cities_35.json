@@ -1,0 +1,2024 @@
+[
+  {
+    "name": "ACIGNE",
+    "cp": "35690",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "AMANLIS",
+    "cp": "35150",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ANDOUILLE NEUVILLE",
+    "cp": "35250",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ARBRISSEL",
+    "cp": "35130",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ARGENTRE DU PLESSIS",
+    "cp": "35370",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "AUBIGNE",
+    "cp": "35250",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "AVAILLES SUR SEICHE",
+    "cp": "35130",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BAGUER MORVAN",
+    "cp": "35120",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BAGUER PICAN",
+    "cp": "35120",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BAIN DE BRETAGNE",
+    "cp": "35470",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BAINS SUR OUST",
+    "cp": "35600",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BAIS",
+    "cp": "35680",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BALAZE",
+    "cp": "35500",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BAULON",
+    "cp": "35580",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BAZOUGES LA PEROUSE",
+    "cp": "35560",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BEAUCE",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BECHEREL",
+    "cp": "35190",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BEDEE",
+    "cp": "35137",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BETTON",
+    "cp": "35830",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BILLE",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BLERUAIS",
+    "cp": "35750",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BOISGERVILLY",
+    "cp": "35360",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BOISTRUDAN",
+    "cp": "35150",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BONNEMAIN",
+    "cp": "35270",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BOURG DES COMPTES",
+    "cp": "35890",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BOURGBARRE",
+    "cp": "35230",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BOVEL",
+    "cp": "35330",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BREAL SOUS MONTFORT",
+    "cp": "35310",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BREAL SOUS VITRE",
+    "cp": "35370",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BRECE",
+    "cp": "35530",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BRETEIL",
+    "cp": "35160",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BRIE",
+    "cp": "35150",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BRIELLES",
+    "cp": "35370",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BROUALAN",
+    "cp": "35120",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BRUC SUR AFF",
+    "cp": "35550",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "BRUZ",
+    "cp": "35170",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CANCALE",
+    "cp": "35260",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CARDROC",
+    "cp": "35190",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CESSON SEVIGNE",
+    "cp": "35510",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHAMPEAUX",
+    "cp": "35500",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHANTELOUP",
+    "cp": "35150",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHANTEPIE",
+    "cp": "35135",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHARTRES DE BRETAGNE",
+    "cp": "35131",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHASNE SUR ILLET",
+    "cp": "35250",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUBOURG",
+    "cp": "35220",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUGIRON",
+    "cp": "35410",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHATEAUNEUF D ILLE ET VILAINE",
+    "cp": "35430",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHATILLON EN VENDELAIS",
+    "cp": "35210",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHAUVIGNE",
+    "cp": "35490",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHAVAGNE",
+    "cp": "35310",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHELUN",
+    "cp": "35640",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHERRUEIX",
+    "cp": "35120",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CHEVAIGNE",
+    "cp": "35250",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CINTRE",
+    "cp": "35310",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CLAYES",
+    "cp": "35590",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "COESMES",
+    "cp": "35134",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "COMBLESSAC",
+    "cp": "35330",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "COMBOURG",
+    "cp": "35270",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "COMBOURTILLE",
+    "cp": "35210",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CORNILLE",
+    "cp": "35500",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CORPS NUDS",
+    "cp": "35150",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CREVIN",
+    "cp": "35320",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "CUGUEN",
+    "cp": "35270",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "DINARD",
+    "cp": "35800",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "DINGE",
+    "cp": "35440",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "DOL DE BRETAGNE",
+    "cp": "35120",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "DOMAGNE",
+    "cp": "35113",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "DOMALAIN",
+    "cp": "35680",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "DOMLOUP",
+    "cp": "35410",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "DOURDAIN",
+    "cp": "35450",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "DROUGES",
+    "cp": "35130",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "EANCE",
+    "cp": "35640",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "EPINIAC",
+    "cp": "35120",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ERBREE",
+    "cp": "35500",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ERCE EN LAMEE",
+    "cp": "35620",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ERCE PRES LIFFRE",
+    "cp": "35340",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ESSE",
+    "cp": "35150",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ETRELLES",
+    "cp": "35370",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "FEINS",
+    "cp": "35440",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "FORGES LA FORET",
+    "cp": "35640",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "FOUGERES",
+    "cp": "35300",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "GAEL",
+    "cp": "35290",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "GAHARD",
+    "cp": "35490",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "GENNES SUR SEICHE",
+    "cp": "35370",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "GEVEZE",
+    "cp": "35850",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "GOSNE",
+    "cp": "35140",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "GOVEN",
+    "cp": "35580",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "GRAND FOUGERAY",
+    "cp": "35390",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "GUICHEN",
+    "cp": "35580",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "GUIGNEN",
+    "cp": "35580",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "GUIPEL",
+    "cp": "35440",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "GUIPRY MESSAC",
+    "cp": "35480",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "HEDE BAZOUGES",
+    "cp": "35630",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "HIREL",
+    "cp": "35120",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "IFFENDIC",
+    "cp": "35750",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "IRODOUER",
+    "cp": "35850",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "JANZE",
+    "cp": "35150",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "JAVENE",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "L HERMITAGE",
+    "cp": "35590",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA BAUSSAINE",
+    "cp": "35190",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA BAZOUGE DU DESERT",
+    "cp": "35420",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA BOSSE DE BRETAGNE",
+    "cp": "35320",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA BOUEXIERE",
+    "cp": "35340",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA BOUSSAC",
+    "cp": "35120",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE AUX FILTZMEENS",
+    "cp": "35190",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE BOUEXIC",
+    "cp": "35330",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE CHAUSSEE",
+    "cp": "35630",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE DE BRAIN",
+    "cp": "35660",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE DES FOUGERETZ",
+    "cp": "35520",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE DU LOU DU LAC",
+    "cp": "35360",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE ERBREE",
+    "cp": "35500",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE FLEURIGNE",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE ST AUBERT",
+    "cp": "35140",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA CHAPELLE THOUARAULT",
+    "cp": "35590",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA COUYERE",
+    "cp": "35320",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA DOMINELAIS",
+    "cp": "35390",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA FRESNAIS",
+    "cp": "35111",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA GOUESNIERE",
+    "cp": "35350",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA GUERCHE DE BRETAGNE",
+    "cp": "35130",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA MEZIERE",
+    "cp": "35520",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA NOE BLANCHE",
+    "cp": "35470",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA NOUAYE",
+    "cp": "35137",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA RICHARDAIS",
+    "cp": "35780",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA SELLE EN LUITRE",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA SELLE GUERCHAISE",
+    "cp": "35130",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LA VILLE ES NONAIS",
+    "cp": "35430",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LAIGNELET",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LAILLE",
+    "cp": "35890",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LALLEU",
+    "cp": "35320",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LANDAVRAN",
+    "cp": "35450",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LANDEAN",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LANDUJAN",
+    "cp": "35360",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LANGAN",
+    "cp": "35850",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LANGON",
+    "cp": "35660",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LANGOUET",
+    "cp": "35630",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LANRIGAN",
+    "cp": "35270",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LASSY",
+    "cp": "35580",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE CHATELLIER",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE CROUAIS",
+    "cp": "35290",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE FERRE",
+    "cp": "35420",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE LOROUX",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE MINIHIC SUR RANCE",
+    "cp": "35870",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE PERTRE",
+    "cp": "35370",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE PETIT FOUGERAY",
+    "cp": "35320",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE RHEU",
+    "cp": "35650",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE SEL DE BRETAGNE",
+    "cp": "35320",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE THEIL DE BRETAGNE",
+    "cp": "35240",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE TIERCENT",
+    "cp": "35460",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE TRONCHET",
+    "cp": "35540",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE VERGER",
+    "cp": "35160",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LE VIVIER SUR MER",
+    "cp": "35960",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LECOUSSE",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LES BRULAIS",
+    "cp": "35330",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LES IFFS",
+    "cp": "35630",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LES PORTES DU COGLAIS",
+    "cp": "35460",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LIEURON",
+    "cp": "35550",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LIFFRE",
+    "cp": "35340",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LILLEMER",
+    "cp": "35111",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LIVRE SUR CHANGEON",
+    "cp": "35450",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LOHEAC",
+    "cp": "35550",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LONGAULNAY",
+    "cp": "35190",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LOURMAIS",
+    "cp": "35270",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LOUTEHEL",
+    "cp": "35330",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LOUVIGNE DE BAIS",
+    "cp": "35680",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LOUVIGNE DU DESERT",
+    "cp": "35420",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LUITRE DOMPIERRE",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "LUITRE DOMPIERRE",
+    "cp": "35210",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MAEN ROCH",
+    "cp": "35460",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MARCILLE RAOUL",
+    "cp": "35560",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MARCILLE ROBERT",
+    "cp": "35240",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MARPIRE",
+    "cp": "35220",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MARTIGNE FERCHAUD",
+    "cp": "35640",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MAXENT",
+    "cp": "35380",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MECE",
+    "cp": "35450",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MEDREAC",
+    "cp": "35360",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MEILLAC",
+    "cp": "35270",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MELESSE",
+    "cp": "35520",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MELLE",
+    "cp": "35420",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MERNEL",
+    "cp": "35330",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MESNIL ROC H",
+    "cp": "35720",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MEZIERES SUR COUESNON",
+    "cp": "35140",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MINIAC MORVAN",
+    "cp": "35540",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MINIAC SOUS BECHEREL",
+    "cp": "35190",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MONDEVERT",
+    "cp": "35370",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MONT DOL",
+    "cp": "35120",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MONTAUBAN DE BRETAGNE",
+    "cp": "35360",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MONTAUTOUR",
+    "cp": "35210",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MONTERFIL",
+    "cp": "35160",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MONTFORT SUR MEU",
+    "cp": "35160",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MONTGERMONT",
+    "cp": "35760",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MONTHAULT",
+    "cp": "35420",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL DES LANDES",
+    "cp": "35210",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL LE GAST",
+    "cp": "35520",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL SOUS PEROUSE",
+    "cp": "35500",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MONTREUIL SUR ILLE",
+    "cp": "35440",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MORDELLES",
+    "cp": "35310",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MOUAZE",
+    "cp": "35250",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MOULINS",
+    "cp": "35680",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MOUSSE",
+    "cp": "35130",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MOUTIERS",
+    "cp": "35130",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "MUEL",
+    "cp": "35290",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "NOUVOITOU",
+    "cp": "35410",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "NOYAL CHATILLON SUR SEICHE",
+    "cp": "35230",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "NOYAL SOUS BAZOUGES",
+    "cp": "35560",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "NOYAL SUR VILAINE",
+    "cp": "35530",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ORGERES",
+    "cp": "35230",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PACE",
+    "cp": "35740",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PAIMPONT",
+    "cp": "35380",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PANCE",
+    "cp": "35320",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PARCE",
+    "cp": "35210",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PARIGNE",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PARTHENAY DE BRETAGNE",
+    "cp": "35850",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PIPRIAC",
+    "cp": "35550",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PIRE CHANCE",
+    "cp": "35150",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PIRE CHANCE",
+    "cp": "35680",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PLECHATEL",
+    "cp": "35470",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PLEINE FOUGERES",
+    "cp": "35610",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PLELAN LE GRAND",
+    "cp": "35380",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PLERGUER",
+    "cp": "35540",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PLESDER",
+    "cp": "35720",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PLEUGUENEUC",
+    "cp": "35720",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PLEUMELEUC",
+    "cp": "35137",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PLEURTUIT",
+    "cp": "35730",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "POCE LES BOIS",
+    "cp": "35500",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "POILLEY",
+    "cp": "35420",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "POLIGNE",
+    "cp": "35320",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PONT PEAN",
+    "cp": "35131",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "PRINCE",
+    "cp": "35210",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "QUEBRIAC",
+    "cp": "35190",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "QUEDILLAC",
+    "cp": "35290",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "RANNEE",
+    "cp": "35130",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "REDON",
+    "cp": "35600",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "RENAC",
+    "cp": "35660",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "RENNES",
+    "cp": "35000",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "RENNES",
+    "cp": "35200",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "RENNES",
+    "cp": "35700",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "RETIERS",
+    "cp": "35240",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "RIMOU",
+    "cp": "35560",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "RIVES DU COUESNON",
+    "cp": "35140",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ROMAGNE",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ROMAZY",
+    "cp": "35490",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ROMILLE",
+    "cp": "35850",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ROZ LANDRIEUX",
+    "cp": "35120",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ROZ SUR COUESNON",
+    "cp": "35610",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "SAINS",
+    "cp": "35610",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "SAULNIERES",
+    "cp": "35320",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "SENS DE BRETAGNE",
+    "cp": "35490",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "SERVON SUR VILAINE",
+    "cp": "35530",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "SIXT SUR AFF",
+    "cp": "35550",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "SOUGEAL",
+    "cp": "35610",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST ARMEL",
+    "cp": "35230",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST AUBIN D AUBIGNE",
+    "cp": "35250",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST AUBIN DES LANDES",
+    "cp": "35500",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST AUBIN DU CORMIER",
+    "cp": "35140",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST BENOIT DES ONDES",
+    "cp": "35114",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST BRIAC SUR MER",
+    "cp": "35800",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST BRIEUC DES IFFS",
+    "cp": "35630",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST BROLADRE",
+    "cp": "35120",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST CHRISTOPHE DE VALAINS",
+    "cp": "35140",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST CHRISTOPHE DES BOIS",
+    "cp": "35210",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST COULOMB",
+    "cp": "35350",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST DIDIER",
+    "cp": "35220",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST DOMINEUC",
+    "cp": "35190",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST ERBLON",
+    "cp": "35230",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST GANTON",
+    "cp": "35550",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES DE GREHAIGNE",
+    "cp": "35610",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST GEORGES DE REINTEMBAULT",
+    "cp": "35420",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN DU PINEL",
+    "cp": "35370",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN EN COGLES",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST GERMAIN SUR ILLE",
+    "cp": "35250",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST GILLES",
+    "cp": "35590",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST GONDRAN",
+    "cp": "35630",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST GONLAY",
+    "cp": "35750",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST GREGOIRE",
+    "cp": "35760",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST GUINOUX",
+    "cp": "35430",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST HILAIRE DES LANDES",
+    "cp": "35140",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST JACQUES DE LA LANDE",
+    "cp": "35136",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST JEAN SUR VILAINE",
+    "cp": "35220",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST JOUAN DES GUERETS",
+    "cp": "35430",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST JUST",
+    "cp": "35550",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST LEGER DES PRES",
+    "cp": "35270",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST LUNAIRE",
+    "cp": "35800",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST M HERVE",
+    "cp": "35500",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST MALO",
+    "cp": "35400",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST MALO DE PHILY",
+    "cp": "35480",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST MALON SUR MEL",
+    "cp": "35750",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST MARC LE BLANC",
+    "cp": "35460",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST MARCAN",
+    "cp": "35120",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST MAUGAN",
+    "cp": "35750",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST MEDARD SUR ILLE",
+    "cp": "35250",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST MEEN LE GRAND",
+    "cp": "35290",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST MELOIR DES ONDES",
+    "cp": "35350",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST ONEN LA CHAPELLE",
+    "cp": "35290",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST OUEN DES ALLEUX",
+    "cp": "35140",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST PERAN",
+    "cp": "35380",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST PERE MARC EN POULET",
+    "cp": "35430",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST PERN",
+    "cp": "35190",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST REMY DU PLAIN",
+    "cp": "35560",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST SAUVEUR DES LANDES",
+    "cp": "35133",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST SEGLIN",
+    "cp": "35330",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST SENOUX",
+    "cp": "35580",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST SULIAC",
+    "cp": "35430",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST SULPICE DES LANDES",
+    "cp": "35390",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST SULPICE LA FORET",
+    "cp": "35250",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST SYMPHORIEN",
+    "cp": "35630",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST THUAL",
+    "cp": "35190",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST THURIAL",
+    "cp": "35310",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "ST UNIAC",
+    "cp": "35360",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "STE ANNE SUR VILAINE",
+    "cp": "35390",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "STE COLOMBE",
+    "cp": "35134",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "STE MARIE",
+    "cp": "35600",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "TAILLIS",
+    "cp": "35500",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "TALENSAC",
+    "cp": "35160",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "TEILLAY",
+    "cp": "35620",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "THORIGNE FOUILLARD",
+    "cp": "35235",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "THOURIE",
+    "cp": "35134",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "TINTENIAC",
+    "cp": "35190",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "TORCE",
+    "cp": "35370",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "TRANS LA FORET",
+    "cp": "35610",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "TREFFENDEL",
+    "cp": "35380",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "TREMEHEUC",
+    "cp": "35270",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "TRESBOEUF",
+    "cp": "35320",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "TREVERIEN",
+    "cp": "35190",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "TRIMER",
+    "cp": "35190",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "VAL COUESNON",
+    "cp": "35460",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "VAL COUESNON",
+    "cp": "35560",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "VAL D ANAST",
+    "cp": "35330",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "VAL D IZE",
+    "cp": "35450",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "VERGEAL",
+    "cp": "35680",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "VERN SUR SEICHE",
+    "cp": "35770",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "VEZIN LE COQUET",
+    "cp": "35132",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "VIEUX VIEL",
+    "cp": "35610",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "VIEUX VY SUR COUESNON",
+    "cp": "35490",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "VIGNOC",
+    "cp": "35630",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "VILLAMEE",
+    "cp": "35420",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "VISSEICHE",
+    "cp": "35130",
+    "dept": "35",
+    "region": ""
+  },
+  {
+    "name": "VITRE",
+    "cp": "35500",
+    "dept": "35",
+    "region": ""
+  }
+]

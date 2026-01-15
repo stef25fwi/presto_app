@@ -39,7 +39,8 @@ class TranscribeAndDraftOfferService {
   final FirebaseFunctions _functions;
 
   TranscribeAndDraftOfferService({FirebaseFunctions? functions})
-      : _functions = functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
+      : _functions =
+            functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
 
   Future<TranscribeAndDraftOfferResult> transcribeAndDraftOffer({
     required String gcsUri,

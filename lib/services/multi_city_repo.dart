@@ -3,8 +3,8 @@ import 'package:flutter/services.dart' show rootBundle;
 
 class CityRecord {
   final String name;
-  final String cp;     // "97128"
-  final String dept;   // "971" ou "75"
+  final String cp; // "97128"
+  final String dept; // "971" ou "75"
   final String? region;
 
   CityRecord({
@@ -38,7 +38,8 @@ class MultiCityRepo {
         .where((p) =>
             p.startsWith('assets/data/') &&
             p.endsWith('.json') &&
-            p.toLowerCase().contains('cities')) // <- change si tes fichiers s'appellent autrement
+            p.toLowerCase().contains(
+                'cities')) // <- change si tes fichiers s'appellent autrement
         .toList()
       ..sort();
 
@@ -82,7 +83,8 @@ class MultiCityRepo {
     final raw = await rootBundle.loadString(asset);
     final decoded = jsonDecode(raw);
 
-    final List list = decoded is List ? decoded : (decoded['data'] as List? ?? const []);
+    final List list =
+        decoded is List ? decoded : (decoded['data'] as List? ?? const []);
     final records = list
         .whereType<Map>()
         .map((m) => CityRecord.fromJson(m.cast<String, dynamic>()))
@@ -94,7 +96,8 @@ class MultiCityRepo {
   }
 
   /// Recherche villes (auto-complétion) : charge le dept lié au CP si fourni, sinon cherche dans depts déjà chargés
-  Future<List<CityRecord>> search(String query, {String? cpHint, int limit = 20}) async {
+  Future<List<CityRecord>> search(String query,
+      {String? cpHint, int limit = 20}) async {
     final q = _normalize(query);
     if (q.isEmpty) return const [];
 

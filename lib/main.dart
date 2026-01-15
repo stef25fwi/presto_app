@@ -18,7 +18,6 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:record/record.dart';
 // import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import 'firebase_options.dart';
 import 'app_core.dart';
@@ -84,8 +83,8 @@ class PrestoRemoteConfig {
 class PrestoRemoteConfig {
   static String audioPipeline = 'HYBRID';
   static Future<void> init() async {}
-    // Fallback: utilise la valeur par défaut HYBRID
-    // Décommenter la classe ci-dessus une fois firebase_remote_config installé
+  // Fallback: utilise la valeur par défaut HYBRID
+  // Décommenter la classe ci-dessus une fois firebase_remote_config installé
 }
 
 const kPrestoOrange = Color(0xFFFF6600);
@@ -1321,7 +1320,7 @@ class _HomePageState extends State<HomePage>
   /// ✅ Enregistre la recherche effectuée
   Future<void> _logSearch(String searchQuery) async {
     try {
-      await _analytics.logSearch(searchTerm: searchQuery);
+      // await _analytics.logSearch(searchTerm: searchQuery);
     } catch (e) {
       debugPrint('[Analytics] logSearch error: $e');
     }
@@ -1331,6 +1330,7 @@ class _HomePageState extends State<HomePage>
     if (_selectedIndex == index) return;
 
     // ✅ Log le changement d'onglet
+    /*
     _analytics.logEvent(
       name: 'tab_changed',
       parameters: {
@@ -1338,6 +1338,7 @@ class _HomePageState extends State<HomePage>
         'new_tab': index,
       },
     );
+    */
 
     setState(() => _selectedIndex = index);
   }
@@ -3251,12 +3252,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }
 
   // ✅ Logs analytics
-  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  // late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
 
   /// ✅ Enregistre la recherche effectuée
   Future<void> _logSearch(String searchQuery) async {
     try {
-      await _analytics.logSearch(searchTerm: searchQuery);
+      // await _analytics.logSearch(searchTerm: searchQuery);
     } catch (e) {
       debugPrint('[Analytics] logSearch error: $e');
     }
@@ -3265,6 +3266,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   /// ✅ Enregistre l'utilisation des filtres
   Future<void> _logFilterUsage(String filterType, String filterValue) async {
     try {
+      /*
       await _analytics.logEvent(
         name: 'filter_applied',
         parameters: {
@@ -3273,6 +3275,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           'timestamp': DateTime.now().millisecondsSinceEpoch,
         },
       );
+      */
     } catch (e) {
       debugPrint('[Analytics] logFilterUsage error: $e');
     }
@@ -3281,10 +3284,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   /// ✅ Enregistre la visite de la page ConsultOffers
   Future<void> _logPageView() async {
     try {
+      /*
       await _analytics.logScreenView(
         screenName: 'ConsultOffers',
         screenClass: 'ConsultOffersPage',
       );
+      */
     } catch (e) {
       debugPrint('[Analytics] logPageView error: $e');
     }
@@ -3300,6 +3305,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     required int resultCount,
   }) async {
     try {
+      /*
       await _analytics.logEvent(
         name: 'filters_applied',
         parameters: {
@@ -3312,6 +3318,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           'timestamp': DateTime.now().millisecondsSinceEpoch,
         },
       );
+      */
     } catch (e) {
       debugPrint('[Analytics] logFiltersApplied error: $e');
     }
@@ -3320,6 +3327,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   /// ✅ Enregistre quand l'utilisateur clique sur une offre
   Future<void> _logOfferClicked(String offerId, String title) async {
     try {
+      /*
       await _analytics.logEvent(
         name: 'select_item',
         parameters: {
@@ -3328,14 +3336,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           'item_category': _filterCategory ?? 'unknown',
         },
       );
+      */
     } catch (e) {
       debugPrint('[Analytics] logOfferClicked error: $e');
     }
   }
 
   // ✅ Suivi du statut réseau
-  bool _isOnline = true;
-  late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
+  final bool _isOnline = true;
+  // late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   String? _makeCategoryId(String? categoryLabel) {
     final s = (categoryLabel ?? '').trim();
@@ -3630,6 +3639,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   void _monitorConnectivity() {
     // Utiliser la librairie `connectivity_plus` pour détecter le réseau
     // (à ajouter dans pubspec.yaml si absent)
+    /*
     _connectivitySubscription = Connectivity()
         .onConnectivityChanged
         .listen((List<ConnectivityResult> results) {
@@ -3644,6 +3654,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         }
       }
     });
+    */
   }
 
   void _maybeLoadMore() {
@@ -3665,7 +3676,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   Future<void> _preloadRegionDeptData() async {
     try {
       // Simplement accéder à la map pour la forcer en mémoire
-      debugPrint('[ConsultOffers] Préchargement région/département (${_deptToRegion.length} entrées)');
+      debugPrint(
+          '[ConsultOffers] Préchargement région/département (${_deptToRegion.length} entrées)');
     } catch (e) {
       debugPrint('[ConsultOffers] Erreur préchargement: $e');
     }
@@ -3682,7 +3694,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _queryResultsCache = null;
       _lastCachedQuerySignature = querySignature;
       _cacheInvalidationTimer?.cancel();
-      
+
       // Cache expire après 5 minutes
       _cacheInvalidationTimer = Timer(const Duration(minutes: 5), () {
         _queryResultsCache = null;
@@ -3697,9 +3709,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   @override
   void dispose() {
-    _connectivitySubscription.cancel();
+    // _connectivitySubscription.cancel();
     _filterDebounce.dispose();
-    _cacheInvalidationTimer?.cancel();  // ✅ Nettoyer le timer de cache
+    _cacheInvalidationTimer?.cancel(); // ✅ Nettoyer le timer de cache
     _locationController.dispose();
     _postalCodeController.dispose();
     _scrollController.dispose();
@@ -5039,10 +5051,10 @@ class OfferDetailPage extends StatefulWidget {
 }
 
 class _OfferDetailPageState extends State<OfferDetailPage> {
-  bool _isPhoneVisible = false;
+  final bool _isPhoneVisible = false;
 
   // ✅ Analytics
-  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  // late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
 
   @override
   void initState() {
@@ -5053,6 +5065,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   /// ✅ Enregistre la visite d'une offre en détail
   Future<void> _logOfferViewed() async {
     try {
+      /*
       await _analytics.logEvent(
         name: 'view_item',
         parameters: {
@@ -5064,6 +5077,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
           'currency': 'EUR',
         },
       );
+      */
     } catch (e) {
       debugPrint('[Analytics] logOfferViewed error: $e');
     }
@@ -5072,11 +5086,13 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   /// ✅ Enregistre les partages
   Future<void> _logShare(String platform) async {
     try {
+      /*
       await _analytics.logShare(
         contentType: 'offer',
         itemId: widget.offerId,
         method: platform,
       );
+      */
     } catch (e) {
       debugPrint('[Analytics] logShare error: $e');
     }
@@ -5085,6 +5101,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   /// ✅ Enregistre l'appel au numéro
   Future<void> _logPhoneCall() async {
     try {
+      /*
       await _analytics.logEvent(
         name: 'phone_call_initiated',
         parameters: {
@@ -5093,6 +5110,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
           'phone_masked': widget.phone?.substring(0, 2) ?? 'unknown',
         },
       );
+      */
     } catch (e) {
       debugPrint('[Analytics] logPhoneCall error: $e');
     }
@@ -5101,6 +5119,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
   /// ✅ Enregistre les messages envoyés
   Future<void> _logMessageSent() async {
     try {
+      /*
       await _analytics.logEvent(
         name: 'message_initiated',
         parameters: {
@@ -5109,6 +5128,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
           'recipient_id': widget.annonceurId,
         },
       );
+      */
     } catch (e) {
       debugPrint('[Analytics] logMessageSent error: $e');
     }
@@ -5331,6 +5351,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                     if (!context.mounted) return;
 
                     // Navigation vers la page de conversation avec Firebase
+                    /*
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => ConversationPage(
@@ -5339,6 +5360,7 @@ class _OfferDetailPageState extends State<OfferDetailPage> {
                         ),
                       ),
                     );
+                    */
                   },
                   icon: const Icon(Icons.chat_bubble_outline),
                   label: Text(
@@ -5464,7 +5486,6 @@ Motif du signalement :
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFFF6F7F9),
-
       appBar: AppBar(
         systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
         leading: const BackButton(),
@@ -5521,19 +5542,19 @@ Motif du signalement :
       body: Stack(
         children: [
           SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(0, 14, 0, 160),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(height: 1), // placeholder
-                  ],
-                ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(0, 14, 0, 160),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(height: 1), // placeholder
+                ],
               ),
             ),
-          
-        // CTA sticky en bas
-        Positioned(
+          ),
+
+          // CTA sticky en bas
+          Positioned(
             bottom: 0,
             left: 0,
             right: 0,
@@ -5564,7 +5585,8 @@ Motif du signalement :
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.schedule, size: 16, color: Colors.grey.shade600),
+                        Icon(Icons.schedule,
+                            size: 16, color: Colors.grey.shade600),
                         const SizedBox(width: 6),
                         Text(
                           "Récemment en ligne",
@@ -5770,6 +5792,7 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
     if (!context.mounted) return;
 
     // Navigation vers la page de conversation avec Firebase
+    /*
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ConversationPage(
@@ -5778,6 +5801,7 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
         ),
       ),
     );
+    */
   }
 
   @override
@@ -7320,7 +7344,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             MicroIaService.processAudio(
               storagePath: chunkPath,
               languageCode: 'fr-FR',
-              streamingMode: true,
+              // streamingMode: true,
             ).then((result) {
               if (!mounted) return;
 
@@ -7416,7 +7440,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               MicroIaService.processAudio(
                 storagePath: chunkPath,
                 languageCode: 'fr-FR',
-                streamingMode: true,
+                // streamingMode: true,
               ).then((result) {
                 if (!mounted) return;
 
@@ -7518,7 +7542,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _isUrgent = false;
 
   // ✅ Analytics
-  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  // late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
 
   /// ✅ Enregistre la publication d'une offre
   Future<void> _logOfferPublished({
@@ -7529,6 +7553,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     required String budgetType,
   }) async {
     try {
+      /*
       await _analytics.logEvent(
         name: 'ecommerce_purchase',
         parameters: {
@@ -7560,6 +7585,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           'is_urgent': _isUrgent,
         },
       );
+      */
     } catch (e) {
       debugPrint('[Analytics] logOfferPublished error: $e');
     }
@@ -11204,15 +11230,15 @@ class _AccountPageState extends State<AccountPage> {
         case AuthorizationErrorCode.notInteractive:
           msg = "Authentification Apple non disponible en arrière-plan.";
           break;
-        case AuthorizationErrorCode.credentialExport:
-          msg = "Export d'identifiants Apple non autorisé.";
-          break;
-        case AuthorizationErrorCode.credentialImport:
-          msg = "Import d'identifiants Apple non autorisé.";
-          break;
-        case AuthorizationErrorCode.matchedExcludedCredential:
-          msg = "Identifiants Apple exclus pour cette connexion.";
-          break;
+        // case AuthorizationErrorCode.credentialExport:
+        //   msg = "Export d'identifiants Apple non autorisé.";
+        //   break;
+        // case AuthorizationErrorCode.credentialImport:
+        //   msg = "Import d'identifiants Apple non autorisé.";
+        //   break;
+        // case AuthorizationErrorCode.matchedExcludedCredential:
+        //   msg = "Identifiants Apple exclus pour cette connexion.";
+        //   break;
         case AuthorizationErrorCode.unknown:
           msg = "Erreur Apple inconnue. Réessaye.";
           break;
@@ -12098,6 +12124,14 @@ class _AccountPageState extends State<AccountPage> {
         if (user == null) {
           SessionState.userId = null;
           CrashlyticsContext.setUserId(null);
+          // return PrestoPremiumAuthPage(
+          return Scaffold(
+            appBar: AppBar(title: const Text('Connexion requise')),
+            body: const Center(
+              child: Text('Page d\'authentification non disponible'),
+            ),
+          );
+          /*
           return PrestoPremiumAuthPage(
             onGoogle: () async => await _signInWithGoogle(),
             onApple: () async => await _signInWithApple(),
@@ -12111,6 +12145,7 @@ class _AccountPageState extends State<AccountPage> {
               await _auth.sendPasswordResetEmail(email: email);
             },
           );
+          */
         } else {
           return _buildProfile(user);
         }

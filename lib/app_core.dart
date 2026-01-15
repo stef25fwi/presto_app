@@ -67,7 +67,6 @@ const Map<String, List<String>> kCategorySubcategories = {
     'Service banquet / Mariage',
     'Traiteur à domicile',
   ],
-
   'Bricolage / Travaux': <String>[
     'Montage de meubles',
     'Pose de luminaires',
@@ -80,7 +79,6 @@ const Map<String, List<String>> kCategorySubcategories = {
     'Réparation portail / clôture',
     'Installation TV / support mural',
   ],
-
   'Aide à domicile': <String>[
     'Ménage régulier',
     'Ménage ponctuel / grand nettoyage',
@@ -93,7 +91,6 @@ const Map<String, List<String>> kCategorySubcategories = {
     'Nettoyage après déménagement',
     'Organisation / rangement',
   ],
-
   'Garde d\'enfants': <String>[
     'Baby-sitting soirée',
     'Sortie d\'école / crèche',
@@ -106,7 +103,6 @@ const Map<String, List<String>> kCategorySubcategories = {
     'Accompagnement activités',
     'Aide aux devoirs légère',
   ],
-
   'Événementiel / DJ': <String>[
     'DJ soirée privée',
     'DJ mariage',
@@ -119,7 +115,6 @@ const Map<String, List<String>> kCategorySubcategories = {
     'Décoration de salle',
     'Organisation complète événement',
   ],
-
   'Cours & soutien': <String>[
     'Aide aux devoirs primaire',
     'Soutien collège',
@@ -133,7 +128,6 @@ const Map<String, List<String>> kCategorySubcategories = {
     'Coaching sport / fitness',
     'Préparation examens / concours',
   ],
-
   'Jardinage': <String>[
     'Tonte de pelouse',
     'Taille de haies',
@@ -146,7 +140,6 @@ const Map<String, List<String>> kCategorySubcategories = {
     'Entretien jardin location',
     'Entretien potager',
   ],
-
   'Peinture': <String>[
     'Peinture chambre / salon',
     'Peinture façade',
@@ -159,7 +152,6 @@ const Map<String, List<String>> kCategorySubcategories = {
     'Peinture décorative',
     'Rénovation locative express',
   ],
-
   'Main-d\'oeuvre': <String>[
     'Aide déménagement',
     'Chargement / déchargement',
@@ -172,7 +164,6 @@ const Map<String, List<String>> kCategorySubcategories = {
     'Aide livraison',
     'Aide débarras / encombrants',
   ],
-
   'Autre': <String>[
     'Informatique / dépannage',
     'Réseaux sociaux / contenu',

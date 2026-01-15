@@ -365,7 +365,8 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
                     label: 'Taux horaire',
                     controller: _tauxHoraireCtrl,
                     suffix: '€/h',
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     onChanged: (_) => setState(() {}),
                     trailing: _QuickRatePresets(
                       onPick: (v) {
@@ -392,7 +393,8 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
                     label: 'Charges / mois',
                     controller: _chargesMensCtrl,
                     suffix: '€',
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: 10),
@@ -407,7 +409,8 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
                   const SizedBox(height: 12),
                   _MiniInfoPill(
                     icon: Icons.calculate_outlined,
-                    text: 'Charge estimée : ${_money(_chargeFixeUnitaire())} € par objet',
+                    text:
+                        'Charge estimée : ${_money(_chargeFixeUnitaire())} € par objet',
                   ),
                 ],
               ),
@@ -433,7 +436,8 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
                       label: 'Frais de plateforme',
                       controller: _fraisPctCtrl,
                       suffix: '%',
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (_) => setState(() {}),
                     )
                   else
@@ -442,7 +446,8 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
                       label: 'Frais fixes par vente',
                       controller: _fraisFixeCtrl,
                       suffix: '€',
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (_) => setState(() {}),
                     ),
                 ],
@@ -500,7 +505,8 @@ class _ExpressFormPageState extends State<_ExpressFormPage> {
     final chargesMens = _parseDouble(_chargesMensCtrl.text);
     final objetsMens = _parseInt(_objetsMensCtrl.text);
 
-    final fraisPct = _fraisTypePct ? _parseDouble(_fraisPctCtrl.text) / 100.0 : 0.0;
+    final fraisPct =
+        _fraisTypePct ? _parseDouble(_fraisPctCtrl.text) / 100.0 : 0.0;
     final fraisFixe = _fraisTypePct ? 0.0 : _parseDouble(_fraisFixeCtrl.text);
 
     return PricingInput(
@@ -593,7 +599,9 @@ class _ResultsPage extends StatelessWidget {
               background: kPrestoOrange,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Action : publier (à connecter à ton flux Prestō)')),
+                  const SnackBar(
+                      content: Text(
+                          'Action : publier (à connecter à ton flux Prestō)')),
                 );
               },
             ),
@@ -685,7 +693,8 @@ class PricingEngine {
     );
 
     // Prix conseillé (net cible = CR + marge%)
-    final netCible = (crHorsFraisPct * (1 + i.margePctSurCout)) + i.fraisVenteFixe;
+    final netCible =
+        (crHorsFraisPct * (1 + i.margePctSurCout)) + i.fraisVenteFixe;
     final prixConseille = _applyFeesToReachNet(
       targetNet: netCible,
       fraisPct: i.fraisVentePct,
@@ -791,7 +800,8 @@ class _PrestoTopBar extends StatelessWidget implements PreferredSizeWidget {
           if (showBack)
             IconButton(
               onPressed: () => Navigator.of(context).maybePop(),
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+              icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white),
             ),
           if (showBack) const SizedBox(width: 2),
           Text(
@@ -844,7 +854,8 @@ class _SectionCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
             decoration: BoxDecoration(
               color: headerColor.withOpacity(0.12),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(18)),
             ),
             child: Row(
               children: [
@@ -881,7 +892,8 @@ class _SectionCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.black38),
+                const Icon(Icons.keyboard_arrow_down_rounded,
+                    color: Colors.black38),
               ],
             ),
           ),
@@ -930,14 +942,16 @@ class _RowField extends StatelessWidget {
           width: 110,
           child: TextField(
             controller: controller,
-            keyboardType: keyboardType ?? const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: keyboardType ??
+                const TextInputType.numberWithOptions(decimal: true),
             onChanged: onChanged,
             textAlign: TextAlign.right,
             decoration: InputDecoration(
               isDense: true,
               filled: true,
               fillColor: const Color(0xFFF3F4F6),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -1181,7 +1195,9 @@ class _ResultSummaryCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _ResultRow(label: 'Coût de revient', value: '${_money(result.coutDeRevient)} €'),
+          _ResultRow(
+              label: 'Coût de revient',
+              value: '${_money(result.coutDeRevient)} €'),
           const SizedBox(height: 10),
           _ResultRow(
               label: 'Prix minimum rentable',
@@ -1204,10 +1220,12 @@ class _ResultSummaryCard extends StatelessWidget {
                 ),
                 Text(
                   '${_money(result.prixConseille)} €',
-                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+                  style: const TextStyle(
+                      fontSize: 26, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(width: 6),
-                const Text('TTC', style: TextStyle(fontWeight: FontWeight.w900)),
+                const Text('TTC',
+                    style: TextStyle(fontWeight: FontWeight.w900)),
               ],
             ),
           ),
@@ -1232,7 +1250,8 @@ class _ResultRow extends StatelessWidget {
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
           ),
         ),
-        Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+        Text(value,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
       ],
     );
   }
@@ -1288,7 +1307,10 @@ class _MarketCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             'Prix du marché : ${_money(marketLow)} € - ${_money(marketMid)} € - ${_money(marketHigh)} €',
-            style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+                fontSize: 13,
+                color: Colors.black54,
+                fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1310,7 +1332,10 @@ class _MarketCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     label,
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: levelColor),
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: levelColor),
                   ),
                 ),
               ],
@@ -1359,11 +1384,17 @@ class _MarketMiniCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _MiniMarketField(label: 'Bas', ctrl: lowCtrl, onChanged: onChanged)),
+              Expanded(
+                  child: _MiniMarketField(
+                      label: 'Bas', ctrl: lowCtrl, onChanged: onChanged)),
               const SizedBox(width: 10),
-              Expanded(child: _MiniMarketField(label: 'Moyen', ctrl: midCtrl, onChanged: onChanged)),
+              Expanded(
+                  child: _MiniMarketField(
+                      label: 'Moyen', ctrl: midCtrl, onChanged: onChanged)),
               const SizedBox(width: 10),
-              Expanded(child: _MiniMarketField(label: 'Haut', ctrl: highCtrl, onChanged: onChanged)),
+              Expanded(
+                  child: _MiniMarketField(
+                      label: 'Haut', ctrl: highCtrl, onChanged: onChanged)),
             ],
           ),
         ],
@@ -1394,7 +1425,8 @@ class _MiniMarketField extends StatelessWidget {
         isDense: true,
         filled: true,
         fillColor: const Color(0xFFF3F4F6),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,

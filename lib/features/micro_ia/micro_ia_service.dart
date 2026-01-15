@@ -8,7 +8,8 @@ import '../../utils/retry.dart';
 class MicroIaService {
   MicroIaService._();
 
-  static final _functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
+  static final _functions =
+      FirebaseFunctions.instanceFor(region: 'europe-west1');
 
   static Future<Map<String, dynamic>> processAudio({
     required String storagePath,

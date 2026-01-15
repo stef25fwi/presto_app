@@ -13,7 +13,8 @@ String normalize(String s) => s
 /// Déduit dept depuis CP (DOM/TOM: 971/..., Corse 20xxx -> 2A/2B (heuristique))
 String deptFromCp(String cp) {
   if (cp.startsWith('97') || cp.startsWith('98')) return cp.substring(0, 3);
-  if (cp.startsWith('20')) return '2A'; // fallback (si besoin tu gères 2A/2B au choix)
+  if (cp.startsWith('20'))
+    return '2A'; // fallback (si besoin tu gères 2A/2B au choix)
   return cp.substring(0, 2);
 }
 
@@ -48,19 +49,20 @@ Map<String, dynamic> _offer({
 }) {
   final dept = deptFromCp(cp);
   final cityNorm = normalize(city);
-  final keywordsNorm = normalize("$title $description $city $cp $dept $category");
+  final keywordsNorm =
+      normalize("$title $description $city $cp $dept $category");
 
   return {
     "title": title,
     "category": category,
     "description": description,
-    
+
     // 🔥 Compatibilité : écriture des 2 variantes
     "city": city,
     "location": city,
     "cp": cp,
     "postalCode": cp,
-    
+
     "dept": dept,
 
     // champs utiles filtres/UX

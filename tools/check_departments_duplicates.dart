@@ -52,14 +52,16 @@ void main() {
     }
   }
 
-  print('\n=== Cohérence: dept présents en régions mais absents de kDepartments ===');
+  print(
+      '\n=== Cohérence: dept présents en régions mais absents de kDepartments ===');
   if (missingInDepartments.isEmpty) {
     print('OK: tous les départements référencés ont un libellé.');
   } else {
     print('ATTENTION: ${missingInDepartments.join(", ")}');
   }
 
-  print('\n=== Cohérence: dept dans kDepartments mais absent de kRegionDepartments ===');
+  print(
+      '\n=== Cohérence: dept dans kDepartments mais absent de kRegionDepartments ===');
   if (notInAnyRegion.isEmpty) {
     print('OK: tous les départements ont une région.');
   } else {
