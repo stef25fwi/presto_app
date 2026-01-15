@@ -5,16 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 class CityEntry {
-    /// Affichage user-friendly pour Paris arrondissements
-    String get displayName {
-      final match = RegExp(r'^PARIS (\d{2})').firstMatch(name);
-      if (match != null) {
-        final num = int.parse(match.group(1)!);
-        final suffix = num == 1 ? 'er' : 'e';
-        return 'Paris $num$suffix arrondissement';
-      }
-      return name;
+  /// Affichage user-friendly pour Paris arrondissements
+  String get displayName {
+    final match = RegExp(r'^PARIS (\d{2})').firstMatch(name);
+    if (match != null) {
+      final num = int.parse(match.group(1)!);
+      final suffix = num == 1 ? 'er' : 'e';
+      return 'Paris $num$suffix arrondissement';
     }
+    return name;
+  }
+
   final String name;
   final String dept; // "75", "971", "2A", "987"...
   final List<String> cps; // ["75001","75002",...]
@@ -30,7 +31,8 @@ class CityEntry {
   factory CityEntry.fromJson(Map<String, dynamic> j) {
     final name = (j['name'] ?? '').toString();
     final dept = (j['dept'] ?? '').toString();
-    final cps = (j['cps'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
+    final cps = (j['cps'] as List?)?.map((e) => e.toString()).toList() ??
+        const <String>[];
     return CityEntry(
       name: name,
       dept: dept,
@@ -63,7 +65,8 @@ class CityPostalService {
   }
 
   List<String> _deptCandidatesFromCp(String cp5) {
-    if (cp5.startsWith('97') || cp5.startsWith('98')) return [cp5.substring(0, 3)];
+    if (cp5.startsWith('97') || cp5.startsWith('98'))
+      return [cp5.substring(0, 3)];
     if (cp5.startsWith('20')) return ['2A', '2B']; // Corse
     return [cp5.substring(0, 2)];
   }
@@ -133,10 +136,12 @@ class CityPostalAutocompleteField extends StatefulWidget {
   });
 
   @override
-  State<CityPostalAutocompleteField> createState() => _CityPostalAutocompleteFieldState();
+  State<CityPostalAutocompleteField> createState() =>
+      _CityPostalAutocompleteFieldState();
 }
 
-class _CityPostalAutocompleteFieldState extends State<CityPostalAutocompleteField> {
+class _CityPostalAutocompleteFieldState
+    extends State<CityPostalAutocompleteField> {
   final CityPostalService _service = CityPostalService();
   Timer? _debounce;
   List<CityEntry> _options = const [];
@@ -190,7 +195,9 @@ class _CityPostalAutocompleteFieldState extends State<CityPostalAutocompleteFiel
     }
 
     // Si user a déjà tapé un CP qui match => on garde
-    final typed = RegExp(r'\b(\d{5})\b').firstMatch(widget.postalCodeController.text)?.group(1);
+    final typed = RegExp(r'\b(\d{5})\b')
+        .firstMatch(widget.postalCodeController.text)
+        ?.group(1);
     if (typed != null && c.cps.contains(typed)) {
       widget.postalCodeController.text = typed;
       return;
@@ -251,11 +258,14 @@ class _CityPostalAutocompleteFieldState extends State<CityPostalAutocompleteFiel
                   final c = list[i];
                   final cpLabel = c.cps.isEmpty
                       ? ""
-                      : (c.cps.length == 1 ? c.cps.first : "${c.cps.first} … (+${c.cps.length - 1})");
+                      : (c.cps.length == 1
+                          ? c.cps.first
+                          : "${c.cps.first} … (+${c.cps.length - 1})");
                   return ListTile(
                     dense: true,
                     title: Text(c.displayName),
-                    subtitle: Text("${c.dept}${cpLabel.isNotEmpty ? " • $cpLabel" : ""}"),
+                    subtitle: Text(
+                        "${c.dept}${cpLabel.isNotEmpty ? " • $cpLabel" : ""}"),
                     onTap: () => onSelected(c),
                   );
                 },

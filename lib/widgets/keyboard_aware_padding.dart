@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Widget qui gère le padding automatiquement selon l'état du clavier
-/// 
+///
 /// Cette classe encapsule la logique d'ajustement du padding quand le clavier apparaît/disparaît
 /// pour éviter que les contenus ne se chevauchent avec le clavier virtuel.
 class KeyboardAwarePadding extends StatelessWidget {
@@ -22,9 +22,8 @@ class KeyboardAwarePadding extends StatelessWidget {
     final isPaddingNeeded = keyboardHeight > 0;
 
     // Calculer le padding du bas
-    final bottomPadding = isPaddingNeeded 
-        ? keyboardHeight 
-        : (basePadding?.bottom ?? 0);
+    final bottomPadding =
+        isPaddingNeeded ? keyboardHeight : (basePadding?.bottom ?? 0);
 
     return AnimatedPadding(
       duration: const Duration(milliseconds: 180),
@@ -41,7 +40,7 @@ class KeyboardAwarePadding extends StatelessWidget {
 }
 
 /// Widget qui gère automatiquement le scroll + padding pour les formulaires
-/// 
+///
 /// Utilise SingleChildScrollView avec le bon keyboardDismissBehavior
 /// et applique le padding selon le clavier
 class KeyboardAwareForm extends StatelessWidget {

@@ -17,10 +17,12 @@ class CityPostalAutocompleteCompact extends StatefulWidget {
   });
 
   @override
-  State<CityPostalAutocompleteCompact> createState() => _CityPostalAutocompleteCompactState();
+  State<CityPostalAutocompleteCompact> createState() =>
+      _CityPostalAutocompleteCompactState();
 }
 
-class _CityPostalAutocompleteCompactState extends State<CityPostalAutocompleteCompact> {
+class _CityPostalAutocompleteCompactState
+    extends State<CityPostalAutocompleteCompact> {
   Timer? _debounce;
   List<CityEntry> _options = const [];
 
@@ -65,7 +67,8 @@ class _CityPostalAutocompleteCompactState extends State<CityPostalAutocompleteCo
     }
 
     // Si user a déjà tapé un CP qui match => on garde
-    final typed = RegExp(r'\b(\d{5})\b').firstMatch(widget.cpCtrl.text)?.group(1);
+    final typed =
+        RegExp(r'\b(\d{5})\b').firstMatch(widget.cpCtrl.text)?.group(1);
     if (typed != null && c.cps.contains(typed)) {
       widget.cpCtrl.text = typed;
       return;
@@ -81,7 +84,8 @@ class _CityPostalAutocompleteCompactState extends State<CityPostalAutocompleteCo
         shrinkWrap: true,
         children: [
           const ListTile(
-            title: Text("Choisir le code postal", style: TextStyle(fontWeight: FontWeight.w700)),
+            title: Text("Choisir le code postal",
+                style: TextStyle(fontWeight: FontWeight.w700)),
           ),
           ...c.cps.map((cp) => ListTile(
                 title: Text(cp),
@@ -106,7 +110,8 @@ class _CityPostalAutocompleteCompactState extends State<CityPostalAutocompleteCo
           controller: widget.cityCtrl,
           focusNode: focusNode,
           decoration: widget.decoration,
-          validator: (v) => (v == null || v.trim().isEmpty) ? "Ville obligatoire" : null,
+          validator: (v) =>
+              (v == null || v.trim().isEmpty) ? "Ville obligatoire" : null,
         );
       },
       optionsViewBuilder: (context, onSelected, options) {
@@ -124,11 +129,14 @@ class _CityPostalAutocompleteCompactState extends State<CityPostalAutocompleteCo
                   final c = options.elementAt(i);
                   final cpLabel = c.cps.isEmpty
                       ? ""
-                      : (c.cps.length == 1 ? c.cps.first : "${c.cps.first} … (+${c.cps.length - 1})");
+                      : (c.cps.length == 1
+                          ? c.cps.first
+                          : "${c.cps.first} … (+${c.cps.length - 1})");
                   return ListTile(
                     dense: true,
                     title: Text(c.name),
-                    subtitle: Text("${c.dept}${cpLabel.isNotEmpty ? " • $cpLabel" : ""}"),
+                    subtitle: Text(
+                        "${c.dept}${cpLabel.isNotEmpty ? " • $cpLabel" : ""}"),
                     onTap: () => onSelected(c),
                   );
                 },

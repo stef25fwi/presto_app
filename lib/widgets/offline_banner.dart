@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// Banner affiché en haut de l'écran en mode offline
 class OfflineBanner extends StatelessWidget {
   final bool isVisible;
-  
+
   const OfflineBanner({
     super.key,
     required this.isVisible,
@@ -12,7 +12,7 @@ class OfflineBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!isVisible) return const SizedBox.shrink();
-    
+
     return Material(
       color: Colors.grey.shade800,
       elevation: 4,
@@ -70,7 +70,7 @@ class OfflineActionGuard extends StatelessWidget {
   final VoidCallback onAction;
   final String offlineMessage;
   final Widget child;
-  
+
   const OfflineActionGuard({
     super.key,
     required this.isOnline,
@@ -119,7 +119,7 @@ class OfflineActionGuard extends StatelessWidget {
 /// Badge "Hors ligne" pour les boutons
 class OfflineBadge extends StatelessWidget {
   final bool isOnline;
-  
+
   const OfflineBadge({
     super.key,
     required this.isOnline,
@@ -128,7 +128,7 @@ class OfflineBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isOnline) return const SizedBox.shrink();
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

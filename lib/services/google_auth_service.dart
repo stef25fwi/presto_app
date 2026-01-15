@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 /// Service centralisé pour Google Sign-In avec gestion d'erreurs améliorée
 class GoogleAuthService {
   // final _auth = FirebaseAuth.instance; // Unused for now
-  
+
   // Configuration
   static const int maxRetries = 2;
   static const Duration retryDelay = Duration(seconds: 2);
@@ -121,11 +121,11 @@ class GoogleAuthService {
   void logError(String method, dynamic error, {int? retryCount}) {
     final timestamp = DateTime.now().toIso8601String();
     final retry = retryCount != null ? ' [Retry $retryCount/$maxRetries]' : '';
-    
+
     debugPrint('');
     debugPrint('❌ [Google Auth] $method $retry @ $timestamp');
     debugPrint('   Error type: ${error.runtimeType}');
-    
+
     if (error is FirebaseAuthException) {
       debugPrint('   Code: ${error.code}');
       debugPrint('   Message: ${error.message}');
@@ -168,7 +168,7 @@ class GoogleAuthService {
 /// Extension pour afficher messages sans null
 extension NullableStringExt on String? {
   bool get isNotEmpty => this != null && this!.isNotEmpty;
-  
+
   /// Affiche le message si non-null, sinon silencieux
   void showIfNotNull(Function(String) onShow) {
     if (this != null && this!.isNotEmpty) {

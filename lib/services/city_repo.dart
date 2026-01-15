@@ -33,9 +33,8 @@ class CityRepo {
     final manifest = (jsonDecode(manifestRaw) as Map).cast<String, dynamic>();
 
     _cityAssets = manifest.keys
-        .where((p) =>
-            p.startsWith('assets/data/cities/') &&
-            p.endsWith('.json'))
+        .where(
+            (p) => p.startsWith('assets/data/cities/') && p.endsWith('.json'))
         .toList()
       ..sort();
 
@@ -116,7 +115,8 @@ class CityRepo {
     final raw = await rootBundle.loadString(asset);
     final decoded = jsonDecode(raw);
 
-    final List list = decoded is List ? decoded : (decoded['data'] as List? ?? const []);
+    final List list =
+        decoded is List ? decoded : (decoded['data'] as List? ?? const []);
     final records = list
         .whereType<Map>()
         .map((m) => CityRecord.fromJson(m.cast<String, dynamic>()))

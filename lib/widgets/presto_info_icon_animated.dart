@@ -4,14 +4,14 @@ class PrestoInfoIconAnimated extends StatefulWidget {
   final VoidCallback onTap;
   final bool showBadge;
   final String badgeText;
-   final double size;
+  final double size;
 
   const PrestoInfoIconAnimated({
     super.key,
     required this.onTap,
     this.showBadge = true,
     this.badgeText = "Nouveau",
-     this.size = 56,
+    this.size = 56,
   });
 
   @override
@@ -99,10 +99,12 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white,
-                        border: Border.all(color: kBlue, width: 3.0), // liseré bleu
+                        border:
+                            Border.all(color: kBlue, width: 3.0), // liseré bleu
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.all(3.0), // espace pour liseré interne
+                        padding: const EdgeInsets.all(
+                            3.0), // espace pour liseré interne
                         child: DecoratedBox(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,

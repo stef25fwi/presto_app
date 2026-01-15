@@ -32,7 +32,8 @@ class GooglePlacesService {
         'input': input,
         'language': 'fr',
         if (types != null) 'types': types,
-        if (componentRestrictions != null) 'componentRestrictions': componentRestrictions,
+        if (componentRestrictions != null)
+          'componentRestrictions': componentRestrictions,
       });
 
       final data = (res.data as Map<dynamic, dynamic>);

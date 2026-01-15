@@ -1,20 +1,9 @@
 import 'dart:async';
-import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:record/record.dart';
 
 import 'firebase_options.dart';
 import 'app_core.dart';
@@ -30,7 +19,6 @@ import 'widgets/premium_ai_button.dart';
 import 'widgets/ad_banner.dart';
 import 'widgets/offer_card.dart';
 import 'widgets/phone_input_field.dart';
-import 'package:presto_app/widgets/random_asset_ticker.dart';
 import 'widgets/entrepreneur_toolbox_slide.dart';
 import 'pages/toolbox_hub_page.dart';
 import 'services/city_search.dart';
@@ -43,9 +31,6 @@ import 'pages/admin_space_page.dart';
 import 'dev/seed_offers.dart';
 
 import 'app/theme.dart';
-
-import 'package:image_picker/image_picker.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);

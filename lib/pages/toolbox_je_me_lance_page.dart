@@ -104,10 +104,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
     // Tentative 1 : tri serveur sur updatedAt (peut échouer si types inconsistants)
     try {
-      final snap = await col
-          .orderBy('updatedAt', descending: true)
-          .limit(1)
-          .get();
+      final snap =
+          await col.orderBy('updatedAt', descending: true).limit(1).get();
       if (snap.docs.isNotEmpty) return snap.docs.first;
       return null;
     } catch (e) {
@@ -171,11 +169,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
       if (latest == null) {
         // Créer un nouveau parcours
-        final doc = _db
-            .collection('users')
-            .doc(user.uid)
-            .collection('parcours')
-            .doc();
+        final doc =
+            _db.collection('users').doc(user.uid).collection('parcours').doc();
 
         _parcoursId = doc.id;
 
@@ -391,7 +386,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     if (cachedJourney != null) {
       // Parcours trouvé en cache!
       // _isFromCache = true; // TODO: activer quand la fonctionnalité sera affichée
-      debugPrint('✅ Parcours trouvé en cache ($_activityType / ${_projectCtrl.text} / $_region)');
+      debugPrint(
+          '✅ Parcours trouvé en cache ($_activityType / ${_projectCtrl.text} / $_region)');
       _importDerived(cachedJourney['content'] as Map<String, dynamic>? ?? {});
     } else {
       // Générer un nouveau parcours
@@ -475,7 +471,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     }
     if (_situation == 'Fonctionnaire / agent public') {
       blocking.add(
-          "Cumul : demande écrite hiérarchique + règles spécifiques (temps partiel / durée encadrée)." );
+          "Cumul : demande écrite hiérarchique + règles spécifiques (temps partiel / durée encadrée).");
     }
     if (_situation == "Demandeur d’emploi") {
       blocking.add(
@@ -522,7 +518,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       'annonceLegale':
           (statut.contains('SAS') || statut.contains('EURL')) ? 180 : 0,
       'assuranceProAn': 250,
-      'comptableAn': (statut.contains('SAS') || statut.contains('EURL')) ? 1200 : 0,
+      'comptableAn':
+          (statut.contains('SAS') || statut.contains('EURL')) ? 1200 : 0,
       'banqueOutilsAn': 120,
       'note':
           "Estimations indicatives. Les montants varient selon activité et département.",
@@ -536,10 +533,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       _aid("Prêt d’honneur", "Initiative France / Réseau Entreprendre", true),
       _aid("Aides territoriales",
           "Région / Département / Agglo (selon territoire)", true),
-      _aid(
-          "Fonds européens",
-          "FEDER / FSE+ / FEADER (via programmes régionaux)",
-          true),
+      _aid("Fonds européens",
+          "FEDER / FSE+ / FEADER (via programmes régionaux)", true),
     ];
 
     // Plan 30 jours
@@ -550,10 +545,12 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       _task("Semaine 2", "Contacter CCI/CMA/BGE et prendre 1 RDV"),
       _task("Semaine 2", "Chercher aides via Aides-territoires + Région"),
       _task("Semaine 3", "Monter dossier ACRE / France Travail (si concerné)"),
-      _task("Semaine 3", "Préparer dossier subvention (résumé + budget + devis)"),
+      _task(
+          "Semaine 3", "Préparer dossier subvention (résumé + budget + devis)"),
       _task("Semaine 4", "Déposer formalités via guichet unique"),
       _task("Semaine 4", "Assurances + compte bancaire pro si nécessaire"),
-      _task("Semaine 4", "1ère action commerciale (prospection / pub / partenariats)"),
+      _task("Semaine 4",
+          "1ère action commerciale (prospection / pub / partenariats)"),
     ];
 
     return {
@@ -597,7 +594,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     if (_businessModel == 'Ponctuel') p.add('Simplicité');
     if (_protectionPatrimoine) p.add('Protection');
     if (_depensesPro > 5000) p.add('Optimisation frais');
-    if (_ambition.contains('Croissance') || _caVise > 60000) p.add('Croissance');
+    if (_ambition.contains('Croissance') || _caVise > 60000)
+      p.add('Croissance');
     if (p.isEmpty) return ['Simplicité', 'Coût', 'Rapidité'];
     return p.take(3).toList();
   }
@@ -715,7 +713,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             decoration: InputDecoration(
               hintText: "Ex : Créer une entreprise de vente de gâteaux",
               prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -909,7 +908,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           TextField(
             decoration: InputDecoration(
               labelText: "Région",
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -923,7 +923,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           TextField(
             decoration: InputDecoration(
               labelText: "Département (ex: 971)",
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -937,7 +938,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           TextField(
             decoration: InputDecoration(
               labelText: "Commune (optionnel)",
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -1015,12 +1017,12 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final statut = (_recommendation['statut'] ?? '—') as String;
     final why = (_recommendation['why'] ?? '') as String;
     final planB = (_recommendation['planB'] ?? '') as String;
-    final prios = (_recommendation['priorites'] as List?)
-            ?.map((e) => '$e')
-            .toList() ??
-        [];
+    final prios =
+        (_recommendation['priorites'] as List?)?.map((e) => '$e').toList() ??
+            [];
 
-    final formalites = (_costs['formalitesEstimees'] as Map?)?.cast<String, dynamic>() ?? {};
+    final formalites =
+        (_costs['formalitesEstimees'] as Map?)?.cast<String, dynamic>() ?? {};
     final fMin = formalites['min'] ?? 0;
     final fMax = formalites['max'] ?? 0;
 
@@ -1039,11 +1041,16 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               ),
               const SizedBox(height: 10),
               if (why.isNotEmpty)
-                _InfoBox(icon: Icons.lightbulb_outline, title: "Pourquoi", text: why),
+                _InfoBox(
+                    icon: Icons.lightbulb_outline,
+                    title: "Pourquoi",
+                    text: why),
               if (planB.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 _InfoBox(
-                    icon: Icons.swap_horiz, title: "Plan B si ça grossit", text: planB),
+                    icon: Icons.swap_horiz,
+                    title: "Plan B si ça grossit",
+                    text: planB),
               ],
               if (prios.isNotEmpty) ...[
                 const SizedBox(height: 10),
@@ -1056,33 +1063,37 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             ],
           ),
         ),
-
         if (_blockingAlerts.isNotEmpty) ...[
           const SizedBox(height: 12),
           _Card(
             title: "Alertes à vérifier",
             child: Column(
               children: _blockingAlerts
-                  .map((a) => _Bullet(icon: Icons.warning_amber_rounded, text: a))
+                  .map((a) =>
+                      _Bullet(icon: Icons.warning_amber_rounded, text: a))
                   .toList(),
             ),
           ),
         ],
-
         const SizedBox(height: 12),
         _Card(
           title: "Coûts estimés",
           child: Column(
             children: [
-              _CostRow(label: "Frais de formalités", value: "≈ $fMin à $fMax €"),
               _CostRow(
-                  label: "Annonce légale", value: "≈ ${_costs['annonceLegale'] ?? 0} €"),
+                  label: "Frais de formalités", value: "≈ $fMin à $fMax €"),
               _CostRow(
-                  label: "Assurance pro / an", value: "≈ ${_costs['assuranceProAn'] ?? 0} €"),
+                  label: "Annonce légale",
+                  value: "≈ ${_costs['annonceLegale'] ?? 0} €"),
               _CostRow(
-                  label: "Comptable / an", value: "≈ ${_costs['comptableAn'] ?? 0} €"),
+                  label: "Assurance pro / an",
+                  value: "≈ ${_costs['assuranceProAn'] ?? 0} €"),
               _CostRow(
-                  label: "Banque + outils / an", value: "≈ ${_costs['banqueOutilsAn'] ?? 0} €"),
+                  label: "Comptable / an",
+                  value: "≈ ${_costs['comptableAn'] ?? 0} €"),
+              _CostRow(
+                  label: "Banque + outils / an",
+                  value: "≈ ${_costs['banqueOutilsAn'] ?? 0} €"),
               const SizedBox(height: 8),
               Text(
                 "${_costs['note'] ?? ''}",
@@ -1091,7 +1102,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             ],
           ),
         ),
-
         const SizedBox(height: 12),
         _Card(
           title: "Aides & financements",
@@ -1108,7 +1118,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                   value: (a['status'] ?? 'à checker') as String,
                   underline: const SizedBox.shrink(),
                   items: const [
-                    DropdownMenuItem(value: 'à checker', child: Text("à checker")),
+                    DropdownMenuItem(
+                        value: 'à checker', child: Text("à checker")),
                     DropdownMenuItem(value: 'demandé', child: Text("demandé")),
                     DropdownMenuItem(value: 'obtenu', child: Text("obtenu")),
                   ],
@@ -1122,7 +1133,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             }).toList(),
           ),
         ),
-
         const SizedBox(height: 12),
         _Card(
           title: "Plan d’action 30 jours",
@@ -1257,7 +1267,10 @@ class _Card extends StatelessWidget {
               if (stepLabel != null)
                 Text(
                   stepLabel!,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600),
                 ),
             ],
           ),
@@ -1366,7 +1379,8 @@ class _SelectRow extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(title,
-                  style: const TextStyle(fontWeight: FontWeight.w700)), // Plus épais
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700)), // Plus épais
             ),
             Icon(Icons.chevron_right, color: Colors.grey.shade600),
           ],
@@ -1401,9 +1415,15 @@ class _InfoBox extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)), // Plus épais
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15)), // Plus épais
                 const SizedBox(height: 4),
-                Text(text, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
+                Text(text,
+                    style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600)),
               ],
             ),
           ),
@@ -1419,7 +1439,9 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)); // Plus épais
+    return Text(text,
+        style: const TextStyle(
+            fontWeight: FontWeight.w800, fontSize: 16)); // Plus épais
   }
 }
 
@@ -1449,8 +1471,9 @@ class _DropdownField extends StatelessWidget {
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          items:
-              items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          items: items
+              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
           onChanged: (v) => onChanged(v ?? value),
         ),
       ),
@@ -1507,7 +1530,9 @@ class _PillRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold))),
+        Expanded(
+            child: Text(title,
+                style: const TextStyle(fontWeight: FontWeight.bold))),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
@@ -1515,7 +1540,8 @@ class _PillRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
             border: Border.all(color: color.withOpacity(0.35)),
           ),
-          child: Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+          child: Text(value,
+              style: TextStyle(color: color, fontWeight: FontWeight.w700)),
         )
       ],
     );
@@ -1555,7 +1581,9 @@ class _CostRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text(label)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)), // Plus épais
+          Text(value,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w800, fontSize: 15)), // Plus épais
         ],
       ),
     );

@@ -8,7 +8,8 @@ class AiDraftService {
       FirebaseFunctions.instanceFor(region: 'europe-west1');
 
   /// Génère un brouillon simple (compatible ancien format)
-  Future<Map<String, dynamic>> generateOfferDraft({required String text}) async {
+  Future<Map<String, dynamic>> generateOfferDraft(
+      {required String text}) async {
     try {
       final callable = _functions.httpsCallable(
         'generateOfferDraft',
@@ -124,7 +125,8 @@ class AiDraftService {
         'budget': _toBudgetMap(data['budget']),
         'urgence': (data['urgence'] ?? '').toString(),
         'details': _toStringList(data['details'] ?? []),
-        'competences_requises': _toStringList(data['competences_requises'] ?? []),
+        'competences_requises':
+            _toStringList(data['competences_requises'] ?? []),
         'materiel': _toMaterielMap(data['materiel']),
         'disponibilites': (data['disponibilites'] ?? '').toString(),
         'questions_a_poser': _toStringList(data['questions_a_poser'] ?? []),

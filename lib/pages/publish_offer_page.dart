@@ -136,14 +136,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final nextDesc = (draft.description ?? '').trim();
     final currentDesc = _descCtrl.text.trim();
     final transcriptTrim = (transcript ?? '').trim();
-    final canReplaceDesc = currentDesc.isEmpty || (transcriptTrim.isNotEmpty && currentDesc == transcriptTrim);
+    final canReplaceDesc = currentDesc.isEmpty ||
+        (transcriptTrim.isNotEmpty && currentDesc == transcriptTrim);
     if (nextDesc.isNotEmpty && canReplaceDesc) {
       _descCtrl.text = nextDesc;
     }
 
     // Catégorie
     final nextCat = (draft.category ?? '').trim();
-    if ((_category == null || _category!.trim().isEmpty) && nextCat.isNotEmpty) {
+    if ((_category == null || _category!.trim().isEmpty) &&
+        nextCat.isNotEmpty) {
       // On ne force que si la catégorie fait partie des choix affichés.
       if (_categories.contains(nextCat)) {
         _category = nextCat;
@@ -340,7 +342,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       // Démarrer l'enregistrement
       if (await _audioRecorder.hasPermission()) {
         // Ultra perf: WAV PCM16 16k mono (évite ffmpeg côté serveur)
-        final filePath = await createTempAudioPath(prefix: 'presto_audio', extension: 'wav');
+        final filePath =
+            await createTempAudioPath(prefix: 'presto_audio', extension: 'wav');
         await _audioRecorder.start(
           const RecordConfig(
             encoder: AudioEncoder.wav,
@@ -414,7 +417,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       // Option A: après transcription, générer un brouillon (titre/catégorie/ville/CP)
       try {
         final draft = await AiOfferService.generateDraft(
-          hint: transcript.trim().isEmpty ? _descCtrl.text.trim() : transcript.trim(),
+          hint: transcript.trim().isEmpty
+              ? _descCtrl.text.trim()
+              : transcript.trim(),
           currentCity: _cityCtrl.text.trim(),
           currentCategory: (_category ?? '').trim(),
         );
@@ -491,13 +496,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         );
       }
 
-        final lower = audioPath.toLowerCase();
-        final isM4a = lower.endsWith('.m4a');
-        final isMp4 = lower.endsWith('.mp4');
-        final ext = isM4a ? 'm4a' : (isMp4 ? 'mp4' : 'wav');
-        final contentType = (isM4a || isMp4) ? 'audio/mp4' : 'audio/wav';
+      final lower = audioPath.toLowerCase();
+      final isM4a = lower.endsWith('.m4a');
+      final isMp4 = lower.endsWith('.mp4');
+      final ext = isM4a ? 'm4a' : (isMp4 ? 'mp4' : 'wav');
+      final contentType = (isM4a || isMp4) ? 'audio/mp4' : 'audio/wav';
 
-        final fileName = 'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final fileName =
+          'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.$ext';
 
       final storageRef = FirebaseStorage.instance.ref().child(fileName);
 
@@ -577,7 +583,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       // Option A: après transcription, générer un brouillon (titre/catégorie/ville/CP)
       try {
         final draft = await AiOfferService.generateDraft(
-          hint: transcript.trim().isEmpty ? _descCtrl.text.trim() : transcript.trim(),
+          hint: transcript.trim().isEmpty
+              ? _descCtrl.text.trim()
+              : transcript.trim(),
           currentCity: _cityCtrl.text.trim(),
           currentCategory: (_category ?? '').trim(),
         );

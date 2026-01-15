@@ -9,8 +9,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('Smoke test - app loads a basic screen', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: Scaffold(body: Text('Hello'))));
+  testWidgets('Smoke test - app loads a basic screen',
+      (WidgetTester tester) async {
+    await tester
+        .pumpWidget(const MaterialApp(home: Scaffold(body: Text('Hello'))));
 
     expect(find.text('Hello'), findsOneWidget);
   });

@@ -3,8 +3,8 @@ import 'package:flutter/services.dart' show rootBundle;
 
 class CityEntry {
   final String name;
-  final String dept;        // "75", "971", "2A", "987"...
-  final List<String> cps;   // ["75001","75002",...]
+  final String dept; // "75", "971", "2A", "987"...
+  final List<String> cps; // ["75001","75002",...]
   final String nameNorm;
 
   CityEntry({
@@ -17,7 +17,8 @@ class CityEntry {
   factory CityEntry.fromJson(Map<String, dynamic> j) {
     final name = (j['name'] ?? '').toString();
     final dept = (j['dept'] ?? '').toString();
-    final cps = (j['cps'] as List?)?.map((e) => e.toString()).toList() ?? const <String>[];
+    final cps = (j['cps'] as List?)?.map((e) => e.toString()).toList() ??
+        const <String>[];
     return CityEntry(
       name: name,
       dept: dept,
@@ -51,7 +52,8 @@ class CityRepoCompact {
 
   /// CP -> dept candidates (Corse: 20xxx => 2A OU 2B)
   List<String> deptCandidatesFromCp(String cp5) {
-    if (cp5.startsWith('97') || cp5.startsWith('98')) return [cp5.substring(0, 3)];
+    if (cp5.startsWith('97') || cp5.startsWith('98'))
+      return [cp5.substring(0, 3)];
     if (cp5.startsWith('20')) return ['2A', '2B'];
     return [cp5.substring(0, 2)];
   }

@@ -79,7 +79,8 @@ class ToolboxPage extends StatelessWidget {
                   icon: Icons.calculate_rounded,
                   iconBg: const Color(0xFFE8F0FF),
                   title: "La calculatrice de\nl'entrepreneur",
-                  subtitle: 'Fixe le bon prix pour vendre\nsans perdre d\'argent',
+                  subtitle:
+                      'Fixe le bon prix pour vendre\nsans perdre d\'argent',
                   description:
                       'En quelques clics, calcule ton coût de\nrevient, ton prix de vente conseillé et\ncompare avec le marché.',
                   items: const [
@@ -169,7 +170,8 @@ class _SectionTitle extends StatelessWidget {
               )
             ],
           ),
-          child: Icon(Icons.work_outline, size: 18, color: ToolboxPage.textPrimary),
+          child: Icon(Icons.work_outline,
+              size: 18, color: ToolboxPage.textPrimary),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -375,7 +377,8 @@ class _CheckItem extends StatelessWidget {
             color: ToolboxPage.success.withOpacity(0.12),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.check_rounded, size: 16, color: ToolboxPage.success),
+          child: const Icon(Icons.check_rounded,
+              size: 16, color: ToolboxPage.success),
         ),
         const SizedBox(width: 10),
         Expanded(

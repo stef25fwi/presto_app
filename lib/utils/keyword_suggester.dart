@@ -43,11 +43,48 @@ class SuggestionItem {
 class KeywordSuggester {
   /// Stopwords FR (tu peux compléter)
   static const Set<String> _stop = {
-    "je", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles",
-    "de", "des", "du", "la", "le", "les", "un", "une", "et", "ou",
-    "a", "au", "aux", "pour", "avec", "sans", "sur", "dans",
-    "mon", "ma", "mes", "ton", "ta", "tes", "son", "sa", "ses",
-    "faire", "cree", "creer", "creation", "projet", "entreprise",
+    "je",
+    "tu",
+    "il",
+    "elle",
+    "on",
+    "nous",
+    "vous",
+    "ils",
+    "elles",
+    "de",
+    "des",
+    "du",
+    "la",
+    "le",
+    "les",
+    "un",
+    "une",
+    "et",
+    "ou",
+    "a",
+    "au",
+    "aux",
+    "pour",
+    "avec",
+    "sans",
+    "sur",
+    "dans",
+    "mon",
+    "ma",
+    "mes",
+    "ton",
+    "ta",
+    "tes",
+    "son",
+    "sa",
+    "ses",
+    "faire",
+    "cree",
+    "creer",
+    "creation",
+    "projet",
+    "entreprise",
   };
 
   /// Synonymes / variantes (sans IA)
@@ -78,13 +115,32 @@ class KeywordSuggester {
   static String _removeDiacritics(String s) {
     // mapping simple (suffisant pour FR)
     const map = {
-      'à': 'a', 'á': 'a', 'â': 'a', 'ä': 'a', 'ã': 'a', 'å': 'a',
+      'à': 'a',
+      'á': 'a',
+      'â': 'a',
+      'ä': 'a',
+      'ã': 'a',
+      'å': 'a',
       'ç': 'c',
-      'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e',
-      'ì': 'i', 'í': 'i', 'î': 'i', 'ï': 'i',
-      'ò': 'o', 'ó': 'o', 'ô': 'o', 'ö': 'o', 'õ': 'o',
-      'ù': 'u', 'ú': 'u', 'û': 'u', 'ü': 'u',
-      'ÿ': 'y', 'ñ': 'n',
+      'è': 'e',
+      'é': 'e',
+      'ê': 'e',
+      'ë': 'e',
+      'ì': 'i',
+      'í': 'i',
+      'î': 'i',
+      'ï': 'i',
+      'ò': 'o',
+      'ó': 'o',
+      'ô': 'o',
+      'ö': 'o',
+      'õ': 'o',
+      'ù': 'u',
+      'ú': 'u',
+      'û': 'u',
+      'ü': 'u',
+      'ÿ': 'y',
+      'ñ': 'n',
     };
     final b = StringBuffer();
     for (final ch in s.split('')) {
@@ -157,8 +213,8 @@ class KeywordSuggester {
   static List<SuggestionItem> compute({
     required String query,
     required List<SuggestionItem> items,
-    String? region,     // ex: "Guadeloupe"
-    String? situation,  // ex: "Sans emploi"
+    String? region, // ex: "Guadeloupe"
+    String? situation, // ex: "Sans emploi"
     int limit = 8,
   }) {
     final qNorm = normalize(query);
@@ -184,8 +240,8 @@ class KeywordSuggester {
       double score = 0;
 
       // 0) priorités manuelles / popularité
-      score += it.weight * 0.06;      // poids léger mais utile
-      score += it.popularity * 0.02;  // départage
+      score += it.weight * 0.06; // poids léger mais utile
+      score += it.popularity * 0.02; // départage
 
       // 1) compat région/situation
       final r = (region == null) ? "" : normalize(region);
@@ -296,7 +352,8 @@ class KeywordSuggester {
         final r = region == null ? "" : normalize(region);
         final s = situation == null ? "" : normalize(situation);
         final okR = it.regions.isEmpty || it.regions.map(normalize).contains(r);
-        final okS = it.situations.isEmpty || it.situations.map(normalize).contains(s);
+        final okS =
+            it.situations.isEmpty || it.situations.map(normalize).contains(s);
         return okR && okS;
       }).toList()
         ..sort((a, b) => b.popularity.compareTo(a.popularity));
