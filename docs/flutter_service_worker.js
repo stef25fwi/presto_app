@@ -157,7 +157,7 @@ const RESOURCES = {"assets/assets/images/chrono_1min.png": "0fcf0bfe7937ba892294
 "index.html": "c229c5ae58039081cf9ebfa5ddc8b779",
 "/": "c229c5ae58039081cf9ebfa5ddc8b779",
 "main.dart.js": "9fff61671ee0a511f17f51dc6387b947",
-"flutter_bootstrap.js": "bf10d5060565ddf801aefe5a2ce27ca1",
+"flutter_bootstrap.js": "c076b3050a16d428e72f391e05f2a1f2",
 "version.json": "8df3cd3c7c223f3ebda8fbb9cdf0967f",
 "manifest.json": "b8e012f650576f16cebd94a9a9003fb4",
 "flutter.js": "24bc71911b75b5f8135c949e27a2984e"};
