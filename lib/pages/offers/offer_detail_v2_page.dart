@@ -1,23 +1,11 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-// ✅ Adapte ces imports à ton projet
-import 'package:presto_app/main.dart'
-    show
-        AccountPage,
-        ConversationPage,
-        showSuccessSnackBar,
-        prestoOverlayStyleFor,
-        kPrestoAppBarTitleStyle,
-        kPrestoOrange,
-        kPrestoBlue,
-        PrestoMonitoring;
+import 'package:presto_app/main.dart';
 
 class OfferDetailV2Page extends StatefulWidget {
   final String offerId;
@@ -32,9 +20,6 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
   int _pageIndex = 0;
 
   bool _isPhoneVisible = false;
-
-  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
-  bool _loggedView = false;
 
   @override
   void dispose() {
@@ -76,14 +61,6 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     if (b.isNotEmpty) return b;
     final c = _s(data['commune']);
     if (c.isNotEmpty) return c;
-    return '';
-  }
-
-  String _pickCategory(Map<String, dynamic> data) {
-    final c = _s(data['category']);
-    if (c.isNotEmpty) return c;
-    final c2 = _s(data['categorie']);
-    if (c2.isNotEmpty) return c2;
     return '';
   }
 
@@ -159,54 +136,6 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
   // ----------------------------
   // Analytics
   // ----------------------------
-  Future<void> _logViewItem({
-    required String title,
-    required String category,
-    required num? budget,
-  }) async {
-    if (_loggedView) return;
-    _loggedView = true;
-    try {
-      await _analytics.logEvent(
-        name: 'view_item',
-        parameters: {
-          'item_id': widget.offerId,
-          'item_name': title,
-          'item_category': category,
-          'value': (budget is num) ? budget.toDouble() : 0.0,
-          'currency': 'EUR',
-        },
-      );
-    } catch (_) {}
-  }
-
-  Future<void> _logMessageInitiated(String annonceurId) async {
-    try {
-      await _analytics.logEvent(
-        name: 'message_initiated',
-        parameters: {'offer_id': widget.offerId, 'recipient_id': annonceurId},
-      );
-    } catch (_) {}
-  }
-
-  Future<void> _logPhoneCall(String? phone) async {
-    try {
-      await _analytics.logEvent(
-        name: 'phone_call_initiated',
-        parameters: {
-          'offer_id': widget.offerId,
-          'phone_masked': (phone ?? '').isNotEmpty ? phone!.substring(0, 2) : 'unknown',
-        },
-      );
-    } catch (_) {}
-  }
-
-  Future<void> _logShare(String method) async {
-    try {
-      await _analytics.logShare(contentType: 'offer', itemId: widget.offerId, method: method);
-    } catch (_) {}
-  }
-
   // ----------------------------
   // Firebase actions
   // ----------------------------
@@ -224,11 +153,11 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     }
 
     if (annonceurId.trim().isEmpty) {
-      showSuccessSnackBar(context, "Annonceur introuvable.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Annonceur introuvable.")),
+      );
       return;
     }
-
-    await _logMessageInitiated(annonceurId);
 
     // ✅ Cherche une conversation existante (participants + offerId)
     final convCol = FirebaseFirestore.instance.collection('conversations');
@@ -265,20 +194,22 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
 
     if (!context.mounted) return;
 
-    // ✅ Ouvre ta page de chat (chez toi elle supporte déjà conversationId)
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ConversationPage(conversationId: conversationId!),
-      ),
+    // ✅ TODO: Ouvre la page de chat (à implémenter avec ta navigation)
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Conversation ouverture en cours...")),
     );
+    // Exemple future :
+    // Navigator.of(context).push(
+    //   MaterialPageRoute(builder: (_) => ConversationPage(conversationId: conversationId!)),
+    // );
   }
 
   Future<void> _callPhone(BuildContext context, String? phone) async {
-    await _logPhoneCall(phone);
-
     if (!context.mounted) return;
     if (phone == null || phone.trim().isEmpty) {
-      showSuccessSnackBar(context, "Aucun numéro disponible.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Aucun numéro disponible.")),
+      );
       return;
     }
 
@@ -288,7 +219,9 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     final ok = await canLaunchUrl(uri);
     if (!context.mounted) return;
     if (!ok) {
-      showSuccessSnackBar(context, "Impossible de lancer l'appel sur cet appareil.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Impossible de lancer l'appel sur cet appareil.")),
+      );
       return;
     }
     await launchUrl(uri);
@@ -298,17 +231,20 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     final url = 'https://prestoo.app/offers/${widget.offerId}';
     await Clipboard.setData(ClipboardData(text: url));
     if (!context.mounted) return;
-    showSuccessSnackBar(context, "Lien copié.");
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Lien copié.")),
+    );
   }
 
   Future<void> _shareBasic(BuildContext context, String title, String location) async {
-    await _logShare('share');
     // Simple: on copie le texte dans le presse-papier (fiable partout)
     final url = 'https://prestoo.app/offers/${widget.offerId}';
     final text = "$title – $location\n$url";
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
-    showSuccessSnackBar(context, "Texte de partage copié.");
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Texte de partage copié.")),
+    );
   }
 
   // ----------------------------
@@ -340,7 +276,6 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
 
         final title = _pickTitle(data);
         final location = _pickLocation(data);
-        final category = _pickCategory(data);
         final annonceurId = _pickAnnonceurId(data);
 
         final budget = _num(data['budget'] ?? data['price'] ?? data['amount']);
@@ -348,8 +283,6 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
 
         final phone = _pickPhone(data);
         final images = _listStr(data['imageUrls'] ?? data['photos'] ?? data['images']);
-
-        unawaited(_logViewItem(title: title, category: category, budget: budget));
 
         final hasPhone = (phone ?? '').trim().isNotEmpty;
         final phoneDisplay = hasPhone
@@ -365,7 +298,14 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
             elevation: 0,
             centerTitle: true,
             leading: const BackButton(),
-            title: const Text("OffreDetailV2", style: kPrestoAppBarTitleStyle),
+            title: const Text(
+              "OffreDetailV2",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.2,
+              ),
+            ),
             actions: [
               IconButton(
                 tooltip: "Partager",
@@ -529,7 +469,14 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
           elevation: 0,
           centerTitle: true,
           leading: const BackButton(),
-          title: const Text("OffreDetailV2", style: kPrestoAppBarTitleStyle),
+          title: const Text(
+            "OffreDetailV2",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.2,
+            ),
+          ),
         ),
         body: const Center(
           child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange)),
@@ -545,7 +492,14 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
           elevation: 0,
           centerTitle: true,
           leading: const BackButton(),
-          title: const Text("OffreDetailV2", style: kPrestoAppBarTitleStyle),
+          title: const Text(
+            "OffreDetailV2",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.2,
+            ),
+          ),
         ),
         body: Center(
           child: Padding(
