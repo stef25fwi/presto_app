@@ -21,6 +21,7 @@ class _OfferDetailV2TopState extends State<OfferDetailV2Top> {
 
   final _pageCtrl = PageController();
   int _pageIndex = 0;
+  bool _isPhoneVisible = false;
 
   @override
   void dispose() {
@@ -71,7 +72,7 @@ class _OfferDetailV2TopState extends State<OfferDetailV2Top> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 18),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 140), // place pour le bouton sticky
         children: [
           _TopOfferCard(
             orange: kPrestoOrange,
@@ -79,11 +80,7 @@ class _OfferDetailV2TopState extends State<OfferDetailV2Top> {
             title: "Livraison de colis",
             distanceAndPrice: "15 km - 20 €",
             dateLine: "À effectuer le 25 avril",
-            chipLeft: _ChipSpec(
-              label: "Rapide",
-              bg: kPrestoBlue,
-              fg: Colors.white,
-            ),
+            chipLeft: _ChipSpec(label: "Rapide", bg: kPrestoBlue, fg: Colors.white),
             chipRight: _ChipSpec(
               label: "Utilitaire requis",
               bg: const Color(0xFFE9EDF3),
@@ -93,7 +90,7 @@ class _OfferDetailV2TopState extends State<OfferDetailV2Top> {
           ),
           const SizedBox(height: 12),
 
-          // --- Carrousel + dots (comme ton visuel) ---
+          // Carrousel photos (déjà)
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: Container(
@@ -127,7 +124,61 @@ class _OfferDetailV2TopState extends State<OfferDetailV2Top> {
               ),
             ),
           ),
+
+          const SizedBox(height: 14),
+          _SectionTitle("Description"),
+          const SizedBox(height: 8),
+          _SectionBody(
+            "Transport d'un colis de Montauban à Toulouse.\n"
+            "Besoin d'un utilitaire pour livrer un carton 5ox50 cm.\n"
+            "Livraison à effectuer avant 14h.\n"
+            "Merci de me contacter pour plus d'infos.",
+          ),
+
+          const SizedBox(height: 16),
+          _SectionTitle("Contact"),
+          const SizedBox(height: 10),
+
+          _ContactCard(
+            blue: kPrestoBlue,
+            phoneMasked: "+33 6 12 34 XX XX",
+            onToggle: () => setState(() => _isPhoneVisible = !_isPhoneVisible),
+            isVisible: _isPhoneVisible,
+            onMessage: () {},
+            onShare: () {},
+          ),
         ],
+      ),
+      bottomSheet: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+          color: Colors.transparent,
+          child: Container(
+            height: 64,
+            decoration: BoxDecoration(
+              color: kPrestoOrange,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.18),
+                  blurRadius: 16,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: const Center(
+              child: Text(
+                "Accepter l'offre",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -377,6 +428,188 @@ class _MockPhotoTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String text;
+  const _SectionTitle(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 26,
+        fontWeight: FontWeight.w900,
+        color: Color(0xFF111827),
+      ),
+    );
+  }
+}
+
+class _SectionBody extends StatelessWidget {
+  final String text;
+  const _SectionBody(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(bottom: 6),
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: Color(0xFFE4E7EE), width: 2),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 18,
+            height: 1.35,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF111827),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ContactCard extends StatelessWidget {
+  final Color blue;
+  final String phoneMasked;
+  final VoidCallback onToggle;
+  final bool isVisible;
+  final VoidCallback onMessage;
+  final VoidCallback onShare;
+
+  const _ContactCard({
+    required this.blue,
+    required this.phoneMasked,
+    required this.onToggle,
+    required this.isVisible,
+    required this.onMessage,
+    required this.onShare,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = Colors.white;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF2F7),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.call, color: Color(0xFF0F172A)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  phoneMasked, // si tu veux: isVisible ? full : masked
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                height: 42,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: blue,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                  ),
+                  onPressed: onToggle,
+                  child: Text(
+                    isVisible ? "Masquer" : "Afficher le numéro",
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: blue,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: onMessage,
+                    icon: const Icon(Icons.mail_outline_rounded),
+                    label: const Text(
+                      "Message",
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SizedBox(
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6A00),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onPressed: onShare,
+                    icon: const Icon(Icons.send_rounded),
+                    label: const Text(
+                      "Partager",
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
