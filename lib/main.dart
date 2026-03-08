@@ -2461,19 +2461,27 @@ class _HomePageState extends State<HomePage>
                 // COMMENT ÇA MARCHE
                 Container(
                   width: double.infinity,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
+                    borderRadius: const BorderRadius.all(Radius.circular(16)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: const [
                       Text(
                         "Comment ça marche ?",
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.w800,
                           color: kPrestoBlue,
                         ),
@@ -2937,21 +2945,23 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.only(bottom: showLine ? 12 : 0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
                     title,
+                    textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: kPrestoBlue,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     description,
+                    textAlign: TextAlign.justify,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 14,
                       color: Colors.black87,
                       height: 1.4,
                     ),
