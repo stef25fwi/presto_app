@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'utils/friendly_snackbar.dart';
 import 'constants.dart';
@@ -316,14 +315,56 @@ class _ProfilePageState extends State<ProfilePage> {
             automaticallyImplyLeading: false,
           ),
           body: Container(
-            color: colorScheme.surface,
-            child: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: isLoggedIn
-                    ? _buildProfileContent(colorScheme, isDark, user)
-                    : _buildAuthContent(colorScheme, isDark),
-              ),
+            decoration: isLoggedIn
+                ? BoxDecoration(color: colorScheme.surface)
+                : const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFFFFF4EC),
+                        Color(0xFFEAF2FF),
+                        Colors.white,
+                      ],
+                    ),
+                  ),
+            child: Stack(
+              children: [
+                if (!isLoggedIn)
+                  Positioned(
+                    top: -70,
+                    left: -50,
+                    child: Container(
+                      width: 180,
+                      height: 180,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFFF6600).withOpacity(0.10),
+                      ),
+                    ),
+                  ),
+                if (!isLoggedIn)
+                  Positioned(
+                    top: 120,
+                    right: -60,
+                    child: Container(
+                      width: 170,
+                      height: 170,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF1A73E8).withOpacity(0.10),
+                      ),
+                    ),
+                  ),
+                SafeArea(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, isLoggedIn ? 28 : 72),
+                    child: isLoggedIn
+                        ? _buildProfileContent(colorScheme, isDark, user)
+                        : _buildAuthContent(colorScheme, isDark),
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -418,15 +459,16 @@ class _ProfilePageState extends State<ProfilePage> {
         const SizedBox(height: 20),
 
         _buildSocialButton(
-          icon: FontAwesomeIcons.google,
+          icon: const _GoogleBrandLogo(size: 18),
           label: 'Continuer avec Google',
           onTap: () async => _onGoogleSignIn(),
           colorScheme: colorScheme,
+          forceWhiteBackground: true,
         ),
         if (_isAppleSignInSupported) ...[
           const SizedBox(height: 8),
           _buildSocialButton(
-            icon: Icons.apple,
+            icon: const Icon(Icons.apple),
             label: 'Continuer avec Apple',
             onTap: () async => _onAppleSignIn(),
             colorScheme: colorScheme,
@@ -583,18 +625,17 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildSocialButton({
-    required IconData icon,
+    required Widget icon,
     required String label,
     required Future<void> Function() onTap,
     required ColorScheme colorScheme,
+    bool forceWhiteBackground = false,
   }) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: _isLoading ? null : () async => onTap(),
-        icon: icon == FontAwesomeIcons.google
-            ? FaIcon(icon, size: 18)
-            : Icon(icon),
+        icon: icon,
         label: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text(
@@ -603,6 +644,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         style: OutlinedButton.styleFrom(
+          backgroundColor: forceWhiteBackground ? Colors.white : null,
           side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.5)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -1205,4 +1247,61 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+}
+
+class _GoogleBrandLogo extends StatelessWidget {
+  final double size;
+
+  const _GoogleBrandLogo({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _GoogleBrandLogoPainter(),
+      ),
+    );
+  }
+}
+
+class _GoogleBrandLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final stroke = size.width * 0.18;
+    final rect = Offset(stroke / 2, stroke / 2) &
+        Size(size.width - stroke, size.height - stroke);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.butt;
+
+    paint.color = const Color(0xFFEA4335); // red
+    canvas.drawArc(rect, 3.75, 1.05, false, paint);
+    paint.color = const Color(0xFFFBBC05); // yellow
+    canvas.drawArc(rect, 4.80, 1.00, false, paint);
+    paint.color = const Color(0xFF34A853); // green
+    canvas.drawArc(rect, 5.80, 1.00, false, paint);
+    paint.color = const Color(0xFF4285F4); // blue
+    canvas.drawArc(rect, 0.52, 2.40, false, paint);
+
+    final barPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = const Color(0xFF4285F4);
+    final barH = stroke * 0.82;
+    final barY = size.height / 2 - barH / 2;
+    final barX = size.width * 0.52;
+    final barW = size.width * 0.36;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(barX, barY, barW, barH),
+        Radius.circular(barH / 2),
+      ),
+      barPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
