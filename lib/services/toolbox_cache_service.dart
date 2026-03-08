@@ -13,7 +13,7 @@ import 'cache_monitoring_service.dart';
 ///     - content: {parcours complet}
 ///
 ///   /toolbox_journey_index/{indexId}
-///     - criteria_hash: string (MD5 de "type_projet|domaine|region")
+///     - criteria_hash: string normalisé de "type_projet|domaine|region"
 ///     - journey_id: string
 ///     - createdAt: timestamp
 
@@ -21,14 +21,66 @@ class ToolboxCacheService {
   final _db = FirebaseFirestore.instance;
   final _monitoring = CacheMonitoringService();
 
-  /// Génère un hash unique pour les critères
+  /// Génère une clé stable pour les critères saisis librement.
+  String _normalizeCriteriaPart(String value) {
+    var normalized = value.trim().toLowerCase();
+
+    const replacements = {
+      'à': 'a',
+      'á': 'a',
+      'â': 'a',
+      'ä': 'a',
+      'ã': 'a',
+      'å': 'a',
+      'ç': 'c',
+      'è': 'e',
+      'é': 'e',
+      'ê': 'e',
+      'ë': 'e',
+      'ì': 'i',
+      'í': 'i',
+      'î': 'i',
+      'ï': 'i',
+      'ñ': 'n',
+      'ò': 'o',
+      'ó': 'o',
+      'ô': 'o',
+      'ö': 'o',
+      'õ': 'o',
+      'ù': 'u',
+      'ú': 'u',
+      'û': 'u',
+      'ü': 'u',
+      'ý': 'y',
+      'ÿ': 'y',
+      'œ': 'oe',
+      'æ': 'ae',
+      '’': ' ',
+      '\'': ' ',
+      '-': ' ',
+      '_': ' ',
+      '/': ' ',
+    };
+
+    replacements.forEach((source, target) {
+      normalized = normalized.replaceAll(source, target);
+    });
+
+    normalized = normalized.replaceAll(RegExp(r'[^a-z0-9 ]+'), ' ');
+    normalized = normalized.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return normalized;
+  }
+
   /// Format: "type_projet|domaine|region"
   String _generateCriteriaHash(
-      String typeProjet, String domaine, String region) {
-    final criteria = '$typeProjet|$domaine|$region';
-    // Simple hash: on peut utiliser crypto.md5 si besoin
-    // Pour l'instant, on utilise juste la concaténation
-    return criteria;
+    String typeProjet,
+    String domaine,
+    String region,
+  ) {
+    final normalizedType = _normalizeCriteriaPart(typeProjet);
+    final normalizedDomain = _normalizeCriteriaPart(domaine);
+    final normalizedRegion = _normalizeCriteriaPart(region);
+    return '$normalizedType|$normalizedDomain|$normalizedRegion';
   }
 
   /// Cherche un parcours existant pour les critères donnés
@@ -51,6 +103,7 @@ class ToolboxCacheService {
           .get();
 
       if (indexQuery.docs.isEmpty) {
+        _monitoring.recordCacheMiss(DateTime.now().difference(startTime));
         return null; // Pas trouvé en cache
       }
 
@@ -58,6 +111,7 @@ class ToolboxCacheService {
       final journeyId = indexDoc['journey_id'] as String?;
 
       if (journeyId == null) {
+        _monitoring.recordCacheMiss(DateTime.now().difference(startTime));
         return null;
       }
 
@@ -72,6 +126,7 @@ class ToolboxCacheService {
         return journeyDoc.data();
       }
 
+      _monitoring.recordCacheMiss(DateTime.now().difference(startTime));
       return null;
     } catch (e) {
       _monitoring.recordCacheError('fetchExistingJourney: $e');
@@ -108,8 +163,15 @@ class ToolboxCacheService {
         'content': journeyContent,
       });
 
-      // 2. Créer l'entrée d'index
-      final indexRef = _db.collection('toolbox_journey_index').doc();
+      // 2. Créer ou mettre à jour l'entrée d'index
+      final existingIndex = await _db
+          .collection('toolbox_journey_index')
+          .where('criteria_hash', isEqualTo: criteriaHash)
+          .limit(1)
+          .get();
+      final indexRef = existingIndex.docs.isNotEmpty
+          ? existingIndex.docs.first.reference
+          : _db.collection('toolbox_journey_index').doc();
       await indexRef.set({
         'criteria_hash': criteriaHash,
         'journey_id': journeyId,

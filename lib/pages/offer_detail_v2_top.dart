@@ -72,7 +72,8 @@ class _OfferDetailV2TopState extends State<OfferDetailV2Top> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 140), // place pour le bouton sticky
+        padding: const EdgeInsets.fromLTRB(
+            12, 12, 12, 140), // place pour le bouton sticky
         children: [
           _TopOfferCard(
             orange: kPrestoOrange,
@@ -80,7 +81,8 @@ class _OfferDetailV2TopState extends State<OfferDetailV2Top> {
             title: "Livraison de colis",
             distanceAndPrice: "15 km - 20 €",
             dateLine: "À effectuer le 25 avril",
-            chipLeft: _ChipSpec(label: "Rapide", bg: kPrestoBlue, fg: Colors.white),
+            chipLeft:
+                _ChipSpec(label: "Rapide", bg: kPrestoBlue, fg: Colors.white),
             chipRight: _ChipSpec(
               label: "Utilitaire requis",
               bg: const Color(0xFFE9EDF3),
@@ -227,11 +229,13 @@ class _TopOfferCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: orange,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(18)),
             ),
             child: Row(
               children: [
-                const Icon(Icons.local_shipping_rounded, color: Colors.white, size: 18),
+                const Icon(Icons.local_shipping_rounded,
+                    color: Colors.white, size: 18),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -266,7 +270,6 @@ class _TopOfferCard extends StatelessWidget {
                   text: dateLine,
                 ),
                 const SizedBox(height: 12),
-
                 Row(
                   children: [
                     _Pill(
@@ -331,7 +334,8 @@ class _ChipSpec {
   final Color bg;
   final Color fg;
   final Color? border;
-  const _ChipSpec({required this.label, required this.bg, required this.fg, this.border});
+  const _ChipSpec(
+      {required this.label, required this.bg, required this.fg, this.border});
 }
 
 class _Pill extends StatelessWidget {
@@ -416,7 +420,8 @@ class _MockPhotoTile extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 34, color: const Color(0xFF111827).withOpacity(0.70)),
+            Icon(icon,
+                size: 34, color: const Color(0xFF111827).withOpacity(0.70)),
             const SizedBox(height: 6),
             Text(
               label,
@@ -580,7 +585,8 @@ class _ContactCard extends StatelessWidget {
                     icon: const Icon(Icons.mail_outline_rounded),
                     label: const Text(
                       "Message",
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                      style:
+                          TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
                     ),
                   ),
                 ),
@@ -602,7 +608,8 @@ class _ContactCard extends StatelessWidget {
                     icon: const Icon(Icons.send_rounded),
                     label: const Text(
                       "Partager",
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                      style:
+                          TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
                     ),
                   ),
                 ),
@@ -614,186 +621,3 @@ class _ContactCard extends StatelessWidget {
     );
   }
 }
-
-class _SectionTitle extends StatelessWidget {
-  final String text;
-  const _SectionTitle(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 26,
-        fontWeight: FontWeight.w900,
-        color: Color(0xFF111827),
-      ),
-    );
-  }
-}
-
-class _SectionBody extends StatelessWidget {
-  final String text;
-  const _SectionBody(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.only(bottom: 6),
-      decoration: const BoxDecoration(
-        border: Border(
-          top: BorderSide(color: Color(0xFFE4E7EE), width: 2),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 10),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 18,
-            height: 1.35,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF111827),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ContactCard extends StatelessWidget {
-  final Color blue;
-  final String phoneMasked;
-  final VoidCallback onToggle;
-  final bool isVisible;
-  final VoidCallback onMessage;
-  final VoidCallback onShare;
-
-  const _ContactCard({
-    required this.blue,
-    required this.phoneMasked,
-    required this.onToggle,
-    required this.isVisible,
-    required this.onMessage,
-    required this.onShare,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = Colors.white;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withOpacity(0.06)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF2F7),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.call, color: Color(0xFF0F172A)),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  phoneMasked, // si tu veux: isVisible ? full : masked
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              SizedBox(
-                height: 42,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: blue,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                  ),
-                  onPressed: onToggle,
-                  child: Text(
-                    isVisible ? "Masquer" : "Afficher le numéro",
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: blue,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    onPressed: onMessage,
-                    icon: const Icon(Icons.mail_outline_rounded),
-                    label: const Text(
-                      "Message",
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6A00),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    onPressed: onShare,
-                    icon: const Icon(Icons.send_rounded),
-                    label: const Text(
-                      "Partager",
-                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-

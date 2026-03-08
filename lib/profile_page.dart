@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'utils/friendly_snackbar.dart';
 import 'constants.dart';
@@ -36,6 +37,19 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _cityCtrl = TextEditingController();
   final TextEditingController _cpCtrl = TextEditingController();
   final TextEditingController _phoneCtrl = TextEditingController();
+
+  bool get _isAppleSignInSupported =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS);
+
+  String get _authHeadline => _authMode == AuthMode.login
+      ? 'Bon retour sur Presto'
+      : 'Bienvenue sur Presto';
+
+  String get _authSubtitle => _authMode == AuthMode.login
+      ? 'Connectez-vous pour retrouver vos offres, vos messages et vos préférences.'
+      : 'Créez votre compte pour publier une offre, accepter des missions et discuter avec les prestataires autour de vous.';
 
   bool _notifNearby = true;
   bool _notifFavorites = true;
@@ -165,9 +179,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _onAppleSignIn() async {
     if (_isLoading) return;
-    if (kIsWeb ||
-        !(defaultTargetPlatform == TargetPlatform.iOS ||
-            defaultTargetPlatform == TargetPlatform.macOS)) {
+    if (!_isAppleSignInSupported) {
       showErrorSnackBar(context, 'Connexion Apple disponible sur iOS/macOS.');
       return;
     }
@@ -248,6 +260,39 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  Future<void> _onForgotPassword() async {
+    if (_isLoading) return;
+
+    final email = _emailCtrl.text.trim();
+    if (email.isEmpty) {
+      showErrorSnackBar(context,
+          'Saisis ton e-mail pour recevoir un lien de réinitialisation.');
+      return;
+    }
+
+    if (!email.contains('@')) {
+      showErrorSnackBar(context, 'Renseigne une adresse e-mail valide.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
+      showSuccessSnackBar(
+          context, 'Lien de réinitialisation envoyé par e-mail.');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context,
+          e.message ?? 'Impossible d\'envoyer l\'e-mail de réinitialisation.');
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   // --- UI ---
 
   @override
@@ -291,7 +336,7 @@ class _ProfilePageState extends State<ProfilePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Bienvenue sur Presto',
+          _authHeadline,
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -300,7 +345,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Connectez-vous ou créez un compte pour publier et accepter des offres autour de vous.',
+          _authSubtitle,
           style: TextStyle(
             fontSize: 14,
             color: colorScheme.onSurface.withValues(alpha: 0.7),
@@ -372,24 +417,21 @@ class _ProfilePageState extends State<ProfilePage> {
 
         const SizedBox(height: 20),
 
-        // Boutons Google / Apple
         _buildSocialButton(
-          icon: Icons.g_mobiledata,
-          label: _authMode == AuthMode.login
-              ? 'Se connecter avec Google'
-              : "S'inscrire avec Google",
+          icon: FontAwesomeIcons.google,
+          label: 'Continuer avec Google',
           onTap: () async => _onGoogleSignIn(),
           colorScheme: colorScheme,
         ),
-        const SizedBox(height: 8),
-        _buildSocialButton(
-          icon: Icons.apple,
-          label: _authMode == AuthMode.login
-              ? 'Se connecter avec Apple'
-              : "S'inscrire avec Apple",
-          onTap: () async => _onAppleSignIn(),
-          colorScheme: colorScheme,
-        ),
+        if (_isAppleSignInSupported) ...[
+          const SizedBox(height: 8),
+          _buildSocialButton(
+            icon: Icons.apple,
+            label: 'Continuer avec Apple',
+            onTap: () async => _onAppleSignIn(),
+            colorScheme: colorScheme,
+          ),
+        ],
 
         const SizedBox(height: 16),
         Row(
@@ -399,7 +441,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     Divider(color: colorScheme.outline.withValues(alpha: 0.4))),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text('ou avec e-mail'),
+              child: Text('ou continuez avec e-mail'),
             ),
             Expanded(
                 child:
@@ -422,6 +464,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   TextFormField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.email],
+                    textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
                       labelText: 'E-mail',
                       prefixIcon: Icon(Icons.email_outlined),
@@ -440,6 +484,17 @@ class _ProfilePageState extends State<ProfilePage> {
                   TextFormField(
                     controller: _passwordCtrl,
                     obscureText: true,
+                    autofillHints: _authMode == AuthMode.login
+                        ? const [AutofillHints.password]
+                        : const [AutofillHints.newPassword],
+                    textInputAction: _authMode == AuthMode.signup
+                        ? TextInputAction.next
+                        : TextInputAction.done,
+                    onFieldSubmitted: (_) {
+                      if (_authMode == AuthMode.login) {
+                        _onEmailAuth();
+                      }
+                    },
                     decoration: const InputDecoration(
                       labelText: 'Mot de passe',
                       prefixIcon: Icon(Icons.lock_outline),
@@ -459,6 +514,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     TextFormField(
                       controller: _passwordConfirmCtrl,
                       obscureText: true,
+                      autofillHints: const [AutofillHints.newPassword],
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _onEmailAuth(),
                       decoration: const InputDecoration(
                         labelText: 'Confirmer le mot de passe',
                         prefixIcon: Icon(Icons.lock_outline),
@@ -490,9 +548,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                       child: Text(
-                        _authMode == AuthMode.login
-                            ? 'Se connecter'
-                            : 'Créer mon compte',
+                        _isLoading
+                            ? 'Chargement...'
+                            : _authMode == AuthMode.login
+                                ? 'Se connecter'
+                                : 'Créer mon compte',
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600),
                       ),
@@ -504,9 +564,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {
-                          // TODO: mot de passe oublié
-                        },
+                        onPressed:
+                            _isLoading ? null : () => _onForgotPassword(),
                         child: const Text('Mot de passe oublié ?'),
                       ),
                     ),
@@ -533,7 +592,9 @@ class _ProfilePageState extends State<ProfilePage> {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: _isLoading ? null : () async => onTap(),
-        icon: Icon(icon),
+        icon: icon == FontAwesomeIcons.google
+            ? FaIcon(icon, size: 18)
+            : Icon(icon),
         label: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text(

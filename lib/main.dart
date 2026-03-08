@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
+
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -5,93 +7,60 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
-// import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:record/record.dart';
-// import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:record/record.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import 'firebase_options.dart';
+import 'app/theme.dart';
 import 'app_core.dart';
 import 'constants.dart';
-import 'app/theme.dart';
-// import 'services/firebase_service.dart';
-import 'services/city_search.dart';
-import 'services/google_auth_service.dart';
-import 'services/notification_service.dart';
-import 'pages/toolbox_hub_page.dart';
-// import 'pages/auth/presto_premium_auth_page.dart';
-import 'pages/pro_profile_page.dart';
+import 'firebase_options.dart';
+import 'dev/seed_offers.dart';
+import 'features/ai_draft/ai_draft_service.dart';
+import 'features/micro_ia/micro_ia_service.dart';
+import 'features/micro_ia/web_audio_recorder.dart';
+import 'profile_page.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/legal_info_page.dart';
-// import 'pages/home_page_v2_option2.dart';
-// import 'pages/messages/conversation_page.dart';
-import 'widgets/ad_banner.dart';
-import 'widgets/offer_card.dart';
-import 'widgets/random_asset_ticker.dart';
-import 'widgets/entrepreneur_toolbox_slide.dart';
-import 'features/ai_draft/ai_draft_service.dart';
-import 'features/micro_ia/web_audio_recorder.dart';
-import 'utils/friendly_snackbar.dart';
+import 'pages/pro_profile_page.dart';
+import 'pages/toolbox_hub_page.dart';
+import 'services/city_search.dart';
+import 'services/account_social_auth_actions.dart';
+import 'services/google_auth_service.dart';
+import 'services/notification_service.dart';
 import 'utils/crashlytics_context.dart';
+import 'utils/friendly_snackbar.dart';
 import 'utils/recording_path_web.dart'
     if (dart.library.io) 'utils/recording_path_io.dart';
-import 'dev/seed_offers.dart';
-import 'features/micro_ia/micro_ia_service.dart';
+import 'widgets/ad_banner.dart';
+import 'widgets/account_admin_analytics_panel.dart';
+import 'widgets/account_admin_micro_ia_panel.dart';
+import 'widgets/account_build_version_panel.dart';
+import 'widgets/account_profile_sections.dart';
+import 'widgets/entrepreneur_toolbox_slide.dart';
+import 'widgets/home_bottom_nav_item.dart';
+import 'widgets/offer_card.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/phone_input_field.dart';
-// ...existing code (autres imports)...
+import 'widgets/photo_selector_tile.dart';
+import 'widgets/random_asset_ticker.dart';
 
-// ✅ Remote Config singleton: expose 'audio_pipeline' pour l'UI
-/* ⚠️ À décommenter une fois flutter pub get réussi
-class PrestoRemoteConfig {
-  static String audioPipeline = 'UNKNOWN';
-
-  static Future<void> init() async {
-    final rc = FirebaseRemoteConfig.instance;
-
-    await rc.setConfigSettings(RemoteConfigSettings(
-      fetchTimeout: const Duration(seconds: 10),
-      minimumFetchInterval: const Duration(minutes: 5),
-    ));
-
-    await rc.setDefaults(<String, dynamic>{
-      'audio_pipeline': 'HYBRID',
-    });
-
-    try {
-      await rc.fetchAndActivate();
-      audioPipeline = rc.getString('audio_pipeline').trim().isEmpty
-          ? 'HYBRID'
-          : rc.getString('audio_pipeline').trim();
-    } catch (_) {
-      audioPipeline = 'HYBRID';
-    }
-  }
-}
-*/
-
-// Fallback class temporaire
 class PrestoRemoteConfig {
   static String audioPipeline = 'HYBRID';
+
   static Future<void> init() async {}
-  // Fallback: utilise la valeur par défaut HYBRID
-  // Décommenter la classe ci-dessus une fois firebase_remote_config installé
 }
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
 
-// ✅ Build stamp (pour vérifier en prod quel commit est réellement déployé)
-// Remplir via: flutter build/run ... --dart-define=APP_BUILD_SHA=... etc.
 const String kAppBuildSha =
     String.fromEnvironment('APP_BUILD_SHA', defaultValue: 'local');
 const String kAppBuildBranch =
@@ -101,81 +70,13 @@ const String kAppBuildTimeUtc =
 const String kAppBuildTag =
     String.fromEnvironment('APP_BUILD_TAG', defaultValue: '');
 
-/// ✅ Fonction utilitaire pour récupérer le statut de présence d'utilisateurs
-Future<Map<String, dynamic>> getUserPresenceStatus(List<String> userIds) async {
-  if (userIds.isEmpty) return {};
-
-  try {
-    final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
-    final callable = functions.httpsCallable(
-      'getUserPresenceStatus',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 10)),
-    );
-
-    final result = await callable.call<Map<String, dynamic>>({
-      'userIds': userIds,
-    });
-
-    return result.data['statuses'] as Map<String, dynamic>? ?? {};
-  } catch (e) {
-    debugPrint('[Presence] Error fetching user status: $e');
-    return {};
-  }
-}
-
-/// ✅ Widget pour afficher l'indicateur de statut utilisateur
-class UserStatusIndicator extends StatelessWidget {
-  final String status; // 'online', 'away', 'offline'
-  final double size;
-
-  const UserStatusIndicator({
-    super.key,
-    required this.status,
-    this.size = 12,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    Color color;
-    switch (status) {
-      case 'online':
-        color = Colors.green;
-        break;
-      case 'away':
-        color = Colors.orange;
-        break;
-      default:
-        color = Colors.grey;
-    }
-
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 4,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// ✅ Monitoring local (session) — utilisé par le dashboard admin
-/// Objectif: rendre visibles les appels de récupération de données (Firestore/Functions)
 class PrestoMonitoring extends ChangeNotifier {
   static final PrestoMonitoring I = PrestoMonitoring._();
+
   PrestoMonitoring._();
 
   bool enabled = true;
   bool verboseLogs = false;
-
-  // Toggles par “pipeline”
   bool monitorOffersStream = true;
   bool monitorOffersFetchOnce = true;
   bool monitorMessagesFetchOnce = true;
@@ -184,7 +85,6 @@ class PrestoMonitoring extends ChangeNotifier {
 
   DateTime sessionStart = DateTime.now();
 
-  // Compteurs
   int offersQueryBuildCount = 0;
   int offersSnapshotsCount = 0;
   int offersFetchOnceCount = 0;
@@ -192,14 +92,12 @@ class PrestoMonitoring extends ChangeNotifier {
   int functionsCallsCount = 0;
   int errorsCount = 0;
 
-  // Autres streams Firestore (home/notifications/conversations/profils...)
   int otherStreamsEvents = 0;
   final Map<String, int> otherStreamEventCounts = <String, int>{};
   final Map<String, int> otherStreamLastDocs = <String, int>{};
   String? lastOtherStreamKey;
   int lastOtherStreamDocs = 0;
 
-  // Derniers états
   int lastOffersSnapshotDocs = 0;
   int lastOffersFetchDocs = 0;
   int lastMessagesFetchDocs = 0;
@@ -272,7 +170,6 @@ class PrestoMonitoring extends ChangeNotifier {
     lastFunctionsCallMs = 0;
     lastOffersQuerySignature = null;
     lastError = null;
-
     otherStreamsEvents = 0;
     otherStreamEventCounts.clear();
     otherStreamLastDocs.clear();
@@ -352,7 +249,6 @@ SystemUiOverlayStyle prestoOverlayStyleFor(Color backgroundColor) {
     statusBarColor: backgroundColor,
     statusBarIconBrightness:
         isDarkBackground ? Brightness.light : Brightness.dark,
-    // iOS: Brightness.dark => icônes claires
     statusBarBrightness: isDarkBackground ? Brightness.dark : Brightness.light,
     systemNavigationBarColor: backgroundColor,
     systemNavigationBarDividerColor: backgroundColor,
@@ -575,89 +471,6 @@ class _CardShell extends StatelessWidget {
         ],
       ),
       child: child,
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final Widget child;
-  final Widget? trailing;
-
-  const _SectionCard({
-    required this.title,
-    required this.child,
-    this.trailing,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return _CardShell(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              if (trailing != null)
-                IconTheme(
-                  data: IconThemeData(color: Colors.grey.shade500),
-                  child: trailing!,
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-class _ShareButton extends StatelessWidget {
-  final Widget icon;
-  final String label;
-  final VoidCallback onPressed;
-
-  const _ShareButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 44,
-      child: OutlinedButton.icon(
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white,
-          side: BorderSide(color: Colors.black.withOpacity(0.06)),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        ),
-        onPressed: onPressed,
-        icon: icon,
-        label: Text(
-          label,
-          maxLines: 1,
-          softWrap: false,
-          overflow: TextOverflow.fade,
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: Colors.grey.shade900,
-          ),
-        ),
-      ),
     );
   }
 }
@@ -2066,7 +1879,7 @@ class _HomePageState extends State<HomePage>
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Expanded(
-                                  child: _BottomNavItem(
+                                  child: HomeBottomNavItem(
                                     icon: Icons.home,
                                     label: "Accueil",
                                     selected: _selectedIndex == 0,
@@ -2074,7 +1887,7 @@ class _HomePageState extends State<HomePage>
                                   ),
                                 ),
                                 Expanded(
-                                  child: _BottomNavItem(
+                                  child: HomeBottomNavItem(
                                     icon: Icons.search,
                                     label: "Je consulte\nles offres",
                                     selected: _selectedIndex == 1,
@@ -2083,7 +1896,7 @@ class _HomePageState extends State<HomePage>
                                 ),
                                 Expanded(
                                   flex: 1,
-                                  child: _BottomNavItem(
+                                  child: HomeBottomNavItem(
                                     icon: Icons.add_circle_outline,
                                     label: "Publier\nune offre",
                                     isBig: true,
@@ -2091,7 +1904,7 @@ class _HomePageState extends State<HomePage>
                                   ),
                                 ),
                                 Expanded(
-                                  child: _BottomNavItem(
+                                  child: HomeBottomNavItem(
                                     icon: Icons.chat_bubble_outline,
                                     label: "Messages",
                                     selected: _selectedIndex == 3,
@@ -2099,7 +1912,7 @@ class _HomePageState extends State<HomePage>
                                   ),
                                 ),
                                 Expanded(
-                                  child: _BottomNavItem(
+                                  child: HomeBottomNavItem(
                                     icon: Icons.person_outline,
                                     label: "Compte",
                                     selected: _selectedIndex == 4,
@@ -3182,13 +2995,6 @@ class _Debouncer {
   void dispose() => _t?.cancel();
 }
 
-/// Helper: extrait la première URL d'un message (erreurs Firestore incluent souvent un lien d'index)
-String? _extractFirstUrl(String text) {
-  final match = RegExp(r'https?://\S+').firstMatch(text);
-  if (match == null) return null;
-  return match.group(0)?.replaceAll(RegExp(r'[)\],.]+$'), '');
-}
-
 /// ✅ Conversion d'erreur Firestore en message amical
 String _friendlyFirestoreErrorMessage(Object error) {
   final msg = error.toString().toLowerCase();
@@ -3382,7 +3188,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _postalCodeController = TextEditingController();
-  // ignore: unused_field
   final _formKey = GlobalKey<FormState>();
 
   Future<void> _copyToClipboard(BuildContext context, String text) async {
@@ -3466,9 +3271,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   final FocusNode _regionFocus = FocusNode();
   final FocusNode _deptFocus = FocusNode();
   final FocusNode _filterCityFocusNode = FocusNode();
-  // ignore: unused_field
   List<CityRecord> _filterCitySuggestions = [];
-  // ignore: unused_field
   int _filterCityHighlightedIndex = -1;
   Timer? _filterCityDebounce;
 
@@ -3482,7 +3285,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   final Map<String, String> _normalizedTextCache = {};
 
   // ✅ Cache des résultats Firestore pour éviter les re-queries
-  // ignore: unused_field
   Map<String, List<DocumentSnapshot<Map<String, dynamic>>>>? _queryResultsCache;
   String? _lastCachedQuerySignature;
   Timer? _cacheInvalidationTimer;
@@ -3684,7 +3486,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }
 
   /// ✅ Cache les résultats Firestore pour éviter les re-queries inutiles (template pour utilisation future)
-  // ignore: unused_element
   List<DocumentSnapshot<Map<String, dynamic>>> _getCachedOrFreshResults(
     String querySignature,
     List<DocumentSnapshot<Map<String, dynamic>>> freshResults,
@@ -3853,7 +3654,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return query;
   }
 
-  // ignore: unused_element
   Future<void> _fetchOffers({bool resetPaging = false}) async {
     if (_isLoading) return;
 
@@ -4861,7 +4661,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     );
   }
 
-  // ignore: unused_element
   String _ageLabelFromCreatedAt(dynamic createdAt) {
     if (createdAt == null) return '';
 
@@ -4891,7 +4690,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return '${diff.inDays} j';
   }
 
-  // ignore: unused_element
   Future<void> _showEditOfferDialog(
     BuildContext context,
     String offerId,
@@ -4950,7 +4748,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     });
   }
 
-  // ignore: unused_element
   Future<void> _confirmDeleteOffer(
     BuildContext context,
     String offerId,
@@ -5452,36 +5249,11 @@ Motif du signalement :
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // --- helpers format / extraction ---
-    String formatPrice(num? b) {
-      if (b == null) return "—";
-      final v = b.toDouble();
-      return "${v.toStringAsFixed(0)} €";
-    }
-
-    String extractDuration(String title) {
-      // Ex: "Ménage 2h" => "2h" | "DJ 90 min" => "90 min"
-      final reg = RegExp(r'(\d+\s*(h|min))', caseSensitive: false);
-      final m = reg.firstMatch(title);
-      return m?.group(1)?.replaceAll(' ', '') ?? "—";
-    }
-
-    final String priceText = formatPrice(widget.budget);
-    final String durationText = extractDuration(widget.title);
-    final String city = widget.location;
-
     final bool hasPhone =
         widget.phone != null && widget.phone!.trim().isNotEmpty;
     final String rawPhone = hasPhone ? widget.phone!.trim() : '';
     final String formattedPhone =
         hasPhone ? _formatPhoneWithIndicatif(rawPhone) : '';
-    final String phoneText = hasPhone
-        ? (_isPhoneVisible ? formattedPhone : _maskPhone(formattedPhone))
-        : "Numéro non renseigné";
-    final String rawDescription = (widget.description ?? '').trim();
-    final String descriptionText = rawDescription.isEmpty
-        ? "Aucune description détaillée fournie."
-        : rawDescription;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -7626,9 +7398,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   int _highlightedIndex = -1;
 
   // Région / département (optionnel à exploiter dans le futur)
-  // ignore: unused_field
   String? _selectedRegionCode;
-  // ignore: unused_field
   String? _selectedDeptCode;
 
   bool _isSubmitting = false;
@@ -8245,7 +8015,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   /// Appelle la Cloud Function pour analyser la description avec OpenAI
-  // ignore: unused_element
   Future<void> _onTapAiAnalyze() async {
     final input = _descriptionController.text.trim();
     if (input.isEmpty) {
@@ -9173,7 +8942,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   Row(
                     children: [
                       Expanded(
-                        child: _PhotoSelectorTile(
+                        child: PhotoSelectorTile(
                           label: 'Photo 1',
                           file: _selectedPhotos.isNotEmpty
                               ? _selectedPhotos[0]
@@ -9187,7 +8956,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _PhotoSelectorTile(
+                        child: PhotoSelectorTile(
                           label: 'Photo 2',
                           file: _selectedPhotos.length > 1
                               ? _selectedPhotos[1]
@@ -9409,107 +9178,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 }
 
-// ignore: unused_element
-/// Petite carte pour sélectionner une photo
-class _PhotoSelectorTile extends StatelessWidget {
-  final String label;
-  final XFile? file;
-  final Uint8List? bytes;
-  final VoidCallback onTap;
-  final VoidCallback? onLongPress;
-
-  const _PhotoSelectorTile({
-    required this.label,
-    required this.file,
-    required this.bytes,
-    required this.onTap,
-    this.onLongPress,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // ✅ variable locale pour la promotion null-safety
-    final XFile? localFile = file;
-
-    Widget content;
-    if (localFile == null) {
-      content = Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.add_a_photo_outlined,
-              size: 28, color: Colors.black45),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.black54,
-            ),
-          ),
-        ],
-      );
-    } else {
-      content = ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: (bytes != null)
-            ? Image.memory(
-                bytes!,
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-                errorBuilder: (_, __, ___) => Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.image, size: 24, color: kPrestoOrange),
-                    const SizedBox(height: 4),
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-      );
-    }
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Container(
-        height: 90,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black12),
-        ),
-        child: content,
-      ),
-    );
-  }
-}
-
 /// PAGE COMPTE (Firebase Auth : email / Google / Apple) ////////////////////
 
 class AccountPage extends StatefulWidget {
@@ -9693,444 +9361,78 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  Widget _buildAnalyticsMetricRow({
-    required String icon,
-    required String label,
-    required String subtitle,
-    required bool enabled,
-    required ValueChanged<bool> onToggle,
-    required String value,
-    String? hint,
-    Color color = kPrestoBlue,
-  }) {
-    final statusColor = enabled ? color : Colors.grey;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: enabled
-            ? statusColor.withOpacity(0.07)
-            : Colors.grey.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusColor.withOpacity(0.25)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
-        children: [
-          Text(icon, style: const TextStyle(fontSize: 18)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                if (hint != null && hint.trim().isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    hint,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: Colors.black45,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ]
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  color: statusColor,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Switch(
-                value: enabled,
-                onChanged: (v) => onToggle(v),
-                activeColor: statusColor,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildAdminAnalyticsPanel() {
     return AnimatedBuilder(
       animation: PrestoMonitoring.I,
       builder: (context, _) {
         final m = PrestoMonitoring.I;
 
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.teal.withOpacity(0.25)),
-          ),
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Text(
-                    '📊 Analytics / Monitoring (session)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.teal,
-                    ),
-                  ),
-                  const Spacer(),
-                  Switch(
-                    value: m.enabled,
-                    onChanged: (v) => m.setEnabled(v),
-                    activeColor: Colors.teal,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ],
-              ),
-              Text(
-                'Session: ${m.sessionDurationLabel} • erreurs: ${m.errorsCount}',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 10),
-              _buildAnalyticsMetricRow(
-                icon: '🧾',
-                label: 'Offres — Stream Firestore',
-                subtitle: 'snapshots() sur la query (temps réel)',
-                enabled: m.monitorOffersStream,
-                onToggle: (v) => m.setMonitorOffersStream(v),
-                value:
-                    '${m.offersSnapshotsCount} snap • ${m.lastOffersSnapshotDocs} docs',
-                hint: m.lastOffersQuerySignature,
-                color: kPrestoBlue,
-              ),
-              const SizedBox(height: 8),
-              _buildAnalyticsMetricRow(
-                icon: '📥',
-                label: 'Offres — Fetch once',
-                subtitle: 'get() ponctuel (debug/pagination)',
-                enabled: m.monitorOffersFetchOnce,
-                onToggle: (v) => m.setMonitorOffersFetchOnce(v),
-                value:
-                    '${m.offersFetchOnceCount} • ${m.lastOffersFetchMs}ms • ${m.lastOffersFetchDocs} docs',
-                color: kPrestoOrange,
-              ),
-              const SizedBox(height: 8),
-              _buildAnalyticsMetricRow(
-                icon: '💬',
-                label: 'Messages — Fetch once',
-                subtitle: 'get() messages d’une conversation',
-                enabled: m.monitorMessagesFetchOnce,
-                onToggle: (v) => m.setMonitorMessagesFetchOnce(v),
-                value:
-                    '${m.messagesFetchOnceCount} • ${m.lastMessagesFetchMs}ms • ${m.lastMessagesFetchDocs} docs',
-                color: Colors.purple,
-              ),
-              const SizedBox(height: 8),
-              _buildAnalyticsMetricRow(
-                icon: '⚡',
-                label: 'Cloud Functions',
-                subtitle: 'callable (admin/login/...)',
-                enabled: m.monitorFunctionsCalls,
-                onToggle: (v) => m.setMonitorFunctionsCalls(v),
-                value: '${m.functionsCallsCount} • ${m.lastFunctionsCallMs}ms',
-                hint: m.lastError,
-                color: Colors.teal,
-              ),
-              const SizedBox(height: 8),
-              _buildAnalyticsMetricRow(
-                icon: '🛰️',
-                label: 'Autres streams Firestore',
-                subtitle: 'notifications / conversations / profils / home',
-                enabled: m.monitorOtherStreams,
-                onToggle: (v) => m.setMonitorOtherStreams(v),
-                value:
-                    '${m.otherStreamsEvents} • ${m.lastOtherStreamDocs} docs',
-                hint: m.lastOtherStreamKey,
-                color: Colors.indigo,
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: m.reset,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text(
-                      'Reset',
-                      style: TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                  ),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      const Text(
-                        'Logs',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Switch(
-                        value: m.verboseLogs,
-                        onChanged: (v) => m.setVerbose(v),
-                        activeColor: Colors.teal,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            ],
-          ),
+        return AccountAdminAnalyticsPanel(
+          enabled: m.enabled,
+          verboseLogs: m.verboseLogs,
+          sessionLabel: m.sessionDurationLabel,
+          errorsCount: m.errorsCount,
+          onEnabledChanged: m.setEnabled,
+          onVerboseChanged: m.setVerbose,
+          onReset: m.reset,
+          metrics: [
+            AccountAnalyticsMetricItem(
+              icon: '🧾',
+              label: 'Offres — Stream Firestore',
+              subtitle: 'snapshots() sur la query (temps réel)',
+              enabled: m.monitorOffersStream,
+              onToggle: m.setMonitorOffersStream,
+              value:
+                  '${m.offersSnapshotsCount} snap • ${m.lastOffersSnapshotDocs} docs',
+              hint: m.lastOffersQuerySignature,
+              color: kPrestoBlue,
+            ),
+            AccountAnalyticsMetricItem(
+              icon: '📥',
+              label: 'Offres — Fetch once',
+              subtitle: 'get() ponctuel (debug/pagination)',
+              enabled: m.monitorOffersFetchOnce,
+              onToggle: m.setMonitorOffersFetchOnce,
+              value:
+                  '${m.offersFetchOnceCount} • ${m.lastOffersFetchMs}ms • ${m.lastOffersFetchDocs} docs',
+              color: kPrestoOrange,
+            ),
+            AccountAnalyticsMetricItem(
+              icon: '💬',
+              label: 'Messages — Fetch once',
+              subtitle: 'get() messages d’une conversation',
+              enabled: m.monitorMessagesFetchOnce,
+              onToggle: m.setMonitorMessagesFetchOnce,
+              value:
+                  '${m.messagesFetchOnceCount} • ${m.lastMessagesFetchMs}ms • ${m.lastMessagesFetchDocs} docs',
+              color: Colors.purple,
+            ),
+            AccountAnalyticsMetricItem(
+              icon: '⚡',
+              label: 'Cloud Functions',
+              subtitle: 'callable (admin/login/...)',
+              enabled: m.monitorFunctionsCalls,
+              onToggle: m.setMonitorFunctionsCalls,
+              value: '${m.functionsCallsCount} • ${m.lastFunctionsCallMs}ms',
+              hint: m.lastError,
+              color: Colors.teal,
+            ),
+            AccountAnalyticsMetricItem(
+              icon: '🛰️',
+              label: 'Autres streams Firestore',
+              subtitle: 'notifications / conversations / profils / home',
+              enabled: m.monitorOtherStreams,
+              onToggle: m.setMonitorOtherStreams,
+              value: '${m.otherStreamsEvents} • ${m.lastOtherStreamDocs} docs',
+              hint: m.lastOtherStreamKey,
+              color: Colors.indigo,
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildBuildVersionPanel() {
-    final mode =
-        kReleaseMode ? 'release' : (kProfileMode ? 'profile' : 'debug');
-    final platform = kIsWeb ? 'web' : defaultTargetPlatform.name;
-    final sha = kAppBuildSha;
-    final shortSha = (sha.length > 12) ? sha.substring(0, 12) : sha;
-
-    final hasStamp = sha.isNotEmpty && sha != 'local';
-    final stampLine = [
-      if (kAppBuildTag.trim().isNotEmpty) 'tag: ${kAppBuildTag.trim()}',
-      if (kAppBuildBranch.trim().isNotEmpty)
-        'branch: ${kAppBuildBranch.trim()}',
-      if (kAppBuildTimeUtc.trim().isNotEmpty)
-        'build: ${kAppBuildTimeUtc.trim()} UTC',
-    ].join(' • ');
-
-    return Container(
-      decoration: BoxDecoration(
-        color: hasStamp
-            ? Colors.green.withOpacity(0.06)
-            : Colors.red.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: hasStamp
-              ? Colors.green.withOpacity(0.25)
-              : Colors.red.withOpacity(0.25),
-        ),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                '🧩 Version affichée',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  color: hasStamp ? Colors.green.shade800 : Colors.red.shade700,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '$platform • $mode',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SelectableText(
-            'sha: $shortSha',
-            style: const TextStyle(
-              fontSize: 12,
-              height: 1.2,
-              color: Colors.black87,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          if (stampLine.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              stampLine,
-              style: const TextStyle(
-                fontSize: 11,
-                color: Colors.black54,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-          if (!hasStamp) ...[
-            const SizedBox(height: 6),
-            const Text(
-              '⚠️ Build stamp non renseigné (utilise --dart-define).',
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.black54,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              TextButton.icon(
-                onPressed: () async {
-                  await Clipboard.setData(ClipboardData(text: sha));
-                  if (!mounted) return;
-                  showSuccessSnackBar(context, 'SHA copié');
-                },
-                icon: const Icon(Icons.copy, size: 16),
-                label: const Text(
-                  'Copier SHA',
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-                style: TextButton.styleFrom(
-                  foregroundColor: kPrestoBlue,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                hasStamp ? 'OK' : 'LOCAL',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
-                  color: hasStamp ? Colors.green.shade800 : Colors.red.shade700,
-                ),
-              ),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  // ignore: unused_element
-  Widget _buildAudioPipelineRow({
-    required String icon,
-    required String label,
-    required String description,
-    required bool isActive,
-    required String status,
-  }) {
-    final statusColor = isActive
-        ? (status == 'ACTIVE' ? Colors.green : Colors.blue)
-        : Colors.grey;
-    final bgColor =
-        isActive ? statusColor.withOpacity(0.1) : Colors.grey.withOpacity(0.05);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: statusColor.withOpacity(0.3),
-          width: 1.5,
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Row(
-        children: [
-          Text(icon, style: const TextStyle(fontSize: 18)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.black87,
-                  ),
-                ),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Status Badge avec Toggle
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: statusColor.withOpacity(0.4)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  status,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    color: statusColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ignore: unused_element
   Widget _buildAdminMicroIaPanel(User user) {
     _adminCfgFuture ??= _adminGetMicroIaConfig();
 
@@ -10187,13 +9489,6 @@ class _AccountPageState extends State<AccountPage> {
           _adminConfigLoaded = true;
         }
 
-        final canEdit = _adminMicroIaEditing && !_adminSaving;
-        final disabledHintStyle = TextStyle(
-          color: kPrestoBlue.withOpacity(0.65),
-          fontWeight: FontWeight.w700,
-          fontSize: 12,
-        );
-
         final techLines = <String>[
           'uid: ${user.uid}',
           'email: ${user.email ?? "(null)"}',
@@ -10202,273 +9497,46 @@ class _AccountPageState extends State<AccountPage> {
           'lastSignIn: ${user.metadata.lastSignInTime?.toIso8601String() ?? "(null)"}',
         ];
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 24),
-            const Text(
-              'PANNEAU ADMIN',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: kPrestoBlue,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Réglages et outils de gestion (fonctions à venir).',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.black54,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: kPrestoBlue.withOpacity(0.18)),
-                boxShadow: [
-                  BoxShadow(
-                    color: kPrestoBlue.withOpacity(0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Espace admin',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: kPrestoBlue,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: kPrestoBlue.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: kPrestoBlue.withOpacity(0.18)),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Profil admin (technique)',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
-                            color: kPrestoBlue,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        SelectableText(
-                          techLines.join('\n'),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            height: 1.25,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildBuildVersionPanel(),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Micro-IA (transcription audio)',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 14,
-                      color: kPrestoOrange,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  // ✅ AUDIO PIPELINE MONITOR
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.amber.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.amber.withOpacity(0.3)),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '🎙️ Pipelines Audio Actifs',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.amber,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        // Mobile Streaming
-                        _buildAudioPipelineRow(
-                          icon: '📱',
-                          label: 'Mobile Streaming',
-                          description: 'PCM16 16kHz real-time',
-                          isActive: !kIsWeb,
-                          status: !kIsWeb ? 'READY' : 'N/A',
-                        ),
-                        const SizedBox(height: 8),
-                        // Web Chunking
-                        _buildAudioPipelineRow(
-                          icon: '🌐',
-                          label: 'Web Chunking',
-                          description: '2-sec chunks, stopToBlob()',
-                          isActive: kIsWeb,
-                          status: kIsWeb ? 'ACTIVE' : 'STANDBY',
-                        ),
-                        const SizedBox(height: 8),
-                        // Standard Recording
-                        _buildAudioPipelineRow(
-                          icon: '⏺️',
-                          label: 'Standard Recording',
-                          description: 'Fallback WAV 16k mono',
-                          isActive: true,
-                          status: 'AVAILABLE',
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildAdminAnalyticsPanel(),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    value: _adminMicroIaMode,
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'HYBRID',
-                        child: Text('Hybrid (recommandé)'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'GOOGLE_ONLY',
-                        child: Text('Google STT uniquement'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'WHISPER_ONLY',
-                        child: Text('Whisper uniquement'),
-                      ),
-                    ],
-                    onChanged: canEdit
-                        ? (v) {
-                            if (v == null) return;
-                            setState(() => _adminMicroIaMode = v);
-                          }
-                        : null,
-                    decoration: InputDecoration(
-                      labelText: 'Mode',
-                      helperText: canEdit
-                          ? null
-                          : 'Lecture seule (appuie sur “Modifier”)',
-                      helperStyle: disabledHintStyle,
-                    ),
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Fallback activé'),
-                    subtitle: const Text(
-                      'Si la qualité est faible, tente un autre provider.',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    value: _adminMicroIaFallbackEnabled,
-                    onChanged: canEdit
-                        ? (v) =>
-                            setState(() => _adminMicroIaFallbackEnabled = v)
-                        : null,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Seuil qualité: ${_adminMicroIaQualityThreshold.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Slider(
-                    value: _adminMicroIaQualityThreshold,
-                    min: 0.40,
-                    max: 0.95,
-                    divisions: 55,
-                    onChanged: canEdit
-                        ? (v) =>
-                            setState(() => _adminMicroIaQualityThreshold = v)
-                        : null,
-                  ),
-                  TextField(
-                    controller: _adminMicroIaLanguageController,
-                    decoration: const InputDecoration(
-                      labelText: 'Language code',
-                      hintText: 'fr-FR',
-                    ),
-                    enabled: canEdit,
-                    onChanged: (v) {
-                      _adminMicroIaLanguageCode = v.trim();
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: _adminMicroIaEditing
-                        ? ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: kPrestoBlue,
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed:
-                                _adminSaving ? null : _adminSetMicroIaConfig,
-                            icon: _adminSaving
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          Colors.white),
-                                    ),
-                                  )
-                                : const Icon(Icons.check_circle_outline),
-                            label: Text(
-                              _adminSaving ? 'Application…' : 'Appliquer',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w800),
-                            ),
-                          )
-                        : OutlinedButton.icon(
-                            onPressed: _adminSaving
-                                ? null
-                                : () {
-                                    setState(() => _adminMicroIaEditing = true);
-                                  },
-                            icon: const Icon(Icons.edit_outlined),
-                            label: const Text(
-                              'Modifier',
-                              style: TextStyle(fontWeight: FontWeight.w800),
-                            ),
-                          ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Ces réglages modifient Firebase Remote Config (impact côté Functions).',
-                    style: TextStyle(fontSize: 11, color: Colors.black45),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        return AccountAdminMicroIaPanel(
+          techLines: techLines,
+          buildVersionPanel: AccountBuildVersionPanel(
+            platformLabel: kIsWeb ? 'web' : defaultTargetPlatform.name,
+            modeLabel:
+                kReleaseMode ? 'release' : (kProfileMode ? 'profile' : 'debug'),
+            sha: kAppBuildSha,
+            tag: kAppBuildTag,
+            branch: kAppBuildBranch,
+            buildTimeUtc: kAppBuildTimeUtc,
+            onCopySha: () async {
+              await Clipboard.setData(
+                const ClipboardData(text: kAppBuildSha),
+              );
+              if (!mounted) return;
+              showSuccessSnackBar(context, 'SHA copié');
+            },
+          ),
+          analyticsPanel: _buildAdminAnalyticsPanel(),
+          mode: _adminMicroIaMode,
+          fallbackEnabled: _adminMicroIaFallbackEnabled,
+          qualityThreshold: _adminMicroIaQualityThreshold,
+          languageController: _adminMicroIaLanguageController,
+          canEdit: _adminMicroIaEditing && !_adminSaving,
+          isSaving: _adminSaving,
+          onModeChanged: (v) {
+            if (v == null) return;
+            setState(() => _adminMicroIaMode = v);
+          },
+          onFallbackChanged: (v) =>
+              setState(() => _adminMicroIaFallbackEnabled = v),
+          onThresholdChanged: (v) =>
+              setState(() => _adminMicroIaQualityThreshold = v),
+          onLanguageChanged: (v) {
+            _adminMicroIaLanguageCode = v.trim();
+          },
+          onApplyPressed: _adminSetMicroIaConfig,
+          onEditPressed: () {
+            setState(() => _adminMicroIaEditing = true);
+          },
         );
       },
     );
@@ -10989,7 +10057,6 @@ class _AccountPageState extends State<AccountPage> {
     if (changed && mounted) setState(() {});
   }
 
-  // ignore: unused_element
   Future<void> _toggleFavoriteSubcategory(User user, String subcategory) async {
     setState(() {
       if (_selectedFavoriteSubcategories.contains(subcategory)) {
@@ -11002,285 +10069,20 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _signInWithGoogle() async {
-    // setState(() => _isLoading = true); // Géré par PrestoPremiumAuthPage
-
-    try {
-      _googleAuthService.logAttempt('signInWithGoogle',
-          details: kIsWeb ? 'Mode Web' : 'Mode Mobile');
-
-      if (kIsWeb) {
-        // ✅ Configuration du provider Google avec paramètres optimaux
-        final googleProvider = GoogleAuthProvider();
-        googleProvider.setCustomParameters({
-          'prompt': 'select_account',
-          'login_hint': '',
-        });
-        googleProvider.addScope('email');
-        googleProvider.addScope('profile');
-
-        try {
-          _googleAuthService.logAttempt('Popup');
-          await _auth.signInWithPopup(googleProvider);
-          _googleAuthService.logSuccess('Popup', _auth.currentUser?.email);
-        } catch (popupError) {
-          _googleAuthService.logError('Popup', popupError);
-
-          // ✅ Fallback automatique vers redirect
-          if (_googleAuthService.shouldFallbackToRedirect(popupError)) {
-            try {
-              _googleAuthService.logFallback('Popup', 'Redirect',
-                  reason: 'Popup bloqué ou erreur interne');
-              await _auth.signInWithRedirect(googleProvider);
-              return; // Important: sortir ici après redirect
-            } catch (redirectError) {
-              _googleAuthService.logError('Redirect', redirectError);
-              if (!mounted) return;
-
-              final msg = _googleAuthService.getErrorMessage(redirectError);
-              if (msg.isNotEmpty) {
-                showErrorSnackBar(context, msg);
-              }
-              if (mounted) {
-                // setState(() => _isLoading = false);
-              }
-              return;
-            }
-          }
-
-          // Erreur qui n'est pas un popup bloqué
-          if (!mounted) return;
-
-          final msg = _googleAuthService.getErrorMessage(popupError);
-          if (msg.isNotEmpty) {
-            showErrorSnackBar(context, msg);
-          }
-          if (mounted) {
-            // setState(() => _isLoading = false);
-          }
-          return;
-        }
-      } else {
-        // ✅ Mode mobile/desktop (sans google_sign_in)
-        // Utilise les SDK natifs via FirebaseAuth (ouvre le sélecteur de compte Google).
-        final provider = GoogleAuthProvider()
-          ..setCustomParameters({'prompt': 'select_account'});
-        provider.addScope('email');
-        provider.addScope('profile');
-
-        _googleAuthService.logAttempt('signInWithProvider');
-        await _auth.signInWithProvider(provider);
-        _googleAuthService.logSuccess('Provider', _auth.currentUser?.email);
-      }
-
-      // ✅ Tracking de la connexion avec détection nouveau compte
-      final user = _auth.currentUser;
-      if (user != null) {
-        try {
-          final userDoc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .get();
-          final isNew =
-              !userDoc.exists || userDoc.data()?['lastLoginAt'] == null;
-          await _trackLogin(authMethod: 'google', isNewUser: isNew);
-        } catch (trackingError) {
-          _googleAuthService.logError('Tracking', trackingError);
-          // Continuer même si le tracking échoue
-        }
-      }
-
-      if (!mounted) return;
-      _googleAuthService.logSuccess('signInWithGoogle', user?.email);
-      showSuccessSnackBar(context, "✓ Connecté avec Google");
-    } on FirebaseAuthException catch (e, st) {
-      debugPrint(
-          "❌ FirebaseAuthException: code=${e.code} message=${e.message}");
-      debugPrintStack(stackTrace: st);
-      _googleAuthService.logError('signInWithGoogle', e);
-      if (!mounted) return;
-
-      final msg = _googleAuthService.getErrorMessage(e);
-      if (msg.isNotEmpty) {
-        showErrorSnackBar(context, msg);
-      }
-    } on PlatformException catch (e, st) {
-      debugPrint("❌ PlatformException: code=${e.code} message=${e.message}");
-      debugPrintStack(stackTrace: st);
-      _googleAuthService.logError('signInWithGoogle', e);
-      if (!mounted) return;
-
-      final msg = _googleAuthService.getErrorMessage(e);
-      if (msg.isNotEmpty) {
-        showErrorSnackBar(context, msg);
-      }
-    } catch (e, stackTrace) {
-      _googleAuthService.logError('signInWithGoogle', e);
-      debugPrint('Stack trace: $stackTrace');
-      if (!mounted) return;
-      showErrorSnackBar(context, "Erreur lors de la connexion. Réessaye.");
-    } finally {
-      if (mounted) {
-        // setState(() => _isLoading = false);
-      }
-    }
+    await AccountSocialAuthActions.signInWithGoogle(
+      context: context,
+      auth: _auth,
+      googleAuthService: _googleAuthService,
+      trackLogin: _trackLogin,
+    );
   }
 
   Future<void> _signInWithApple() async {
-    // ✅ Vérification stricte de la plateforme
-    if (kIsWeb ||
-        !(defaultTargetPlatform == TargetPlatform.iOS ||
-            defaultTargetPlatform == TargetPlatform.macOS)) {
-      if (!mounted) return;
-      showErrorSnackBar(
-          context, "Connexion Apple disponible uniquement sur iOS et macOS.");
-      return;
-    }
-
-    // setState(() => _isLoading = true); // Géré par PrestoPremiumAuthPage
-    try {
-      debugPrint('[Apple Sign-In] Démarrage de l\'authentification Apple...');
-
-      // ✅ Récupération des credentials Apple avec scopes complets
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-        webAuthenticationOptions: kIsWeb
-            ? WebAuthenticationOptions(
-                clientId:
-                    'your.app.bundle.id', // À configurer dans Firebase Console
-                redirectUri: Uri.parse(
-                    'https://your-project.firebaseapp.com/__/auth/handler'),
-              )
-            : null,
-      );
-
-      debugPrint(
-          '[Apple Sign-In] Credentials reçus: ${appleCredential.identityToken != null}');
-
-      // ✅ Validation des credentials
-      if (appleCredential.identityToken == null) {
-        throw Exception('Identité Apple non reçue');
-      }
-
-      // ✅ Création du credential Firebase avec OAuthProvider
-      final oauthCredential = OAuthProvider("apple.com").credential(
-        idToken: appleCredential.identityToken,
-        accessToken: appleCredential.authorizationCode,
-      );
-
-      // ✅ Connexion Firebase
-      final userCredential = await _auth.signInWithCredential(oauthCredential);
-      debugPrint(
-          '[Apple Sign-In] Utilisateur connecté: ${userCredential.user?.uid}');
-
-      // ✅ Mise à jour du profil si nom disponible (première connexion uniquement)
-      if (userCredential.additionalUserInfo?.isNewUser == true) {
-        final fullName = appleCredential.givenName != null ||
-                appleCredential.familyName != null
-            ? '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'
-                .trim()
-            : null;
-
-        if (fullName != null && fullName.isNotEmpty) {
-          try {
-            await userCredential.user?.updateDisplayName(fullName);
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(userCredential.user?.uid)
-                .set({'pseudo': fullName}, SetOptions(merge: true));
-            debugPrint('[Apple Sign-In] Nom mis à jour: $fullName');
-          } catch (e) {
-            debugPrint('[Apple Sign-In] Erreur mise à jour nom: $e');
-          }
-        }
-      }
-
-      // ✅ Tracking de connexion avec détection nouveau compte
-      final user = _auth.currentUser;
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user?.uid)
-          .get();
-      final isNew = !userDoc.exists || userDoc.data()?['lastLoginAt'] == null;
-      await _trackLogin(authMethod: 'apple', isNewUser: isNew);
-
-      if (!mounted) return;
-      showSuccessSnackBar(context, "Connecté avec Apple ✓");
-    } on SignInWithAppleAuthorizationException catch (e) {
-      if (!mounted) return;
-      debugPrint(
-          '[Apple Sign-In] Authorization error: ${e.code} - ${e.message}');
-
-      String msg;
-      switch (e.code) {
-        case AuthorizationErrorCode.canceled:
-          msg = "Connexion Apple annulée.";
-          break;
-        case AuthorizationErrorCode.failed:
-          msg = "Échec de l'authentification Apple. Réessaye.";
-          break;
-        case AuthorizationErrorCode.invalidResponse:
-          msg = "Réponse Apple invalide. Contacte le support.";
-          break;
-        case AuthorizationErrorCode.notHandled:
-          msg = "Requête Apple non traitée.";
-          break;
-        case AuthorizationErrorCode.notInteractive:
-          msg = "Authentification Apple non disponible en arrière-plan.";
-          break;
-        // case AuthorizationErrorCode.credentialExport:
-        //   msg = "Export d'identifiants Apple non autorisé.";
-        //   break;
-        // case AuthorizationErrorCode.credentialImport:
-        //   msg = "Import d'identifiants Apple non autorisé.";
-        //   break;
-        // case AuthorizationErrorCode.matchedExcludedCredential:
-        //   msg = "Identifiants Apple exclus pour cette connexion.";
-        //   break;
-        case AuthorizationErrorCode.unknown:
-          msg = "Erreur Apple inconnue. Réessaye.";
-          break;
-      }
-      showErrorSnackBar(context, msg);
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      debugPrint('[Apple Sign-In] Firebase error: ${e.code} - ${e.message}');
-
-      String msg;
-      switch (e.code) {
-        case 'account-exists-with-different-credential':
-          msg =
-              "Un compte existe déjà avec cet email. Utilise ta méthode de connexion habituelle.";
-          break;
-        case 'invalid-credential':
-          msg = "Credentials Apple invalides. Réessaye.";
-          break;
-        case 'operation-not-allowed':
-          msg = "Connexion Apple non activée. Contacte le support.";
-          break;
-        case 'user-disabled':
-          msg = "Ce compte a été désactivé.";
-          break;
-        case 'user-not-found':
-          msg = "Aucun compte trouvé. Un nouveau compte sera créé.";
-          break;
-        case 'invalid-verification-code':
-        case 'invalid-verification-id':
-          msg = "Code de vérification Apple invalide.";
-          break;
-        default:
-          msg = "Erreur Firebase : ${e.message ?? e.code}";
-      }
-      showErrorSnackBar(context, msg);
-    } catch (e) {
-      if (!mounted) return;
-      debugPrint('[Apple Sign-In] Unexpected error: $e');
-      showErrorSnackBar(context, "Erreur inattendue : $e");
-    } finally {
-      // if (mounted) setState(() => _isLoading = false);
-    }
+    await AccountSocialAuthActions.signInWithApple(
+      context: context,
+      auth: _auth,
+      trackLogin: _trackLogin,
+    );
   }
 
   Future<void> _signOut() async {
@@ -11470,253 +10272,28 @@ class _AccountPageState extends State<AccountPage> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        "Mon profil",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          children: [
-                            TextField(
-                              controller: _profilePseudoController,
-                              enabled: _isEditingProfile,
-                              decoration: InputDecoration(
-                                labelText: "Pseudo",
-                                hintText: "Ex : DJ Heat, Stef971...",
-                                filled: !_isEditingProfile,
-                                fillColor: !_isEditingProfile
-                                    ? Colors.grey.shade100
-                                    : null,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            AbsorbPointer(
-                              absorbing: !_isEditingProfile,
-                              child: Opacity(
-                                opacity: _isEditingProfile ? 1.0 : 0.6,
-                                child: Autocomplete<CityRecord>(
-                                  displayStringForOption: (city) =>
-                                      '${city.name} (${city.cp})',
-                                  optionsBuilder: (TextEditingValue value) {
-                                    final query = value.text.trim();
-                                    if (query.length < 2) {
-                                      return const Iterable<CityRecord>.empty();
-                                    }
-                                    return CitySearch.instance
-                                        .search(query, limit: 10);
-                                  },
-                                  onSelected: (CityRecord city) {
-                                    setState(() {
-                                      _profileCityController.text =
-                                          '${city.name} (${city.cp})';
-                                    });
-                                  },
-                                  fieldViewBuilder: (context, textController,
-                                      focusNode, onFieldSubmitted) {
-                                    // Synchroniser avec le controller principal
-                                    if (_profileCityController
-                                            .text.isNotEmpty &&
-                                        textController.text !=
-                                            _profileCityController.text) {
-                                      WidgetsBinding.instance
-                                          .addPostFrameCallback((_) {
-                                        if (!mounted) return;
-                                        if (textController.text !=
-                                            _profileCityController.text) {
-                                          textController.text =
-                                              _profileCityController.text;
-                                        }
-                                      });
-                                    }
-
-                                    return TextField(
-                                      controller: textController,
-                                      focusNode: focusNode,
-                                      enabled: _isEditingProfile,
-                                      decoration: InputDecoration(
-                                        labelText: "Ville",
-                                        hintText: "Ex : Baie-Mahault",
-                                        filled: !_isEditingProfile,
-                                        fillColor: !_isEditingProfile
-                                            ? Colors.grey.shade100
-                                            : null,
-                                      ),
-                                      onChanged: (value) {
-                                        _profileCityController.text = value;
-                                      },
-                                    );
-                                  },
-                                  optionsViewBuilder:
-                                      (context, onSelected, options) {
-                                    return Align(
-                                      alignment: Alignment.topLeft,
-                                      child: Material(
-                                        elevation: 4.0,
-                                        child: Container(
-                                          constraints: const BoxConstraints(
-                                              maxHeight: 200),
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width -
-                                              80,
-                                          child: ListView.builder(
-                                            padding: EdgeInsets.zero,
-                                            shrinkWrap: true,
-                                            itemCount: options.length,
-                                            itemBuilder: (context, index) {
-                                              final city =
-                                                  options.elementAt(index);
-                                              return ListTile(
-                                                dense: true,
-                                                title: Text(
-                                                    '${city.name} (${city.cp})'),
-                                                subtitle:
-                                                    Text('Dept ${city.dept}'),
-                                                onTap: () => onSelected(city),
-                                              );
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            AbsorbPointer(
-                              absorbing: !_isEditingProfile,
-                              child: Opacity(
-                                opacity: _isEditingProfile ? 1.0 : 0.6,
-                                child: PhoneInputFieldCompact(
-                                  controller: _profilePhoneController,
-                                  labelText: 'Téléphone',
-                                  hintText: '690123456',
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _isEditingProfile
-                                      ? kPrestoOrange
-                                      : kPrestoBlue,
-                                  foregroundColor: Colors.white,
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 10),
-                                ),
-                                onPressed: _isSavingProfile
-                                    ? null
-                                    : () {
-                                        if (_isEditingProfile) {
-                                          _saveProfile(user);
-                                        } else {
-                                          setState(
-                                              () => _isEditingProfile = true);
-                                        }
-                                      },
-                                icon: _isSavingProfile
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                  Colors.white),
-                                        ),
-                                      )
-                                    : Icon(_isEditingProfile
-                                        ? Icons.save_outlined
-                                        : Icons.edit_outlined),
-                                label: Text(
-                                  _isSavingProfile
-                                      ? "Enregistrement..."
-                                      : _isEditingProfile
-                                          ? "Enregistrer mon profil"
-                                          : "Modifier mon profil",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                      AccountProfileFormSection(
+                        pseudoController: _profilePseudoController,
+                        cityController: _profileCityController,
+                        phoneController: _profilePhoneController,
+                        isEditing: _isEditingProfile,
+                        isSaving: _isSavingProfile,
+                        onStartEditing: () {
+                          setState(() => _isEditingProfile = true);
+                        },
+                        onSave: () {
+                          _saveProfile(user);
+                        },
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        "Mes messages",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
+                      AccountMessagesSection(
+                        onOpenMessages: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const MessagesPage(),
                             ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Retrouve toutes les conversations liées à tes offres ou aux offres auxquelles tu as répondu.",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => const MessagesPage(),
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(Icons.chat_bubble_outline),
-                                label: const Text(
-                                  "Ouvrir mes messages",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 24),
                       const Text(
@@ -11731,260 +10308,30 @@ class _AccountPageState extends State<AccountPage> {
                         child: UserOffersSection(userId: user.uid),
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        "Mes catégories favorites",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
                       RepaintBoundary(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Sélectionne les catégories pour lesquelles tu veux être notifié quand une nouvelle annonce est publiée.",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              InkWell(
-                                onTap: _openCategoryPickerSheet,
-                                borderRadius: BorderRadius.circular(12),
-                                child: InputDecorator(
-                                  decoration: InputDecoration(
-                                    labelText: 'Catégories',
-                                    filled: true,
-                                    fillColor: const Color(0xFFF9F9F9),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 10,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          _draftFavoriteSelections
-                                                  .where(
-                                                      (e) => !e.contains('—'))
-                                                  .isEmpty
-                                              ? 'Choisir des catégories'
-                                              : '${_draftFavoriteSelections.where((e) => !e.contains('—')).length} catégorie(s) sélectionnée(s)',
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                      ),
-                                      const Icon(
-                                        Icons.arrow_drop_down,
-                                        color: Colors.black54,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              InkWell(
-                                onTap: _openSubcategoryPickerSheet,
-                                borderRadius: BorderRadius.circular(12),
-                                child: InputDecorator(
-                                  decoration: InputDecoration(
-                                    labelText: 'Sous-catégories',
-                                    filled: true,
-                                    fillColor: const Color(0xFFF9F9F9),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 10,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          _draftFavoriteSelections
-                                                  .where((e) => e.contains('—'))
-                                                  .isEmpty
-                                              ? 'Choisir des sous-catégories'
-                                              : '${_draftFavoriteSelections.where((e) => e.contains('—')).length} sous-catégorie(s) sélectionnée(s)',
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                      ),
-                                      const Icon(
-                                        Icons.arrow_drop_down,
-                                        color: Colors.black54,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: kPrestoBlue,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 14),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                  ),
-                                  onPressed: _isSavingProfile
-                                      ? null
-                                      : () => _applyDraftFavorites(user),
-                                  child: _isSavingProfile
-                                      ? const SizedBox(
-                                          width: 18,
-                                          height: 18,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                              Colors.white,
-                                            ),
-                                          ),
-                                        )
-                                      : const Text(
-                                          'Valider mes alertes',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w900,
-                                            fontSize: 15,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        child: AccountFavoriteCategoriesSection(
+                          categoriesCount: _draftFavoriteSelections
+                              .where((e) => !e.contains('—'))
+                              .length,
+                          subcategoriesCount: _draftFavoriteSelections
+                              .where((e) => e.contains('—'))
+                              .length,
+                          isSaving: _isSavingProfile,
+                          onOpenCategoryPicker: _openCategoryPickerSheet,
+                          onOpenSubcategoryPicker: _openSubcategoryPickerSheet,
+                          onApply: () => _applyDraftFavorites(user),
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              kPrestoOrange.withOpacity(0.15),
-                              kPrestoBlue.withOpacity(0.1),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: kPrestoOrange.withOpacity(0.3),
-                            width: 2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: kPrestoOrange.withOpacity(0.15),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                      AccountProUpgradeSection(
+                        onOpenProProfile: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ProProfilePage(),
                             ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: kPrestoOrange,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(
-                                    Icons.business_center,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Text(
-                                    "Vous êtes une entreprise ?",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 17,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              "Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\n"
-                              "Abonnement bientôt disponible.",
-                              style: TextStyle(
-                                color: Colors.black87,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 48,
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: kPrestoOrange,
-                                  foregroundColor: Colors.white,
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (_) => const ProProfilePage()),
-                                  );
-                                },
-                                icon: const Icon(Icons.business_center_outlined,
-                                    size: 20),
-                                label: const Text(
-                                  "Créer un compte Pro",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 28),
                       _buildAdminSpaceEntry(user),
@@ -12099,13 +10446,11 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  // ignore: unused_element
   List<String> _getSubcategoriesForCategory(String category) {
     final subcats = kCategorySubcategories[category] ?? [];
     return ['', ...subcats];
   }
 
-  // ignore: unused_element
   List<String> _getAvailableSubcategories() {
     final allSubcats = <String>{};
     for (final cat in _selectedFavoriteCategories) {
@@ -12124,13 +10469,7 @@ class _AccountPageState extends State<AccountPage> {
         if (user == null) {
           SessionState.userId = null;
           CrashlyticsContext.setUserId(null);
-          // return PrestoPremiumAuthPage(
-          return Scaffold(
-            appBar: AppBar(title: const Text('Connexion requise')),
-            body: const Center(
-              child: Text('Page d\'authentification non disponible'),
-            ),
-          );
+          return const ProfilePage();
           /*
           return PrestoPremiumAuthPage(
             onGoogle: () async => await _signInWithGoogle(),
@@ -12443,7 +10782,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     );
   }
 
-  // ignore: unused_element
   Future<void> _showEditOfferDialog(
     BuildContext context,
     String offerId,
@@ -12613,41 +10951,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
 
     return false;
-  }
-}
-
-// ignore: unused_element
-class _RecapRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _RecapRow({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey.shade700,
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

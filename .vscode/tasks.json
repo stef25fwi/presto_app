@@ -18,6 +18,13 @@
       "type": "shell",
       "command": "python3 tools/move_root_md_to_docs_md.py --keep README.md",
       "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Web Preview",
+      "type": "shell",
+      "command": "flutter run -d web-server --web-port 8080 --web-hostname 0.0.0.0",
+      "isBackground": true,
+      "problemMatcher": []
     }
   ]
 }
