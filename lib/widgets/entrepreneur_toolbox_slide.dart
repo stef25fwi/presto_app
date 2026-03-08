@@ -16,7 +16,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 0),
       decoration: BoxDecoration(
         color: kPrestoOrange,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.zero,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.10),
