@@ -1867,7 +1867,7 @@ class _HomePageState extends State<HomePage>
                         bottom: 0,
                         child: Container(
                           decoration: const BoxDecoration(
-                            color: kPrestoOrange,
+                            color: kPrestoBlue,
                             borderRadius:
                                 BorderRadius.vertical(top: Radius.circular(24)),
                           ),
