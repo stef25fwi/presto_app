@@ -1496,17 +1496,19 @@ class _HomePageState extends State<HomePage>
               fillColor: Colors.white,
               hintText: "Que cherchez-vous ? (ex: jardinage aujourd’hui)",
               hintStyle: const TextStyle(
-                fontSize: 13,
+                fontSize: 14,
                 color: Colors.black45,
+                fontWeight: FontWeight.w500,
               ),
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               prefixIcon: const Icon(
                 Icons.search,
                 color: kPrestoBlue,
+                size: 22,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(18),
                 borderSide: BorderSide.none,
               ),
             ),
@@ -2231,15 +2233,15 @@ class _HomePageState extends State<HomePage>
                 Container(
                   width: double.infinity,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
+                        color: Colors.black.withOpacity(0.12),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
@@ -2251,8 +2253,8 @@ class _HomePageState extends State<HomePage>
                           const Text(
                             "Dernières offres",
                             style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
                           const Spacer(),
@@ -2261,15 +2263,15 @@ class _HomePageState extends State<HomePage>
                             child: const Text(
                               "Voir tout",
                               style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
                                 color: kPrestoBlue,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                         stream: _latestOffersStream,
                         builder: (context, snapshot) {
@@ -2463,17 +2465,17 @@ class _HomePageState extends State<HomePage>
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: const BorderRadius.all(Radius.circular(16)),
+                    borderRadius: const BorderRadius.all(Radius.circular(18)),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
+                        color: Colors.black.withOpacity(0.12),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: const [
@@ -2481,12 +2483,13 @@ class _HomePageState extends State<HomePage>
                         "Comment ça marche ?",
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 23,
+                          fontWeight: FontWeight.w900,
                           color: kPrestoBlue,
+                          letterSpacing: 0.3,
                         ),
                       ),
-                      SizedBox(height: 16),
+                      SizedBox(height: 22),
                       _HowItWorksStepWithProgress(
                         stepNumber: 1,
                         title: "Je publie une offre",
@@ -2910,22 +2913,22 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
           Column(
             children: [
               CircleAvatar(
-                radius: 20,
+                radius: 26,
                 backgroundColor: kPrestoOrange,
                 child: Text(
                   stepNumber.toString(),
                   style: const TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
                   ),
                 ),
               ),
               if (showLine)
                 Expanded(
                   child: Container(
-                    width: 3,
-                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    width: 4,
+                    margin: const EdgeInsets.symmetric(vertical: 6),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
@@ -2940,10 +2943,10 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 18),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: showLine ? 12 : 0),
+              padding: EdgeInsets.only(top: 2, bottom: showLine ? 18 : 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -2951,19 +2954,20 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
                     title,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
                       color: kPrestoBlue,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     description,
                     textAlign: TextAlign.justify,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
                       color: Colors.black87,
-                      height: 1.4,
+                      fontWeight: FontWeight.w500,
+                      height: 1.5,
                     ),
                   ),
                 ],
