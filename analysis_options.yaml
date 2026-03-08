@@ -12,6 +12,7 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   exclude:
     - lib/main_backup.dart
+    - dev/archive/**
     - bin/**
     - tools/**
 
@@ -29,6 +30,9 @@ analyzer:
     unnecessary_to_list_in_spreads: ignore
     curly_braces_in_flow_control_structures: ignore
     strict_top_level_inference: ignore
+    unused_element: ignore
+    unused_field: ignore
+    unused_local_variable: ignore
 
 linter:
   # The lint rules applied to this project can be customized in the

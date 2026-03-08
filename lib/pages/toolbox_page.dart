@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:presto_app/pages/pricing_calculator_page.dart';
-import 'package:presto_app/pages/toolbox_je_me_lance_page.dart';
+import 'package:presto_app/pages/toolbox_hub_page.dart';
 
 /// Prestō / IliPrestō - Boîte à outils (présentation premium)
 /// - Gradient orange en haut
@@ -61,7 +61,7 @@ class ToolboxPage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const ToolboxJeMeLancePage(),
+                        builder: (_) => const ToolboxHubPage(),
                       ),
                     );
                   },

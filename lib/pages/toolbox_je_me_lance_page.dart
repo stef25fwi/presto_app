@@ -45,7 +45,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   int _step = 1; // 1..3
   bool _loading = true;
   bool _saving = false;
+  bool _isLocalOnlyMode = false;
   String? _error;
+  String _journeyStatus = 'draft';
 
   // Parcours Firestore
   String? _parcoursId;
@@ -53,6 +55,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
   // Form fields
   final TextEditingController _projectCtrl = TextEditingController();
+  final TextEditingController _regionCtrl = TextEditingController();
+  final TextEditingController _departementCtrl = TextEditingController();
+  final TextEditingController _communeCtrl = TextEditingController();
   String _activityType = 'Prestation de services'; // default
   String _clientele = 'Particuliers (B2C)';
   String _businessModel = 'Ponctuel';
@@ -91,6 +96,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   void dispose() {
     _autosaveDebounce?.cancel();
     _projectCtrl.dispose();
+    _regionCtrl.dispose();
+    _departementCtrl.dispose();
+    _communeCtrl.dispose();
     super.dispose();
   }
 
@@ -156,6 +164,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
       if (user == null) {
         _parcoursId = null;
+        _isLocalOnlyMode = true;
+        _journeyStatus = 'draft';
         _recomputeDerived();
         setState(() {
           _loading = false;
@@ -173,6 +183,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             _db.collection('users').doc(user.uid).collection('parcours').doc();
 
         _parcoursId = doc.id;
+        _journeyStatus = 'draft';
+        _isLocalOnlyMode = false;
 
         final now = FieldValue.serverTimestamp();
         await doc.set({
@@ -194,10 +206,13 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         final data = (map['data'] as Map<String, dynamic>?) ?? {};
         final derived = (map['derived'] as Map<String, dynamic>?) ?? {};
         final step = (map['step'] as num?)?.toInt() ?? 1;
+        final status = (map['status'] ?? 'draft').toString();
 
         _importData(data);
         _importDerived(derived);
         _step = step.clamp(1, 3);
+        _journeyStatus = status == 'completed' ? 'completed' : 'draft';
+        _isLocalOnlyMode = false;
 
         // Répare `updatedAt` si absent/non-Timestamp (évite crashes orderBy futur)
         final updatedAt = map['updatedAt'];
@@ -223,6 +238,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         // Si Firestore est inaccessible (App Check / règles / auth), on laisse l'utilisateur
         // accéder à la toolbox en mode local (sans persistance).
         _parcoursId = null;
+        _isLocalOnlyMode = true;
+        _journeyStatus = 'draft';
         _recomputeDerived();
         setState(() {
           _loading = false;
@@ -247,6 +264,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   // Autosave
   // --------------------------
   void _onAnyFieldChanged() {
+    if (_journeyStatus == 'completed' && mounted) {
+      setState(() => _journeyStatus = 'draft');
+    }
     _autosaveDebounce?.cancel();
     _autosaveDebounce = Timer(const Duration(milliseconds: 500), () async {
       await _saveDraft();
@@ -255,7 +275,13 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
   Future<void> _saveDraft({bool recompute = true}) async {
     final user = _auth.currentUser;
-    if (user == null || _parcoursId == null) return;
+    if (user == null || _parcoursId == null) {
+      if (recompute) {
+        _recomputeDerived();
+        if (mounted) setState(() {});
+      }
+      return;
+    }
 
     setState(() => _saving = true);
     try {
@@ -274,7 +300,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           .collection('parcours')
           .doc(_parcoursId)
           .set({
-        'status': 'draft',
+        'status': _journeyStatus,
         'step': _step,
         'updatedAt': FieldValue.serverTimestamp(),
         'data': _exportData(),
@@ -336,6 +362,9 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     _region = (t['region'] ?? '') as String;
     _departement = (t['departement'] ?? '') as String;
     _commune = (t['commune'] ?? '') as String;
+    _regionCtrl.text = _region;
+    _departementCtrl.text = _departement;
+    _communeCtrl.text = _commune;
 
     _ambition = (data['ambition'] ?? _ambition) as String;
     _caVise = ((data['caVise'] ?? 0) as num).toDouble();
@@ -617,6 +646,130 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     // If we moved past 3, we stay on 3 and show "Mon parcours" below.
   }
 
+  Future<void> _completeJourney() async {
+    if (!_step3Valid) return;
+
+    setState(() => _journeyStatus = 'completed');
+    await _saveDraft();
+
+    final user = _auth.currentUser;
+    if (!_isLocalOnlyMode && user != null && _parcoursId != null) {
+      try {
+        await _db
+            .collection('users')
+            .doc(user.uid)
+            .collection('parcours')
+            .doc(_parcoursId)
+            .set({
+          'status': 'completed',
+          'completedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Parcours validé, mais fin de sauvegarde incomplète: $e')),
+        );
+        return;
+      }
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _isLocalOnlyMode
+              ? 'Parcours validé en mode local. Il ne sera pas repris sur un autre appareil.'
+              : 'Parcours validé et sauvegardé.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _reopenJourneyForEditing() async {
+    setState(() => _journeyStatus = 'draft');
+    await _saveDraft(recompute: false);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content:
+            Text('Le parcours est repassé en brouillon pour modification.'),
+      ),
+    );
+  }
+
+  void _resetJourneyValues() {
+    _step = 1;
+    _journeyStatus = 'draft';
+    _projectCtrl.clear();
+    _regionCtrl.clear();
+    _departementCtrl.clear();
+    _communeCtrl.clear();
+
+    _activityType = 'Prestation de services';
+    _clientele = 'Particuliers (B2C)';
+    _businessModel = 'Ponctuel';
+    _situation = '';
+    _region = '';
+    _departement = '';
+    _commune = '';
+    _ambition = 'Tester l’idée';
+    _caVise = 0;
+    _depensesPro = 0;
+    _besoinTva = 'Je ne sais pas';
+    _association = false;
+    _protectionPatrimoine = true;
+
+    _recommendation = {};
+    _blockingAlerts = [];
+    _costs = {};
+    _plan30 = [];
+    _aides = [];
+    _recomputeDerived();
+  }
+
+  Future<void> _startNewJourney() async {
+    _autosaveDebounce?.cancel();
+
+    final user = _auth.currentUser;
+    final canPersist = !_isLocalOnlyMode && user != null;
+
+    setState(() {
+      _resetJourneyValues();
+      _parcoursId = null;
+    });
+
+    if (canPersist) {
+      final doc =
+          _db.collection('users').doc(user.uid).collection('parcours').doc();
+      _parcoursId = doc.id;
+      final now = FieldValue.serverTimestamp();
+      await doc.set({
+        'status': 'draft',
+        'step': 1,
+        'createdAt': now,
+        'updatedAt': now,
+        'data': _exportData(),
+        'derived': _exportDerived(),
+        'version': 1,
+      });
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          canPersist
+              ? 'Nouveau parcours créé.'
+              : 'Nouveau parcours local démarré.',
+        ),
+      ),
+    );
+  }
+
   Future<void> _back() async {
     setState(() => _step = (_step - 1).clamp(1, 3));
     await _saveDraft();
@@ -667,6 +820,27 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                               "Décris ton projet, ta situation et ton territoire. On génère un parcours personnalisé avec statut conseillé, aides, coûts et plan 30 jours.",
                           accent: kBlue,
                         ),
+                        if (_isLocalOnlyMode) ...[
+                          const SizedBox(height: 12),
+                          const _InfoBox(
+                            icon: Icons.cloud_off_outlined,
+                            title: 'Mode local non sauvegardé',
+                            text:
+                                'Tes réponses restent utilisables sur cet écran, mais elles ne seront pas reprises automatiquement plus tard tant que la persistance n’est pas disponible.',
+                          ),
+                        ],
+                        if (_journeyStatus == 'completed') ...[
+                          const SizedBox(height: 12),
+                          _InfoBox(
+                            icon: Icons.verified_outlined,
+                            title: 'Parcours validé',
+                            text: _isLocalOnlyMode
+                                ? 'Ce parcours a été validé localement. Toute nouvelle modification remettra le parcours en brouillon.'
+                                : 'Ce parcours a été validé et sauvegardé. Toute nouvelle modification remettra le parcours en brouillon.',
+                          ),
+                          const SizedBox(height: 12),
+                          _buildCompletionActionsCard(),
+                        ],
                         const SizedBox(height: 12),
                         _StepperBar(step: _step),
                         const SizedBox(height: 12),
@@ -906,6 +1080,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           const Text("Les organismes locaux s’adaptent à votre région."),
           const SizedBox(height: 12),
           TextField(
+            controller: _regionCtrl,
             decoration: InputDecoration(
               labelText: "Région",
               border:
@@ -917,10 +1092,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               setState(() => _region = v.trim());
               _onAnyFieldChanged();
             },
-            controller: TextEditingController(text: _region),
           ),
           const SizedBox(height: 10),
           TextField(
+            controller: _departementCtrl,
             decoration: InputDecoration(
               labelText: "Département (ex: 971)",
               border:
@@ -932,10 +1107,10 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               setState(() => _departement = v.trim());
               _onAnyFieldChanged();
             },
-            controller: TextEditingController(text: _departement),
           ),
           const SizedBox(height: 10),
           TextField(
+            controller: _communeCtrl,
             decoration: InputDecoration(
               labelText: "Commune (optionnel)",
               border:
@@ -947,7 +1122,6 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               setState(() => _commune = v.trim());
               _onAnyFieldChanged();
             },
-            controller: TextEditingController(text: _commune),
           ),
           const SizedBox(height: 12),
           const _InfoBox(
@@ -965,6 +1139,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     final canNext = (_step == 1 && _step1Valid) ||
         (_step == 2 && _step2Valid) ||
         (_step == 3 && _step3Valid);
+    final isFinalStep = _step == 3;
 
     return Row(
       children: [
@@ -978,7 +1153,8 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         const SizedBox(width: 10),
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: canNext ? _next : null,
+            onPressed:
+                canNext ? (isFinalStep ? _completeJourney : _next) : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: kBlue,
               foregroundColor: Colors.white,
@@ -990,7 +1166,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
               ),
             ),
             icon: const Icon(Icons.arrow_forward),
-            label: Text(_step < 3 ? "Suivant" : "Valider"),
+            label: Text(
+              _step < 3
+                  ? "Suivant"
+                  : (_journeyStatus == 'completed' ? "Revalider" : "Valider"),
+            ),
           ),
         ),
       ],
@@ -1153,6 +1333,44 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCompletionActionsCard() {
+    return _Card(
+      title: 'Actions après validation',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Tu peux rouvrir ce parcours pour le corriger ou repartir d’un nouveau brouillon.',
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _reopenJourneyForEditing,
+                  icon: const Icon(Icons.edit_outlined),
+                  label: const Text('Modifier'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _startNewJourney,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kBlue,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.add_circle_outline),
+                  label: const Text('Nouveau'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
