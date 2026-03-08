@@ -2271,13 +2271,7 @@ class _HomePageState extends State<HomePage>
                       ),
                       const SizedBox(height: 4),
                       StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                        stream: _latestOffersStream.map((snap) {
-                          PrestoMonitoring.I.trackOtherStream(
-                            key: 'home.latestOffers',
-                            docsCount: snap.docs.length,
-                          );
-                          return snap;
-                        }),
+                        stream: _latestOffersStream,
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                                   ConnectionState.waiting &&
@@ -2298,6 +2292,14 @@ class _HomePageState extends State<HomePage>
                           }
 
                           final docs = snapshot.data?.docs ?? [];
+                          
+                          // ✅ Track après réception des données sans remapper le stream
+                          if (docs.isNotEmpty) {
+                            PrestoMonitoring.I.trackOtherStream(
+                              key: 'home.latestOffers',
+                              docsCount: docs.length,
+                            );
+                          }
                           if (docs.isEmpty) {
                             return const Text(
                               "Aucune offre publiée pour le moment.",
