@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app_core.dart';
+import '../../constants.dart';
 import '../../features/messaging/conversation_service.dart';
 import '../messages/conversation_thread_page.dart';
 
@@ -461,7 +462,7 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
         leading: const BackButton(),
         title: const Text(
           'Details de l offre',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 19),
+          style: kPrestoAppBarTitleStyle,
         ),
         centerTitle: false,
         actions: [
@@ -507,21 +508,14 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
                   const SizedBox(height: 14),
                   _MainInfoCard(offer: offer, isLoading: _isLoading),
                   const SizedBox(height: 14),
-                  _DescriptionCard(
-                    isLoading: _isLoading,
-                    description: offer.description,
-                    expanded: _descriptionExpanded,
-                    onToggleExpand: () =>
-                        setState(() => _descriptionExpanded = !_descriptionExpanded),
-                  ),
-                  const SizedBox(height: 14),
                   _PracticalInfoCard(
                     isLoading: _isLoading,
                     practicalInfo: offer.practicalInfo,
                   ),
                   const SizedBox(height: 14),
-                  _ContactCard(
+                  _ContactAdvertiserCard(
                     isLoading: _isLoading,
+                    advertiser: offer.advertiser,
                     displayPhone: _phoneVisible
                         ? offer.phone
                         : _maskPhoneForDisplay(offer.phone),
@@ -530,13 +524,7 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
                     onCall: _callSeller,
                     onCopy: _copyPhone,
                     onMessage: _startChat,
-                  ),
-                  const SizedBox(height: 14),
-                  _AdvertiserCard(
-                    isLoading: _isLoading,
-                    advertiser: offer.advertiser,
                     onOpenProfile: _openAdvertiserProfile,
-                    onChat: _startChat,
                   ),
                   const SizedBox(height: 16),
                   _SimilarOffersSection(
@@ -858,38 +846,91 @@ class _PracticalInfoCard extends StatelessWidget {
   }
 }
 
-class _ContactCard extends StatelessWidget {
+class _ContactAdvertiserCard extends StatelessWidget {
   final bool isLoading;
+  final Advertiser advertiser;
   final String displayPhone;
   final bool phoneVisible;
   final VoidCallback onTogglePhone;
   final Future<void> Function() onCall;
   final Future<void> Function() onCopy;
   final Future<void> Function() onMessage;
+  final VoidCallback onOpenProfile;
 
-  const _ContactCard({
+  const _ContactAdvertiserCard({
     required this.isLoading,
+    required this.advertiser,
     required this.displayPhone,
     required this.phoneVisible,
     required this.onTogglePhone,
     required this.onCall,
     required this.onCopy,
     required this.onMessage,
+    required this.onOpenProfile,
   });
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const _SkeletonBox(height: 164, radius: 18);
+      return const _SkeletonBox(height: 260, radius: 18);
     }
 
     return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Contact',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+          Row(
+            children: [
+              _AdvertiserAvatar(avatarUrl: advertiser.avatarUrl, radius: 26),
+              const SizedBox(width: 12),
+              Expanded(
+                child: InkWell(
+                  onTap: onOpenProfile,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              advertiser.name,
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          if (advertiser.verified) ...[
+                            const SizedBox(width: 6),
+                            const Icon(
+                              Icons.verified,
+                              size: 18,
+                              color: Color(0xFF2563EB),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${advertiser.rating.toStringAsFixed(1)} • ${advertiser.offersCount} annonces • ${advertiser.city}',
+                        style: const TextStyle(
+                          color: Color(0xFF6B7280),
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            advertiser.bio.isEmpty
+                ? 'Annonceur sans bio pour le moment.'
+                : advertiser.bio,
+            style: const TextStyle(height: 1.4, color: Color(0xFF374151)),
           ),
           const SizedBox(height: 12),
           Container(
@@ -925,153 +966,24 @@ class _ContactCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
+              FilledButton.icon(
+                onPressed: onMessage,
+                icon: const Icon(Icons.chat_bubble_outline),
+                label: const Text('Envoyer un message'),
+              ),
               OutlinedButton.icon(
                 onPressed: onCall,
                 icon: const Icon(Icons.call_outlined),
                 label: const Text('Appeler'),
               ),
               OutlinedButton.icon(
-                onPressed: onCopy,
-                icon: const Icon(Icons.copy_outlined),
-                label: const Text('Copier'),
-              ),
-              FilledButton.icon(
-                onPressed: onMessage,
-                icon: const Icon(Icons.chat_bubble_outline),
-                label: const Text('Envoyer un message'),
+                onPressed: onOpenProfile,
+                icon: const Icon(Icons.person_outline),
+                label: const Text('Voir le profil'),
               ),
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _AdvertiserCard extends StatelessWidget {
-  final bool isLoading;
-  final Advertiser advertiser;
-  final VoidCallback onOpenProfile;
-  final Future<void> Function() onChat;
-
-  const _AdvertiserCard({
-    required this.isLoading,
-    required this.advertiser,
-    required this.onOpenProfile,
-    required this.onChat,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (isLoading) {
-      return const _SkeletonBox(height: 190, radius: 18);
-    }
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: onOpenProfile,
-      child: _SectionCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _AdvertiserAvatar(avatarUrl: advertiser.avatarUrl, radius: 28),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      GestureDetector(
-                        onTap: onOpenProfile,
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                advertiser.name,
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                            if (advertiser.verified) ...[
-                              const SizedBox(width: 6),
-                              const Icon(
-                                Icons.verified,
-                                size: 18,
-                                color: Color(0xFF2563EB),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${advertiser.rating.toStringAsFixed(1)} • ${advertiser.offersCount} annonces • ${advertiser.city}',
-                        style: const TextStyle(color: Color(0xFF6B7280)),
-                      ),
-                      Text(
-                        advertiser.seniorityLabel,
-                        style: const TextStyle(color: Color(0xFF6B7280)),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: advertiser.isOnline
-                                  ? const Color(0xFF16A34A)
-                                  : const Color(0xFF9CA3AF),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              advertiser.isOnline
-                                  ? 'En ligne maintenant'
-                                  : advertiser.lastSeenLabel,
-                              style: const TextStyle(
-                                color: Color(0xFF6B7280),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              advertiser.bio.isEmpty
-                  ? 'Annonceur sans bio pour le moment.'
-                  : advertiser.bio,
-              style: const TextStyle(height: 1.4, color: Color(0xFF374151)),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                FilledButton.icon(
-                  onPressed: onChat,
-                  icon: const Icon(Icons.chat_outlined),
-                  label: const Text('Chat'),
-                ),
-                const SizedBox(width: 8),
-                OutlinedButton(
-                  onPressed: onOpenProfile,
-                  child: const Text('Voir le profil'),
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -1172,9 +1084,10 @@ class _StickyBottomBarState extends State<_StickyBottomBar> {
                         style: FilledButton.styleFrom(
                           backgroundColor: kPrestoOrange,
                           foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(56),
                           textStyle: const TextStyle(
                             fontWeight: FontWeight.w800,
-                            fontSize: 14,
+                            fontSize: 15,
                           ),
                         ),
                         icon: const Icon(Icons.chat_bubble_outline),
@@ -1183,14 +1096,15 @@ class _StickyBottomBarState extends State<_StickyBottomBar> {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: OutlinedButton.icon(
+                      child: FilledButton.icon(
                         onPressed: widget.onCall,
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: kPrestoBlue.withOpacity(0.35)),
-                          foregroundColor: kPrestoBlue,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: kPrestoBlue,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(56),
                           textStyle: const TextStyle(
                             fontWeight: FontWeight.w800,
-                            fontSize: 14,
+                            fontSize: 15,
                           ),
                         ),
                         icon: const Icon(Icons.call_outlined),
