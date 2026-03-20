@@ -9753,6 +9753,10 @@ class _AccountPageState extends State<AccountPage> {
                       ),
                       const SizedBox(height: 24),
                       RepaintBoundary(
+                        child: FavoriteOffersSection(userId: user.uid),
+                      ),
+                      const SizedBox(height: 24),
+                      RepaintBoundary(
                         child: AccountFavoriteCategoriesSection(
                           categoriesCount: _draftFavoriteSelections
                               .where((e) => !e.contains('—'))
@@ -9948,6 +9952,457 @@ class UserOffersSection extends StatefulWidget {
 
   @override
   State<UserOffersSection> createState() => _UserOffersSectionState();
+}
+
+class FavoriteOffersSection extends StatefulWidget {
+  final String userId;
+
+  const FavoriteOffersSection({
+    super.key,
+    required this.userId,
+  });
+
+  @override
+  State<FavoriteOffersSection> createState() => _FavoriteOffersSectionState();
+}
+
+class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
+  List<_FavoriteOfferItem> _offers = const [];
+  bool _isLoading = true;
+  String? _error;
+  String? _selectedOfferId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    if (widget.userId.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _offers = const [];
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .get();
+
+      final favoriteMetaSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .collection('favoriteOffers')
+          .orderBy('addedAt', descending: true)
+          .get();
+
+      if (favoriteMetaSnap.docs.isNotEmpty) {
+        final items = favoriteMetaSnap.docs.map((doc) {
+          final data = doc.data();
+          return _FavoriteOfferItem(
+            offerId: doc.id,
+            title: (data['title'] ?? 'Sans titre').toString().trim(),
+            city: (data['city'] ?? 'Lieu non précisé').toString().trim(),
+            category: (data['category'] ?? 'Catégorie non précisée').toString().trim(),
+            price: (data['price'] as num?)?.toDouble(),
+            imageUrl: (data['imageUrl'] ?? '').toString().trim(),
+            addedAt: data['addedAt'] is Timestamp ? data['addedAt'] as Timestamp : null,
+            rawData: data,
+          );
+        }).toList();
+
+        if (!mounted) return;
+        setState(() {
+          _offers = items;
+          _isLoading = false;
+
+          final ids = items.map((item) => item.offerId).toSet();
+          if (_selectedOfferId == null || !ids.contains(_selectedOfferId)) {
+            _selectedOfferId = items.isNotEmpty ? items.first.offerId : null;
+          }
+        });
+        return;
+      }
+
+      final favoriteIds = (userDoc.data()?['favoriteOfferIds'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList()
+          .reversed
+          .toList();
+
+      if (favoriteIds.isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          _offers = const [];
+          _isLoading = false;
+          _selectedOfferId = null;
+        });
+        return;
+      }
+
+      final docs = await Future.wait(
+        favoriteIds.map(
+          (offerId) => FirebaseFirestore.instance
+              .collection('offers')
+              .doc(offerId)
+              .get(),
+        ),
+      );
+
+      final existingDocs = docs.where((doc) => doc.exists).toList();
+
+      existingDocs.sort((a, b) {
+        final ta = a.data()?['createdAt'];
+        final tb = b.data()?['createdAt'];
+        final ma = ta is Timestamp ? ta.millisecondsSinceEpoch : 0;
+        final mb = tb is Timestamp ? tb.millisecondsSinceEpoch : 0;
+        return mb.compareTo(ma);
+      });
+
+      final items = existingDocs.map((doc) {
+        final data = doc.data() ?? const <String, dynamic>{};
+        final imageUrls = (data['imageUrls'] as List<dynamic>? ?? const [])
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+        return _FavoriteOfferItem(
+          offerId: doc.id,
+          title: (data['title'] ?? 'Sans titre').toString().trim(),
+          city: (data['location'] ?? data['city'] ?? 'Lieu non précisé').toString().trim(),
+          category: (data['category'] ?? 'Catégorie non précisée').toString().trim(),
+          price: (data['budget'] as num?)?.toDouble(),
+          imageUrl: imageUrls.isNotEmpty ? imageUrls.first : '',
+          addedAt: null,
+          rawData: data,
+        );
+      }).toList();
+
+      if (!mounted) return;
+      setState(() {
+        _offers = items;
+        _isLoading = false;
+
+        final ids = items.map((item) => item.offerId).toSet();
+        if (_selectedOfferId == null || !ids.contains(_selectedOfferId)) {
+          _selectedOfferId = items.isNotEmpty ? items.first.offerId : null;
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _removeFavorite(String offerId) async {
+    await FirebaseFirestore.instance.collection('users').doc(widget.userId).set({
+      'favoriteOfferIds': FieldValue.arrayRemove([offerId]),
+      'favoriteOffersUpdatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userId)
+        .collection('favoriteOffers')
+        .doc(offerId)
+        .delete();
+
+    if (!mounted) return;
+    showSuccessSnackBar(context, 'Annonce retirée des favoris');
+    await _loadFavorites();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.userId.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+          ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          "Erreur lors du chargement de vos favoris.\n$_error",
+          style: const TextStyle(
+            color: Colors.red,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+
+    final docs = _offers;
+
+    if (docs.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          "Tu n’as encore aucune annonce favorite.",
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.black54,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+
+    final selectedId = _selectedOfferId;
+    final selectedDoc = (selectedId == null)
+        ? docs.first
+        : (docs.where((doc) => doc.offerId == selectedId).isNotEmpty
+            ? docs.firstWhere((doc) => doc.offerId == selectedId)
+            : docs.first);
+
+    final selectedData = selectedDoc.rawData;
+    final selectedTitle = selectedDoc.title;
+    final selectedLocation = selectedDoc.city;
+    final selectedCategory = selectedDoc.category;
+    final selectedBudget = selectedDoc.price;
+
+    String subtitle = "$selectedLocation · $selectedCategory";
+    if (selectedBudget != null) {
+      subtitle += " · ${selectedBudget.toStringAsFixed(0)} €";
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                "Mes annonces favorites",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: kPrestoOrange.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '${docs.length}',
+                style: const TextStyle(
+                  color: kPrestoOrange,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        InputDecorator(
+          decoration: InputDecoration(
+            labelText: 'Mes favoris',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              value: selectedDoc.offerId,
+              items: docs.map((doc) {
+                return DropdownMenuItem<String>(
+                  value: doc.offerId,
+                  child: Text(
+                    doc.title.isEmpty ? 'Sans titre' : doc.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() => _selectedOfferId = value);
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: selectedDoc.imageUrl.isNotEmpty
+                      ? Image.network(
+                          selectedDoc.imageUrl,
+                          width: 72,
+                          height: 72,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _buildFavoritePlaceholder(),
+                        )
+                      : _buildFavoritePlaceholder(),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        selectedTitle.isEmpty ? 'Sans titre' : selectedTitle,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _favoriteAddedLabel(selectedDoc.addedAt),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => OfferDetailsPage(
+                        offer: _buildOfferDetailsOffer(
+                          offerId: selectedDoc.offerId,
+                          data: selectedData,
+                        ),
+                        currentUserId:
+                            FirebaseAuth.instance.currentUser?.uid ?? '',
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('Voir détail'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                onPressed: () => _removeFavorite(selectedDoc.offerId),
+                child: const Text('Retirer'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFavoritePlaceholder() {
+    return Container(
+      width: 72,
+      height: 72,
+      color: const Color(0xFFFFEDF1),
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.favorite,
+        color: Colors.redAccent,
+      ),
+    );
+  }
+
+  String _favoriteAddedLabel(Timestamp? addedAt) {
+    if (addedAt == null) return 'Favori enregistré';
+
+    final diff = DateTime.now().difference(addedAt.toDate());
+    if (diff.inMinutes < 1) return 'Ajouté à l’instant';
+    if (diff.inMinutes < 60) return 'Ajouté il y a ${diff.inMinutes} min';
+    if (diff.inHours < 24) return 'Ajouté il y a ${diff.inHours} h';
+    if (diff.inDays < 7) return 'Ajouté il y a ${diff.inDays} j';
+
+    final date = addedAt.toDate();
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return 'Ajouté le $day/$month/${date.year}';
+  }
+}
+
+class _FavoriteOfferItem {
+  final String offerId;
+  final String title;
+  final String city;
+  final String category;
+  final double? price;
+  final String imageUrl;
+  final Timestamp? addedAt;
+  final Map<String, dynamic> rawData;
+
+  const _FavoriteOfferItem({
+    required this.offerId,
+    required this.title,
+    required this.city,
+    required this.category,
+    required this.price,
+    required this.imageUrl,
+    required this.addedAt,
+    required this.rawData,
+  });
 }
 
 class _UserOffersSectionState extends State<UserOffersSection> {
