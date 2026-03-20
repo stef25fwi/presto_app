@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -40,6 +41,7 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
   void initState() {
     super.initState();
     _loadOfferFromFirestore();
+    _loadFavoriteStatus();
   }
 
   @override
@@ -59,6 +61,103 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
         builder: (_) => AdvertiserProfilePage(advertiser: offer.advertiser),
       ),
     );
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final offerId = widget.offer.id.trim();
+
+    if (user == null || offerId.isEmpty) {
+      if (mounted) {
+        setState(() => _isFavorite = false);
+      }
+      return;
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      final favoriteIds = (doc.data()?['favoriteOfferIds'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toSet();
+
+      if (!mounted) return;
+      setState(() => _isFavorite = favoriteIds.contains(offerId));
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isFavorite = false);
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Connectez-vous pour enregistrer vos favoris.')),
+      );
+      await Navigator.of(context).pushNamed('/account');
+      return;
+    }
+
+    final offerId = (_loadedOffer ?? widget.offer).id.trim();
+    final offer = _loadedOffer ?? widget.offer;
+    if (offerId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Annonce introuvable.')),
+      );
+      return;
+    }
+
+    final nextValue = !_isFavorite;
+    setState(() => _isFavorite = nextValue);
+
+    try {
+      final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+      await userRef.set({
+        'favoriteOfferIds': nextValue
+            ? FieldValue.arrayUnion([offerId])
+            : FieldValue.arrayRemove([offerId]),
+        'favoriteOffersUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      final favoriteRef = userRef.collection('favoriteOffers').doc(offerId);
+      if (nextValue) {
+        await favoriteRef.set({
+          'offerId': offer.id,
+          'title': offer.title,
+          'city': offer.city,
+          'category': offer.category,
+          'price': offer.price,
+          'imageUrl': offer.imageUrls.isNotEmpty ? offer.imageUrls.first : '',
+          'addedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      } else {
+        await favoriteRef.delete();
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            nextValue
+                ? 'Annonce ajoutée à vos favoris.'
+                : 'Annonce retirée de vos favoris.',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isFavorite = !nextValue);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Impossible de mettre à jour les favoris.')),
+      );
+    }
   }
 
   Future<void> _startChat() async {
@@ -389,16 +488,205 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
     );
   }
 
-  Future<void> _shareOffer() async {
-    final deepLink =
-        'https://presto-app-74abe.web.app/offers/${widget.offer.id}';
-    await Clipboard.setData(ClipboardData(text: deepLink));
+  String _offerDeepLink(Offer offer) {
+    return 'https://presto-app-74abe.web.app/offers/${offer.id}';
+  }
+
+  String _offerShareText(Offer offer) {
+    final priceText = offer.price > 0 ? ' - ${offer.price.toStringAsFixed(0)} EUR' : '';
+    final locationText = offer.city.trim().isEmpty ? '' : ' a ${offer.city.trim()}';
+    return 'Découvrez cette annonce sur ilipresto: ${offer.title}$locationText$priceText\n${_offerDeepLink(offer)}';
+  }
+
+  Future<bool> _launchFirstAvailable(
+    List<Uri> uris, {
+    LaunchMode mode = LaunchMode.externalApplication,
+  }) async {
+    for (final uri in uris) {
+      try {
+        if (await canLaunchUrl(uri)) {
+          final launched = await launchUrl(uri, mode: mode);
+          if (launched) return true;
+        }
+      } catch (_) {}
+    }
+    return false;
+  }
+
+  Future<void> _copyShareText(String text, String message) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> _shareToWhatsApp(Offer offer) async {
+    final encoded = Uri.encodeComponent(_offerShareText(offer));
+    final opened = await _launchFirstAvailable([
+      Uri.parse('whatsapp://send?text=$encoded'),
+      Uri.parse('https://wa.me/?text=$encoded'),
+    ]);
+
+    if (!opened) {
+      await _copyShareText(
+        _offerShareText(offer),
+        'Lien copié. Collez-le dans WhatsApp.',
+      );
+    }
+  }
+
+  Future<void> _shareToWhatsAppStatus(Offer offer) async {
+    final shareText = _offerShareText(offer);
+    await Clipboard.setData(ClipboardData(text: shareText));
+    await _launchFirstAvailable([
+      Uri.parse('whatsapp://app'),
+      Uri.parse('https://www.whatsapp.com/'),
+    ]);
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Lien de l annonce copie. Pret a partager.'),
+        content: Text('Texte copié. Collez-le dans votre statut WhatsApp.'),
       ),
+    );
+  }
+
+  Future<void> _shareToFacebook(Offer offer) async {
+    final link = Uri.encodeComponent(_offerDeepLink(offer));
+    final quote = Uri.encodeComponent(_offerShareText(offer));
+    final opened = await _launchFirstAvailable([
+      Uri.parse('fb://facewebmodal/f?href=https://www.facebook.com/sharer/sharer.php?u=$link&quote=$quote'),
+      Uri.parse('https://www.facebook.com/sharer/sharer.php?u=$link&quote=$quote'),
+    ]);
+
+    if (!opened) {
+      await _copyShareText(
+        _offerShareText(offer),
+        'Lien copié. Partagez-le sur Facebook.',
+      );
+    }
+  }
+
+  Future<void> _shareToInstagram(Offer offer) async {
+    final shareText = _offerShareText(offer);
+    await Clipboard.setData(ClipboardData(text: shareText));
+    await _launchFirstAvailable([
+      Uri.parse('instagram://app'),
+      Uri.parse('https://www.instagram.com/'),
+    ]);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Lien copié. Collez-le dans Instagram.'),
+      ),
+    );
+  }
+
+  Future<void> _shareByMail(Offer offer) async {
+    final uri = Uri.parse(
+      'mailto:?subject=${Uri.encodeComponent('Annonce ilipresto: ${offer.title}')}&body=${Uri.encodeComponent(_offerShareText(offer))}',
+    );
+    final opened = await _launchFirstAvailable(
+      [uri],
+      mode: LaunchMode.platformDefault,
+    );
+
+    if (!opened) {
+      await _copyShareText(
+        _offerShareText(offer),
+        'Lien copié. Utilisez votre application mail pour partager.',
+      );
+    }
+  }
+
+  Future<void> _shareOffer() async {
+    final offer = _loadedOffer ?? widget.offer;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Partager cette annonce',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  offer.title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _ShareActionButton(
+                      label: 'WhatsApp',
+                      backgroundColor: const Color(0xFF25D366),
+                      icon: const FaIcon(FontAwesomeIcons.whatsapp, color: Colors.white, size: 22),
+                      onTap: () async {
+                        Navigator.of(sheetContext).pop();
+                        await _shareToWhatsApp(offer);
+                      },
+                    ),
+                    _ShareActionButton(
+                      label: 'Statut WhatsApp',
+                      backgroundColor: const Color(0xFF128C7E),
+                      icon: const FaIcon(FontAwesomeIcons.whatsapp, color: Colors.white, size: 22),
+                      onTap: () async {
+                        Navigator.of(sheetContext).pop();
+                        await _shareToWhatsAppStatus(offer);
+                      },
+                    ),
+                    _ShareActionButton(
+                      label: 'Facebook',
+                      backgroundColor: const Color(0xFF1877F2),
+                      icon: const FaIcon(FontAwesomeIcons.facebookF, color: Colors.white, size: 20),
+                      onTap: () async {
+                        Navigator.of(sheetContext).pop();
+                        await _shareToFacebook(offer);
+                      },
+                    ),
+                    _ShareActionButton(
+                      label: 'Instagram',
+                      backgroundColor: const Color(0xFFE1306C),
+                      icon: const FaIcon(FontAwesomeIcons.instagram, color: Colors.white, size: 20),
+                      onTap: () async {
+                        Navigator.of(sheetContext).pop();
+                        await _shareToInstagram(offer);
+                      },
+                    ),
+                    _ShareActionButton(
+                      label: 'Mail',
+                      backgroundColor: const Color(0xFF4B5563),
+                      icon: const Icon(Icons.mail_outline, color: Colors.white, size: 22),
+                      onTap: () async {
+                        Navigator.of(sheetContext).pop();
+                        await _shareByMail(offer);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -470,7 +758,7 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
         actions: [
           IconButton(
             tooltip: _isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
-            onPressed: () => setState(() => _isFavorite = !_isFavorite),
+            onPressed: _toggleFavorite,
             icon: Icon(
               _isFavorite ? Icons.favorite : Icons.favorite_border,
               color: _isFavorite ? Colors.white : Colors.white,
@@ -525,9 +813,7 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
                         : _maskPhoneForDisplay(offer.phone),
                     phoneVisible: _phoneVisible,
                     onTogglePhone: _togglePhoneVisibility,
-                    onCall: _callSeller,
                     onCopy: _copyPhone,
-                    onMessage: _startChat,
                     onOpenProfile: _openAdvertiserProfile,
                   ),
                   const SizedBox(height: 14),
@@ -856,9 +1142,7 @@ class _ContactAdvertiserCard extends StatelessWidget {
   final String displayPhone;
   final bool phoneVisible;
   final VoidCallback onTogglePhone;
-  final Future<void> Function() onCall;
   final Future<void> Function() onCopy;
-  final Future<void> Function() onMessage;
   final VoidCallback onOpenProfile;
 
   const _ContactAdvertiserCard({
@@ -867,9 +1151,7 @@ class _ContactAdvertiserCard extends StatelessWidget {
     required this.displayPhone,
     required this.phoneVisible,
     required this.onTogglePhone,
-    required this.onCall,
     required this.onCopy,
-    required this.onMessage,
     required this.onOpenProfile,
   });
 
@@ -927,16 +1209,30 @@ class _ContactAdvertiserCard extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(width: 10),
+              OutlinedButton.icon(
+                onPressed: onOpenProfile,
+                icon: const Icon(Icons.person_outline),
+                label: const Text('Voir le profil'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            advertiser.bio.isEmpty
-                ? 'Annonceur sans bio pour le moment.'
-                : advertiser.bio,
-            style: const TextStyle(height: 1.4, color: Color(0xFF374151)),
-          ),
-          const SizedBox(height: 12),
+          if (advertiser.bio.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              advertiser.bio,
+              style: const TextStyle(height: 1.4, color: Color(0xFF374151)),
+            ),
+            const SizedBox(height: 12),
+          ] else
+            const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
@@ -964,28 +1260,6 @@ class _ContactAdvertiserCard extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              FilledButton.icon(
-                onPressed: onMessage,
-                icon: const Icon(Icons.chat_bubble_outline),
-                label: const Text('Envoyer un message'),
-              ),
-              OutlinedButton.icon(
-                onPressed: onCall,
-                icon: const Icon(Icons.call_outlined),
-                label: const Text('Appeler'),
-              ),
-              OutlinedButton.icon(
-                onPressed: onOpenProfile,
-                icon: const Icon(Icons.person_outline),
-                label: const Text('Voir le profil'),
-              ),
-            ],
           ),
         ],
       ),
@@ -1197,6 +1471,63 @@ class _MetaPill extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ShareActionButton extends StatelessWidget {
+  final String label;
+  final Color backgroundColor;
+  final Widget icon;
+  final Future<void> Function() onTap;
+
+  const _ShareActionButton({
+    required this.label,
+    required this.backgroundColor,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: SizedBox(
+        width: 104,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x16000000),
+                    blurRadius: 12,
+                    offset: Offset(0, 6),
+                  ),
+                ],
+              ),
+              alignment: Alignment.center,
+              child: icon,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF111827),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1512,7 +1843,14 @@ class AdvertiserProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil annonceur')),
+      appBar: AppBar(
+        backgroundColor: kPrestoOrange,
+        foregroundColor: Colors.white,
+        title: const Text(
+          'Profil annonceur',
+          style: kPrestoAppBarTitleStyle,
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
