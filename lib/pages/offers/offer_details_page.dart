@@ -452,6 +452,8 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final offer = _loadedOffer ?? widget.offer;
+    final hasImages = offer.imageUrls.isNotEmpty;
+    final topPadding = hasImages ? 12.0 : 6.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
@@ -492,27 +494,29 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 120),
+              padding: EdgeInsets.fromLTRB(12, topPadding, 12, 116),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _GalleryCard(
-                    pageController: _galleryController,
-                    imageUrls: offer.imageUrls,
-                    currentIndex: _currentImageIndex,
-                    onPageChanged: (v) => setState(() => _currentImageIndex = v),
-                    badges: offer.statusBadges,
-                    heroTag: 'offer-image-${offer.id}',
-                    isLoading: _isLoading,
-                  ),
-                  const SizedBox(height: 14),
+                  if (_isLoading || hasImages) ...[
+                    _GalleryCard(
+                      pageController: _galleryController,
+                      imageUrls: offer.imageUrls,
+                      currentIndex: _currentImageIndex,
+                      onPageChanged: (v) => setState(() => _currentImageIndex = v),
+                      badges: offer.statusBadges,
+                      heroTag: 'offer-image-${offer.id}',
+                      isLoading: _isLoading,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   _MainInfoCard(offer: offer, isLoading: _isLoading),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   _PracticalInfoCard(
                     isLoading: _isLoading,
                     practicalInfo: offer.practicalInfo,
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   _ContactAdvertiserCard(
                     isLoading: _isLoading,
                     advertiser: offer.advertiser,
@@ -526,7 +530,7 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
                     onMessage: _startChat,
                     onOpenProfile: _openAdvertiserProfile,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   _SimilarOffersSection(
                     isLoading: _isLoading,
                     offers: offer.similarOffers,
@@ -579,14 +583,14 @@ class _GalleryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const _SkeletonBox(height: 250, radius: 20);
+      return const _SkeletonBox(height: 232, radius: 18);
     }
 
     return Container(
-      height: 250,
+      height: 232,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: const [
           BoxShadow(
             color: Color(0x14000000),
@@ -596,7 +600,7 @@ class _GalleryCard extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -656,7 +660,7 @@ class _MainInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const _SkeletonBox(height: 188, radius: 18);
+      return const _SkeletonBox(height: 180, radius: 16);
     }
 
     return _SectionCard(
@@ -666,7 +670,7 @@ class _MainInfoCard extends StatelessWidget {
           Text(
             offer.title,
             style: const TextStyle(
-              fontSize: 22,
+              fontSize: 21,
               fontWeight: FontWeight.w800,
               color: Color(0xFF111827),
               height: 1.2,
@@ -676,7 +680,7 @@ class _MainInfoCard extends StatelessWidget {
           Text(
             '${offer.price.toStringAsFixed(0)} €',
             style: const TextStyle(
-              fontSize: 27,
+              fontSize: 26,
               fontWeight: FontWeight.w900,
               color: kPrestoOrange,
             ),
@@ -792,7 +796,7 @@ class _PracticalInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const _SkeletonBox(height: 270, radius: 18);
+      return const _SkeletonBox(height: 252, radius: 16);
     }
 
     return _SectionCard(
@@ -801,7 +805,7 @@ class _PracticalInfoCard extends StatelessWidget {
         children: [
           const Text(
             'Informations pratiques',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
           _InfoLine(
@@ -872,7 +876,7 @@ class _ContactAdvertiserCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const _SkeletonBox(height: 260, radius: 18);
+      return const _SkeletonBox(height: 248, radius: 16);
     }
 
     return _SectionCard(
@@ -896,7 +900,7 @@ class _ContactAdvertiserCard extends StatelessWidget {
                             child: Text(
                               advertiser.name,
                               style: const TextStyle(
-                                fontSize: 17,
+                                  fontSize: 18,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -1150,7 +1154,7 @@ class _SectionCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: kPrestoBlue.withOpacity(0.10)),
         boxShadow: const [
           BoxShadow(
