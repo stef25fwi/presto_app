@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../app_core.dart';
 import '../../features/messaging/conversation_service.dart';
 import '../messages/conversation_thread_page.dart';
 
@@ -452,15 +453,15 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
     final offer = _loadedOffer ?? widget.offer;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: const Color(0xFFF6F7F9),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF111827),
+        backgroundColor: kPrestoOrange,
+        foregroundColor: Colors.white,
         leading: const BackButton(),
         title: const Text(
           'Details de l offre',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 19),
         ),
         centerTitle: false,
         actions: [
@@ -469,7 +470,7 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
             onPressed: () => setState(() => _isFavorite = !_isFavorite),
             icon: Icon(
               _isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: _isFavorite ? const Color(0xFFE11D48) : null,
+              color: _isFavorite ? Colors.white : Colors.white,
             ),
           ),
           IconButton(
@@ -689,7 +690,7 @@ class _MainInfoCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 27,
               fontWeight: FontWeight.w900,
-              color: Color(0xFF1D4ED8),
+              color: kPrestoOrange,
             ),
           ),
           const SizedBox(height: 12),
@@ -1127,7 +1128,7 @@ class _SimilarOffersSection extends StatelessWidget {
   }
 }
 
-class _StickyBottomBar extends StatelessWidget {
+class _StickyBottomBar extends StatefulWidget {
   final Offer offer;
   final Future<void> Function() onMessage;
   final Future<void> Function() onCall;
@@ -1141,52 +1142,82 @@ class _StickyBottomBar extends StatelessWidget {
   });
 
   @override
+  State<_StickyBottomBar> createState() => _StickyBottomBarState();
+}
+
+class _StickyBottomBarState extends State<_StickyBottomBar> {
+  bool _showContactActions = false;
+
+  @override
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
           border: Border(
-            top: BorderSide(color: Color(0xFFE5E7EB)),
+            top: BorderSide(color: kPrestoBlue.withOpacity(0.18)),
           ),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onMessage,
-                icon: const Icon(Icons.chat_bubble_outline),
-                label: const Text('Message'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onCall,
-                icon: const Icon(Icons.call_outlined),
-                label: const Text('Appeler'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              flex: 2,
-              child: FilledButton.icon(
-                onPressed: onPrimaryAction,
-                icon: Icon(
-                  offer.actionType == OfferActionType.booking
-                      ? Icons.event_available_outlined
-                      : Icons.send_outlined,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          child: _showContactActions
+              ? Row(
+                  key: const ValueKey('contact-actions'),
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: widget.onMessage,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: kPrestoOrange,
+                          foregroundColor: Colors.white,
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        ),
+                        icon: const Icon(Icons.chat_bubble_outline),
+                        label: const Text('Envoyer un message'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: widget.onCall,
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: kPrestoBlue.withOpacity(0.35)),
+                          foregroundColor: kPrestoBlue,
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        ),
+                        icon: const Icon(Icons.call_outlined),
+                        label: const Text('Appeler'),
+                      ),
+                    ),
+                  ],
+                )
+              : SizedBox(
+                  key: const ValueKey('propose-service'),
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      setState(() => _showContactActions = true);
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: kPrestoOrange,
+                      foregroundColor: Colors.white,
+                      textStyle: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                      ),
+                    ),
+                    icon: const Icon(Icons.send_outlined),
+                    label: const Text('Proposer mes services'),
+                  ),
                 ),
-                label: Text(
-                  offer.actionType == OfferActionType.booking
-                      ? 'Reserver'
-                      : 'Contacter',
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -1206,6 +1237,7 @@ class _SectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: kPrestoBlue.withOpacity(0.10)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x12000000),
@@ -1230,7 +1262,7 @@ class _MetaPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
+        color: kPrestoBlue.withOpacity(0.08),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -1241,9 +1273,9 @@ class _MetaPill extends StatelessWidget {
           Text(
             text,
             style: const TextStyle(
-              color: Color(0xFF374151),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+              color: Color(0xFF27364A),
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -1312,10 +1344,10 @@ class _StatusBadge extends StatelessWidget {
     final lower = label.toLowerCase();
     Color bg = const Color(0x99000000);
 
-    if (lower.contains('urgent')) bg = const Color(0xCCE11D48);
-    if (lower.contains('verifie')) bg = const Color(0xCC1D4ED8);
+    if (lower.contains('urgent')) bg = const Color(0xCCB91C1C);
+    if (lower.contains('verifie')) bg = const Color(0xCC1A73E8);
     if (lower.contains('disponible')) bg = const Color(0xCC059669);
-    if (lower.contains('nouveau')) bg = const Color(0xCC7C3AED);
+    if (lower.contains('nouveau')) bg = const Color(0xCCFF6600);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
