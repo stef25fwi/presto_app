@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -58,7 +59,11 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
     final offer = _loadedOffer ?? widget.offer;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => AdvertiserProfilePage(advertiser: offer.advertiser),
+        builder: (_) => AdvertiserProfilePage(
+          advertiser: offer.advertiser,
+          featuredOffer: offer,
+          currentUserId: widget.currentUserId,
+        ),
       ),
     );
   }
@@ -1832,49 +1837,2125 @@ class _SimilarOfferTile extends StatelessWidget {
   }
 }
 
-class AdvertiserProfilePage extends StatelessWidget {
+class AdvertiserProfilePage extends StatefulWidget {
   final Advertiser advertiser;
+  final Offer? featuredOffer;
+  final String currentUserId;
 
   const AdvertiserProfilePage({
     super.key,
     required this.advertiser,
+    this.featuredOffer,
+    this.currentUserId = '',
+  });
+
+  @override
+  State<AdvertiserProfilePage> createState() => _AdvertiserProfilePageState();
+}
+
+class _AdvertiserProfilePageState extends State<AdvertiserProfilePage> {
+  final ConversationService _conversationService = ConversationService();
+  bool _showPhone = false;
+  bool _isLoadingExtraData = true;
+  List<Offer> _advertiserOffers = const [];
+  List<_AdvertiserReviewData> _advertiserReviews = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAdvertiserExtraData();
+  }
+
+  Advertiser get advertiser => widget.advertiser;
+  Offer? get featuredOffer => widget.featuredOffer;
+
+  String get _displayPhone {
+    final phone = featuredOffer?.phone ?? '';
+    if (phone.trim().isEmpty) return 'Numero non renseigne';
+    return _showPhone ? phone : _maskPhoneForDisplay(phone);
+  }
+
+  String get _initials {
+    final parts = advertiser.name
+        .replaceAll('.', ' ')
+        .split(' ')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return 'A';
+    if (parts.length == 1) {
+      final word = parts.first;
+      return word.substring(0, word.length >= 2 ? 2 : 1).toUpperCase();
+    }
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+
+  List<String> get _topBadges {
+    final badges = <String>['Annonceur'];
+    if (advertiser.verified) badges.add('Compte verifie');
+    if (advertiser.isOnline) badges.add('En ligne');
+    return badges;
+  }
+
+  List<String> get _availabilityTags {
+    final offer = featuredOffer;
+    if (offer == null) return const ['Reponse selon disponibilite'];
+    return <String>{
+      if (offer.availability.trim().isNotEmpty) offer.availability.trim(),
+      if (offer.practicalInfo.averageDelay.trim().isNotEmpty)
+        offer.practicalInfo.averageDelay.trim(),
+      if (offer.practicalInfo.schedule.trim().isNotEmpty)
+        offer.practicalInfo.schedule.trim(),
+      if (offer.practicalInfo.paymentMethod.trim().isNotEmpty)
+        offer.practicalInfo.paymentMethod.trim(),
+    }.take(4).toList();
+  }
+
+  Future<void> _loadAdvertiserExtraData() async {
+    final sellerId = advertiser.id.trim();
+    if (sellerId.isEmpty) {
+      if (!mounted) return;
+      setState(() => _isLoadingExtraData = false);
+      return;
+    }
+
+    try {
+      final offers = await _loadSellerOffers(sellerId);
+      final reviews = await _loadSellerReviews(sellerId);
+
+      if (!mounted) return;
+      setState(() {
+        _advertiserOffers = offers;
+        _advertiserReviews = reviews;
+        _isLoadingExtraData = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _advertiserOffers = const [];
+        _advertiserReviews = const [];
+        _isLoadingExtraData = false;
+      });
+    }
+  }
+
+  Future<List<Offer>> _loadSellerOffers(String sellerId) async {
+    final col = FirebaseFirestore.instance.collection('offers');
+    final byUserId = await col.where('userId', isEqualTo: sellerId).limit(12).get();
+    final byUid = await col.where('uid', isEqualTo: sellerId).limit(12).get();
+    final byOwnerId = await col.where('ownerId', isEqualTo: sellerId).limit(12).get();
+
+    final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{
+      for (final d in byUserId.docs) d.id: d,
+      for (final d in byUid.docs) d.id: d,
+      for (final d in byOwnerId.docs) d.id: d,
+    };
+
+    final offers = byId.values.map((doc) {
+      final data = doc.data();
+      final imageUrls = (data['imageUrls'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+
+      final title = (data['title'] ?? 'Annonce').toString();
+      final category = (data['category'] ?? 'Service').toString();
+      final city = (data['location'] ?? data['city'] ?? advertiser.city).toString();
+      final price = (data['budget'] as num?)?.toDouble() ?? 0;
+      final description = (data['description'] ?? '').toString();
+
+      final featured = featuredOffer;
+      final fallbackPractical = featured?.practicalInfo ??
+          const PracticalInfo(
+            category: 'Service',
+            serviceArea: 'Zone locale',
+            canTravel: true,
+            schedule: 'Flexible',
+            averageDelay: 'Selon disponibilite',
+            paymentMethod: 'A convenir',
+            serviceType: 'Ponctuelle',
+          );
+
+      return Offer(
+        id: doc.id,
+        title: title,
+        price: price,
+        category: category,
+        city: city,
+        publishedAtLabel: featured?.publishedAtLabel ?? 'Recente',
+        availability: featured?.availability ?? 'Selon disponibilite',
+        shortDescription: description.isEmpty
+            ? (featured?.shortDescription ?? 'Annonce publiee par cet annonceur.')
+            : description,
+        description: description,
+        phone: (data['phone'] ?? featured?.phone ?? '').toString(),
+        imageUrls: imageUrls,
+        statusBadges: (data['statusBadges'] as List<dynamic>? ?? const ['Active'])
+            .map((e) => e.toString())
+            .toList(),
+        practicalInfo: fallbackPractical,
+        advertiser: advertiser,
+        actionType: OfferActionType.contact,
+        similarOffers: const [],
+      );
+    }).toList();
+
+    offers.sort((a, b) {
+      final aIsFeatured = featuredOffer != null && a.id == featuredOffer!.id;
+      final bIsFeatured = featuredOffer != null && b.id == featuredOffer!.id;
+      if (aIsFeatured && !bIsFeatured) return -1;
+      if (!aIsFeatured && bIsFeatured) return 1;
+      return a.title.compareTo(b.title);
+    });
+
+    if (offers.isEmpty && featuredOffer != null) {
+      return [featuredOffer!];
+    }
+
+    return offers;
+  }
+
+  Future<List<_AdvertiserReviewData>> _loadSellerReviews(String sellerId) async {
+    final reviews = <_AdvertiserReviewData>[];
+    final tried = <String>{};
+
+    Future<void> addFromQuery(Query<Map<String, dynamic>> query, String key) async {
+      if (tried.contains(key)) return;
+      tried.add(key);
+      final snap = await query.limit(20).get();
+      for (final doc in snap.docs) {
+        final data = doc.data();
+        reviews.add(_AdvertiserReviewData.fromMap(doc.id, data));
+      }
+    }
+
+    try {
+      await addFromQuery(
+        FirebaseFirestore.instance.collection('reviews').where('sellerId', isEqualTo: sellerId),
+        'reviews:sellerId',
+      );
+      await addFromQuery(
+        FirebaseFirestore.instance.collection('reviews').where('advertiserId', isEqualTo: sellerId),
+        'reviews:advertiserId',
+      );
+      await addFromQuery(
+        FirebaseFirestore.instance.collection('reviews').where('userId', isEqualTo: sellerId),
+        'reviews:userId',
+      );
+
+      final nested = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(sellerId)
+          .collection('reviews')
+          .limit(20)
+          .get();
+      for (final doc in nested.docs) {
+        reviews.add(_AdvertiserReviewData.fromMap(doc.id, doc.data()));
+      }
+    } catch (_) {
+      // Les collections d'avis peuvent ne pas exister selon l'environnement.
+    }
+
+    final byId = <String, _AdvertiserReviewData>{};
+    for (final review in reviews) {
+      byId[review.id] = review;
+    }
+
+    final list = byId.values.toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
+  List<String> get _trustItems {
+    return [
+      advertiser.verified ? 'Compte verifie' : 'Compte non verifie',
+      advertiser.isOnline ? 'Annonceur en ligne' : advertiser.lastSeenLabel,
+      if (advertiser.rating > 0)
+        'Note moyenne ${advertiser.rating.toStringAsFixed(1)} / 5',
+      advertiser.seniorityLabel,
+      '${advertiser.offersCount} annonce${advertiser.offersCount > 1 ? 's' : ''} publiee${advertiser.offersCount > 1 ? 's' : ''}',
+    ];
+  }
+
+  Future<void> _startChat() async {
+    final me = FirebaseAuth.instance.currentUser;
+    if (me == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Connectez-vous pour envoyer un message.')),
+      );
+      await Navigator.of(context).pushNamed('/account');
+      return;
+    }
+
+    final sellerId = advertiser.id.trim();
+    if (sellerId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Annonceur introuvable.')),
+      );
+      return;
+    }
+
+    final conversation = await _conversationService.getOrCreateConversation(
+      currentUserId: me.uid,
+      otherUserId: sellerId,
+    );
+
+    if (featuredOffer != null) {
+      await FirebaseFirestore.instance
+          .collection('conversations')
+          .doc(conversation.conversationId)
+          .set({
+        'offerId': featuredOffer!.id,
+        'offerTitle': featuredOffer!.title,
+      }, SetOptions(merge: true));
+    }
+
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ConversationThreadPage(
+          conversationId: conversation.conversationId,
+          offerTitle: featuredOffer?.title ?? 'Conversation',
+          currentUserId: me.uid,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _callAdvertiser() async {
+    final phone = featuredOffer?.phone ?? '';
+    final normalized = _normalizePhone(phone);
+    if (normalized.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Numero indisponible.')),
+      );
+      return;
+    }
+
+    final uri = Uri(scheme: 'tel', path: normalized);
+    final ok = await canLaunchUrl(uri);
+    if (!mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Impossible de lancer l appel.')),
+      );
+      return;
+    }
+
+    await launchUrl(uri);
+  }
+
+  Future<void> _shareProfile() async {
+    final profileText = 'Profil annonceur ilipresto: ${advertiser.name} • '
+        '${advertiser.city} • ${advertiser.rating.toStringAsFixed(1)} / 5';
+    await Clipboard.setData(ClipboardData(text: profileText));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Profil copie dans le presse-papiers.')),
+    );
+  }
+
+  void _reportProfile() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Signalement du profil envoye.')),
+    );
+  }
+
+  void _openFeaturedOffer() {
+    final offer = featuredOffer;
+    if (offer == null) return;
+    _openOfferDetails(offer);
+  }
+
+  void _openOfferDetails(Offer offer) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => OfferDetailsPage(
+          offer: offer,
+          currentUserId: widget.currentUserId,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const pageBg = Color(0xFFF6F8FC);
+    const textPrimary = Color(0xFF101828);
+    const textSecondary = Color(0xFF667085);
+
+    return Scaffold(
+      backgroundColor: pageBg,
+      body: Stack(
+        children: [
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverAppBar(
+                pinned: true,
+                expandedHeight: 260,
+                backgroundColor: Colors.white,
+                elevation: 0,
+                surfaceTintColor: Colors.transparent,
+                foregroundColor: textPrimary,
+                title: Text(
+                  'Profil annonceur',
+                  style: kPrestoAppBarTitleStyle.copyWith(color: textPrimary),
+                ),
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFFFFB067),
+                              Color(0xFFFF7A00),
+                              Color(0xFF1E5EFF),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.10),
+                              Colors.black.withOpacity(0.35),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: -20,
+                        top: 40,
+                        child: _ProfileBlurBubble(
+                          size: 120,
+                          color: Colors.white.withOpacity(0.20),
+                        ),
+                      ),
+                      Positioned(
+                        right: -30,
+                        top: 70,
+                        child: _ProfileBlurBubble(
+                          size: 150,
+                          color: Colors.white.withOpacity(0.14),
+                        ),
+                      ),
+                      Positioned(
+                        left: 18,
+                        right: 18,
+                        bottom: 26,
+                        child: SafeArea(
+                          bottom: false,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Hero(
+                                tag: 'advertiser_avatar_${advertiser.id}',
+                                child: Container(
+                                  width: 92,
+                                  height: 92,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 3),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.18),
+                                        blurRadius: 18,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ],
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFFFFD7B0),
+                                        Color(0xFFF3B374),
+                                      ],
+                                    ),
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  alignment: Alignment.center,
+                                  child: advertiser.avatarUrl.trim().isNotEmpty
+                                      ? Image.network(
+                                          advertiser.avatarUrl,
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                          errorBuilder: (_, __, ___) => _ProfileInitialsAvatar(
+                                            initials: _initials,
+                                          ),
+                                        )
+                                      : _ProfileInitialsAvatar(initials: _initials),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      advertiser.name,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 22,
+                                        height: 1.08,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: _topBadges
+                                          .map(
+                                            (label) => _ProfileTopBadge(
+                                              label: label,
+                                              icon: label.contains('verifie')
+                                                  ? Icons.verified_rounded
+                                                  : label.contains('ligne')
+                                                      ? Icons.radio_button_checked_rounded
+                                                      : Icons.person_outline_rounded,
+                                            ),
+                                          )
+                                          .toList(),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Transform.translate(
+                  offset: const Offset(0, -18),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                        child: _AdvertiserProfileGlassIdentityCard(
+                          city: advertiser.city,
+                          area: featuredOffer?.practicalInfo.serviceArea ?? 'Zone locale',
+                          rating: advertiser.rating,
+                          reviewsCount: advertiser.offersCount,
+                          memberSinceLabel: advertiser.seniorityLabel,
+                          lastSeenLabel: advertiser.isOnline
+                              ? 'En ligne maintenant'
+                              : advertiser.lastSeenLabel,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                        child: _AdvertiserProfileStatsRow(
+                          offersCount: advertiser.offersCount,
+                          rating: advertiser.rating,
+                          statusLabel: advertiser.isOnline ? 'En ligne' : 'Actif',
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                        child: _AdvertiserProfileActionsCard(
+                          displayPhone: _displayPhone,
+                          hasPhone: (featuredOffer?.phone.trim().isNotEmpty ?? false),
+                          showPhone: _showPhone,
+                          onTogglePhone: () => setState(() => _showPhone = !_showPhone),
+                          onMessage: _startChat,
+                          onCall: _callAdvertiser,
+                          onShare: _shareProfile,
+                          onReport: _reportProfile,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                        child: _AdvertiserProfileSectionCard(
+                          title: 'A propos',
+                          icon: Icons.badge_outlined,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                advertiser.bio.trim().isEmpty
+                                    ? 'Cet annonceur n’a pas encore ajoute de presentation.'
+                                    : advertiser.bio,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  height: 1.6,
+                                  color: textPrimary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              if (featuredOffer != null) ...[
+                                const SizedBox(height: 16),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    _AdvertiserProfileInfoChip(
+                                      label: featuredOffer!.city,
+                                      icon: Icons.location_on_outlined,
+                                    ),
+                                    _AdvertiserProfileInfoChip(
+                                      label: featuredOffer!.category,
+                                      icon: Icons.work_outline_rounded,
+                                    ),
+                                    _AdvertiserProfileInfoChip(
+                                      label: featuredOffer!.practicalInfo.serviceType,
+                                      icon: Icons.build_circle_outlined,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                        child: _AdvertiserProfileSectionCard(
+                          title: 'Fiabilite',
+                          icon: Icons.verified_user_outlined,
+                          child: Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: _trustItems
+                                .map(
+                                  (label) => _AdvertiserProfileTrustPill(
+                                    label: label,
+                                    active: !label.contains('non verifie'),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                        child: _AdvertiserProfileSectionCard(
+                          title: 'Disponibilites',
+                          icon: Icons.schedule_rounded,
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: _availabilityTags
+                                .map((label) => _AdvertiserProfileAvailabilityChip(label: label))
+                                .toList(),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                        child: _AdvertiserProfileAdsSection(
+                          ads: _advertiserOffers,
+                          isLoading: _isLoadingExtraData,
+                          offersCount: advertiser.offersCount,
+                          onOpenAd: _openOfferDetails,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+                        child: _AdvertiserProfileReviewsSection(
+                          reviews: _advertiserReviews,
+                          isLoading: _isLoadingExtraData,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 120),
+                        child: _AdvertiserProfileSectionCard(
+                          title: 'Conseils securite',
+                          icon: Icons.shield_moon_outlined,
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(18),
+                              color: const Color(0xFFF8FAFD),
+                              border: Border.all(color: const Color(0xFFE7ECF3)),
+                            ),
+                            child: const Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _AdvertiserProfileSafetyRow(
+                                  text: 'Privilegiez la messagerie ilipresto pour garder une trace des echanges.',
+                                ),
+                                SizedBox(height: 10),
+                                _AdvertiserProfileSafetyRow(
+                                  text: 'Ne versez jamais d’acompte sans verification minimale du profil.',
+                                ),
+                                SizedBox(height: 10),
+                                _AdvertiserProfileSafetyRow(
+                                  text: 'Comparez la fiche, la note et les delais avant de vous engager.',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Positioned(
+            left: 14,
+            right: 14,
+            bottom: 12,
+            child: SafeArea(
+              top: false,
+              child: _AdvertiserProfileStickyBar(
+                onMessage: _startChat,
+                onCall: _callAdvertiser,
+                onOpenAds: _openFeaturedOffer,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileInitialsAvatar extends StatelessWidget {
+  final String initials;
+
+  const _ProfileInitialsAvatar({required this.initials});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        initials,
+        style: const TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF5F2E00),
+        ),
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfileGlassIdentityCard extends StatelessWidget {
+  final String city;
+  final String area;
+  final double rating;
+  final int reviewsCount;
+  final String memberSinceLabel;
+  final String lastSeenLabel;
+
+  const _AdvertiserProfileGlassIdentityCard({
+    required this.city,
+    required this.area,
+    required this.rating,
+    required this.reviewsCount,
+    required this.memberSinceLabel,
+    required this.lastSeenLabel,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: kPrestoOrange,
-        foregroundColor: Colors.white,
-        title: const Text(
-          'Profil annonceur',
-          style: kPrestoAppBarTitleStyle,
+    const textPrimary = Color(0xFF101828);
+    const textSecondary = Color(0xFF667085);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            color: Colors.white.withOpacity(0.86),
+            border: Border.all(color: Colors.white.withOpacity(0.90)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.location_on_outlined, size: 18, color: textSecondary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '$city • $area',
+                      style: const TextStyle(
+                        color: textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  if (rating > 0)
+                    Row(
+                      children: [
+                        const Icon(Icons.star_rounded, color: Color(0xFFFFB800), size: 18),
+                        const SizedBox(width: 4),
+                        Text(
+                          rating.toStringAsFixed(1),
+                          style: const TextStyle(
+                            color: textPrimary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          ' ($reviewsCount)',
+                          style: const TextStyle(
+                            color: textSecondary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _AdvertiserProfileMiniMetaTile(
+                      icon: Icons.calendar_month_outlined,
+                      label: memberSinceLabel,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _AdvertiserProfileMiniMetaTile(
+                      icon: Icons.radio_button_checked_rounded,
+                      label: lastSeenLabel,
+                      accent: const Color(0xFF16A34A),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    );
+  }
+}
+
+class _AdvertiserProfileStatsRow extends StatelessWidget {
+  final int offersCount;
+  final double rating;
+  final String statusLabel;
+
+  const _AdvertiserProfileStatsRow({
+    required this.offersCount,
+    required this.rating,
+    required this.statusLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _AdvertiserProfileStatCard(
+            value: offersCount.toString(),
+            label: 'Annonces',
+            icon: Icons.campaign_outlined,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _AdvertiserProfileStatCard(
+            value: rating > 0 ? rating.toStringAsFixed(1) : '-',
+            label: 'Note moyenne',
+            icon: Icons.star_outline_rounded,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _AdvertiserProfileStatCard(
+            value: statusLabel,
+            label: 'Presence',
+            icon: Icons.bolt_rounded,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AdvertiserProfileActionsCard extends StatelessWidget {
+  final String displayPhone;
+  final bool hasPhone;
+  final bool showPhone;
+  final VoidCallback onTogglePhone;
+  final Future<void> Function() onMessage;
+  final Future<void> Function() onCall;
+  final Future<void> Function() onShare;
+  final VoidCallback onReport;
+
+  const _AdvertiserProfileActionsCard({
+    required this.displayPhone,
+    required this.hasPhone,
+    required this.showPhone,
+    required this.onTogglePhone,
+    required this.onMessage,
+    required this.onCall,
+    required this.onShare,
+    required this.onReport,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const borderColor = Color(0xFFE7ECF3);
+    const textPrimary = Color(0xFF101828);
+    const textSecondary = Color(0xFF667085);
+
+    return _AdvertiserProfileSectionCard(
+      title: 'Actions rapides',
+      icon: Icons.flash_on_outlined,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _AdvertiserProfilePrimaryButton(
+                  icon: Icons.chat_bubble_outline_rounded,
+                  label: 'Envoyer un message',
+                  onTap: onMessage,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _AdvertiserProfileSecondaryButton(
+                  icon: Icons.call_outlined,
+                  label: 'Appeler',
+                  onTap: hasPhone ? onCall : null,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              color: const Color(0xFFF9FBFD),
+              border: Border.all(color: borderColor),
+            ),
+            child: Row(
               children: [
-                _AdvertiserAvatar(avatarUrl: advertiser.avatarUrl, radius: 32),
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    color: const Color(0xFFFFF1E6),
+                  ),
+                  child: const Icon(
+                    Icons.phone_iphone_rounded,
+                    color: Color(0xFFFF7A00),
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    advertiser.name,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Numero de telephone',
+                        style: TextStyle(
+                          color: textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        displayPhone,
+                        style: const TextStyle(
+                          color: textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: hasPhone ? onTogglePhone : null,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: borderColor),
+                  ),
+                  icon: Icon(
+                    showPhone ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                    color: textPrimary,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
-            Text('Ville: ${advertiser.city}'),
-            Text('Anciennete: ${advertiser.seniorityLabel}'),
-            Text('Note: ${advertiser.rating.toStringAsFixed(1)} / 5'),
-            const SizedBox(height: 10),
-            Text(advertiser.bio),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _AdvertiserProfileMiniActionTile(
+                  icon: Icons.ios_share_rounded,
+                  label: 'Partager',
+                  onTap: onShare,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _AdvertiserProfileMiniActionTile(
+                  icon: Icons.flag_outlined,
+                  label: 'Signaler',
+                  onTap: () async => onReport(),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfileAdsSection extends StatelessWidget {
+  final List<Offer> ads;
+  final bool isLoading;
+  final int offersCount;
+  final ValueChanged<Offer> onOpenAd;
+
+  const _AdvertiserProfileAdsSection({
+    required this.ads,
+    required this.isLoading,
+    required this.offersCount,
+    required this.onOpenAd,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasAds = ads.isNotEmpty;
+
+    return _AdvertiserProfileSectionCard(
+      title: 'Annonces publiees',
+      icon: Icons.grid_view_rounded,
+      trailing: TextButton(
+        onPressed: hasAds ? () => onOpenAd(ads.first) : null,
+        child: const Text('Voir tout'),
+      ),
+      child: isLoading
+          ? const _SkeletonBox(height: 120, radius: 18)
+          : !hasAds
+          ? const Text(
+              'Aucune annonce detaillee disponible pour le moment.',
+              style: TextStyle(
+                color: Color(0xFF667085),
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          : Column(
+              children: [
+                for (final ad in ads.take(4)) ...[
+                  _AdvertiserProfileAdCard(
+                    offer: ad,
+                    offersCount: offersCount,
+                    onTap: () => onOpenAd(ad),
+                  ),
+                  if (ad != ads.take(4).last) const SizedBox(height: 12),
+                ],
+              ],
+            ),
+    );
+  }
+}
+
+class _AdvertiserProfileReviewsSection extends StatelessWidget {
+  final List<_AdvertiserReviewData> reviews;
+  final bool isLoading;
+
+  const _AdvertiserProfileReviewsSection({
+    required this.reviews,
+    required this.isLoading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final average = reviews.isEmpty
+        ? 0.0
+        : reviews.map((e) => e.rating).reduce((a, b) => a + b) / reviews.length;
+
+    return _AdvertiserProfileSectionCard(
+      title: 'Avis clients',
+      icon: Icons.reviews_outlined,
+      child: isLoading
+          ? const _SkeletonBox(height: 140, radius: 18)
+          : reviews.isEmpty
+              ? const Text(
+                  'Aucun avis pour le moment.',
+                  style: TextStyle(
+                    color: Color(0xFF667085),
+                    fontWeight: FontWeight.w600,
+                  ),
+                )
+              : Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        color: const Color(0xFFF9FBFD),
+                        border: Border.all(color: const Color(0xFFE7ECF3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 62,
+                            height: 62,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(18),
+                              color: const Color(0xFFFFF4D8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              average.toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF7A4A00),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              '${reviews.length} avis client${reviews.length > 1 ? 's' : ''}',
+                              style: const TextStyle(
+                                color: Color(0xFF101828),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    for (final review in reviews.take(6)) ...[
+                      _AdvertiserProfileReviewCard(review: review),
+                      if (review != reviews.take(6).last) const SizedBox(height: 12),
+                    ],
+                  ],
+                ),
+    );
+  }
+}
+
+class _AdvertiserProfileStickyBar extends StatelessWidget {
+  final Future<void> Function() onMessage;
+  final Future<void> Function() onCall;
+  final VoidCallback onOpenAds;
+
+  const _AdvertiserProfileStickyBar({
+    required this.onMessage,
+    required this.onCall,
+    required this.onOpenAds,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        color: Colors.white.withOpacity(0.96),
+        border: Border.all(color: const Color(0xFFE7ECF3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.10),
+            blurRadius: 26,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 5,
+            child: _AdvertiserProfilePrimaryButton(
+              icon: Icons.chat_bubble_outline_rounded,
+              label: 'Message',
+              onTap: onMessage,
+              compact: true,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 4,
+            child: _AdvertiserProfileSecondaryButton(
+              icon: Icons.call_outlined,
+              label: 'Appeler',
+              onTap: onCall,
+              compact: true,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 4,
+            child: _AdvertiserProfileGhostButton(
+              icon: Icons.list_alt_rounded,
+              label: 'Annonce',
+              onTap: onOpenAds,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfileSectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Widget child;
+  final Widget? trailing;
+
+  const _AdvertiserProfileSectionCard({
+    required this.title,
+    required this.icon,
+    required this.child,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE7ECF3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFF0E1), Color(0xFFEAF1FF)],
+                  ),
+                ),
+                child: Icon(icon, color: const Color(0xFF101828), size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF101828),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              if (trailing != null) trailing!,
+            ],
+          ),
+          const SizedBox(height: 16),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfileAdCard extends StatelessWidget {
+  final Offer offer;
+  final int offersCount;
+  final VoidCallback onTap;
+
+  const _AdvertiserProfileAdCard({
+    required this.offer,
+    required this.offersCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final statusLabel = offer.statusBadges.isNotEmpty ? offer.statusBadges.first : 'Active';
+    final budgetLabel = offer.price > 0 ? '${offer.price.toStringAsFixed(0)} €' : 'Sur devis';
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Ink(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          color: const Color(0xFFFDFEFF),
+          border: Border.all(color: const Color(0xFFE7ECF3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 92,
+              height: 106,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFFFD3AF), Color(0xFFFFA254)],
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: offer.imageUrls.isNotEmpty
+                  ? Image.network(
+                      offer.imageUrls.first,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _buildAdFallback(),
+                    )
+                  : _buildAdFallback(),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: SizedBox(
+                height: 106,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            offer.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF101828),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              height: 1.2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            color: kPrestoOrange.withOpacity(0.10),
+                          ),
+                          child: Text(
+                            statusLabel,
+                            style: const TextStyle(
+                              color: kPrestoOrange,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      offer.shortDescription.isNotEmpty ? offer.shortDescription : offer.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF667085),
+                        fontSize: 13,
+                        height: 1.4,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _AdvertiserProfileTinyMetaPill(
+                          icon: Icons.work_outline_rounded,
+                          label: offer.category,
+                        ),
+                        _AdvertiserProfileTinyMetaPill(
+                          icon: Icons.location_on_outlined,
+                          label: offer.city,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text(
+                          budgetLabel,
+                          style: const TextStyle(
+                            color: kPrestoOrange,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const Spacer(),
+                        _AdvertiserProfileInlineInfo(
+                          icon: Icons.campaign_outlined,
+                          text: '$offersCount',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdFallback() {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.all(12),
+          child: Icon(Icons.work_outline_rounded, color: Colors.white, size: 24),
+        ),
+        Spacer(),
+        Padding(
+          padding: EdgeInsets.all(12),
+          child: Text(
+            'ilipresto',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AdvertiserProfileReviewCard extends StatelessWidget {
+  final _AdvertiserReviewData review;
+
+  const _AdvertiserProfileReviewCard({required this.review});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFFFDFEFF),
+        border: Border.all(color: const Color(0xFFE7ECF3)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFEAF1FF), Color(0xFFFFF0E1)],
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  review.authorInitials,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF101828),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      review.authorName,
+                      style: const TextStyle(
+                        color: Color(0xFF101828),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        ...List.generate(
+                          5,
+                          (index) => Padding(
+                            padding: const EdgeInsets.only(right: 2),
+                            child: Icon(
+                              index < review.rating.round()
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
+                              color: const Color(0xFFFFB800),
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            review.dateLabel,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Color(0xFF667085),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (review.relatedMission.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  color: const Color(0xFFEAFBF0),
+                ),
+                child: Text(
+                  'Mission • ${review.relatedMission}',
+                  style: const TextStyle(
+                    color: Color(0xFF15803D),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Text(
+            review.comment,
+            style: const TextStyle(
+              color: Color(0xFF344054),
+              fontSize: 14,
+              height: 1.55,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdvertiserReviewData {
+  final String id;
+  final String authorName;
+  final double rating;
+  final String comment;
+  final DateTime createdAt;
+  final String relatedMission;
+
+  const _AdvertiserReviewData({
+    required this.id,
+    required this.authorName,
+    required this.rating,
+    required this.comment,
+    required this.createdAt,
+    required this.relatedMission,
+  });
+
+  String get authorInitials {
+    final parts = authorName
+        .replaceAll('.', ' ')
+        .split(' ')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return 'U';
+    if (parts.length == 1) {
+      final p = parts.first;
+      return p.substring(0, p.length >= 2 ? 2 : 1).toUpperCase();
+    }
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+
+  String get dateLabel {
+    final day = createdAt.day.toString().padLeft(2, '0');
+    final month = createdAt.month.toString().padLeft(2, '0');
+    return '$day/$month/${createdAt.year}';
+  }
+
+  factory _AdvertiserReviewData.fromMap(String id, Map<String, dynamic> data) {
+    final createdAtRaw = data['createdAt'] ?? data['date'] ?? data['updatedAt'];
+    DateTime createdAt;
+    if (createdAtRaw is Timestamp) {
+      createdAt = createdAtRaw.toDate();
+    } else if (createdAtRaw is DateTime) {
+      createdAt = createdAtRaw;
+    } else {
+      createdAt = DateTime.now();
+    }
+
+    return _AdvertiserReviewData(
+      id: id,
+      authorName: (data['authorName'] ?? data['author'] ?? 'Utilisateur').toString(),
+      rating: (data['rating'] as num?)?.toDouble() ?? 5,
+      comment: (data['comment'] ?? data['text'] ?? '').toString().trim().isEmpty
+          ? 'Avis utilisateur'
+          : (data['comment'] ?? data['text']).toString(),
+      createdAt: createdAt,
+      relatedMission: (data['relatedMission'] ?? data['offerTitle'] ?? '').toString(),
+    );
+  }
+}
+
+class _AdvertiserProfileStatCard extends StatelessWidget {
+  final String value;
+  final String label;
+  final IconData icon;
+
+  const _AdvertiserProfileStatCard({
+    required this.value,
+    required this.label,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 108,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE7ECF3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.035),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: const Color(0xFFF4F7FD),
+            ),
+            child: Icon(icon, size: 18, color: const Color(0xFF101828)),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF101828),
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF667085),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.25,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfilePrimaryButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Future<void> Function() onTap;
+  final bool compact;
+
+  const _AdvertiserProfilePrimaryButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: compact ? 48 : 54,
+      child: ElevatedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, size: compact ? 18 : 20),
+        label: Text(
+          label,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: compact ? 13 : 14,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          foregroundColor: Colors.white,
+          backgroundColor: kPrestoOrange,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(compact ? 16 : 18),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfileSecondaryButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Future<void> Function()? onTap;
+  final bool compact;
+
+  const _AdvertiserProfileSecondaryButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: compact ? 48 : 54,
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, size: compact ? 18 : 20),
+        label: Text(
+          label,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: compact ? 13 : 14,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Color(0xFFD9E2F0)),
+          foregroundColor: const Color(0xFF1E5EFF),
+          backgroundColor: const Color(0xFFF8FAFF),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(compact ? 16 : 18),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfileGhostButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _AdvertiserProfileGhostButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, size: 18),
+        label: Text(
+          label,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Color(0xFFE1E8F2)),
+          foregroundColor: const Color(0xFF101828),
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+        ),
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfileMiniActionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Future<void> Function() onTap;
+
+  const _AdvertiserProfileMiniActionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Ink(
+        height: 52,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFFE7ECF3)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: const Color(0xFF101828)),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF101828),
+                fontWeight: FontWeight.w800,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileTopBadge extends StatelessWidget {
+  final String label;
+  final IconData icon;
+
+  const _ProfileTopBadge({required this.label, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: Colors.white.withOpacity(0.18),
+        border: Border.all(color: Colors.white.withOpacity(0.24)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 14),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfileInfoChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+
+  const _AdvertiserProfileInfoChip({required this.label, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: const Color(0xFFF7FAFC),
+        border: Border.all(color: const Color(0xFFE7ECF3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: const Color(0xFF667085)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF344054),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfileTrustPill extends StatelessWidget {
+  final String label;
+  final bool active;
+
+  const _AdvertiserProfileTrustPill({required this.label, required this.active});
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = active ? const Color(0xFFEFF8F2) : const Color(0xFFF7F8FA);
+    final fg = active ? const Color(0xFF15803D) : const Color(0xFF667085);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: bg,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: fg,
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfileAvailabilityChip extends StatelessWidget {
+  final String label;
+
+  const _AdvertiserProfileAvailabilityChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFF1E6), Color(0xFFEAF1FF)],
+        ),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFF101828),
+          fontWeight: FontWeight.w800,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfileTinyMetaPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _AdvertiserProfileTinyMetaPill({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: const Color(0xFFF5F8FC),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: const Color(0xFF667085)),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF667085),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfileInlineInfo extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _AdvertiserProfileInlineInfo({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 15, color: const Color(0xFF98A2B3)),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: const TextStyle(
+            color: Color(0xFF98A2B3),
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AdvertiserProfileMiniMetaTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color accent;
+
+  const _AdvertiserProfileMiniMetaTile({
+    required this.icon,
+    required this.label,
+    this.accent = const Color(0xFF667085),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFFF8FAFD),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: accent),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFF344054),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdvertiserProfileSafetyRow extends StatelessWidget {
+  final String text;
+
+  const _AdvertiserProfileSafetyRow({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Color(0xFFEAF1FF),
+          ),
+          child: const Icon(
+            Icons.check_rounded,
+            size: 14,
+            color: Color(0xFF1E5EFF),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Color(0xFF344054),
+              fontWeight: FontWeight.w600,
+              height: 1.45,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProfileBlurBubble extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const _ProfileBlurBubble({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ImageFiltered(
+        imageFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
       ),
     );
