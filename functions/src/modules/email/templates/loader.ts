@@ -26,6 +26,7 @@ export async function loadActiveTemplateVersion(
 
   if (q.empty) return null;
   const doc = q.docs[0];
+  if (!doc) return null;
   const data = doc.data();
 
   return {
