@@ -1,0 +1,1 @@
+export { handleEmailProviderWebhook } from "./handler";
