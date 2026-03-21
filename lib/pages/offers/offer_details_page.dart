@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -611,6 +610,7 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
 
     await showModalBottomSheet<void>(
       context: context,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -620,15 +620,17 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const Text(
                   'Partager cette annonce',
+                  textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   offer.title,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF6B7280),
@@ -637,13 +639,15 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
                 ),
                 const SizedBox(height: 16),
                 Wrap(
+                  alignment: WrapAlignment.center,
                   spacing: 12,
                   runSpacing: 12,
                   children: [
                     _ShareActionButton(
                       label: 'WhatsApp',
                       backgroundColor: const Color(0xFF25D366),
-                      icon: const FaIcon(FontAwesomeIcons.whatsapp, color: Colors.white, size: 22),
+                      logoUrl:
+                          'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg',
                       onTap: () async {
                         Navigator.of(sheetContext).pop();
                         await _shareToWhatsApp(offer);
@@ -652,7 +656,8 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
                     _ShareActionButton(
                       label: 'Statut WhatsApp',
                       backgroundColor: const Color(0xFF128C7E),
-                      icon: const FaIcon(FontAwesomeIcons.whatsapp, color: Colors.white, size: 22),
+                      logoUrl:
+                          'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg',
                       onTap: () async {
                         Navigator.of(sheetContext).pop();
                         await _shareToWhatsAppStatus(offer);
@@ -661,7 +666,8 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
                     _ShareActionButton(
                       label: 'Facebook',
                       backgroundColor: const Color(0xFF1877F2),
-                      icon: const FaIcon(FontAwesomeIcons.facebookF, color: Colors.white, size: 20),
+                      logoUrl:
+                          'https://upload.wikimedia.org/wikipedia/commons/b/b9/2023_Facebook_icon.svg',
                       onTap: () async {
                         Navigator.of(sheetContext).pop();
                         await _shareToFacebook(offer);
@@ -670,7 +676,8 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
                     _ShareActionButton(
                       label: 'Instagram',
                       backgroundColor: const Color(0xFFE1306C),
-                      icon: const FaIcon(FontAwesomeIcons.instagram, color: Colors.white, size: 20),
+                      logoUrl:
+                          'https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png',
                       onTap: () async {
                         Navigator.of(sheetContext).pop();
                         await _shareToInstagram(offer);
@@ -679,7 +686,13 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
                     _ShareActionButton(
                       label: 'Mail',
                       backgroundColor: const Color(0xFF4B5563),
-                      icon: const Icon(Icons.mail_outline, color: Colors.white, size: 22),
+                      logoUrl:
+                          'https://upload.wikimedia.org/wikipedia/commons/4/4e/Gmail_Icon.png',
+                      fallbackIcon: const Icon(
+                        Icons.mail_outline,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                       onTap: () async {
                         Navigator.of(sheetContext).pop();
                         await _shareByMail(offer);
@@ -755,9 +768,11 @@ class _OfferDetailsPageState extends State<OfferDetailsPage> {
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         leading: const BackButton(),
-        title: const Text(
-          'Details de l offre',
+        title: Text(
+          offer.title,
           style: kPrestoAppBarTitleStyle,
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
         ),
         centerTitle: false,
         actions: [
@@ -981,20 +996,28 @@ class _MainInfoCard extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
-              _MetaPill(icon: Icons.category_outlined, text: offer.category),
-              _MetaPill(icon: Icons.location_on_outlined, text: offer.city),
-              _MetaPill(icon: Icons.event_outlined, text: offer.publishedAtLabel),
-              _MetaPill(icon: Icons.fingerprint, text: 'ID ${offer.id}'),
-              _MetaPill(icon: Icons.schedule, text: offer.availability),
+              if (offer.category.isNotEmpty)
+                _MetaPill(icon: Icons.category_outlined, text: offer.category),
+              if (offer.city.isNotEmpty)
+                _MetaPill(icon: Icons.location_on_outlined, text: offer.city),
+              if (offer.statusBadges.any(
+                (b) => b.toLowerCase().contains('urgent'),
+              ))
+                _MetaPill(
+                  icon: Icons.bolt,
+                  text: 'Urgent',
+                  color: const Color(0xFFB91C1C),
+                ),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             offer.shortDescription,
             style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF4B5563),
-              height: 1.4,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2937),
+              height: 1.45,
             ),
           ),
         ],
@@ -1374,7 +1397,10 @@ class _StickyBottomBarState extends State<_StickyBottomBar> {
                           ),
                         ),
                         icon: const Icon(Icons.chat_bubble_outline),
-                        label: const Text('Envoyer un message'),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('Envoyer un message'),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -1391,7 +1417,10 @@ class _StickyBottomBarState extends State<_StickyBottomBar> {
                           ),
                         ),
                         icon: const Icon(Icons.call_outlined),
-                        label: const Text('Appeler'),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('Appeler'),
+                        ),
                       ),
                     ),
                   ],
@@ -1406,13 +1435,17 @@ class _StickyBottomBarState extends State<_StickyBottomBar> {
                     style: FilledButton.styleFrom(
                       backgroundColor: kPrestoOrange,
                       foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(56),
                       textStyle: const TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
                       ),
                     ),
                     icon: const Icon(Icons.send_outlined),
-                    label: const Text('Proposer mes services'),
+                    label: const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text('Proposer mes services'),
+                    ),
                   ),
                 ),
         ),
@@ -1451,26 +1484,31 @@ class _SectionCard extends StatelessWidget {
 class _MetaPill extends StatelessWidget {
   final IconData icon;
   final String text;
+  final Color? color;
 
-  const _MetaPill({required this.icon, required this.text});
+  const _MetaPill({required this.icon, required this.text, this.color});
 
   @override
   Widget build(BuildContext context) {
+    final baseColor = color ?? const Color(0xFF4B5563);
+    final bgColor = color != null
+        ? color!.withOpacity(0.10)
+        : kPrestoBlue.withOpacity(0.08);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: kPrestoBlue.withOpacity(0.08),
+        color: bgColor,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: const Color(0xFF4B5563)),
+          Icon(icon, size: 16, color: baseColor),
           const SizedBox(width: 6),
           Text(
             text,
-            style: const TextStyle(
-              color: Color(0xFF27364A),
+            style: TextStyle(
+              color: color != null ? color! : const Color(0xFF27364A),
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
             ),
@@ -1484,13 +1522,15 @@ class _MetaPill extends StatelessWidget {
 class _ShareActionButton extends StatelessWidget {
   final String label;
   final Color backgroundColor;
-  final Widget icon;
+  final String logoUrl;
+  final Widget? fallbackIcon;
   final Future<void> Function() onTap;
 
   const _ShareActionButton({
     required this.label,
     required this.backgroundColor,
-    required this.icon,
+    required this.logoUrl,
+    this.fallbackIcon,
     required this.onTap,
   });
 
@@ -1519,7 +1559,17 @@ class _ShareActionButton extends StatelessWidget {
                 ],
               ),
               alignment: Alignment.center,
-              child: icon,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.network(
+                  logoUrl,
+                  width: 28,
+                  height: 28,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) =>
+                      fallbackIcon ?? const Icon(Icons.share, color: Colors.white, size: 22),
+                ),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -2196,7 +2246,7 @@ class _AdvertiserProfilePageState extends State<AdvertiserProfilePage> {
             slivers: [
               SliverAppBar(
                 pinned: true,
-                expandedHeight: 260,
+                expandedHeight: 200,
                 backgroundColor: Colors.white,
                 elevation: 0,
                 surfaceTintColor: Colors.transparent,
@@ -2253,17 +2303,18 @@ class _AdvertiserProfilePageState extends State<AdvertiserProfilePage> {
                       Positioned(
                         left: 18,
                         right: 18,
-                        bottom: 26,
+                        bottom: 20,
                         child: SafeArea(
                           bottom: false,
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Hero(
                                 tag: 'advertiser_avatar_${advertiser.id}',
                                 child: Container(
-                                  width: 92,
-                                  height: 92,
+                                  width: 76,
+                                  height: 76,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(color: Colors.white, width: 3),
@@ -2296,42 +2347,36 @@ class _AdvertiserProfilePageState extends State<AdvertiserProfilePage> {
                                       : _ProfileInitialsAvatar(initials: _initials),
                                 ),
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      advertiser.name,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 22,
-                                        height: 1.08,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 8,
-                                      children: _topBadges
-                                          .map(
-                                            (label) => _ProfileTopBadge(
-                                              label: label,
-                                              icon: label.contains('verifie')
-                                                  ? Icons.verified_rounded
-                                                  : label.contains('ligne')
-                                                      ? Icons.radio_button_checked_rounded
-                                                      : Icons.person_outline_rounded,
-                                            ),
-                                          )
-                                          .toList(),
-                                    ),
-                                  ],
+                              const SizedBox(height: 8),
+                              Text(
+                                advertiser.name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 20,
+                                  height: 1.1,
                                 ),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: 8,
+                                runSpacing: 6,
+                                children: _topBadges
+                                    .map(
+                                      (label) => _ProfileTopBadge(
+                                        label: label,
+                                        icon: label.contains('verifie')
+                                            ? Icons.verified_rounded
+                                            : label.contains('ligne')
+                                                ? Icons.radio_button_checked_rounded
+                                                : Icons.person_outline_rounded,
+                                      ),
+                                    )
+                                    .toList(),
                               ),
                             ],
                           ),
@@ -2519,7 +2564,6 @@ class _AdvertiserProfilePageState extends State<AdvertiserProfilePage> {
               child: _AdvertiserProfileStickyBar(
                 onMessage: _startChat,
                 onCall: _callAdvertiser,
-                onOpenAds: _openFeaturedOffer,
               ),
             ),
           ),
@@ -2973,12 +3017,10 @@ class _AdvertiserProfileReviewsSection extends StatelessWidget {
 class _AdvertiserProfileStickyBar extends StatelessWidget {
   final Future<void> Function() onMessage;
   final Future<void> Function() onCall;
-  final VoidCallback onOpenAds;
 
   const _AdvertiserProfileStickyBar({
     required this.onMessage,
     required this.onCall,
-    required this.onOpenAds,
   });
 
   @override
@@ -3001,30 +3043,53 @@ class _AdvertiserProfileStickyBar extends StatelessWidget {
         children: [
           Expanded(
             flex: 5,
-            child: _AdvertiserProfilePrimaryButton(
-              icon: Icons.chat_bubble_outline_rounded,
-              label: 'Message',
-              onTap: onMessage,
-              compact: true,
+            child: SizedBox(
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: onMessage,
+                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Envoyer un message',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  foregroundColor: Colors.white,
+                  backgroundColor: kPrestoOrange,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
             flex: 4,
-            child: _AdvertiserProfileSecondaryButton(
-              icon: Icons.call_outlined,
-              label: 'Appeler',
-              onTap: onCall,
-              compact: true,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 4,
-            child: _AdvertiserProfileGhostButton(
-              icon: Icons.list_alt_rounded,
-              label: 'Annonce',
-              onTap: onOpenAds,
+            child: SizedBox(
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: onCall,
+                icon: const Icon(Icons.call_outlined, size: 18),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'Appeler',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  foregroundColor: Colors.white,
+                  backgroundColor: kPrestoBlue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
