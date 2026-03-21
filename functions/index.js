@@ -1845,3 +1845,11 @@ exports.processOfferPhoto = onCall(
     };
   }
 );
+
+// ─── Email functions (compiled TypeScript) ────────────────────────────────────
+try {
+  const emailFunctions = require('./lib/index');
+  Object.assign(exports, emailFunctions);
+} catch (e) {
+  console.warn('[index.js] Email TS functions not loaded (run npm run build):', e.message);
+}
