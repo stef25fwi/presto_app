@@ -1,5 +1,4 @@
 {
-  "engines": { "node": "20" },
   "name": "presto-functions",
   "version": "1.0.0",
   "description": "Cloud Functions pour Presto App",
@@ -8,10 +7,13 @@
     "node": "20"
   },
   "scripts": {
-    "serve": "firebase emulators:start --only functions",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "test": "npm run build && node --test \"lib/**/*.test.js\"",
+    "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
-    "deploy": "firebase deploy --only functions",
+    "deploy": "npm run build && firebase deploy --only functions",
     "logs": "firebase functions:log"
   },
   "dependencies": {
@@ -22,6 +24,11 @@
     "firebase-functions": "^7.0.2",
     "nodemailer": "^6.10.1",
     "openai": "^4.104.0",
+    "resend": "^3.2.0",
     "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.4.5"
   }
 }

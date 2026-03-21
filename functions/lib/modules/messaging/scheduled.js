@@ -1,0 +1,46 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.enqueueUnreadMessageReminders = void 0;
+const scheduler_1 = require("firebase-functions/v2/scheduler");
+const firestore_1 = require("../../core/firestore");
+const constants_1 = require("../../shared/constants");
+const hash_1 = require("../../utils/hash");
+exports.enqueueUnreadMessageReminders = (0, scheduler_1.onSchedule)("every 2 hours", async () => {
+    const now = Date.now();
+    const threshold = now - 24 * 60 * 60 * 1000;
+    const q = await firestore_1.db
+        .collection(constants_1.COLLECTIONS.conversations)
+        .where("last_message_at", "<=", threshold)
+        .where("status", "==", "open")
+        .limit(200)
+        .get();
+    for (const doc of q.docs) {
+        const data = doc.data();
+        const participantIds = Array.isArray(data.participant_ids) ? data.participant_ids : [];
+        for (const uid of participantIds) {
+            const userId = String(uid || "");
+            if (!userId)
+                continue;
+            const user = await firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(userId).get();
+            const email = String(user.data()?.email || "").trim();
+            if (!email)
+                continue;
+            const eventId = `evt_conv_reminder_${doc.id}_${userId}_${now}`;
+            await firestore_1.db.collection(constants_1.COLLECTIONS.emailEvents).doc(eventId).set({
+                event_id: eventId,
+                event_name: "conversation.pending_reminder_due",
+                source_collection: constants_1.COLLECTIONS.conversations,
+                source_id: doc.id,
+                recipient_user_id: userId,
+                dedupe_key: (0, hash_1.sha256)(`conversation.pending_reminder_due:${doc.id}:${userId}:${Math.floor(now / (12 * 60 * 60 * 1000))}`),
+                occurred_at: now,
+                payload: {
+                    recipient_email: email,
+                    conversationUrl: `https://presto.app/messages/${doc.id}`,
+                },
+                status: "created",
+            });
+        }
+    }
+});
+//# sourceMappingURL=scheduled.js.map

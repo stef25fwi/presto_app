@@ -3588,27 +3588,25 @@ class _AdvertiserProfilePrimaryButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final Future<void> Function() onTap;
-  final bool compact;
 
   const _AdvertiserProfilePrimaryButton({
     required this.icon,
     required this.label,
     required this.onTap,
-    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: compact ? 48 : 54,
+      height: 54,
       child: ElevatedButton.icon(
         onPressed: onTap,
-        icon: Icon(icon, size: compact ? 18 : 20),
+        icon: Icon(icon, size: 20),
         label: Text(
           label,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: compact ? 13 : 14,
+          style: const TextStyle(
+            fontSize: 14,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -3617,7 +3615,7 @@ class _AdvertiserProfilePrimaryButton extends StatelessWidget {
           foregroundColor: Colors.white,
           backgroundColor: kPrestoOrange,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(compact ? 16 : 18),
+            borderRadius: BorderRadius.circular(18),
           ),
         ),
       ),
@@ -3629,27 +3627,25 @@ class _AdvertiserProfileSecondaryButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final Future<void> Function()? onTap;
-  final bool compact;
 
   const _AdvertiserProfileSecondaryButton({
     required this.icon,
     required this.label,
     required this.onTap,
-    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: compact ? 48 : 54,
+      height: 54,
       child: OutlinedButton.icon(
         onPressed: onTap,
-        icon: Icon(icon, size: compact ? 18 : 20),
+        icon: Icon(icon, size: 20),
         label: Text(
           label,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: compact ? 13 : 14,
+          style: const TextStyle(
+            fontSize: 14,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -3658,7 +3654,7 @@ class _AdvertiserProfileSecondaryButton extends StatelessWidget {
           foregroundColor: const Color(0xFF1E5EFF),
           backgroundColor: const Color(0xFFF8FAFF),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(compact ? 16 : 18),
+            borderRadius: BorderRadius.circular(18),
           ),
         ),
       ),
