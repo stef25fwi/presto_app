@@ -6,6 +6,7 @@ import { EmailJob } from "../../../types/models";
 import { mapEventToTemplate } from "../events/mapper";
 import { enrichEventPayload } from "../events/enrich";
 import { resolvePreferenceDecision } from "../preferences/resolver";
+import { getTemplateMeta, listMissingRequiredVariables } from "../templates/registry";
 import { sha256 } from "../../../utils/hash";
 
 export async function enqueueEmailJobsFromEvent(event: DomainEventPayload): Promise<void> {
@@ -13,6 +14,12 @@ export async function enqueueEmailJobsFromEvent(event: DomainEventPayload): Prom
   const template = mapEventToTemplate(enrichedEvent.event_name);
   if (!template) {
     logger.info("email_enqueue_skipped_no_template", { eventId: enrichedEvent.event_id, eventName: enrichedEvent.event_name });
+    return;
+  }
+
+  const meta = getTemplateMeta(template);
+  if (!meta) {
+    logger.warn("email_enqueue_skipped_unknown_template_meta", { eventId: enrichedEvent.event_id, template });
     return;
   }
 
@@ -39,8 +46,34 @@ export async function enqueueEmailJobsFromEvent(event: DomainEventPayload): Prom
     return;
   }
 
-  const channel = template.includes("marketing") ? "marketing" : template.includes("product") ? "produit" : "transactionnel";
-  const decision = await resolvePreferenceDecision(recipientUserId, channel);
+  const missingVariables = listMissingRequiredVariables(template, enrichedEvent.payload);
+  if (missingVariables.length > 0) {
+    await db.collection(COLLECTIONS.emailEvents).doc(enrichedEvent.event_id).set(
+      {
+        status: "ignored",
+        ignore_reason: "missing_required_variables",
+        missing_required_variables: missingVariables,
+        updated_at: Date.now(),
+      },
+      { merge: true },
+    );
+    logger.warn("email_enqueue_skipped_missing_required_variables", {
+      eventId: enrichedEvent.event_id,
+      template,
+      missingVariables,
+    });
+    return;
+  }
+
+  const topic = meta.category === "messaging"
+    ? "messaging"
+    : meta.category === "listings"
+      ? "listings"
+      : meta.category === "saved_search"
+        ? "saved_search"
+        : "other";
+  const channel = meta.channel;
+  const decision = await resolvePreferenceDecision(recipientUserId, channel, topic);
   if (!decision.allowed) {
     logger.info("email_enqueue_skipped_by_preferences", {
       eventId: enrichedEvent.event_id,
@@ -62,7 +95,7 @@ export async function enqueueEmailJobsFromEvent(event: DomainEventPayload): Prom
     channel,
     template_code: template,
     template_version: 1,
-    locale: "fr",
+    locale: decision.locale || "fr",
     priority: channel === "transactionnel" ? "high" : "normal",
     status: "queued",
     send_at: decision.sendAtMs || now,

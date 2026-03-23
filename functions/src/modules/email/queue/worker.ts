@@ -2,12 +2,13 @@ import { db } from "../../../core/firestore";
 import { logger } from "../../../core/logger";
 import { COLLECTIONS } from "../../../shared/constants";
 import { EmailJob } from "../../../types/models";
+import { TemplateCode } from "../../../types/templates";
 import { createEmailProvider } from "../providers/provider_factory";
 import { moveJobToDeadLetter } from "./dead_letter";
 import { computeRetryDelayMs } from "./retry";
 import { EMAIL_FROM } from "../../../config/env";
 import { loadActiveTemplateVersion } from "../templates/loader";
-import { getTemplateMeta } from "../templates/registry";
+import { getDefaultTemplateContent, getTemplateMeta } from "../templates/registry";
 import { renderHtml } from "../renderer/render_html";
 import { renderText } from "../renderer/render_text";
 
@@ -17,7 +18,8 @@ async function resolveTemplate(
   payload: Record<string, unknown>,
 ): Promise<{ subject: string; html: string; text: string }> {
   // 1. Essai depuis Firestore (versions dynamiques)
-  const loaded = await loadActiveTemplateVersion(templateCode, locale);
+  const loaded = (await loadActiveTemplateVersion(templateCode, locale))
+    || (locale === "en" ? await loadActiveTemplateVersion(templateCode, "fr") : null);
   if (loaded) {
     return {
       subject: renderText(loaded.subject, payload),
@@ -30,24 +32,9 @@ async function resolveTemplate(
   const meta = getTemplateMeta(templateCode);
   const subject = meta?.default_subject_fr ?? `PRESTO — ${templateCode}`;
   const preheader = meta?.default_preheader_fr ?? "";
-  const vars = payload as Record<string, string>;
-  const firstName = vars.firstName ?? "";
-  const htmlBody = renderHtml(
-    `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>{{subject}}</title></head>` +
-    `<body style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px">` +
-    `<h2 style="color:#F97316">PRESTO</h2>` +
-    `${firstName ? `<p>Bonjour {{firstName}},</p>` : ""}` +
-    `<p style="font-size:16px">{{preheader}}</p>` +
-    `<hr><p style="color:#6B7280;font-size:12px">` +
-    `Vous recevez cet e-mail car vous êtes inscrit(e) sur PRESTO. ` +
-    `<a href="https://presto.app/unsubscribe">Se désabonner</a></p></body></html>`,
-    { ...payload, subject, preheader },
-  );
-  const textBody = renderText(`PRESTO\n\n${firstName ? "Bonjour {{firstName}},\n\n" : ""}${preheader}\n\n---\nPRESTŌ`, {
-    ...payload,
-    subject,
-    preheader,
-  });
+  const content = getDefaultTemplateContent(templateCode as TemplateCode, locale);
+  const htmlBody = renderHtml(content.html, { ...payload, subject, preheader });
+  const textBody = renderText(content.text, { ...payload, subject, preheader });
 
   return { subject, html: htmlBody, text: textBody };
 }

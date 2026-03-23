@@ -1,6 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.syncEmailAnalytics = exports.purgeOldEmailLogs = exports.purgeOldEmailWebhooks = exports.handleEmailProviderWebhook = exports.cleanupExpiredEmailJobs = exports.retryFailedEmailJobs = exports.processScheduledEmailDigests = exports.processEmailJobTrigger = exports.enqueueEmailJobsFromEventTrigger = exports.onReportCreated = exports.onSupportTicketReplied = exports.onSupportTicketCreated = exports.enqueueUnreadMessageReminders = exports.onMessageCreated = exports.enqueueExpiringListingEmails = exports.onListingPublished = exports.onUserCreated = void 0;
+exports.syncEmailAnalytics = exports.purgeOldEmailLogs = exports.purgeOldEmailWebhooks = exports.handleEmailProviderWebhook = exports.cleanupExpiredEmailJobs = exports.retryFailedEmailJobs = exports.processScheduledEmailDigests = exports.processEmailJobTrigger = exports.enqueueEmailJobsFromEventTrigger = exports.onBillingInvoiceUpdated = exports.onSubscriptionUpdated = exports.onReportCreated = exports.onSupportTicketReplied = exports.onSupportTicketCreated = exports.enqueueUnreadMessageReminders = exports.onMessageCreated = exports.enqueueExpiringListingEmails = exports.onListingPublished = exports.onUserCreated = void 0;
+const v2_1 = require("firebase-functions/v2");
+const env_1 = require("./config/env");
+(0, v2_1.setGlobalOptions)({
+    secrets: env_1.EMAIL_PROVIDER_SECRETS,
+});
 var triggers_1 = require("./modules/auth/triggers");
 Object.defineProperty(exports, "onUserCreated", { enumerable: true, get: function () { return triggers_1.onUserCreated; } });
 var triggers_2 = require("./modules/listings/triggers");
@@ -16,12 +21,15 @@ Object.defineProperty(exports, "onSupportTicketCreated", { enumerable: true, get
 Object.defineProperty(exports, "onSupportTicketReplied", { enumerable: true, get: function () { return triggers_4.onSupportTicketReplied; } });
 var triggers_5 = require("./modules/moderation/triggers");
 Object.defineProperty(exports, "onReportCreated", { enumerable: true, get: function () { return triggers_5.onReportCreated; } });
-var triggers_6 = require("./modules/email/queue/triggers");
-Object.defineProperty(exports, "enqueueEmailJobsFromEventTrigger", { enumerable: true, get: function () { return triggers_6.enqueueEmailJobsFromEventTrigger; } });
-Object.defineProperty(exports, "processEmailJobTrigger", { enumerable: true, get: function () { return triggers_6.processEmailJobTrigger; } });
-Object.defineProperty(exports, "processScheduledEmailDigests", { enumerable: true, get: function () { return triggers_6.processScheduledEmailDigests; } });
-Object.defineProperty(exports, "retryFailedEmailJobs", { enumerable: true, get: function () { return triggers_6.retryFailedEmailJobs; } });
-Object.defineProperty(exports, "cleanupExpiredEmailJobs", { enumerable: true, get: function () { return triggers_6.cleanupExpiredEmailJobs; } });
+var triggers_6 = require("./modules/billing/triggers");
+Object.defineProperty(exports, "onSubscriptionUpdated", { enumerable: true, get: function () { return triggers_6.onSubscriptionUpdated; } });
+Object.defineProperty(exports, "onBillingInvoiceUpdated", { enumerable: true, get: function () { return triggers_6.onBillingInvoiceUpdated; } });
+var triggers_7 = require("./modules/email/queue/triggers");
+Object.defineProperty(exports, "enqueueEmailJobsFromEventTrigger", { enumerable: true, get: function () { return triggers_7.enqueueEmailJobsFromEventTrigger; } });
+Object.defineProperty(exports, "processEmailJobTrigger", { enumerable: true, get: function () { return triggers_7.processEmailJobTrigger; } });
+Object.defineProperty(exports, "processScheduledEmailDigests", { enumerable: true, get: function () { return triggers_7.processScheduledEmailDigests; } });
+Object.defineProperty(exports, "retryFailedEmailJobs", { enumerable: true, get: function () { return triggers_7.retryFailedEmailJobs; } });
+Object.defineProperty(exports, "cleanupExpiredEmailJobs", { enumerable: true, get: function () { return triggers_7.cleanupExpiredEmailJobs; } });
 var handler_1 = require("./modules/email/webhooks/handler");
 Object.defineProperty(exports, "handleEmailProviderWebhook", { enumerable: true, get: function () { return handler_1.handleEmailProviderWebhook; } });
 var scheduled_3 = require("./modules/email/scheduled");

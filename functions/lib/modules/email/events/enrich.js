@@ -1,8 +1,47 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildBillingInvoiceEnrichment = buildBillingInvoiceEnrichment;
+exports.buildSubscriptionEnrichment = buildSubscriptionEnrichment;
 exports.enrichEventPayload = enrichEventPayload;
 const firestore_1 = require("../../../core/firestore");
 const constants_1 = require("../../../shared/constants");
+function buildBillingInvoiceEnrichment(source, payload) {
+    const extra = {};
+    if (!payload.amount)
+        extra.amount = Number(source.amount_due ?? source.amount ?? 0);
+    if (!payload.currency)
+        extra.currency = String(source.currency ?? "EUR");
+    if (!payload.paymentMethod) {
+        extra.paymentMethod = String(source.payment_method_label ?? source.payment_method ?? source.method ?? "");
+    }
+    if (!payload.nextRetryAt) {
+        const retryAt = Number(source.next_retry_at ?? source.retry_at ?? 0);
+        if (retryAt > 0)
+            extra.nextRetryAt = retryAt;
+    }
+    if (!payload.retryUrl)
+        extra.retryUrl = "https://presto.app/facturation";
+    return extra;
+}
+function buildSubscriptionEnrichment(source, payload) {
+    const extra = {};
+    if (!payload.planName)
+        extra.planName = String(source.plan_name ?? source.plan ?? "PRESTO Premium");
+    if (!payload.currency)
+        extra.currency = String(source.currency ?? "EUR");
+    if (!payload.renewalDate) {
+        const renewalTs = Number(source.renewal_at ?? source.current_period_end ?? 0);
+        if (renewalTs > 0) {
+            extra.renewalDate = new Date(renewalTs).toLocaleDateString("fr-FR");
+        }
+    }
+    if (!payload.paymentMethod) {
+        extra.paymentMethod = String(source.payment_method_label ?? source.payment_method ?? source.method ?? "");
+    }
+    if (!payload.manageUrl)
+        extra.manageUrl = "https://presto.app/abonnement";
+    return extra;
+}
 async function enrichEventPayload(event) {
     const extra = { enriched_at: Date.now() };
     // Enrichissement depuis le profil utilisateur destinataire
@@ -47,6 +86,14 @@ async function enrichEventPayload(event) {
                         extra.ticketNumber = String(s.ticket_number ?? event.source_id);
                     if (!event.payload.ticketSubject)
                         extra.ticketSubject = String(s.subject ?? "");
+                    if (!event.payload.replyUrl)
+                        extra.replyUrl = `https://presto.app/support/${event.source_id}`;
+                }
+                else if (event.source_collection === constants_1.COLLECTIONS.billingInvoices) {
+                    Object.assign(extra, buildBillingInvoiceEnrichment(s, event.payload));
+                }
+                else if (event.source_collection === constants_1.COLLECTIONS.subscriptions) {
+                    Object.assign(extra, buildSubscriptionEnrichment(s, event.payload));
                 }
             }
         }

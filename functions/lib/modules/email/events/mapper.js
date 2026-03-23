@@ -36,7 +36,7 @@ function mapEventToTemplate(eventName) {
             return "tpl_product_saved_search_match_found_v1";
         case "saved_search.daily_digest.ready":
         case "saved_search.weekly_digest.ready":
-            return null; // traité via le moteur de digest
+            return "tpl_product_saved_search_match_found_v1";
         // ── Favoris ───────────────────────────────────────────────────────────
         case "favorite.listing.updated":
         case "favorite.listing.expired":

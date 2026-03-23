@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.templateRegistry = void 0;
 exports.getTemplateMeta = getTemplateMeta;
+exports.listMissingRequiredVariables = listMissingRequiredVariables;
+exports.getDefaultTemplateContent = getDefaultTemplateContent;
 exports.templateRegistry = [
     // ── Compte & Auth ─────────────────────────────────────────────────────────
     {
@@ -200,5 +202,132 @@ exports.templateRegistry = [
 ];
 function getTemplateMeta(templateCode) {
     return exports.templateRegistry.find((item) => item.template_code === templateCode) || null;
+}
+function listMissingRequiredVariables(templateCode, payload) {
+    const meta = getTemplateMeta(templateCode);
+    if (!meta)
+        return [];
+    return meta.required_variables.filter((key) => {
+        const value = payload[key];
+        if (value === undefined || value === null)
+            return true;
+        if (typeof value === "string")
+            return value.trim().length === 0;
+        return false;
+    });
+}
+function wrapDefaultHtml(subject, preheader, body) {
+    return (`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${subject}</title></head>` +
+        `<body style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px;color:#111827">` +
+        `<div style="padding:24px;border:1px solid #E5E7EB;border-radius:16px">` +
+        `<div style="font-size:28px;font-weight:700;color:#F97316;margin-bottom:8px">PRESTO</div>` +
+        `<div style="font-size:14px;color:#6B7280;margin-bottom:20px">${preheader}</div>` +
+        `${body}` +
+        `<hr style="margin:24px 0;border:none;border-top:1px solid #E5E7EB">` +
+        `<p style="font-size:12px;color:#6B7280">Vous recevez cet e-mail car vous utilisez PRESTO.</p>` +
+        `</div></body></html>`);
+}
+function wrapDefaultText(subject, preheader, body) {
+    return `PRESTO\n\n${subject}\n\n${preheader}\n\n${body}\n`;
+}
+function getDefaultTemplateContent(templateCode, locale) {
+    const meta = getTemplateMeta(templateCode);
+    const subject = meta?.default_subject_fr ?? templateCode;
+    const preheader = meta?.default_preheader_fr ?? "";
+    const frBodies = {
+        tpl_transactional_account_welcome_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Bienvenue sur PRESTO.</p><p><a href="{{dashboardUrl}}">Accéder à mon espace</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nBienvenue sur PRESTO.\n{{dashboardUrl}}`),
+        },
+        tpl_transactional_account_email_verification_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Confirmez votre adresse e-mail.</p><p><a href="{{verificationUrl}}">Vérifier mon e-mail</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nVérifiez votre e-mail:\n{{verificationUrl}}`),
+        },
+        tpl_transactional_account_password_forgotten_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Réinitialisez votre mot de passe.</p><p><a href="{{resetUrl}}">Réinitialiser</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nRéinitialisation:\n{{resetUrl}}`),
+        },
+        tpl_transactional_account_password_changed_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Votre mot de passe a été modifié.</p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nVotre mot de passe a été modifié.`),
+        },
+        tpl_transactional_account_suspicious_login_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Connexion détectée depuis {{device}} (IP {{ip}}).</p><p><a href="{{secureUrl}}">Sécuriser mon compte</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nConnexion depuis {{device}} (IP {{ip}}).\n{{secureUrl}}`),
+        },
+        tpl_transactional_listing_submitted_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Votre annonce {{listingTitle}} est en cours de modération.</p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nVotre annonce {{listingTitle}} est en cours de modération.`),
+        },
+        tpl_transactional_listing_published_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Votre annonce {{listingTitle}} est en ligne.</p><p><a href="{{listingUrl}}">Voir mon annonce</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Votre annonce {{listingTitle}} est en ligne.\n{{listingUrl}}`),
+        },
+        tpl_transactional_listing_rejected_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Votre annonce {{listingTitle}} n'a pas été publiée.</p><p>Raison: {{rejectionReason}}</p><p><a href="{{editUrl}}">Corriger l'annonce</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nAnnonce refusée: {{listingTitle}}\nRaison: {{rejectionReason}}\n{{editUrl}}`),
+        },
+        tpl_product_listing_expiring_soon_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Votre annonce {{listingTitle}} expire bientôt.</p><p><a href="{{renewUrl}}">Renouveler</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Votre annonce {{listingTitle}} expire bientôt.\n{{renewUrl}}`),
+        },
+        tpl_product_messaging_new_message_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>{{senderName}} vous a envoyé un message.</p><p><a href="{{conversationUrl}}">Ouvrir la conversation</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Nouveau message de {{senderName}}.\n{{conversationUrl}}`),
+        },
+        tpl_product_messaging_pending_reminder_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Vous avez une conversation en attente.</p><p><a href="{{conversationUrl}}">Répondre maintenant</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Vous avez une conversation en attente.\n{{conversationUrl}}`),
+        },
+        tpl_product_lead_received_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>{{senderName}} est intéressé par {{listingTitle}}.</p><p><a href="{{conversationUrl}}">Voir la candidature</a></p>`),
+            text: wrapDefaultText(subject, preheader, `{{senderName}} est intéressé par {{listingTitle}}.\n{{conversationUrl}}`),
+        },
+        tpl_product_saved_search_match_found_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>{{searchName}}: {{matchCount}} nouvelle(s) annonce(s).</p><p><a href="{{resultsUrl}}">Voir les résultats</a></p>`),
+            text: wrapDefaultText(subject, preheader, `{{searchName}}: {{matchCount}} nouvelle(s) annonce(s).\n{{resultsUrl}}`),
+        },
+        tpl_transactional_support_ticket_created_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Votre demande #{{ticketNumber}} a bien été reçue.</p><p>Sujet: {{ticketSubject}}</p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nVotre demande #{{ticketNumber}} a été reçue.\nSujet: {{ticketSubject}}`),
+        },
+        tpl_transactional_support_reply_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Nous avons répondu à votre demande #{{ticketNumber}}.</p><p><a href="{{replyUrl}}">Lire la réponse</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nRéponse à votre demande #{{ticketNumber}}.\n{{replyUrl}}`),
+        },
+        tpl_transactional_moderation_report_received_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Votre signalement a été enregistré.</p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nVotre signalement a été enregistré.`),
+        },
+        tpl_transactional_legal_terms_updated_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Nos conditions changent à partir du {{effectiveDate}}.</p><p><a href="{{termsUrl}}">Consulter les conditions</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Conditions applicables à partir du {{effectiveDate}}.\n{{termsUrl}}`),
+        },
+        tpl_marketing_onboarding_d1_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Découvrez vos premiers pas sur PRESTO.</p><p><a href="{{dashboardUrl}}">Commencer</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nPremiers pas sur PRESTO:\n{{dashboardUrl}}`),
+        },
+        tpl_marketing_onboarding_d3_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Publiez votre première annonce.</p><p><a href="{{createListingUrl}}">Créer une annonce</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nCréer une annonce:\n{{createListingUrl}}`),
+        },
+        tpl_marketing_onboarding_d7_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Explorez les prestataires près de chez vous.</p><p><a href="{{exploreUrl}}">Explorer</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nExplorer PRESTO:\n{{exploreUrl}}`),
+        },
+        tpl_marketing_newsletter_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>{{newsletterTitle}}</p><p><a href="{{newsletterUrl}}">Lire la newsletter</a></p>`),
+            text: wrapDefaultText(subject, preheader, `{{newsletterTitle}}\n{{newsletterUrl}}`),
+        },
+        tpl_transactional_subscription_renewal_upcoming_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Votre abonnement {{planName}} se renouvelle le {{renewalDate}}.</p><p><a href="{{manageUrl}}">Gérer l'abonnement</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nRenouvellement de {{planName}} le {{renewalDate}}.\n{{manageUrl}}`),
+        },
+        tpl_transactional_billing_payment_failed_v1: {
+            html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Le paiement de {{amount}} a échoué.</p><p><a href="{{retryUrl}}">Mettre à jour le paiement</a></p>`),
+            text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nLe paiement de {{amount}} a échoué.\n{{retryUrl}}`),
+        },
+    };
+    return frBodies[templateCode];
 }
 //# sourceMappingURL=registry.js.map

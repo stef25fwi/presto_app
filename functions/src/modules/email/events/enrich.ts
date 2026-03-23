@@ -74,6 +74,7 @@ export async function enrichEventPayload(event: DomainEventPayload): Promise<Dom
         } else if (event.source_collection === COLLECTIONS.supportTickets) {
           if (!event.payload.ticketNumber) extra.ticketNumber = String(s.ticket_number ?? event.source_id);
           if (!event.payload.ticketSubject) extra.ticketSubject = String(s.subject ?? "");
+          if (!event.payload.replyUrl) extra.replyUrl = `https://presto.app/support/${event.source_id}`;
         } else if (event.source_collection === COLLECTIONS.billingInvoices) {
           Object.assign(extra, buildBillingInvoiceEnrichment(s, event.payload));
         } else if (event.source_collection === COLLECTIONS.subscriptions) {
