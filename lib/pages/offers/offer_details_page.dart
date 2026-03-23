@@ -128,14 +128,14 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           SafeArea(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(18, 14, 18, 28),
+              padding: const EdgeInsets.fromLTRB(9, 7, 9, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _TopHeader(title: data.title),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 9),
                   _HeroCard(data: data),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   _PracticalInfoCard(data: data),
                 ],
               ),
@@ -369,16 +369,16 @@ class _TopHeader extends StatelessWidget {
     const blueDeep = Color(0xFF0459D9);
 
     return SizedBox(
-      height: 54,
+      height: 27,
       child: Row(
         children: [
           _CircleIconButton(
             icon: Icons.arrow_back_rounded,
             iconColor: orange,
-            size: 22,
+            size: 11,
             onTap: () => Navigator.of(context).maybePop(),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 5),
           Expanded(
             child: Text(
               _truncatedTitle(title),
@@ -386,9 +386,9 @@ class _TopHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: blueDeep,
-                fontSize: 26,
+                fontSize: 13,
                 fontWeight: FontWeight.w700,
-                letterSpacing: -0.6,
+                letterSpacing: -0.3,
                 height: 1.0,
               ),
             ),
@@ -396,7 +396,7 @@ class _TopHeader extends StatelessWidget {
           _CircleIconButton(
             icon: Icons.notifications_none_rounded,
             iconColor: blueDeep,
-            size: 24,
+            size: 12,
             onTap: () {},
           ),
         ],
@@ -425,20 +425,20 @@ class _HeroCard extends StatelessWidget {
     const chipBg = Color(0xFFF1EFF7);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
+      padding: const EdgeInsets.fromLTRB(11, 12, 11, 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF9B8E86).withOpacity(0.10),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
+            blurRadius: 14,
+            offset: const Offset(0, 7),
           ),
           BoxShadow(
             color: Colors.white.withOpacity(0.85),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+            blurRadius: 5,
+            offset: const Offset(0, -1),
           ),
         ],
       ),
@@ -449,13 +449,13 @@ class _HeroCard extends StatelessWidget {
             data.title,
             style: const TextStyle(
               color: navy,
-              fontSize: 31,
+              fontSize: 15,
               fontWeight: FontWeight.w800,
               height: 1.0,
-              letterSpacing: -1.1,
+              letterSpacing: -0.55,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           RichText(
             text: TextSpan(
               children: [
@@ -463,26 +463,26 @@ class _HeroCard extends StatelessWidget {
                   text: data.detail,
                   style: const TextStyle(
                     color: navy,
-                    fontSize: 29,
+                    fontSize: 14,
                     fontWeight: FontWeight.w800,
                     height: 1.0,
-                    letterSpacing: -1.0,
+                    letterSpacing: -0.5,
                   ),
                 ),
                 TextSpan(
                   text: ' - ${data.city}',
                   style: const TextStyle(
                     color: navy,
-                    fontSize: 25,
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
                     height: 1.0,
-                    letterSpacing: -0.8,
+                    letterSpacing: -0.4,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -490,16 +490,16 @@ class _HeroCard extends StatelessWidget {
                 '${data.price.toStringAsFixed(0)} €',
                 style: const TextStyle(
                   color: orange,
-                  fontSize: 64,
+                  fontSize: 32,
                   fontWeight: FontWeight.w800,
                   height: 0.95,
-                  letterSpacing: -2.1,
+                  letterSpacing: -1.05,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 8),
               Expanded(
                 child: Container(
-                  height: 46,
+                  height: 23,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(100),
                     gradient: const LinearGradient(
@@ -508,23 +508,23 @@ class _HeroCard extends StatelessWidget {
                     boxShadow: [
                       BoxShadow(
                         color: orange.withOpacity(0.26),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.check_rounded, color: Colors.white, size: 22),
-                      SizedBox(width: 8),
+                      Icon(Icons.check_rounded, color: Colors.white, size: 11),
+                      SizedBox(width: 4),
                       Text(
                         'Réponse rapide',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: 9,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: -0.2,
+                          letterSpacing: -0.1,
                         ),
                       ),
                     ],
@@ -533,7 +533,7 @@ class _HeroCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -543,7 +543,7 @@ class _HeroCard extends StatelessWidget {
                   bg: chipBg,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 6),
               Expanded(
                 child: _TagChip(
                   icon: Icons.location_on_outlined,
@@ -553,15 +553,15 @@ class _HeroCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           Text(
             data.description,
             style: const TextStyle(
               color: body,
-              fontSize: 20,
+              fontSize: 10,
               fontWeight: FontWeight.w500,
               height: 1.48,
-              letterSpacing: -0.2,
+              letterSpacing: -0.1,
             ),
           ),
         ],
@@ -588,34 +588,34 @@ class _PracticalInfoCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(34),
+        borderRadius: BorderRadius.circular(17),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF9B8E86).withOpacity(0.10),
-            blurRadius: 28,
-            offset: const Offset(0, 14),
+            blurRadius: 14,
+            offset: const Offset(0, 7),
           ),
           BoxShadow(
             color: blueSoft.withOpacity(0.55),
-            blurRadius: 24,
-            spreadRadius: 1,
-            offset: const Offset(0, 18),
+            blurRadius: 12,
+            spreadRadius: 0.5,
+            offset: const Offset(0, 9),
           ),
         ],
       ),
       child: Column(
         children: [
           const Padding(
-            padding: EdgeInsets.fromLTRB(22, 20, 22, 14),
+            padding: EdgeInsets.fromLTRB(11, 10, 11, 7),
             child: Row(
               children: [
                 Text(
                   'Informations pratiques',
                   style: TextStyle(
                     color: blue,
-                    fontSize: 27,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: -0.6,
+                    letterSpacing: -0.3,
                     height: 1.0,
                   ),
                 ),
@@ -625,10 +625,10 @@ class _PracticalInfoCard extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               color: const Color(0xFFFBFAFA),
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
               child: Column(
                 children: [
                   Row(
@@ -637,7 +637,7 @@ class _PracticalInfoCard extends StatelessWidget {
                         name: data.advertiserName,
                         avatarUrl: data.advertiserAvatarUrl,
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: 7),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -649,44 +649,44 @@ class _PracticalInfoCard extends StatelessWidget {
                                     text: data.advertiserName,
                                     style: const TextStyle(
                                       color: navy,
-                                      fontSize: 21,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.w800,
-                                      letterSpacing: -0.4,
+                                      letterSpacing: -0.2,
                                     ),
                                   ),
                                   TextSpan(
                                     text: ', ${data.advertiserRole}',
                                     style: const TextStyle(
                                       color: navy,
-                                      fontSize: 19,
+                                      fontSize: 9,
                                       fontWeight: FontWeight.w500,
-                                      letterSpacing: -0.2,
+                                      letterSpacing: -0.1,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 3),
                             Row(
                               children: [
-                                const Icon(Icons.star_rounded, color: orange, size: 20),
-                                const SizedBox(width: 4),
+                                const Icon(Icons.star_rounded, color: orange, size: 10),
+                                const SizedBox(width: 2),
                                 Text(
                                   data.advertiserRating.toStringAsFixed(1),
                                   style: const TextStyle(
                                     color: orange,
-                                    fontSize: 17,
+                                    fontSize: 8,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: 3),
                                 Text(
                                   data.advertiserReviewCount > 0
                                       ? '(${data.advertiserReviewCount} avis)'
                                       : '(0 avis)',
                                   style: const TextStyle(
                                     color: muted,
-                                    fontSize: 16,
+                                    fontSize: 8,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -696,7 +696,7 @@ class _PracticalInfoCard extends StatelessWidget {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F7F2),
                           borderRadius: BorderRadius.circular(40),
@@ -710,14 +710,14 @@ class _PracticalInfoCard extends StatelessWidget {
                             Icon(
                               Icons.check_circle_rounded,
                               color: data.verified ? green : muted,
-                              size: 16,
+                              size: 8,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 3),
                             Text(
                               data.verified ? 'Vérifié' : 'Profil',
                               style: const TextStyle(
                                 color: navy,
-                                fontSize: 15,
+                                fontSize: 7,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -726,7 +726,7 @@ class _PracticalInfoCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 6),
                   const Divider(height: 1, thickness: 1, color: line),
                   _InfoLine(
                     icon: Icons.handyman_outlined,
@@ -749,31 +749,31 @@ class _PracticalInfoCard extends StatelessWidget {
                     value: data.schedule,
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    padding: const EdgeInsets.symmetric(vertical: 7),
                     child: Row(
                       children: [
-                        const Icon(Icons.wallet_outlined, color: muted, size: 28),
-                        const SizedBox(width: 12),
+                        const Icon(Icons.wallet_outlined, color: muted, size: 14),
+                        const SizedBox(width: 6),
                         const Text(
                           'Délai moyen',
                           style: TextStyle(
                             color: muted,
-                            fontSize: 18,
+                            fontSize: 9,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         const Spacer(),
-                        const Icon(Icons.bolt_rounded, color: orange, size: 20),
-                        const SizedBox(width: 4),
+                        const Icon(Icons.bolt_rounded, color: orange, size: 10),
+                        const SizedBox(width: 2),
                         const Text(
                           'Réponse rapide',
                           style: TextStyle(
                             color: orange,
-                            fontSize: 17,
+                            fontSize: 8,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 4),
                         _DelayBadge(text: data.averageDelay),
                       ],
                     ),
@@ -791,24 +791,24 @@ class _PracticalInfoCard extends StatelessWidget {
                     iconColor: blue,
                     showDivider: false,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   _InlineCta(label: data.actionType == OfferActionType.booking ? 'Réserver maintenant' : 'Proposer mes services'),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 7),
                   const Row(
                     children: [
                       Expanded(child: Divider(height: 1, thickness: 1, color: line)),
-                      SizedBox(width: 10),
-                      Icon(Icons.access_time_rounded, color: muted, size: 18),
-                      SizedBox(width: 6),
+                      SizedBox(width: 5),
+                      Icon(Icons.access_time_rounded, color: muted, size: 9),
+                      SizedBox(width: 3),
                       Text(
                         'Réponse en moins d\'une heure',
                         style: TextStyle(
                           color: muted,
-                          fontSize: 15,
+                          fontSize: 7,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      SizedBox(width: 10),
+                      SizedBox(width: 5),
                       Expanded(child: Divider(height: 1, thickness: 1, color: line)),
                     ],
                   ),
@@ -838,8 +838,8 @@ class _TagChip extends StatelessWidget {
     const navy = Color(0xFF18233D);
 
     return Container(
-      height: 54,
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      height: 27,
+      padding: const EdgeInsets.symmetric(horizontal: 9),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(999),
@@ -847,17 +847,17 @@ class _TagChip extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: navy, size: 23),
-          const SizedBox(width: 8),
+          Icon(icon, color: navy, size: 11),
+          const SizedBox(width: 4),
           Flexible(
             child: Text(
               text,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: navy,
-                fontSize: 18,
+                fontSize: 9,
                 fontWeight: FontWeight.w700,
-                letterSpacing: -0.2,
+                letterSpacing: -0.1,
               ),
             ),
           ),
@@ -891,32 +891,32 @@ class _InfoLine extends StatelessWidget {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 15),
+          padding: const EdgeInsets.symmetric(vertical: 7),
           child: Row(
             children: [
-              Icon(icon, color: iconColor, size: 28),
-              const SizedBox(width: 12),
+              Icon(icon, color: iconColor, size: 14),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   label,
                   style: const TextStyle(
                     color: muted,
-                    fontSize: 18,
+                    fontSize: 9,
                     fontWeight: FontWeight.w500,
-                    letterSpacing: -0.1,
+                    letterSpacing: -0.05,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 6),
               Flexible(
                 child: Text(
                   value,
                   textAlign: TextAlign.right,
                   style: const TextStyle(
                     color: navy,
-                    fontSize: 18,
+                    fontSize: 9,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: -0.2,
+                    letterSpacing: -0.1,
                   ),
                 ),
               ),
@@ -945,10 +945,10 @@ class _DelayBadge extends StatelessWidget {
     final subline = normalized.contains('en moyenne') ? 'en moyenne' : '';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
         color: const Color(0xFFF5F8FF),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(7),
         border: Border.all(
           color: const Color(0xFFDBE6FA),
           width: 1,
@@ -960,18 +960,18 @@ class _DelayBadge extends StatelessWidget {
             headline,
             style: const TextStyle(
               color: blue,
-              fontSize: 14,
+              fontSize: 7,
               fontWeight: FontWeight.w700,
               height: 1,
             ),
           ),
           if (subline.isNotEmpty) ...[
-            const SizedBox(height: 1),
+            const SizedBox(height: 0.5),
             Text(
               subline,
               style: const TextStyle(
                 color: muted,
-                fontSize: 10.5,
+                fontSize: 5,
                 fontWeight: FontWeight.w600,
                 height: 1,
               ),
@@ -991,7 +991,7 @@ class _InlineCta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 64,
+      height: 32,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.centerLeft,
@@ -1002,13 +1002,13 @@ class _InlineCta extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0A63E7).withOpacity(0.35),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+            blurRadius: 11,
+            offset: const Offset(0, 5),
           ),
           BoxShadow(
             color: Colors.white.withOpacity(0.35),
-            blurRadius: 8,
-            offset: const Offset(0, -1),
+            blurRadius: 4,
+            offset: const Offset(0, -0.5),
           ),
         ],
       ),
@@ -1018,15 +1018,15 @@ class _InlineCta extends StatelessWidget {
           borderRadius: BorderRadius.circular(100),
           onTap: () {},
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 9),
             child: Row(
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 19,
+                  height: 19,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.22),
-                    borderRadius: BorderRadius.circular(11),
+                    borderRadius: BorderRadius.circular(5),
                     border: Border.all(
                       color: Colors.white.withOpacity(0.28),
                     ),
@@ -1034,26 +1034,26 @@ class _InlineCta extends StatelessWidget {
                   child: const Icon(
                     Icons.mail_outline_rounded,
                     color: Colors.white,
-                    size: 22,
+                    size: 11,
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 7),
                 Expanded(
                   child: Text(
                     label,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 22,
+                      fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: -0.3,
+                      letterSpacing: -0.15,
                     ),
                   ),
                 ),
                 const Icon(
                   Icons.arrow_forward_ios_rounded,
                   color: Colors.white,
-                  size: 24,
+                  size: 12,
                 ),
               ],
             ),
@@ -1075,16 +1075,16 @@ class _AdvertiserAvatar extends StatelessWidget {
     final initials = _buildInitials(name);
 
     return Container(
-      width: 62,
-      height: 62,
+      width: 31,
+      height: 31,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 2.5),
+        border: Border.all(color: Colors.white, width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
           ),
         ],
         gradient: const LinearGradient(
@@ -1136,11 +1136,11 @@ class _CircleIconButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkResponse(
-        radius: 24,
+        radius: 12,
         onTap: onTap,
         child: SizedBox(
-          width: 34,
-          height: 34,
+          width: 17,
+          height: 17,
           child: Icon(
             icon,
             color: iconColor,
@@ -1172,10 +1172,10 @@ class _AvatarFallback extends StatelessWidget {
         children: [
           Positioned(
             bottom: 0,
-            left: 9,
-            right: 9,
+            left: 4,
+            right: 4,
             child: Container(
-              height: 26,
+              height: 13,
               decoration: const BoxDecoration(
                 color: Color(0xFFDAA065),
                 shape: BoxShape.circle,
@@ -1183,30 +1183,30 @@ class _AvatarFallback extends StatelessWidget {
             ),
           ),
           const Positioned(
-            top: 14,
-            left: 18,
+            top: 7,
+            left: 9,
             child: CircleAvatar(
-              radius: 5,
+              radius: 2,
               backgroundColor: Color(0xFF50371E),
             ),
           ),
           const Positioned(
-            top: 14,
-            right: 18,
+            top: 7,
+            right: 9,
             child: CircleAvatar(
-              radius: 5,
+              radius: 2,
               backgroundColor: Color(0xFF50371E),
             ),
           ),
           Positioned(
-            top: 24,
-            left: 18,
-            right: 18,
+            top: 12,
+            left: 9,
+            right: 9,
             child: Container(
-              height: 12,
+              height: 6,
               decoration: BoxDecoration(
                 color: const Color(0xFF8B5A31).withOpacity(0.85),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(6),
               ),
             ),
           ),
