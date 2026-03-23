@@ -1965,7 +1965,14 @@ class _HomePageState extends State<HomePage>
                         bottom: 0,
                         child: Container(
                           decoration: const BoxDecoration(
-                            color: kPrestoBlue,
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color(0xFF1A73E8),
+                                Color(0xFF0D47A1),
+                              ],
+                            ),
                             borderRadius:
                                 BorderRadius.vertical(top: Radius.circular(24)),
                           ),
