@@ -2550,78 +2550,6 @@ class _HomePageState extends State<HomePage>
                   },
                 ),
 
-                const SizedBox(height: 18),
-
-                // COMMENT ÇA MARCHE
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: const BorderRadius.all(Radius.circular(16)),
-                    border: Border.all(
-                      color: kPrestoBlue.withOpacity(0.12),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Workflow premium, rapide, sans friction",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: kPrestoOrange,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                      SizedBox(height: 6),
-                      Text(
-                        "Comment ça marche ?",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          color: kPrestoBlue,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                      SizedBox(height: 12),
-                      _HowItWorksStepWithProgress(
-                        stepNumber: 1,
-                        title: "Je dépose ma demande en 60 secondes",
-                        description:
-                            "Je précise le besoin, le budget et la zone, puis l'offre part instantanément.",
-                        showLine: true,
-                      ),
-                      _HowItWorksStepWithProgress(
-                        stepNumber: 2,
-                        title: "Je reçois vite des profils qualifiés",
-                        description:
-                            "Les prestataires proches sont notifiés immédiatement et se positionnent rapidement.",
-                        showLine: true,
-                      ),
-                      _HowItWorksStepWithProgress(
-                        stepNumber: 3,
-                        title: "Je compare et je choisis sereinement",
-                        description:
-                            "J'échange, je compare les réponses et je valide le meilleur profil pour la mission.",
-                        showLine: false,
-                      ),
-                    ],
-                  ),
-                ),
-
                 const SizedBox(height: 20),
               ],
             ),
@@ -6597,7 +6525,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           reason: 'Web streaming mic failed',
           fatal: false,
         );
-        if (!context.mounted) return;
+        if (!mounted) return;
         showSuccessSnackBar(context, 'Erreur streaming micro: $e');
       }
       return;
@@ -10755,10 +10683,11 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                   'budget': newBudget ?? data['budget'],
                 });
 
+                if (!mounted || !context.mounted) return;
                 if (ctx.mounted) {
                   Navigator.of(ctx).pop();
-                  showSuccessSnackBar(context, "Annonce mise à jour ✅");
                 }
+                showSuccessSnackBar(context, "Annonce mise à jour ✅");
               },
               child: const Text("Enregistrer"),
             ),
