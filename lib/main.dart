@@ -475,6 +475,13 @@ Offer _buildOfferDetailsOffer({
           (data['rating'] is num) ? (data['rating'] as num).toDouble() : 4.7,
       offersCount:
           (data['offersCount'] is num) ? (data['offersCount'] as num).toInt() : 1,
+      reviewsCount: (data['reviewsCount'] is num)
+        ? (data['reviewsCount'] as num).toInt()
+        : (data['reviewCount'] is num)
+          ? (data['reviewCount'] as num).toInt()
+          : (data['ratingCount'] is num)
+            ? (data['ratingCount'] as num).toInt()
+            : 0,
       seniorityLabel: (data['seniorityLabel'] ?? 'Membre Presto').toString(),
       city: location.isEmpty ? 'Ville non precisee' : location,
       bio: (data['bio'] ?? '').toString(),

@@ -9,7 +9,8 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
-    "test": "npm run build && node --test \"lib/**/*.test.js\"",
+    "test": "npm run build && node --test lib/**/*.test.js",
+    "brevo:webhook:smoke": "node scripts/brevo_webhook_smoke_test.mjs",
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",

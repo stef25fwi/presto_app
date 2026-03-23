@@ -1,3 +1,10 @@
+import { setGlobalOptions } from "firebase-functions/v2";
+import { EMAIL_PROVIDER_SECRETS } from "./config/env";
+
+setGlobalOptions({
+  secrets: EMAIL_PROVIDER_SECRETS,
+});
+
 export { onUserCreated } from "./modules/auth/triggers";
 
 export { onListingPublished } from "./modules/listings/triggers";

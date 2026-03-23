@@ -6,7 +6,16 @@ function normalizeHeaders(input) {
         return {};
     const headers = input;
     return Object.fromEntries(Object.entries(headers)
-        .filter(([, value]) => typeof value === "string")
-        .map(([key, value]) => [key, String(value)]));
+        .map(([key, value]) => {
+        if (typeof value === "string")
+            return [key, value];
+        if (Array.isArray(value)) {
+            const first = value.find((v) => typeof v === "string");
+            if (typeof first === "string")
+                return [key, first];
+        }
+        return null;
+    })
+        .filter((item) => item !== null));
 }
 //# sourceMappingURL=signature.js.map

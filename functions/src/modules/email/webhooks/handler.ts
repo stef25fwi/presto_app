@@ -4,8 +4,9 @@ import { normalizeHeaders } from "./signature";
 import { db } from "../../../core/firestore";
 import { COLLECTIONS } from "../../../shared/constants";
 import { mapProviderStatusToInternal } from "./mapper";
+import { PROJECT_REGION } from "../../../config/env";
 
-export const handleEmailProviderWebhook = onRequest(async (req, res) => {
+export const handleEmailProviderWebhook = onRequest({ region: PROJECT_REGION }, async (req, res) => {
   const provider = createEmailProvider();
   const rawBody = typeof req.rawBody === "string" ? req.rawBody : req.rawBody?.toString("utf8") || "";
   const headers = normalizeHeaders(req.headers);

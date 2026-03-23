@@ -14,7 +14,8 @@ const render_html_1 = require("../renderer/render_html");
 const render_text_1 = require("../renderer/render_text");
 async function resolveTemplate(templateCode, locale, payload) {
     // 1. Essai depuis Firestore (versions dynamiques)
-    const loaded = await (0, loader_1.loadActiveTemplateVersion)(templateCode, locale);
+    const loaded = (await (0, loader_1.loadActiveTemplateVersion)(templateCode, locale))
+        || (locale === "en" ? await (0, loader_1.loadActiveTemplateVersion)(templateCode, "fr") : null);
     if (loaded) {
         return {
             subject: (0, render_text_1.renderText)(loaded.subject, payload),
@@ -26,21 +27,9 @@ async function resolveTemplate(templateCode, locale, payload) {
     const meta = (0, registry_1.getTemplateMeta)(templateCode);
     const subject = meta?.default_subject_fr ?? `PRESTO — ${templateCode}`;
     const preheader = meta?.default_preheader_fr ?? "";
-    const vars = payload;
-    const firstName = vars.firstName ?? "";
-    const htmlBody = (0, render_html_1.renderHtml)(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>{{subject}}</title></head>` +
-        `<body style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px">` +
-        `<h2 style="color:#F97316">PRESTO</h2>` +
-        `${firstName ? `<p>Bonjour {{firstName}},</p>` : ""}` +
-        `<p style="font-size:16px">{{preheader}}</p>` +
-        `<hr><p style="color:#6B7280;font-size:12px">` +
-        `Vous recevez cet e-mail car vous êtes inscrit(e) sur PRESTO. ` +
-        `<a href="https://presto.app/unsubscribe">Se désabonner</a></p></body></html>`, { ...payload, subject, preheader });
-    const textBody = (0, render_text_1.renderText)(`PRESTO\n\n${firstName ? "Bonjour {{firstName}},\n\n" : ""}${preheader}\n\n---\nPRESTŌ`, {
-        ...payload,
-        subject,
-        preheader,
-    });
+    const content = (0, registry_1.getDefaultTemplateContent)(templateCode, locale);
+    const htmlBody = (0, render_html_1.renderHtml)(content.html, { ...payload, subject, preheader });
+    const textBody = (0, render_text_1.renderText)(content.text, { ...payload, subject, preheader });
     return { subject, html: htmlBody, text: textBody };
 }
 async function processEmailJob(jobId) {

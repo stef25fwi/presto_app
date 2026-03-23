@@ -25,6 +25,60 @@
       "command": "flutter run -d web-server --web-port 8080 --web-hostname 0.0.0.0",
       "isBackground": true,
       "problemMatcher": []
+    },
+    {
+      "label": "Git: Status Snapshot",
+      "type": "shell",
+      "command": "git status --short --branch",
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: Changed Names",
+      "type": "shell",
+      "command": "git diff --name-only",
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: Add All",
+      "type": "shell",
+      "command": "git add -A",
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: Commit All",
+      "type": "shell",
+      "command": "git commit -m \"feat: update offer details and email delivery pipeline\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: Push Main",
+      "type": "shell",
+      "command": "git push origin main",
+      "problemMatcher": []
+    },
+    {
+      "label": "Functions: Build",
+      "type": "shell",
+      "command": "npm --prefix functions run build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Functions: Test",
+      "type": "shell",
+      "command": "npm --prefix functions test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Build Web Release",
+      "type": "shell",
+      "command": "flutter build web --release",
+      "problemMatcher": []
+    },
+    {
+      "label": "Firebase: Deploy",
+      "type": "shell",
+      "command": "firebase deploy",
+      "problemMatcher": []
     }
   ]
 }

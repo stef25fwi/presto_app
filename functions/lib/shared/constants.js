@@ -12,6 +12,8 @@ exports.COLLECTIONS = {
     favorites: "favorites",
     supportTickets: "support_tickets",
     reports: "reports",
+    subscriptions: "subscriptions",
+    billingInvoices: "billing_invoices",
     notificationPreferences: "notification_preferences",
     emailTemplates: "email_templates",
     emailTemplateVersions: "email_template_versions",

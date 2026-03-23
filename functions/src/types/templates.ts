@@ -31,3 +31,8 @@ export interface TemplateRegistryItem {
   default_subject_fr: string;
   default_preheader_fr: string;
 }
+
+export interface DefaultTemplateContent {
+  html: string;
+  text: string;
+}
