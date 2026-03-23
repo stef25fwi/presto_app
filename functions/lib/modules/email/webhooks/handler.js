@@ -7,7 +7,8 @@ const signature_1 = require("./signature");
 const firestore_1 = require("../../../core/firestore");
 const constants_1 = require("../../../shared/constants");
 const mapper_1 = require("./mapper");
-exports.handleEmailProviderWebhook = (0, https_1.onRequest)(async (req, res) => {
+const env_1 = require("../../../config/env");
+exports.handleEmailProviderWebhook = (0, https_1.onRequest)({ region: env_1.PROJECT_REGION }, async (req, res) => {
     const provider = (0, provider_factory_1.createEmailProvider)();
     const rawBody = typeof req.rawBody === "string" ? req.rawBody : req.rawBody?.toString("utf8") || "";
     const headers = (0, signature_1.normalizeHeaders)(req.headers);

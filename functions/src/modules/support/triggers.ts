@@ -27,6 +27,7 @@ export const onSupportTicketCreated = onDocumentCreated("support_tickets/{ticket
       recipient_email: email,
       ticketId,
       ticketUrl: `https://presto.app/support/${ticketId}`,
+      replyUrl: `https://presto.app/support/${ticketId}`,
     },
     status: "created",
   });
@@ -61,6 +62,7 @@ export const onSupportTicketReplied = onDocumentUpdated("support_tickets/{ticket
       recipient_email: email,
       ticketId,
       ticketUrl: `https://presto.app/support/${ticketId}`,
+      replyUrl: `https://presto.app/support/${ticketId}`,
     },
     status: "created",
   });

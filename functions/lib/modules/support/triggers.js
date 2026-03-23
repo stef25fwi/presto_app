@@ -29,6 +29,7 @@ exports.onSupportTicketCreated = (0, firestore_1.onDocumentCreated)("support_tic
             recipient_email: email,
             ticketId,
             ticketUrl: `https://presto.app/support/${ticketId}`,
+            replyUrl: `https://presto.app/support/${ticketId}`,
         },
         status: "created",
     });
@@ -62,6 +63,7 @@ exports.onSupportTicketReplied = (0, firestore_1.onDocumentUpdated)("support_tic
             recipient_email: email,
             ticketId,
             ticketUrl: `https://presto.app/support/${ticketId}`,
+            replyUrl: `https://presto.app/support/${ticketId}`,
         },
         status: "created",
     });
