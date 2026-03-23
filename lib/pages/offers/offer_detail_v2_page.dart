@@ -64,6 +64,16 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     return '';
   }
 
+  String _pickPostalCode(Map<String, dynamic> data) {
+    final a = _s(data['postalCode']);
+    if (a.isNotEmpty) return a;
+    final b = _s(data['postal_code']);
+    if (b.isNotEmpty) return b;
+    final c = _s(data['cp']);
+    if (c.isNotEmpty) return c;
+    return '';
+  }
+
   String _pickAnnonceurId(Map<String, dynamic> data) {
     final a = _s(data['userId']);
     if (a.isNotEmpty) return a;
@@ -276,6 +286,7 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
 
         final title = _pickTitle(data);
         final location = _pickLocation(data);
+        final postalCode = _pickPostalCode(data);
         final annonceurId = _pickAnnonceurId(data);
 
         final budget = _num(data['budget'] ?? data['price'] ?? data['amount']);
@@ -359,7 +370,7 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                 dateLine: _s(data['dateLabel'] ?? "À effectuer le 25 avril"),
                 chipLeft: _ChipSpec(label: "Rapide", bg: kPrestoBlue, fg: Colors.white),
                 chipRight: _ChipSpec(
-                  label: _s(data['chip2'] ?? "Utilitaire requis"),
+                  label: postalCode.isNotEmpty ? "$location ($postalCode)" : location,
                   bg: const Color(0xFFE9EDF3),
                   fg: const Color(0xFF243041),
                   border: const Color(0xFFD7DEE8),
