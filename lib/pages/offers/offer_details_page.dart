@@ -119,6 +119,9 @@ class PrestoOfferDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     const bg = Color(0xFFF6EFEC);
     final data = _OfferUiData.fromOffer(offer);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isCompactMobile = screenWidth <= 360;
+    final sectionGap = isCompactMobile ? 12.0 : 14.0;
 
     return Scaffold(
       backgroundColor: bg,
@@ -128,15 +131,20 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           SafeArea(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(9, 7, 9, 14),
+              padding: EdgeInsets.fromLTRB(
+                isCompactMobile ? 14 : 16,
+                isCompactMobile ? 10 : 12,
+                isCompactMobile ? 14 : 16,
+                isCompactMobile ? 20 : 24,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _TopHeader(title: data.title),
-                  const SizedBox(height: 9),
-                  _HeroCard(data: data),
-                  const SizedBox(height: 8),
-                  _PracticalInfoCard(data: data),
+                  _TopHeader(title: data.title, compact: isCompactMobile),
+                  SizedBox(height: sectionGap),
+                  _HeroCard(data: data, compact: isCompactMobile),
+                  SizedBox(height: sectionGap),
+                  _PracticalInfoCard(data: data, compact: isCompactMobile),
                 ],
               ),
             ),
@@ -360,8 +368,9 @@ class _BackgroundDecor extends StatelessWidget {
 
 class _TopHeader extends StatelessWidget {
   final String title;
+  final bool compact;
 
-  const _TopHeader({required this.title});
+  const _TopHeader({required this.title, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
@@ -369,16 +378,17 @@ class _TopHeader extends StatelessWidget {
     const blueDeep = Color(0xFF0459D9);
 
     return SizedBox(
-      height: 27,
+      height: compact ? 40 : 44,
       child: Row(
         children: [
           _CircleIconButton(
             icon: Icons.arrow_back_rounded,
             iconColor: orange,
-            size: 11,
+            size: compact ? 18 : 20,
+            compact: compact,
             onTap: () => Navigator.of(context).maybePop(),
           ),
-          const SizedBox(width: 5),
+          SizedBox(width: compact ? 8 : 10),
           Expanded(
             child: Text(
               _truncatedTitle(title),
@@ -386,17 +396,18 @@ class _TopHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: blueDeep,
-                fontSize: 13,
+                fontSize: 22,
                 fontWeight: FontWeight.w700,
-                letterSpacing: -0.3,
+                letterSpacing: -0.5,
                 height: 1.0,
-              ),
+              ).copyWith(fontSize: compact ? 20 : 22),
             ),
           ),
           _CircleIconButton(
             icon: Icons.notifications_none_rounded,
             iconColor: blueDeep,
-            size: 12,
+            size: compact ? 18 : 20,
+            compact: compact,
             onTap: () {},
           ),
         ],
@@ -413,8 +424,9 @@ class _TopHeader extends StatelessWidget {
 
 class _HeroCard extends StatelessWidget {
   final _OfferUiData data;
+  final bool compact;
 
-  const _HeroCard({required this.data});
+  const _HeroCard({required this.data, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
@@ -425,20 +437,25 @@ class _HeroCard extends StatelessWidget {
     const chipBg = Color(0xFFF1EFF7);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(11, 12, 11, 12),
+      padding: EdgeInsets.fromLTRB(
+        compact ? 18 : 22,
+        compact ? 18 : 22,
+        compact ? 18 : 22,
+        compact ? 18 : 22,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(compact ? 26 : 30),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF9B8E86).withOpacity(0.10),
-            blurRadius: 14,
-            offset: const Offset(0, 7),
+            blurRadius: compact ? 18 : 22,
+            offset: Offset(0, compact ? 8 : 10),
           ),
           BoxShadow(
             color: Colors.white.withOpacity(0.85),
-            blurRadius: 5,
-            offset: const Offset(0, -1),
+            blurRadius: compact ? 6 : 8,
+            offset: Offset(0, compact ? -1 : -2),
           ),
         ],
       ),
@@ -447,59 +464,59 @@ class _HeroCard extends StatelessWidget {
         children: [
           Text(
             data.title,
-            style: const TextStyle(
+            style: TextStyle(
               color: navy,
-              fontSize: 15,
+              fontSize: compact ? 26 : 30,
               fontWeight: FontWeight.w800,
               height: 1.0,
-              letterSpacing: -0.55,
+              letterSpacing: compact ? -0.9 : -1.0,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: compact ? 4 : 6),
           RichText(
             text: TextSpan(
               children: [
                 TextSpan(
                   text: data.detail,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: navy,
-                    fontSize: 14,
+                    fontSize: compact ? 20 : 22,
                     fontWeight: FontWeight.w800,
                     height: 1.0,
-                    letterSpacing: -0.5,
+                    letterSpacing: compact ? -0.7 : -0.8,
                   ),
                 ),
                 TextSpan(
                   text: ' - ${data.city}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: navy,
-                    fontSize: 12,
+                    fontSize: compact ? 16 : 18,
                     fontWeight: FontWeight.w500,
                     height: 1.0,
-                    letterSpacing: -0.4,
+                    letterSpacing: compact ? -0.4 : -0.5,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: compact ? 14 : 18),
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 '${data.price.toStringAsFixed(0)} €',
-                style: const TextStyle(
+                style: TextStyle(
                   color: orange,
-                  fontSize: 32,
+                  fontSize: compact ? 52 : 60,
                   fontWeight: FontWeight.w800,
                   height: 0.95,
-                  letterSpacing: -1.05,
+                  letterSpacing: compact ? -1.6 : -1.9,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: compact ? 10 : 12),
               Expanded(
                 child: Container(
-                  height: 23,
+                  height: compact ? 38 : 42,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(100),
                     gradient: const LinearGradient(
@@ -508,23 +525,23 @@ class _HeroCard extends StatelessWidget {
                     boxShadow: [
                       BoxShadow(
                         color: orange.withOpacity(0.26),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+                        blurRadius: compact ? 10 : 12,
+                        offset: Offset(0, compact ? 5 : 6),
                       ),
                     ],
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.check_rounded, color: Colors.white, size: 11),
-                      SizedBox(width: 4),
+                      Icon(Icons.check_rounded, color: Colors.white, size: compact ? 16 : 18),
+                      SizedBox(width: compact ? 4 : 6),
                       Text(
                         'Réponse rapide',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 9,
+                          fontSize: compact ? 13 : 14,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: -0.1,
+                          letterSpacing: -0.15,
                         ),
                       ),
                     ],
@@ -533,7 +550,7 @@ class _HeroCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: compact ? 12 : 14),
           Row(
             children: [
               Expanded(
@@ -541,27 +558,29 @@ class _HeroCard extends StatelessWidget {
                   icon: Icons.handyman_outlined,
                   text: data.category,
                   bg: chipBg,
+                  compact: compact,
                 ),
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: compact ? 8 : 10),
               Expanded(
                 child: _TagChip(
                   icon: Icons.location_on_outlined,
                   text: data.city,
                   bg: chipBg,
+                  compact: compact,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: compact ? 14 : 18),
           Text(
             data.description,
-            style: const TextStyle(
+            style: TextStyle(
               color: body,
-              fontSize: 10,
+              fontSize: compact ? 15 : 16,
               fontWeight: FontWeight.w500,
               height: 1.48,
-              letterSpacing: -0.1,
+              letterSpacing: compact ? -0.1 : -0.15,
             ),
           ),
         ],
@@ -572,8 +591,9 @@ class _HeroCard extends StatelessWidget {
 
 class _PracticalInfoCard extends StatelessWidget {
   final _OfferUiData data;
+  final bool compact;
 
-  const _PracticalInfoCard({required this.data});
+  const _PracticalInfoCard({required this.data, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
@@ -588,34 +608,39 @@ class _PracticalInfoCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(compact ? 28 : 32),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF9B8E86).withOpacity(0.10),
-            blurRadius: 14,
-            offset: const Offset(0, 7),
+            blurRadius: compact ? 18 : 22,
+            offset: Offset(0, compact ? 8 : 10),
           ),
           BoxShadow(
             color: blueSoft.withOpacity(0.55),
-            blurRadius: 12,
-            spreadRadius: 0.5,
-            offset: const Offset(0, 9),
+            blurRadius: compact ? 15 : 18,
+            spreadRadius: 1,
+            offset: Offset(0, compact ? 11 : 14),
           ),
         ],
       ),
       child: Column(
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(11, 10, 11, 7),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              compact ? 16 : 18,
+              compact ? 14 : 16,
+              compact ? 16 : 18,
+              compact ? 10 : 12,
+            ),
             child: Row(
               children: [
                 Text(
                   'Informations pratiques',
                   style: TextStyle(
                     color: blue,
-                    fontSize: 13,
+                    fontSize: compact ? 20 : 22,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
+                    letterSpacing: -0.4,
                     height: 1.0,
                   ),
                 ),
@@ -625,10 +650,15 @@ class _PracticalInfoCard extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               color: const Color(0xFFFBFAFA),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(compact ? 20 : 24),
             ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+              padding: EdgeInsets.fromLTRB(
+                compact ? 14 : 18,
+                compact ? 12 : 16,
+                compact ? 14 : 18,
+                compact ? 14 : 18,
+              ),
               child: Column(
                 children: [
                   Row(
@@ -636,8 +666,9 @@ class _PracticalInfoCard extends StatelessWidget {
                       _AdvertiserAvatar(
                         name: data.advertiserName,
                         avatarUrl: data.advertiserAvatarUrl,
+                        compact: compact,
                       ),
-                      const SizedBox(width: 7),
+                      SizedBox(width: compact ? 12 : 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -647,46 +678,46 @@ class _PracticalInfoCard extends StatelessWidget {
                                 children: [
                                   TextSpan(
                                     text: data.advertiserName,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: navy,
-                                      fontSize: 10,
+                                      fontSize: compact ? 17 : 20,
                                       fontWeight: FontWeight.w800,
-                                      letterSpacing: -0.2,
+                                      letterSpacing: -0.3,
                                     ),
                                   ),
                                   TextSpan(
                                     text: ', ${data.advertiserRole}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: navy,
-                                      fontSize: 9,
+                                      fontSize: compact ? 15 : 17,
                                       fontWeight: FontWeight.w500,
-                                      letterSpacing: -0.1,
+                                      letterSpacing: -0.15,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 3),
+                            SizedBox(height: compact ? 5 : 6),
                             Row(
                               children: [
-                                const Icon(Icons.star_rounded, color: orange, size: 10),
-                                const SizedBox(width: 2),
+                                Icon(Icons.star_rounded, color: orange, size: compact ? 15 : 18),
+                                SizedBox(width: compact ? 4 : 5),
                                 Text(
                                   data.advertiserRating.toStringAsFixed(1),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: orange,
-                                    fontSize: 8,
+                                    fontSize: compact ? 14 : 16,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
-                                const SizedBox(width: 3),
+                                SizedBox(width: compact ? 5 : 8),
                                 Text(
                                   data.advertiserReviewCount > 0
                                       ? '(${data.advertiserReviewCount} avis)'
                                       : '(0 avis)',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: muted,
-                                    fontSize: 8,
+                                    fontSize: compact ? 13 : 14,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -696,7 +727,10 @@ class _PracticalInfoCard extends StatelessWidget {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: compact ? 10 : 14,
+                          vertical: compact ? 6 : 8,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F7F2),
                           borderRadius: BorderRadius.circular(40),
@@ -710,14 +744,14 @@ class _PracticalInfoCard extends StatelessWidget {
                             Icon(
                               Icons.check_circle_rounded,
                               color: data.verified ? green : muted,
-                              size: 8,
+                              size: compact ? 14 : 16,
                             ),
-                            const SizedBox(width: 3),
+                            SizedBox(width: compact ? 5 : 6),
                             Text(
                               data.verified ? 'Vérifié' : 'Profil',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: navy,
-                                fontSize: 7,
+                                fontSize: compact ? 12 : 14,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -726,55 +760,59 @@ class _PracticalInfoCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: compact ? 10 : 14),
                   const Divider(height: 1, thickness: 1, color: line),
                   _InfoLine(
                     icon: Icons.handyman_outlined,
                     label: 'Catégorie',
                     value: data.category,
+                    compact: compact,
                   ),
                   _InfoLine(
                     icon: Icons.map_outlined,
                     label: 'Zone d\'intervention',
                     value: data.serviceArea,
+                    compact: compact,
                   ),
                   _InfoLine(
                     icon: Icons.check_circle_outline_rounded,
                     label: 'Déplacement possible',
                     value: data.canTravel ? 'Oui' : 'Non',
+                    compact: compact,
                   ),
                   _InfoLine(
                     icon: Icons.access_time_rounded,
                     label: 'Horaires',
                     value: data.schedule,
+                    compact: compact,
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 7),
+                    padding: EdgeInsets.symmetric(vertical: compact ? 12 : 14),
                     child: Row(
                       children: [
-                        const Icon(Icons.wallet_outlined, color: muted, size: 14),
-                        const SizedBox(width: 6),
-                        const Text(
+                        Icon(Icons.wallet_outlined, color: muted, size: compact ? 21 : 24),
+                        SizedBox(width: compact ? 9 : 12),
+                        Text(
                           'Délai moyen',
                           style: TextStyle(
                             color: muted,
-                            fontSize: 9,
+                            fontSize: compact ? 15 : 16,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         const Spacer(),
-                        const Icon(Icons.bolt_rounded, color: orange, size: 10),
-                        const SizedBox(width: 2),
-                        const Text(
+                        Icon(Icons.bolt_rounded, color: orange, size: compact ? 15 : 18),
+                        SizedBox(width: compact ? 4 : 5),
+                        Text(
                           'Réponse rapide',
                           style: TextStyle(
                             color: orange,
-                            fontSize: 8,
+                            fontSize: compact ? 13 : 14,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        _DelayBadge(text: data.averageDelay),
+                        SizedBox(width: compact ? 5 : 8),
+                        _DelayBadge(text: data.averageDelay, compact: compact),
                       ],
                     ),
                   ),
@@ -783,6 +821,7 @@ class _PracticalInfoCard extends StatelessWidget {
                     icon: Icons.account_balance_wallet_outlined,
                     label: 'Mode de paiement',
                     value: data.paymentMethod,
+                    compact: compact,
                   ),
                   _InfoLine(
                     icon: Icons.work_outline_rounded,
@@ -790,25 +829,29 @@ class _PracticalInfoCard extends StatelessWidget {
                     value: data.serviceType,
                     iconColor: blue,
                     showDivider: false,
+                    compact: compact,
                   ),
-                  const SizedBox(height: 8),
-                  _InlineCta(label: data.actionType == OfferActionType.booking ? 'Réserver maintenant' : 'Proposer mes services'),
-                  const SizedBox(height: 7),
-                  const Row(
+                  SizedBox(height: compact ? 12 : 14),
+                  _InlineCta(
+                    label: data.actionType == OfferActionType.booking ? 'Réserver maintenant' : 'Proposer mes services',
+                    compact: compact,
+                  ),
+                  SizedBox(height: compact ? 12 : 14),
+                  Row(
                     children: [
                       Expanded(child: Divider(height: 1, thickness: 1, color: line)),
-                      SizedBox(width: 5),
-                      Icon(Icons.access_time_rounded, color: muted, size: 9),
-                      SizedBox(width: 3),
+                      SizedBox(width: compact ? 7 : 10),
+                      Icon(Icons.access_time_rounded, color: muted, size: compact ? 13 : 15),
+                      SizedBox(width: compact ? 4 : 5),
                       Text(
                         'Réponse en moins d\'une heure',
                         style: TextStyle(
                           color: muted,
-                          fontSize: 7,
+                          fontSize: compact ? 12 : 13,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      SizedBox(width: 5),
+                      SizedBox(width: compact ? 7 : 10),
                       Expanded(child: Divider(height: 1, thickness: 1, color: line)),
                     ],
                   ),
@@ -826,11 +869,13 @@ class _TagChip extends StatelessWidget {
   final IconData icon;
   final String text;
   final Color bg;
+  final bool compact;
 
   const _TagChip({
     required this.icon,
     required this.text,
     required this.bg,
+    this.compact = false,
   });
 
   @override
@@ -838,8 +883,8 @@ class _TagChip extends StatelessWidget {
     const navy = Color(0xFF18233D);
 
     return Container(
-      height: 27,
-      padding: const EdgeInsets.symmetric(horizontal: 9),
+      height: compact ? 44 : 48,
+      padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 14),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(999),
@@ -847,17 +892,17 @@ class _TagChip extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: navy, size: 11),
-          const SizedBox(width: 4),
+          Icon(icon, color: navy, size: compact ? 16 : 18),
+          SizedBox(width: compact ? 5 : 6),
           Flexible(
             child: Text(
               text,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 color: navy,
-                fontSize: 9,
+                fontSize: compact ? 15 : 16,
                 fontWeight: FontWeight.w700,
-                letterSpacing: -0.1,
+                letterSpacing: -0.15,
               ),
             ),
           ),
@@ -873,6 +918,7 @@ class _InfoLine extends StatelessWidget {
   final String value;
   final Color iconColor;
   final bool showDivider;
+  final bool compact;
 
   const _InfoLine({
     required this.icon,
@@ -880,6 +926,7 @@ class _InfoLine extends StatelessWidget {
     required this.value,
     this.iconColor = const Color(0xFF6C7384),
     this.showDivider = true,
+    this.compact = false,
   });
 
   @override
@@ -891,32 +938,32 @@ class _InfoLine extends StatelessWidget {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 7),
+          padding: EdgeInsets.symmetric(vertical: compact ? 10 : 12),
           child: Row(
             children: [
-              Icon(icon, color: iconColor, size: 14),
-              const SizedBox(width: 6),
+              Icon(icon, color: iconColor, size: compact ? 20 : 22),
+              SizedBox(width: compact ? 8 : 10),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: muted,
-                    fontSize: 9,
+                    fontSize: compact ? 15 : 16,
                     fontWeight: FontWeight.w500,
-                    letterSpacing: -0.05,
+                    letterSpacing: -0.1,
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: compact ? 8 : 10),
               Flexible(
                 child: Text(
                   value,
                   textAlign: TextAlign.right,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: navy,
-                    fontSize: 9,
+                    fontSize: compact ? 15 : 16,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: -0.1,
+                    letterSpacing: -0.15,
                   ),
                 ),
               ),
@@ -931,8 +978,9 @@ class _InfoLine extends StatelessWidget {
 
 class _DelayBadge extends StatelessWidget {
   final String text;
+  final bool compact;
 
-  const _DelayBadge({required this.text});
+  const _DelayBadge({required this.text, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
@@ -945,10 +993,13 @@ class _DelayBadge extends StatelessWidget {
     final subline = normalized.contains('en moyenne') ? 'en moyenne' : '';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 7 : 8,
+        vertical: compact ? 3 : 4,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFF5F8FF),
-        borderRadius: BorderRadius.circular(7),
+        borderRadius: BorderRadius.circular(compact ? 9 : 10),
         border: Border.all(
           color: const Color(0xFFDBE6FA),
           width: 1,
@@ -958,20 +1009,20 @@ class _DelayBadge extends StatelessWidget {
         children: [
           Text(
             headline,
-            style: const TextStyle(
+            style: TextStyle(
               color: blue,
-              fontSize: 7,
+              fontSize: compact ? 11 : 12,
               fontWeight: FontWeight.w700,
               height: 1,
             ),
           ),
           if (subline.isNotEmpty) ...[
-            const SizedBox(height: 0.5),
+            SizedBox(height: compact ? 0.5 : 1),
             Text(
               subline,
-              style: const TextStyle(
+              style: TextStyle(
                 color: muted,
-                fontSize: 5,
+                fontSize: compact ? 8 : 9,
                 fontWeight: FontWeight.w600,
                 height: 1,
               ),
@@ -985,13 +1036,14 @@ class _DelayBadge extends StatelessWidget {
 
 class _InlineCta extends StatelessWidget {
   final String label;
+  final bool compact;
 
-  const _InlineCta({required this.label});
+  const _InlineCta({required this.label, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 32,
+      height: compact ? 56 : 62,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.centerLeft,
@@ -1002,13 +1054,13 @@ class _InlineCta extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0A63E7).withOpacity(0.35),
-            blurRadius: 11,
-            offset: const Offset(0, 5),
+            blurRadius: compact ? 15 : 18,
+            offset: Offset(0, compact ? 7 : 8),
           ),
           BoxShadow(
             color: Colors.white.withOpacity(0.35),
-            blurRadius: 4,
-            offset: const Offset(0, -0.5),
+            blurRadius: compact ? 5 : 6,
+            offset: const Offset(0, -1),
           ),
         ],
       ),
@@ -1018,42 +1070,42 @@ class _InlineCta extends StatelessWidget {
           borderRadius: BorderRadius.circular(100),
           onTap: () {},
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 9),
+            padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 16),
             child: Row(
               children: [
                 Container(
-                  width: 19,
-                  height: 19,
+                  width: compact ? 28 : 30,
+                  height: compact ? 28 : 30,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.22),
-                    borderRadius: BorderRadius.circular(5),
+                    borderRadius: BorderRadius.circular(compact ? 7 : 8),
                     border: Border.all(
                       color: Colors.white.withOpacity(0.28),
                     ),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.mail_outline_rounded,
                     color: Colors.white,
-                    size: 11,
+                    size: compact ? 16 : 18,
                   ),
                 ),
-                const SizedBox(width: 7),
+                SizedBox(width: compact ? 8 : 10),
                 Expanded(
                   child: Text(
                     label,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
-                      fontSize: 11,
+                      fontSize: compact ? 17 : 19,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: -0.15,
+                      letterSpacing: -0.2,
                     ),
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios_rounded,
                   color: Colors.white,
-                  size: 12,
+                  size: compact ? 14 : 16,
                 ),
               ],
             ),
@@ -1067,24 +1119,25 @@ class _InlineCta extends StatelessWidget {
 class _AdvertiserAvatar extends StatelessWidget {
   final String name;
   final String avatarUrl;
+  final bool compact;
 
-  const _AdvertiserAvatar({required this.name, required this.avatarUrl});
+  const _AdvertiserAvatar({required this.name, required this.avatarUrl, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
     final initials = _buildInitials(name);
 
     return Container(
-      width: 31,
-      height: 31,
+      width: compact ? 52 : 58,
+      height: compact ? 52 : 58,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 1),
+        border: Border.all(color: Colors.white, width: compact ? 1.5 : 2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+            blurRadius: compact ? 6 : 8,
+            offset: Offset(0, compact ? 2 : 3),
           ),
         ],
         gradient: const LinearGradient(
@@ -1123,12 +1176,14 @@ class _CircleIconButton extends StatelessWidget {
   final Color iconColor;
   final double size;
   final VoidCallback onTap;
+  final bool compact;
 
   const _CircleIconButton({
     required this.icon,
     required this.iconColor,
     required this.size,
     required this.onTap,
+    this.compact = false,
   });
 
   @override
@@ -1136,11 +1191,11 @@ class _CircleIconButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkResponse(
-        radius: 12,
+        radius: compact ? 20 : 22,
         onTap: onTap,
         child: SizedBox(
-          width: 17,
-          height: 17,
+          width: compact ? 28 : 30,
+          height: compact ? 28 : 30,
           child: Icon(
             icon,
             color: iconColor,
