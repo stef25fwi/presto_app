@@ -3327,6 +3327,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   final ScrollController _scrollController = ScrollController();
 
   bool _showFilters = false; // Panneau de filtres rétracté au départ
+  int _lastResultCount = 0;
 
   late final Map<String, String> _deptToRegion = _buildDeptToRegion();
 
@@ -3988,53 +3989,47 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     if (_activeSearchQuery != null && _activeSearchQuery!.isNotEmpty)
       activeFiltersCount++;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(26),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(26),
-          onTap: () => setState(() => _showFilters = !_showFilters),
-          child: Container(
-            height: 72,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.70),
-              borderRadius: BorderRadius.circular(26),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x09000000),
-                  blurRadius: 14,
-                  offset: Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFF6F0F2),
-                borderRadius: BorderRadius.circular(18),
+    return Material(
+      color: Colors.white.withValues(alpha: 0.70),
+      child: InkWell(
+        onTap: () => setState(() => _showFilters = !_showFilters),
+        child: Container(
+          height: 56,
+          color: const Color(0xFFF6F0F2),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Icon(
+                _showFilters ? Icons.tune : Icons.tune_rounded,
+                size: 22,
+                color: const Color(0xFF686A8A),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Icon(
-                    _showFilters ? Icons.tune : Icons.tune_rounded,
-                    size: 24,
-                    color: const Color(0xFF686A8A),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
                       'Filtres',
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                         color: Color(0xFF4F5371),
                         letterSpacing: -0.2,
                       ),
                     ),
-                  ),
+                    Text(
+                      '$_lastResultCount annonce${_lastResultCount > 1 ? 's' : ''}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                        color: Color(0xFF8A8CA8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
                   if (activeFiltersCount > 0)
                     Container(
                       height: 34,
@@ -4053,7 +4048,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                         ),
                       ),
                     ),
-                  if (activeFiltersCount > 0) const SizedBox(width: 10),
+                  if (activeFiltersCount > 0) const SizedBox(width: 8),
                   if (activeFiltersCount > 0)
                     GestureDetector(
                       onTap: _resetFilters,
@@ -4064,8 +4059,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       ),
                     ),
                 ],
-              ),
-            ),
           ),
         ),
       ),
@@ -4094,8 +4087,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
               children: [
                 Container(
                   width: double.infinity,
+                  height: kToolbarHeight,
                   color: kPrestoOrange,
-                  padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 12, 0),
                   child: Row(
                     children: [
                       Expanded(
@@ -4213,6 +4207,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
                     // Nombre après filtrage
                     final int resultCount = docs.length;
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted && _lastResultCount != resultCount) {
+                        setState(() => _lastResultCount = resultCount);
+                      }
+                    });
 
                     if (docs.isEmpty) {
                       return Column(
@@ -4250,27 +4249,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
                     return Column(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 10, 24, 8),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.grid_view_rounded,
-                                size: 20,
-                                color: _offersOrange,
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                '$resultCount annonce${resultCount > 1 ? 's' : ''}',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: _offersNavy,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                         Expanded(
                           child: ListView.builder(
                             controller: _scrollController,
@@ -4325,7 +4303,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
                               return RepaintBoundary(
                                 child: Padding(
-                                  padding: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.only(bottom: 6),
                                   child: _OfferBrowseTile(
                                     onTap: () {
                                       _logOfferClicked(offerId, title);
