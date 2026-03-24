@@ -4035,43 +4035,28 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           child: SafeArea(
             child: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 0),
+                Container(
+                  width: double.infinity,
+                  color: kPrestoOrange,
+                  padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
                   child: Row(
                     children: [
-                      IconButton(
-                        onPressed: () => Navigator.of(context).maybePop(),
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          color: _offersOrange,
-                          size: 28,
-                        ),
-                        splashRadius: 22,
-                        padding: EdgeInsets.zero,
-                      ),
-                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           baseTitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            height: 1.0,
-                            fontWeight: FontWeight.w700,
-                            color: _offersNavy,
-                            letterSpacing: -0.8,
-                          ),
+                          style: kPrestoAppBarTitleStyle,
                         ),
                       ),
                       IconButton(
                         onPressed: () {},
                         icon: const Icon(
                           Icons.notifications_none_rounded,
-                          color: _offersOrange,
-                          size: 28,
+                          color: Colors.white,
+                          size: 26,
                         ),
-                        splashRadius: 22,
+                        splashRadius: 20,
                         padding: EdgeInsets.zero,
                       ),
                     ],
@@ -4247,7 +4232,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                           child: ListView.builder(
                             controller: _scrollController,
                             physics: const ClampingScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(24, 0, 24, 132),
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 132),
                             addAutomaticKeepAlives: true,
                             addRepaintBoundaries: true,
                             itemCount: _totalItems,
@@ -4325,7 +4310,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                       publishedText: publishedText,
                                       price: budget,
                                       isUrgent: isUrgent,
-                                      emoji: _categoryEmoji(category),
+                                      icon: _categoryIcon(category),
                                     ),
                                   ),
                                 ),
@@ -4758,25 +4743,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     }
   }
 
-  String _categoryEmoji(String category) {
-    switch (category.toLowerCase()) {
-      case 'plomberie':
-        return '🔧';
-      case 'bricolage':
-        return '🛠️';
-      case 'jardinage':
-        return '🛻';
-      case 'menage':
-      case 'ménage':
-        return '🧹';
-      case 'demenagement':
-      case 'déménagement':
-        return '📦';
-      default:
-        return '💼';
-    }
-  }
-
   bool _isQuickResponse(Map<String, dynamic> data) {
     final dynamic direct = data['quickResponse'] ?? data['isQuickResponse'];
     if (direct is bool) return direct;
@@ -4892,7 +4858,7 @@ class _OfferBrowseTileData {
   final String publishedText;
   final int price;
   final bool isUrgent;
-  final String emoji;
+  final IconData icon;
 
   const _OfferBrowseTileData({
     required this.title,
@@ -4900,7 +4866,7 @@ class _OfferBrowseTileData {
     required this.publishedText,
     required this.price,
     required this.isUrgent,
-    required this.emoji,
+    required this.icon,
   });
 }
 
@@ -4938,19 +4904,19 @@ class _OfferBrowseTile extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(
-                  width: 30,
-                  child: Text(
-                    data.emoji,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 21),
+                  width: 26,
+                  child: Icon(
+                    data.icon,
+                    size: 20,
+                    color: _ConsultOffersPageState._offersNavy.withValues(alpha: 0.72),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -4996,7 +4962,7 @@ class _OfferBrowseTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 110),
                   child: Column(
@@ -5039,6 +5005,7 @@ class _OfferStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 38,
+      constraints: BoxConstraints(minWidth: isUrgent ? 78 : 106),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
