@@ -216,6 +216,12 @@ class AccountSocialAuthActions {
         case AuthorizationErrorCode.canceled:
           msg = 'Connexion Apple annulée.';
           break;
+        case AuthorizationErrorCode.credentialExport:
+          msg = 'Export des identifiants Apple non pris en charge sur cet appareil.';
+          break;
+        case AuthorizationErrorCode.credentialImport:
+          msg = 'Import des identifiants Apple non pris en charge sur cet appareil.';
+          break;
         case AuthorizationErrorCode.failed:
           msg = 'Échec de l\'authentification Apple. Réessaye.';
           break;
@@ -230,6 +236,9 @@ class AccountSocialAuthActions {
           break;
         case AuthorizationErrorCode.unknown:
           msg = 'Erreur Apple inconnue. Réessaye.';
+          break;
+        default:
+          msg = 'Erreur Apple inattendue. Réessaye.';
           break;
       }
       showErrorSnackBar(context, msg);
