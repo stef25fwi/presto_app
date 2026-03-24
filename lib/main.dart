@@ -3079,6 +3079,12 @@ String _friendlyFirestoreErrorMessage(Object error) {
 }
 
 class _ConsultOffersPageState extends State<ConsultOffersPage> {
+  static const Color _offersBg = Color(0xFFF6F1F1);
+  static const Color _offersNavy = Color(0xFF1E2554);
+  static const Color _offersOrange = Color(0xFFFF7A00);
+  static const Color _offersSoftText = Color(0xFF626584);
+  static const Color _offersCardBorder = Color(0xFFF0E8E8);
+
   // --- Normalisation (réduction index) ---
   String _slugId(String input) {
     final s = input
@@ -3926,74 +3932,82 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       activeFiltersCount++;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+      padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(30),
         child: InkWell(
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(30),
           onTap: () => setState(() => _showFilters = !_showFilters),
           child: Container(
-            height: 72,
-            padding: const EdgeInsets.symmetric(horizontal: 18),
+            height: 86,
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.68),
-              borderRadius: BorderRadius.circular(26),
-              border: Border.all(color: const Color(0xFFF0E9E9)),
+              color: Colors.white.withValues(alpha: 0.70),
+              borderRadius: BorderRadius.circular(30),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x0F000000),
-                  blurRadius: 24,
+                  color: Color(0x09000000),
+                  blurRadius: 18,
                   offset: Offset(0, 10),
                 ),
               ],
             ),
-            child: Row(
-              children: [
-                Icon(
-                  _showFilters ? Icons.tune : Icons.tune_rounded,
-                  size: 28,
-                  color: const Color(0xFF676C87),
-                ),
-                const SizedBox(width: 14),
-                const Expanded(
-                  child: Text(
-                    'Filtres',
-                    style: TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF4C526F),
-                    ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF6F0F2),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Row(
+                children: [
+                  Icon(
+                    _showFilters ? Icons.tune : Icons.tune_rounded,
+                    size: 28,
+                    color: const Color(0xFF686A8A),
                   ),
-                ),
-                if (activeFiltersCount > 0)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF7A00),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
+                  const SizedBox(width: 16),
+                  const Expanded(
                     child: Text(
-                      '$activeFiltersCount',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                      'Filtres',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF4F5371),
+                        letterSpacing: -0.2,
                       ),
                     ),
                   ),
-                if (activeFiltersCount > 0) const SizedBox(width: 8),
-                if (activeFiltersCount > 0)
-                  GestureDetector(
-                    onTap: _resetFilters,
-                    child: const Icon(
-                      Icons.close_rounded,
-                      size: 20,
-                      color: Color(0xFFFF7A00),
+                  if (activeFiltersCount > 0)
+                    Container(
+                      height: 34,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: _offersOrange,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '$activeFiltersCount',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                  ),
-              ],
+                  if (activeFiltersCount > 0) const SizedBox(width: 10),
+                  if (activeFiltersCount > 0)
+                    GestureDetector(
+                      onTap: _resetFilters,
+                      child: const Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: _offersOrange,
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -4011,7 +4025,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: const Color(0xFFF7F1F0),
+        backgroundColor: _offersBg,
         body: AnimatedPadding(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
@@ -4022,28 +4036,31 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
                   child: Row(
                     children: [
                       IconButton(
                         onPressed: () => Navigator.of(context).maybePop(),
                         icon: const Icon(
-                          Icons.arrow_back_rounded,
-                          color: Color(0xFFFF7A00),
-                          size: 34,
+                          Icons.arrow_back_ios_new_rounded,
+                          color: _offersOrange,
+                          size: 30,
                         ),
+                        splashRadius: 22,
+                        padding: EdgeInsets.zero,
                       ),
-                      const SizedBox(width: 2),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           baseTitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1B2144),
-                            letterSpacing: -0.5,
+                            fontSize: 28,
+                            height: 1.0,
+                            fontWeight: FontWeight.w700,
+                            color: _offersNavy,
+                            letterSpacing: -0.8,
                           ),
                         ),
                       ),
@@ -4051,9 +4068,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                         onPressed: () {},
                         icon: const Icon(
                           Icons.notifications_none_rounded,
-                          color: Color(0xFFFF7A00),
-                          size: 31,
+                          color: _offersOrange,
+                          size: 32,
                         ),
+                        splashRadius: 22,
+                        padding: EdgeInsets.zero,
                       ),
                     ],
                   ),
@@ -4171,21 +4190,21 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       return Column(
                         children: [
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+                            padding: const EdgeInsets.fromLTRB(24, 18, 24, 12),
                             child: Row(
                               children: const [
                                 Icon(
                                   Icons.grid_view_rounded,
                                   size: 20,
-                                  color: Color(0xFFFF7A00),
+                                  color: _offersOrange,
                                 ),
                                 SizedBox(width: 10),
                                 Text(
                                   '0 annonce',
                                   style: TextStyle(
-                                    fontSize: 20,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF1D2340),
+                                    color: _offersNavy,
                                   ),
                                 ),
                               ],
@@ -4204,21 +4223,21 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     return Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+                          padding: const EdgeInsets.fromLTRB(24, 18, 24, 12),
                           child: Row(
                             children: [
                               const Icon(
                                 Icons.grid_view_rounded,
                                 size: 20,
-                                color: Color(0xFFFF7A00),
+                                color: _offersOrange,
                               ),
                               const SizedBox(width: 10),
                               Text(
                                 '$resultCount annonce${resultCount > 1 ? 's' : ''}',
                                 style: const TextStyle(
-                                  fontSize: 20,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF1D2340),
+                                  color: _offersNavy,
                                 ),
                               ),
                             ],
@@ -4228,7 +4247,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                           child: ListView.builder(
                             controller: _scrollController,
                             physics: const ClampingScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
+                            padding: const EdgeInsets.fromLTRB(24, 0, 24, 132),
                             addAutomaticKeepAlives: true,
                             addRepaintBoundaries: true,
                             itemCount: _totalItems,
@@ -4255,26 +4274,26 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                               final title =
                                   (data['title'] ?? 'Sans titre') as String;
 
-                                final city = ((data['city'] ?? data['location']) ??
+                              final city = ((data['city'] ?? data['location']) ??
                                     'Lieu non précisé')
                                   .toString();
-                                final category = (data['category'] ??
+                              final category = (data['category'] ??
                                     'Catégorie non précisée')
                                   .toString();
-                                final budgetRaw = data['budget'] ?? data['price'];
-                                final int budget = budgetRaw is num
+                              final budgetRaw = data['budget'] ?? data['price'];
+                              final int budget = budgetRaw is num
                                   ? budgetRaw.round()
                                   : int.tryParse(budgetRaw?.toString() ?? '') ?? 0;
-                                final publishedAge =
+                              final publishedAge =
                                   _ageLabelFromCreatedAt(data['createdAt']);
-                                final publishedText = publishedAge.isEmpty
+                              final publishedText = publishedAge.isEmpty
                                   ? 'Publication récente'
                                   : 'Publié il y a $publishedAge';
-                                final quickResponse = _isQuickResponse(data);
+                              final quickResponse = _isQuickResponse(data);
 
                               return RepaintBoundary(
                                 child: Padding(
-                                  padding: const EdgeInsets.only(bottom: 14),
+                                  padding: const EdgeInsets.only(bottom: 18),
                                   child: _OfferBrowseTile(
                                     onTap: () {
                                       _logOfferClicked(offerId, title);
@@ -4293,13 +4312,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                       );
                                     },
                                     data: _OfferBrowseTileData(
-                                      icon: _categoryIcon(category),
                                       title: title,
-                                      city: city,
-                                      category: category,
-                                      price: budget,
+                                      subtitle: '$city · $category',
                                       publishedText: publishedText,
+                                      price: budget,
                                       quickResponse: quickResponse,
+                                      emoji: _categoryEmoji(category),
                                     ),
                                   ),
                                 ),
@@ -4732,6 +4750,25 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     }
   }
 
+  String _categoryEmoji(String category) {
+    switch (category.toLowerCase()) {
+      case 'plomberie':
+        return '🔧';
+      case 'bricolage':
+        return '🛠️';
+      case 'jardinage':
+        return '🛻';
+      case 'menage':
+      case 'ménage':
+        return '🧹';
+      case 'demenagement':
+      case 'déménagement':
+        return '📦';
+      default:
+        return '💼';
+    }
+  }
+
   bool _isQuickResponse(Map<String, dynamic> data) {
     final dynamic direct = data['quickResponse'] ?? data['isQuickResponse'];
     if (direct is bool) return direct;
@@ -4842,22 +4879,20 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 }
 
 class _OfferBrowseTileData {
-  final IconData icon;
   final String title;
-  final String city;
-  final String category;
-  final int price;
+  final String subtitle;
   final String publishedText;
+  final int price;
   final bool quickResponse;
+  final String emoji;
 
   const _OfferBrowseTileData({
-    required this.icon,
     required this.title,
-    required this.city,
-    required this.category,
-    required this.price,
+    required this.subtitle,
     required this.publishedText,
+    required this.price,
     required this.quickResponse,
+    required this.emoji,
   });
 }
 
@@ -4880,147 +4915,202 @@ class _OfferBrowseTile extends StatelessWidget {
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.96),
+            color: Colors.white.withValues(alpha: 0.96),
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
-              color: const Color(0xFFF0EAEA),
+              color: _ConsultOffersPageState._offersCardBorder,
               width: 1,
             ),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x12000000),
+                color: Color(0x0C000000),
                 blurRadius: 24,
                 offset: Offset(0, 10),
               ),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _OfferMainContent(data: data),
-                ),
-                const SizedBox(width: 16),
-                _OfferAside(data: data),
-              ],
-            ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 430;
+
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 18, 18),
+                child: compact
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: SizedBox(
+                                  width: 34,
+                                  child: Text(
+                                    data.emoji,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(fontSize: 24),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      data.title,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        height: 1.05,
+                                        fontWeight: FontWeight.w700,
+                                        color: _ConsultOffersPageState._offersNavy,
+                                        letterSpacing: -0.7,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      data.subtitle,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 17,
+                                        height: 1.15,
+                                        fontWeight: FontWeight.w500,
+                                        color: _ConsultOffersPageState._offersNavy.withValues(alpha: 0.82),
+                                        letterSpacing: -0.2,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      data.publishedText,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        height: 1.0,
+                                        fontWeight: FontWeight.w500,
+                                        color: _ConsultOffersPageState._offersSoftText,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Text(
+                                '${data.price} €',
+                                style: const TextStyle(
+                                  fontSize: 32,
+                                  height: 1.0,
+                                  fontWeight: FontWeight.w700,
+                                  color: _ConsultOffersPageState._offersOrange,
+                                  letterSpacing: -1.2,
+                                ),
+                              ),
+                              const Spacer(),
+                              Flexible(
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: data.quickResponse
+                                      ? const _QuickResponseBadge()
+                                      : const _StandardResponseBadge(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: SizedBox(
+                              width: 34,
+                              child: Text(
+                                data.emoji,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 24),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  data.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    height: 1.05,
+                                    fontWeight: FontWeight.w700,
+                                    color: _ConsultOffersPageState._offersNavy,
+                                    letterSpacing: -0.7,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  data.subtitle,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    height: 1.15,
+                                    fontWeight: FontWeight.w500,
+                                    color: _ConsultOffersPageState._offersNavy.withValues(alpha: 0.82),
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  data.publishedText,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    height: 1.0,
+                                    fontWeight: FontWeight.w500,
+                                    color: _ConsultOffersPageState._offersSoftText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 152),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '${data.price} €',
+                                  textAlign: TextAlign.right,
+                                  style: const TextStyle(
+                                    fontSize: 34,
+                                    height: 1.0,
+                                    fontWeight: FontWeight.w700,
+                                    color: _ConsultOffersPageState._offersOrange,
+                                    letterSpacing: -1.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 18),
+                                data.quickResponse
+                                    ? const _QuickResponseBadge()
+                                    : const _StandardResponseBadge(),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+              );
+            },
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _OfferMainContent extends StatelessWidget {
-  final _OfferBrowseTileData data;
-
-  const _OfferMainContent({
-    required this.data,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const titleColor = Color(0xFF171E45);
-    const mutedColor = Color(0xFF4E5476);
-    const subtleColor = Color(0xFF5B607D);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 3),
-              child: Icon(
-                data.icon,
-                size: 24,
-                color: const Color(0xFF636A93),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                data.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 20,
-                  height: 1.05,
-                  fontWeight: FontWeight.w900,
-                  color: titleColor,
-                  letterSpacing: -0.6,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Padding(
-          padding: const EdgeInsets.only(left: 36),
-          child: Text(
-            '${data.city} • ${data.category}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 16,
-              height: 1.15,
-              fontWeight: FontWeight.w500,
-              color: mutedColor,
-              letterSpacing: -0.1,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.only(left: 36),
-          child: Text(
-            data.publishedText,
-            style: const TextStyle(
-              fontSize: 15.5,
-              height: 1.1,
-              fontWeight: FontWeight.w500,
-              color: subtleColor,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _OfferAside extends StatelessWidget {
-  final _OfferBrowseTileData data;
-
-  const _OfferAside({
-    required this.data,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 128, maxWidth: 150),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            '${data.price} €',
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              fontSize: 32,
-              height: 1,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFFFF7A00),
-              letterSpacing: -1.4,
-            ),
-          ),
-          const SizedBox(height: 16),
-          data.quickResponse
-              ? const _QuickResponseBadge()
-              : const _StandardResponseBadge(),
-        ],
       ),
     );
   }
@@ -5032,23 +5122,23 @@ class _QuickResponseBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
         gradient: const LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [
-            Color(0xFFF6B84A),
-            Color(0xFFFF7C08),
+            Color(0xFFFFC04A),
+            Color(0xFFFF7A00),
           ],
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x22FF8A00),
-            blurRadius: 14,
-            offset: Offset(0, 6),
+            color: _ConsultOffersPageState._offersOrange.withValues(alpha: 0.22),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -5057,17 +5147,18 @@ class _QuickResponseBadge extends StatelessWidget {
         children: [
           Icon(
             Icons.check_rounded,
-            size: 22,
+            size: 20,
             color: Colors.white,
           ),
           SizedBox(width: 8),
           Text(
             'Réponse rapide',
             style: TextStyle(
-              fontSize: 14.8,
+              fontSize: 16,
               height: 1,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
               color: Colors.white,
+              letterSpacing: -0.2,
             ),
           ),
         ],
@@ -5082,8 +5173,8 @@ class _StandardResponseBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
       decoration: BoxDecoration(
         color: const Color(0xFFF3EEF4),
         borderRadius: BorderRadius.circular(999),
@@ -5092,7 +5183,7 @@ class _StandardResponseBadge extends StatelessWidget {
       child: const Text(
         'Standard',
         style: TextStyle(
-          fontSize: 14.5,
+          fontSize: 15,
           fontWeight: FontWeight.w700,
           color: Color(0xFF666C87),
         ),
