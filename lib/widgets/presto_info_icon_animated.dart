@@ -98,29 +98,17 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white,
-                        border:
-                            Border.all(color: kBlue, width: 3.0), // liseré bleu
+                        color: kBlue,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          width: 2.2,
+                        ),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(
-                            3.0), // espace pour liseré interne
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.95),
-                              width: 2.0,
-                            ),
-                          ),
-                          child: Center(
-                            child: Icon(
-                              Icons.info_rounded,
-                              color: kBlue,
-                              size: widget.size * 0.70,
-                            ),
-                          ),
+                      child: Center(
+                        child: Icon(
+                          Icons.info_rounded,
+                          color: Colors.white,
+                          size: widget.size * 0.68,
                         ),
                       ),
                     ),

@@ -47,7 +47,6 @@ import 'widgets/account_build_version_panel.dart';
 import 'widgets/account_profile_sections.dart';
 import 'widgets/entrepreneur_toolbox_slide.dart';
 import 'widgets/home_bottom_nav_item.dart';
-import 'widgets/offer_card.dart';
 import 'widgets/presto_info_icon_animated.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/phone_input_field.dart';
@@ -2262,6 +2261,7 @@ class _HomePageState extends State<HomePage>
                                         _buildSlideIllustration(
                                           slide,
                                           index,
+                                          onTap: onSlideTap,
                                         ),
                                       ],
                                     ],
@@ -3925,96 +3925,78 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     if (_activeSearchQuery != null && _activeSearchQuery!.isNotEmpty)
       activeFiltersCount++;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: InkWell(
-              onTap: () {
-                setState(() => _showFilters = !_showFilters);
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: activeFiltersCount > 0
-                      ? kPrestoOrange.withOpacity(0.1)
-                      : Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: activeFiltersCount > 0
-                        ? kPrestoOrange
-                        : Colors.grey.shade300,
-                    width: 1.5,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(26),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(26),
+          onTap: () => setState(() => _showFilters = !_showFilters),
+          child: Container(
+            height: 72,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.68),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(color: const Color(0xFFF0E9E9)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x0F000000),
+                  blurRadius: 24,
+                  offset: Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _showFilters ? Icons.tune : Icons.tune_rounded,
+                  size: 28,
+                  color: const Color(0xFF676C87),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Text(
+                    'Filtres',
+                    style: TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF4C526F),
+                    ),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _showFilters ? Icons.filter_list_off : Icons.filter_list,
-                      size: 22,
-                      color: activeFiltersCount > 0
-                          ? kPrestoOrange
-                          : Colors.grey.shade700,
+                if (activeFiltersCount > 0)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF7A00),
+                      borderRadius: BorderRadius.circular(999),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _showFilters ? 'Masquer les filtres' : 'Filtres',
-                        style: TextStyle(
-                          color: activeFiltersCount > 0
-                              ? kPrestoOrange
-                              : Colors.grey.shade700,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
+                    child: Text(
+                      '$activeFiltersCount',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
                       ),
                     ),
-                    if (activeFiltersCount > 0) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: kPrestoOrange,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '$activeFiltersCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      InkWell(
-                        onTap: () {
-                          _resetFilters();
-                        },
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          child: Icon(
-                            Icons.close,
-                            size: 18,
-                            color: kPrestoOrange,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+                  ),
+                if (activeFiltersCount > 0) const SizedBox(width: 8),
+                if (activeFiltersCount > 0)
+                  GestureDetector(
+                    onTap: _resetFilters,
+                    child: const Icon(
+                      Icons.close_rounded,
+                      size: 20,
+                      color: Color(0xFFFF7A00),
+                    ),
+                  ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -4029,39 +4011,53 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        // Fond blanc derrière les annonces pour un look plus clair
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-          title: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              baseTitle,
-              style: kPrestoAppBarTitleStyle,
-            ),
-          ),
-          backgroundColor: kPrestoOrange,
-          foregroundColor: Colors.white,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.home_outlined),
-              onPressed: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const HomePage()),
-                  (route) => false,
-                );
-              },
-            ),
-          ],
-        ),
+        backgroundColor: const Color(0xFFF7F1F0),
         body: AnimatedPadding(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          child: Column(
-            children: [
+          child: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: Color(0xFFFF7A00),
+                          size: 34,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Expanded(
+                        child: Text(
+                          baseTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 25,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF1B55C8),
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {},
+                        icon: const Icon(
+                          Icons.notifications_none_rounded,
+                          color: Color(0xFF1B55C8),
+                          size: 31,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               // ✅ Tuiles cliquables pour filtres actifs
               _buildActiveFilterChips(),
               _buildFilterPanel(),
@@ -4174,28 +4170,22 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     if (docs.isEmpty) {
                       return Column(
                         children: [
-                          // Compteur d'annonces
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
-                              border: Border(
-                                  bottom:
-                                      BorderSide(color: Colors.grey.shade200)),
-                            ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.list_alt,
-                                    size: 18, color: Colors.grey.shade600),
-                                const SizedBox(width: 8),
+                              children: const [
+                                Icon(
+                                  Icons.grid_view_rounded,
+                                  size: 20,
+                                  color: Color(0xFFFF7A00),
+                                ),
+                                SizedBox(width: 10),
                                 Text(
                                   '0 annonce',
                                   style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.grey.shade700,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF1D2340),
                                   ),
                                 ),
                               ],
@@ -4213,28 +4203,22 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
                     return Column(
                       children: [
-                        // Compteur d'annonces
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            border: Border(
-                                bottom:
-                                    BorderSide(color: Colors.grey.shade200)),
-                          ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.list_alt,
-                                  size: 18, color: kPrestoOrange),
-                              const SizedBox(width: 8),
+                              const Icon(
+                                Icons.grid_view_rounded,
+                                size: 20,
+                                color: Color(0xFFFF7A00),
+                              ),
+                              const SizedBox(width: 10),
                               Text(
                                 '$resultCount annonce${resultCount > 1 ? 's' : ''}',
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF1D2340),
                                 ),
                               ),
                             ],
@@ -4244,7 +4228,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                           child: ListView.builder(
                             controller: _scrollController,
                             physics: const ClampingScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(2, 8, 2, 100),
+                            padding: const EdgeInsets.fromLTRB(18, 0, 18, 24),
                             addAutomaticKeepAlives: true,
                             addRepaintBoundaries: true,
                             itemCount: _totalItems,
@@ -4270,25 +4254,27 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
                               final title =
                                   (data['title'] ?? 'Sans titre') as String;
-                              final location = (data['location'] ??
-                                  'Lieu non précisé') as String;
-                              final category = (data['category'] ??
-                                  'Catégorie non précisée') as String;
-                              final budget = data['budget'];
-                              final description =
-                                  (data['description'] ?? '') as String;
-                              final phone = data['phone'] == null
-                                  ? null
-                                  : data['phone'] as String;
 
-                              final List<String> imageUrls =
-                                  (data['imageUrls'] as List<dynamic>? ?? [])
-                                      .map((e) => e.toString())
-                                      .toList();
+                                final city = ((data['city'] ?? data['location']) ??
+                                    'Lieu non précisé')
+                                  .toString();
+                                final category = (data['category'] ??
+                                    'Catégorie non précisée')
+                                  .toString();
+                                final budgetRaw = data['budget'] ?? data['price'];
+                                final int budget = budgetRaw is num
+                                  ? budgetRaw.round()
+                                  : int.tryParse(budgetRaw?.toString() ?? '') ?? 0;
+                                final publishedAge =
+                                  _ageLabelFromCreatedAt(data['createdAt']);
+                                final publishedText = publishedAge.isEmpty
+                                  ? 'Publication récente'
+                                  : 'Publié il y a $publishedAge';
+                                final quickResponse = _isQuickResponse(data);
 
                               return RepaintBoundary(
                                 child: Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.only(bottom: 14),
                                   child: GestureDetector(
                                     onTap: () {
                                       _logOfferClicked(offerId, title);
@@ -4306,10 +4292,16 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                         ),
                                       );
                                     },
-                                    child: OfferCard(
-                                      offerId: offerId,
-                                      data: data,
-                                      showActionsMenu: false,
+                                        child: _OfferBrowseTile(
+                                          data: _OfferBrowseTileData(
+                                            title: title,
+                                            city: city,
+                                            category: category,
+                                            publishedText: publishedText,
+                                            price: budget,
+                                            quickResponse: quickResponse,
+                                            icon: _categoryIcon(category),
+                                          ),
                                     ),
                                   ),
                                 ),
@@ -4322,7 +4314,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                   },
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -4722,6 +4715,49 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return '${diff.inDays} j';
   }
 
+  IconData _categoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'plomberie':
+        return Icons.plumbing_outlined;
+      case 'bricolage':
+        return Icons.handyman_outlined;
+      case 'jardinage':
+        return Icons.yard_outlined;
+      case 'menage':
+      case 'ménage':
+        return Icons.cleaning_services_outlined;
+      case 'demenagement':
+      case 'déménagement':
+        return Icons.local_shipping_outlined;
+      default:
+        return Icons.work_outline_rounded;
+    }
+  }
+
+  bool _isQuickResponse(Map<String, dynamic> data) {
+    final dynamic direct = data['quickResponse'] ?? data['isQuickResponse'];
+    if (direct is bool) return direct;
+
+    final statusBadges = (data['statusBadges'] as List<dynamic>? ?? const [])
+        .map((e) => e.toString().toLowerCase())
+        .toList();
+    if (statusBadges.any((b) => b.contains('rapide'))) {
+      return true;
+    }
+
+    final availability = (data['availability'] ?? '').toString().toLowerCase();
+    if (availability.contains('rapide')) {
+      return true;
+    }
+
+    final averageDelay = (data['averageDelay'] ?? '').toString().toLowerCase();
+    if (averageDelay.contains('min')) {
+      return true;
+    }
+
+    return false;
+  }
+
   Future<void> _showEditOfferDialog(
     BuildContext context,
     String offerId,
@@ -4804,6 +4840,297 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     if (yes != true) return;
 
     await FirebaseFirestore.instance.collection('offers').doc(offerId).delete();
+  }
+}
+
+class _OfferBrowseTileData {
+  final String title;
+  final String city;
+  final String category;
+  final String publishedText;
+  final int price;
+  final bool quickResponse;
+  final IconData icon;
+
+  const _OfferBrowseTileData({
+    required this.title,
+    required this.city,
+    required this.category,
+    required this.publishedText,
+    required this.price,
+    required this.quickResponse,
+    required this.icon,
+  });
+}
+
+class _OfferBrowseTile extends StatelessWidget {
+  const _OfferBrowseTile({required this.data});
+
+  final _OfferBrowseTileData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(30),
+      child: Ink(
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.96),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x14000000),
+              blurRadius: 28,
+              offset: Offset(0, 14),
+            ),
+            BoxShadow(
+              color: Color(0x0A000000),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color: const Color(0xFFF0EAEA),
+            width: 1.1,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _OfferLeadingIcon(icon: data.icon),
+              const SizedBox(width: 14),
+              Expanded(child: _OfferMainContent(data: data)),
+              const SizedBox(width: 14),
+              _OfferAside(data: data),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OfferLeadingIcon extends StatelessWidget {
+  const _OfferLeadingIcon({required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 54,
+      height: 54,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F2F6),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Icon(
+        icon,
+        size: 28,
+        color: const Color(0xFF4E5476),
+      ),
+    );
+  }
+}
+
+class _OfferMainContent extends StatelessWidget {
+  const _OfferMainContent({required this.data});
+
+  final _OfferBrowseTileData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${data.title} - ${data.city}',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 22,
+            height: 1.1,
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF1A2140),
+            letterSpacing: -0.4,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            const Icon(
+              Icons.location_on_outlined,
+              size: 18,
+              color: Color(0xFF6B6F8F),
+            ),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                '${data.city} • ${data.category}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF5F6483),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            _SoftInfoChip(icon: data.icon, label: data.category),
+            _SoftInfoChip(icon: Icons.place_outlined, label: data.city),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Text(
+          data.publishedText,
+          style: const TextStyle(
+            fontSize: 15.5,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF6E6F7A),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _OfferAside extends StatelessWidget {
+  const _OfferAside({required this.data});
+
+  final _OfferBrowseTileData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minWidth: 118, maxWidth: 180),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            '${data.price}€',
+            style: const TextStyle(
+              fontSize: 34,
+              height: 1,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFFFF7A00),
+              letterSpacing: -1.3,
+            ),
+          ),
+          const SizedBox(height: 14),
+          if (data.quickResponse)
+            const _QuickResponseBadge()
+          else
+            const _StandardResponseBadge(),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickResponseBadge extends StatelessWidget {
+  const _QuickResponseBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFF8B64C),
+            Color(0xFFFF7C08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x26FF8A00),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_rounded, size: 18, color: Colors.white),
+          SizedBox(width: 6),
+          Text(
+            'Réponse rapide',
+            style: TextStyle(
+              fontSize: 14.5,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StandardResponseBadge extends StatelessWidget {
+  const _StandardResponseBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF2EEF3),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: const Text(
+        'Standard',
+        style: TextStyle(
+          fontSize: 14.5,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF676C87),
+        ),
+      ),
+    );
+  }
+}
+
+class _SoftInfoChip extends StatelessWidget {
+  const _SoftInfoChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3EFF5),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF535979)),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF2A3152),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
