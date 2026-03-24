@@ -3989,7 +3989,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       activeFiltersCount++;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(26),
@@ -4103,7 +4103,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                           baseTitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: kPrestoAppBarTitleStyle,
+                          style: kPrestoAppBarTitleStyle.copyWith(
+                            color: Colors.white,
+                            fontSize: 20,
+                          ),
                         ),
                       ),
                       IconButton(
