@@ -422,8 +422,10 @@ Offer _buildOfferDetailsOffer({
 }) {
   final title = (data['title'] ?? '').toString().trim();
   final location = ((data['location'] ?? data['city']) ?? '').toString().trim();
+  final postalCode = ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
   final category = (data['category'] ?? '').toString().trim();
   final description = (data['description'] ?? '').toString().trim();
+  final isUrgent = (data['urgent'] as bool?) ?? false;
   final budget = data['budget'];
   final price = budget is num ? budget.toDouble() : 0.0;
   final imageUrls = (data['imageUrls'] as List<dynamic>? ?? const [])
@@ -442,6 +444,8 @@ Offer _buildOfferDetailsOffer({
     price: price,
     category: category.isEmpty ? 'Categorie non precisee' : category,
     city: location.isEmpty ? 'Lieu non precise' : location,
+    postalCode: postalCode,
+    isUrgent: isUrgent,
     publishedAtLabel: _offerDetailsPublishedLabel(data['createdAt']),
     availability:
         (data['availability'] ?? 'Disponibilite a confirmer').toString(),
@@ -3259,7 +3263,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   final TextEditingController _cityCtrl = TextEditingController();
 
   int _filterPanelKey = 0;
-  int _queryKey = 0; // Force le StreamBuilder à se reconstruire
+  int _lastSnapshotRawCount = 0;
+  DateTime? _lastPaginationRequestAt;
 
   String? _selectedCategory;
   String? _selectedRegionCode;
@@ -3404,6 +3409,36 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return _filteredDepartmentCodes;
   }
 
+    bool get _hasActiveClientFilters {
+    final selectedCategory =
+      (_filterCategory != null && _filterCategory!.isNotEmpty)
+        ? _filterCategory
+        : ((_selectedCategory != null &&
+            _selectedCategory != 'Toutes catégories')
+          ? _selectedCategory
+          : null);
+    final hasCity = _filterCityName?.trim().isNotEmpty ?? false;
+    final hasSearch = _activeSearchQuery?.trim().isNotEmpty ?? false;
+    final hasSubcategory =
+      _selectedSubCategory != null && _selectedSubCategory!.isNotEmpty;
+    final hasDept =
+      (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
+        (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) ||
+        (_selectedRegionCode != null && _selectedRegionCode!.isNotEmpty);
+    final min = _parseBudgetBound(_budgetMinCtrl.text);
+    final max = _parseBudgetBound(_budgetMaxCtrl.text);
+    final hasBudgetRange = _advancedFilters &&
+      (min != null || max != null) &&
+      _budgetRangeWarning == null;
+
+    return (selectedCategory != null && selectedCategory.isNotEmpty) ||
+      hasCity ||
+      hasSearch ||
+      hasSubcategory ||
+      hasDept ||
+      hasBudgetRange;
+    }
+
   @override
   void initState() {
     super.initState();
@@ -3478,7 +3513,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         });
         if (isNowOnline) {
           // Resync des données quand on retrouve du réseau
-          setState(() => _queryKey++);
+          setState(() {});
         }
       }
     });
@@ -3487,16 +3522,25 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   void _maybeLoadMore() {
     if (!_scrollController.hasClients) return;
+    if (_hasActiveClientFilters) return;
     if (_pageLimit >= _maxLimit) return;
+    if (_lastSnapshotRawCount < _pageLimit) return;
 
     final position = _scrollController.position;
     // Seuil : quand on approche du bas (500px), on augmente la limite progressivement
     const thresholdPx = 500.0;
     if (position.maxScrollExtent - position.pixels > thresholdPx) return;
 
+    final now = DateTime.now();
+    final canRequest = _lastPaginationRequestAt == null ||
+        now.difference(_lastPaginationRequestAt!) >
+            const Duration(milliseconds: 450);
+    if (!canRequest) return;
+
+    _lastPaginationRequestAt = now;
+
     setState(() {
       _pageLimit = math.min(_pageLimit + _pageSize, _maxLimit);
-      _queryKey++; // force StreamBuilder à recréer le stream avec la nouvelle limit
     });
   }
 
@@ -3851,15 +3895,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           "Garde 0–1 filtre (ex: seulement Ville OU seulement Catégorie) pour éviter l’explosion d’index.";
     }
 
-    // Remonter en haut de la liste
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
-
     // ✅ Log les filtres appliqués
     _logFiltersApplied(
       category: _filterCategory,
@@ -3870,14 +3905,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       resultCount: 0, // sera mis à jour après le StreamBuilder
     );
 
-    // Force le StreamBuilder à se reconstruire
     setState(() {
       _budgetRangeWarning = budgetWarning;
       _activeSearchQuery =
           _keywordCtrl.text.trim().isEmpty ? null : _keywordCtrl.text.trim();
-      _queryKey++;
       _lastDoc = null; // Reset pagination
       _pageLimit = _initialLimit;
+      _lastPaginationRequestAt = null;
       _showFilters = false;
     });
   }
@@ -3914,8 +3948,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _filterCityHighlightedIndex = -1;
       _activeSearchQuery = null;
       _filterPanelKey++; // Force la reconstruction du panneau
-      _queryKey++; // Force la reconstruction du StreamBuilder
       _pageLimit = _initialLimit;
+      _lastPaginationRequestAt = null;
     });
 
     // 2) reset champs texte
@@ -3932,16 +3966,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     // 3) ferme le clavier si besoin
     FocusScope.of(context).unfocus();
 
-    // 4) remonte la liste
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
-
-    // 5) ✅ Pas besoin de _fetchOffers car le StreamBuilder se reconstruit automatiquement
+    // 4) ✅ Pas de scroll forcé: on conserve la position courante
   }
 
   // Met à jour le champ "Ville" visible avec la valeur des filtres si présente
@@ -3989,78 +4014,116 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     if (_activeSearchQuery != null && _activeSearchQuery!.isNotEmpty)
       activeFiltersCount++;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => setState(() => _showFilters = !_showFilters),
-        child: Container(
-          height: 52,
-          color: const Color(0xFFF6F0F2),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
+    final offersLabel =
+        '$_lastResultCount annonce${_lastResultCount > 1 ? 's' : ''}';
+
+    return Container(
+      color: const Color(0xFFF6F0F2),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 360;
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(
-                _showFilters ? Icons.tune : Icons.tune_rounded,
-                size: 22,
-                color: const Color(0xFF686A8A),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Filtres',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF4F5371),
-                        letterSpacing: -0.2,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: () => setState(() => _showFilters = !_showFilters),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isNarrow ? 10 : 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: const Color(0xFFE4D8DA),
                       ),
                     ),
-                    Text(
-                      '$_lastResultCount annonce${_lastResultCount > 1 ? 's' : ''}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
-                        color: Color(0xFF8A8CA8),
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _showFilters ? Icons.tune : Icons.tune_rounded,
+                          size: 18,
+                          color: const Color(0xFF585D7C),
+                        ),
+                        const SizedBox(width: 7),
+                        const Text(
+                          'Filtres',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF474D70),
+                            letterSpacing: -0.1,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          _showFilters
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.keyboard_arrow_down_rounded,
+                          size: 18,
+                          color: const Color(0xFF777B97),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-                  if (activeFiltersCount > 0)
-                    Container(
-                      height: 34,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: _offersOrange,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        '$activeFiltersCount',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
+              SizedBox(width: isNarrow ? 10 : 14),
+              Expanded(
+                child: Text(
+                  offersLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: isNarrow ? 14 : 15,
+                    fontWeight: FontWeight.w700,
+                    color: _offersNavy,
+                    letterSpacing: -0.15,
+                  ),
+                ),
+              ),
+              if (activeFiltersCount > 0)
+                Container(
+                  height: 28,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: _offersOrange,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$activeFiltersCount',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
                     ),
-                  if (activeFiltersCount > 0) const SizedBox(width: 8),
-                  if (activeFiltersCount > 0)
-                    GestureDetector(
-                      onTap: _resetFilters,
-                      child: const Icon(
-                        Icons.close_rounded,
-                        size: 20,
-                        color: _offersOrange,
-                      ),
+                  ),
+                ),
+              if (activeFiltersCount > 0) const SizedBox(width: 8),
+              if (activeFiltersCount > 0)
+                InkWell(
+                  borderRadius: BorderRadius.circular(999),
+                  onTap: _resetFilters,
+                  child: const Padding(
+                    padding: EdgeInsets.all(2),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 19,
+                      color: _offersOrange,
                     ),
-                ],
-          ),
-        ),
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -4121,8 +4184,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
               _buildFilterPanel(),
               Expanded(
                 child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  key: ValueKey(
-                      _queryKey), // Force la reconstruction quand les filtres changent
                   stream: _buildOffersQuery().snapshots().map((snap) {
                     PrestoMonitoring.I.trackOffersSnapshot(snap.docs.length);
                     return snap;
@@ -4185,7 +4246,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                               const SizedBox(height: 16),
                               ElevatedButton.icon(
                                 onPressed: () {
-                                  setState(() => _queryKey++);
+                                  setState(() {});
                                 },
                                 icon: const Icon(Icons.refresh),
                                 label: const Text('Réessayer'),
@@ -4200,10 +4261,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       );
                     }
 
+                    final rawDocs = snapshot.data?.docs ?? const [];
+                    _lastSnapshotRawCount = rawDocs.length;
+
                     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
-                      (snapshot.data?.docs ?? [])
-                        .where((d) => _matchesOfferFilters(d.data()))
-                        .toList();
+                        rawDocs.where((d) => _matchesOfferFilters(d.data())).toList();
 
                     // Nombre après filtrage
                     final int resultCount = docs.length;
@@ -4251,6 +4313,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       children: [
                         Expanded(
                           child: ListView.builder(
+                            key: const PageStorageKey<String>(
+                              'consult-offers-list',
+                            ),
                             controller: _scrollController,
                             physics: const ClampingScrollPhysics(),
                             padding: const EdgeInsets.fromLTRB(16, 0, 16, 132),
