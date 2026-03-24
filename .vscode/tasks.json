@@ -77,7 +77,7 @@
     {
       "label": "Firebase: Deploy",
       "type": "shell",
-      "command": "firebase deploy",
+      "command": "firebase deploy --project presto-app-74abe",
       "problemMatcher": []
     }
   ]
