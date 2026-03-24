@@ -16,6 +16,7 @@ import '../utils/retry.dart';
 import '../utils/friendly_snackbar.dart';
 import '../utils/recording_path.dart';
 import '../services/city_repo_compact.dart';
+import '../services/offer_indexing.dart';
 import '../widgets/city_postal_autocomplete_compact.dart';
 import '../widgets/phone_input_field.dart';
 import '../constants.dart';
@@ -654,16 +655,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final cp = _cpCtrl.text.trim();
       final budgetStr = _budgetCtrl.text.trim();
       final budget = budgetStr.isEmpty ? null : int.tryParse(budgetStr);
+      final normalizedOffer = buildOfferIndexFields(
+        category: _category ?? 'Autre',
+        city: city,
+        postalCode: cp,
+        budget: budget,
+        isActive: true,
+        status: 'active',
+      );
 
       await FirebaseFirestore.instance.collection('offers').add({
         'title': _titleCtrl.text.trim(),
         'description': _descCtrl.text.trim(),
-        'category': _category ?? 'Autre',
-        // 🔥 Compatibilité : écriture des 2 variantes
-        'city': city,
-        'location': city,
-        'cp': cp.isEmpty ? null : cp,
-        'postalCode': cp.isEmpty ? null : cp,
         'budget': budget,
         'budgetType': _budgetType,
         'phone': _phoneCtrl.text.trim().isEmpty
@@ -672,7 +675,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'userId': user.uid,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-        'status': 'active',
+        ...normalizedOffer,
       });
 
       if (!mounted) return;
