@@ -23,6 +23,68 @@ class ToolboxHubPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final isPhone = mq.size.width < 700;
+
+    final firstCard = _ToolCard(
+      leading: const _IconBadge(
+        icon: Icons.rocket_launch_rounded,
+        bg: Color(0xFFFFE6D6),
+        fg: prestoOrange,
+      ),
+      title: 'Je me lance !',
+      subtitle: 'IliPrestō te guide pour la création de ton entreprise.',
+      description: 'Décris ton projet, ta situation et ton territoire.',
+      bullets: const [
+        'Statut juridique conseillé',
+        'Coûts & démarches exactes',
+        'Aides, subventions & organismes',
+        "Plan d’actions sur 30 jours",
+      ],
+      buttonText: 'Démarrer mon projet',
+      buttonGradient: const LinearGradient(
+        colors: [Color(0xFF42A5F5), Color(0xFF1250B0)],
+      ),
+      compact: isPhone,
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CurrentToolboxPage()),
+        );
+      },
+    );
+
+    final secondCard = _ToolCard(
+      leading: const _IconBadge(
+        icon: Icons.calculate_rounded,
+        bg: Color(0xFFE7F0FF),
+        fg: prestoBlue,
+      ),
+      title: "La calculatrice de l'entrepreneur",
+      subtitle: 'Fixe le bon prix pour vendre sans perdre d’argent.',
+      description:
+          'En quelques clics, calcule ton coût de revient, ton prix de vente conseillé et compare avec le marché.',
+      bullets: const [
+        'Matières premières',
+        'Temps de travail',
+        'Charges & frais réels',
+        'Positionnement face à la concurrence',
+      ],
+      buttonText: 'Calculer mon prix',
+      buttonGradient: const LinearGradient(
+        colors: [Color(0xFFFF8C00), Color(0xFFFF4500)],
+      ),
+      compact: isPhone,
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const EntrepreneurCalculatorPage(),
+          ),
+        );
+      },
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
@@ -31,66 +93,43 @@ class ToolboxHubPage extends StatelessWidget {
         elevation: 0,
         title: const Text('Boîte à outils'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(8, 12, 8, 24),
-        children: [
-          _ToolCard(
-            leading: const _IconBadge(
-              icon: Icons.rocket_launch_rounded,
-              bg: Color(0xFFFFE6D6),
-              fg: prestoOrange,
-            ),
-            title: 'Je me lance !',
-            subtitle: 'IliPrestō te guide pour la création de ton entreprise.',
-            description: 'Décris ton projet, ta situation et ton territoire.',
-            bullets: const [
-              'Statut juridique conseillé',
-              'Coûts & démarches exactes',
-              'Aides, subventions & organismes',
-              "Plan d’actions sur 30 jours",
-            ],
-            buttonText: 'Démarrer mon projet',
-            buttonGradient: const LinearGradient(
-              colors: [Color(0xFF42A5F5), Color(0xFF1250B0)],
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CurrentToolboxPage()),
-              );
-            },
-          ),
-          const SizedBox(height: 10),
-          _ToolCard(
-            leading: const _IconBadge(
-              icon: Icons.calculate_rounded,
-              bg: Color(0xFFE7F0FF),
-              fg: prestoBlue,
-            ),
-            title: "La calculatrice de l'entrepreneur",
-            subtitle: 'Fixe le bon prix pour vendre sans perdre d’argent.',
-            description:
-                'En quelques clics, calcule ton coût de revient, ton prix de vente conseillé et compare avec le marché.',
-            bullets: const [
-              'Matières premières',
-              'Temps de travail',
-              'Charges & frais réels',
-              'Positionnement face à la concurrence',
-            ],
-            buttonText: 'Calculer mon prix',
-            buttonGradient: const LinearGradient(
-              colors: [Color(0xFFFF8C00), Color(0xFFFF4500)],
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const EntrepreneurCalculatorPage(),
+      body: SafeArea(
+        top: false,
+        bottom: true,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (isPhone) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8, bottom: 4),
+                        child: firstCard,
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 4, bottom: 8),
+                        child: secondCard,
+                      ),
+                    ),
+                  ],
                 ),
               );
-            },
-          ),
-        ],
+            }
+
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(8, 12, 8, 24),
+              children: [
+                firstCard,
+                const SizedBox(height: 10),
+                secondCard,
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -108,6 +147,7 @@ class _ToolCard extends StatelessWidget {
     required this.bullets,
     required this.buttonText,
     required this.buttonGradient,
+    required this.compact,
     required this.onPressed,
   });
 
@@ -118,6 +158,7 @@ class _ToolCard extends StatelessWidget {
   final List<String> bullets;
   final String buttonText;
   final LinearGradient buttonGradient;
+  final bool compact;
   final VoidCallback onPressed;
 
   @override
@@ -135,7 +176,12 @@ class _ToolCard extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+        padding: EdgeInsets.fromLTRB(
+          compact ? 10 : 12,
+          compact ? 10 : 12,
+          compact ? 10 : 12,
+          compact ? 10 : 12,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -150,24 +196,28 @@ class _ToolCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
-                          fontSize: 16,
+                        style: TextStyle(
+                          fontSize: compact ? 15 : 16,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: compact ? 3 : 4),
                       Text(
                         subtitle,
-                        style: const TextStyle(
-                          fontSize: 13,
+                        maxLines: compact ? 1 : 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: compact ? 12 : 13,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 5),
+                      SizedBox(height: compact ? 4 : 5),
                       Text(
                         description,
+                        maxLines: compact ? 2 : 3,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: compact ? 11 : 12,
                           color: Colors.black.withOpacity(0.70),
                           height: 1.25,
                         ),
@@ -177,12 +227,13 @@ class _ToolCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: compact ? 8 : 10),
             _BulletsGrid(bullets: bullets),
-            const SizedBox(height: 12),
+            if (compact) const Spacer() else const SizedBox(height: 12),
+            SizedBox(height: compact ? 8 : 0),
             SizedBox(
               width: double.infinity,
-              height: 44,
+              height: compact ? 41 : 44,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: buttonGradient,
@@ -208,8 +259,8 @@ class _ToolCard extends StatelessWidget {
                   onPressed: onPressed,
                   child: Text(
                     buttonText,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: TextStyle(
+                      fontSize: compact ? 13 : 14,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
