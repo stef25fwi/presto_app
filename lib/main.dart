@@ -4040,10 +4040,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 25,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF1B55C8),
-                            letterSpacing: -0.4,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF1B2144),
+                            letterSpacing: -0.5,
                           ),
                         ),
                       ),
@@ -4051,7 +4051,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                         onPressed: () {},
                         icon: const Icon(
                           Icons.notifications_none_rounded,
-                          color: Color(0xFF1B55C8),
+                          color: Color(0xFFFF7A00),
                           size: 31,
                         ),
                       ),
@@ -4275,7 +4275,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                               return RepaintBoundary(
                                 child: Padding(
                                   padding: const EdgeInsets.only(bottom: 14),
-                                  child: GestureDetector(
+                                  child: _OfferBrowseTile(
                                     onTap: () {
                                       _logOfferClicked(offerId, title);
                                       Navigator.of(context).push(
@@ -4292,16 +4292,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                         ),
                                       );
                                     },
-                                        child: _OfferBrowseTile(
-                                          data: _OfferBrowseTileData(
-                                            title: title,
-                                            city: city,
-                                            category: category,
-                                            publishedText: publishedText,
-                                            price: budget,
-                                            quickResponse: quickResponse,
-                                            icon: _categoryIcon(category),
-                                          ),
+                                    data: _OfferBrowseTileData(
+                                      icon: _categoryIcon(category),
+                                      title: title,
+                                      city: city,
+                                      category: category,
+                                      price: budget,
+                                      publishedText: publishedText,
+                                      quickResponse: quickResponse,
                                     ),
                                   ),
                                 ),
@@ -4844,158 +4842,148 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 }
 
 class _OfferBrowseTileData {
+  final IconData icon;
   final String title;
   final String city;
   final String category;
-  final String publishedText;
   final int price;
+  final String publishedText;
   final bool quickResponse;
-  final IconData icon;
 
   const _OfferBrowseTileData({
+    required this.icon,
     required this.title,
     required this.city,
     required this.category,
-    required this.publishedText,
     required this.price,
+    required this.publishedText,
     required this.quickResponse,
-    required this.icon,
   });
 }
 
 class _OfferBrowseTile extends StatelessWidget {
-  const _OfferBrowseTile({required this.data});
-
   final _OfferBrowseTileData data;
+  final VoidCallback? onTap;
+
+  const _OfferBrowseTile({
+    required this.data,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(30),
-      child: Ink(
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.96),
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x14000000),
-              blurRadius: 28,
-              offset: Offset(0, 14),
+      borderRadius: BorderRadius.circular(28),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(28),
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.96),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: const Color(0xFFF0EAEA),
+              width: 1,
             ),
-            BoxShadow(
-              color: Color(0x0A000000),
-              blurRadius: 10,
-              offset: Offset(0, 4),
-            ),
-          ],
-          border: Border.all(
-            color: const Color(0xFFF0EAEA),
-            width: 1.1,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _OfferLeadingIcon(icon: data.icon),
-              const SizedBox(width: 14),
-              Expanded(child: _OfferMainContent(data: data)),
-              const SizedBox(width: 14),
-              _OfferAside(data: data),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x12000000),
+                blurRadius: 24,
+                offset: Offset(0, 10),
+              ),
             ],
           ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _OfferMainContent(data: data),
+                ),
+                const SizedBox(width: 16),
+                _OfferAside(data: data),
+              ],
+            ),
+          ),
         ),
-      ),
-    );
-  }
-}
-
-class _OfferLeadingIcon extends StatelessWidget {
-  const _OfferLeadingIcon({required this.icon});
-
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 54,
-      height: 54,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF6F2F6),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Icon(
-        icon,
-        size: 28,
-        color: const Color(0xFF4E5476),
       ),
     );
   }
 }
 
 class _OfferMainContent extends StatelessWidget {
-  const _OfferMainContent({required this.data});
-
   final _OfferBrowseTileData data;
+
+  const _OfferMainContent({
+    required this.data,
+  });
 
   @override
   Widget build(BuildContext context) {
+    const titleColor = Color(0xFF171E45);
+    const mutedColor = Color(0xFF4E5476);
+    const subtleColor = Color(0xFF5B607D);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '${data.title} - ${data.city}',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 22,
-            height: 1.1,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF1A2140),
-            letterSpacing: -0.4,
-          ),
-        ),
-        const SizedBox(height: 8),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(
-              Icons.location_on_outlined,
-              size: 18,
-              color: Color(0xFF6B6F8F),
+            Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Icon(
+                data.icon,
+                size: 24,
+                color: const Color(0xFF636A93),
+              ),
             ),
-            const SizedBox(width: 4),
-            Flexible(
+            const SizedBox(width: 12),
+            Expanded(
               child: Text(
-                '${data.city} • ${data.category}',
-                maxLines: 1,
+                data.title,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 16.5,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF5F6483),
+                  fontSize: 20,
+                  height: 1.05,
+                  fontWeight: FontWeight.w900,
+                  color: titleColor,
+                  letterSpacing: -0.6,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 14),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            _SoftInfoChip(icon: data.icon, label: data.category),
-            _SoftInfoChip(icon: Icons.place_outlined, label: data.city),
-          ],
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.only(left: 36),
+          child: Text(
+            '${data.city} • ${data.category}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.15,
+              fontWeight: FontWeight.w500,
+              color: mutedColor,
+              letterSpacing: -0.1,
+            ),
+          ),
         ),
-        const SizedBox(height: 14),
-        Text(
-          data.publishedText,
-          style: const TextStyle(
-            fontSize: 15.5,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF6E6F7A),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.only(left: 36),
+          child: Text(
+            data.publishedText,
+            style: const TextStyle(
+              fontSize: 15.5,
+              height: 1.1,
+              fontWeight: FontWeight.w500,
+              color: subtleColor,
+            ),
           ),
         ),
       ],
@@ -5004,32 +4992,34 @@ class _OfferMainContent extends StatelessWidget {
 }
 
 class _OfferAside extends StatelessWidget {
-  const _OfferAside({required this.data});
-
   final _OfferBrowseTileData data;
+
+  const _OfferAside({
+    required this.data,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 118, maxWidth: 180),
+      constraints: const BoxConstraints(minWidth: 128, maxWidth: 150),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            '${data.price}€',
+            '${data.price} €',
+            textAlign: TextAlign.right,
             style: const TextStyle(
-              fontSize: 34,
+              fontSize: 32,
               height: 1,
               fontWeight: FontWeight.w900,
               color: Color(0xFFFF7A00),
-              letterSpacing: -1.3,
+              letterSpacing: -1.4,
             ),
           ),
-          const SizedBox(height: 14),
-          if (data.quickResponse)
-            const _QuickResponseBadge()
-          else
-            const _StandardResponseBadge(),
+          const SizedBox(height: 16),
+          data.quickResponse
+              ? const _QuickResponseBadge()
+              : const _StandardResponseBadge(),
         ],
       ),
     );
@@ -5042,32 +5032,40 @@ class _QuickResponseBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
         gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
           colors: [
-            Color(0xFFF8B64C),
+            Color(0xFFF6B84A),
             Color(0xFFFF7C08),
           ],
         ),
-        borderRadius: BorderRadius.circular(999),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x26FF8A00),
-            blurRadius: 18,
-            offset: Offset(0, 8),
+            color: Color(0x22FF8A00),
+            blurRadius: 14,
+            offset: Offset(0, 6),
           ),
         ],
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.check_rounded, size: 18, color: Colors.white),
-          SizedBox(width: 6),
+          Icon(
+            Icons.check_rounded,
+            size: 22,
+            color: Colors.white,
+          ),
+          SizedBox(width: 8),
           Text(
             'Réponse rapide',
             style: TextStyle(
-              fontSize: 14.5,
+              fontSize: 14.8,
+              height: 1,
               fontWeight: FontWeight.w800,
               color: Colors.white,
             ),
@@ -5084,51 +5082,20 @@ class _StandardResponseBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2EEF3),
+        color: const Color(0xFFF3EEF4),
         borderRadius: BorderRadius.circular(999),
       ),
+      alignment: Alignment.center,
       child: const Text(
         'Standard',
         style: TextStyle(
           fontSize: 14.5,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF676C87),
+          color: Color(0xFF666C87),
         ),
-      ),
-    );
-  }
-}
-
-class _SoftInfoChip extends StatelessWidget {
-  const _SoftInfoChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3EFF5),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: const Color(0xFF535979)),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF2A3152),
-            ),
-          ),
-        ],
       ),
     );
   }
