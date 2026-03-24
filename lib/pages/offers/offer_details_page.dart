@@ -430,157 +430,228 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const navy = Color(0xFF162038);
-    const body = Color(0xFF1F2740);
-    const orange = Color(0xFFFF7B12);
-    const orangeLight = Color(0xFFFFB34B);
-    const chipBg = Color(0xFFF1EFF7);
+    const card = Colors.white;
+    const textPrimary = Color(0xFF0E1738);
+    const textSecondary = Color(0xFF5E6480);
+    const orangeStart = Color(0xFFFFBE4D);
+    const orangeEnd = Color(0xFFFF7A00);
+
+    final quickLabel = data.availability.trim().isEmpty
+        ? 'Intervention rapide'
+        : data.availability;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(
-        compact ? 18 : 22,
-        compact ? 18 : 22,
-        compact ? 18 : 22,
-        compact ? 18 : 22,
-      ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(compact ? 26 : 30),
+        color: card,
+        borderRadius: BorderRadius.circular(compact ? 24 : 30),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF9B8E86).withOpacity(0.10),
-            blurRadius: compact ? 18 : 22,
-            offset: Offset(0, compact ? 8 : 10),
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(0.85),
-            blurRadius: compact ? 6 : 8,
-            offset: Offset(0, compact ? -1 : -2),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: compact ? 22 : 30,
+            offset: Offset(0, compact ? 12 : 16),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            data.title,
-            style: TextStyle(
-              color: navy,
-              fontSize: compact ? 26 : 30,
-              fontWeight: FontWeight.w800,
-              height: 1.0,
-              letterSpacing: compact ? -0.9 : -1.0,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          compact ? 16 : 22,
+          compact ? 16 : 22,
+          compact ? 16 : 22,
+          compact ? 16 : 22,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              data.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: compact ? 24 : 28,
+                height: 1.02,
+                fontWeight: FontWeight.w800,
+                color: textPrimary,
+                letterSpacing: compact ? -0.7 : -0.9,
+              ),
             ),
-          ),
-          SizedBox(height: compact ? 4 : 6),
-          RichText(
-            text: TextSpan(
+            SizedBox(height: compact ? 8 : 12),
+            Row(
               children: [
-                TextSpan(
-                  text: data.detail,
-                  style: TextStyle(
-                    color: navy,
-                    fontSize: compact ? 20 : 22,
-                    fontWeight: FontWeight.w800,
-                    height: 1.0,
-                    letterSpacing: compact ? -0.7 : -0.8,
-                  ),
+                Icon(
+                  Icons.location_on_outlined,
+                  size: compact ? 18 : 20,
+                  color: textSecondary,
                 ),
-                TextSpan(
-                  text: ' - ${data.city}',
-                  style: TextStyle(
-                    color: navy,
-                    fontSize: compact ? 16 : 18,
-                    fontWeight: FontWeight.w500,
-                    height: 1.0,
-                    letterSpacing: compact ? -0.4 : -0.5,
+                SizedBox(width: compact ? 5 : 6),
+                Expanded(
+                  child: Text(
+                    '${data.city} • $quickLabel',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: compact ? 14 : 16,
+                      height: 1.2,
+                      fontWeight: FontWeight.w600,
+                      color: textSecondary,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          SizedBox(height: compact ? 14 : 18),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                '${data.price.toStringAsFixed(0)} €',
-                style: TextStyle(
-                  color: orange,
-                  fontSize: compact ? 52 : 60,
-                  fontWeight: FontWeight.w800,
-                  height: 0.95,
-                  letterSpacing: compact ? -1.6 : -1.9,
-                ),
-              ),
-              SizedBox(width: compact ? 10 : 12),
-              Expanded(
-                child: Container(
-                  height: compact ? 38 : 42,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(100),
-                    gradient: const LinearGradient(
-                      colors: [orangeLight, orange],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: orange.withOpacity(0.26),
-                        blurRadius: compact ? 10 : 12,
-                        offset: Offset(0, compact ? 5 : 6),
+            SizedBox(height: compact ? 16 : 22),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  flex: 4,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '${data.price.toStringAsFixed(0)} €',
+                      style: TextStyle(
+                        fontSize: compact ? 48 : 56,
+                        height: 0.95,
+                        fontWeight: FontWeight.w800,
+                        color: orangeEnd,
+                        letterSpacing: compact ? -1.6 : -2.0,
                       ),
-                    ],
+                    ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.check_rounded, color: Colors.white, size: compact ? 16 : 18),
-                      SizedBox(width: compact ? 4 : 6),
-                      Text(
-                        'Réponse rapide',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: compact ? 13 : 14,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.15,
+                ),
+                SizedBox(width: compact ? 10 : 14),
+                Expanded(
+                  flex: 8,
+                  child: Container(
+                    height: compact ? 52 : 58,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      gradient: const LinearGradient(
+                        colors: [orangeStart, orangeEnd],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF8D1A).withOpacity(0.28),
+                          blurRadius: compact ? 16 : 22,
+                          offset: Offset(0, compact ? 8 : 10),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(999),
+                        onTap: () {},
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: compact ? 14 : 20,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.check_rounded,
+                                color: Colors.white,
+                                size: compact ? 20 : 22,
+                              ),
+                              SizedBox(width: compact ? 8 : 10),
+                              Flexible(
+                                child: Text(
+                                  'Réponse rapide',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: compact ? 16 : 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: -0.2,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: compact ? 12 : 14),
-          Row(
-            children: [
-              Expanded(
-                child: _TagChip(
+              ],
+            ),
+            SizedBox(height: compact ? 14 : 18),
+            Wrap(
+              spacing: compact ? 10 : 12,
+              runSpacing: compact ? 10 : 12,
+              children: [
+                _HeroInfoChip(
                   icon: Icons.handyman_outlined,
-                  text: data.category,
-                  bg: chipBg,
+                  label: data.category,
                   compact: compact,
                 ),
-              ),
-              SizedBox(width: compact ? 8 : 10),
-              Expanded(
-                child: _TagChip(
+                _HeroInfoChip(
                   icon: Icons.location_on_outlined,
-                  text: data.city,
-                  bg: chipBg,
+                  label: data.city,
                   compact: compact,
                 ),
+              ],
+            ),
+            SizedBox(height: compact ? 14 : 18),
+            Text(
+              data.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: compact ? 15 : 17,
+                height: 1.45,
+                fontWeight: FontWeight.w500,
+                color: textPrimary,
+                letterSpacing: -0.2,
               ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroInfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool compact;
+
+  const _HeroInfoChip({
+    required this.icon,
+    required this.label,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: compact ? 46 : 54,
+      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1EEF7),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: compact ? 19 : 22,
+            color: const Color(0xFF313757),
           ),
-          SizedBox(height: compact ? 14 : 18),
+          SizedBox(width: compact ? 8 : 10),
           Text(
-            data.description,
+            label,
             style: TextStyle(
-              color: body,
-              fontSize: compact ? 15 : 16,
-              fontWeight: FontWeight.w500,
-              height: 1.48,
-              letterSpacing: compact ? -0.1 : -0.15,
+              fontSize: compact ? 15 : 17,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1D2340),
+              letterSpacing: -0.2,
             ),
           ),
         ],
@@ -856,53 +927,6 @@ class _PracticalInfoCard extends StatelessWidget {
                     ],
                   ),
                 ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TagChip extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final Color bg;
-  final bool compact;
-
-  const _TagChip({
-    required this.icon,
-    required this.text,
-    required this.bg,
-    this.compact = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const navy = Color(0xFF18233D);
-
-    return Container(
-      height: compact ? 44 : 48,
-      padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 14),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: navy, size: compact ? 16 : 18),
-          SizedBox(width: compact ? 5 : 6),
-          Flexible(
-            child: Text(
-              text,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: navy,
-                fontSize: compact ? 15 : 16,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.15,
               ),
             ),
           ),
