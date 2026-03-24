@@ -60,6 +60,8 @@ class Offer {
   final double price;
   final String category;
   final String city;
+  final String postalCode;
+  final bool isUrgent;
   final String publishedAtLabel;
   final String availability;
   final String shortDescription;
@@ -78,6 +80,8 @@ class Offer {
     required this.price,
     required this.category,
     required this.city,
+    this.postalCode = '',
+    this.isUrgent = false,
     required this.publishedAtLabel,
     required this.availability,
     required this.shortDescription,
@@ -125,10 +129,37 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: bg,
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFF7A00),
+        elevation: 0,
+        centerTitle: false,
+        titleSpacing: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Détail annonce',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 19,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.notifications_none_rounded, size: 26),
+            color: Colors.white,
+            splashRadius: 20,
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           const _BackgroundDecor(),
           SafeArea(
+            top: false,
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: EdgeInsets.fromLTRB(
@@ -140,8 +171,6 @@ class PrestoOfferDetailsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _TopHeader(title: data.title, compact: isCompactMobile),
-                  SizedBox(height: sectionGap),
                   _HeroCard(data: data, compact: isCompactMobile),
                   SizedBox(height: sectionGap),
                   _PracticalInfoCard(data: data, compact: isCompactMobile),
@@ -159,6 +188,8 @@ class _OfferUiData {
   final String title;
   final String detail;
   final String city;
+  final String postalCode;
+  final bool isUrgent;
   final String category;
   final String description;
   final String phone;
@@ -186,6 +217,8 @@ class _OfferUiData {
     required this.title,
     required this.detail,
     required this.city,
+    required this.postalCode,
+    required this.isUrgent,
     required this.category,
     required this.description,
     required this.phone,
@@ -216,6 +249,7 @@ class _OfferUiData {
     final title = _asString(_read(() => o.title), fallback: 'Montage meuble');
     final detail = _asString(_read(() => o.shortDescription), fallback: '+ fixation TV');
     final city = _asString(_read(() => o.city), fallback: 'Les Abymes');
+    final postalCode = _asString(_read(() => o.postalCode), fallback: '');
     final category = _asString(_read(() => o.category), fallback: 'Bricolage');
 
     final fullDescription = _asString(
@@ -235,6 +269,12 @@ class _OfferUiData {
         ? _read(() => o.actionType) as OfferActionType
         : OfferActionType.contact;
     final statusBadges = _asStringList(_read(() => o.statusBadges));
+    final urgentRaw = _read(() => o.isUrgent);
+    final isUrgent = urgentRaw is bool
+      ? urgentRaw
+      : statusBadges.any(
+        (badge) => badge.toLowerCase().contains('urgent'),
+        );
 
     final price = _asDouble(_read(() => o.price), fallback: 90);
 
@@ -259,6 +299,8 @@ class _OfferUiData {
       title: title,
       detail: detail,
       city: city,
+      postalCode: postalCode,
+      isUrgent: isUrgent,
       category: category,
       description: fullDescription,
       phone: phone,
@@ -370,7 +412,7 @@ class _TopHeader extends StatelessWidget {
   final String title;
   final bool compact;
 
-  const _TopHeader({required this.title, this.compact = false});
+  const _TopHeader({required this.title, required this.compact});
 
   @override
   Widget build(BuildContext context) {
@@ -440,181 +482,141 @@ class _HeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     const card = Colors.white;
     const textPrimary = Color(0xFF111B4A);
-    const textMuted = Color(0xFF6C6A8A);
-    const orange1 = Color(0xFFF6B645);
+    const textMuted = Color(0xFF6B708D);
+    const divider = Color(0xFFECE6E3);
     const orange2 = Color(0xFFFF7A00);
-
-    final quickLabel = data.availability.trim().isEmpty
-        ? 'Intervention rapide'
-        : data.availability;
+    final locationLine = data.postalCode.trim().isEmpty
+        ? data.city
+        : '${data.city} ${data.postalCode}';
+    final detailsLine = data.detail.trim().isNotEmpty
+        ? data.detail.trim()
+        : data.description.trim();
 
     return Container(
       decoration: BoxDecoration(
         color: card,
-        borderRadius: BorderRadius.circular(compact ? 24 : 30),
+        borderRadius: BorderRadius.circular(compact ? 20 : 24),
+        border: Border.all(
+          color: const Color(0xFFF0E7E4),
+          width: 1,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x10000000),
-            blurRadius: 24,
-            offset: Offset(0, 10),
+            blurRadius: 18,
+            offset: Offset(0, 8),
           ),
         ],
       ),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          compact ? 18 : 24,
-          compact ? 18 : 24,
-          compact ? 18 : 24,
-          compact ? 18 : 24,
+          compact ? 15 : 18,
+          compact ? 15 : 18,
+          compact ? 15 : 18,
+          compact ? 15 : 18,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              data.title,
+              data.title.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: compact ? 17 : 18,
+                height: 1.0,
+                fontWeight: FontWeight.w800,
+                color: textPrimary,
+                letterSpacing: 0.4,
+              ),
+            ),
+            SizedBox(height: compact ? 6 : 7),
+            Text(
+              locationLine,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: compact ? 12.5 : 13,
+                height: 1.15,
+                fontWeight: FontWeight.w600,
+                color: textMuted,
+                letterSpacing: -0.1,
+              ),
+            ),
+            SizedBox(height: compact ? 10 : 12),
+            Text(
+              detailsLine,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: compact ? 27 : 31,
-                height: 1.03,
-                fontWeight: FontWeight.w800,
-                color: textPrimary,
-                letterSpacing: compact ? -0.8 : -1.0,
+                fontSize: compact ? 14 : 15,
+                height: 1.28,
+                fontWeight: FontWeight.w500,
+                color: textPrimary.withOpacity(0.9),
               ),
             ),
-            SizedBox(height: compact ? 8 : 10),
-            Row(
-              children: [
-                Icon(
-                  Icons.location_on_outlined,
-                  size: compact ? 20 : 22,
-                  color: textMuted,
-                ),
-                SizedBox(width: compact ? 6 : 7),
-                Flexible(
-                  child: Text(
-                    data.city,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: compact ? 17 : 19,
-                      height: 1.1,
-                      fontWeight: FontWeight.w700,
-                      color: textPrimary,
-                    ),
-                  ),
-                ),
-                SizedBox(width: compact ? 6 : 7),
-                Text(
-                  '•',
-                  style: TextStyle(
-                    fontSize: compact ? 16 : 18,
-                    fontWeight: FontWeight.w700,
-                    color: textMuted,
-                  ),
-                ),
-                SizedBox(width: compact ? 6 : 7),
-                Expanded(
-                  child: Text(
-                    quickLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: compact ? 17 : 19,
-                      height: 1.1,
-                      fontWeight: FontWeight.w500,
-                      color: textMuted,
-                    ),
-                  ),
-                ),
-              ],
+            SizedBox(height: compact ? 10 : 12),
+            Container(
+              height: 1,
+              color: divider,
             ),
-            SizedBox(height: compact ? 18 : 24),
+            SizedBox(height: compact ? 10 : 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
                   '${data.price.toStringAsFixed(0)} €',
                   style: TextStyle(
-                    fontSize: compact ? 54 : 62,
-                    height: 0.95,
+                    fontSize: compact ? 28 : 30,
+                    height: 1.0,
                     fontWeight: FontWeight.w800,
                     color: orange2,
-                    letterSpacing: compact ? -1.8 : -2.0,
+                    letterSpacing: -0.6,
                   ),
                 ),
-                SizedBox(width: compact ? 12 : 16),
-                Expanded(
-                  child: Container(
-                    height: compact ? 58 : 66,
+                const SizedBox(width: 10),
+                if (data.isUrgent)
+                  Container(
+                    height: 28,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(34),
+                      borderRadius: BorderRadius.circular(999),
                       gradient: const LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
-                        colors: [orange1, orange2],
+                        colors: [Color(0xFFFFA43A), Color(0xFFFF6A00)],
                       ),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x26FF8A00),
-                          blurRadius: 16,
-                          offset: Offset(0, 7),
+                          color: Color(0x2EFF8A00),
+                          blurRadius: 12,
+                          offset: Offset(0, 4),
                         ),
                       ],
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
                         Icon(
-                          Icons.check_rounded,
+                          Icons.priority_high_rounded,
+                          size: 13,
                           color: Colors.white,
-                          size: compact ? 27 : 31,
                         ),
-                        SizedBox(width: compact ? 8 : 10),
+                        SizedBox(width: 5),
                         Text(
-                          'Réponse rapide',
+                          'URGENT',
                           style: TextStyle(
-                            fontSize: compact ? 17 : 19,
+                            fontSize: 11,
                             height: 1,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
                             color: Colors.white,
+                            letterSpacing: 0.2,
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
               ],
-            ),
-            SizedBox(height: compact ? 16 : 22),
-            Row(
-              children: [
-                Expanded(
-                  child: _HeroInfoChip(
-                    icon: Icons.handyman_outlined,
-                    label: data.category,
-                    compact: compact,
-                  ),
-                ),
-                SizedBox(width: compact ? 12 : 16),
-                Expanded(
-                  child: _HeroInfoChip(
-                    icon: Icons.location_on_outlined,
-                    label: data.city,
-                    compact: compact,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: compact ? 18 : 24),
-            Text(
-              data.description,
-              style: TextStyle(
-                fontSize: compact ? 16 : 18,
-                height: 1.38,
-                fontWeight: FontWeight.w500,
-                color: textPrimary,
-              ),
             ),
           ],
         ),
@@ -631,7 +633,7 @@ class _HeroInfoChip extends StatelessWidget {
   const _HeroInfoChip({
     required this.icon,
     required this.label,
-    this.compact = false,
+    required this.compact,
   });
 
   @override
