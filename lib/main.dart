@@ -9246,7 +9246,7 @@ class _AccountPageState extends State<AccountPage> {
               await Clipboard.setData(
                 const ClipboardData(text: kAppBuildSha),
               );
-              if (!mounted) return;
+              if (!context.mounted) return;
               showSuccessSnackBar(context, 'SHA copié');
             },
           ),
