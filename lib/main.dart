@@ -3990,11 +3990,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       activeFiltersCount++;
 
     return Material(
-      color: Colors.white.withValues(alpha: 0.70),
+      color: Colors.transparent,
       child: InkWell(
         onTap: () => setState(() => _showFilters = !_showFilters),
         child: Container(
-          height: 56,
+          height: 52,
           color: const Color(0xFFF6F0F2),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
