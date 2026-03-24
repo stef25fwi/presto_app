@@ -45,13 +45,11 @@ import 'widgets/account_admin_analytics_panel.dart';
 import 'widgets/account_admin_micro_ia_panel.dart';
 import 'widgets/account_build_version_panel.dart';
 import 'widgets/account_profile_sections.dart';
-import 'widgets/entrepreneur_toolbox_slide.dart';
 import 'widgets/home_bottom_nav_item.dart';
 import 'widgets/offer_card.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/phone_input_field.dart';
 import 'widgets/photo_selector_tile.dart';
-import 'widgets/random_asset_ticker.dart';
 
 class PrestoRemoteConfig {
   static String audioPipeline = 'HYBRID';
@@ -1131,7 +1129,6 @@ class _HomePageState extends State<HomePage>
   Timer? _presenceTimer;
   DateTime? _lastPresenceUpdate;
   DateTime? _sessionStartTime;
-  bool _carouselEnabled = false;
   // Bottom bar désormais fixe (ne se masque plus au scroll/clavier)
 
   late final AnimationController _categoryController;
@@ -1270,14 +1267,11 @@ class _HomePageState extends State<HomePage>
     });
 
     // À l'arrivée sur l'accueil: on laisse le slide texte visible 4s,
-    // puis on lance le carousel et sa rotation.
+    // puis on passe automatiquement au slide 2.
     if (_selectedIndex == 0) {
       _homeAutoSlideTimer = Timer(const Duration(seconds: 4), () {
         if (!mounted) return;
         if (!_carouselController.hasClients) return;
-        setState(() {
-          _carouselEnabled = true;
-        });
         _carouselController.animateToPage(
           1,
           duration: const Duration(milliseconds: 550),
@@ -2106,41 +2100,14 @@ class _HomePageState extends State<HomePage>
                         children: [
                           PageView.builder(
                             controller: _carouselController,
-                            itemCount: _slides.length + 1,
+                            itemCount: _slides.length,
                             onPageChanged: (index) {
                               setState(() {
                                 _currentSlide = index;
-                                if (index == 1) {
-                                  _carouselEnabled = true;
-                                }
                               });
                             },
                             itemBuilder: (context, index) {
-                              // Ordre voulu:
-                              // 0 = slide texte (fixe 4s)
-                              // 1 = carousel d'images (démarre après 4s)
-                              // 2.. = slides existants
-
-                              if (index == 1) {
-                                return SizedBox.expand(
-                                  child: Container(
-                                    decoration: const BoxDecoration(
-                                      color: Colors.black,
-                                    ),
-                                    child: RepaintBoundary(
-                                      child: RandomAssetTicker(
-                                        folderPrefix: 'assets/carousel_home/',
-                                        interval: const Duration(seconds: 3),
-                                        antiRepeatWindow: 3,
-                                        fit: BoxFit.cover,
-                                        enabled: _carouselEnabled,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }
-
-                              final slideIndex = index == 0 ? 0 : index - 1;
+                              final slideIndex = index;
                               final slide = _slides[slideIndex];
 
                               // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
@@ -2205,12 +2172,7 @@ class _HomePageState extends State<HomePage>
                                 );
                               }
 
-                              // ✅ SLIDE 2 (index 1) : Boîte à outils de l'entrepreneur
-                              if (slideIndex == 1) {
-                                return const EntrepreneurToolboxSlide();
-                              }
-
-                              // 🔁 SLIDES 2, 3, 4 : layout texte + icône / image
+                              // 🔁 Slides texte restants : layout texte + icône / image
                               final VoidCallback? onSlideTap = slideIndex ==
                                       (_slides.length - 1)
                                   ? () {
@@ -2307,7 +2269,7 @@ class _HomePageState extends State<HomePage>
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: List.generate(
-                                _slides.length + 1,
+                                _slides.length,
                                 (index) => AnimatedContainer(
                                   duration: const Duration(milliseconds: 250),
                                   margin:
