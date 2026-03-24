@@ -45,8 +45,10 @@ import 'widgets/account_admin_analytics_panel.dart';
 import 'widgets/account_admin_micro_ia_panel.dart';
 import 'widgets/account_build_version_panel.dart';
 import 'widgets/account_profile_sections.dart';
+import 'widgets/entrepreneur_toolbox_slide.dart';
 import 'widgets/home_bottom_nav_item.dart';
 import 'widgets/offer_card.dart';
+import 'widgets/presto_info_icon_animated.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/phone_input_field.dart';
 import 'widgets/photo_selector_tile.dart';
@@ -1880,6 +1882,15 @@ class _HomePageState extends State<HomePage>
     int index, {
     VoidCallback? onTap,
   }) {
+    // Le slide 3 (infos) reprend le style d'icône bleue animée de la boîte à outils.
+    if (index == _slides.length - 1) {
+      return PrestoInfoIconAnimated(
+        size: 72,
+        showBadge: false,
+        onTap: onTap ?? () {},
+      );
+    }
+
     // On ignore complètement slide.imageAsset, on affiche juste une icône
     final child = Container(
       width: 70,
@@ -2172,6 +2183,11 @@ class _HomePageState extends State<HomePage>
                                 );
                               }
 
+                              // ✅ SLIDE 2 : Boîte à outils de l'entrepreneur (icône bleue animée + badge)
+                              if (slideIndex == 1) {
+                                return const EntrepreneurToolboxSlide();
+                              }
+
                               // 🔁 Slides texte restants : layout texte + icône / image
                               final VoidCallback? onSlideTap = slideIndex ==
                                       (_slides.length - 1)
@@ -2378,28 +2394,30 @@ class _HomePageState extends State<HomePage>
                             );
                           }
 
-                          return _AutoScrollingOffersCarousel(
-                            offers: docs,
-                            onOfferTap: (doc) {
-                              final data = doc.data();
-                              final title =
-                                  (data['title'] ?? 'Sans titre') as String;
-                              final location = (data['location'] ??
-                                  'Lieu non précisé') as String;
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => OfferDetailsPage(
-                                    offer: _buildOfferDetailsOffer(
-                                      offerId: doc.id,
-                                      data: data,
+                          return RepaintBoundary(
+                            child: _AutoScrollingOffersCarousel(
+                              offers: docs,
+                              onOfferTap: (doc) {
+                                final data = doc.data();
+                                final title =
+                                    (data['title'] ?? 'Sans titre') as String;
+                                final location = (data['location'] ??
+                                    'Lieu non précisé') as String;
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => OfferDetailsPage(
+                                      offer: _buildOfferDetailsOffer(
+                                        offerId: doc.id,
+                                        data: data,
+                                      ),
+                                      currentUserId: FirebaseAuth
+                                              .instance.currentUser?.uid ??
+                                          '',
                                     ),
-                                    currentUserId:
-                                        FirebaseAuth.instance.currentUser?.uid ??
-                                            '',
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           );
                         },
                       ),
@@ -10745,7 +10763,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 }
 
 // ============================================================================
-// CARROUSEL AUTO-DÉFILANT POUR LES DERNIÈRES OFFRES (2 lignes)
+// CARROUSEL AUTO-DÉFILANT POUR LES DERNIÈRES OFFRES (ligne unique)
 // ============================================================================
 class _AutoScrollingOffersCarousel extends StatefulWidget {
   final List<QueryDocumentSnapshot<Map<String, dynamic>>> offers;
@@ -10762,39 +10780,56 @@ class _AutoScrollingOffersCarousel extends StatefulWidget {
 }
 
 class _AutoScrollingOffersCarouselState
-    extends State<_AutoScrollingOffersCarousel> {
+    extends State<_AutoScrollingOffersCarousel>
+    with SingleTickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
-  Timer? _autoScrollTimer;
+  late final AnimationController _scrollTicker;
   bool _isHovered = false;
+  Duration _lastElapsed = Duration.zero;
+  static const double _pixelsPerSecond = 44.0;
 
   @override
   void initState() {
     super.initState();
-    _startAutoScroll();
+    _scrollTicker = AnimationController.unbounded(vsync: this)
+      ..addListener(_onTick)
+      ..repeat(min: 0, max: 1, period: const Duration(seconds: 1));
   }
 
   @override
   void dispose() {
-    _autoScrollTimer?.cancel();
+    _scrollTicker
+      ..removeListener(_onTick)
+      ..dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _startAutoScroll() {
-    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
-      if (!_isHovered && _scrollController.hasClients) {
-        final maxScroll = _scrollController.position.maxScrollExtent;
-        final currentScroll = _scrollController.offset;
+  void _onTick() {
+    if (_isHovered || !_scrollController.hasClients) return;
 
-        // Défilement continu de droite vers gauche
-        if (currentScroll >= maxScroll) {
-          // Retour instantané au début pour un effet infini
-          _scrollController.jumpTo(0);
-        } else {
-          _scrollController.jumpTo(currentScroll + 1);
-        }
-      }
-    });
+    final elapsed = _scrollTicker.lastElapsedDuration;
+    if (elapsed == null) return;
+
+    final dtMs = (elapsed - _lastElapsed).inMilliseconds;
+    _lastElapsed = elapsed;
+
+    if (dtMs <= 0) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    if (maxScroll <= 0) return;
+
+    final loopPoint = maxScroll / 2;
+    if (loopPoint <= 0) return;
+
+    final delta = _pixelsPerSecond * (dtMs / 1000.0);
+    var next = _scrollController.offset + delta;
+
+    if (next >= loopPoint) {
+      next -= loopPoint;
+    }
+
+    _scrollController.jumpTo(next);
   }
 
   String _labelWhenFromTitle(String title) {
@@ -10889,46 +10924,18 @@ class _AutoScrollingOffersCarouselState
     // Dupliquer les offres pour créer un effet de boucle infinie
     final duplicatedOffers = [...widget.offers, ...widget.offers];
 
-    // Séparer en 2 lignes
-    final row1Offers = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-    final row2Offers = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-
-    for (int i = 0; i < duplicatedOffers.length; i++) {
-      if (i % 2 == 0) {
-        row1Offers.add(duplicatedOffers[i]);
-      } else {
-        row2Offers.add(duplicatedOffers[i]);
-      }
-    }
-
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: Column(
-        children: [
-          // Ligne 1
-          SizedBox(
-            height: 60,
-            child: ListView.separated(
-              controller: _scrollController,
-              scrollDirection: Axis.horizontal,
-              itemCount: row1Offers.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, index) => _buildOfferCard(row1Offers[index]),
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Ligne 2
-          SizedBox(
-            height: 60,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: row2Offers.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, index) => _buildOfferCard(row2Offers[index]),
-            ),
-          ),
-        ],
+      child: SizedBox(
+        height: 60,
+        child: ListView.separated(
+          controller: _scrollController,
+          scrollDirection: Axis.horizontal,
+          itemCount: duplicatedOffers.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (_, index) => _buildOfferCard(duplicatedOffers[index]),
+        ),
       ),
     );
   }
