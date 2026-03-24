@@ -32,7 +32,7 @@ class ToolboxHubPage extends StatelessWidget {
         title: const Text('Boîte à outils'),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        padding: const EdgeInsets.fromLTRB(8, 12, 8, 24),
         children: [
           _ToolCard(
             leading: const _IconBadge(
@@ -50,7 +50,9 @@ class ToolboxHubPage extends StatelessWidget {
               "Plan d’actions sur 30 jours",
             ],
             buttonText: 'Démarrer mon projet',
-            buttonColor: prestoBlue,
+            buttonGradient: const LinearGradient(
+              colors: [Color(0xFF42A5F5), Color(0xFF1250B0)],
+            ),
             onPressed: () {
               Navigator.push(
                 context,
@@ -58,7 +60,7 @@ class ToolboxHubPage extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           _ToolCard(
             leading: const _IconBadge(
               icon: Icons.calculate_rounded,
@@ -76,7 +78,9 @@ class ToolboxHubPage extends StatelessWidget {
               'Positionnement face à la concurrence',
             ],
             buttonText: 'Calculer mon prix',
-            buttonColor: prestoOrange,
+            buttonGradient: const LinearGradient(
+              colors: [Color(0xFFFF8C00), Color(0xFFFF4500)],
+            ),
             onPressed: () {
               Navigator.push(
                 context,
@@ -103,7 +107,7 @@ class _ToolCard extends StatelessWidget {
     required this.description,
     required this.bullets,
     required this.buttonText,
-    required this.buttonColor,
+    required this.buttonGradient,
     required this.onPressed,
   });
 
@@ -113,7 +117,7 @@ class _ToolCard extends StatelessWidget {
   final String description;
   final List<String> bullets;
   final String buttonText;
-  final Color buttonColor;
+  final LinearGradient buttonGradient;
   final VoidCallback onPressed;
 
   @override
@@ -121,17 +125,17 @@ class _ToolCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -139,7 +143,7 @@ class _ToolCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 leading,
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,23 +151,23 @@ class _ToolCard extends StatelessWidget {
                       Text(
                         title,
                         style: const TextStyle(
-                          fontSize: 20,
+                          fontSize: 16,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
                         subtitle,
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 5),
                       Text(
                         description,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: Colors.black.withOpacity(0.70),
                           height: 1.25,
                         ),
@@ -173,27 +177,41 @@ class _ToolCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             _BulletsGrid(bullets: bullets),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonColor,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
-                  ),
+              height: 44,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: buttonGradient,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: buttonGradient.colors.last.withOpacity(0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                onPressed: onPressed,
-                child: Text(
-                  buttonText,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                  ),
+                  onPressed: onPressed,
+                  child: Text(
+                    buttonText,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),
@@ -237,18 +255,18 @@ class _BulletColumn extends StatelessWidget {
       children: items
           .map(
             (t) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
+              padding: const EdgeInsets.symmetric(vertical: 3),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Icon(Icons.check_circle_rounded,
-                      size: 18, color: Color(0xFF2EAD6B)),
-                  const SizedBox(width: 8),
+                      size: 15, color: Color(0xFF2EAD6B)),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       t,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -276,13 +294,13 @@ class _IconBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 46,
-      height: 46,
+      width: 40,
+      height: 40,
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Icon(icon, color: fg, size: 26),
+      child: Icon(icon, color: fg, size: 22),
     );
   }
 }
