@@ -374,41 +374,49 @@ class _TopHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const orange = Color(0xFFFF7A14);
-    const blueDeep = Color(0xFF0459D9);
+    const orange = Color(0xFFFF8A00);
+    const blue = Color(0xFF1565D8);
 
     return SizedBox(
-      height: compact ? 40 : 44,
+      height: compact ? 42 : 46,
       child: Row(
         children: [
-          _CircleIconButton(
-            icon: Icons.arrow_back_rounded,
-            iconColor: orange,
-            size: compact ? 18 : 20,
-            compact: compact,
-            onTap: () => Navigator.of(context).maybePop(),
+          IconButton(
+            onPressed: () => Navigator.of(context).maybePop(),
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              color: orange,
+              size: compact ? 28 : 32,
+            ),
+            splashRadius: compact ? 18 : 22,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
-          SizedBox(width: compact ? 8 : 10),
+          SizedBox(width: compact ? 12 : 16),
           Expanded(
             child: Text(
               _truncatedTitle(title),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: blueDeep,
-                fontSize: 22,
+              style: TextStyle(
+                color: blue,
+                fontSize: compact ? 24 : 27,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.5,
                 height: 1.0,
-              ).copyWith(fontSize: compact ? 20 : 22),
+              ),
             ),
           ),
-          _CircleIconButton(
-            icon: Icons.notifications_none_rounded,
-            iconColor: blueDeep,
-            size: compact ? 18 : 20,
-            compact: compact,
-            onTap: () {},
+          IconButton(
+            onPressed: () {},
+            icon: Icon(
+              Icons.notifications_none_rounded,
+              color: blue,
+              size: compact ? 28 : 32,
+            ),
+            splashRadius: compact ? 18 : 22,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
         ],
       ),
@@ -431,10 +439,10 @@ class _HeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const card = Colors.white;
-    const textPrimary = Color(0xFF0E1738);
-    const textSecondary = Color(0xFF5E6480);
-    const orangeStart = Color(0xFFFFBE4D);
-    const orangeEnd = Color(0xFFFF7A00);
+    const textPrimary = Color(0xFF111B4A);
+    const textMuted = Color(0xFF6C6A8A);
+    const orange1 = Color(0xFFF6B645);
+    const orange2 = Color(0xFFFF7A00);
 
     final quickLabel = data.availability.trim().isEmpty
         ? 'Intervention rapide'
@@ -444,20 +452,20 @@ class _HeroCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: card,
         borderRadius: BorderRadius.circular(compact ? 24 : 30),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: compact ? 22 : 30,
-            offset: Offset(0, compact ? 12 : 16),
+            color: Color(0x10000000),
+            blurRadius: 24,
+            offset: Offset(0, 10),
           ),
         ],
       ),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          compact ? 16 : 22,
-          compact ? 16 : 22,
-          compact ? 16 : 22,
-          compact ? 16 : 22,
+          compact ? 18 : 24,
+          compact ? 18 : 24,
+          compact ? 18 : 24,
+          compact ? 18 : 24,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -467,32 +475,112 @@ class _HeroCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: compact ? 24 : 28,
-                height: 1.02,
+                fontSize: compact ? 27 : 31,
+                height: 1.03,
                 fontWeight: FontWeight.w800,
                 color: textPrimary,
-                letterSpacing: compact ? -0.7 : -0.9,
+                letterSpacing: compact ? -0.8 : -1.0,
               ),
             ),
-            SizedBox(height: compact ? 8 : 12),
+            SizedBox(height: compact ? 8 : 10),
             Row(
               children: [
                 Icon(
                   Icons.location_on_outlined,
-                  size: compact ? 18 : 20,
-                  color: textSecondary,
+                  size: compact ? 20 : 22,
+                  color: textMuted,
                 ),
-                SizedBox(width: compact ? 5 : 6),
-                Expanded(
+                SizedBox(width: compact ? 6 : 7),
+                Flexible(
                   child: Text(
-                    '${data.city} • $quickLabel',
+                    data.city,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: compact ? 14 : 16,
-                      height: 1.2,
-                      fontWeight: FontWeight.w600,
-                      color: textSecondary,
+                      fontSize: compact ? 17 : 19,
+                      height: 1.1,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                    ),
+                  ),
+                ),
+                SizedBox(width: compact ? 6 : 7),
+                Text(
+                  '•',
+                  style: TextStyle(
+                    fontSize: compact ? 16 : 18,
+                    fontWeight: FontWeight.w700,
+                    color: textMuted,
+                  ),
+                ),
+                SizedBox(width: compact ? 6 : 7),
+                Expanded(
+                  child: Text(
+                    quickLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: compact ? 17 : 19,
+                      height: 1.1,
+                      fontWeight: FontWeight.w500,
+                      color: textMuted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: compact ? 18 : 24),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  '${data.price.toStringAsFixed(0)} €',
+                  style: TextStyle(
+                    fontSize: compact ? 54 : 62,
+                    height: 0.95,
+                    fontWeight: FontWeight.w800,
+                    color: orange2,
+                    letterSpacing: compact ? -1.8 : -2.0,
+                  ),
+                ),
+                SizedBox(width: compact ? 12 : 16),
+                Expanded(
+                  child: Container(
+                    height: compact ? 58 : 66,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(34),
+                      gradient: const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [orange1, orange2],
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x26FF8A00),
+                          blurRadius: 16,
+                          offset: Offset(0, 7),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: compact ? 27 : 31,
+                        ),
+                        SizedBox(width: compact ? 8 : 10),
+                        Text(
+                          'Réponse rapide',
+                          style: TextStyle(
+                            fontSize: compact ? 17 : 19,
+                            height: 1,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -500,113 +588,32 @@ class _HeroCard extends StatelessWidget {
             ),
             SizedBox(height: compact ? 16 : 22),
             Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
-                  flex: 4,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      '${data.price.toStringAsFixed(0)} €',
-                      style: TextStyle(
-                        fontSize: compact ? 48 : 56,
-                        height: 0.95,
-                        fontWeight: FontWeight.w800,
-                        color: orangeEnd,
-                        letterSpacing: compact ? -1.6 : -2.0,
-                      ),
-                    ),
+                  child: _HeroInfoChip(
+                    icon: Icons.handyman_outlined,
+                    label: data.category,
+                    compact: compact,
                   ),
                 ),
-                SizedBox(width: compact ? 10 : 14),
+                SizedBox(width: compact ? 12 : 16),
                 Expanded(
-                  flex: 8,
-                  child: Container(
-                    height: compact ? 52 : 58,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      gradient: const LinearGradient(
-                        colors: [orangeStart, orangeEnd],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF8D1A).withOpacity(0.28),
-                          blurRadius: compact ? 16 : 22,
-                          offset: Offset(0, compact ? 8 : 10),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(999),
-                        onTap: () {},
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: compact ? 14 : 20,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.check_rounded,
-                                color: Colors.white,
-                                size: compact ? 20 : 22,
-                              ),
-                              SizedBox(width: compact ? 8 : 10),
-                              Flexible(
-                                child: Text(
-                                  'Réponse rapide',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: compact ? 16 : 18,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                    letterSpacing: -0.2,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                  child: _HeroInfoChip(
+                    icon: Icons.location_on_outlined,
+                    label: data.city,
+                    compact: compact,
                   ),
                 ),
               ],
             ),
-            SizedBox(height: compact ? 14 : 18),
-            Wrap(
-              spacing: compact ? 10 : 12,
-              runSpacing: compact ? 10 : 12,
-              children: [
-                _HeroInfoChip(
-                  icon: Icons.handyman_outlined,
-                  label: data.category,
-                  compact: compact,
-                ),
-                _HeroInfoChip(
-                  icon: Icons.location_on_outlined,
-                  label: data.city,
-                  compact: compact,
-                ),
-              ],
-            ),
-            SizedBox(height: compact ? 14 : 18),
+            SizedBox(height: compact ? 18 : 24),
             Text(
               data.description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: compact ? 15 : 17,
-                height: 1.45,
+                fontSize: compact ? 16 : 18,
+                height: 1.38,
                 fontWeight: FontWeight.w500,
                 color: textPrimary,
-                letterSpacing: -0.2,
               ),
             ),
           ],
@@ -630,28 +637,31 @@ class _HeroInfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: compact ? 46 : 54,
+      height: compact ? 52 : 58,
       padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1EEF7),
-        borderRadius: BorderRadius.circular(999),
+        color: const Color(0xFFF0EDF6),
+        borderRadius: BorderRadius.circular(29),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             icon,
-            size: compact ? 19 : 22,
-            color: const Color(0xFF313757),
+            size: compact ? 21 : 24,
+            color: const Color(0xFF2B2F52),
           ),
           SizedBox(width: compact ? 8 : 10),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: compact ? 15 : 17,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1D2340),
-              letterSpacing: -0.2,
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: compact ? 16 : 18,
+                height: 1,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF2B2F52),
+              ),
             ),
           ),
         ],
@@ -1192,42 +1202,6 @@ class _AdvertiserAvatar extends StatelessWidget {
       return parts.first.substring(0, parts.first.length >= 2 ? 2 : 1).toUpperCase();
     }
     return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  }
-}
-
-class _CircleIconButton extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final double size;
-  final VoidCallback onTap;
-  final bool compact;
-
-  const _CircleIconButton({
-    required this.icon,
-    required this.iconColor,
-    required this.size,
-    required this.onTap,
-    this.compact = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkResponse(
-        radius: compact ? 20 : 22,
-        onTap: onTap,
-        child: SizedBox(
-          width: compact ? 28 : 30,
-          height: compact ? 28 : 30,
-          child: Icon(
-            icon,
-            color: iconColor,
-            size: size,
-          ),
-        ),
-      ),
-    );
   }
 }
 
