@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   firebase_auth: ^6.1.0
-  sign_in_with_apple: ^6.1.2
+  sign_in_with_apple: ^7.0.1
   http: ^1.2.2 
   
 
@@ -30,7 +30,7 @@ dependencies:
   record: ^6.1.2
   path_provider: ^2.1.0
   google_mobile_ads: ^7.0.0
-  font_awesome_flutter: ^10.7.0
+  font_awesome_flutter: ^11.0.0
   flutter_svg: ^2.0.9
   web: ^1.0.0
   cross_file: ^0.3.4+2
