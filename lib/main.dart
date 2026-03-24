@@ -36,6 +36,7 @@ import 'services/city_search.dart';
 import 'services/account_social_auth_actions.dart';
 import 'services/google_auth_service.dart';
 import 'services/notification_service.dart';
+import 'services/offer_indexing.dart';
 import 'utils/crashlytics_context.dart';
 import 'utils/friendly_snackbar.dart';
 import 'utils/recording_path_web.dart'
@@ -2473,7 +2474,7 @@ class _HomePageState extends State<HomePage>
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Main-d’œuvre",
+                                    categoryFilter: "Main-d'œuvre",
                                   ),
                                 ),
                               );
@@ -2503,7 +2504,7 @@ class _HomePageState extends State<HomePage>
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Garde d’enfants",
+                                    categoryFilter: "Garde d'enfants",
                                   ),
                                 ),
                               );
@@ -3373,31 +3374,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }
 
   String? _matchKnownCategory(String input) {
-    final q = _normalizeForCategoryMatch(input);
-    if (q.isEmpty) return null;
-
-    String? best;
-    int bestScore = -1;
-
-    for (final c in kCategories) {
-      final cn = _normalizeForCategoryMatch(c);
-      int score = -1;
-
-      if (cn == q) {
-        score = 10000;
-      } else if (cn.contains(q) && q.length >= 2) {
-        score = 5000 + q.length;
-      } else if (q.contains(cn) && cn.length >= 2) {
-        score = 3000 + cn.length;
-      }
-
-      if (score > bestScore) {
-        bestScore = score;
-        best = c;
-      }
-    }
-
-    return bestScore > 0 ? best : null;
+    return canonicalizeOfferCategory(input);
   }
 
   Map<String, String> _buildDeptToRegion() {
@@ -3579,8 +3556,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     Query<Map<String, dynamic>> query =
         FirebaseFirestore.instance.collection('offers');
 
-    query = query.where('isActive', isEqualTo: true);
-
     final loc = _locationController.text.trim();
     final cp = _postalCodeController.text.trim();
     final cat = _selectedCategory;
@@ -3599,7 +3574,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     final String cityName =
         (filterCity != null && filterCity.isNotEmpty) ? filterCity : loc;
 
-    // ✅ Si la ville vient de l'autocomplete, privilégier son CP (plus fiable que le champ global).
     final String cpForCity = (filterCity != null &&
             filterCity.isNotEmpty &&
             _filterPostalCodeController.text.trim().isNotEmpty)
@@ -3612,62 +3586,29 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     final String? cityCategoryKey =
         _makeCityCategoryKey(cityId: cityId, categoryId: categoryId);
 
-    // ✅ Stratégie anti-explosion d’index :
-    // - si Ville+CP + Catégorie => 1 seul where(eq) sur cityCategoryKey
-    // - sinon cityId OU categoryId
-    if (cityCategoryKey != null) {
-      query = query.where('cityCategoryKey', isEqualTo: cityCategoryKey);
-    } else {
-      if (cityId != null) query = query.where('cityId', isEqualTo: cityId);
-      if (categoryId != null)
-        query = query.where('categoryId', isEqualTo: categoryId);
-    }
-
-    // Filtre sous-catégorie (optionnel; gardé en “legacy” tant que pas de subcategoryId)
     final bool hasSubcategory = (subcat != null && subcat.isNotEmpty);
-    if (hasSubcategory) {
-      query = query.where('subcategory', isEqualTo: subcat);
-    }
+    final bool hasDept =
+        (filterDeptCode != null && filterDeptCode.isNotEmpty) ||
+            (filterRegCode != null && filterRegCode.isNotEmpty) ||
+            (regionCode != null && regionCode.isNotEmpty);
 
-    // Filtre région/département (inchangé, mais attention: ça recrée des combinaisons d’index)
-    bool hasDept = false;
-    if (filterRegCode != null && filterRegCode.isNotEmpty) {
-      final depts = kRegionDepartments[filterRegCode] ?? [];
-      if (depts.isNotEmpty) {
-        hasDept = true;
-        query = query.where('dept', isEqualTo: depts.first);
-      }
-    } else if (regionCode != null && regionCode.isNotEmpty) {
-      final depts = kRegionDepartments[regionCode] ?? [];
-      if (depts.isNotEmpty) {
-        hasDept = true;
-        query = query.where('dept', isEqualTo: depts.first);
-      }
-    }
-    if (filterDeptCode != null && filterDeptCode.isNotEmpty) {
-      hasDept = true;
-      query = query.where('dept', isEqualTo: filterDeptCode);
-    }
-
-    // ✅ Budget range (AVANCÉ) (inchangé)
     final min = _parseBudgetBound(_budgetMinCtrl.text);
     final max = _parseBudgetBound(_budgetMaxCtrl.text);
     final bool wantsBudgetRange = _advancedFilters &&
         (min != null || max != null) &&
         _budgetRangeWarning == null;
 
-    if (wantsBudgetRange) {
-      if (min != null)
-        query = query.where('budgetValue', isGreaterThanOrEqualTo: min);
-      if (max != null)
-        query = query.where('budgetValue', isLessThanOrEqualTo: max);
-      query = query.orderBy('budgetValue', descending: false);
-      query = query.orderBy('createdAt', descending: true);
-    } else {
-      query = query.orderBy('createdAt', descending: true);
-    }
+    query = query.orderBy('createdAt', descending: true);
 
-    query = query.limit(_pageLimit);
+    final hasClientFilters = categoryId != null ||
+        cityId != null ||
+        cityCategoryKey != null ||
+        hasSubcategory ||
+        hasDept ||
+        wantsBudgetRange ||
+        (_activeSearchQuery?.trim().isNotEmpty ?? false);
+
+    query = query.limit(hasClientFilters ? _maxLimit : _pageLimit);
 
     // Signature (audit index) — minimaliste
     _lastOffersQuerySignature = _buildOffersQuerySignature(
@@ -3700,6 +3641,122 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         .trackOffersQueryBuild(signature: _lastOffersQuerySignature);
 
     return query;
+  }
+
+  bool _offerIsActive(Map<String, dynamic> data) {
+    final dynamic isActive = data['isActive'];
+    if (isActive is bool) return isActive;
+
+    final status = (data['status'] ?? '').toString().trim().toLowerCase();
+    if (status.isNotEmpty) return status == 'active';
+
+    return true;
+  }
+
+  String _offerCategoryLabel(Map<String, dynamic> data) {
+    final raw = (data['category'] ?? '').toString().trim();
+    return _matchKnownCategory(raw) ?? raw;
+  }
+
+  String _offerCityLabel(Map<String, dynamic> data) {
+    return ((data['city'] ?? data['location']) ?? '').toString().trim();
+  }
+
+  String _offerPostalCode(Map<String, dynamic> data) {
+    return ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
+  }
+
+  String? _offerDepartmentCode(Map<String, dynamic> data) {
+    final rawDept = (data['dept'] ?? '').toString().trim();
+    if (rawDept.isNotEmpty) return rawDept;
+    return departmentFromPostalCode(_offerPostalCode(data));
+  }
+
+  String? _offerRegionCode(Map<String, dynamic> data) {
+    final dept = _offerDepartmentCode(data);
+    if (dept == null || dept.isEmpty) return null;
+    return _deptToRegion[dept];
+  }
+
+  double? _offerBudgetValue(Map<String, dynamic> data) {
+    return budgetValueFromDynamic(
+      data['budgetValue'] ?? data['budget'] ?? data['price'],
+    );
+  }
+
+  bool _matchesOfferFilters(Map<String, dynamic> data) {
+    if (!_offerIsActive(data)) return false;
+
+    final selectedCategory =
+        (_filterCategory != null && _filterCategory!.isNotEmpty)
+            ? _filterCategory
+            : ((_selectedCategory != null &&
+                    _selectedCategory != 'Toutes catégories')
+                ? _selectedCategory
+                : null);
+    if (selectedCategory != null && selectedCategory.isNotEmpty) {
+      final offerCategory = _offerCategoryLabel(data);
+      if (_normalizeForCategoryMatch(offerCategory) !=
+          _normalizeForCategoryMatch(selectedCategory)) {
+        return false;
+      }
+    }
+
+    if (_selectedSubCategory != null && _selectedSubCategory!.isNotEmpty) {
+      final offerSubCategory =
+          ((data['subCategory'] ?? data['subcategory']) ?? '').toString().trim();
+      if (offerSubCategory != _selectedSubCategory) {
+        return false;
+      }
+    }
+
+    if (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) {
+      if (_offerDepartmentCode(data) != _filterDepartmentCode) {
+        return false;
+      }
+    }
+
+    final regionFilter = (_filterRegionCode != null && _filterRegionCode!.isNotEmpty)
+        ? _filterRegionCode
+        : _selectedRegionCode;
+    if (regionFilter != null && regionFilter.isNotEmpty) {
+      if (_offerRegionCode(data) != regionFilter) {
+        return false;
+      }
+    }
+
+    final cityFilter = _filterCityName?.trim();
+    if (cityFilter != null && cityFilter.isNotEmpty) {
+      if (_normalizeText(_offerCityLabel(data)) != _normalizeText(cityFilter)) {
+        return false;
+      }
+      final filterPostalCode = _filterPostalCodeController.text.trim();
+      if (filterPostalCode.isNotEmpty && _offerPostalCode(data) != filterPostalCode) {
+        return false;
+      }
+    }
+
+    final min = _parseBudgetBound(_budgetMinCtrl.text);
+    final max = _parseBudgetBound(_budgetMaxCtrl.text);
+    if (_advancedFilters && (min != null || max != null) && _budgetRangeWarning == null) {
+      final offerBudget = _offerBudgetValue(data);
+      if (offerBudget == null) return false;
+      if (min != null && offerBudget < min) return false;
+      if (max != null && offerBudget > max) return false;
+    }
+
+    if (_activeSearchQuery != null && _activeSearchQuery!.trim().isNotEmpty) {
+      final q = _normalizeText(_activeSearchQuery!);
+      final queryTokens = q.split(' ').where((t) => t.isNotEmpty).toList();
+      final title = _normalizeText((data['title'] ?? '').toString());
+      final desc = _normalizeText((data['description'] ?? '').toString());
+      final combined = '$title $desc';
+      if (!queryTokens.every((token) => combined.contains(token))) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   Future<void> _fetchOffers({bool resetPaging = false}) async {
@@ -4147,26 +4204,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                     }
 
                     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
-                        snapshot.data?.docs ?? [];
-
-                    // ✅ Filtrage client-side optimisé avec normalisation
-                    if (_activeSearchQuery != null &&
-                        _activeSearchQuery!.trim().isNotEmpty) {
-                      final q = _normalizeText(_activeSearchQuery!);
-                      final queryTokens =
-                          q.split(' ').where((t) => t.isNotEmpty).toList();
-
-                      docs = docs.where((d) {
-                        final data = d.data();
-                        final title = _normalizeText(data['title'] ?? '');
-                        final desc = _normalizeText(data['description'] ?? '');
-                        final combined = '$title $desc';
-
-                        // Correspondance si tous les tokens sont présents
-                        return queryTokens
-                            .every((token) => combined.contains(token));
-                      }).toList();
-                    }
+                      (snapshot.data?.docs ?? [])
+                        .where((d) => _matchesOfferFilters(d.data()))
+                        .toList();
 
                     // Nombre après filtrage
                     final int resultCount = docs.length;
@@ -8146,21 +8186,31 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       await _uploadPhotos(uid: user.uid);
 
       // Sauvegarder l'offre dans Firestore
+      final city = _locationController.text.trim();
+      final postalCode = _postalCodeController.text.trim();
+      final budgetRaw = _budgetController.text.trim();
+      final normalizedOffer = buildOfferIndexFields(
+        category: _category,
+        city: city,
+        postalCode: postalCode,
+        budget: budgetRaw,
+        isActive: true,
+        status: 'active',
+      );
+
       final docRef = await FirebaseFirestore.instance.collection('offers').add({
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
-        'category': _category,
         'subCategory': _selectedSubCategory,
         'urgent': _isUrgent,
-        'location': _locationController.text.trim(),
-        'postalCode': _postalCodeController.text.trim(),
         'phone': _phoneController.text.trim(),
-        'budget': _budgetController.text.trim(),
+        'budget': budgetRaw,
         'budgetType': _budgetType,
         'imageUrls': _uploadedPhotoUrls.isEmpty ? null : _uploadedPhotoUrls,
         'userId': user.uid,
         'ownerId': user.uid,
         'createdAt': Timestamp.now(),
+        ...normalizedOffer,
       });
 
       // ✅ Analytics: publication
