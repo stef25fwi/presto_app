@@ -1,7 +1,9 @@
 export const COLLECTIONS = {
   users: "users",
   userProfiles: "user_profiles",
+  offers: "offers",
   listings: "listings",
+  newsletterCampaigns: "newsletter_campaigns",
   listingDrafts: "listing_drafts",
   conversations: "conversations",
   conversationMessages: "conversation_messages",
