@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:presto_app/main.dart';
+import 'package:presto_app/services/conversation_service.dart';
 
 class OfferDetailV2Page extends StatefulWidget {
   final String offerId;
@@ -238,38 +239,12 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
       return;
     }
 
-    // ✅ Cherche une conversation existante (participants + offerId)
-    final convCol = FirebaseFirestore.instance.collection('conversations');
-    final q = await convCol
-        .where('participants', arrayContains: me)
-        .where('offerId', isEqualTo: widget.offerId)
-        .limit(20)
-        .get();
-
-    String? conversationId;
-
-    for (final d in q.docs) {
-      final data = d.data();
-      final parts = (data['participants'] as List<dynamic>? ?? []).map((e) => e.toString()).toList();
-      if (parts.contains(annonceurId)) {
-        conversationId = d.id;
-        break;
-      }
-    }
-
-    // ✅ Sinon crée une conversation
-    if (conversationId == null) {
-      final doc = await convCol.add({
-        'offerId': widget.offerId,
-        'offerTitle': offerTitle,
-        'participants': [me, annonceurId],
-        'createdAt': FieldValue.serverTimestamp(),
-        'lastMessageAt': FieldValue.serverTimestamp(),
-        'lastMessage': '',
-        'unreadCount': {me: 0, annonceurId: 0},
-      });
-      conversationId = doc.id;
-    }
+    final conversationId = await ConversationService.ensureConversation(
+      offerId: widget.offerId,
+      offerTitle: offerTitle,
+      currentUserId: me,
+      otherUserId: annonceurId,
+    );
 
     if (!context.mounted) return;
 

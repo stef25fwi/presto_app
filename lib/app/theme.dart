@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../constants.dart';
+
 ThemeData buildPrestoTheme() {
   const prestoOrange = Color(0xFFFF6600);
   const prestoBlue = Color(0xFF1A73E8);
@@ -9,6 +11,36 @@ ThemeData buildPrestoTheme() {
     colorScheme: ColorScheme.fromSeed(
       seedColor: prestoOrange,
       brightness: Brightness.light,
+    ),
+    appBarTheme: AppBarTheme(
+      elevation: 0,
+      centerTitle: false,
+      foregroundColor: Colors.white,
+      titleTextStyle: kPrestoAppBarTitleStyle.copyWith(color: Colors.white),
+      toolbarTextStyle: kPrestoBodyTextStyle.copyWith(color: Colors.white),
+    ),
+    textTheme: const TextTheme(
+      titleLarge: kPrestoSectionTitleStyle,
+      titleMedium: kPrestoCardTitleStyle,
+      bodyMedium: kPrestoBodyTextStyle,
+      bodySmall: kPrestoMetaTextStyle,
+    ),
+    dialogTheme: DialogThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+      ),
+      titleTextStyle: kPrestoSectionTitleStyle.copyWith(
+        color: const Color(0xFF111827),
+      ),
+      contentTextStyle: kPrestoBodyTextStyle.copyWith(
+        color: const Color(0xFF111827),
+      ),
+    ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
     ),
     snackBarTheme: SnackBarThemeData(
       shape: RoundedRectangleBorder(
@@ -36,6 +68,21 @@ ThemeData buildPrestoTheme() {
       hintStyle: const TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w500,
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        textStyle: kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w700),
+      ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        textStyle: kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w800),
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        textStyle: kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w800),
       ),
     ),
   );

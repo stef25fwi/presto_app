@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:presto_app/pages/pricing_calculator_page.dart';
 import 'package:presto_app/pages/toolbox_hub_page.dart';
 
+import '../constants.dart';
+
 /// Prestō / IliPrestō - Boîte à outils (présentation premium)
 /// - Gradient orange en haut
 /// - 2 cartes principales avec infos détaillées
@@ -29,7 +31,7 @@ class ToolboxPage extends StatelessWidget {
         foregroundColor: Colors.white,
         title: const Text(
           'Boîte à outils',
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: kPrestoAppBarTitleStyle,
         ),
       ),
       body: Stack(

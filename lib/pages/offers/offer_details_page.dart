@@ -1,10 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:presto_app/constants.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:presto_app/pages/messages/conversation_thread_page.dart';
+import 'package:presto_app/services/conversation_service.dart';
 
 // ─── Data models ─────────────────────────────────────────────────────────────
 
@@ -181,37 +182,12 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       return;
     }
 
-    final convCol = FirebaseFirestore.instance.collection('conversations');
-    final q = await convCol
-        .where('participants', arrayContains: me)
-        .where('offerId', isEqualTo: data.offerId)
-        .limit(20)
-        .get();
-
-    String? conversationId;
-    for (final doc in q.docs) {
-      final parts = (doc.data()['participants'] as List<dynamic>? ?? [])
-          .map((entry) => entry.toString())
-          .toList();
-      if (parts.contains(data.advertiserId)) {
-        conversationId = doc.id;
-        break;
-      }
-    }
-
-    if (conversationId == null) {
-      final created = await convCol.add({
-        'offerId': data.offerId,
-        'offerTitle': data.title,
-        'participants': [me, data.advertiserId],
-        'createdAt': FieldValue.serverTimestamp(),
-        'lastMessageAt': FieldValue.serverTimestamp(),
-        'lastMessage': '',
-        'unreadCount': {me: 0, data.advertiserId: 0},
-      });
-      conversationId = created.id;
-    }
-    final resolvedConversationId = conversationId;
+    final resolvedConversationId = await ConversationService.ensureConversation(
+      offerId: data.offerId,
+      offerTitle: data.title,
+      currentUserId: me,
+      otherUserId: data.advertiserId,
+    );
 
     if (!context.mounted) return;
     Navigator.of(context).push(
@@ -301,11 +277,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                 const Text(
                   'Partager l\'annonce',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF111827),
-                  ),
+                  style: kPrestoSectionTitleStyle,
                 ),
                 const SizedBox(height: 14),
                 Wrap(
@@ -414,11 +386,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                 const Text(
                   'Proposer mes services',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF111827),
-                  ),
+                  style: kPrestoSectionTitleStyle,
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
@@ -433,10 +401,6 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     icon: const Icon(Icons.chat_bubble_outline),
@@ -456,10 +420,6 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     icon: const Icon(Icons.call_outlined),
@@ -495,10 +455,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           'Détail annonce',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-          ),
+          style: kPrestoAppBarTitleStyle,
         ),
         actions: [
           IconButton(

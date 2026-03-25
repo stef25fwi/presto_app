@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:presto_app/pages/pricing_calculator_page.dart';
 import 'package:presto_app/pages/toolbox_je_me_lance_page.dart';
 
+import '../constants.dart';
+
 /// ==========================
 /// ROUTES (optionnel)
 /// ==========================
@@ -135,9 +137,6 @@ class ToolboxHubPage extends StatelessWidget {
   }
 }
 
-/// ==========================
-/// WIDGET CARD (réutilisable)
-/// ==========================
 class _ToolCard extends StatelessWidget {
   const _ToolCard({
     required this.leading,
@@ -196,7 +195,7 @@ class _ToolCard extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
+                        style: kPrestoCardTitleStyle.copyWith(
                           fontSize: compact ? 15 : 16,
                           fontWeight: FontWeight.w800,
                         ),
@@ -206,7 +205,7 @@ class _ToolCard extends StatelessWidget {
                         subtitle,
                         maxLines: compact ? 1 : 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        style: kPrestoMetaTextStyle.copyWith(
                           fontSize: compact ? 12 : 13,
                           fontWeight: FontWeight.w600,
                         ),
@@ -216,7 +215,7 @@ class _ToolCard extends StatelessWidget {
                         description,
                         maxLines: compact ? 2 : 3,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        style: kPrestoMetaTextStyle.copyWith(
                           fontSize: compact ? 11 : 12,
                           color: Colors.black.withOpacity(0.70),
                           height: 1.25,

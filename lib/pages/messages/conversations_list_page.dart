@@ -87,13 +87,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             style: kPrestoAppBarTitleStyle,
           ),
         ),
-        body: const Center(
+        body: Center(
           child: Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Text(
               'Connectez-vous pour accéder à vos conversations.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              style: kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         ),
@@ -211,7 +211,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                       child: Text(
                         'Erreur de chargement des conversations.\n${snapshot.error}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        style: kPrestoBodyTextStyle.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   );
@@ -219,13 +221,15 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
                 final docs = snapshot.data?.docs ?? const [];
                 if (docs.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(24),
                       child: Text(
                         'Aucune conversation pour le moment.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                        style: kPrestoBodyTextStyle.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   );
@@ -255,10 +259,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                     }).toList();
 
                     if (filteredDocs.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Text(
                           'Aucune conversation trouvée',
-                          style: TextStyle(fontWeight: FontWeight.w600),
+                          style: kPrestoBodyTextStyle.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       );
                     }
@@ -297,7 +303,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                           ),
                           title: Text(
                             contactName,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
+                            style: kPrestoCardTitleStyle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -309,13 +315,18 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                 offerTitle,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                style: kPrestoBodyTextStyle.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               if (lastMessage.isNotEmpty)
                                 Text(
                                   lastMessage,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
+                                  style: kPrestoMetaTextStyle.copyWith(
+                                    color: Colors.black87,
+                                  ),
                                 ),
                             ],
                           ),
@@ -325,7 +336,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                             children: [
                               Text(
                                 _formatTimestamp(lastDate),
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                style: kPrestoMetaTextStyle.copyWith(
+                                  color: Colors.grey,
+                                ),
                               ),
                               if (unreadCount > 0)
                                 Container(
