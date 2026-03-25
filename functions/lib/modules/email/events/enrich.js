@@ -69,17 +69,19 @@ async function enrichEventPayload(event) {
             const sourceDoc = await firestore_1.db.collection(event.source_collection).doc(event.source_id).get();
             if (sourceDoc.exists) {
                 const s = sourceDoc.data() ?? {};
-                if (event.source_collection === constants_1.COLLECTIONS.listings) {
+                if (event.source_collection === constants_1.COLLECTIONS.listings || event.source_collection === constants_1.COLLECTIONS.offers) {
                     if (!event.payload.listingTitle)
                         extra.listingTitle = String(s.title ?? "");
                     if (!event.payload.listingUrl)
-                        extra.listingUrl = `https://presto.app/listings/${event.source_id}`;
+                        extra.listingUrl = `https://presto.app/offers/${event.source_id}`;
                     if (!event.payload.city)
                         extra.city = String(s.city ?? extra.city ?? "");
                 }
                 else if (event.source_collection === constants_1.COLLECTIONS.conversations) {
                     if (!event.payload.conversationUrl)
                         extra.conversationUrl = `https://presto.app/messages/${event.source_id}`;
+                    if (!event.payload.listingTitle)
+                        extra.listingTitle = String(s.offerTitle ?? s.listingTitle ?? s.title ?? "");
                 }
                 else if (event.source_collection === constants_1.COLLECTIONS.supportTickets) {
                     if (!event.payload.ticketNumber)

@@ -1,6 +1,8 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { db } from "../../core/firestore";
+import { logger } from "../../core/logger";
 import { COLLECTIONS } from "../../shared/constants";
+import { triggerDeliverabilityAlerts } from "./analytics/alerts";
 
 export const purgeOldEmailWebhooks = onSchedule("every day 04:00", async () => {
   const threshold = Date.now() - 30 * 24 * 60 * 60 * 1000;
@@ -19,8 +21,51 @@ export const purgeOldEmailLogs = onSchedule("every day 04:30", async () => {
 });
 
 export const syncEmailAnalytics = onSchedule("every 1 hours", async () => {
+  const threshold = Date.now() - 60 * 60 * 1000;
+  const logsSnap = await db
+    .collection(COLLECTIONS.emailLogs)
+    .where("created_at", ">=", threshold)
+    .limit(1000)
+    .get();
+
+  const metrics = {
+    sent: 0,
+    delivered: 0,
+    bounced: 0,
+    complained: 0,
+    failed: 0,
+  };
+
+  for (const doc of logsSnap.docs) {
+    const status = String(doc.data().status || "");
+    if (status === "sent") metrics.sent += 1;
+    if (status === "delivered") metrics.delivered += 1;
+    if (status === "bounced") metrics.bounced += 1;
+    if (status === "complained") metrics.complained += 1;
+    if (status === "failed") metrics.failed += 1;
+  }
+
+  const deadLettersSnap = await db
+    .collection(COLLECTIONS.emailJobs)
+    .where("status", "==", "dead_letter")
+    .limit(200)
+    .get();
+  const recentDeadLetters = deadLettersSnap.docs.filter((doc) => {
+    const updatedAt = Number(doc.data().updated_at || 0);
+    return updatedAt >= threshold;
+  }).length;
+
+  triggerDeliverabilityAlerts(metrics);
+
+  if (recentDeadLetters > 0) {
+    logger.warn("email_dead_letters_detected", { recentDeadLetters });
+  }
+
   await db.collection(COLLECTIONS.audits).add({
     action: "email.analytics.sync",
     created_at: Date.now(),
+    metrics,
+    recent_dead_letters: recentDeadLetters,
+    sampled_logs: logsSnap.size,
   });
 });

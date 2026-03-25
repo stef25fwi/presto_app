@@ -29,6 +29,7 @@ export function mapEventToTemplate(eventName: EventName): TemplateCode | null {
 
     // ── Messagerie ────────────────────────────────────────────────────────
     case "message.created.new_thread":
+      return "tpl_product_lead_received_v1";
     case "message.created.existing_thread":
       return "tpl_product_messaging_new_message_v1";
     case "conversation.pending_reminder_due":

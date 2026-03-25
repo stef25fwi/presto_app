@@ -9,18 +9,27 @@ export const enqueueUnreadMessageReminders = onSchedule("every 2 hours", async (
 
   const q = await db
     .collection(COLLECTIONS.conversations)
-    .where("last_message_at", "<=", threshold)
-    .where("status", "==", "open")
+    .where("lastMessageAt", "<=", threshold)
     .limit(200)
     .get();
 
   for (const doc of q.docs) {
     const data = doc.data();
-    const participantIds = Array.isArray(data.participant_ids) ? data.participant_ids : [];
+    const status = String(data.status || "open").toLowerCase();
+    if (status !== "open" && status !== "active" && status.length > 0) continue;
+
+    const participantIds = Array.isArray(data.participants)
+      ? data.participants
+      : Array.isArray(data.participant_ids)
+        ? data.participant_ids
+        : [];
+    const unreadCount = (data.unreadCount || data.unread_count || {}) as Record<string, unknown>;
 
     for (const uid of participantIds) {
       const userId = String(uid || "");
       if (!userId) continue;
+      const unread = Number(unreadCount[userId] || 0);
+      if (unread <= 0) continue;
       const user = await db.collection(COLLECTIONS.users).doc(userId).get();
       const email = String(user.data()?.email || "").trim();
       if (!email) continue;

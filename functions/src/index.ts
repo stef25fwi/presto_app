@@ -6,11 +6,15 @@ setGlobalOptions({
 });
 
 export { onUserCreated } from "./modules/auth/triggers";
+export { requestPasswordResetEmail, requestEmailVerificationEmail, reportPasswordChanged, trackUserLogin } from "./modules/auth/callables";
 
-export { onListingPublished } from "./modules/listings/triggers";
+export { onListingPublished, onOfferCreated, onOfferUpdated } from "./modules/listings/triggers";
 export { enqueueExpiringListingEmails } from "./modules/listings/scheduled";
+export { onLegalTermsSettingsUpdated } from "./modules/legal/triggers";
+export { enqueueMarketingOnboardingEmails } from "./modules/marketing/scheduled";
+export { onNewsletterCampaignCreated, onNewsletterCampaignUpdated } from "./modules/marketing/triggers";
 
-export { onMessageCreated } from "./modules/messaging/triggers";
+export { onMessageCreated, onConversationSubMessageCreated } from "./modules/messaging/triggers";
 export { enqueueUnreadMessageReminders } from "./modules/messaging/scheduled";
 
 export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/support/triggers";
