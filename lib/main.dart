@@ -1140,7 +1140,7 @@ class _HomePageState extends State<HomePage>
   late final AnimationController _categoryController;
 
   // Taille de police de référence pour les titres des slides (alignée sur le slide 1)
-  static const double _homeSlideTitleFontSize = 24;
+  static const double _homeSlideTitleFontSize = 26;
 
   bool _isSeeding = false;
 
@@ -2189,7 +2189,7 @@ class _HomePageState extends State<HomePage>
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
                                             color: Colors.white70,
-                                            fontSize: 14,
+                                            fontSize: 15,
                                             fontWeight: FontWeight.w500,
                                             height: 1.3,
                                           ),
@@ -2265,7 +2265,7 @@ class _HomePageState extends State<HomePage>
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
                                                 color: Colors.white70,
-                                                fontSize: 13,
+                                                fontSize: 14,
                                                 fontWeight: FontWeight.w500,
                                               ),
                                             ),
