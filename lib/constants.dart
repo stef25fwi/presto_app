@@ -1,8 +1,37 @@
 import 'package:flutter/material.dart';
 
-/// Style de titre des headers (AppBar) — référence: "Mes messages"
+/// Charte typo centralisée Presto.
+/// Les écrans peuvent encore surcharger localement certains textes,
+/// mais les niveaux de base sont définis ici.
 const TextStyle kPrestoAppBarTitleStyle = TextStyle(
+  fontSize: 20,
   fontWeight: FontWeight.w700,
+  height: 1.1,
+  letterSpacing: 0.1,
+);
+
+const TextStyle kPrestoSectionTitleStyle = TextStyle(
+  fontSize: 18,
+  fontWeight: FontWeight.w700,
+  height: 1.2,
+);
+
+const TextStyle kPrestoCardTitleStyle = TextStyle(
+  fontSize: 16,
+  fontWeight: FontWeight.w700,
+  height: 1.2,
+);
+
+const TextStyle kPrestoBodyTextStyle = TextStyle(
+  fontSize: 14,
+  fontWeight: FontWeight.w500,
+  height: 1.35,
+);
+
+const TextStyle kPrestoMetaTextStyle = TextStyle(
+  fontSize: 12,
+  fontWeight: FontWeight.w500,
+  height: 1.3,
 );
 
 /// Constantes de l'application Presto

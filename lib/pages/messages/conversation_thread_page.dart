@@ -173,7 +173,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       child: Text(
                         'Erreur de chargement des messages.\n${snapshot.error}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        style: kPrestoBodyTextStyle.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   );
@@ -181,13 +183,15 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
                 final docs = snapshot.data?.docs ?? const [];
                 if (docs.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(24),
                       child: Text(
                         'Aucun message pour le moment.\nCommencez la conversation.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                        style: kPrestoBodyTextStyle.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   );
@@ -227,23 +231,24 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                   padding: const EdgeInsets.only(bottom: 4),
                                   child: Text(
                                     senderName,
-                                    style: const TextStyle(
-                                      fontSize: 12,
+                                    style: kPrestoMetaTextStyle.copyWith(
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF6B7280),
+                                      color: const Color(0xFF6B7280),
                                     ),
                                   ),
                                 ),
                               Text(
                                 text,
-                                style: const TextStyle(fontSize: 14, color: Color(0xFF111827)),
+                                style: kPrestoBodyTextStyle.copyWith(
+                                  color: const Color(0xFF111827),
+                                ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 _formatMessageTimestamp(sentAt),
-                                style: const TextStyle(
+                                style: kPrestoMetaTextStyle.copyWith(
                                   fontSize: 11,
-                                  color: Color(0xFF6B7280),
+                                  color: const Color(0xFF6B7280),
                                 ),
                               ),
                             ],

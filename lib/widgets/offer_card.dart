@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../constants.dart';
+
 enum OfferMenuAction { edit, delete }
 
 class OfferCard extends StatelessWidget {
@@ -105,15 +107,14 @@ class OfferCard extends StatelessWidget {
                     title.isEmpty ? 'Annonce' : title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700),
+                    style: kPrestoCardTitleStyle,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitleLine,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13),
+                    style: kPrestoMetaTextStyle.copyWith(fontSize: 13),
                   ),
                   const SizedBox(height: 6),
                   if (ageLabel.isNotEmpty)
@@ -122,7 +123,7 @@ class OfferCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             'Publié il y a $ageLabel',
-                            style: const TextStyle(fontSize: 12),
+                            style: kPrestoMetaTextStyle,
                           ),
                         ),
                         if (isUrgent) ...[

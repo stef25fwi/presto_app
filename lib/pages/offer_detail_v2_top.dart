@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../constants.dart';
+
 /// ✅ HEADER + "TOP CARD" de la page détail (style comme ton visuel)
 /// - AppBar orange : back, titre centré, share + coeur
 /// - Carte blanche avec bandeau orange + infos + chips
@@ -51,11 +53,7 @@ class _OfferDetailV2TopState extends State<OfferDetailV2Top> {
         leading: const BackButton(),
         title: const Text(
           "OffreDetailV2",
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.2,
-          ),
+          style: kPrestoAppBarTitleStyle,
         ),
         actions: [
           IconButton(
@@ -240,10 +238,9 @@ class _TopOfferCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
+                    style: kPrestoCardTitleStyle.copyWith(
                       color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w800,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -317,10 +314,9 @@ class _RowInfo extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
-              fontSize: 16,
+            style: kPrestoCardTitleStyle.copyWith(
+              color: const Color(0xFF111827),
               fontWeight: FontWeight.w800,
-              color: Color(0xFF111827),
             ),
           ),
         ),
@@ -362,7 +358,7 @@ class _Pill extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
+        style: kPrestoMetaTextStyle.copyWith(
           color: fg,
           fontSize: 14,
           fontWeight: FontWeight.w900,
@@ -446,10 +442,10 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
+      style: kPrestoSectionTitleStyle.copyWith(
         fontSize: 26,
         fontWeight: FontWeight.w900,
-        color: Color(0xFF111827),
+        color: const Color(0xFF111827),
       ),
     );
   }
@@ -473,11 +469,11 @@ class _SectionBody extends StatelessWidget {
         padding: const EdgeInsets.only(top: 10),
         child: Text(
           text,
-          style: const TextStyle(
+          style: kPrestoBodyTextStyle.copyWith(
             fontSize: 18,
             height: 1.35,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF111827),
+            color: const Color(0xFF111827),
           ),
         ),
       ),
@@ -537,10 +533,10 @@ class _ContactCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   phoneMasked, // si tu veux: isVisible ? full : masked
-                  style: const TextStyle(
+                  style: kPrestoCardTitleStyle.copyWith(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
+                    color: const Color(0xFF0F172A),
                   ),
                 ),
               ),
@@ -585,8 +581,7 @@ class _ContactCard extends StatelessWidget {
                     icon: const Icon(Icons.mail_outline_rounded),
                     label: const Text(
                       "Message",
-                      style:
-                          TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
                     ),
                   ),
                 ),
@@ -608,8 +603,7 @@ class _ContactCard extends StatelessWidget {
                     icon: const Icon(Icons.send_rounded),
                     label: const Text(
                       "Partager",
-                      style:
-                          TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                      style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
                     ),
                   ),
                 ),

@@ -454,7 +454,10 @@ class _ProfilePageState extends State<ProfilePage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Contacter le support'),
+        title: const Text(
+          'Contacter le support',
+          style: kPrestoSectionTitleStyle,
+        ),
         content: Form(
           key: formKey,
           child: Column(
@@ -562,7 +565,10 @@ class _ProfilePageState extends State<ProfilePage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Changer mon mot de passe'),
+        title: const Text(
+          'Changer mon mot de passe',
+          style: kPrestoSectionTitleStyle,
+        ),
         content: Form(
           key: formKey,
           child: Column(
@@ -683,9 +689,13 @@ class _ProfilePageState extends State<ProfilePage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Supprimer mon compte'),
+        title: const Text(
+          'Supprimer mon compte',
+          style: kPrestoSectionTitleStyle,
+        ),
         content: const Text(
           'Cette action est irréversible. Veux-tu vraiment supprimer ton compte ?',
+          style: kPrestoBodyTextStyle,
         ),
         actions: [
           TextButton(
@@ -1685,10 +1695,7 @@ class _ProfilePageState extends State<ProfilePage> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-        ),
+        style: kPrestoSectionTitleStyle,
       ),
     );
   }
@@ -1705,11 +1712,14 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(
+                title,
+                style: kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 12),
+                style: kPrestoMetaTextStyle,
               ),
             ],
           ),
@@ -1754,7 +1764,10 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Ajouter une catégorie'),
+        title: const Text(
+          'Ajouter une catégorie',
+          style: kPrestoSectionTitleStyle,
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1770,9 +1783,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       padding: const EdgeInsets.only(top: 12, bottom: 8),
                       child: Text(
                         category,
-                        style: const TextStyle(
+                        style: kPrestoBodyTextStyle.copyWith(
                           fontWeight: FontWeight.w600,
-                          fontSize: 14,
                         ),
                       ),
                     ),
@@ -1782,7 +1794,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       return CheckboxListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
-                        title: Text(sub, style: const TextStyle(fontSize: 13)),
+                        title: Text(sub, style: kPrestoMetaTextStyle.copyWith(fontSize: 13)),
                         value: isFavored,
                         onChanged: (val) {
                           setState(() {

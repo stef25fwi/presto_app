@@ -817,7 +817,10 @@ void _showSignupDialog(BuildContext context) {
   showDialog(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Créer un compte'),
+      title: const Text(
+        'Créer un compte',
+        style: kPrestoSectionTitleStyle,
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1708,66 +1711,15 @@ class _HomePageState extends State<HomePage>
           );
         }
 
-        // Connecté → on compte les messages non lus ET les notifications non lues
-        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance
-              .collection('conversations')
-              .where('participants', arrayContains: user.uid)
-              .snapshots()
-              .map((snap) {
-            PrestoMonitoring.I.trackOtherStream(
-              key: 'home.bell.conversations',
-              docsCount: snap.docs.length,
-            );
-            return snap;
-          }),
-          builder: (context, convSnapshot) {
-            int unreadMessagesCount = 0;
-
-            if (convSnapshot.hasData) {
-              for (final doc in convSnapshot.data!.docs) {
-                final data = doc.data();
-                final unreadMap =
-                    (data['unreadCount'] as Map<String, dynamic>?) ?? {};
-                final v = unreadMap[user.uid];
-                if (v is int) unreadMessagesCount += v;
-              }
-            }
-
-            // On compte aussi les notifications d'offres non lues
-            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: FirebaseFirestore.instance
-                  .collection('notifications')
-                  .where('userId', isEqualTo: user.uid)
-                  .where('read', isEqualTo: false)
-                  .snapshots()
-                  .map((snap) {
-                PrestoMonitoring.I.trackOtherStream(
-                  key: 'home.bell.notifications',
-                  docsCount: snap.docs.length,
-                );
-                return snap;
-              }),
-              builder: (context, notifSnapshot) {
-                int unreadNotificationsCount = 0;
-
-                if (notifSnapshot.hasData) {
-                  unreadNotificationsCount = notifSnapshot.data!.docs.length;
-                }
-
-                final totalUnread =
-                    unreadMessagesCount + unreadNotificationsCount;
-
-                return _TapScale(
-                  onTap: () {
-                    // Afficher une page de notifications ou aller aux messages
-                    _showNotificationsDialog(context, user.uid);
-                  },
-                  child: _NotificationBellBase(badgeCount: totalUnread),
-                );
-              },
-            );
-          },
+        return _UnreadInboxBell(
+          userId: user.uid,
+          monitoringKeyPrefix: 'home.bell',
+          builder: (context, badgeCount) => _TapScale(
+            onTap: () {
+              _showNotificationsDialog(context, user.uid);
+            },
+            child: _NotificationBellBase(badgeCount: badgeCount),
+          ),
         );
       },
     );
@@ -1782,10 +1734,7 @@ class _HomePageState extends State<HomePage>
         title: const Text(
           'Notifications',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+          style: kPrestoSectionTitleStyle,
         ),
         content: SizedBox(
           width: double.maxFinite,
@@ -1813,7 +1762,7 @@ class _HomePageState extends State<HomePage>
               if (notifications.isEmpty) {
                 return const Text(
                   'Aucune notification pour le moment.',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: kPrestoBodyTextStyle,
                 );
               }
 
@@ -1835,16 +1784,16 @@ class _HomePageState extends State<HomePage>
                     ),
                     title: Text(
                       title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                      style: kPrestoBodyTextStyle.copyWith(
+                        fontWeight: FontWeight.w700,
                         color: isRead ? Colors.grey.shade700 : Colors.black,
                       ),
                     ),
                     subtitle: Text(
                       message,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
+                      style: kPrestoMetaTextStyle.copyWith(
                         fontSize: 13,
+                        fontWeight: FontWeight.w700,
                         color: isRead
                             ? Colors.grey.shade600
                             : Colors.grey.shade800,
@@ -2351,8 +2300,6 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
 
-                const SizedBox(height: 12),
-
                 // DERNIÈRES OFFRES - Section avec fond blanc
                 Container(
                   width: double.infinity,
@@ -2375,10 +2322,7 @@ class _HomePageState extends State<HomePage>
                         children: [
                           const Text(
                             "Dernières offres",
-                            style: TextStyle(
-                              fontSize: 19,
-                              fontWeight: FontWeight.w900,
-                            ),
+                            style: kPrestoSectionTitleStyle,
                           ),
                           const Spacer(),
                           TextButton(
@@ -2429,9 +2373,7 @@ class _HomePageState extends State<HomePage>
                             return const Text(
                               "Aucune offre publiée pour le moment.",
                               style: TextStyle(
-                                fontSize: 13,
                                 color: Colors.black54,
-                                fontWeight: FontWeight.w500,
                               ),
                             );
                           }
@@ -2834,8 +2776,14 @@ class _BottomNavItemState extends State<_BottomNavItem>
 
 class _NotificationBellBase extends StatelessWidget {
   final int badgeCount;
+  final bool showBackground;
+  final Color iconColor;
 
-  const _NotificationBellBase({required this.badgeCount});
+  const _NotificationBellBase({
+    required this.badgeCount,
+    this.showBackground = true,
+    this.iconColor = Colors.black87,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -2853,21 +2801,23 @@ class _NotificationBellBase extends StatelessWidget {
       children: [
         Container(
           padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(999),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(
+          decoration: showBackground
+              ? BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                )
+              : null,
+          child: Icon(
             Icons.notifications_none_outlined,
             size: 22,
-            color: Colors.black87,
+            color: iconColor,
           ),
         ),
         if (label != null)
@@ -2875,29 +2825,90 @@ class _NotificationBellBase extends StatelessWidget {
             right: -2,
             top: -2,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 5),
               decoration: BoxDecoration(
-                color: Colors.green,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: Colors.white, width: 1.5),
               ),
-              constraints: const BoxConstraints(
-                minWidth: 18,
-                minHeight: 18,
-              ),
-              child: Center(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 9,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
+              alignment: Alignment.center,
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ),
           ),
       ],
+    );
+  }
+}
+
+int _countUnreadMessages(
+  QuerySnapshot<Map<String, dynamic>>? snapshot,
+  String userId,
+) {
+  if (snapshot == null) return 0;
+
+  var unreadMessagesCount = 0;
+  for (final doc in snapshot.docs) {
+    final data = doc.data();
+    final unreadMap = (data['unreadCount'] as Map<String, dynamic>?) ?? {};
+    final value = unreadMap[userId];
+    if (value is int) unreadMessagesCount += value;
+  }
+
+  return unreadMessagesCount;
+}
+
+class _UnreadInboxBell extends StatelessWidget {
+  final String userId;
+  final String? monitoringKeyPrefix;
+  final Widget Function(BuildContext context, int badgeCount) builder;
+
+  const _UnreadInboxBell({
+    required this.userId,
+    required this.builder,
+    this.monitoringKeyPrefix,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final stream = FirebaseFirestore.instance
+        .collection('conversations')
+        .where('participants', arrayContains: userId)
+        .snapshots()
+        .map((snap) {
+      if (monitoringKeyPrefix != null) {
+        PrestoMonitoring.I.trackOtherStream(
+          key: monitoringKeyPrefix!,
+          docsCount: snap.docs.length,
+        );
+      }
+      return snap;
+    });
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          final error = snapshot.error;
+          if (error != null) {
+            PrestoMonitoring.I.trackError(
+              '${monitoringKeyPrefix ?? 'messages'}.stream',
+              error,
+            );
+          }
+          return builder(context, 0);
+        }
+
+        final badgeCount = _countUnreadMessages(snapshot.data, userId);
+        return builder(context, badgeCount);
+      },
     );
   }
 }
@@ -3417,54 +3428,32 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                 'Connecte-toi pour recevoir les notifications.',
               );
             },
-            icon: const _NotificationBellBase(badgeCount: 0),
+            icon: const _NotificationBellBase(
+              badgeCount: 0,
+              showBackground: false,
+              iconColor: Colors.white,
+            ),
             splashRadius: 20,
             padding: EdgeInsets.zero,
           );
         }
 
-        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance
-              .collection('conversations')
-              .where('participants', arrayContains: user.uid)
-              .snapshots(),
-          builder: (context, convSnapshot) {
-            int unreadMessagesCount = 0;
-            if (convSnapshot.hasData) {
-              for (final doc in convSnapshot.data!.docs) {
-                final data = doc.data();
-                final unreadMap =
-                    (data['unreadCount'] as Map<String, dynamic>?) ?? {};
-                final v = unreadMap[user.uid];
-                if (v is int) unreadMessagesCount += v;
-              }
-            }
-
-            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: FirebaseFirestore.instance
-                  .collection('notifications')
-                  .where('userId', isEqualTo: user.uid)
-                  .where('read', isEqualTo: false)
-                  .snapshots(),
-              builder: (context, notifSnapshot) {
-                final unreadNotificationsCount =
-                    notifSnapshot.hasData ? notifSnapshot.data!.docs.length : 0;
-                final totalUnread =
-                    unreadMessagesCount + unreadNotificationsCount;
-
-                return IconButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const MessagesPage()),
-                    );
-                  },
-                  icon: _NotificationBellBase(badgeCount: totalUnread),
-                  splashRadius: 20,
-                  padding: EdgeInsets.zero,
-                );
-              },
-            );
-          },
+        return _UnreadInboxBell(
+          userId: user.uid,
+          builder: (context, badgeCount) => IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MessagesPage()),
+              );
+            },
+            icon: _NotificationBellBase(
+              badgeCount: badgeCount,
+              showBackground: false,
+              iconColor: Colors.white,
+            ),
+            splashRadius: 20,
+            padding: EdgeInsets.zero,
+          ),
         );
       },
     );
@@ -4242,7 +4231,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                           overflow: TextOverflow.ellipsis,
                           style: kPrestoAppBarTitleStyle.copyWith(
                             color: Colors.white,
-                            fontSize: 20,
                           ),
                         ),
                       ),
@@ -5008,7 +4996,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Modifier l\'annonce'),
+        title: const Text(
+          'Modifier l\'annonce',
+          style: kPrestoSectionTitleStyle,
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -5059,8 +5050,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Supprimer l\'annonce ?'),
-        content: Text('Supprimer : "$title" ?'),
+        title: const Text(
+          'Supprimer l\'annonce ?',
+          style: kPrestoSectionTitleStyle,
+        ),
+        content: Text(
+          'Supprimer : "$title" ?',
+          style: kPrestoBodyTextStyle,
+        ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -7440,9 +7437,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   context: context,
                   builder: (_) => AlertDialog(
                     backgroundColor: Colors.white,
-                    title: const Text('Réinitialiser ?'),
+                    title: const Text(
+                      'Réinitialiser ?',
+                      style: kPrestoSectionTitleStyle,
+                    ),
                     content: const Text(
                       'Voulez-vous effacer tous les champs et recommencer ?',
+                      style: kPrestoBodyTextStyle,
                     ),
                     actions: [
                       TextButton(
@@ -10327,11 +10328,14 @@ class _AutoScrollingOffersCarouselState
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 8,
+        padding: const EdgeInsets.fromLTRB(
+          12,
+          6,
+          12,
+          10,
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               width: 36,
@@ -10358,9 +10362,10 @@ class _AutoScrollingOffersCarouselState
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
+                      height: 1.1,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1),
                   Text(
                     "$location — $whenLabel",
                     maxLines: 1,

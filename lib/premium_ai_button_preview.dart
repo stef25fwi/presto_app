@@ -104,19 +104,12 @@ class _PremiumAiButtonPreviewState extends State<PremiumAiButtonPreview> {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+          style: kPrestoSectionTitleStyle.copyWith(color: Colors.black87),
         ),
         const SizedBox(height: 8),
         Text(
           description,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.grey,
-          ),
+          style: kPrestoMetaTextStyle.copyWith(color: Colors.grey),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 20),
@@ -138,11 +131,7 @@ class _PremiumAiButtonPreviewState extends State<PremiumAiButtonPreview> {
         children: [
           const Text(
             'Spécifications',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+            style: kPrestoCardTitleStyle,
           ),
           const SizedBox(height: 12),
           _specItem('Couleur', '#1A73E8 (Bleu Presto)'),
@@ -168,7 +157,7 @@ class _PremiumAiButtonPreviewState extends State<PremiumAiButtonPreview> {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(
+              style: kPrestoMetaTextStyle.copyWith(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Colors.black54,

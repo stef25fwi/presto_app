@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
+import '../app/theme.dart';
+import '../constants.dart';
+
 /// Prestō – Calculatrice de Prix Artisan (mockup fidèle à l'image)
 /// - Écran 1 : choix du mode
 /// - Écran 2 : mode express (sections + champs)
@@ -23,9 +26,7 @@ class PrestoPriceCalculatorApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Prestō – Calculatrice',
-      theme: ThemeData(
-        useMaterial3: true,
-        fontFamily: 'Roboto',
+      theme: buildPrestoTheme().copyWith(
         scaffoldBackgroundColor: const Color(0xFFF5F6F8),
         colorScheme: ColorScheme.fromSeed(
           seedColor: kPrestoBlue,
@@ -70,7 +71,10 @@ class _ModeSelectionPageState extends State<_ModeSelectionPage> {
               const SizedBox(height: 6),
               const Text(
                 'Calculatrice de Prix Artisan',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 14),
               _ModeCard(
@@ -164,13 +168,12 @@ class _ModeCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: kPrestoCardTitleStyle.copyWith(
                         fontWeight: FontWeight.w900,
                       )),
                   const SizedBox(height: 3),
                   Text(subtitle,
-                      style: const TextStyle(
+                      style: kPrestoMetaTextStyle.copyWith(
                         fontSize: 13,
                         color: Colors.black54,
                         fontWeight: FontWeight.w600,
@@ -806,12 +809,7 @@ class _PrestoTopBar extends StatelessWidget implements PreferredSizeWidget {
           if (showBack) const SizedBox(width: 2),
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.3,
-            ),
+            style: kPrestoAppBarTitleStyle.copyWith(color: Colors.white),
           ),
         ],
       ),
