@@ -204,14 +204,14 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
 
     if (!context.mounted) return;
 
-    // ✅ TODO: Ouvre la page de chat (à implémenter avec ta navigation)
+    // Ouvre la messagerie après création/récupération de la conversation.
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Conversation ouverture en cours...")),
+      const SnackBar(content: Text("Conversation prête. Ouverture de la messagerie...")),
     );
-    // Exemple future :
-    // Navigator.of(context).push(
-    //   MaterialPageRoute(builder: (_) => ConversationPage(conversationId: conversationId!)),
-    // );
+
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MessagesPage()),
+    );
   }
 
   Future<void> _callPhone(BuildContext context, String? phone) async {
@@ -254,6 +254,94 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Texte de partage copié.")),
+    );
+  }
+
+  Future<void> _showContactOptionsSheet({
+    required BuildContext context,
+    required String annonceurId,
+    required String offerTitle,
+    required String? phone,
+  }) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Proposer mes services',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(sheetContext).pop();
+                      _openOrCreateConversation(
+                        context: context,
+                        annonceurId: annonceurId,
+                        offerTitle: offerTitle,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrestoBlue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    icon: const Icon(Icons.chat_bubble_outline),
+                    label: const Text('Envoyer un message'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 50,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(sheetContext).pop();
+                      _callPhone(context, phone);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: kPrestoBlue,
+                      side: const BorderSide(color: Color(0xFFD7DEE8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    icon: const Icon(Icons.call_outlined),
+                    label: const Text('Appeler'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -348,12 +436,13 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                     elevation: 10,
                     textStyle: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
                   ),
-                  onPressed: () => _openOrCreateConversation(
+                  onPressed: () => _showContactOptionsSheet(
                     context: context,
                     annonceurId: annonceurId,
                     offerTitle: title,
+                    phone: phone,
                   ),
-                  child: const Text("Accepter l'offre"),
+                  child: const Text('Proposer mes services'),
                 ),
               ),
             ),
