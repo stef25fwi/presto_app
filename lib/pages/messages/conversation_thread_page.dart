@@ -28,6 +28,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   final ScrollController _scrollController = ScrollController();
   bool _isSending = false;
   List<String> _participants = const [];
+  bool _metaLoaded = false;
 
   @override
   void initState() {
@@ -58,8 +59,17 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (!mounted) return;
       setState(() {
         _participants = participants;
+        _metaLoaded = true;
       });
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[ConversationThread] _loadConversationMeta error: $e');
+      // Fallback : on sait au moins que le currentUser est participant
+      if (!mounted) return;
+      setState(() {
+        _participants = [widget.currentUserId];
+        _metaLoaded = true;
+      });
+    }
   }
 
   Future<void> _markAsRead() async {
@@ -67,7 +77,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       await FirebaseFirestore.instance.collection('conversations').doc(widget.conversationId).update({
         'unreadCount.${widget.currentUserId}': 0,
       });
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[ConversationThread] _markAsRead error: $e');
+    }
   }
 
   Future<void> _sendMessage() async {
@@ -78,6 +90,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (authUser == null) {
       showSuccessSnackBar(context, 'Connectez-vous pour envoyer un message.');
       return;
+    }
+
+    // Si les participants n'ont pas encore été chargés, on retente le chargement
+    if (!_metaLoaded || _participants.length < 2) {
+      await _loadConversationMeta();
     }
 
     setState(() {

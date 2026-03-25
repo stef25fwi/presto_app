@@ -108,16 +108,13 @@ service cloud.firestore {
       allow read: if isSignedIn() && resource.data.userId == uid();
 
       // Le client peut seulement marquer "read" à true/false sur ses notifs.
+      // On vérifie que les champs critiques ne changent pas (quand ils existent).
       allow update: if isSignedIn()
         && resource.data.userId == uid()
         && request.resource.data.userId == resource.data.userId
-        && request.resource.data.offerId == resource.data.offerId
-        && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.title == resource.data.title
-        && request.resource.data.message == resource.data.message
-        && request.resource.data.category == resource.data.category
-        && request.resource.data.subCategory == resource.data.subCategory
-        && request.resource.data.read is bool;
+        && request.resource.data.read is bool
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['read']);
 
       allow create, delete: if false; // server-only
     }
