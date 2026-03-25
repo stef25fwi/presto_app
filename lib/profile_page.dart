@@ -12,6 +12,13 @@ import 'widgets/phone_input_field.dart';
 
 enum AuthMode { login, signup }
 
+const kIliPrestoOrange = Color(0xFFFF6600);
+const kIliPrestoBlue = Color(0xFF1A73E8);
+const kIliPrestoCream = Color(0xFFFFF7F1);
+const kIliPrestoSky = Color(0xFFF2F7FF);
+const kIliPrestoBorder = Color(0xFFD8E6FB);
+const kIliPrestoTextMuted = Color(0xFF6B7280);
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -789,6 +796,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
         return Scaffold(
           appBar: AppBar(
+            backgroundColor: kIliPrestoOrange,
+            foregroundColor: Colors.white,
             title: const Text(
               'Mon profil',
               style: kPrestoAppBarTitleStyle,
@@ -798,14 +807,24 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           body: Container(
             decoration: isLoggedIn
-                ? BoxDecoration(color: colorScheme.surface)
+                ? const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFFFFFCF8),
+                        Color(0xFFF4F8FF),
+                        Colors.white,
+                      ],
+                    ),
+                  )
                 : const BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Color(0xFFFFF4EC),
-                        Color(0xFFEAF2FF),
+                        kIliPrestoCream,
+                        kIliPrestoSky,
                         Colors.white,
                       ],
                     ),
@@ -821,7 +840,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       height: 180,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFFFF6600).withOpacity(0.10),
+                        color: kIliPrestoOrange.withOpacity(0.10),
                       ),
                     ),
                   ),
@@ -834,7 +853,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       height: 170,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF1A73E8).withOpacity(0.10),
+                        color: kIliPrestoBlue.withOpacity(0.10),
                       ),
                     ),
                   ),
@@ -858,30 +877,81 @@ class _ProfilePageState extends State<ProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          _authHeadline,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: colorScheme.primary,
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                kIliPrestoOrange,
+                Color(0xFFFF8A3D),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: kIliPrestoOrange.withOpacity(0.22),
+                blurRadius: 22,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(
+                  Icons.bolt_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _authHeadline,
+                style: const TextStyle(
+                  fontSize: 27,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  height: 1.05,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _authSubtitle,
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.35,
+                  color: Color(0xFFFFF4EC),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          _authSubtitle,
-          style: TextStyle(
-            fontSize: 14,
-            color: colorScheme.onSurface.withValues(alpha: 0.7),
-          ),
-        ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 22),
 
         // Switch Connexion / Inscription
         Container(
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest
-                .withValues(alpha: isDark ? 0.3 : 1),
+            color: Colors.white.withOpacity(isDark ? 0.22 : 0.96),
             borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: kIliPrestoBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
           padding: const EdgeInsets.all(4),
           child: Row(
@@ -893,7 +963,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: _authMode == AuthMode.login
-                          ? colorScheme.primary
+                          ? kIliPrestoBlue
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -903,8 +973,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: _authMode == AuthMode.login
-                            ? colorScheme.onPrimary
-                            : colorScheme.onSurface,
+                            ? Colors.white
+                            : const Color(0xFF374151),
                       ),
                     ),
                   ),
@@ -917,7 +987,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: _authMode == AuthMode.signup
-                          ? colorScheme.primary
+                          ? kIliPrestoBlue
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -927,8 +997,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: _authMode == AuthMode.signup
-                            ? colorScheme.onPrimary
-                            : colorScheme.onSurface,
+                            ? Colors.white
+                            : const Color(0xFF374151),
                       ),
                     ),
                   ),
@@ -962,37 +1032,62 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             Expanded(
                 child:
-                    Divider(color: colorScheme.outline.withValues(alpha: 0.4))),
+                    Divider(color: kIliPrestoBlue.withOpacity(0.28))),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text('ou continuez avec e-mail'),
+              child: Text(
+                'ou continuez avec e-mail',
+                style: TextStyle(
+                  color: kIliPrestoTextMuted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             Expanded(
                 child:
-                    Divider(color: colorScheme.outline.withValues(alpha: 0.4))),
+                    Divider(color: kIliPrestoBlue.withOpacity(0.28))),
           ],
         ),
         const SizedBox(height: 8),
 
         // Formulaire Email
         Card(
-          elevation: 1,
+          color: Colors.white.withOpacity(0.98),
+          elevation: 0,
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          shadowColor: Colors.transparent,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Form(
               key: _formKeyAuth,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: kIliPrestoCream,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text(
+                      'Acces a votre espace iLiPresto',
+                      style: TextStyle(
+                        color: kIliPrestoOrange,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   TextFormField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
                     textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
+                    decoration: _authInputDecoration(
                       labelText: 'E-mail',
-                      prefixIcon: Icon(Icons.email_outlined),
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -1019,9 +1114,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         _onEmailAuth();
                       }
                     },
-                    decoration: const InputDecoration(
+                    decoration: _authInputDecoration(
                       labelText: 'Mot de passe',
-                      prefixIcon: Icon(Icons.lock_outline),
+                      prefixIcon: const Icon(Icons.lock_outline),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -1041,9 +1136,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       autofillHints: const [AutofillHints.newPassword],
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _onEmailAuth(),
-                      decoration: const InputDecoration(
+                      decoration: _authInputDecoration(
                         labelText: 'Confirmer le mot de passe',
-                        prefixIcon: Icon(Icons.lock_outline),
+                        prefixIcon: const Icon(Icons.lock_outline),
                       ),
                       validator: (value) {
                         if (_authMode == AuthMode.signup) {
@@ -1066,10 +1161,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: FilledButton(
                       onPressed: _isLoading ? null : () async => _onEmailAuth(),
                       style: FilledButton.styleFrom(
+                        backgroundColor: kIliPrestoOrange,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                         ),
+                        elevation: 0,
                       ),
                       child: Text(
                         _isLoading
@@ -1090,7 +1188,13 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: TextButton(
                         onPressed:
                             _isLoading ? null : () => _onForgotPassword(),
-                        child: const Text('Mot de passe oublié ?'),
+                        child: const Text(
+                          'Mot de passe oublié ?',
+                          style: TextStyle(
+                            color: kIliPrestoBlue,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -1126,11 +1230,16 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         style: OutlinedButton.styleFrom(
-          backgroundColor: forceWhiteBackground ? Colors.white : null,
-          side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.5)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+          backgroundColor: forceWhiteBackground ? Colors.white : const Color(0xFFF9FBFF),
+          foregroundColor: const Color(0xFF111827),
+          side: BorderSide(
+            color: forceWhiteBackground ? kIliPrestoBorder : kIliPrestoBlue.withOpacity(0.24),
           ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
         ),
       ),
     );
@@ -1138,21 +1247,30 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildPrestoPromoCard(ColorScheme colorScheme) {
     return Card(
-      color: colorScheme.primaryContainer,
+      color: const Color(0xFFEAF2FF),
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(Icons.bolt, color: colorScheme.onPrimaryContainer),
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.bolt, color: kIliPrestoBlue),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 "Besoin d'un jardinier tout de suite ? Publiez votre offre : ils sont des dizaines autour de vous, prêts à accepter le job !",
-                style: TextStyle(
-                  color: colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.w600,
+                style: const TextStyle(
+                  color: Color(0xFF153B73),
+                  fontWeight: FontWeight.w700,
+                  height: 1.35,
                 ),
               ),
             ),
@@ -1162,63 +1280,126 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  InputDecoration _authInputDecoration({
+    required String labelText,
+    required Widget prefixIcon,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: const TextStyle(
+        color: kIliPrestoTextMuted,
+        fontWeight: FontWeight.w600,
+      ),
+      prefixIcon: IconTheme(
+        data: const IconThemeData(color: kIliPrestoBlue),
+        child: prefixIcon,
+      ),
+      filled: true,
+      fillColor: const Color(0xFFFBFDFF),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: kIliPrestoBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: kIliPrestoBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: kIliPrestoBlue, width: 1.6),
+      ),
+    );
+  }
+
   Widget _buildProfileContent(ColorScheme colorScheme, bool isDark, User user) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Header profil
-        Row(
-          children: [
-            CircleAvatar(
-              radius: 32,
-              backgroundColor: colorScheme.primary.withValues(alpha: 0.15),
-              child: Icon(Icons.person, size: 32, color: colorScheme.primary),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                kIliPrestoOrange,
+                kIliPrestoBlue,
+              ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _nameCtrl.text.isEmpty
-                        ? 'Mon profil Presto'
-                        : _nameCtrl.text,
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold),
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: kIliPrestoBlue.withOpacity(0.16),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 68,
+                height: 68,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.24),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.verified,
-                          size: 18, color: colorScheme.primary),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Compte non vérifié',
+                ),
+                child: const Icon(Icons.person, size: 34, color: Colors.white),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _nameCtrl.text.isEmpty ? 'Mon profil iLiPresto' : _nameCtrl.text,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Text(
+                        'Compte non verifie',
                         style: TextStyle(
                           fontSize: 12,
-                          color: colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            IconButton(
-              onPressed: () async => _onLogout(),
-              icon: Icon(Icons.logout, color: colorScheme.error),
-              tooltip: 'Déconnexion',
-            ),
-          ],
+              IconButton(
+                onPressed: () async => _onLogout(),
+                icon: const Icon(Icons.logout, color: Colors.white),
+                tooltip: 'Déconnexion',
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.14),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 24),
 
         // Infos personnelles
         _buildSectionTitle('Informations personnelles'),
-        Card(
-          elevation: 1,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        _buildProfileCard(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Form(
@@ -1227,25 +1408,25 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   TextFormField(
                     controller: _nameCtrl,
-                    decoration: const InputDecoration(
+                    decoration: _profileInputDecoration(
                       labelText: 'Nom complet',
-                      prefixIcon: Icon(Icons.person_outline),
+                      prefixIcon: const Icon(Icons.person_outline),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _cityCtrl,
-                    decoration: const InputDecoration(
+                    decoration: _profileInputDecoration(
                       labelText: 'Commune',
-                      prefixIcon: Icon(Icons.location_on_outlined),
+                      prefixIcon: const Icon(Icons.location_on_outlined),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _cpCtrl,
-                    decoration: const InputDecoration(
+                    decoration: _profileInputDecoration(
                       labelText: 'C/P',
-                      prefixIcon: Icon(Icons.markunread_mailbox_outlined),
+                      prefixIcon: const Icon(Icons.markunread_mailbox_outlined),
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -1264,9 +1445,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _emailCtrl,
-                    decoration: const InputDecoration(
+                    decoration: _profileInputDecoration(
                       labelText: 'E-mail',
-                      prefixIcon: Icon(Icons.email_outlined),
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
                     keyboardType: TextInputType.emailAddress,
                   ),
@@ -1310,6 +1491,13 @@ class _ProfilePageState extends State<ProfilePage> {
                       onPressed: _isLoading ? null : _saveProfile,
                       icon: const Icon(Icons.save_outlined),
                       label: const Text('Enregistrer'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: kIliPrestoOrange,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -1322,10 +1510,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
         // Préférences
         _buildSectionTitle('Préférences'),
-        Card(
-          elevation: 1,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        _buildProfileCard(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -1419,10 +1604,7 @@ class _ProfilePageState extends State<ProfilePage> {
         const SizedBox(height: 16),
 
         // Langue & thème
-        Card(
-          elevation: 1,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        _buildProfileCard(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -1546,10 +1728,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
         // Catégories favorites
         _buildSectionTitle('Mes catégories favorites'),
-        Card(
-          elevation: 1,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        _buildProfileCard(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -1560,7 +1739,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     'Aucune catégorie favori sélectionnée',
                     style: TextStyle(
                       fontSize: 14,
-                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: kIliPrestoTextMuted,
                       fontStyle: FontStyle.italic,
                     ),
                   )
@@ -1615,8 +1794,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                       }
                                     });
                                   },
-                                  backgroundColor: colorScheme.primaryContainer
-                                      .withValues(alpha: 0.3),
+                                  backgroundColor: const Color(0xFFEAF2FF),
+                                  side: const BorderSide(color: kIliPrestoBorder),
                                 ),
                               ),
                             ],
@@ -1634,8 +1813,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     label: const Text('Ajouter une catégorie'),
                     style: OutlinedButton.styleFrom(
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      foregroundColor: kIliPrestoBlue,
+                      side: const BorderSide(color: kIliPrestoBorder),
+                      backgroundColor: Colors.white,
                     ),
                   ),
                 ),
@@ -1648,37 +1830,32 @@ class _ProfilePageState extends State<ProfilePage> {
 
         // Sécurité & aide
         _buildSectionTitle('Sécurité & aide'),
-        Card(
-          elevation: 1,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        _buildProfileCard(
           child: Column(
             children: [
-              ListTile(
-                leading: const Icon(Icons.lock_reset_outlined),
-                title: const Text('Changer mon mot de passe'),
+              _buildProfileActionTile(
+                icon: Icons.lock_reset_outlined,
+                title: 'Changer mon mot de passe',
                 onTap: _onChangePasswordTapped,
               ),
               const Divider(height: 0),
-              ListTile(
-                leading: const Icon(Icons.description_outlined),
-                title: const Text('Télécharger mes données'),
+              _buildProfileActionTile(
+                icon: Icons.description_outlined,
+                title: 'Télécharger mes données',
                 onTap: _onDownloadDataTapped,
               ),
               const Divider(height: 0),
-              ListTile(
-                leading: const Icon(Icons.support_agent_outlined),
-                title: const Text('FAQ & support'),
+              _buildProfileActionTile(
+                icon: Icons.support_agent_outlined,
+                title: 'FAQ & support',
                 onTap: _onSupportTapped,
               ),
               const Divider(height: 0),
-              ListTile(
-                leading: Icon(Icons.delete_forever_outlined,
-                    color: colorScheme.error),
-                title: Text(
-                  'Supprimer mon compte',
-                  style: TextStyle(color: colorScheme.error),
-                ),
+              _buildProfileActionTile(
+                icon: Icons.delete_forever_outlined,
+                title: 'Supprimer mon compte',
+                iconColor: colorScheme.error,
+                textColor: colorScheme.error,
                 onTap: _onDeleteAccountTapped,
               ),
             ],
@@ -1692,10 +1869,25 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        title,
-        style: kPrestoSectionTitleStyle,
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 6,
+            height: 24,
+            decoration: BoxDecoration(
+              color: kIliPrestoOrange,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            title,
+            style: kPrestoSectionTitleStyle.copyWith(
+              color: const Color(0xFF16324F),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1719,12 +1911,21 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: kPrestoMetaTextStyle,
+                style: kPrestoMetaTextStyle.copyWith(
+                  color: kIliPrestoTextMuted,
+                ),
               ),
             ],
           ),
         ),
-        Switch(value: value, onChanged: onChanged),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeColor: Colors.white,
+          activeTrackColor: kIliPrestoOrange,
+          inactiveThumbColor: Colors.white,
+          inactiveTrackColor: const Color(0xFFD1D5DB),
+        ),
       ],
     );
   }
@@ -1741,22 +1942,109 @@ class _ProfilePageState extends State<ProfilePage> {
       initialValue: value,
       decoration: InputDecoration(
         labelText: labelText,
-        prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+        labelStyle: const TextStyle(
+          color: kIliPrestoTextMuted,
+          fontWeight: FontWeight.w600,
+        ),
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: kIliPrestoBlue) : null,
+        filled: true,
+        fillColor: const Color(0xFFFBFDFF),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: kIliPrestoBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: kIliPrestoBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.blue, width: 2),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: kIliPrestoBlue, width: 1.6),
         ),
       ),
       items: items,
       onChanged: onChanged,
       menuMaxHeight: 250,
+    );
+  }
+
+  InputDecoration _profileInputDecoration({
+    required String labelText,
+    required Widget prefixIcon,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: const TextStyle(
+        color: kIliPrestoTextMuted,
+        fontWeight: FontWeight.w600,
+      ),
+      prefixIcon: IconTheme(
+        data: const IconThemeData(color: kIliPrestoBlue),
+        child: prefixIcon,
+      ),
+      filled: true,
+      fillColor: const Color(0xFFFBFDFF),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: kIliPrestoBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: kIliPrestoBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: kIliPrestoBlue, width: 1.6),
+      ),
+    );
+  }
+
+  Widget _buildProfileCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.98),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: kIliPrestoBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+
+  Widget _buildProfileActionTile({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color? iconColor,
+    Color? textColor,
+  }) {
+    return ListTile(
+      leading: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: (iconColor ?? kIliPrestoBlue).withOpacity(0.10),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, color: iconColor ?? kIliPrestoBlue),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: textColor ?? const Color(0xFF16324F),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      trailing: const Icon(Icons.chevron_right_rounded, color: kIliPrestoTextMuted),
+      onTap: onTap,
     );
   }
 

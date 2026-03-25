@@ -47,7 +47,7 @@
     {
       "label": "Git: Commit All",
       "type": "shell",
-      "command": "git commit -m \"fix(firestore): fiabilise rules notifications, page messages et error handling\"",
+      "command": "git commit -m \"style(profile): harmonise la charte graphique iLiPresto\"",
       "problemMatcher": []
     },
     {
