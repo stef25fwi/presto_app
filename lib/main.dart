@@ -71,6 +71,25 @@ Filter _publicOffersFilter() {
   );
 }
 
+bool _isPublishedOfferData(Map<String, dynamic> data) {
+  final isPublished = data['isPublished'];
+  if (isPublished is bool && isPublished) return true;
+
+  final status = (data['status'] ?? '').toString().trim().toLowerCase();
+  if (status == 'published' || status == 'active') return true;
+
+  final visibility = data['visibility'];
+  if (visibility is Map) {
+    final isPublic = visibility['isPublic'];
+    if (isPublic is bool && isPublic) return true;
+  }
+
+  final isActive = data['isActive'];
+  if (isActive is bool && isActive) return true;
+
+  return false;
+}
+
 class _HomeCategoryShortcut {
   final IconData icon;
   final String label;
@@ -2407,51 +2426,52 @@ class _HomePageState extends State<HomePage>
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+
                 // CATEGORIES COMPACTES
                 StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: FirebaseFirestore.instance
                       .collection('offers')
-                      .where(
-                        Filter.and(
-                          _publicOffersFilter(),
-                          Filter('isPublished', isEqualTo: true),
-                        ),
-                      )
-                      .limit(60)
+                      .where(_publicOffersFilter())
+                      .limit(100)
                       .snapshots(),
                   builder: (context, snapshot) {
-                    final shortcuts = _availableCategoryShortcuts(
-                      snapshot.data?.docs ?? const [],
-                    );
+                    final docs = (snapshot.data?.docs ?? const [])
+                        .where((doc) => _isPublishedOfferData(doc.data()))
+                        .toList(growable: false);
+                    final shortcuts = _availableCategoryShortcuts(docs);
 
                     if (shortcuts.isEmpty) {
                       return const SizedBox.shrink();
                     }
 
-                    return AnimatedBuilder(
-                      animation: _categoryController,
-                      builder: (context, child) {
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              for (var index = 0;
-                                  index < shortcuts.length;
-                                  index++) ...[
-                                if (index > 0) const SizedBox(width: 6),
-                                _CategoryChip(
-                                  icon: shortcuts[index].icon,
-                                  label: shortcuts[index].label,
-                                  iconScale: _categoryScaleForIndex(index),
-                                  onTap: () => _goToCategoryOffers(
-                                    shortcuts[index].targetCategory,
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: AnimatedBuilder(
+                        animation: _categoryController,
+                        builder: (context, child) {
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                for (var index = 0;
+                                    index < shortcuts.length;
+                                    index++) ...[
+                                  if (index > 0) const SizedBox(width: 6),
+                                  _CategoryChip(
+                                    icon: shortcuts[index].icon,
+                                    label: shortcuts[index].label,
+                                    iconScale: _categoryScaleForIndex(index),
+                                    onTap: () => _goToCategoryOffers(
+                                      shortcuts[index].targetCategory,
+                                    ),
                                   ),
-                                ),
+                                ],
                               ],
-                            ],
-                          ),
-                        );
-                      },
+                            ),
+                          );
+                        },
+                      ),
                     );
                   },
                 ),
@@ -5409,8 +5429,13 @@ class _OfferMissionDelayChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final maxWidth = (MediaQuery.sizeOf(context).width * 0.42).clamp(
+      142.0,
+      196.0,
+    );
+
     return Container(
-      constraints: const BoxConstraints(maxWidth: 130),
+      constraints: BoxConstraints(maxWidth: maxWidth),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
@@ -5431,16 +5456,19 @@ class _OfferMissionDelayChip extends StatelessWidget {
           ),
         ],
       ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w800,
-          color: Colors.white,
-          height: 1,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          label,
+          maxLines: 1,
+          softWrap: false,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            height: 1,
+          ),
         ),
       ),
     );
