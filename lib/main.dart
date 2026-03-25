@@ -64,6 +64,13 @@ class PrestoRemoteConfig {
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
 
+Filter _publicOffersFilter() {
+  return Filter.or(
+    Filter('visibility.isPublic', isEqualTo: true),
+    Filter('status', isEqualTo: 'active'),
+  );
+}
+
 const String kAppBuildSha =
     String.fromEnvironment('APP_BUILD_SHA', defaultValue: 'local');
 const String kAppBuildBranch =
@@ -1341,6 +1348,7 @@ class _HomePageState extends State<HomePage>
 
     _latestOffersFuture = FirebaseFirestore.instance
         .collection('offers')
+        .where(_publicOffersFilter())
         .orderBy('createdAt', descending: true)
         .limit(8)
       .get();
@@ -1422,6 +1430,7 @@ class _HomePageState extends State<HomePage>
     // sans déclencher des rebuilds massifs quand la collection grossit.
     _dynamicKeywordsSubscription = FirebaseFirestore.instance
         .collection('offers')
+        .where(_publicOffersFilter())
         .where(
           'createdAt',
           isGreaterThan: Timestamp.fromMillisecondsSinceEpoch(0),
@@ -3651,7 +3660,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   Query<Map<String, dynamic>> _buildOffersQuery() {
     Query<Map<String, dynamic>> query =
-        FirebaseFirestore.instance.collection('offers');
+        FirebaseFirestore.instance.collection('offers').where(
+              _publicOffersFilter(),
+            );
 
     final loc = _locationController.text.trim();
     final cp = _postalCodeController.text.trim();
@@ -5403,8 +5414,14 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
       _loadActiveOffers() async {
     final col = FirebaseFirestore.instance.collection('offers');
 
-    final resUid = await col.where('uid', isEqualTo: widget.userId).get();
-    final resUserId = await col.where('userId', isEqualTo: widget.userId).get();
+    final resUid = await col
+      .where('uid', isEqualTo: widget.userId)
+      .where(_publicOffersFilter())
+      .get();
+    final resUserId = await col
+      .where('userId', isEqualTo: widget.userId)
+      .where(_publicOffersFilter())
+      .get();
 
     final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
     for (final d in resUid.docs) {
