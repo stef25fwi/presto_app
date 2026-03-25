@@ -104,19 +104,32 @@ service cloud.firestore {
           && resource.data.participants.hasAny([uid()]);
       }
 
+      function requestHasCurrentUserParticipant() {
+        return isSignedIn()
+          && (request.resource.data.participants is list)
+          && request.resource.data.participants.hasAny([uid()]);
+      }
+
       allow read: if isParticipant();
 
       allow create: if isSignedIn()
-        && (request.resource.data.participants is list)
-        && request.resource.data.participants.hasAny([uid()]);
+        && requestHasCurrentUserParticipant();
 
-      // Update seulement si participant; (on ne force pas la structure exacte ici)
-      allow update, delete: if isParticipant();
+      // Update seulement si participant, sans réécrire les participants/offerId.
+      allow update: if isParticipant()
+        && requestHasCurrentUserParticipant()
+        && request.resource.data.participants == resource.data.participants
+        && request.resource.data.offerId == resource.data.offerId
+        && request.resource.data.offerTitle == resource.data.offerTitle;
+
+      allow delete: if false;
 
       match /messages/{messageId} {
         allow read: if isParticipant();
         allow create: if isParticipant()
-          && request.resource.data.senderId == uid();
+          && request.resource.data.senderId == uid()
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0;
         allow update, delete: if false;
       }
     }

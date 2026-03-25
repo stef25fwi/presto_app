@@ -130,18 +130,23 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     required String rawTitle,
     required String location,
     required String postalCode,
+    String? commune,
   }) {
     var out = rawTitle.trim();
     if (out.isEmpty) return 'Annonce';
 
     final safeLoc = location.trim();
     final safeCp = postalCode.trim();
+    final safeCommune = (commune ?? '').trim();
 
     if (safeLoc.isNotEmpty) {
       out = out.replaceAll(RegExp(RegExp.escape(safeLoc), caseSensitive: false), ' ');
     }
     if (safeCp.isNotEmpty) {
       out = out.replaceAll(RegExp('\\b${RegExp.escape(safeCp)}\\b', caseSensitive: false), ' ');
+    }
+    if (safeCommune.isNotEmpty) {
+      out = out.replaceAll(RegExp(RegExp.escape(safeCommune), caseSensitive: false), ' ');
     }
 
     out = out.replaceAll(RegExp(r'\s+'), ' ').replaceAll(RegExp(r'\s*[-–|/]\s*$'), '').trim();
@@ -301,6 +306,40 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     await launchUrl(uri);
   }
 
+  Future<void> _openExternalMessaging(
+    BuildContext context, {
+    required String? phone,
+    required String title,
+  }) async {
+    if (!context.mounted) return;
+    if (phone == null || phone.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Aucun numéro disponible pour envoyer un message.")),
+      );
+      return;
+    }
+
+    final dial = _toE164Like(phone.trim());
+    final smsUri = Uri(
+      scheme: 'sms',
+      path: dial.isNotEmpty ? dial : phone.trim(),
+      queryParameters: {
+        'body': 'Bonjour, je vous contacte pour votre annonce: $title',
+      },
+    );
+
+    final ok = await canLaunchUrl(smsUri);
+    if (!context.mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Impossible d'ouvrir la messagerie sur cet appareil.")),
+      );
+      return;
+    }
+
+    await launchUrl(smsUri, mode: LaunchMode.externalApplication);
+  }
+
   Future<void> _copyLink(BuildContext context) async {
     final url = 'https://prestoo.app/offers/${widget.offerId}';
     await Clipboard.setData(ClipboardData(text: url));
@@ -368,10 +407,10 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       Navigator.of(sheetContext).pop();
-                      _openOrCreateConversation(
-                        context: context,
-                        annonceurId: annonceurId,
-                        offerTitle: offerTitle,
+                      _openExternalMessaging(
+                        context,
+                        phone: phone,
+                        title: offerTitle,
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -460,10 +499,11 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
           rawTitle: title,
           location: location,
           postalCode: postalCode,
+          commune: _s(data['commune']),
         );
 
         final budget = _num(data['budget'] ?? data['price'] ?? data['amount']);
-        final duration = _extractDuration(title);
+        final duration = _pickMissionDelay(data);
 
         final phone = _pickPhone(data);
         final images = _listStr(data['imageUrls'] ?? data['photos'] ?? data['images']);
@@ -549,7 +589,7 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                   fg: const Color(0xFF243041),
                   border: const Color(0xFFD7DEE8),
                 ),
-                subtitleRight: duration != "—" ? "Durée estimée : $duration" : null,
+                rightDelayBadge: duration != "Non précisé" ? duration : null,
               ),
               const SizedBox(height: 12),
 
@@ -642,10 +682,10 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                 toggleLabel:
                     hasPhone ? (_isPhoneVisible ? "Masquer" : "Afficher le numéro") : "Indisponible",
                 onToggle: hasPhone ? () => setState(() => _isPhoneVisible = !_isPhoneVisible) : null,
-                onMessage: () => _openOrCreateConversation(
-                  context: context,
-                  annonceurId: annonceurId,
-                  offerTitle: title,
+                onMessage: () => _openExternalMessaging(
+                  context,
+                  phone: phone,
+                  title: title,
                 ),
                 onShare: () => _copyLink(context),
                 onCall: () => _callPhone(context, phone),
@@ -732,7 +772,7 @@ class _TopOfferCard extends StatelessWidget {
   final String locationLine;
   final _ChipSpec chipLeft;
   final _ChipSpec chipRight;
-  final String? subtitleRight;
+  final String? rightDelayBadge;
 
   const _TopOfferCard({
     required this.orange,
@@ -742,7 +782,7 @@ class _TopOfferCard extends StatelessWidget {
     required this.locationLine,
     required this.chipLeft,
     required this.chipRight,
-    this.subtitleRight,
+    this.rightDelayBadge,
   });
 
   @override
@@ -770,6 +810,7 @@ class _TopOfferCard extends StatelessWidget {
               borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(Icons.local_shipping_rounded, color: Colors.white, size: 18),
                 const SizedBox(width: 10),
@@ -777,18 +818,32 @@ class _TopOfferCard extends StatelessWidget {
                   child: Text(
                     title,
                     style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
-                    maxLines: 1,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  rightPrice,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      rightPrice,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    if (rightDelayBadge != null) ...[
+                      const SizedBox(height: 6),
+                      _Pill(
+                        label: rightDelayBadge!,
+                        bg: const Color(0xFFFFEDD5),
+                        fg: const Color(0xFF9A3412),
+                        border: const Color(0xFFFEC89A),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -799,16 +854,6 @@ class _TopOfferCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _RowInfo(icon: Icons.place_outlined, iconColor: orange, text: locationLine),
-                if (subtitleRight != null) ...[
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      subtitleRight!,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF334155)),
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 12),
                 Row(
                   children: [
