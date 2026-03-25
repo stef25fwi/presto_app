@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:presto_app/constants.dart';
 import 'package:presto_app/pages/messages/conversation_thread_page.dart';
 
 // ─── Data models ─────────────────────────────────────────────────────────────
@@ -126,6 +126,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
   final Object? offer;
   final String currentUserId;
 
+  static const Color _headerOrange = Color(0xFFFF6600);
+
   const PrestoOfferDetailsPage({
     super.key,
     this.offer,
@@ -242,6 +244,134 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
+  Future<void> _openExternalShareTarget(
+    BuildContext context, {
+    required Uri uri,
+    required String errorMessage,
+  }) async {
+    final ok = await canLaunchUrl(uri);
+    if (!context.mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage)),
+      );
+      return;
+    }
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _showShareOptionsSheet(BuildContext context, _OfferUiData data) async {
+    final offerUrl = 'https://presto-app-74abe.web.app/#/offers/${data.offerId}';
+    final shareText = '${data.title} - ${data.city}\n$offerUrl';
+
+    await showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (sheetContext) {
+        Future<void> openInstagram() async {
+          await Clipboard.setData(ClipboardData(text: shareText));
+          if (!sheetContext.mounted) return;
+          Navigator.of(sheetContext).pop();
+          await _openExternalShareTarget(
+            context,
+            uri: Uri.parse('https://www.instagram.com/'),
+            errorMessage: 'Impossible d\'ouvrir Instagram.',
+          );
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Texte copié. Collez-le dans Instagram.')),
+          );
+        }
+
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Partager l\'annonce',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _ShareOptionTile(
+                      icon: Icons.chat,
+                      label: 'WhatsApp',
+                      color: const Color(0xFF25D366),
+                      onTap: () async {
+                        Navigator.of(sheetContext).pop();
+                        await _openExternalShareTarget(
+                          context,
+                          uri: Uri.parse(
+                            'https://wa.me/?text=${Uri.encodeComponent(shareText)}',
+                          ),
+                          errorMessage: 'Impossible d\'ouvrir WhatsApp.',
+                        );
+                      },
+                    ),
+                    _ShareOptionTile(
+                      icon: Icons.facebook,
+                      label: 'Facebook',
+                      color: const Color(0xFF1877F2),
+                      onTap: () async {
+                        Navigator.of(sheetContext).pop();
+                        await _openExternalShareTarget(
+                          context,
+                          uri: Uri.parse(
+                            'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(offerUrl)}',
+                          ),
+                          errorMessage: 'Impossible d\'ouvrir Facebook.',
+                        );
+                      },
+                    ),
+                    _ShareOptionTile(
+                      icon: Icons.camera_alt_outlined,
+                      label: 'Instagram',
+                      color: const Color(0xFFE1306C),
+                      onTap: openInstagram,
+                    ),
+                    _ShareOptionTile(
+                      icon: Icons.mail_outline,
+                      label: 'Mail',
+                      color: const Color(0xFF0459D9),
+                      onTap: () async {
+                        Navigator.of(sheetContext).pop();
+                        await _openExternalShareTarget(
+                          context,
+                          uri: Uri(
+                            scheme: 'mailto',
+                            queryParameters: {
+                              'subject': data.title,
+                              'body': shareText,
+                            },
+                          ),
+                          errorMessage: 'Impossible d\'ouvrir l\'application mail.',
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _showContactOptionsSheet(BuildContext context, _OfferUiData data) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -332,7 +462,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFF7A00),
+        backgroundColor: _headerOrange,
+        foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
         titleSpacing: 0,
@@ -341,12 +472,15 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           'Détail annonce',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: kPrestoAppBarTitleStyle,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         actions: [
           IconButton(
             tooltip: 'Partager',
-            onPressed: () {},
+            onPressed: () => _showShareOptionsSheet(context, data),
             icon: const Icon(Icons.share_outlined),
             color: Colors.white,
             splashRadius: 20,
@@ -1380,6 +1514,55 @@ class _InlineCta extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShareOptionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ShareOptionTile({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 92,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: color),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF111827),
+              ),
+            ),
+          ],
         ),
       ),
     );
