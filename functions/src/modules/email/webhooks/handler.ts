@@ -28,6 +28,28 @@ export const handleEmailProviderWebhook = onRequest({ region: PROJECT_REGION }, 
   const events = provider.parseWebhook(req.body);
   for (const evt of events) {
     const internalStatus = mapProviderStatusToInternal(evt.type);
+    let jobMetadata: Record<string, unknown> = {};
+
+    if (evt.providerMessageId) {
+      const jobSnap = await db
+        .collection(COLLECTIONS.emailJobs)
+        .where("provider_message_id", "==", evt.providerMessageId)
+        .limit(1)
+        .get();
+      const jobDoc = jobSnap.docs[0];
+      const jobData = jobDoc?.data();
+      if (jobDoc && jobData) {
+        jobMetadata = {
+          job_id: jobDoc.id,
+          event_id: jobData.event_id || null,
+          template_code: jobData.template_code || null,
+          channel: jobData.channel || null,
+          recipient_user_id: jobData.recipient_user_id || null,
+          recipient_email: jobData.recipient_email || null,
+        };
+      }
+    }
+
     await db.collection(COLLECTIONS.emailLogs).add({
       provider: provider.name(),
       provider_message_id: evt.providerMessageId || null,
@@ -35,6 +57,7 @@ export const handleEmailProviderWebhook = onRequest({ region: PROJECT_REGION }, 
       recipient: evt.recipient || null,
       created_at: Date.now(),
       webhook_event_id: evt.providerEventId,
+      ...jobMetadata,
     });
 
     if (internalStatus === "bounced" || internalStatus === "complained" || internalStatus === "unsubscribed") {

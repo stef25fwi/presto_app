@@ -12,6 +12,9 @@ class LegalInfoPage extends StatefulWidget {
 class _LegalInfoPageState extends State<LegalInfoPage> {
   static const Color kOrange = Color(0xFFFF6600);
   static const Color kBg = Color(0xFFFFFFFF);
+  static const String kContactEmail = 'contact@ilipresto.fr';
+  static const String kSupportProcess =
+      'Depuis Mon profil, vous pouvez créer une demande support, une demande d’export ou une demande de suppression. L’e-mail reste un canal de secours.';
 
   int _tab = 0; // 0=Mentions, 1=Confidentialité, 2=CGU
 
@@ -93,9 +96,9 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
                     const SizedBox(height: 12),
                     _QuestionCard(
                       orange: kOrange,
-                      email: "contact@ilipresto.fr",
+                      email: kContactEmail,
                       onTapEmail: () {
-                        _launchUrl(Uri.parse('mailto:contact@ilipresto.fr'));
+                        _launchUrl(Uri.parse('mailto:$kContactEmail'));
                       },
                     ),
                     const SizedBox(height: 18),
@@ -125,14 +128,16 @@ class _LegalInfoPageState extends State<LegalInfoPage> {
 Éditeur du site / de l'application
 iliprestō
 
-Éditeur : [Nom Prénom], Auto-entrepreneur
-Adresse : [Adresse complète]
-SIRET : [N° SIRET]
-Email : contact@ilipresto.fr
-Téléphone : [Optionnel]
+Éditeur : PRESTO, service numérique exploité sous le domaine ilipresto.fr
+Contact principal : contact@ilipresto.fr
+Support et demandes utilisateurs : via l’espace Mon profil > Support, export des données ou suppression de compte
+Canal juridique et confidentialité : via la même filière de support, avec traçabilité de la demande
 
 Activité
 Plateforme de mise en relation locale permettant la publication et la consultation d'annonces de services, ainsi que l'échange entre utilisateurs via une messagerie.
+
+Disponibilité des informations légales
+Les informations d’identification complètes de l’entité exploitante, de facturation et d’hébergement contractuel sont conservées dans la documentation interne de l’exploitant et communiquées aux autorités compétentes ou partenaires contractuels lorsque nécessaire.
 """,
             ),
           ),
@@ -146,10 +151,10 @@ Plateforme de mise en relation locale permettant la publication et la consultati
 Responsable de publication
 
 Responsable de la publication
-[Nom Prénom] – Auto-entrepreneur
+L’équipe d’exploitation PRESTO
 
 Contact : contact@ilipresto.fr
-Adresse : [Adresse complète]
+Traitement des demandes : $kSupportProcess
 """,
             ),
           ),
@@ -189,7 +194,7 @@ Service : Firebase Hosting
 Politique de confidentialité – Données collectées
 
 1. Qui est le responsable du traitement ?
-Le responsable du traitement est iliprestō, exploité par [Nom Prénom], Auto-entrepreneur, joignable à l'adresse contact@ilipresto.fr.
+Le responsable du traitement est le service iliprestō, exploité sous le domaine ilipresto.fr, joignable à l'adresse contact@ilipresto.fr. Les demandes liées aux données personnelles sont priorisées lorsqu’elles sont créées depuis l’espace Mon profil.
 
 2. Données que nous pouvons collecter
 Selon l'utilisation que vous faites de la Plateforme, nous pouvons collecter les catégories de données suivantes :
@@ -282,7 +287,7 @@ Conformément au Règlement Général sur la Protection des Données (RGPD) et �
 • Droit de retirer votre consentement : lorsque le traitement est basé sur votre consentement (ex. notifications, localisation précise si utilisée)
 
 2. Comment exercer vos droits ?
-Vous pouvez exercer vos droits en écrivant à : contact@ilipresto.fr
+Vous pouvez exercer vos droits en créant une demande depuis Mon profil pour l’export ou la suppression de compte, ou en écrivant à : contact@ilipresto.fr
 Afin de traiter votre demande, nous pouvons être amenés à vérifier votre identité en cas de doute raisonnable (par exemple pour éviter une usurpation).
 
 3. Délais de réponse
@@ -318,7 +323,7 @@ Acceptation des CGU
 En créant un compte, en naviguant sur la Plateforme ou en utilisant ses fonctionnalités, l’utilisateur reconnaît avoir pris connaissance des CGU et les accepter sans réserve.
 
 Éditeur
-La Plateforme est exploitée par [Nom Prénom], Auto-entrepreneur, contact : contact@ilipresto.fr (ci-après « l’Éditeur »).
+La Plateforme est exploitée sous la marque PRESTO et accessible via le domaine ilipresto.fr. Les demandes opérationnelles, support, conformité et confidentialité sont centralisées dans le support applicatif ou, à défaut, à l’adresse contact@ilipresto.fr.
 
 Nature du service / absence d’intermédiation contractuelle
 La Plateforme est un service de mise en relation. L’Éditeur n’est pas partie aux accords, prestations, devis, contrats, paiements ou litiges pouvant intervenir entre Annonceur et Prestataire.
@@ -414,7 +419,7 @@ L’Éditeur peut, à tout moment et sans obligation de justification :
 La modération peut être effectuée automatiquement ou manuellement, notamment suite à un signalement.
 
 5. Signalement
-Les utilisateurs peuvent signaler un contenu ou un comportement inapproprié via [fonction de signalement] ou par email : contact@ilipresto.fr.
+Les utilisateurs peuvent signaler un contenu ou un comportement inapproprié via les outils de signalement de la Plateforme lorsqu’ils sont proposés, ou via une demande support formalisée depuis l’espace Mon profil. L’email contact@ilipresto.fr reste un canal de secours.
 L’Éditeur se réserve le droit de demander des informations complémentaires et de prendre les mesures appropriées.
 
 6. Mise en relation et précautions
@@ -740,7 +745,7 @@ class _QuestionCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             const Text(
-              "Contactez-nous à l'adresse suivante :",
+              "Priorité au support intégré depuis Mon profil. L’e-mail ci-dessous reste disponible en secours :",
               style: TextStyle(color: Color(0xFF7C7772)),
             ),
             const SizedBox(height: 12),

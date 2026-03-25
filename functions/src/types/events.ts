@@ -28,6 +28,7 @@ export type EventName =
   | "marketing.onboarding.d7_due"
   | "marketing.newsletter.monthly"
   | "subscription.renewal.upcoming"
+  | "billing.payment.succeeded"
   | "billing.payment.failed";
 
 export interface DomainEventPayload {

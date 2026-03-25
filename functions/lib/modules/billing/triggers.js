@@ -63,8 +63,6 @@ exports.onBillingInvoiceUpdated = (0, firestore_1.onDocumentUpdated)(`${constant
     const afterStatus = String(after.status || "");
     if (beforeStatus === afterStatus)
         return;
-    if (afterStatus !== "failed" && afterStatus !== "payment_failed")
-        return;
     const userId = String(after.user_id || "");
     if (!userId)
         return;
@@ -75,25 +73,49 @@ exports.onBillingInvoiceUpdated = (0, firestore_1.onDocumentUpdated)(`${constant
         return;
     const invoiceId = event.params.invoiceId;
     const now = Date.now();
-    const eventId = `evt_billing_payment_failed_${invoiceId}_${now}`;
-    await firestore_2.db.collection(constants_1.COLLECTIONS.emailEvents).doc(eventId).set({
-        event_id: eventId,
-        event_name: "billing.payment.failed",
-        source_collection: constants_1.COLLECTIONS.billingInvoices,
-        source_id: invoiceId,
-        recipient_user_id: userId,
-        dedupe_key: (0, hash_1.sha256)(`billing.payment.failed:${invoiceId}:${afterStatus}`),
-        occurred_at: now,
-        payload: {
-            recipient_email: email,
-            firstName: String(userData?.display_name || userData?.displayName || "").split(" ")[0] ?? "",
-            amount: Number(after.amount_due || after.amount || 0),
-            currency: String(after.currency || "EUR"),
-            paymentMethod: String(after.payment_method_label || after.payment_method || after.method || ""),
-            nextRetryAt: Number(after.next_retry_at || after.retry_at || 0) || undefined,
-            retryUrl: "https://presto.app/facturation",
-        },
-        status: "created",
-    });
+    if (afterStatus === "failed" || afterStatus === "payment_failed") {
+        const eventId = `evt_billing_payment_failed_${invoiceId}_${now}`;
+        await firestore_2.db.collection(constants_1.COLLECTIONS.emailEvents).doc(eventId).set({
+            event_id: eventId,
+            event_name: "billing.payment.failed",
+            source_collection: constants_1.COLLECTIONS.billingInvoices,
+            source_id: invoiceId,
+            recipient_user_id: userId,
+            dedupe_key: (0, hash_1.sha256)(`billing.payment.failed:${invoiceId}:${afterStatus}`),
+            occurred_at: now,
+            payload: {
+                recipient_email: email,
+                firstName: String(userData?.display_name || userData?.displayName || "").split(" ")[0] ?? "",
+                amount: Number(after.amount_due || after.amount || 0),
+                currency: String(after.currency || "EUR"),
+                paymentMethod: String(after.payment_method_label || after.payment_method || after.method || ""),
+                nextRetryAt: Number(after.next_retry_at || after.retry_at || 0) || undefined,
+                retryUrl: "https://presto.app/facturation",
+            },
+            status: "created",
+        });
+        return;
+    }
+    if (afterStatus === "paid" || afterStatus === "succeeded" || afterStatus === "payment_succeeded") {
+        const eventId = `evt_billing_payment_succeeded_${invoiceId}_${now}`;
+        await firestore_2.db.collection(constants_1.COLLECTIONS.emailEvents).doc(eventId).set({
+            event_id: eventId,
+            event_name: "billing.payment.succeeded",
+            source_collection: constants_1.COLLECTIONS.billingInvoices,
+            source_id: invoiceId,
+            recipient_user_id: userId,
+            dedupe_key: (0, hash_1.sha256)(`billing.payment.succeeded:${invoiceId}:${afterStatus}`),
+            occurred_at: now,
+            payload: {
+                recipient_email: email,
+                firstName: String(userData?.display_name || userData?.displayName || "").split(" ")[0] ?? "",
+                amount: Number(after.amount_paid || after.amount_due || after.amount || 0),
+                currency: String(after.currency || "EUR"),
+                paymentMethod: String(after.payment_method_label || after.payment_method || after.method || ""),
+                invoiceUrl: "https://presto.app/facturation",
+            },
+            status: "created",
+        });
+    }
 });
 //# sourceMappingURL=triggers.js.map

@@ -5,18 +5,33 @@ const env_1 = require("../../../config/env");
 const provider_1 = require("../../../config/provider");
 const brevo_provider_1 = require("./brevo_provider");
 const resend_provider_1 = require("./resend_provider");
+function hasValue(value) {
+    return String(value || "").trim().length > 0;
+}
 function createEmailProvider() {
+    const explicitProvider = String(process.env.EMAIL_PROVIDER_NAME || "").trim().toLowerCase();
     const providerName = String((0, provider_1.getProviderName)() || "resend").toLowerCase();
+    const brevoApiKey = env_1.BREVO_API_KEY.value();
+    const brevoWebhookSecret = env_1.BREVO_WEBHOOK_SECRET.value();
+    const resendApiKey = env_1.EMAIL_PROVIDER_API_KEY.value();
+    const resendWebhookSecret = env_1.EMAIL_PROVIDER_WEBHOOK_SECRET.value();
+    const hasBrevoConfig = hasValue(brevoApiKey) && hasValue(brevoWebhookSecret);
+    const hasResendConfig = hasValue(resendApiKey) && hasValue(resendWebhookSecret);
+    if (!explicitProvider && hasBrevoConfig && hasResendConfig) {
+        throw new Error("EMAIL_PROVIDER_NAME is required when both Brevo and generic provider secrets are configured");
+    }
     switch (providerName) {
         case "brevo": {
-            const apiKey = env_1.BREVO_API_KEY.value() || env_1.EMAIL_PROVIDER_API_KEY.value();
-            const webhookSecret = env_1.BREVO_WEBHOOK_SECRET.value() || env_1.EMAIL_PROVIDER_WEBHOOK_SECRET.value();
-            return new brevo_provider_1.BrevoProvider(apiKey, webhookSecret);
+            if (!hasBrevoConfig) {
+                throw new Error("Brevo provider selected but BREVO_API_KEY/BREVO_WEBHOOK_SECRET are not fully configured");
+            }
+            return new brevo_provider_1.BrevoProvider(brevoApiKey, brevoWebhookSecret);
         }
         case "resend": {
-            const apiKey = env_1.EMAIL_PROVIDER_API_KEY.value() || env_1.BREVO_API_KEY.value();
-            const webhookSecret = env_1.EMAIL_PROVIDER_WEBHOOK_SECRET.value() || env_1.BREVO_WEBHOOK_SECRET.value();
-            return new resend_provider_1.ResendProvider(apiKey, webhookSecret);
+            if (!hasResendConfig) {
+                throw new Error("Resend provider selected but EMAIL_PROVIDER_API_KEY/EMAIL_PROVIDER_WEBHOOK_SECRET are not fully configured");
+            }
+            return new resend_provider_1.ResendProvider(resendApiKey, resendWebhookSecret);
         }
         default:
             throw new Error(`Unsupported EMAIL_PROVIDER_NAME: ${providerName}`);
