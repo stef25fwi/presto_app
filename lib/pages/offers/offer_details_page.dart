@@ -1,4 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:presto_app/constants.dart';
+import 'package:presto_app/pages/messages/conversation_thread_page.dart';
 
 // ─── Data models ─────────────────────────────────────────────────────────────
 
@@ -110,14 +115,211 @@ class OfferDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PrestoOfferDetailsPage(offer: offer);
+    return PrestoOfferDetailsPage(
+      offer: offer,
+      currentUserId: currentUserId,
+    );
   }
 }
 
 class PrestoOfferDetailsPage extends StatelessWidget {
   final Object? offer;
+  final String currentUserId;
 
-  const PrestoOfferDetailsPage({super.key, this.offer});
+  const PrestoOfferDetailsPage({
+    super.key,
+    this.offer,
+    required this.currentUserId,
+  });
+
+  String _toE164Like(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return '';
+
+    if (trimmed.startsWith('+')) {
+      final digits = trimmed.replaceAll(RegExp(r'\D'), '');
+      return digits.isEmpty ? trimmed : '+$digits';
+    }
+
+    final digits = trimmed.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return '';
+    if (digits.length == 10 && digits.startsWith('0')) return '+33${digits.substring(1)}';
+    if (digits.length == 9 && (digits.startsWith('6') || digits.startsWith('7'))) return '+33$digits';
+    return digits;
+  }
+
+  Future<void> _openInternalMessaging(
+    BuildContext context,
+    _OfferUiData data,
+  ) async {
+    final authUser = FirebaseAuth.instance.currentUser;
+    final me = authUser?.uid.isNotEmpty == true ? authUser!.uid : currentUserId;
+
+    if (me.isEmpty || me == 'buyer_demo_001') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Connectez-vous pour envoyer un message.")),
+      );
+      return;
+    }
+
+    if (data.advertiserId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Annonceur introuvable.")),
+      );
+      return;
+    }
+
+    if (data.advertiserId == me) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vous ne pouvez pas vous envoyer un message.")),
+      );
+      return;
+    }
+
+    final convCol = FirebaseFirestore.instance.collection('conversations');
+    final q = await convCol
+        .where('participants', arrayContains: me)
+        .where('offerId', isEqualTo: data.offerId)
+        .limit(20)
+        .get();
+
+    String? conversationId;
+    for (final doc in q.docs) {
+      final parts = (doc.data()['participants'] as List<dynamic>? ?? [])
+          .map((entry) => entry.toString())
+          .toList();
+      if (parts.contains(data.advertiserId)) {
+        conversationId = doc.id;
+        break;
+      }
+    }
+
+    if (conversationId == null) {
+      final created = await convCol.add({
+        'offerId': data.offerId,
+        'offerTitle': data.title,
+        'participants': [me, data.advertiserId],
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastMessageAt': FieldValue.serverTimestamp(),
+        'lastMessage': '',
+        'unreadCount': {me: 0, data.advertiserId: 0},
+      });
+      conversationId = created.id;
+    }
+    final resolvedConversationId = conversationId;
+
+    if (!context.mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ConversationThreadPage(
+          conversationId: resolvedConversationId,
+          offerTitle: data.title,
+          currentUserId: me,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _callPhone(BuildContext context, String phone) async {
+    if (phone.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Aucun numéro disponible.")),
+      );
+      return;
+    }
+
+    final dial = _toE164Like(phone);
+    final uri = Uri(scheme: 'tel', path: dial.isNotEmpty ? dial : phone.trim());
+    final ok = await canLaunchUrl(uri);
+    if (!ok) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Impossible de lancer l'appel sur cet appareil.")),
+      );
+      return;
+    }
+
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _showContactOptionsSheet(BuildContext context, _OfferUiData data) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Proposer mes services',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(sheetContext).pop();
+                      _openInternalMessaging(context, data);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0459D9),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    icon: const Icon(Icons.chat_bubble_outline),
+                    label: const Text('Envoyer un message'),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 50,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(sheetContext).pop();
+                      _callPhone(context, data.phone);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF0459D9),
+                      side: const BorderSide(color: Color(0xFFD7DEE8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    icon: const Icon(Icons.call_outlined),
+                    label: const Text('Appeler'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,20 +341,24 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           'Détail annonce',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 19,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.2,
-          ),
+          style: kPrestoAppBarTitleStyle,
         ),
         actions: [
           IconButton(
+            tooltip: 'Partager',
             onPressed: () {},
-            icon: const Icon(Icons.notifications_none_rounded, size: 26),
+            icon: const Icon(Icons.share_outlined),
             color: Colors.white,
             splashRadius: 20,
           ),
+          IconButton(
+            tooltip: 'Favori',
+            onPressed: () {},
+            icon: const Icon(Icons.favorite_border_rounded),
+            color: Colors.white,
+            splashRadius: 20,
+          ),
+          const SizedBox(width: 6),
         ],
       ),
       body: Stack(
@@ -173,7 +379,11 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                 children: [
                   _HeroCard(data: data, compact: isCompactMobile),
                   SizedBox(height: sectionGap),
-                  _PracticalInfoCard(data: data, compact: isCompactMobile),
+                  _PracticalInfoCard(
+                    data: data,
+                    compact: isCompactMobile,
+                    onContactTap: () => _showContactOptionsSheet(context, data),
+                  ),
                 ],
               ),
             ),
@@ -185,6 +395,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 }
 
 class _OfferUiData {
+  final String offerId;
   final String title;
   final String detail;
   final String city;
@@ -199,6 +410,7 @@ class _OfferUiData {
   final OfferActionType actionType;
   final List<String> statusBadges;
 
+  final String advertiserId;
   final String advertiserName;
   final String advertiserRole;
   final String advertiserAvatarUrl;
@@ -214,6 +426,7 @@ class _OfferUiData {
   final String serviceType;
 
   const _OfferUiData({
+    required this.offerId,
     required this.title,
     required this.detail,
     required this.city,
@@ -227,6 +440,7 @@ class _OfferUiData {
     required this.price,
     required this.actionType,
     required this.statusBadges,
+    required this.advertiserId,
     required this.advertiserName,
     required this.advertiserRole,
     required this.advertiserAvatarUrl,
@@ -241,11 +455,29 @@ class _OfferUiData {
     required this.serviceType,
   });
 
+  String get sanitizedTitle {
+    var out = title.trim();
+    if (out.isEmpty) return 'Annonce';
+    final cityTrim = city.trim();
+    final postalTrim = postalCode.trim();
+
+    if (cityTrim.isNotEmpty) {
+      out = out.replaceAll(RegExp(RegExp.escape(cityTrim), caseSensitive: false), ' ');
+    }
+    if (postalTrim.isNotEmpty) {
+      out = out.replaceAll(RegExp('\\b${RegExp.escape(postalTrim)}\\b', caseSensitive: false), ' ');
+    }
+
+    out = out.replaceAll(RegExp(r'\s+'), ' ').replaceAll(RegExp(r'\s*[-–|/]\s*$'), '').trim();
+    return out.isEmpty ? title.trim() : out;
+  }
+
   factory _OfferUiData.fromOffer(Object? offer) {
     final dynamic o = offer;
     final dynamic advertiser = _read(() => o.advertiser);
     final dynamic practical = _read(() => o.practicalInfo);
 
+    final offerId = _asString(_read(() => o.id), fallback: '');
     final title = _asString(_read(() => o.title), fallback: 'Montage meuble');
     final detail = _asString(_read(() => o.shortDescription), fallback: '+ fixation TV');
     final city = _asString(_read(() => o.city), fallback: 'Les Abymes');
@@ -278,6 +510,13 @@ class _OfferUiData {
 
     final price = _asDouble(_read(() => o.price), fallback: 90);
 
+    final advertiserId = _asString(
+      _read(() => advertiser.id) ??
+          _read(() => o.userId) ??
+          _read(() => o.uid) ??
+          _read(() => o.ownerId),
+      fallback: '',
+    );
     final advertiserName = _asString(_read(() => advertiser.name), fallback: 'Bastien');
     final advertiserRole = _asString(_read(() => advertiser.bio), fallback: 'Bricoleur expérimenté');
     final advertiserAvatarUrl = _asString(_read(() => advertiser.avatarUrl), fallback: '');
@@ -296,6 +535,7 @@ class _OfferUiData {
     final serviceType = _asString(_read(() => practical.serviceType), fallback: 'Prestation ponctuelle');
 
     return _OfferUiData(
+      offerId: offerId,
       title: title,
       detail: detail,
       city: city,
@@ -309,6 +549,7 @@ class _OfferUiData {
       price: price,
       actionType: actionType,
       statusBadges: statusBadges,
+      advertiserId: advertiserId,
       advertiserName: advertiserName,
       advertiserRole: advertiserRole,
       advertiserAvatarUrl: advertiserAvatarUrl,
@@ -519,8 +760,8 @@ class _HeroCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              data.title.toUpperCase(),
-              maxLines: 1,
+              data.sanitizedTitle.toUpperCase(),
+              maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: compact ? 17 : 18,
@@ -546,8 +787,7 @@ class _HeroCard extends StatelessWidget {
             SizedBox(height: compact ? 10 : 12),
             Text(
               detailsLine,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+              softWrap: true,
               style: TextStyle(
                 fontSize: compact ? 14 : 15,
                 height: 1.28,
@@ -564,17 +804,6 @@ class _HeroCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  '${data.price.toStringAsFixed(0)} €',
-                  style: TextStyle(
-                    fontSize: compact ? 28 : 30,
-                    height: 1.0,
-                    fontWeight: FontWeight.w800,
-                    color: orange2,
-                    letterSpacing: -0.6,
-                  ),
-                ),
-                const SizedBox(width: 10),
                 if (data.isUrgent)
                   Container(
                     height: 28,
@@ -616,6 +845,24 @@ class _HeroCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                const Spacer(),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${data.price.toStringAsFixed(0)} €',
+                      style: TextStyle(
+                        fontSize: compact ? 28 : 30,
+                        height: 1.0,
+                        fontWeight: FontWeight.w800,
+                        color: orange2,
+                        letterSpacing: -0.6,
+                      ),
+                    ),
+                    SizedBox(height: compact ? 6 : 8),
+                    _DelayBadge(text: data.averageDelay, compact: compact),
+                  ],
+                ),
               ],
             ),
           ],
@@ -675,8 +922,13 @@ class _HeroInfoChip extends StatelessWidget {
 class _PracticalInfoCard extends StatelessWidget {
   final _OfferUiData data;
   final bool compact;
+  final VoidCallback onContactTap;
 
-  const _PracticalInfoCard({required this.data, this.compact = false});
+  const _PracticalInfoCard({
+    required this.data,
+    this.compact = false,
+    required this.onContactTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -718,7 +970,7 @@ class _PracticalInfoCard extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  'Informations pratiques',
+                  'Infos annonceur',
                   style: TextStyle(
                     color: blue,
                     fontSize: compact ? 20 : 22,
@@ -766,15 +1018,6 @@ class _PracticalInfoCard extends StatelessWidget {
                                       fontSize: compact ? 17 : 20,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: -0.3,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: ', ${data.advertiserRole}',
-                                    style: TextStyle(
-                                      color: navy,
-                                      fontSize: compact ? 15 : 17,
-                                      fontWeight: FontWeight.w500,
-                                      letterSpacing: -0.15,
                                     ),
                                   ),
                                 ],
@@ -831,7 +1074,7 @@ class _PracticalInfoCard extends StatelessWidget {
                             ),
                             SizedBox(width: compact ? 5 : 6),
                             Text(
-                              data.verified ? 'Vérifié' : 'Profil',
+                              data.verified ? 'Profil vérifié' : 'Profil',
                               style: TextStyle(
                                 color: navy,
                                 fontSize: compact ? 12 : 14,
@@ -876,7 +1119,7 @@ class _PracticalInfoCard extends StatelessWidget {
                         Icon(Icons.wallet_outlined, color: muted, size: compact ? 21 : 24),
                         SizedBox(width: compact ? 9 : 12),
                         Text(
-                          'Délai moyen',
+                          'Délai pour effectuer la mission',
                           style: TextStyle(
                             color: muted,
                             fontSize: compact ? 15 : 16,
@@ -884,17 +1127,6 @@ class _PracticalInfoCard extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        Icon(Icons.bolt_rounded, color: orange, size: compact ? 15 : 18),
-                        SizedBox(width: compact ? 4 : 5),
-                        Text(
-                          'Réponse rapide',
-                          style: TextStyle(
-                            color: orange,
-                            fontSize: compact ? 13 : 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        SizedBox(width: compact ? 5 : 8),
                         _DelayBadge(text: data.averageDelay, compact: compact),
                       ],
                     ),
@@ -916,8 +1148,9 @@ class _PracticalInfoCard extends StatelessWidget {
                   ),
                   SizedBox(height: compact ? 12 : 14),
                   _InlineCta(
-                    label: data.actionType == OfferActionType.booking ? 'Réserver maintenant' : 'Proposer mes services',
+                    label: 'Proposer mes services',
                     compact: compact,
+                    onTap: onContactTap,
                   ),
                   SizedBox(height: compact ? 12 : 14),
                   Row(
@@ -1073,8 +1306,9 @@ class _DelayBadge extends StatelessWidget {
 class _InlineCta extends StatelessWidget {
   final String label;
   final bool compact;
+  final VoidCallback onTap;
 
-  const _InlineCta({required this.label, this.compact = false});
+  const _InlineCta({required this.label, this.compact = false, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1104,7 +1338,7 @@ class _InlineCta extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(100),
-          onTap: () {},
+          onTap: onTap,
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 16),
             child: Row(
