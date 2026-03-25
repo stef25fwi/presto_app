@@ -29,6 +29,7 @@ import 'features/micro_ia/web_audio_recorder.dart';
 import 'profile_page.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/legal_info_page.dart';
+import 'pages/offers/offer_detail_v2_page.dart';
 import 'pages/offers/offer_details_page.dart';
 import 'pages/pro_profile_page.dart';
 import 'pages/toolbox_hub_page.dart';
@@ -3302,6 +3303,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   bool _showFilters = false; // Panneau de filtres rétracté au départ
   int _lastResultCount = 0;
   String _headerTitle = 'Je consulte les offres';
+  String? _firstVisibleOfferIdForV2;
 
   late final Map<String, String> _deptToRegion = _buildDeptToRegion();
 
@@ -4186,6 +4188,24 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     );
   }
 
+  void _openOfferDetailV2FromHeader() {
+    final offerId = _firstVisibleOfferIdForV2;
+    if (offerId == null || offerId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Aucune annonce disponible pour ouvrir la page V2"),
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => OfferDetailV2Page(offerId: offerId),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final baseTitle = _headerTitle;
@@ -4212,13 +4232,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          baseTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: kPrestoAppBarTitleStyle.copyWith(
-                            color: Colors.white,
-                            fontSize: 20,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onLongPress: _openOfferDetailV2FromHeader,
+                          child: Text(
+                            baseTitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: kPrestoAppBarTitleStyle.copyWith(
+                              color: Colors.white,
+                              fontSize: 20,
+                            ),
                           ),
                         ),
                       ),
@@ -4313,6 +4337,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
                     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
                         rawDocs.where((d) => _matchesOfferFilters(d.data())).toList();
+
+                    _firstVisibleOfferIdForV2 =
+                      docs.isNotEmpty ? docs.first.id : null;
 
                     // Nombre après filtrage
                     final int resultCount = docs.length;
