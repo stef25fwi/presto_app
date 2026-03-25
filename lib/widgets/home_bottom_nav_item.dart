@@ -5,6 +5,7 @@ class HomeBottomNavItem extends StatefulWidget {
   final String label;
   final bool selected;
   final bool isBig;
+  final int badgeCount;
   final VoidCallback onTap;
 
   const HomeBottomNavItem({
@@ -14,6 +15,7 @@ class HomeBottomNavItem extends StatefulWidget {
     required this.onTap,
     this.selected = false,
     this.isBig = false,
+    this.badgeCount = 0,
   });
 
   @override
@@ -61,6 +63,11 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
   Widget build(BuildContext context) {
     final color = Colors.white;
     final fontWeight = widget.selected ? FontWeight.w700 : FontWeight.w500;
+    final String? badgeLabel = widget.badgeCount <= 0
+        ? null
+        : widget.badgeCount > 9
+            ? '9+'
+            : widget.badgeCount.toString();
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
@@ -72,38 +79,69 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
           children: [
             ScaleTransition(
               scale: _scaleAnimation,
-              child: Container(
-                padding: EdgeInsets.all(widget.isBig ? 6 : 4),
-                decoration: BoxDecoration(
-                  color: widget.isBig
-                      ? Colors.white
-                      : widget.selected
-                          ? Colors.white.withOpacity(0.35)
-                          : Colors.transparent,
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: widget.isBig
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.35),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : widget.selected
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(widget.isBig ? 6 : 4),
+                    decoration: BoxDecoration(
+                      color: widget.isBig
+                          ? Colors.white
+                          : widget.selected
+                              ? Colors.white.withOpacity(0.35)
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: widget.isBig
                           ? [
                               BoxShadow(
-                                color: Colors.white.withOpacity(0.5),
-                                blurRadius: 12,
-                                spreadRadius: 3,
+                                color: Colors.black.withOpacity(0.35),
+                                blurRadius: 16,
+                                offset: const Offset(0, 4),
                               ),
                             ]
-                          : null,
-                ),
-                child: Icon(
-                  widget.icon,
-                  size: widget.isBig ? 28 : 24,
-                  color: widget.isBig ? _kPrestoOrange : color,
-                ),
+                          : widget.selected
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.white.withOpacity(0.5),
+                                    blurRadius: 12,
+                                    spreadRadius: 3,
+                                  ),
+                                ]
+                              : null,
+                    ),
+                    child: Icon(
+                      widget.icon,
+                      size: widget.isBig ? 28 : 24,
+                      color: widget.isBig ? _kPrestoOrange : color,
+                    ),
+                  ),
+                  if (badgeLabel != null)
+                    Positioned(
+                      right: -6,
+                      top: -4,
+                      child: Container(
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          badgeLabel,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 3),
