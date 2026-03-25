@@ -1229,6 +1229,19 @@ class _HomePageState extends State<HomePage>
     );
   }
 
+  void _goToCategoryOffers(String category) {
+    final normalizedCategory = category.trim();
+    if (normalizedCategory.isEmpty) return;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ConsultOffersPage(
+          categoryFilter: normalizedCategory,
+        ),
+      ),
+    );
+  }
+
   /// ✅ Enregistre la recherche effectuée
   Future<void> _logSearch(String searchQuery) async {
     try {
@@ -2444,90 +2457,45 @@ class _HomePageState extends State<HomePage>
                             icon: Icons.eco_outlined,
                             label: "Jardinage",
                             iconScale: _categoryScaleForIndex(0),
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Jardinage",
-                                  ),
-                                ),
-                              );
-                            },
+                            onTap: () => _goToCategoryOffers("Jardinage"),
                           ),
                           const SizedBox(width: 6),
                           _CategoryChip(
                             icon: Icons.format_paint_outlined,
                             label: "Peinture",
                             iconScale: _categoryScaleForIndex(1),
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Peinture",
-                                  ),
-                                ),
-                              );
-                            },
+                            onTap: () => _goToCategoryOffers("Peinture"),
                           ),
                           const SizedBox(width: 6),
                           _CategoryChip(
                             icon: Icons.handyman_outlined,
                             label: "Main-d’œuvre",
                             iconScale: _categoryScaleForIndex(2),
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Main-d'œuvre",
-                                  ),
-                                ),
-                              );
-                            },
+                            onTap: () =>
+                                _goToCategoryOffers("Main-d'œuvre"),
                           ),
                           const SizedBox(width: 6),
                           _CategoryChip(
                             icon: Icons.other_houses_outlined,
                             label: "Autres",
                             iconScale: _categoryScaleForIndex(3),
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Autre",
-                                  ),
-                                ),
-                              );
-                            },
+                            onTap: () => _goToCategoryOffers("Autre"),
                           ),
                           const SizedBox(width: 6),
                           _CategoryChip(
                             icon: Icons.child_care_outlined,
                             label: "Garde enfants",
                             iconScale: _categoryScaleForIndex(4),
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Garde d'enfants",
-                                  ),
-                                ),
-                              );
-                            },
+                            onTap: () =>
+                                _goToCategoryOffers("Garde d'enfants"),
                           ),
                           const SizedBox(width: 6),
                           _CategoryChip(
                             icon: Icons.music_note_outlined,
                             label: "DJ / Sono",
                             iconScale: _categoryScaleForIndex(5),
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const ConsultOffersPage(
-                                    categoryFilter: "Événementiel / DJ",
-                                  ),
-                                ),
-                              );
-                            },
+                            onTap: () =>
+                                _goToCategoryOffers("Événementiel / DJ"),
                           ),
                         ],
                       ),
@@ -3409,6 +3377,74 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return _filteredDepartmentCodes;
   }
 
+  /// Badge = messages non lus + notifications d'annonces (dont favoris)
+  Widget _buildConsultNotificationBell() {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, authSnapshot) {
+        final user = authSnapshot.data;
+
+        if (user == null) {
+          return IconButton(
+            onPressed: () {
+              showSuccessSnackBar(
+                context,
+                'Connecte-toi pour recevoir les notifications.',
+              );
+            },
+            icon: const _NotificationBellBase(badgeCount: 0),
+            splashRadius: 20,
+            padding: EdgeInsets.zero,
+          );
+        }
+
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('conversations')
+              .where('participants', arrayContains: user.uid)
+              .snapshots(),
+          builder: (context, convSnapshot) {
+            int unreadMessagesCount = 0;
+            if (convSnapshot.hasData) {
+              for (final doc in convSnapshot.data!.docs) {
+                final data = doc.data();
+                final unreadMap =
+                    (data['unreadCount'] as Map<String, dynamic>?) ?? {};
+                final v = unreadMap[user.uid];
+                if (v is int) unreadMessagesCount += v;
+              }
+            }
+
+            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('notifications')
+                  .where('userId', isEqualTo: user.uid)
+                  .where('read', isEqualTo: false)
+                  .snapshots(),
+              builder: (context, notifSnapshot) {
+                final unreadNotificationsCount =
+                    notifSnapshot.hasData ? notifSnapshot.data!.docs.length : 0;
+                final totalUnread =
+                    unreadMessagesCount + unreadNotificationsCount;
+
+                return IconButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const MessagesPage()),
+                    );
+                  },
+                  icon: _NotificationBellBase(badgeCount: totalUnread),
+                  splashRadius: 20,
+                  padding: EdgeInsets.zero,
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
     bool get _hasActiveClientFilters {
     final selectedCategory =
       (_filterCategory != null && _filterCategory!.isNotEmpty)
@@ -3947,9 +3983,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _filterCitySuggestions = [];
       _filterCityHighlightedIndex = -1;
       _activeSearchQuery = null;
+      _budgetRangeWarning = null;
       _filterPanelKey++; // Force la reconstruction du panneau
       _pageLimit = _initialLimit;
       _lastPaginationRequestAt = null;
+      _showFilters = false;
     });
 
     // 2) reset champs texte
@@ -3967,6 +4005,21 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     FocusScope.of(context).unfocus();
 
     // 4) ✅ Pas de scroll forcé: on conserve la position courante
+  }
+
+  String get _currentConsultOffersTitle {
+    final activeCategory = (_filterCategory?.trim().isNotEmpty ?? false)
+        ? _filterCategory!.trim()
+        : (((_selectedCategory?.trim().isNotEmpty ?? false) &&
+                _selectedCategory != 'Toutes catégories')
+            ? _selectedCategory!.trim()
+            : null);
+
+    if (activeCategory == null) {
+      return 'Je consulte les offres';
+    }
+
+    return 'Offres : $activeCategory';
   }
 
   // Met à jour le champ "Ville" visible avec la valeur des filtres si présente
@@ -4130,9 +4183,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   @override
   Widget build(BuildContext context) {
-    final baseTitle = widget.categoryFilter == null
-        ? "Je consulte les offres"
-        : "Offres : ${widget.categoryFilter!}";
+    final baseTitle = _currentConsultOffersTitle;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -4166,16 +4217,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                           ),
                         ),
                       ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.notifications_none_rounded,
-                          color: Colors.white,
-                          size: 26,
-                        ),
-                        splashRadius: 20,
-                        padding: EdgeInsets.zero,
-                      ),
+                      _buildConsultNotificationBell(),
                     ],
                   ),
                 ),
@@ -4318,7 +4360,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                             ),
                             controller: _scrollController,
                             physics: const ClampingScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 132),
+                            padding: const EdgeInsets.fromLTRB(10, 0, 10, 132),
                             addAutomaticKeepAlives: true,
                             addRepaintBoundaries: true,
                             itemCount: _totalItems,
@@ -4994,30 +5036,21 @@ class _OfferBrowseTile extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: 26,
-                  child: Icon(
-                    data.icon,
-                    size: 20,
-                    color: _ConsultOffersPageState._offersNavy.withValues(alpha: 0.72),
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        data.title,
-                        maxLines: 1,
+                        data.title.toUpperCase(),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 18,
-                          height: 1.0,
+                          fontSize: 17,
+                          height: 1.15,
                           fontWeight: FontWeight.w700,
                           color: _ConsultOffersPageState._offersNavy,
-                          letterSpacing: -0.45,
+                          letterSpacing: 0.15,
                         ),
                       ),
                       const SizedBox(height: 6),
