@@ -5100,7 +5100,7 @@ class _OfferBrowseTile extends StatelessWidget {
                         children: [
                           Text(
                             data.title.toUpperCase(),
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 17,
@@ -5110,7 +5110,7 @@ class _OfferBrowseTile extends StatelessWidget {
                               letterSpacing: 0.15,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 14),
                           Text(
                             data.subtitle,
                             maxLines: 1,
