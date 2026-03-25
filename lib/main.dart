@@ -36,6 +36,7 @@ import 'pages/toolbox_hub_page.dart';
 import 'services/city_search.dart';
 import 'services/account_social_auth_actions.dart';
 import 'services/google_auth_service.dart';
+import 'services/email_action_service.dart';
 import 'services/notification_service.dart';
 import 'services/offer_indexing.dart';
 import 'utils/crashlytics_context.dart';
@@ -784,8 +785,7 @@ class PrestoApp extends StatelessWidget {
                 );
               },
               onResetPassword: (email) async {
-                await FirebaseAuth.instance
-                    .sendPasswordResetEmail(email: email);
+                await EmailActionService.requestPasswordResetEmail(email);
               },
               onGoToSignup: () {
                 _showSignupDialog(context);
@@ -885,14 +885,17 @@ void _showSignupDialog(BuildContext context) {
             }
 
             try {
-              await FirebaseAuth.instance.createUserWithEmailAndPassword(
+              final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
                 email: email,
                 password: pass,
               );
+              if (credential.user != null) {
+                await EmailActionService.requestEmailVerificationEmail();
+              }
               if (ctx.mounted) Navigator.of(ctx).pop();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Compte créé avec succès ! ✅')),
+                  const SnackBar(content: Text('Compte créé. Vérifiez votre e-mail. ✅')),
                 );
               }
             } catch (e) {
@@ -1161,8 +1164,8 @@ class _HomePageState extends State<HomePage>
   /// Contrôle l'affichage des suggestions de recherche
   bool _showSearchSuggestions = true;
 
-  /// Stream figé pour éviter le clignotement des "Dernières offres"
-  late final Stream<QuerySnapshot<Map<String, dynamic>>> _latestOffersStream;
+  /// Chargement figé à l'ouverture de la home pour stabiliser la section.
+  late final Future<QuerySnapshot<Map<String, dynamic>>> _latestOffersFuture;
 
   /// Slogans animés (fade + slide) pour le 1er slide
   final List<String> _firstSlideSlogans = const [
@@ -1333,11 +1336,11 @@ class _HomePageState extends State<HomePage>
 
     _listenDynamicKeywords();
 
-    _latestOffersStream = FirebaseFirestore.instance
+    _latestOffersFuture = FirebaseFirestore.instance
         .collection('offers')
         .orderBy('createdAt', descending: true)
         .limit(8)
-        .snapshots();
+      .get();
 
     // Listener pour hide/show bottom bar au scroll
     _scrollController.addListener(() {
@@ -2353,8 +2356,7 @@ class _HomePageState extends State<HomePage>
                 // DERNIÈRES OFFRES - Section avec fond blanc
                 Container(
                   width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 18),
+                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 18),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -2392,9 +2394,9 @@ class _HomePageState extends State<HomePage>
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
-                      StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                        stream: _latestOffersStream,
+                      const SizedBox(height: 4),
+                      FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                        future: _latestOffersFuture,
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                                   ConnectionState.waiting &&
@@ -8634,7 +8636,7 @@ class _AccountPageState extends State<AccountPage> {
       // ✅ Vérifier l'email si pas encore vérifié
       if (!user.emailVerified && user.email != null) {
         try {
-          await user.sendEmailVerification();
+          await EmailActionService.requestEmailVerificationEmail();
         } catch (_) {
           // Silencieux
         }

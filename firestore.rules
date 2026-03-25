@@ -51,6 +51,18 @@ service cloud.firestore {
       }
     }
 
+    match /notification_preferences/{userId} {
+      allow read: if isSignedIn() && userId == uid();
+      allow create: if isSignedIn()
+        && userId == uid()
+        && request.resource.data.user_id == uid();
+      allow update: if isSignedIn()
+        && userId == uid()
+        && request.resource.data.user_id == resource.data.user_id
+        && request.resource.data.user_id == uid();
+      allow delete: if false;
+    }
+
     // ✅ Pros: chaque pro gère son doc (profil + statut)
     match /pros/{proId} {
       allow read, create, update, delete: if isSignedIn() && proId == uid();

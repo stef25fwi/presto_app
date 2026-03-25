@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'services/email_action_service.dart';
 import 'utils/friendly_snackbar.dart';
 import 'constants.dart';
 import 'widgets/phone_input_field.dart';
@@ -84,6 +85,9 @@ class _ProfilePageState extends State<ProfilePage> {
       if (email != null && email.isNotEmpty && _emailCtrl.text != email) {
         _emailCtrl.text = email;
       }
+      if (user != null) {
+        _loadNotificationPreferences(user.uid);
+      }
     });
 
     // Sur Web, vérifie si l'utilisateur revient d'un redirect Google Sign-In
@@ -128,6 +132,44 @@ class _ProfilePageState extends State<ProfilePage> {
     _cpCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadNotificationPreferences(String userId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('notification_preferences')
+          .doc(userId)
+          .get();
+      final data = doc.data();
+      if (data == null || !mounted) return;
+
+      final emailPrefs =
+          (data['email'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+      final savedSearches =
+          (emailPrefs['saved_searches'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+      final messaging =
+          (emailPrefs['messaging'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+      final favorites =
+          (emailPrefs['favorites'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+      final support =
+          (emailPrefs['support'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+
+      setState(() {
+        _notifNearby = (savedSearches['mode'] ?? 'daily').toString() != 'off';
+        _notifAcceptOffer = (messaging['mode'] ?? 'immediate').toString() != 'off';
+        _notifFavorites = favorites['enabled'] != false;
+        _notifSystem = support['enabled'] != false;
+
+        final locale = (data['locale'] ?? 'fr').toString();
+        if (locale == 'en') {
+          _language = 'Anglais';
+        } else if (_language == 'Anglais') {
+          _language = 'Français';
+        }
+      });
+    } catch (_) {
+      // best effort
+    }
   }
 
   Future<void> _onGoogleSignIn() async {
@@ -231,12 +273,15 @@ class _ProfilePageState extends State<ProfilePage> {
         if (!mounted) return;
         showSuccessSnackBar(context, 'Connexion réussie');
       } else {
-        await _auth.createUserWithEmailAndPassword(
+        final credential = await _auth.createUserWithEmailAndPassword(
           email: email,
           password: password,
         );
+        if (credential.user != null) {
+          await EmailActionService.requestEmailVerificationEmail();
+        }
         if (!mounted) return;
-        showSuccessSnackBar(context, 'Compte créé');
+        showSuccessSnackBar(context, 'Compte créé. Vérifiez votre e-mail.');
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
@@ -283,6 +328,33 @@ class _ProfilePageState extends State<ProfilePage> {
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
+      await FirebaseFirestore.instance
+          .collection('notification_preferences')
+          .doc(user.uid)
+          .set({
+        'user_id': user.uid,
+        'locale': _language == 'Anglais' ? 'en' : 'fr',
+        'timezone': 'America/Guadeloupe',
+        'quiet_hours': {
+          'enabled': true,
+          'start_local': '22:00',
+          'end_local': '08:00',
+        },
+        'email': {
+          'account': {'enabled': true},
+          'messaging': {'mode': _notifAcceptOffer ? 'immediate' : 'off'},
+          'listings': {'mode': 'immediate'},
+          'saved_searches': {'mode': _notifNearby ? 'daily' : 'off'},
+          'favorites': {'enabled': _notifFavorites},
+          'support': {'enabled': _notifSystem},
+          'marketing': {
+            'enabled': false,
+            'frequency_cap_per_week': 2,
+          },
+        },
+        'updated_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
       if (!mounted) return;
       showSuccessSnackBar(context, 'Profil mis à jour.');
     } catch (e) {
@@ -294,22 +366,131 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _onChangePasswordTapped() async {
+    final user = _auth.currentUser;
     final targetEmail = (_auth.currentUser?.email ?? _emailCtrl.text).trim();
     if (targetEmail.isEmpty) {
       showErrorSnackBar(context, 'Aucun e-mail disponible pour le reset.');
       return;
     }
 
+    final hasPasswordProvider =
+        user?.providerData.any((provider) => provider.providerId == 'password') ??
+            false;
+
+    if (user == null || !hasPasswordProvider) {
+      try {
+        await EmailActionService.requestPasswordResetEmail(targetEmail);
+        if (!mounted) return;
+        showSuccessSnackBar(
+          context,
+          'E-mail de réinitialisation envoyé à $targetEmail',
+        );
+      } on FirebaseAuthException catch (e) {
+        if (!mounted) return;
+        showErrorSnackBar(context, e.message ?? 'Erreur de réinitialisation.');
+      }
+      return;
+    }
+
+    final currentPasswordCtrl = TextEditingController();
+    final newPasswordCtrl = TextEditingController();
+    final confirmPasswordCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Changer mon mot de passe'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: currentPasswordCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Mot de passe actuel'),
+                validator: (value) {
+                  if ((value ?? '').trim().isEmpty) {
+                    return 'Saisis ton mot de passe actuel';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: newPasswordCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Nouveau mot de passe'),
+                validator: (value) {
+                  final password = (value ?? '').trim();
+                  if (password.length < 6) {
+                    return '6 caractères minimum';
+                  }
+                  if (password == currentPasswordCtrl.text.trim()) {
+                    return 'Choisis un mot de passe différent';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: confirmPasswordCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Confirmer le mot de passe'),
+                validator: (value) {
+                  if ((value ?? '').trim() != newPasswordCtrl.text.trim()) {
+                    return 'Les mots de passe ne correspondent pas';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() != true) return;
+              Navigator.of(ctx).pop(true);
+            },
+            child: const Text('Mettre à jour'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
+      currentPasswordCtrl.dispose();
+      newPasswordCtrl.dispose();
+      confirmPasswordCtrl.dispose();
+      return;
+    }
+
     try {
-      await _auth.sendPasswordResetEmail(email: targetEmail);
+      final credential = EmailAuthProvider.credential(
+        email: targetEmail,
+        password: currentPasswordCtrl.text.trim(),
+      );
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPasswordCtrl.text.trim());
+      await EmailActionService.reportPasswordChanged();
       if (!mounted) return;
       showSuccessSnackBar(
         context,
-        'E-mail de réinitialisation envoyé à $targetEmail',
+        'Mot de passe mis à jour.',
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, e.message ?? 'Erreur de réinitialisation.');
+      showErrorSnackBar(context, e.message ?? 'Erreur de changement de mot de passe.');
+    } finally {
+      currentPasswordCtrl.dispose();
+      newPasswordCtrl.dispose();
+      confirmPasswordCtrl.dispose();
     }
   }
 
@@ -384,7 +565,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() => _isLoading = true);
     try {
-      await _auth.sendPasswordResetEmail(email: email);
+      await EmailActionService.requestPasswordResetEmail(email);
       if (!mounted) return;
       showSuccessSnackBar(
           context, 'Lien de réinitialisation envoyé par e-mail.');

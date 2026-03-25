@@ -4,7 +4,9 @@ exports.EMAIL_RETRY_MINUTES = exports.COLLECTIONS = void 0;
 exports.COLLECTIONS = {
     users: "users",
     userProfiles: "user_profiles",
+    offers: "offers",
     listings: "listings",
+    newsletterCampaigns: "newsletter_campaigns",
     listingDrafts: "listing_drafts",
     conversations: "conversations",
     conversationMessages: "conversation_messages",
