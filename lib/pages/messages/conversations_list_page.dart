@@ -16,6 +16,8 @@ class ConversationsListPage extends StatefulWidget {
 
 class _ConversationsListPageState extends State<ConversationsListPage> {
   final TextEditingController _searchController = TextEditingController();
+  final Map<String, String> _contactNamesCache = {};
+  int _totalUnread = 0;
 
   @override
   void dispose() {
@@ -52,16 +54,24 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       ids.addAll(participants);
     }
 
-    final futures = ids.map((id) async {
-      try {
-        final snap = await FirebaseFirestore.instance.collection('users').doc(id).get();
-        return MapEntry(id, _extractDisplayName(snap.data(), id));
-      } catch (_) {
-        return MapEntry(id, id);
-      }
-    });
+    // Ne charger que les IDs pas encore en cache
+    final missing = ids.where((id) => !_contactNamesCache.containsKey(id)).toList();
 
-    return Map<String, String>.fromEntries(await Future.wait(futures));
+    if (missing.isNotEmpty) {
+      final futures = missing.map((id) async {
+        try {
+          final snap = await FirebaseFirestore.instance.collection('users').doc(id).get();
+          return MapEntry(id, _extractDisplayName(snap.data(), id));
+        } catch (_) {
+          return MapEntry(id, id);
+        }
+      });
+      _contactNamesCache.addAll(Map<String, String>.fromEntries(await Future.wait(futures)));
+    }
+
+    return Map<String, String>.fromEntries(
+      ids.map((id) => MapEntry(id, _contactNamesCache[id] ?? id)),
+    );
   }
 
   Future<void> _markConversationRead(String conversationId, String currentUserId) async {
@@ -109,53 +119,35 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           style: kPrestoAppBarTitleStyle,
         ),
         actions: [
-          StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: FirebaseFirestore.instance
-                .collection('conversations')
-                .where('participants', arrayContains: userId)
-                .snapshots(),
-            builder: (context, snapshot) {
-              final docs = snapshot.data?.docs ?? const [];
-              var totalUnread = 0;
-              for (final doc in docs) {
-                final unread = doc.data()['unreadCount'];
-                if (unread is Map<String, dynamic>) {
-                  final value = unread[userId];
-                  if (value is int) totalUnread += value;
-                }
-              }
-
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.notifications_none),
-                    tooltip: 'Nouveaux messages',
-                  ),
-                  if (totalUnread > 0)
-                    Positioned(
-                      right: 8,
-                      top: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade600,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '$totalUnread',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                onPressed: () {},
+                icon: const Icon(Icons.notifications_none),
+                tooltip: 'Nouveaux messages',
+              ),
+              if (_totalUnread > 0)
+                Positioned(
+                  right: 8,
+                  top: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade600,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '$_totalUnread',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                ],
-              );
-            },
+                  ),
+                ),
+            ],
           ),
         ],
       ),
@@ -220,6 +212,22 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                 }
 
                 final docs = snapshot.data?.docs ?? const [];
+
+                // Calculer le badge total non lu depuis le stream unique
+                var computedUnread = 0;
+                for (final doc in docs) {
+                  final unread = doc.data()['unreadCount'];
+                  if (unread is Map<String, dynamic>) {
+                    final value = unread[userId];
+                    if (value is int) computedUnread += value;
+                  }
+                }
+                if (computedUnread != _totalUnread) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) setState(() => _totalUnread = computedUnread);
+                  });
+                }
+
                 if (docs.isEmpty) {
                   return Center(
                     child: Padding(
