@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -266,6 +267,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     await showModalBottomSheet<void>(
       context: context,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
@@ -287,7 +289,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
         return SafeArea(
           top: false,
-          child: Padding(
+          child: Container(
+            color: Colors.white,
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -308,7 +311,11 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                   runSpacing: 12,
                   children: [
                     _ShareOptionTile(
-                      icon: Icons.chat,
+                        icon: const FaIcon(
+                          FontAwesomeIcons.whatsapp,
+                          color: Color(0xFF25D366),
+                          size: 24,
+                        ),
                       label: 'WhatsApp',
                       color: const Color(0xFF25D366),
                       onTap: () async {
@@ -323,7 +330,11 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                       },
                     ),
                     _ShareOptionTile(
-                      icon: Icons.facebook,
+                      icon: const FaIcon(
+                        FontAwesomeIcons.facebookF,
+                        color: Color(0xFF1877F2),
+                        size: 24,
+                      ),
                       label: 'Facebook',
                       color: const Color(0xFF1877F2),
                       onTap: () async {
@@ -338,13 +349,21 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                       },
                     ),
                     _ShareOptionTile(
-                      icon: Icons.camera_alt_outlined,
+                      icon: const FaIcon(
+                        FontAwesomeIcons.instagram,
+                        color: Color(0xFFE1306C),
+                        size: 24,
+                      ),
                       label: 'Instagram',
                       color: const Color(0xFFE1306C),
                       onTap: openInstagram,
                     ),
                     _ShareOptionTile(
-                      icon: Icons.mail_outline,
+                      icon: const FaIcon(
+                        FontAwesomeIcons.envelope,
+                        color: Color(0xFF0459D9),
+                        size: 24,
+                      ),
                       label: 'Mail',
                       color: const Color(0xFF0459D9),
                       onTap: () async {
@@ -1521,7 +1540,7 @@ class _InlineCta extends StatelessWidget {
 }
 
 class _ShareOptionTile extends StatelessWidget {
-  final IconData icon;
+  final Widget icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
@@ -1547,10 +1566,20 @@ class _ShareOptionTile extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFFE5E7EB),
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x12000000),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
               ),
-              child: Icon(icon, color: color),
+              child: Center(child: icon),
             ),
             const SizedBox(height: 8),
             Text(
