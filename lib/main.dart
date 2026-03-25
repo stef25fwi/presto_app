@@ -1720,7 +1720,15 @@ class _HomePageState extends State<HomePage>
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide.none,
+                borderSide: const BorderSide(color: kPrestoBlue, width: 1.5),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(color: kPrestoBlue, width: 1.5),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(color: kPrestoBlue, width: 2),
               ),
             ),
           ),
@@ -2399,6 +2407,56 @@ class _HomePageState extends State<HomePage>
                     ),
                   ),
                 ),
+                // CATEGORIES COMPACTES
+                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('offers')
+                      .where(
+                        Filter.and(
+                          _publicOffersFilter(),
+                          Filter('isPublished', isEqualTo: true),
+                        ),
+                      )
+                      .limit(60)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    final shortcuts = _availableCategoryShortcuts(
+                      snapshot.data?.docs ?? const [],
+                    );
+
+                    if (shortcuts.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return AnimatedBuilder(
+                      animation: _categoryController,
+                      builder: (context, child) {
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              for (var index = 0;
+                                  index < shortcuts.length;
+                                  index++) ...[
+                                if (index > 0) const SizedBox(width: 6),
+                                _CategoryChip(
+                                  icon: shortcuts[index].icon,
+                                  label: shortcuts[index].label,
+                                  iconScale: _categoryScaleForIndex(index),
+                                  onTap: () => _goToCategoryOffers(
+                                    shortcuts[index].targetCategory,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 18),
 
                 // DERNIÈRES OFFRES - Section avec fond blanc
                 Container(
@@ -2507,57 +2565,6 @@ class _HomePageState extends State<HomePage>
                       ),
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 18),
-
-                // CATEGORIES COMPACTES
-                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseFirestore.instance
-                      .collection('offers')
-                      .where(
-                        Filter.and(
-                          _publicOffersFilter(),
-                          Filter('isPublished', isEqualTo: true),
-                        ),
-                      )
-                      .limit(60)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    final shortcuts = _availableCategoryShortcuts(
-                      snapshot.data?.docs ?? const [],
-                    );
-
-                    if (shortcuts.isEmpty) {
-                      return const SizedBox.shrink();
-                    }
-
-                    return AnimatedBuilder(
-                      animation: _categoryController,
-                      builder: (context, child) {
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              for (var index = 0;
-                                  index < shortcuts.length;
-                                  index++) ...[
-                                if (index > 0) const SizedBox(width: 6),
-                                _CategoryChip(
-                                  icon: shortcuts[index].icon,
-                                  label: shortcuts[index].label,
-                                  iconScale: _categoryScaleForIndex(index),
-                                  onTap: () => _goToCategoryOffers(
-                                    shortcuts[index].targetCategory,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  },
                 ),
 
                 const SizedBox(height: 20),
