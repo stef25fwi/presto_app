@@ -29,8 +29,8 @@ import 'features/micro_ia/web_audio_recorder.dart';
 import 'profile_page.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/legal_info_page.dart';
-import 'pages/offers/offer_detail_v2_page.dart';
 import 'pages/offers/offer_details_page.dart';
+import 'pages/messages/conversations_list_page.dart';
 import 'pages/pro_profile_page.dart';
 import 'pages/toolbox_hub_page.dart';
 import 'services/city_search.dart';
@@ -438,6 +438,9 @@ Offer _buildOfferDetailsOffer({
   final serviceArea = (data['serviceArea'] ??
           (location.isEmpty ? 'Zone locale' : location))
       .toString();
+    final missionDelay = ((data['missionDelay'] ?? data['averageDelay']) ??
+        'Délai non précisé')
+      .toString();
 
   return Offer(
     id: offerId,
@@ -467,7 +470,8 @@ Offer _buildOfferDetailsOffer({
       serviceArea: serviceArea,
       canTravel: (data['canTravel'] as bool?) ?? true,
       schedule: (data['schedule'] ?? 'Horaires a convenir').toString(),
-      averageDelay: (data['averageDelay'] ?? 'Reponse rapide').toString(),
+      missionDelay: missionDelay,
+      averageDelay: missionDelay,
       paymentMethod:
           (data['paymentMethod'] ?? 'Paiement a convenir').toString(),
       serviceType: (data['serviceType'] ?? 'Prestation ponctuelle').toString(),
@@ -1097,7 +1101,8 @@ class _SplashScreenState extends State<SplashScreen>
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
-                      onPressed: () => _navigateTo(const ConsultOffersPage()),
+                        onPressed: () =>
+                          _navigateTo(const HomePage(initialIndex: 1)),
                       child: const Text(
                         "Je consulte les offres",
                         style: TextStyle(
@@ -1119,7 +1124,15 @@ class _SplashScreenState extends State<SplashScreen>
 
 class HomePage extends StatefulWidget {
   final int initialIndex;
-  const HomePage({super.key, this.initialIndex = 0});
+  final String? initialConsultCategoryFilter;
+  final String? initialConsultSearchQuery;
+
+  const HomePage({
+    super.key,
+    this.initialIndex = 0,
+    this.initialConsultCategoryFilter,
+    this.initialConsultSearchQuery,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -1225,7 +1238,10 @@ class _HomePageState extends State<HomePage>
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ConsultOffersPage(searchQuery: q),
+        builder: (_) => HomePage(
+          initialIndex: 1,
+          initialConsultSearchQuery: q,
+        ),
       ),
     );
   }
@@ -1236,8 +1252,9 @@ class _HomePageState extends State<HomePage>
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ConsultOffersPage(
-          categoryFilter: normalizedCategory,
+        builder: (_) => HomePage(
+          initialIndex: 1,
+          initialConsultCategoryFilter: normalizedCategory,
         ),
       ),
     );
@@ -1845,7 +1862,7 @@ class _HomePageState extends State<HomePage>
                         // Ouvrir la page ConsultOffersPage avec un filtre sur cette offre
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const ConsultOffersPage(),
+                            builder: (_) => const HomePage(initialIndex: 1),
                           ),
                         );
                       }
@@ -1975,7 +1992,11 @@ class _HomePageState extends State<HomePage>
                           index: _selectedIndex,
                           children: [
                             _buildHomeContent(),
-                            ConsultOffersPage(onScroll: _onPageScroll),
+                            ConsultOffersPage(
+                              onScroll: _onPageScroll,
+                              categoryFilter: widget.initialConsultCategoryFilter,
+                              searchQuery: widget.initialConsultSearchQuery,
+                            ),
                             PublishOfferPage(onScroll: _onPageScroll),
                             const MessagesPage(),
                             const AccountPage(),
@@ -3303,7 +3324,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   bool _showFilters = false; // Panneau de filtres rétracté au départ
   int _lastResultCount = 0;
   String _headerTitle = 'Je consulte les offres';
-  String? _firstVisibleOfferIdForV2;
 
   late final Map<String, String> _deptToRegion = _buildDeptToRegion();
 
@@ -4188,24 +4208,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     );
   }
 
-  void _openOfferDetailV2FromHeader() {
-    final offerId = _firstVisibleOfferIdForV2;
-    if (offerId == null || offerId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Aucune annonce disponible pour ouvrir la page V2"),
-        ),
-      );
-      return;
-    }
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => OfferDetailV2Page(offerId: offerId),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final baseTitle = _headerTitle;
@@ -4232,17 +4234,13 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onLongPress: _openOfferDetailV2FromHeader,
-                          child: Text(
-                            baseTitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: kPrestoAppBarTitleStyle.copyWith(
-                              color: Colors.white,
-                              fontSize: 20,
-                            ),
+                        child: Text(
+                          baseTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: kPrestoAppBarTitleStyle.copyWith(
+                            color: Colors.white,
+                            fontSize: 20,
                           ),
                         ),
                       ),
@@ -4337,9 +4335,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
                     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
                         rawDocs.where((d) => _matchesOfferFilters(d.data())).toList();
-
-                    _firstVisibleOfferIdForV2 =
-                      docs.isNotEmpty ? docs.first.id : null;
 
                     // Nombre après filtrage
                     final int resultCount = docs.length;
@@ -5140,56 +5135,49 @@ class _OfferBrowseTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  data.title.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    height: 1.15,
+                    fontWeight: FontWeight.w700,
+                    color: _ConsultOffersPageState._offersNavy,
+                    letterSpacing: 0.15,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  data.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.0,
+                    fontWeight: FontWeight.w500,
+                    color: _ConsultOffersPageState._offersNavy.withValues(alpha: 0.82),
+                    letterSpacing: -0.1,
+                  ),
+                ),
+                const SizedBox(height: 10),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            data.title.toUpperCase(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              height: 1.15,
-                              fontWeight: FontWeight.w700,
-                              color: _ConsultOffersPageState._offersNavy,
-                              letterSpacing: 0.15,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            data.subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 14,
-                              height: 1.0,
-                              fontWeight: FontWeight.w500,
-                              color: _ConsultOffersPageState._offersNavy
-                                  .withValues(alpha: 0.82),
-                              letterSpacing: -0.1,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            data.publishedText,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              height: 1.0,
-                              fontWeight: FontWeight.w500,
-                              color: _ConsultOffersPageState._offersSoftText,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        data.publishedText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.0,
+                          fontWeight: FontWeight.w500,
+                          color: _ConsultOffersPageState._offersSoftText,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 110),
                       child: Column(
@@ -5473,18 +5461,6 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
     }
 
     if (!context.mounted) return;
-
-    // Navigation vers la page de conversation avec Firebase
-    /*
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ConversationPage(
-          otherUserId: widget.userId,
-          otherUserName: 'Utilisateur',
-        ),
-      ),
-    );
-    */
   }
 
   @override
@@ -5800,1149 +5776,14 @@ String formatAgeSince(Timestamp? ts) {
 
 /// PAGE MESSAGES (LISTE DE CONVERSATIONS) //////////////////////////////////
 
-class MessagesPage extends StatefulWidget {
+class MessagesPage extends StatelessWidget {
   const MessagesPage({super.key});
 
   @override
-  State<MessagesPage> createState() => _MessagesPageState();
-}
-
-class _MessagesPageState extends State<MessagesPage> {
-  bool _isDarkMode = false;
-
-  Widget _buildNeedAccount(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-        title: const Text(
-          "Mes messages",
-          style: kPrestoAppBarTitleStyle,
-        ),
-        backgroundColor: kPrestoOrange,
-        foregroundColor: Colors.white,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(20),
-          ),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.chat_bubble_outline,
-                size: 60,
-                color: Colors.black26,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                "Pour utiliser la messagerie iliprestō, connectez-vous à votre compte.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 18),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrestoBlue,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const AccountPage()),
-                  );
-                },
-                icon: const Icon(Icons.person),
-                label: const Text(
-                  "Se connecter / s’inscrire",
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    final userId = user?.uid ?? SessionState.userId;
-
-    if (userId == null) {
-      return _buildNeedAccount(context);
-    }
-
-    final bgColor = _isDarkMode ? const Color(0xFF1a1a1a) : Colors.white;
-    final bubbleColor =
-        _isDarkMode ? const Color(0xFF303030) : const Color(0xFFf0f0f0);
-    final textColor = _isDarkMode ? Colors.white : Colors.black87;
-
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: bgColor,
-        appBar: AppBar(
-          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-          title: const Text(
-            "Mes messages",
-            style: kPrestoAppBarTitleStyle,
-          ),
-          backgroundColor:
-              _isDarkMode ? const Color(0xFF1a1a1a) : kPrestoOrange,
-          foregroundColor: Colors.white,
-          actions: [
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              onSelected: (value) {
-                if (value == 'dark_mode') {
-                  setState(() => _isDarkMode = !_isDarkMode);
-                }
-              },
-              itemBuilder: (BuildContext context) => [
-                PopupMenuItem<String>(
-                  value: 'dark_mode',
-                  child: Row(
-                    children: [
-                      Icon(
-                        _isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                        color: Colors.black87,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        _isDarkMode ? 'Mode clair' : 'Mode sombre',
-                        style: const TextStyle(color: Colors.black87),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        body: AnimatedPadding(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: FirebaseFirestore.instance
-                .collection('conversations')
-                .where('participants', arrayContains: userId)
-                .orderBy('lastMessageAt', descending: true)
-                .snapshots()
-                .map((snap) {
-              PrestoMonitoring.I.trackOtherStream(
-                key: 'messages.list.conversations',
-                docsCount: snap.docs.length,
-              );
-              return snap;
-            }),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _isDarkMode ? Colors.white : kPrestoOrange,
-                    ),
-                  ),
-                );
-              }
-
-              if (snapshot.hasError) {
-                debugPrint('❌ [Messages] Erreur Firestore: ${snapshot.error}');
-                debugPrint('❌ [Messages] Stack trace: ${snapshot.stackTrace}');
-
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Colors.red,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          "Erreur lors du chargement des conversations",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.red,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "${snapshot.error}",
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kPrestoBlue,
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () {
-                            setState(() {});
-                          },
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Réessayer'),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              final docs = (snapshot.data?.docs ?? []).toList();
-
-              if (docs.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.chat_bubble_outline,
-                          size: 64,
-                          color: _isDarkMode ? Colors.white24 : Colors.black26,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          "Aucune conversation pour l’instant",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Accepte une offre ou envoie un message depuis le détail d’une annonce pour démarrer une conversation.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color:
-                                _isDarkMode ? Colors.white54 : Colors.black54,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              return ListView.separated(
-                padding: const EdgeInsets.fromLTRB(4, 8, 4, 140),
-                itemCount: docs.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 4),
-                itemBuilder: (context, index) {
-                  final data = docs[index].data();
-                  final conversationId = docs[index].id;
-
-                  final offerTitle = (data['offerTitle'] ??
-                      'Conversation iliprestō') as String;
-                  final lastMessage = (data['lastMessage'] ??
-                      'Pas encore de message') as String;
-                  final ts = data['lastMessageAt'] as Timestamp?;
-                  final timeLabel = formatTimeLabel(ts);
-
-                  final Map<String, dynamic> unreadMap =
-                      (data['unreadCount'] as Map<String, dynamic>?) ?? {};
-                  final int unread =
-                      (unreadMap[userId] is int) ? unreadMap[userId] as int : 0;
-
-                  return _TapScale(
-                    onTap: () {
-                      /*
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ConversationPage(
-                            conversationId: conversationId,
-                          ),
-                        ),
-                      );
-                      */
-                    },
-                    child: Card(
-                      color: bubbleColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      elevation: _isDarkMode ? 0 : 1.5,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 8),
-                        child: Row(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                width: 46,
-                                height: 46,
-                                color: _isDarkMode
-                                    ? const Color(0xFF454545)
-                                    : const Color(0xFFFFF3E0),
-                                child: Icon(
-                                  Icons.work_outline,
-                                  color: _isDarkMode
-                                      ? Colors.orange[300]
-                                      : kPrestoOrange,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    offerTitle,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800,
-                                      color: textColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    lastMessage,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: unread > 0
-                                          ? FontWeight.w700
-                                          : FontWeight.w500,
-                                      color: unread > 0
-                                          ? textColor
-                                          : (_isDarkMode
-                                              ? Colors.white54
-                                              : Colors.black54),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  timeLabel,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: _isDarkMode
-                                        ? Colors.white38
-                                        : Colors.black45,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                if (unread > 0)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: kPrestoBlue,
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    child: Text(
-                                      unread.toString(),
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ),
-    );
+    return const ConversationsListPage();
   }
 }
-
-/*
-/// PAGE CONVERSATION (CHAT) - ANCIENNE VERSION - REMPLACÉE PAR pages/messages/conversation_page.dart
-/// NE PAS UTILISER - CONSERVÉE POUR RÉFÉRENCE UNIQUEMENT
-
-class ConversationPage extends StatefulWidget {
-  final String conversationId;
-  final String offerTitle;
-
-  const ConversationPage({
-    super.key,
-    required this.conversationId,
-    required this.offerTitle,
-  });
-
-  @override
-  State<ConversationPage> createState() => _ConversationPageState();
-}
-
-class _ConversationPageState extends State<ConversationPage> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final TextEditingController _messageController = TextEditingController();
-
-  List<String> _participants = [];
-  bool _isLoadingMeta = true;
-
-  String? _currentUserName;
-
-  // ✅ Analytics
-  late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadConversationMeta();
-    _loadCurrentUserName();
-    _markAsRead();
-    _logConversationViewed();
-  }
-
-  /// ✅ Enregistre la visite d'une conversation
-  Future<void> _logConversationViewed() async {
-    try {
-      await _analytics.logEvent(
-        name: 'conversation_viewed',
-        parameters: {
-          'conversation_id': widget.conversationId,
-          'offer_title': widget.offerTitle,
-        },
-      );
-    } catch (e) {
-      debugPrint('[Analytics] logConversationViewed error: $e');
-    }
-  }
-
-  /// ✅ Enregistre les messages envoyés
-  Future<void> _logMessageSent(String messageText) async {
-    try {
-      await _analytics.logEvent(
-        name: 'message_sent',
-        parameters: {
-          'conversation_id': widget.conversationId,
-          'message_length': messageText.length,
-          'offer_title': widget.offerTitle,
-        },
-      );
-    } catch (e) {
-      debugPrint('[Analytics] logMessageSent error: $e');
-    }
-  }
-
-  Future<void> _loadConversationMeta() async {
-    try {
-      final doc = await _firestore
-          .collection('conversations')
-          .doc(widget.conversationId)
-          .get();
-      if (!doc.exists) {
-        setState(() {
-          _participants = [];
-          _isLoadingMeta = false;
-        });
-        return;
-      }
-      final data = doc.data() as Map<String, dynamic>;
-      final parts = (data['participants'] as List<dynamic>? ?? [])
-          .map((e) => e.toString())
-          .toList();
-      setState(() {
-        _participants = parts;
-        _isLoadingMeta = false;
-      });
-    } catch (_) {
-      setState(() {
-        _participants = [];
-        _isLoadingMeta = false;
-      });
-    }
-  }
-
-  Future<void> _loadCurrentUserName() async {
-    final user = _auth.currentUser;
-    final userId = user?.uid ?? SessionState.userId;
-    if (userId == null) return;
-
-    String? name;
-
-    try {
-      final doc = await _firestore.collection('users').doc(userId).get();
-      if (doc.exists) {
-        final data = doc.data() as Map<String, dynamic>;
-        final pseudo = (data['pseudo'] ?? '') as String;
-        if (pseudo.trim().isNotEmpty) {
-          name = pseudo.trim();
-        }
-      }
-    } catch (_) {}
-
-    name ??= user?.displayName ?? user?.email ?? 'Utilisateur iliprestō';
-
-    if (mounted) {
-      setState(() {
-        _currentUserName = name;
-      });
-    }
-  }
-
-  Future<void> _markAsRead() async {
-    final user = _auth.currentUser;
-    final userId = user?.uid ?? SessionState.userId;
-    if (userId == null) return;
-
-    try {
-      await _firestore
-          .collection('conversations')
-          .doc(widget.conversationId)
-          .update({
-        'unreadCount.$userId': 0,
-      });
-    } catch (_) {}
-  }
-
-  @override
-  void dispose() {
-    _messageController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _sendMessage() async {
-    final user = _auth.currentUser;
-    final userId = user?.uid ?? SessionState.userId;
-
-    if (userId == null) {
-      showSuccessSnackBar(
-        context,
-        "Connecte-toi à ton compte pour envoyer des messages iliprestō.",
-      );
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const AccountPage()),
-      );
-      return;
-    }
-
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
-
-    final convRef =
-        _firestore.collection('conversations').doc(widget.conversationId);
-    final messagesRef = convRef.collection('messages');
-
-    final String senderName = _currentUserName ??
-        user?.displayName ??
-        user?.email ??
-        'Utilisateur iliprestō';
-
-    _messageController.clear();
-
-    try {
-      await _firestore.runTransaction((txn) async {
-        await messagesRef.add({
-          'text': text,
-          'senderId': userId,
-          'senderName': senderName,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-
-        final Map<String, dynamic> update = {
-          'lastMessage': text,
-          'lastMessageAt': FieldValue.serverTimestamp(),
-          'lastSenderId': userId,
-        };
-
-        for (final p in _participants) {
-          if (p == userId) {
-            update['unreadCount.$p'] = 0;
-          } else {
-            update['unreadCount.$p'] = FieldValue.increment(1);
-          }
-        }
-
-        txn.update(convRef, update);
-      });
-
-      // ✅ Analytics: message envoyé
-      await _logMessageSent(text);
-      _markAsRead();
-    } catch (e) {
-      if (!mounted) return;
-      showSuccessSnackBar(context, "Erreur lors de l’envoi du message : $e");
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> _fetchMessagesOnce() async {
-    final sw = Stopwatch()..start();
-    final snap = await _firestore
-        .collection('conversations')
-        .doc(widget.conversationId)
-        .collection('messages')
-        .orderBy('createdAt', descending: false)
-        .get();
-
-    sw.stop();
-    PrestoMonitoring.I.trackMessagesFetchOnce(
-        ms: sw.elapsedMilliseconds, docsCount: snap.docs.length);
-
-    return snap.docs.map((d) => d.data()).toList();
-  }
-
-  /*
-  // ANCIENNE VERSION - NE PAS UTILISER - COMMENTEE
-  void _onMenuSelected(String value) async {
-    final messages = await _fetchMessagesOnce();
-    final buffer = StringBuffer();
-
-    for (final m in messages) {
-      final sender = (m['senderName'] ?? 'Utilisateur') as String;
-      final text = (m['text'] ?? '') as String;
-      final ts = m['createdAt'] as Timestamp?;
-      final timeLabel = formatTimeLabel(ts);
-      buffer.writeln("[$timeLabel] $sender : $text");
-    }
-
-    final subject =
-        Uri.encodeComponent("Conversation iliprestō - ${widget.offerTitle}");
-    final body = Uri.encodeComponent(buffer.toString());
-
-    final uri = Uri.parse("mailto:?subject=$subject&body=$body");
-
-    final ok = await canLaunchUrl(uri);
-    if (!mounted) return;
-
-    if (ok) {
-      await launchUrl(uri);
-      return;
-    }
-
-    {
-      showSuccessSnackBar(
-        context,
-        "Impossible d’ouvrir le client email sur cet appareil.",
-      );
-    }
-  }
-
-  Future<void> _exportAsText() async {
-    final messages = await _fetchMessagesOnce();
-    final buffer = StringBuffer();
-
-    buffer.writeln("Conversation iliprestō - ${widget.offerTitle}");
-    buffer.writeln("======================================");
-    buffer.writeln();
-
-    for (final m in messages) {
-      final sender = (m['senderName'] ?? 'Utilisateur') as String;
-      final text = (m['text'] ?? '') as String;
-      final ts = m['createdAt'] as Timestamp?;
-      final timeLabel = formatTimeLabel(ts);
-      buffer.writeln("[$timeLabel] $sender : $text");
-    }
-
-    final text = buffer.toString();
-
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (_) {
-        return AlertDialog(
-          title: const Text("Conversation (texte)"),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: SelectableText(
-                text.isEmpty ? "Aucun message pour l’instant." : text,
-                style: const TextStyle(
-                  fontSize: 13,
-                  height: 1.3,
-                ),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Fermer"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-  */
-
-  void _onMenuSelected(String value) async {
-    switch (value) {
-      case 'email':
-        // Récupérer les messages et les formater
-        final messages = await _fetchMessagesOnce();
-        final buffer = StringBuffer();
-
-        buffer.writeln("Conversation iliprestō - ${widget.offerTitle}");
-        buffer.writeln("======================================");
-        buffer.writeln();
-
-        for (final m in messages) {
-          final sender = (m['senderName'] ?? 'Utilisateur') as String;
-          final text = (m['text'] ?? '') as String;
-          final ts = m['createdAt'] as Timestamp?;
-          final timeLabel = formatTimeLabel(ts);
-          buffer.writeln("[$timeLabel] $sender : $text");
-        }
-
-        final subject = Uri.encodeComponent(
-            "Conversation iliprestō - ${widget.offerTitle}");
-        final body = Uri.encodeComponent(buffer.toString());
-
-        if (!mounted) return;
-
-        // Afficher dialogue pour choisir l'application mail
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Text(
-              "Partager par email",
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-            content: const Text(
-              "Choisissez votre application mail pour partager cette conversation.",
-              style: TextStyle(fontSize: 14),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text("Annuler"),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrestoOrange,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () async {
-                  Navigator.of(context).pop();
-                  final uri = Uri.parse("mailto:?subject=$subject&body=$body");
-                  try {
-                    final ok = await canLaunchUrl(uri);
-                    if (ok) {
-                      await launchUrl(uri);
-                    } else {
-                      if (!mounted) return;
-                      showSuccessSnackBar(
-                        this.context,
-                        "Impossible d'ouvrir le client email sur cet appareil.",
-                      );
-                    }
-                  } catch (e) {
-                    if (!mounted) return;
-                    showSuccessSnackBar(
-                      this.context,
-                      "Erreur lors de l'ouverture du client email.",
-                    );
-                  }
-                },
-                child: const Text("Ouvrir l'application mail"),
-              ),
-            ],
-          ),
-        );
-        break;
-
-      case 'txt':
-        // Récupérer les messages et les formater
-        final messages = await _fetchMessagesOnce();
-        final buffer = StringBuffer();
-
-        buffer.writeln("Conversation iliprestō - ${widget.offerTitle}");
-        buffer.writeln("======================================");
-        buffer.writeln();
-
-        for (final m in messages) {
-          final sender = (m['senderName'] ?? 'Utilisateur') as String;
-          final text = (m['text'] ?? '') as String;
-          final ts = m['createdAt'] as Timestamp?;
-          final timeLabel = formatTimeLabel(ts);
-          buffer.writeln("[$timeLabel] $sender : $text");
-        }
-
-        final text = buffer.toString();
-
-        if (!mounted) return;
-
-        // Afficher dialogue pour enregistrer
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Text(
-              "Enregistrer la conversation",
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Aperçu de la conversation :",
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    constraints: const BoxConstraints(maxHeight: 300),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: SingleChildScrollView(
-                      child: SelectableText(
-                        text.isEmpty ? "Aucun message pour l'instant." : text,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          height: 1.4,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text("Annuler"),
-              ),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kPrestoOrange,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  showSuccessSnackBar(
-                    context,
-                    "Sélectionnez le texte ci-dessus pour le copier et l'enregistrer.",
-                  );
-                },
-                icon: const Icon(Icons.download, size: 18),
-                label: const Text("Enregistrer"),
-              ),
-            ],
-          ),
-        );
-        break;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final user = _auth.currentUser;
-    final userId = user?.uid ?? SessionState.userId;
-
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
-          backgroundColor: kPrestoOrange,
-          foregroundColor: Colors.white,
-          titleSpacing: 0,
-          title: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  color: const Color(0xFFFFF3E0),
-                  child: const Icon(
-                    Icons.work_outline,
-                    color: kPrestoOrange,
-                    size: 22,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    widget.offerTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: kPrestoAppBarTitleStyle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            PopupMenuButton<String>(
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              onSelected: _onMenuSelected,
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'email',
-                  child: Row(
-                    children: [
-                      Icon(Icons.email_outlined,
-                          size: 20, color: kPrestoOrange),
-                      SizedBox(width: 12),
-                      Text("Partager par email"),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'txt',
-                  child: Row(
-                    children: [
-                      Icon(Icons.file_download_outlined,
-                          size: 20, color: kPrestoOrange),
-                      SizedBox(width: 12),
-                      Text("Enregistrer (texte)"),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            // Liste des messages
-            Expanded(
-              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: _firestore
-                    .collection('conversations')
-                    .doc(widget.conversationId)
-                    .collection('messages')
-                    .orderBy('createdAt', descending: true)
-                    .limit(200)
-                    .snapshots()
-                    .map((snap) {
-                  PrestoMonitoring.I.trackOtherStream(
-                    key: 'conversation.messages.stream',
-                    docsCount: snap.docs.length,
-                  );
-                  return snap;
-                }),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting &&
-                      !_isLoadingMeta) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                      ),
-                    );
-                  }
-
-                  final docs = snapshot.data?.docs ?? [];
-                  if (docs.isEmpty) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Text(
-                          "Aucun message pour le moment.\nCommence la conversation !",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    reverse: true,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                    itemCount: docs.length,
-                    itemBuilder: (context, index) {
-                      final data = docs[index].data();
-                      final text = (data['text'] ?? '') as String;
-                      final senderName =
-                          (data['senderName'] ?? 'iliprestō') as String;
-                      final senderId = (data['senderId'] ?? '') as String;
-                      final ts = data['createdAt'] as Timestamp?;
-                      final timeLabel = formatTimeLabel(ts);
-
-                      final isMe = senderId == userId;
-
-                      return Align(
-                        alignment:
-                            isMe ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 3),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width * 0.75,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isMe ? kPrestoBlue : Colors.white,
-                            borderRadius: BorderRadius.only(
-                              topLeft: const Radius.circular(18),
-                              topRight: const Radius.circular(18),
-                              bottomLeft: Radius.circular(isMe ? 18 : 4),
-                              bottomRight: Radius.circular(isMe ? 4 : 18),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
-                                blurRadius: 6,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (!isMe)
-                                Text(
-                                  senderName,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black54,
-                                  ),
-                                ),
-                              if (!isMe) const SizedBox(height: 2),
-                              Text(
-                                text,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: isMe ? Colors.white : Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Align(
-                                alignment: Alignment.bottomRight,
-                                child: Text(
-                                  timeLabel,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color:
-                                        isMe ? Colors.white70 : Colors.black38,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-
-            // Zone de saisie
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              color: Colors.grey[100],
-              child: SafeArea(
-                top: false,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _messageController,
-                        minLines: 1,
-                        maxLines: 4,
-                        decoration: const InputDecoration(
-                          hintText: "Écrire un message...",
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.send, color: kPrestoOrange),
-                      onPressed: _sendMessage,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-*/
 
 /// PAGE PUBLIER UNE OFFRE //////////////////////////////////////////////////
 

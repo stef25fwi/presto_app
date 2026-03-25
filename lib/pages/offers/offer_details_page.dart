@@ -15,6 +15,7 @@ class PracticalInfo {
   final String serviceArea;
   final bool canTravel;
   final String schedule;
+  final String missionDelay;
   final String averageDelay;
   final String paymentMethod;
   final String serviceType;
@@ -24,6 +25,7 @@ class PracticalInfo {
     required this.serviceArea,
     required this.canTravel,
     required this.schedule,
+    required this.missionDelay,
     required this.averageDelay,
     required this.paymentMethod,
     required this.serviceType,
@@ -395,13 +397,15 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: false,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       builder: (sheetContext) {
         return SafeArea(
           top: false,
-          child: Padding(
+          child: Container(
+            color: Colors.white,
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -425,7 +429,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                       _openInternalMessaging(context, data);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0459D9),
+                      backgroundColor: const Color(0xFFFF6A00),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -442,14 +446,14 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                 const SizedBox(height: 10),
                 SizedBox(
                   height: 50,
-                  child: OutlinedButton.icon(
+                  child: ElevatedButton.icon(
                     onPressed: () {
                       Navigator.of(sheetContext).pop();
                       _callPhone(context, data.phone);
                     },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF0459D9),
-                      side: const BorderSide(color: Color(0xFFD7DEE8)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0459D9),
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -574,6 +578,7 @@ class _OfferUiData {
   final String serviceArea;
   final bool canTravel;
   final String schedule;
+  final String missionDelay;
   final String averageDelay;
   final String paymentMethod;
   final String serviceType;
@@ -603,6 +608,7 @@ class _OfferUiData {
     required this.serviceArea,
     required this.canTravel,
     required this.schedule,
+    required this.missionDelay,
     required this.averageDelay,
     required this.paymentMethod,
     required this.serviceType,
@@ -683,6 +689,12 @@ class _OfferUiData {
     final serviceArea = _asString(_read(() => practical.serviceArea), fallback: city);
     final canTravel = _asBool(_read(() => practical.canTravel), fallback: true);
     final schedule = _asString(_read(() => practical.schedule), fallback: 'Horaires à convenir');
+    final missionDelay = _asString(
+      _read(() => practical.missionDelay) ??
+          _read(() => o.missionDelay) ??
+          _read(() => o.averageDelay),
+      fallback: 'Délai non précisé',
+    );
     final averageDelay = _asString(_read(() => practical.averageDelay), fallback: '30 min en moyenne');
     final paymentMethod = _asString(_read(() => practical.paymentMethod), fallback: 'Paiement à convenir');
     final serviceType = _asString(_read(() => practical.serviceType), fallback: 'Prestation ponctuelle');
@@ -712,6 +724,7 @@ class _OfferUiData {
       serviceArea: serviceArea,
       canTravel: canTravel,
       schedule: schedule,
+      missionDelay: missionDelay,
       averageDelay: averageDelay,
       paymentMethod: paymentMethod,
       serviceType: serviceType,
@@ -1123,7 +1136,7 @@ class _PracticalInfoCard extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  'Infos annonceur',
+                  'Info annonceur',
                   style: TextStyle(
                     color: blue,
                     fontSize: compact ? 20 : 22,
@@ -1265,24 +1278,11 @@ class _PracticalInfoCard extends StatelessWidget {
                     value: data.schedule,
                     compact: compact,
                   ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: compact ? 12 : 14),
-                    child: Row(
-                      children: [
-                        Icon(Icons.wallet_outlined, color: muted, size: compact ? 21 : 24),
-                        SizedBox(width: compact ? 9 : 12),
-                        Text(
-                          'Délai pour effectuer la mission',
-                          style: TextStyle(
-                            color: muted,
-                            fontSize: compact ? 15 : 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const Spacer(),
-                        _DelayBadge(text: data.averageDelay, compact: compact),
-                      ],
-                    ),
+                  _InfoLine(
+                    icon: Icons.access_time_rounded,
+                    label: 'Délai',
+                    value: data.missionDelay,
+                    compact: compact,
                   ),
                   const Divider(height: 1, thickness: 1, color: line),
                   _InfoLine(

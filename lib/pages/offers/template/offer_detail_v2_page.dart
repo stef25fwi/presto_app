@@ -380,13 +380,15 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: false,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       builder: (sheetContext) {
         return SafeArea(
           top: false,
-          child: Padding(
+          child: Container(
+            color: Colors.white,
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -414,7 +416,7 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrestoBlue,
+                      backgroundColor: kPrestoOrange,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -431,14 +433,14 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                 const SizedBox(height: 10),
                 SizedBox(
                   height: 50,
-                  child: OutlinedButton.icon(
+                  child: ElevatedButton.icon(
                     onPressed: () {
                       Navigator.of(sheetContext).pop();
                       _callPhone(context, phone);
                     },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: kPrestoBlue,
-                      side: const BorderSide(color: Color(0xFFD7DEE8)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kPrestoBlue,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -662,7 +664,7 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                   : _descriptionWithLineBreaks(_s(data['description']))),
 
               const SizedBox(height: 16),
-              const _SectionTitle("Infos annonceur"),
+              const _SectionTitle("Info annonceur"),
               const SizedBox(height: 10),
 
               _AnnonceurInfoCard(
@@ -972,7 +974,7 @@ class _AnnonceurInfoCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Délai pour effectuer la mission : $missionDelay',
+            'Délai : $missionDelay',
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
