@@ -2332,7 +2332,7 @@ class _HomePageState extends State<HomePage>
                 Container(
                   width: double.infinity,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 18),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -4412,6 +4412,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                   ? 'Publication récente'
                                   : 'Publié il y a $publishedAge';
                               final isUrgent = data['urgent'] == true;
+                              final missionDelayLabel =
+                                  _extractMissionDelayLabel(data);
                               final cleanTitle = _sanitizeOfferTitle(
                                 rawTitle: title,
                                 city: city,
@@ -4447,6 +4449,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                       ].join(' / '),
                                       publishedText: publishedText,
                                       price: budget,
+                                      missionDelayLabel: missionDelayLabel,
                                       isUrgent: isUrgent,
                                       icon: _categoryIcon(category),
                                     ),
@@ -4905,6 +4908,24 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     );
   }
 
+  String _extractMissionDelayLabel(Map<String, dynamic> data) {
+    final candidates = [
+      data['missionDelay'],
+      data['averageDelay'],
+      data['dateLabel'],
+      data['deadlineLabel'],
+      data['executionDelay'],
+      data['responseDelay'],
+    ];
+
+    for (final candidate in candidates) {
+      final value = (candidate ?? '').toString().trim();
+      if (value.isNotEmpty) return value;
+    }
+
+    return 'Délai non précisé';
+  }
+
   IconData _categoryIcon(String category) {
     switch (category.toLowerCase()) {
       case 'plomberie':
@@ -5038,6 +5059,7 @@ class _OfferBrowseTileData {
   final String subtitle;
   final String publishedText;
   final int price;
+  final String missionDelayLabel;
   final bool isUrgent;
   final IconData icon;
 
@@ -5046,6 +5068,7 @@ class _OfferBrowseTileData {
     required this.subtitle,
     required this.publishedText,
     required this.price,
+    required this.missionDelayLabel,
     required this.isUrgent,
     required this.icon,
   });
@@ -5159,6 +5182,10 @@ class _OfferBrowseTile extends StatelessWidget {
                               letterSpacing: -0.9,
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          _OfferMissionDelayChip(
+                            label: data.missionDelayLabel,
+                          ),
                         ],
                       ),
                     ),
@@ -5224,6 +5251,50 @@ class _OfferStatusBadge extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _OfferMissionDelayChip extends StatelessWidget {
+  final String label;
+
+  const _OfferMissionDelayChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 130),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Color(0xFFFFC04A),
+            Color(0xFFFF7A00),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _ConsultOffersPageState._offersOrange.withValues(alpha: 0.18),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+          height: 1,
+        ),
       ),
     );
   }
@@ -7201,6 +7272,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final List<String> _budgetTypes = const ['Fixe', 'À négocier'];
   String _budgetType = 'Fixe';
 
+  // Délai pour effectuer la mission
+  final List<String> _missionDelayOptions = const [
+    'Immédiat',
+    'Dans la journée',
+    'Sous 24h',
+    'Sous 48h',
+    'Cette semaine',
+    'À convenir',
+  ];
+  String? _missionDelay;
+
   // Photos (max 2)
   final List<XFile> _selectedPhotos = [];
   final List<Uint8List?> _selectedPhotoBytes = [];
@@ -7386,6 +7468,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final cityOk = _locationController.text.trim().isNotEmpty;
     final catOk = (_category ?? '').trim().isNotEmpty;
     final subOk = (_selectedSubCategory ?? '').trim().isNotEmpty;
+    final delayOk = (_missionDelay ?? '').trim().isNotEmpty;
     final phoneOk = _isValidPhoneFR(_phoneController.text);
 
     final budgetOk = _budgetType == 'À négocier'
@@ -7395,7 +7478,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             return b != null && b > 0;
           }();
 
-    return titleOk && descOk && cityOk && catOk && subOk && phoneOk && budgetOk;
+    return titleOk &&
+      descOk &&
+      cityOk &&
+      catOk &&
+      subOk &&
+      delayOk &&
+      phoneOk &&
+      budgetOk;
   }
 
   void _recompute() {
@@ -7913,6 +8003,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _budgetController.clear();
       _category = null;
       _selectedSubCategory = null;
+      _missionDelay = null;
       _budgetType = 'Fixe';
       _selectedPhotos.clear();
       _selectedPhotoBytes.clear();
@@ -8344,6 +8435,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
         'subCategory': _selectedSubCategory,
+        'missionDelay': _missionDelay,
+        'averageDelay': _missionDelay,
         'urgent': _isUrgent,
         'phone': _phoneController.text.trim(),
         'budget': budgetRaw,
@@ -8380,6 +8473,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final location = _locationController.text.trim();
       final category = (_category ?? '').toString().trim();
       final subcategory = _selectedSubCategory;
+        final missionDelay = _missionDelay;
       final budgetNum = _budgetType == 'À négocier'
           ? null
           : _parseBudget(_budgetController.text);
@@ -8420,6 +8514,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 'location': location,
                 'category': category,
                 'subcategory': subcategory,
+                'missionDelay': missionDelay,
+                'averageDelay': missionDelay,
                 'budget': budgetNum,
                 'description': description,
                 'phone': phone,
@@ -8865,6 +8961,42 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       return _isValidPhoneFR(value ?? '')
                           ? null
                           : 'Téléphone invalide';
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // DÉLAI POUR EFFECTUER LA MISSION
+                  DropdownButtonFormField<String>(
+                    value: _missionDelay,
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    decoration: InputDecoration(
+                      label: _requiredLabel('Délai pour effectuer la mission'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
+                    ),
+                    items: _missionDelayOptions
+                        .map(
+                          (delay) => DropdownMenuItem(
+                            value: delay,
+                            child: Text(delay),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() => _missionDelay = value);
+                      _recompute();
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Merci de choisir un délai';
+                      }
+                      return null;
                     },
                   ),
                   const SizedBox(height: 16),
