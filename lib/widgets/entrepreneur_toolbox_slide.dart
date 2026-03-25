@@ -38,7 +38,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
                   "PRO",
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.70),
-                    fontSize: 12,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
                   ),
@@ -48,7 +48,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
                   "Boîte à outils de\nl'entrepreneur",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 26,
                     height: 1.25,
                     fontWeight: FontWeight.w900,
                   ),
@@ -58,7 +58,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
                   "Liens utiles CCI, Région, aides et infos clés.",
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.70),
-                    fontSize: 14,
+                    fontSize: 15,
                     height: 1.3,
                     fontWeight: FontWeight.w500,
                   ),
@@ -70,7 +70,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
           // BOUTON INFO ANIMÉ AVEC BUMP ET VIBRATION
           Positioned(
             right: 18,
-            top: 36,
+            top: 12,
             child: PrestoInfoIconAnimated(
               size: 130,
               badgeText: 'Nouveau',

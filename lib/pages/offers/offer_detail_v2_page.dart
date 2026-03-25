@@ -84,6 +84,70 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     return '';
   }
 
+  String _pickAnnonceurPseudo(Map<String, dynamic> data) {
+    final candidates = [
+      _s(data['pseudo']),
+      _s(data['userPseudo']),
+      _s(data['displayName']),
+      _s(data['username']),
+      _s(data['authorName']),
+      _s(data['ownerName']),
+    ];
+    for (final c in candidates) {
+      if (c.isNotEmpty) return c;
+    }
+    return 'Annonceur';
+  }
+
+  bool _pickProfileVerified(Map<String, dynamic> data) {
+    return data['isProfileVerified'] == true ||
+        data['isVerified'] == true ||
+        data['verified'] == true;
+  }
+
+  double _pickRating(Map<String, dynamic> data) {
+    final r = _num(data['rating'] ?? data['averageRating'] ?? data['sellerRating']);
+    if (r == null) return 0;
+    return r.toDouble().clamp(0, 5);
+  }
+
+  int _pickReviewsCount(Map<String, dynamic> data) {
+    final v = _num(data['reviewsCount'] ?? data['avisCount'] ?? data['ratingsCount']);
+    return v?.toInt() ?? 0;
+  }
+
+  String _pickMissionDelay(Map<String, dynamic> data) {
+    final d = _s(
+      data['missionDelay'] ??
+          data['averageDelay'] ??
+          data['responseDelay'] ??
+          data['dateLabel'],
+    );
+    return d.isEmpty ? 'Non précisé' : d;
+  }
+
+  String _sanitizeTitleForHeader({
+    required String rawTitle,
+    required String location,
+    required String postalCode,
+  }) {
+    var out = rawTitle.trim();
+    if (out.isEmpty) return 'Annonce';
+
+    final safeLoc = location.trim();
+    final safeCp = postalCode.trim();
+
+    if (safeLoc.isNotEmpty) {
+      out = out.replaceAll(RegExp(RegExp.escape(safeLoc), caseSensitive: false), ' ');
+    }
+    if (safeCp.isNotEmpty) {
+      out = out.replaceAll(RegExp('\\b${RegExp.escape(safeCp)}\\b', caseSensitive: false), ' ');
+    }
+
+    out = out.replaceAll(RegExp(r'\s+'), ' ').replaceAll(RegExp(r'\s*[-–|/]\s*$'), '').trim();
+    return out.isEmpty ? rawTitle.trim() : out;
+  }
+
   String? _pickPhone(Map<String, dynamic> data) {
     final p = _s(data['phone']);
     if (p.isNotEmpty) return p;
@@ -257,6 +321,17 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     );
   }
 
+  String _descriptionWithLineBreaks(String text) {
+    final value = text.trim();
+    if (value.isEmpty) return value;
+    if (value.contains('\n')) return value;
+    return value
+        .replaceAll('. ', '.\n')
+        .replaceAll('; ', ';\n')
+        .replaceAll(' - ', '\n- ')
+        .trim();
+  }
+
   Future<void> _showContactOptionsSheet({
     required BuildContext context,
     required String annonceurId,
@@ -376,6 +451,16 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
         final location = _pickLocation(data);
         final postalCode = _pickPostalCode(data);
         final annonceurId = _pickAnnonceurId(data);
+        final annonceurPseudo = _pickAnnonceurPseudo(data);
+        final isProfileVerified = _pickProfileVerified(data);
+        final rating = _pickRating(data);
+        final reviewsCount = _pickReviewsCount(data);
+        final missionDelay = _pickMissionDelay(data);
+        final headerTitle = _sanitizeTitleForHeader(
+          rawTitle: title,
+          location: location,
+          postalCode: postalCode,
+        );
 
         final budget = _num(data['budget'] ?? data['price'] ?? data['amount']);
         final duration = _extractDuration(title);
@@ -454,17 +539,17 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
               _TopOfferCard(
                 orange: kPrestoOrange,
                 blue: kPrestoBlue,
-                title: title,
-                distanceAndPrice: "${_s(data['distance'] ?? '15 km')} - ${_formatPrice(budget)}",
-                dateLine: _s(data['dateLabel'] ?? "À effectuer le 25 avril"),
+                title: headerTitle,
+                rightPrice: _formatPrice(budget),
+                locationLine: postalCode.isNotEmpty ? "$location ($postalCode)" : location,
                 chipLeft: _ChipSpec(label: "Rapide", bg: kPrestoBlue, fg: Colors.white),
                 chipRight: _ChipSpec(
-                  label: postalCode.isNotEmpty ? "$location ($postalCode)" : location,
+                  label: _s(data['distance'] ?? '15 km'),
                   bg: const Color(0xFFE9EDF3),
                   fg: const Color(0xFF243041),
                   border: const Color(0xFFD7DEE8),
                 ),
-                subtitleRight: duration != "—" ? "pour $duration" : null,
+                subtitleRight: duration != "—" ? "Durée estimée : $duration" : null,
               ),
               const SizedBox(height: 12),
 
@@ -534,16 +619,28 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
               const SizedBox(height: 8),
               _SectionBody(_s(data['description']).isEmpty
                   ? "Aucune description détaillée fournie."
-                  : _s(data['description'])),
+                  : _descriptionWithLineBreaks(_s(data['description']))),
+
+              const SizedBox(height: 16),
+              const _SectionTitle("Infos annonceur"),
+              const SizedBox(height: 10),
+
+              _AnnonceurInfoCard(
+                pseudo: annonceurPseudo,
+                isProfileVerified: isProfileVerified,
+                rating: rating,
+                reviewsCount: reviewsCount,
+                missionDelay: missionDelay,
+              ),
 
               const SizedBox(height: 16),
               const _SectionTitle("Contact"),
               const SizedBox(height: 10),
-
               _ContactCard(
                 blue: kPrestoBlue,
                 phoneText: phoneDisplay,
-                toggleLabel: hasPhone ? (_isPhoneVisible ? "Masquer" : "Afficher le numéro") : "Indisponible",
+                toggleLabel:
+                    hasPhone ? (_isPhoneVisible ? "Masquer" : "Afficher le numéro") : "Indisponible",
                 onToggle: hasPhone ? () => setState(() => _isPhoneVisible = !_isPhoneVisible) : null,
                 onMessage: () => _openOrCreateConversation(
                   context: context,
@@ -631,8 +728,8 @@ class _TopOfferCard extends StatelessWidget {
   final Color blue;
 
   final String title;
-  final String distanceAndPrice;
-  final String dateLine;
+  final String rightPrice;
+  final String locationLine;
   final _ChipSpec chipLeft;
   final _ChipSpec chipRight;
   final String? subtitleRight;
@@ -641,8 +738,8 @@ class _TopOfferCard extends StatelessWidget {
     required this.orange,
     required this.blue,
     required this.title,
-    required this.distanceAndPrice,
-    required this.dateLine,
+    required this.rightPrice,
+    required this.locationLine,
     required this.chipLeft,
     required this.chipRight,
     this.subtitleRight,
@@ -684,16 +781,24 @@ class _TopOfferCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 10),
+                Text(
+                  rightPrice,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _RowInfo(icon: Icons.check_circle_rounded, iconColor: orange, text: distanceAndPrice),
-                const SizedBox(height: 10),
-                _RowInfo(icon: Icons.check_circle_rounded, iconColor: orange, text: dateLine),
+                _RowInfo(icon: Icons.place_outlined, iconColor: orange, text: locationLine),
                 if (subtitleRight != null) ...[
                   const SizedBox(height: 10),
                   Align(
@@ -714,6 +819,119 @@ class _TopOfferCard extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AnnonceurInfoCard extends StatelessWidget {
+  final String pseudo;
+  final bool isProfileVerified;
+  final double rating;
+  final int reviewsCount;
+  final String missionDelay;
+
+  const _AnnonceurInfoCard({
+    required this.pseudo,
+    required this.isProfileVerified,
+    required this.rating,
+    required this.reviewsCount,
+    required this.missionDelay,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF2F7),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.person_outline, color: Color(0xFF0F172A)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  pseudo,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+              if (isProfileVerified)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F7EE),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Text(
+                    'Profil vérifié',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0B7A3E),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 20),
+              const SizedBox(width: 6),
+              Text(
+                rating > 0 ? rating.toStringAsFixed(1) : 'N/A',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF111827),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '$reviewsCount avis',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF4B5563),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Délai pour effectuer la mission : $missionDelay',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2937),
             ),
           ),
         ],
