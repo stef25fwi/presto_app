@@ -9952,6 +9952,37 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   String? _error;
   String? _selectedOfferId;
 
+  bool _isOfferPublished(Map<String, dynamic> data) {
+    final isPublished = data['isPublished'];
+    if (isPublished is bool && isPublished) return true;
+
+    final status = (data['status'] ?? '').toString().trim().toLowerCase();
+    if (status == 'published' || status == 'active') return true;
+
+    final visibility = data['visibility'];
+    if (visibility is Map) {
+      final isPublic = visibility['isPublic'];
+      if (isPublic is bool && isPublic) return true;
+    }
+
+    final isActive = data['isActive'];
+    if (isActive is bool && isActive) return true;
+
+    return false;
+  }
+
+  String _offerLocation(Map<String, dynamic> data) {
+    final v = (data['location'] ?? data['city'] ?? data['serviceArea'] ?? '')
+        .toString()
+        .trim();
+    return v.isEmpty ? 'Lieu non précisé' : v;
+  }
+
+  String _offerCategory(Map<String, dynamic> data) {
+    final v = (data['category'] ?? data['subcategory'] ?? '').toString().trim();
+    return v.isEmpty ? 'Catégorie non précisée' : v;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -9972,18 +10003,24 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     try {
       final col = FirebaseFirestore.instance.collection('offers');
 
-      // Champ actuel utilisé lors de la publication: userId.
-      // Fallback: ownerId / uid (anciens schémas) pour compatibilité.
-      QuerySnapshot<Map<String, dynamic>> snapshot =
-          await col.where('userId', isEqualTo: widget.userId).get();
-      if (snapshot.docs.isEmpty) {
-        snapshot = await col.where('ownerId', isEqualTo: widget.userId).get();
-      }
-      if (snapshot.docs.isEmpty) {
-        snapshot = await col.where('uid', isEqualTo: widget.userId).get();
-      }
+      // ✅ Compat schémas: userId / ownerId / uid.
+      // On évite 3 requêtes séquentielles (et les cas où l'utilisateur a des
+      // docs répartis sur plusieurs champs) en utilisant un OR + tri client.
+      final snapshot = await col
+          .where(
+            Filter.or(
+              Filter('userId', isEqualTo: widget.userId),
+              Filter('ownerId', isEqualTo: widget.userId),
+              Filter('uid', isEqualTo: widget.userId),
+            ),
+          )
+          .limit(200)
+          .get();
 
-      final docs = snapshot.docs.toList();
+      final docs = snapshot.docs
+          .where((d) => _isOfferPublished(d.data()))
+          .toList();
+
       // Trie côté client pour éviter un index composite (where + orderBy).
       docs.sort((a, b) {
         final ta = a.data()['createdAt'];
@@ -10070,12 +10107,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     final selectedData = selectedDoc.data();
     final selectedTitle =
         (selectedData['title'] ?? 'Sans titre').toString().trim();
-    final selectedLocation =
-        (selectedData['location'] ?? 'Lieu non précisé').toString().trim();
-    final selectedCategory =
-        (selectedData['category'] ?? 'Catégorie non précisée')
-            .toString()
-            .trim();
+    final selectedLocation = _offerLocation(selectedData);
+    final selectedCategory = _offerCategory(selectedData);
     final selectedBudget = selectedData['budget'];
 
     String subtitle = "$selectedLocation · $selectedCategory";
