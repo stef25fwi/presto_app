@@ -71,6 +71,18 @@ Filter _publicOffersFilter() {
   );
 }
 
+class _HomeCategoryShortcut {
+  final IconData icon;
+  final String label;
+  final String targetCategory;
+
+  const _HomeCategoryShortcut({
+    required this.icon,
+    required this.label,
+    required this.targetCategory,
+  });
+}
+
 const String kAppBuildSha =
     String.fromEnvironment('APP_BUILD_SHA', defaultValue: 'local');
 const String kAppBuildBranch =
@@ -431,7 +443,8 @@ Offer _buildOfferDetailsOffer({
 }) {
   final title = (data['title'] ?? '').toString().trim();
   final location = ((data['location'] ?? data['city']) ?? '').toString().trim();
-  final postalCode = ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
+  final postalCode =
+      ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
   final category = (data['category'] ?? '').toString().trim();
   final description = (data['description'] ?? '').toString().trim();
   final isUrgent = (data['urgent'] as bool?) ?? false;
@@ -443,12 +456,12 @@ Offer _buildOfferDetailsOffer({
       .toList();
   final advertiserName =
       ((data['userName'] ?? data['pseudo']) ?? '').toString().trim();
-  final serviceArea = (data['serviceArea'] ??
-          (location.isEmpty ? 'Zone locale' : location))
-      .toString();
-    final missionDelay = ((data['missionDelay'] ?? data['averageDelay']) ??
-        'Délai non précisé')
-      .toString();
+  final serviceArea =
+      (data['serviceArea'] ?? (location.isEmpty ? 'Zone locale' : location))
+          .toString();
+  final missionDelay =
+      ((data['missionDelay'] ?? data['averageDelay']) ?? 'Délai non précisé')
+          .toString();
 
   return Offer(
     id: offerId,
@@ -490,15 +503,16 @@ Offer _buildOfferDetailsOffer({
       verified: (data['verified'] as bool?) ?? false,
       rating:
           (data['rating'] is num) ? (data['rating'] as num).toDouble() : 4.7,
-      offersCount:
-          (data['offersCount'] is num) ? (data['offersCount'] as num).toInt() : 1,
+      offersCount: (data['offersCount'] is num)
+          ? (data['offersCount'] as num).toInt()
+          : 1,
       reviewsCount: (data['reviewsCount'] is num)
-        ? (data['reviewsCount'] as num).toInt()
-        : (data['reviewCount'] is num)
-          ? (data['reviewCount'] as num).toInt()
-          : (data['ratingCount'] is num)
-            ? (data['ratingCount'] as num).toInt()
-            : 0,
+          ? (data['reviewsCount'] as num).toInt()
+          : (data['reviewCount'] is num)
+              ? (data['reviewCount'] as num).toInt()
+              : (data['ratingCount'] is num)
+                  ? (data['ratingCount'] as num).toInt()
+                  : 0,
       seniorityLabel: (data['seniorityLabel'] ?? 'Membre Presto').toString(),
       city: location.isEmpty ? 'Ville non precisee' : location,
       bio: (data['bio'] ?? '').toString(),
@@ -895,7 +909,8 @@ void _showSignupDialog(BuildContext context) {
             }
 
             try {
-              final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+              final credential =
+                  await FirebaseAuth.instance.createUserWithEmailAndPassword(
                 email: email,
                 password: pass,
               );
@@ -905,7 +920,8 @@ void _showSignupDialog(BuildContext context) {
               if (ctx.mounted) Navigator.of(ctx).pop();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Compte créé. Vérifiez votre e-mail. ✅')),
+                  const SnackBar(
+                      content: Text('Compte créé. Vérifiez votre e-mail. ✅')),
                 );
               }
             } catch (e) {
@@ -1114,7 +1130,7 @@ class _SplashScreenState extends State<SplashScreen>
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
-                        onPressed: () =>
+                      onPressed: () =>
                           _navigateTo(const HomePage(initialIndex: 1)),
                       child: const Text(
                         "Je consulte les offres",
@@ -1153,6 +1169,39 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with TickerProviderStateMixin, WidgetsBindingObserver {
+  static const List<_HomeCategoryShortcut> _homeCategoryShortcuts = [
+    _HomeCategoryShortcut(
+      icon: Icons.eco_outlined,
+      label: 'Jardinage',
+      targetCategory: 'Jardinage',
+    ),
+    _HomeCategoryShortcut(
+      icon: Icons.format_paint_outlined,
+      label: 'Peinture',
+      targetCategory: 'Peinture',
+    ),
+    _HomeCategoryShortcut(
+      icon: Icons.handyman_outlined,
+      label: 'Main-d’œuvre',
+      targetCategory: 'Main-d\'œuvre',
+    ),
+    _HomeCategoryShortcut(
+      icon: Icons.other_houses_outlined,
+      label: 'Autres',
+      targetCategory: 'Autre',
+    ),
+    _HomeCategoryShortcut(
+      icon: Icons.child_care_outlined,
+      label: 'Garde enfants',
+      targetCategory: 'Garde d\'enfants',
+    ),
+    _HomeCategoryShortcut(
+      icon: Icons.music_note_outlined,
+      label: 'DJ / Sono',
+      targetCategory: 'Événementiel / DJ',
+    ),
+  ];
+
   late int _selectedIndex;
   final PageController _carouselController = PageController();
   final ScrollController _scrollController = ScrollController();
@@ -1351,7 +1400,7 @@ class _HomePageState extends State<HomePage>
         .where(_publicOffersFilter())
         .orderBy('createdAt', descending: true)
         .limit(8)
-      .get();
+        .get();
 
     // Listener pour hide/show bottom bar au scroll
     _scrollController.addListener(() {
@@ -1498,6 +1547,26 @@ class _HomePageState extends State<HomePage>
       return 1.0 + 0.25 * (1 - (localT - 0.5) * (localT - 0.5) * 4);
     }
     return 1.0;
+  }
+
+  List<_HomeCategoryShortcut> _availableCategoryShortcuts(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    final publishedCategories = <String>{};
+    for (final doc in docs) {
+      final category = (canonicalizeOfferCategory(
+                (doc.data()['category'] ?? '').toString(),
+              ) ??
+              '')
+          .trim();
+      if (category.isNotEmpty) {
+        publishedCategories.add(category);
+      }
+    }
+
+    return _homeCategoryShortcuts
+        .where((item) => publishedCategories.contains(item.targetCategory))
+        .toList(growable: false);
   }
 
   Iterable<String> _buildSearchSuggestions(TextEditingValue value) {
@@ -1955,7 +2024,8 @@ class _HomePageState extends State<HomePage>
                             _buildHomeContent(),
                             ConsultOffersPage(
                               onScroll: _onPageScroll,
-                              categoryFilter: widget.initialConsultCategoryFilter,
+                              categoryFilter:
+                                  widget.initialConsultCategoryFilter,
                               searchQuery: widget.initialConsultSearchQuery,
                             ),
                             PublishOfferPage(onScroll: _onPageScroll),
@@ -2014,11 +2084,32 @@ class _HomePageState extends State<HomePage>
                                   ),
                                 ),
                                 Expanded(
-                                  child: HomeBottomNavItem(
-                                    icon: Icons.chat_bubble_outline,
-                                    label: "Messages",
-                                    selected: _selectedIndex == 3,
-                                    onTap: () => _onBottomTap(3),
+                                  child: StreamBuilder<User?>(
+                                    stream: FirebaseAuth.instance
+                                        .authStateChanges(),
+                                    builder: (context, authSnapshot) {
+                                      final user = authSnapshot.data;
+                                      if (user == null) {
+                                        return HomeBottomNavItem(
+                                          icon: Icons.chat_bubble_outline,
+                                          label: "Messages",
+                                          selected: _selectedIndex == 3,
+                                          onTap: () => _onBottomTap(3),
+                                        );
+                                      }
+
+                                      return _UnreadInboxBell(
+                                        userId: user.uid,
+                                        builder: (context, badgeCount) =>
+                                            HomeBottomNavItem(
+                                          icon: Icons.chat_bubble_outline,
+                                          label: "Messages",
+                                          selected: _selectedIndex == 3,
+                                          badgeCount: badgeCount,
+                                          onTap: () => _onBottomTap(3),
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
                                 Expanded(
@@ -2067,7 +2158,7 @@ class _HomePageState extends State<HomePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Ligne du haut : info + logo + cloche
+                // Ligne du haut : info + logo
                 Row(
                   children: [
                     _buildInfoIcon(),
@@ -2088,7 +2179,7 @@ class _HomePageState extends State<HomePage>
                         ),
                       ),
                     ),
-                    _buildNotificationBell(),
+                    const SizedBox(width: 36),
                   ],
                 ),
 
@@ -2370,7 +2461,7 @@ class _HomePageState extends State<HomePage>
                           }
 
                           final docs = snapshot.data?.docs ?? [];
-                          
+
                           // ✅ Track après réception des données sans remapper le stream
                           if (docs.isNotEmpty) {
                             PrestoMonitoring.I.trackOtherStream(
@@ -2421,59 +2512,50 @@ class _HomePageState extends State<HomePage>
                 const SizedBox(height: 18),
 
                 // CATEGORIES COMPACTES
-                AnimatedBuilder(
-                  animation: _categoryController,
-                  builder: (context, child) {
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _CategoryChip(
-                            icon: Icons.eco_outlined,
-                            label: "Jardinage",
-                            iconScale: _categoryScaleForIndex(0),
-                            onTap: () => _goToCategoryOffers("Jardinage"),
+                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('offers')
+                      .where(
+                        Filter.and(
+                          _publicOffersFilter(),
+                          Filter('isPublished', isEqualTo: true),
+                        ),
+                      )
+                      .limit(60)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    final shortcuts = _availableCategoryShortcuts(
+                      snapshot.data?.docs ?? const [],
+                    );
+
+                    if (shortcuts.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return AnimatedBuilder(
+                      animation: _categoryController,
+                      builder: (context, child) {
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              for (var index = 0;
+                                  index < shortcuts.length;
+                                  index++) ...[
+                                if (index > 0) const SizedBox(width: 6),
+                                _CategoryChip(
+                                  icon: shortcuts[index].icon,
+                                  label: shortcuts[index].label,
+                                  iconScale: _categoryScaleForIndex(index),
+                                  onTap: () => _goToCategoryOffers(
+                                    shortcuts[index].targetCategory,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                          const SizedBox(width: 6),
-                          _CategoryChip(
-                            icon: Icons.format_paint_outlined,
-                            label: "Peinture",
-                            iconScale: _categoryScaleForIndex(1),
-                            onTap: () => _goToCategoryOffers("Peinture"),
-                          ),
-                          const SizedBox(width: 6),
-                          _CategoryChip(
-                            icon: Icons.handyman_outlined,
-                            label: "Main-d’œuvre",
-                            iconScale: _categoryScaleForIndex(2),
-                            onTap: () =>
-                                _goToCategoryOffers("Main-d'œuvre"),
-                          ),
-                          const SizedBox(width: 6),
-                          _CategoryChip(
-                            icon: Icons.other_houses_outlined,
-                            label: "Autres",
-                            iconScale: _categoryScaleForIndex(3),
-                            onTap: () => _goToCategoryOffers("Autre"),
-                          ),
-                          const SizedBox(width: 6),
-                          _CategoryChip(
-                            icon: Icons.child_care_outlined,
-                            label: "Garde enfants",
-                            iconScale: _categoryScaleForIndex(4),
-                            onTap: () =>
-                                _goToCategoryOffers("Garde d'enfants"),
-                          ),
-                          const SizedBox(width: 6),
-                          _CategoryChip(
-                            icon: Icons.music_note_outlined,
-                            label: "DJ / Sono",
-                            iconScale: _categoryScaleForIndex(5),
-                            onTap: () =>
-                                _goToCategoryOffers("Événementiel / DJ"),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     );
                   },
                 ),
@@ -2561,7 +2643,7 @@ class _CategoryChip extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(
                 color: kPrestoBlue,
-                width: 1.5,
+                width: 2,
               ),
               boxShadow: [
                 BoxShadow(
@@ -2990,31 +3072,31 @@ class _HowItWorksStepWithProgress extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: kPrestoBlue,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: kPrestoBlue,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w500,
-                      height: 1.35,
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
             ),
           ),
         ],
@@ -3468,35 +3550,35 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     );
   }
 
-    bool get _hasActiveClientFilters {
+  bool get _hasActiveClientFilters {
     final selectedCategory =
-      (_filterCategory != null && _filterCategory!.isNotEmpty)
-        ? _filterCategory
-        : ((_selectedCategory != null &&
-            _selectedCategory != 'Toutes catégories')
-          ? _selectedCategory
-          : null);
+        (_filterCategory != null && _filterCategory!.isNotEmpty)
+            ? _filterCategory
+            : ((_selectedCategory != null &&
+                    _selectedCategory != 'Toutes catégories')
+                ? _selectedCategory
+                : null);
     final hasCity = _filterCityName?.trim().isNotEmpty ?? false;
     final hasSearch = _activeSearchQuery?.trim().isNotEmpty ?? false;
     final hasSubcategory =
-      _selectedSubCategory != null && _selectedSubCategory!.isNotEmpty;
+        _selectedSubCategory != null && _selectedSubCategory!.isNotEmpty;
     final hasDept =
-      (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
-        (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) ||
-        (_selectedRegionCode != null && _selectedRegionCode!.isNotEmpty);
+        (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
+            (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) ||
+            (_selectedRegionCode != null && _selectedRegionCode!.isNotEmpty);
     final min = _parseBudgetBound(_budgetMinCtrl.text);
     final max = _parseBudgetBound(_budgetMaxCtrl.text);
     final hasBudgetRange = _advancedFilters &&
-      (min != null || max != null) &&
-      _budgetRangeWarning == null;
+        (min != null || max != null) &&
+        _budgetRangeWarning == null;
 
     return (selectedCategory != null && selectedCategory.isNotEmpty) ||
-      hasCity ||
-      hasSearch ||
-      hasSubcategory ||
-      hasDept ||
-      hasBudgetRange;
-    }
+        hasCity ||
+        hasSearch ||
+        hasSubcategory ||
+        hasDept ||
+        hasBudgetRange;
+  }
 
   @override
   void initState() {
@@ -3706,7 +3788,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         (min != null || max != null) &&
         _budgetRangeWarning == null;
 
-    query = query.orderBy('createdAt', descending: true);
+    // NOTE:
+    // Ne pas trier côté Firestore ici: la combinaison OR (public/legacy active)
+    // + orderBy(createdAt) peut déclencher des erreurs d'index selon l'état du
+    // projet. On trie côté client après filtrage pour garder une UX stable.
 
     final hasClientFilters = categoryId != null ||
         cityId != null ||
@@ -3812,7 +3897,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     if (_selectedSubCategory != null && _selectedSubCategory!.isNotEmpty) {
       final offerSubCategory =
-          ((data['subCategory'] ?? data['subcategory']) ?? '').toString().trim();
+          ((data['subCategory'] ?? data['subcategory']) ?? '')
+              .toString()
+              .trim();
       if (offerSubCategory != _selectedSubCategory) {
         return false;
       }
@@ -3824,9 +3911,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       }
     }
 
-    final regionFilter = (_filterRegionCode != null && _filterRegionCode!.isNotEmpty)
-        ? _filterRegionCode
-        : _selectedRegionCode;
+    final regionFilter =
+        (_filterRegionCode != null && _filterRegionCode!.isNotEmpty)
+            ? _filterRegionCode
+            : _selectedRegionCode;
     if (regionFilter != null && regionFilter.isNotEmpty) {
       if (_offerRegionCode(data) != regionFilter) {
         return false;
@@ -3839,14 +3927,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         return false;
       }
       final filterPostalCode = _filterPostalCodeController.text.trim();
-      if (filterPostalCode.isNotEmpty && _offerPostalCode(data) != filterPostalCode) {
+      if (filterPostalCode.isNotEmpty &&
+          _offerPostalCode(data) != filterPostalCode) {
         return false;
       }
     }
 
     final min = _parseBudgetBound(_budgetMinCtrl.text);
     final max = _parseBudgetBound(_budgetMaxCtrl.text);
-    if (_advancedFilters && (min != null || max != null) && _budgetRangeWarning == null) {
+    if (_advancedFilters &&
+        (min != null || max != null) &&
+        _budgetRangeWarning == null) {
       final offerBudget = _offerBudgetValue(data);
       if (offerBudget == null) return false;
       if (min != null && offerBudget < min) return false;
@@ -4245,248 +4336,269 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                           ),
                         ),
                       ),
-                      _buildConsultNotificationBell(),
                     ],
                   ),
                 ),
-              // ✅ Tuiles cliquables pour filtres actifs
-              _buildActiveFilterChips(),
-              _buildFilterPanel(),
-              Expanded(
-                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: _buildOffersQuery().snapshots().map((snap) {
-                    PrestoMonitoring.I.trackOffersSnapshot(snap.docs.length);
-                    return snap;
-                  }),
-                  builder: (context, snapshot) {
-                    // ✅ Ne plus afficher le loader si on a déjà des données
-                    if (snapshot.connectionState == ConnectionState.waiting &&
-                        !snapshot.hasData) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                        ),
-                      );
-                    }
-
-                    if (snapshot.hasError) {
-                      debugPrint('❌ [OFFERS] Error: ${snapshot.error}');
-                      debugPrint('❌ [OFFERS] Stack: ${snapshot.stackTrace}');
-
-                      final err = snapshot.error;
-                      if (err != null) {
-                        PrestoMonitoring.I.trackError('offers.snapshots', err);
-                      }
-
-                      final friendly = err == null
-                          ? "Une erreur s'est produite, réessaie"
-                          : _friendlyFirestoreErrorMessage(err);
-
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                size: 64,
-                                color: Colors.red.shade300,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                "Erreur lors du chargement des offres",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.red.shade700,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                friendly,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade700,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: () {
-                                  setState(() {});
-                                },
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Réessayer'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: kPrestoOrange,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                            ],
+                // ✅ Tuiles cliquables pour filtres actifs
+                _buildActiveFilterChips(),
+                _buildFilterPanel(),
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: _buildOffersQuery().snapshots().map((snap) {
+                      PrestoMonitoring.I.trackOffersSnapshot(snap.docs.length);
+                      return snap;
+                    }),
+                    builder: (context, snapshot) {
+                      // ✅ Ne plus afficher le loader si on a déjà des données
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot.hasData) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(kPrestoOrange),
                           ),
-                        ),
-                      );
-                    }
-
-                    final rawDocs = snapshot.data?.docs ?? const [];
-                    _lastSnapshotRawCount = rawDocs.length;
-
-                    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
-                        rawDocs.where((d) => _matchesOfferFilters(d.data())).toList();
-
-                    // Nombre après filtrage
-                    final int resultCount = docs.length;
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted && _lastResultCount != resultCount) {
-                        setState(() => _lastResultCount = resultCount);
+                        );
                       }
-                    });
 
-                    if (docs.isEmpty) {
-                      return Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(24, 18, 24, 12),
-                            child: Row(
-                              children: const [
+                      if (snapshot.hasError) {
+                        debugPrint('❌ [OFFERS] Error: ${snapshot.error}');
+                        debugPrint('❌ [OFFERS] Stack: ${snapshot.stackTrace}');
+
+                        final err = snapshot.error;
+                        if (err != null) {
+                          PrestoMonitoring.I
+                              .trackError('offers.snapshots', err);
+                        }
+
+                        final friendly = err == null
+                            ? "Une erreur s'est produite, réessaie"
+                            : _friendlyFirestoreErrorMessage(err);
+
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
                                 Icon(
-                                  Icons.grid_view_rounded,
-                                  size: 20,
-                                  color: _offersOrange,
+                                  Icons.error_outline,
+                                  size: 64,
+                                  color: Colors.red.shade300,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(height: 16),
                                 Text(
-                                  '0 annonce',
+                                  "Erreur lors du chargement des offres",
+                                  textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    color: _offersNavy,
+                                    color: Colors.red.shade700,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  friendly,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    setState(() {});
+                                  },
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Réessayer'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: kPrestoOrange,
+                                    foregroundColor: Colors.white,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const Expanded(child: _EmptyOffers()),
-                        ],
-                      );
-                    }
+                        );
+                      }
 
-                    const int _adsEvery =
-                        8; // Bandeau pub après chaque 8 annonces
-                    final int _adSlots = docs.length ~/ _adsEvery;
-                    final int _totalItems = docs.length + _adSlots;
+                      final rawDocs = snapshot.data?.docs ?? const [];
+                      _lastSnapshotRawCount = rawDocs.length;
 
-                    return Column(
-                      children: [
-                        Expanded(
-                          child: ListView.builder(
-                            key: const PageStorageKey<String>(
-                              'consult-offers-list',
-                            ),
-                            controller: _scrollController,
-                            physics: const ClampingScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(6, 0, 6, 132),
-                            addAutomaticKeepAlives: true,
-                            addRepaintBoundaries: true,
-                            itemCount: _totalItems,
-                            itemBuilder: (context, index) {
-                              final bool isAd =
-                                  (index + 1) % (_adsEvery + 1) == 0;
-                              if (isAd) {
-                                return AdBanner(
-                                  margin: EdgeInsets.zero,
-                                  placeholderHeight: kIsWeb ? 180.0 : 100.0,
-                                  placeholderFolderPrefix:
-                                      'assets/carousel_home/',
-                                  flat: true,
-                                  animatePlaceholder: false,
-                                );
-                              }
+                      List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
+                          rawDocs
+                              .where((d) => _matchesOfferFilters(d.data()))
+                              .toList();
 
-                              final int docIndex =
-                                  index - (index ~/ (_adsEvery + 1));
-                              final doc = docs[docIndex];
-                              final offerId = doc.id;
-                              final data = doc.data();
+                        docs.sort((a, b) {
+                        final aTs = a.data()['createdAt'];
+                        final bTs = b.data()['createdAt'];
+                        final aMs = aTs is Timestamp
+                          ? aTs.millisecondsSinceEpoch
+                          : 0;
+                        final bMs = bTs is Timestamp
+                          ? bTs.millisecondsSinceEpoch
+                          : 0;
+                        return bMs.compareTo(aMs);
+                        });
 
-                              final title =
-                                  (data['title'] ?? 'Sans titre') as String;
+                      // Nombre après filtrage
+                      final int resultCount = docs.length;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted && _lastResultCount != resultCount) {
+                          setState(() => _lastResultCount = resultCount);
+                        }
+                      });
 
-                              final city = ((data['city'] ?? data['location']) ??
-                                    'Lieu non précisé')
-                                  .toString();
-                              final postalCode =
-                                  ((data['postalCode'] ?? data['cp']) ?? '')
-                                      .toString()
-                                      .trim();
-                              final category = (data['category'] ??
-                                    'Catégorie non précisée')
-                                  .toString();
-                              final budgetRaw = data['budget'] ?? data['price'];
-                              final int budget = budgetRaw is num
-                                  ? budgetRaw.round()
-                                  : int.tryParse(budgetRaw?.toString() ?? '') ?? 0;
-                              final publishedAge =
-                                  _ageLabelFromCreatedAt(data['createdAt']);
-                              final publishedText = publishedAge.isEmpty
-                                  ? 'Publication récente'
-                                  : 'Publié il y a $publishedAge';
-                              final isUrgent = data['urgent'] == true;
-                              final missionDelayLabel =
-                                  _extractMissionDelayLabel(data);
-                              final cleanTitle = _sanitizeOfferTitle(
-                                rawTitle: title,
-                                city: city,
-                                postalCode: postalCode,
-                              );
-
-                              return RepaintBoundary(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(bottom: 6),
-                                  child: _OfferBrowseTile(
-                                    onTap: () {
-                                      _logOfferClicked(offerId, title);
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) => OfferDetailsPage(
-                                            offer: _buildOfferDetailsOffer(
-                                              offerId: offerId,
-                                              data: data,
-                                            ),
-                                            currentUserId: FirebaseAuth
-                                                    .instance.currentUser?.uid ??
-                                                '',
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    data: _OfferBrowseTileData(
-                                      title: cleanTitle,
-                                      subtitle: [
-                                        city,
-                                        if (postalCode.isNotEmpty) postalCode,
-                                        category,
-                                      ].join(' / '),
-                                      publishedText: publishedText,
-                                      price: budget,
-                                      missionDelayLabel: missionDelayLabel,
-                                      isUrgent: isUrgent,
-                                      icon: _categoryIcon(category),
+                      if (docs.isEmpty) {
+                        return Column(
+                          children: [
+                            Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(24, 18, 24, 12),
+                              child: Row(
+                                children: const [
+                                  Icon(
+                                    Icons.grid_view_rounded,
+                                    size: 20,
+                                    color: _offersOrange,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    '0 annonce',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                      color: _offersNavy,
                                     ),
                                   ),
-                                ),
-                              );
-                            },
+                                ],
+                              ),
+                            ),
+                            const Expanded(child: _EmptyOffers()),
+                          ],
+                        );
+                      }
+
+                      const int _adsEvery =
+                          8; // Bandeau pub après chaque 8 annonces
+                      final int _adSlots = docs.length ~/ _adsEvery;
+                      final int _totalItems = docs.length + _adSlots;
+
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: ListView.builder(
+                              key: const PageStorageKey<String>(
+                                'consult-offers-list',
+                              ),
+                              controller: _scrollController,
+                              physics: const ClampingScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(6, 0, 6, 132),
+                              addAutomaticKeepAlives: true,
+                              addRepaintBoundaries: true,
+                              itemCount: _totalItems,
+                              itemBuilder: (context, index) {
+                                final bool isAd =
+                                    (index + 1) % (_adsEvery + 1) == 0;
+                                if (isAd) {
+                                  return AdBanner(
+                                    margin: EdgeInsets.zero,
+                                    placeholderHeight: kIsWeb ? 180.0 : 100.0,
+                                    placeholderFolderPrefix:
+                                        'assets/carousel_home/',
+                                    flat: true,
+                                    animatePlaceholder: false,
+                                  );
+                                }
+
+                                final int docIndex =
+                                    index - (index ~/ (_adsEvery + 1));
+                                final doc = docs[docIndex];
+                                final offerId = doc.id;
+                                final data = doc.data();
+
+                                final title =
+                                    (data['title'] ?? 'Sans titre') as String;
+
+                                final city =
+                                    ((data['city'] ?? data['location']) ??
+                                            'Lieu non précisé')
+                                        .toString();
+                                final postalCode =
+                                    ((data['postalCode'] ?? data['cp']) ?? '')
+                                        .toString()
+                                        .trim();
+                                final category = (data['category'] ??
+                                        'Catégorie non précisée')
+                                    .toString();
+                                final budgetRaw =
+                                    data['budget'] ?? data['price'];
+                                final int budget = budgetRaw is num
+                                    ? budgetRaw.round()
+                                    : int.tryParse(
+                                            budgetRaw?.toString() ?? '') ??
+                                        0;
+                                final publishedAge =
+                                    _ageLabelFromCreatedAt(data['createdAt']);
+                                final publishedText = publishedAge.isEmpty
+                                    ? 'Publication récente'
+                                    : 'Publié il y a $publishedAge';
+                                final isUrgent = data['urgent'] == true;
+                                final missionDelayLabel =
+                                    _extractMissionDelayLabel(data);
+                                final cleanTitle = _sanitizeOfferTitle(
+                                  rawTitle: title,
+                                  city: city,
+                                  postalCode: postalCode,
+                                );
+
+                                return RepaintBoundary(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 6),
+                                    child: _OfferBrowseTile(
+                                      onTap: () {
+                                        _logOfferClicked(offerId, title);
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) => OfferDetailsPage(
+                                              offer: _buildOfferDetailsOffer(
+                                                offerId: offerId,
+                                                data: data,
+                                              ),
+                                              currentUserId: FirebaseAuth
+                                                      .instance
+                                                      .currentUser
+                                                      ?.uid ??
+                                                  '',
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      data: _OfferBrowseTileData(
+                                        title: cleanTitle,
+                                        subtitle: [
+                                          city,
+                                          if (postalCode.isNotEmpty) postalCode,
+                                          category,
+                                        ].join(' / '),
+                                        publishedText: publishedText,
+                                        price: budget,
+                                        missionDelayLabel: missionDelayLabel,
+                                        isUrgent: isUrgent,
+                                        icon: _categoryIcon(category),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                      ],
-                    );
-                  },
+                        ],
+                      );
+                    },
+                  ),
                 ),
-              ),
               ],
             ),
           ),
@@ -5166,7 +5278,8 @@ class _OfferBrowseTile extends StatelessWidget {
                     fontSize: 14,
                     height: 1.0,
                     fontWeight: FontWeight.w500,
-                    color: _ConsultOffersPageState._offersNavy.withValues(alpha: 0.82),
+                    color: _ConsultOffersPageState._offersNavy
+                        .withValues(alpha: 0.82),
                     letterSpacing: -0.1,
                   ),
                 ),
@@ -5250,7 +5363,8 @@ class _OfferStatusBadge extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: _ConsultOffersPageState._offersOrange.withValues(alpha: 0.22),
+            color:
+                _ConsultOffersPageState._offersOrange.withValues(alpha: 0.22),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -5303,7 +5417,8 @@ class _OfferMissionDelayChip extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: _ConsultOffersPageState._offersOrange.withValues(alpha: 0.18),
+            color:
+                _ConsultOffersPageState._offersOrange.withValues(alpha: 0.18),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -5415,13 +5530,13 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
     final col = FirebaseFirestore.instance.collection('offers');
 
     final resUid = await col
-      .where('uid', isEqualTo: widget.userId)
-      .where(_publicOffersFilter())
-      .get();
+        .where('uid', isEqualTo: widget.userId)
+        .where(_publicOffersFilter())
+        .get();
     final resUserId = await col
-      .where('userId', isEqualTo: widget.userId)
-      .where(_publicOffersFilter())
-      .get();
+        .where('userId', isEqualTo: widget.userId)
+        .where(_publicOffersFilter())
+        .get();
 
     final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
     for (final d in resUid.docs) {
@@ -6363,13 +6478,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           }();
 
     return titleOk &&
-      descOk &&
-      cityOk &&
-      catOk &&
-      subOk &&
-      delayOk &&
-      phoneOk &&
-      budgetOk;
+        descOk &&
+        cityOk &&
+        catOk &&
+        subOk &&
+        delayOk &&
+        phoneOk &&
+        budgetOk;
   }
 
   void _recompute() {
@@ -7357,7 +7472,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final location = _locationController.text.trim();
       final category = (_category ?? '').toString().trim();
       final subcategory = _selectedSubCategory;
-        final missionDelay = _missionDelay;
+      final missionDelay = _missionDelay;
       final budgetNum = _budgetType == 'À négocier'
           ? null
           : _parseBudget(_budgetController.text);
@@ -9415,10 +9530,14 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
             offerId: doc.id,
             title: (data['title'] ?? 'Sans titre').toString().trim(),
             city: (data['city'] ?? 'Lieu non précisé').toString().trim(),
-            category: (data['category'] ?? 'Catégorie non précisée').toString().trim(),
+            category: (data['category'] ?? 'Catégorie non précisée')
+                .toString()
+                .trim(),
             price: (data['price'] as num?)?.toDouble(),
             imageUrl: (data['imageUrl'] ?? '').toString().trim(),
-            addedAt: data['addedAt'] is Timestamp ? data['addedAt'] as Timestamp : null,
+            addedAt: data['addedAt'] is Timestamp
+                ? data['addedAt'] as Timestamp
+                : null,
             rawData: data,
           );
         }).toList();
@@ -9436,12 +9555,13 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         return;
       }
 
-      final favoriteIds = (userDoc.data()?['favoriteOfferIds'] as List<dynamic>? ?? const [])
-          .map((e) => e.toString().trim())
-          .where((e) => e.isNotEmpty)
-          .toList()
-          .reversed
-          .toList();
+      final favoriteIds =
+          (userDoc.data()?['favoriteOfferIds'] as List<dynamic>? ?? const [])
+              .map((e) => e.toString().trim())
+              .where((e) => e.isNotEmpty)
+              .toList()
+              .reversed
+              .toList();
 
       if (favoriteIds.isEmpty) {
         if (!mounted) return;
@@ -9481,8 +9601,11 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
         return _FavoriteOfferItem(
           offerId: doc.id,
           title: (data['title'] ?? 'Sans titre').toString().trim(),
-          city: (data['location'] ?? data['city'] ?? 'Lieu non précisé').toString().trim(),
-          category: (data['category'] ?? 'Catégorie non précisée').toString().trim(),
+          city: (data['location'] ?? data['city'] ?? 'Lieu non précisé')
+              .toString()
+              .trim(),
+          category:
+              (data['category'] ?? 'Catégorie non précisée').toString().trim(),
           price: (data['budget'] as num?)?.toDouble(),
           imageUrl: imageUrls.isNotEmpty ? imageUrls.first : '',
           addedAt: null,
@@ -9510,7 +9633,10 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
   }
 
   Future<void> _removeFavorite(String offerId) async {
-    await FirebaseFirestore.instance.collection('users').doc(widget.userId).set({
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userId)
+        .set({
       'favoriteOfferIds': FieldValue.arrayRemove([offerId]),
       'favoriteOffersUpdatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
@@ -9670,7 +9796,8 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
                           width: 72,
                           height: 72,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _buildFavoritePlaceholder(),
+                          errorBuilder: (_, __, ___) =>
+                              _buildFavoritePlaceholder(),
                         )
                       : _buildFavoritePlaceholder(),
                 ),
@@ -10324,10 +10451,38 @@ class _AutoScrollingOffersCarouselState
     return 'Bientôt';
   }
 
+  String _escapeRegex(String value) {
+    return value.replaceAllMapped(
+      RegExp(r'[\\^$.|?*+()\[\]{}]'),
+      (match) => '\\${match.group(0)}',
+    );
+  }
+
+  String _displayOfferTitle(String title, String location) {
+    final trimmedTitle = title.trim();
+    final trimmedLocation = location.trim();
+    if (trimmedTitle.isEmpty || trimmedLocation.isEmpty) return trimmedTitle;
+
+    final escapedLocation = _escapeRegex(trimmedLocation);
+    final patterns = <RegExp>[
+      RegExp(r'\s*[-–—|:]\s*' + escapedLocation + r'$', caseSensitive: false),
+      RegExp(r'\s*\(' + escapedLocation + r'\)$', caseSensitive: false),
+      RegExp(r'\s*,\s*' + escapedLocation + r'$', caseSensitive: false),
+    ];
+
+    var cleanedTitle = trimmedTitle;
+    for (final pattern in patterns) {
+      cleanedTitle = cleanedTitle.replaceFirst(pattern, '').trim();
+    }
+
+    return cleanedTitle.isEmpty ? trimmedTitle : cleanedTitle;
+  }
+
   Widget _buildOfferCard(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     final title = (data['title'] ?? 'Sans titre') as String;
     final location = (data['location'] ?? 'Lieu non précisé') as String;
+    final displayTitle = _displayOfferTitle(title, location);
     final whenLabel = _labelWhenFromTitle(title);
 
     return GestureDetector(
@@ -10373,7 +10528,7 @@ class _AutoScrollingOffersCarouselState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    displayTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
