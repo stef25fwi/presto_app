@@ -1245,14 +1245,13 @@ class _PracticalInfoCard extends StatelessWidget {
                   _InfoLine(
                     icon: Icons.account_balance_wallet_outlined,
                     label: 'Mode de paiement',
-                    value: data.paymentMethod,
+                    value: 'À convenir',
                     compact: compact,
                   ),
                   _InfoLine(
                     icon: Icons.work_outline_rounded,
                     label: 'Type de prestation',
-                    value: data.serviceType,
-                    iconColor: blue,
+                    value: 'Ponctuelle',
                     showDivider: false,
                     compact: compact,
                   ),
@@ -1295,7 +1294,6 @@ class _InfoLine extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final Color iconColor;
   final bool showDivider;
   final bool compact;
 
@@ -1303,7 +1301,6 @@ class _InfoLine extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
-    this.iconColor = const Color(0xFF6C7384),
     this.showDivider = true,
     this.compact = false,
   });
@@ -1320,7 +1317,7 @@ class _InfoLine extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: compact ? 10 : 12),
           child: Row(
             children: [
-              Icon(icon, color: iconColor, size: compact ? 20 : 22),
+              Icon(icon, color: const Color(0xFF6C7384), size: compact ? 20 : 22),
               SizedBox(width: compact ? 8 : 10),
               Expanded(
                 child: Text(
@@ -1363,8 +1360,8 @@ class _DelayBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const blue = Color(0xFF0459D9);
-    const muted = Color(0xFF6F7282);
+    const headlineColor = Colors.white;
+    const sublineColor = Color(0xFFFFF3E6);
 
     final normalized = text.trim().isEmpty ? '30 min en moyenne' : text.trim();
     final parts = normalized.split(' en moyenne');
@@ -1377,21 +1374,28 @@ class _DelayBadge extends StatelessWidget {
         vertical: compact ? 3 : 4,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F8FF),
-        borderRadius: BorderRadius.circular(compact ? 9 : 10),
-        border: Border.all(
-          color: const Color(0xFFDBE6FA),
-          width: 1,
+        gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Color(0xFFFFB13B), Color(0xFFFF6A00)],
         ),
+        borderRadius: BorderRadius.circular(compact ? 9 : 10),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x26FF7A00),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Text(
             headline,
             style: TextStyle(
-              color: blue,
+              color: headlineColor,
               fontSize: compact ? 11 : 12,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               height: 1,
             ),
           ),
@@ -1400,9 +1404,9 @@ class _DelayBadge extends StatelessWidget {
             Text(
               subline,
               style: TextStyle(
-                color: muted,
+                color: sublineColor,
                 fontSize: compact ? 8 : 9,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 height: 1,
               ),
             ),
@@ -1453,23 +1457,6 @@ class _InlineCta extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 16),
             child: Row(
               children: [
-                Container(
-                  width: compact ? 28 : 30,
-                  height: compact ? 28 : 30,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.22),
-                    borderRadius: BorderRadius.circular(compact ? 7 : 8),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.28),
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.mail_outline_rounded,
-                    color: Colors.white,
-                    size: compact ? 16 : 18,
-                  ),
-                ),
-                SizedBox(width: compact ? 8 : 10),
                 Expanded(
                   child: Text(
                     label,
