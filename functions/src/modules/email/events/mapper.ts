@@ -25,7 +25,7 @@ export function mapEventToTemplate(eventName: EventName): TemplateCode | null {
     case "listing.expiring_soon":
       return "tpl_product_listing_expiring_soon_v1";
     case "listing.expired":
-      return null; // pas d'email pour l'expiration finale
+      return "tpl_transactional_listing_expired_v1";
 
     // ── Messagerie ────────────────────────────────────────────────────────
     case "message.created.new_thread":
@@ -57,13 +57,13 @@ export function mapEventToTemplate(eventName: EventName): TemplateCode | null {
     case "report.created":
       return "tpl_transactional_moderation_report_received_v1";
     case "report.resolved":
-      return null; // pas d'email de fermeture de signalement
+      return "tpl_transactional_moderation_report_resolved_v1";
 
     // ── Légal ─────────────────────────────────────────────────────────────
     case "legal.terms.updated":
       return "tpl_transactional_legal_terms_updated_v1";
     case "legal.privacy.updated":
-      return null; // couvert par les CGU
+      return "tpl_transactional_legal_privacy_updated_v1";
 
     // ── Marketing / Onboarding ─────────────────────────────────────────────
     case "marketing.onboarding.d1_due":
@@ -78,6 +78,8 @@ export function mapEventToTemplate(eventName: EventName): TemplateCode | null {
     // ── Abonnement & Facturation ──────────────────────────────────────────
     case "subscription.renewal.upcoming":
       return "tpl_transactional_subscription_renewal_upcoming_v1";
+    case "billing.payment.succeeded":
+      return "tpl_transactional_billing_payment_succeeded_v1";
     case "billing.payment.failed":
       return "tpl_transactional_billing_payment_failed_v1";
 

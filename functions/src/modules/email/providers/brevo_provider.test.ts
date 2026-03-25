@@ -91,6 +91,24 @@ test("provider factory auto-selects Brevo when BREVO_API_KEY is present", () => 
   );
 });
 
+test("provider factory rejects ambiguous dual-provider secrets without explicit provider", () => {
+  withEnv(
+    {
+      EMAIL_PROVIDER_NAME: undefined,
+      BREVO_API_KEY: "brevo_api_key",
+      BREVO_WEBHOOK_SECRET: "brevo_webhook_secret",
+      EMAIL_PROVIDER_API_KEY: "resend_api_key",
+      EMAIL_PROVIDER_WEBHOOK_SECRET: "resend_webhook_secret",
+    },
+    () => {
+      assert.throws(
+        () => createEmailProvider(),
+        /EMAIL_PROVIDER_NAME is required when both Brevo and generic provider secrets are configured/,
+      );
+    },
+  );
+});
+
 test("provider factory honors explicit resend selection", () => {
   withEnv(
     {
@@ -103,6 +121,24 @@ test("provider factory honors explicit resend selection", () => {
     () => {
       const provider = createEmailProvider();
       assert.equal(provider.name(), "resend");
+    },
+  );
+});
+
+test("provider factory rejects explicit resend selection without resend secrets", () => {
+  withEnv(
+    {
+      EMAIL_PROVIDER_NAME: "resend",
+      BREVO_API_KEY: "brevo_api_key",
+      BREVO_WEBHOOK_SECRET: "brevo_webhook_secret",
+      EMAIL_PROVIDER_API_KEY: undefined,
+      EMAIL_PROVIDER_WEBHOOK_SECRET: undefined,
+    },
+    () => {
+      assert.throws(
+        () => createEmailProvider(),
+        /Resend provider selected but EMAIL_PROVIDER_API_KEY\/EMAIL_PROVIDER_WEBHOOK_SECRET are not fully configured/,
+      );
     },
   );
 });

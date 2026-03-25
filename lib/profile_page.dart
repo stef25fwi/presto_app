@@ -56,10 +56,26 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _notifFavorites = true;
   bool _notifAcceptOffer = true;
   bool _notifSystem = true;
+  bool _marketingEmailsEnabled = false;
+  bool _quietHoursEnabled = true;
 
   String _accountType = 'Particulier';
   String _language = 'Français';
   String _theme = 'Système';
+  String _savedSearchEmailMode = 'daily';
+  String _messagingEmailMode = 'immediate';
+  String _listingEmailMode = 'immediate';
+  String _timezone = 'America/Guadeloupe';
+  String _quietHoursStart = '22:00';
+  String _quietHoursEnd = '08:00';
+
+  static const List<String> _supportedTimezones = [
+    'America/Guadeloupe',
+    'America/Martinique',
+    'America/Guyana',
+    'Europe/Paris',
+    'UTC',
+  ];
 
   // Catégories et sous-catégories
   final Map<String, List<String>> _allCategories = {
@@ -149,16 +165,35 @@ class _ProfilePageState extends State<ProfilePage> {
           (emailPrefs['saved_searches'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
       final messaging =
           (emailPrefs['messaging'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+        final listings =
+          (emailPrefs['listings'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
       final favorites =
           (emailPrefs['favorites'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
       final support =
           (emailPrefs['support'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+        final marketing =
+          (emailPrefs['marketing'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+        final quietHours =
+          (data['quiet_hours'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
 
       setState(() {
-        _notifNearby = (savedSearches['mode'] ?? 'daily').toString() != 'off';
-        _notifAcceptOffer = (messaging['mode'] ?? 'immediate').toString() != 'off';
+        final savedSearchMode = (savedSearches['mode'] ?? 'daily').toString();
+        final messagingMode = (messaging['mode'] ?? 'immediate').toString();
+        final listingMode = (listings['mode'] ?? 'immediate').toString();
+
+        _savedSearchEmailMode = savedSearchMode == 'instant' ? 'daily' : savedSearchMode;
+        _messagingEmailMode = messagingMode;
+        _listingEmailMode = listingMode;
+
+        _notifNearby = _savedSearchEmailMode != 'off';
+        _notifAcceptOffer = _messagingEmailMode != 'off';
         _notifFavorites = favorites['enabled'] != false;
         _notifSystem = support['enabled'] != false;
+        _marketingEmailsEnabled = marketing['enabled'] == true;
+        _quietHoursEnabled = quietHours['enabled'] != false;
+        _timezone = (data['timezone'] ?? 'America/Guadeloupe').toString();
+        _quietHoursStart = (quietHours['start_local'] ?? '22:00').toString();
+        _quietHoursEnd = (quietHours['end_local'] ?? '08:00').toString();
 
         final locale = (data['locale'] ?? 'fr').toString();
         if (locale == 'en') {
@@ -318,10 +353,16 @@ class _ProfilePageState extends State<ProfilePage> {
         'email': _emailCtrl.text.trim(),
         'accountType': _accountType,
         'preferences': {
-          'notifNearby': _notifNearby,
+          'notifNearby': _savedSearchEmailMode != 'off',
           'notifFavorites': _notifFavorites,
-          'notifAcceptOffer': _notifAcceptOffer,
+          'notifAcceptOffer': _messagingEmailMode != 'off',
           'notifSystem': _notifSystem,
+          'savedSearchMode': _savedSearchEmailMode,
+          'messagingMode': _messagingEmailMode,
+          'listingMode': _listingEmailMode,
+          'marketingEmailsEnabled': _marketingEmailsEnabled,
+          'quietHoursEnabled': _quietHoursEnabled,
+          'timezone': _timezone,
           'language': _language,
           'theme': _theme,
         },
@@ -334,21 +375,21 @@ class _ProfilePageState extends State<ProfilePage> {
           .set({
         'user_id': user.uid,
         'locale': _language == 'Anglais' ? 'en' : 'fr',
-        'timezone': 'America/Guadeloupe',
+        'timezone': _timezone,
         'quiet_hours': {
-          'enabled': true,
-          'start_local': '22:00',
-          'end_local': '08:00',
+          'enabled': _quietHoursEnabled,
+          'start_local': _quietHoursStart,
+          'end_local': _quietHoursEnd,
         },
         'email': {
           'account': {'enabled': true},
-          'messaging': {'mode': _notifAcceptOffer ? 'immediate' : 'off'},
-          'listings': {'mode': 'immediate'},
-          'saved_searches': {'mode': _notifNearby ? 'daily' : 'off'},
+          'messaging': {'mode': _messagingEmailMode},
+          'listings': {'mode': _listingEmailMode},
+          'saved_searches': {'mode': _savedSearchEmailMode},
           'favorites': {'enabled': _notifFavorites},
           'support': {'enabled': _notifSystem},
           'marketing': {
-            'enabled': false,
+            'enabled': _marketingEmailsEnabled,
             'frequency_cap_per_week': 2,
           },
         },
@@ -361,6 +402,127 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       showErrorSnackBar(context, 'Impossible d\'enregistrer le profil: $e');
     } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _generateTicketNumber() {
+    final now = DateTime.now();
+    return 'SUP-${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}-${now.millisecondsSinceEpoch.toString().substring(7)}';
+  }
+
+  Future<String> _createSupportTicket({
+    required String subject,
+    required String description,
+    required String category,
+    String priority = 'normal',
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw StateError('Utilisateur non connecté');
+    }
+
+    final ticketNumber = _generateTicketNumber();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final payload = <String, dynamic>{
+      'user_id': user.uid,
+      'ticket_number': ticketNumber,
+      'subject': subject,
+      'description': description,
+      'category': category,
+      'priority': priority,
+      'status': 'open',
+      'last_reply_from': 'user',
+      'created_at': now,
+      'updated_at': now,
+      'request_source': 'profile_page',
+      'requester_email': user.email,
+    };
+
+    await FirebaseFirestore.instance
+        .collection('support_tickets')
+        .add(payload);
+
+    return ticketNumber;
+  }
+
+  Future<void> _openSupportTicketComposer() async {
+    final subjectCtrl = TextEditingController();
+    final messageCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Contacter le support'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: subjectCtrl,
+                decoration: const InputDecoration(labelText: 'Sujet'),
+                validator: (value) {
+                  if ((value ?? '').trim().length < 5) {
+                    return 'Décris brièvement ta demande';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: messageCtrl,
+                minLines: 4,
+                maxLines: 6,
+                decoration: const InputDecoration(labelText: 'Message'),
+                validator: (value) {
+                  if ((value ?? '').trim().length < 20) {
+                    return 'Ajoute quelques détails pour aider le support';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() != true) return;
+              Navigator.of(ctx).pop(true);
+            },
+            child: const Text('Envoyer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
+      subjectCtrl.dispose();
+      messageCtrl.dispose();
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final ticketNumber = await _createSupportTicket(
+        subject: subjectCtrl.text.trim(),
+        description: messageCtrl.text.trim(),
+        category: 'general_support',
+      );
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Demande envoyée. Référence: $ticketNumber');
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Impossible d’envoyer la demande: $e');
+    } finally {
+      subjectCtrl.dispose();
+      messageCtrl.dispose();
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -494,18 +656,27 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  void _onDownloadDataTapped() {
-    showSuccessSnackBar(
-      context,
-      'Export des données en préparation. Contacte le support pour une extraction immédiate.',
-    );
+  Future<void> _onDownloadDataTapped() async {
+    setState(() => _isLoading = true);
+    try {
+      final ticketNumber = await _createSupportTicket(
+        subject: 'Demande d’export de données',
+        description: 'Je souhaite recevoir un export de mes données personnelles et de mon historique d’activité lié à mon compte PRESTO.',
+        category: 'data_export',
+        priority: 'high',
+      );
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Demande d’export enregistrée. Référence: $ticketNumber');
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Impossible de créer la demande d’export: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
-  void _onSupportTapped() {
-    showSuccessSnackBar(
-      context,
-      'Support: ouvre la section infos légales ou contacte support depuis la messagerie.',
-    );
+  Future<void> _onSupportTapped() async {
+    await _openSupportTicketComposer();
   }
 
   Future<void> _onDeleteAccountTapped() async {
@@ -531,10 +702,22 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (confirm != true || !mounted) return;
 
-    showErrorSnackBar(
-      context,
-      'Suppression automatique indisponible ici. Contacte le support pour finaliser.',
-    );
+    setState(() => _isLoading = true);
+    try {
+      final ticketNumber = await _createSupportTicket(
+        subject: 'Demande de suppression de compte',
+        description: 'Je confirme demander la suppression de mon compte PRESTO et l’effacement associé de mes données, sous réserve des obligations légales de conservation.',
+        category: 'account_deletion',
+        priority: 'high',
+      );
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Demande de suppression enregistrée. Référence: $ticketNumber');
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Impossible de créer la demande de suppression: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _onLogout() async {
@@ -1137,12 +1320,57 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _buildSwitchRow(
-                  title: 'Offres proches de moi',
-                  subtitle:
-                      'Recevoir les nouvelles annonces autour de ma position.',
-                  value: _notifNearby,
-                  onChanged: (v) => setState(() => _notifNearby = v),
+                _buildStyledDropdown<String>(
+                  value: _savedSearchEmailMode,
+                  labelText: 'Alertes recherches sauvegardées',
+                  prefixIcon: Icons.search_outlined,
+                  items: const [
+                    DropdownMenuItem(value: 'daily', child: Text('Quotidien')),
+                    DropdownMenuItem(value: 'weekly', child: Text('Hebdomadaire')),
+                    DropdownMenuItem(value: 'off', child: Text('Désactivé')),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() {
+                      _savedSearchEmailMode = value;
+                      _notifNearby = value != 'off';
+                    });
+                  },
+                ),
+                const Divider(),
+                _buildStyledDropdown<String>(
+                  value: _messagingEmailMode,
+                  labelText: 'Messages et leads',
+                  prefixIcon: Icons.forum_outlined,
+                  items: const [
+                    DropdownMenuItem(value: 'immediate', child: Text('Immédiat')),
+                    DropdownMenuItem(value: 'digest_daily', child: Text('Digest quotidien')),
+                    DropdownMenuItem(value: 'digest_weekly', child: Text('Digest hebdomadaire')),
+                    DropdownMenuItem(value: 'off', child: Text('Désactivé')),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() {
+                      _messagingEmailMode = value;
+                      _notifAcceptOffer = value != 'off';
+                    });
+                  },
+                ),
+                const Divider(),
+                _buildStyledDropdown<String>(
+                  value: _listingEmailMode,
+                  labelText: 'Suivi de mes annonces',
+                  prefixIcon: Icons.campaign_outlined,
+                  items: const [
+                    DropdownMenuItem(value: 'immediate', child: Text('Immédiat')),
+                    DropdownMenuItem(value: 'digest_daily', child: Text('Digest quotidien')),
+                    DropdownMenuItem(value: 'digest_weekly', child: Text('Digest hebdomadaire')),
+                    DropdownMenuItem(value: 'off', child: Text('Désactivé')),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+                    setState(() => _listingEmailMode = value);
+                  },
                 ),
                 const Divider(),
                 _buildSwitchRow(
@@ -1154,18 +1382,24 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const Divider(),
                 _buildSwitchRow(
-                  title: 'Quand on accepte mon offre',
-                  subtitle:
-                      'Notification dès qu\'un prestataire ou un client accepte.',
-                  value: _notifAcceptOffer,
-                  onChanged: (v) => setState(() => _notifAcceptOffer = v),
-                ),
-                const Divider(),
-                _buildSwitchRow(
                   title: 'Infos système & sécurité',
                   subtitle: 'Mises à jour importantes de Presto.',
                   value: _notifSystem,
                   onChanged: (v) => setState(() => _notifSystem = v),
+                ),
+                const Divider(),
+                _buildSwitchRow(
+                  title: 'Emails marketing',
+                  subtitle: 'Recevoir conseils, nouveautés et sélection PRESTO.',
+                  value: _marketingEmailsEnabled,
+                  onChanged: (v) => setState(() => _marketingEmailsEnabled = v),
+                ),
+                const Divider(),
+                _buildSwitchRow(
+                  title: 'Quiet hours',
+                  subtitle: 'Décaler les emails non urgents hors de la nuit.',
+                  value: _quietHoursEnabled,
+                  onChanged: (v) => setState(() => _quietHoursEnabled = v),
                 ),
               ],
             ),
@@ -1183,6 +1417,67 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
+                _buildStyledDropdown<String>(
+                  value: _timezone,
+                  labelText: 'Fuseau horaire',
+                  prefixIcon: Icons.schedule_outlined,
+                  items: _supportedTimezones
+                      .map(
+                        (timezone) => DropdownMenuItem(
+                          value: timezone,
+                          child: Text(timezone),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _timezone = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStyledDropdown<String>(
+                        value: _quietHoursStart,
+                        labelText: 'Quiet hours début',
+                        prefixIcon: Icons.bedtime_outlined,
+                        items: const [
+                          DropdownMenuItem(value: '20:00', child: Text('20:00')),
+                          DropdownMenuItem(value: '21:00', child: Text('21:00')),
+                          DropdownMenuItem(value: '22:00', child: Text('22:00')),
+                          DropdownMenuItem(value: '23:00', child: Text('23:00')),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _quietHoursStart = value);
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildStyledDropdown<String>(
+                        value: _quietHoursEnd,
+                        labelText: 'Quiet hours fin',
+                        prefixIcon: Icons.wb_sunny_outlined,
+                        items: const [
+                          DropdownMenuItem(value: '06:00', child: Text('06:00')),
+                          DropdownMenuItem(value: '07:00', child: Text('07:00')),
+                          DropdownMenuItem(value: '08:00', child: Text('08:00')),
+                          DropdownMenuItem(value: '09:00', child: Text('09:00')),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _quietHoursEnd = value);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 _buildStyledDropdown<String>(
                   value: _language,
                   labelText: 'Langue',

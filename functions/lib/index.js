@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.syncEmailAnalytics = exports.purgeOldEmailLogs = exports.purgeOldEmailWebhooks = exports.handleEmailProviderWebhook = exports.cleanupExpiredEmailJobs = exports.retryFailedEmailJobs = exports.processScheduledEmailDigests = exports.processEmailJobTrigger = exports.enqueueEmailJobsFromEventTrigger = exports.onBillingInvoiceUpdated = exports.onSubscriptionUpdated = exports.onReportCreated = exports.onSupportTicketReplied = exports.onSupportTicketCreated = exports.enqueueUnreadMessageReminders = exports.onConversationSubMessageCreated = exports.onMessageCreated = exports.onNewsletterCampaignUpdated = exports.onNewsletterCampaignCreated = exports.enqueueMarketingOnboardingEmails = exports.onLegalTermsSettingsUpdated = exports.enqueueExpiringListingEmails = exports.onOfferUpdated = exports.onOfferCreated = exports.onListingPublished = exports.trackUserLogin = exports.reportPasswordChanged = exports.requestEmailVerificationEmail = exports.requestPasswordResetEmail = exports.onUserCreated = void 0;
+exports.syncEmailAnalytics = exports.purgeOldEmailLogs = exports.purgeOldEmailWebhooks = exports.handleEmailProviderWebhook = exports.cleanupExpiredEmailJobs = exports.retryFailedEmailJobs = exports.processScheduledEmailDigests = exports.processEmailJobTrigger = exports.enqueueEmailJobsFromEventTrigger = exports.onBillingInvoiceUpdated = exports.onSubscriptionUpdated = exports.onReportUpdated = exports.onReportCreated = exports.onSupportTicketReplied = exports.onSupportTicketCreated = exports.enqueueUnreadMessageReminders = exports.onConversationSubMessageCreated = exports.onMessageCreated = exports.onNewsletterCampaignUpdated = exports.onNewsletterCampaignCreated = exports.enqueueMarketingOnboardingEmails = exports.onLegalPrivacySettingsUpdated = exports.onLegalTermsSettingsUpdated = exports.enqueueExpiringListingEmails = exports.onOfferUpdated = exports.onOfferCreated = exports.onListingPublished = exports.trackUserLogin = exports.reportPasswordChanged = exports.requestEmailVerificationEmail = exports.requestPasswordResetEmail = exports.onUserCreated = void 0;
 const v2_1 = require("firebase-functions/v2");
 const env_1 = require("./config/env");
 (0, v2_1.setGlobalOptions)({
@@ -21,6 +21,7 @@ var scheduled_1 = require("./modules/listings/scheduled");
 Object.defineProperty(exports, "enqueueExpiringListingEmails", { enumerable: true, get: function () { return scheduled_1.enqueueExpiringListingEmails; } });
 var triggers_3 = require("./modules/legal/triggers");
 Object.defineProperty(exports, "onLegalTermsSettingsUpdated", { enumerable: true, get: function () { return triggers_3.onLegalTermsSettingsUpdated; } });
+Object.defineProperty(exports, "onLegalPrivacySettingsUpdated", { enumerable: true, get: function () { return triggers_3.onLegalPrivacySettingsUpdated; } });
 var scheduled_2 = require("./modules/marketing/scheduled");
 Object.defineProperty(exports, "enqueueMarketingOnboardingEmails", { enumerable: true, get: function () { return scheduled_2.enqueueMarketingOnboardingEmails; } });
 var triggers_4 = require("./modules/marketing/triggers");
@@ -36,6 +37,7 @@ Object.defineProperty(exports, "onSupportTicketCreated", { enumerable: true, get
 Object.defineProperty(exports, "onSupportTicketReplied", { enumerable: true, get: function () { return triggers_6.onSupportTicketReplied; } });
 var triggers_7 = require("./modules/moderation/triggers");
 Object.defineProperty(exports, "onReportCreated", { enumerable: true, get: function () { return triggers_7.onReportCreated; } });
+Object.defineProperty(exports, "onReportUpdated", { enumerable: true, get: function () { return triggers_7.onReportUpdated; } });
 var triggers_8 = require("./modules/billing/triggers");
 Object.defineProperty(exports, "onSubscriptionUpdated", { enumerable: true, get: function () { return triggers_8.onSubscriptionUpdated; } });
 Object.defineProperty(exports, "onBillingInvoiceUpdated", { enumerable: true, get: function () { return triggers_8.onBillingInvoiceUpdated; } });

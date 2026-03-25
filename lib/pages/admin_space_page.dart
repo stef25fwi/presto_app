@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../utils/friendly_snackbar.dart';
 
 import '../constants.dart';
@@ -298,6 +300,618 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
   }
 }
 
+Map<String, dynamic> _stringKeyMap(dynamic value) {
+  if (value is Map) {
+    return value.map(
+      (key, entry) => MapEntry(key.toString(), entry),
+    );
+  }
+  return <String, dynamic>{};
+}
+
+int _toInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+String _formatAdminTimestamp(int? millis) {
+  if (millis == null || millis <= 0) return 'inconnue';
+  final dt = DateTime.fromMillisecondsSinceEpoch(millis).toLocal();
+  String two(int v) => v.toString().padLeft(2, '0');
+  return '${two(dt.day)}/${two(dt.month)}/${dt.year} ${two(dt.hour)}:${two(dt.minute)}';
+}
+
+enum _EmailDashboardWindow { hour1, day1, day7 }
+
+extension _EmailDashboardWindowX on _EmailDashboardWindow {
+  String get label {
+    switch (this) {
+      case _EmailDashboardWindow.hour1:
+        return '1 h';
+      case _EmailDashboardWindow.day1:
+        return '24 h';
+      case _EmailDashboardWindow.day7:
+        return '7 j';
+    }
+  }
+
+  Duration get duration {
+    switch (this) {
+      case _EmailDashboardWindow.hour1:
+        return const Duration(hours: 1);
+      case _EmailDashboardWindow.day1:
+        return const Duration(hours: 24);
+      case _EmailDashboardWindow.day7:
+        return const Duration(days: 7);
+    }
+  }
+}
+
+class _EmailDashboardStats {
+  final int sent;
+  final int delivered;
+  final int bounced;
+  final int complained;
+  final int failed;
+  final int sampledLogs;
+  final Map<String, Map<String, int>> byProvider;
+  final Map<String, Map<String, int>> byTemplate;
+
+  const _EmailDashboardStats({
+    required this.sent,
+    required this.delivered,
+    required this.bounced,
+    required this.complained,
+    required this.failed,
+    required this.sampledLogs,
+    required this.byProvider,
+    required this.byTemplate,
+  });
+
+  double get deliveryRate => sent > 0 ? delivered / sent : 0.0;
+  double get bounceRate => sent > 0 ? bounced / sent : 0.0;
+  double get complaintRate => sent > 0 ? complained / sent : 0.0;
+
+  static _EmailDashboardStats fromLogs(
+    Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    int sent = 0;
+    int delivered = 0;
+    int bounced = 0;
+    int complained = 0;
+    int failed = 0;
+    final byProvider = <String, Map<String, int>>{};
+    final byTemplate = <String, Map<String, int>>{};
+
+    void incrementBucket(
+      Map<String, Map<String, int>> target,
+      String key,
+      String status,
+    ) {
+      final bucket = target.putIfAbsent(
+        key,
+        () => <String, int>{
+          'sent': 0,
+          'delivered': 0,
+          'bounced': 0,
+          'complained': 0,
+          'failed': 0,
+        },
+      );
+      bucket[status] = (bucket[status] ?? 0) + 1;
+    }
+
+    for (final doc in docs) {
+      final data = doc.data();
+      final status = (data['status'] ?? '').toString().trim();
+      final provider = (data['provider'] ?? 'unknown').toString().trim();
+      final template = (data['template_code'] ?? 'unknown').toString().trim();
+
+      switch (status) {
+        case 'sent':
+          sent += 1;
+        case 'delivered':
+          delivered += 1;
+        case 'bounced':
+          bounced += 1;
+        case 'complained':
+          complained += 1;
+        case 'failed':
+          failed += 1;
+        default:
+          continue;
+      }
+
+      incrementBucket(byProvider, provider.isEmpty ? 'unknown' : provider, status);
+      incrementBucket(byTemplate, template.isEmpty ? 'unknown' : template, status);
+    }
+
+    return _EmailDashboardStats(
+      sent: sent,
+      delivered: delivered,
+      bounced: bounced,
+      complained: complained,
+      failed: failed,
+      sampledLogs: docs.length,
+      byProvider: byProvider,
+      byTemplate: byTemplate,
+    );
+  }
+}
+
+class EmailDashboardPage extends StatefulWidget {
+  const EmailDashboardPage({super.key});
+
+  @override
+  State<EmailDashboardPage> createState() => _EmailDashboardPageState();
+}
+
+class _EmailDashboardPageState extends State<EmailDashboardPage> {
+  _EmailDashboardWindow _window = _EmailDashboardWindow.hour1;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade50,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 0.5,
+        titleSpacing: 16,
+        title: const Text(
+          'Dashboard email',
+          style: kPrestoAppBarTitleStyle,
+        ),
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Row(
+                children: [
+                  for (final window in _EmailDashboardWindow.values) ...[
+                    _WindowChip(
+                      label: window.label,
+                      selected: _window == window,
+                      onTap: () => setState(() => _window = window),
+                    ),
+                    if (window != _EmailDashboardWindow.values.last)
+                      const SizedBox(width: 8),
+                  ],
+                ],
+              ),
+            ),
+            Expanded(
+              child: _EmailDashboardContent(window: _window),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmailDashboardContent extends StatelessWidget {
+  final _EmailDashboardWindow window;
+
+  const _EmailDashboardContent({required this.window});
+
+  static const Color prestoOrange = Color(0xFFFF6600);
+  static const Color prestoBlue = Color(0xFF1A73E8);
+
+  @override
+  Widget build(BuildContext context) {
+    final threshold = DateTime.now()
+        .subtract(window.duration)
+        .millisecondsSinceEpoch;
+    final logsStream = FirebaseFirestore.instance
+        .collection('email_logs')
+        .where('created_at', isGreaterThanOrEqualTo: threshold)
+        .orderBy('created_at', descending: true)
+        .limit(1000)
+        .snapshots();
+    final jobsStream = FirebaseFirestore.instance
+        .collection('email_jobs')
+        .where('updated_at', isGreaterThanOrEqualTo: threshold)
+        .orderBy('updated_at', descending: true)
+        .limit(60)
+        .snapshots();
+    final ticketsStream = FirebaseFirestore.instance
+        .collection('support_tickets')
+        .orderBy('updated_at', descending: true)
+        .limit(60)
+        .snapshots();
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: logsStream,
+      builder: (context, logsSnapshot) {
+        if (logsSnapshot.hasError) {
+          return _AdminInfoState(
+            icon: Icons.warning_amber_rounded,
+            title: 'Lecture impossible',
+            message:
+                'Les logs email ne sont pas accessibles. Vérifie les droits admin ou les index Firestore.',
+            color: Colors.red.shade700,
+          );
+        }
+
+        if (logsSnapshot.connectionState == ConnectionState.waiting &&
+            !logsSnapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final stats = _EmailDashboardStats.fromLogs(logsSnapshot.data?.docs ?? []);
+
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: jobsStream,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return _AdminInfoState(
+                icon: Icons.warning_amber_rounded,
+                title: 'Lecture impossible',
+                message:
+                    'Les jobs email ne sont pas accessibles. Vérifie les droits admin ou les index Firestore.',
+                color: Colors.red.shade700,
+              );
+            }
+
+            final deadLetters = (snapshot.data?.docs ?? [])
+              .where((doc) => (doc.data()['status'] ?? '').toString() == 'dead_letter')
+                .toList();
+
+            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: ticketsStream,
+              builder: (context, ticketsSnapshot) {
+                if (ticketsSnapshot.hasError) {
+                  return _AdminInfoState(
+                    icon: Icons.warning_amber_rounded,
+                    title: 'Lecture impossible',
+                    message:
+                        'Les tickets support ne sont pas accessibles. Vérifie les droits admin.',
+                    color: Colors.red.shade700,
+                  );
+                }
+
+                final tickets = (ticketsSnapshot.data?.docs ?? [])
+                    .where((doc) => _toInt(doc.data()['updated_at']) >= threshold)
+                    .toList();
+                final openTickets = tickets
+                  .where((doc) => (doc.data()['status'] ?? 'open').toString() == 'open')
+                    .length;
+                final hasAlert = deadLetters.isNotEmpty ||
+                    stats.failed > 0 ||
+                    stats.bounceRate >= 0.05 ||
+                    stats.complaintRate >= 0.01;
+
+                final providerEntries = stats.byProvider.entries.toList()
+              ..sort((a, b) {
+                return (b.value['sent'] ?? 0).compareTo(a.value['sent'] ?? 0);
+              });
+                final templateEntries = stats.byTemplate.entries.toList()
+              ..sort((a, b) {
+                return (b.value['sent'] ?? 0).compareTo(a.value['sent'] ?? 0);
+              });
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _CardShell(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: (hasAlert ? Colors.red : prestoBlue)
+                                          .withOpacity(0.10),
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: Icon(
+                                      hasAlert
+                                          ? Icons.warning_amber_rounded
+                                          : Icons.verified_rounded,
+                                      color: hasAlert
+                                          ? Colors.red.shade700
+                                          : prestoBlue,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          hasAlert
+                                              ? 'Livrabilité à surveiller'
+                                              : 'Cockpit email temps réel',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 18,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Fenêtre ${window.label} • ${stats.sampledLogs} logs • maj ${_formatAdminTimestamp(DateTime.now().millisecondsSinceEpoch)}',
+                                          style: const TextStyle(
+                                            color: Colors.black54,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Wrap(
+                                spacing: 10,
+                                runSpacing: 10,
+                                children: [
+                                  _DashboardPill(
+                                    label: 'Taux délivré',
+                                    value:
+                                        '${(stats.deliveryRate * 100).toStringAsFixed(1)}%',
+                                    color: Colors.green.shade700,
+                                  ),
+                                  _DashboardPill(
+                                    label: 'Bounce',
+                                    value:
+                                        '${(stats.bounceRate * 100).toStringAsFixed(1)}%',
+                                    color: stats.bounceRate >= 0.05
+                                        ? Colors.red.shade700
+                                        : prestoBlue,
+                                  ),
+                                  _DashboardPill(
+                                    label: 'Plaintes',
+                                    value:
+                                        '${(stats.complaintRate * 100).toStringAsFixed(1)}%',
+                                    color: stats.complaintRate >= 0.01
+                                        ? Colors.red.shade700
+                                        : prestoBlue,
+                                  ),
+                                  _DashboardPill(
+                                    label: 'Dead letters',
+                                    value: '${deadLetters.length}',
+                                    color: deadLetters.isNotEmpty
+                                        ? Colors.red.shade700
+                                        : prestoOrange,
+                                  ),
+                                  _DashboardPill(
+                                    label: 'Tickets ouverts',
+                                    value: '$openTickets',
+                                    color: openTickets > 0
+                                        ? prestoOrange
+                                        : prestoBlue,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _ActionCard(
+                              icon: Icons.warning_rounded,
+                              title: 'Dead letters',
+                              subtitle:
+                                  '${deadLetters.length} job(s) en échec terminal',
+                              color: Colors.red.shade700,
+                              onTap: () => _showDeadLettersSheet(
+                                context,
+                                deadLetters,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _ActionCard(
+                              icon: Icons.support_agent_rounded,
+                              title: 'Tickets support',
+                              subtitle:
+                                  '$openTickets ouvert(s) sur ${tickets.length}',
+                              color: prestoBlue,
+                              onTap: () => _showSupportTicketsSheet(
+                                context,
+                                tickets,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 1.45,
+                        children: [
+                          _MetricCard(
+                            label: 'Envoyés',
+                            value: '${stats.sent}',
+                            icon: Icons.send_rounded,
+                            color: prestoBlue,
+                          ),
+                          _MetricCard(
+                            label: 'Délivrés',
+                            value: '${stats.delivered}',
+                            icon: Icons.mark_email_read_rounded,
+                            color: Colors.green.shade700,
+                          ),
+                          _MetricCard(
+                            label: 'Bounces',
+                            value: '${stats.bounced}',
+                            icon: Icons.report_gmailerrorred_rounded,
+                            color: Colors.red.shade700,
+                          ),
+                          _MetricCard(
+                            label: 'Plaintes',
+                            value: '${stats.complained}',
+                            icon: Icons.feedback_rounded,
+                            color: Colors.amber.shade800,
+                          ),
+                          _MetricCard(
+                            label: 'Échecs',
+                            value: '${stats.failed}',
+                            icon: Icons.error_outline_rounded,
+                            color: Colors.red.shade700,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      const Text(
+                        'Par provider',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      if (providerEntries.isEmpty)
+                        const _SimpleAdminEmpty(
+                          message: 'Aucun provider remonté sur cette fenêtre.',
+                        )
+                      else
+                        ...providerEntries.map(
+                          (entry) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _BreakdownCard(
+                              title: entry.key,
+                              data: entry.value,
+                              accent: prestoBlue,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Top templates',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      if (templateEntries.isEmpty)
+                        const _SimpleAdminEmpty(
+                          message: 'Aucun template remonté sur cette fenêtre.',
+                        )
+                      else
+                        ...templateEntries.take(8).map(
+                          (entry) => Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _BreakdownCard(
+                              title: entry.key,
+                              data: entry.value,
+                              accent: prestoOrange,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+void _showDeadLettersSheet(
+  BuildContext context,
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> deadLetters,
+) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => _BottomSheetScaffold(
+      title: 'Dead letters',
+      child: deadLetters.isEmpty
+          ? const _SimpleAdminEmpty(
+              message: 'Aucun dead letter sur la fenêtre sélectionnée.',
+            )
+          : Column(
+              children: deadLetters
+                  .map(
+                    (doc) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _AdminListTile(
+                        title: (doc.data()['template_code'] ?? doc.id).toString(),
+                        subtitle:
+                            'Raison: ${(doc.data()['dead_letter_reason'] ?? 'indisponible').toString()}\nMaj: ${_formatAdminTimestamp(_toInt(doc.data()['updated_at']))}',
+                        trailing: _StatusBadge(
+                          label: 'dead_letter',
+                          color: Colors.red.shade700,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+    ),
+  );
+}
+
+void _showSupportTicketsSheet(
+  BuildContext context,
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> tickets,
+) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => _BottomSheetScaffold(
+      title: 'Tickets support',
+      child: tickets.isEmpty
+          ? const _SimpleAdminEmpty(
+              message: 'Aucun ticket support sur la fenêtre sélectionnée.',
+            )
+          : Column(
+              children: tickets
+                  .take(20)
+                  .map(
+                    (doc) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _AdminListTile(
+                        title: (doc.data()['ticket_number'] ??
+                                doc.data()['subject'] ??
+                                doc.id)
+                            .toString(),
+                        subtitle:
+                            '${(doc.data()['subject'] ?? 'Sans sujet').toString()}\n${(doc.data()['category'] ?? 'general_support').toString()} • ${_formatAdminTimestamp(_toInt(doc.data()['updated_at']))}',
+                        trailing: _StatusBadge(
+                          label: (doc.data()['status'] ?? 'open').toString(),
+                          color: (doc.data()['status'] ?? 'open').toString() == 'open'
+                              ? const Color(0xFFFF6600)
+                              : const Color(0xFF1A73E8),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+    ),
+  );
+}
+
 class _AdminSpacePageState extends State<AdminSpacePage> {
   static const Color prestoOrange = Color(0xFFFF6600);
   static const Color prestoBlue = Color(0xFF1A73E8);
@@ -404,6 +1018,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     ? 'Dernière connexion : (inconnue)'
                     : 'Dernière connexion : ${user!.metadata.lastSignInTime!.toLocal().toIso8601String()}',
                 onCopyUid: () async {
+                  await Clipboard.setData(ClipboardData(text: user?.uid ?? ''));
                   showSuccessSnackBar(context, 'UID copié');
                 },
               ),
@@ -452,6 +1067,15 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     subtitle: '—',
                     badge: null,
                     iconColor: prestoOrange,
+                  ),
+                  _EmailSummaryTile(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const EmailDashboardPage(),
+                        ),
+                      );
+                    },
                   ),
                   _KpiTile(
                     icon: Icons.tune_rounded,
@@ -647,6 +1271,503 @@ class _ProfileCard extends StatelessWidget {
                     color: Colors.black54,
                     fontWeight: FontWeight.w600,
                   ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminInfoState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String message;
+  final Color color;
+
+  const _AdminInfoState({
+    required this.icon,
+    required this.title,
+    required this.message,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: _CardShell(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 42, color: color),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SimpleAdminEmpty extends StatelessWidget {
+  final String message;
+
+  const _SimpleAdminEmpty({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardShell(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          message,
+          style: const TextStyle(
+            color: Colors.black54,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WindowChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _WindowChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFFF6600) : Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? const Color(0xFFFF6600) : Colors.black12,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: selected ? Colors.white : Colors.black87,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ActionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardShell(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomSheetScaffold extends StatelessWidget {
+  final String title;
+  final Widget child;
+
+  const _BottomSheetScaffold({
+    required this.title,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFFF6F7F9),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 14),
+              child,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminListTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final Widget trailing;
+
+  const _AdminListTile({
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardShell(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            trailing,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _StatusBadge({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.20)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
+      ),
+    );
+  }
+}
+
+class _EmailSummaryTile extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _EmailSummaryTile({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final stream = FirebaseFirestore.instance
+        .collection('system_settings')
+        .doc('email_dashboard_current')
+        .snapshots();
+
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        final data = snapshot.data?.data();
+        final metrics = _stringKeyMap(data?['metrics']);
+        final sent = _toInt(metrics['sent']);
+        final failed = _toInt(metrics['failed']);
+        final deadLetters = _toInt(data?['recent_dead_letters']);
+        final hours = _toInt(data?['window_hours']);
+
+        final subtitle = snapshot.hasError
+            ? 'Accès snapshot\nà vérifier'
+            : data == null
+                ? 'Aucun snapshot\ndisponible'
+                : '${hours > 0 ? hours : 1} h\nEnvoyés: $sent\nÉchecs: $failed\nDL: $deadLetters';
+
+        return _KpiTile(
+          icon: Icons.mark_email_unread_rounded,
+          title: 'Emails',
+          subtitle: subtitle,
+          badge: null,
+          iconColor: const Color(0xFFFF6600),
+          onTap: onTap,
+        );
+      },
+    );
+  }
+}
+
+class _DashboardPill extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _DashboardPill({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _MetricCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardShell(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 26),
+            const Spacer(),
+            Text(
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 24,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.black54,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BreakdownCard extends StatelessWidget {
+  final String title;
+  final Map<String, dynamic> data;
+  final Color accent;
+
+  const _BreakdownCard({
+    required this.title,
+    required this.data,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final sent = _toInt(data['sent']);
+    final delivered = _toInt(data['delivered']);
+    final bounced = _toInt(data['bounced']);
+    final complained = _toInt(data['complained']);
+    final failed = _toInt(data['failed']);
+
+    return _CardShell(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 15,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _DashboardPill(label: 'sent', value: '$sent', color: accent),
+                _DashboardPill(
+                  label: 'delivered',
+                  value: '$delivered',
+                  color: Colors.green.shade700,
+                ),
+                _DashboardPill(
+                  label: 'bounced',
+                  value: '$bounced',
+                  color: Colors.red.shade700,
+                ),
+                _DashboardPill(
+                  label: 'complained',
+                  value: '$complained',
+                  color: Colors.amber.shade800,
+                ),
+                _DashboardPill(
+                  label: 'failed',
+                  value: '$failed',
+                  color: Colors.red.shade700,
                 ),
               ],
             ),
