@@ -1933,19 +1933,21 @@ class _HomePageState extends State<HomePage>
         actions: [
           TextButton(
             onPressed: () async {
-              // Marquer toutes comme lues
-              final batch = FirebaseFirestore.instance.batch();
+              // Marquer toutes comme lues (Firestore batch limité à 500)
               final notifs = await FirebaseFirestore.instance
                   .collection('notifications')
                   .where('userId', isEqualTo: userId)
                   .where('read', isEqualTo: false)
+                  .limit(500)
                   .get();
 
-              for (final doc in notifs.docs) {
-                batch.update(doc.reference, {'read': true});
+              if (notifs.docs.isNotEmpty) {
+                final batch = FirebaseFirestore.instance.batch();
+                for (final doc in notifs.docs) {
+                  batch.update(doc.reference, {'read': true});
+                }
+                await batch.commit();
               }
-
-              await batch.commit();
 
               if (context.mounted) {
                 Navigator.of(context).pop();
@@ -5184,12 +5186,20 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     if (ok != true) return;
 
-    await FirebaseFirestore.instance.collection('offers').doc(offerId).update({
-      'title': titleCtrl.text.trim(),
-      'city': cityCtrl.text.trim(),
-      'description': descCtrl.text.trim(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    try {
+      await FirebaseFirestore.instance.collection('offers').doc(offerId).update({
+        'title': titleCtrl.text.trim(),
+        'city': cityCtrl.text.trim(),
+        'description': descCtrl.text.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Impossible de modifier l\'annonce : $e')),
+        );
+      }
+    }
   }
 
   Future<void> _confirmDeleteOffer(
@@ -5221,7 +5231,15 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     if (yes != true) return;
 
-    await FirebaseFirestore.instance.collection('offers').doc(offerId).delete();
+    try {
+      await FirebaseFirestore.instance.collection('offers').doc(offerId).delete();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Impossible de supprimer l\'annonce : $e')),
+        );
+      }
+    }
   }
 }
 
@@ -9668,23 +9686,28 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
   }
 
   Future<void> _removeFavorite(String offerId) async {
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.userId)
-        .set({
-      'favoriteOfferIds': FieldValue.arrayRemove([offerId]),
-      'favoriteOffersUpdatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.userId)
-        .collection('favoriteOffers')
-        .doc(offerId)
-        .delete();
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .set({
+        'favoriteOfferIds': FieldValue.arrayRemove([offerId]),
+        'favoriteOffersUpdatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .collection('favoriteOffers')
+          .doc(offerId)
+          .delete();
 
-    if (!mounted) return;
-    showSuccessSnackBar(context, 'Annonce retirée des favoris');
-    await _loadFavorites();
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Annonce retirée des favoris');
+      await _loadFavorites();
+    } catch (e) {
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Erreur lors du retrait du favori : $e');
+    }
   }
 
   @override
@@ -10333,21 +10356,26 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                   newBudget = num.tryParse(budgetText.replaceAll(',', '.'));
                 }
 
-                await FirebaseFirestore.instance
-                    .collection('offers')
-                    .doc(offerId)
-                    .update({
-                  'title': newTitle.isEmpty ? data['title'] : newTitle,
-                  'description':
-                      newDesc.isEmpty ? data['description'] : newDesc,
-                  'budget': newBudget ?? data['budget'],
-                });
+                try {
+                  await FirebaseFirestore.instance
+                      .collection('offers')
+                      .doc(offerId)
+                      .update({
+                    'title': newTitle.isEmpty ? data['title'] : newTitle,
+                    'description':
+                        newDesc.isEmpty ? data['description'] : newDesc,
+                    'budget': newBudget ?? data['budget'],
+                  });
 
-                if (!mounted || !context.mounted) return;
-                if (ctx.mounted) {
-                  Navigator.of(ctx).pop();
+                  if (!mounted || !context.mounted) return;
+                  if (ctx.mounted) {
+                    Navigator.of(ctx).pop();
+                  }
+                  showSuccessSnackBar(context, "Annonce mise à jour ✅");
+                } catch (e) {
+                  if (!mounted || !context.mounted) return;
+                  showErrorSnackBar(context, "Erreur lors de la mise à jour");
                 }
-                showSuccessSnackBar(context, "Annonce mise à jour ✅");
               },
               child: const Text("Enregistrer"),
             ),
