@@ -10,7 +10,7 @@ export { requestPasswordResetEmail, requestEmailVerificationEmail, reportPasswor
 
 export { onListingPublished, onOfferCreated, onOfferUpdated } from "./modules/listings/triggers";
 export { enqueueExpiringListingEmails } from "./modules/listings/scheduled";
-export { onLegalTermsSettingsUpdated } from "./modules/legal/triggers";
+export { onLegalTermsSettingsUpdated, onLegalPrivacySettingsUpdated } from "./modules/legal/triggers";
 export { enqueueMarketingOnboardingEmails } from "./modules/marketing/scheduled";
 export { onNewsletterCampaignCreated, onNewsletterCampaignUpdated } from "./modules/marketing/triggers";
 
@@ -18,7 +18,7 @@ export { onMessageCreated, onConversationSubMessageCreated } from "./modules/mes
 export { enqueueUnreadMessageReminders } from "./modules/messaging/scheduled";
 
 export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/support/triggers";
-export { onReportCreated } from "./modules/moderation/triggers";
+export { onReportCreated, onReportUpdated } from "./modules/moderation/triggers";
 export { onSubscriptionUpdated, onBillingInvoiceUpdated } from "./modules/billing/triggers";
 
 export {

@@ -85,6 +85,11 @@ async function processEmailJob(jobId) {
         }, { merge: true });
         await firestore_1.db.collection(constants_1.COLLECTIONS.emailLogs).add({
             job_id: job.job_id,
+            event_id: job.event_id,
+            template_code: job.template_code,
+            channel: job.channel,
+            recipient_user_id: job.recipient_user_id || null,
+            recipient_email: job.recipient_email,
             provider: provider.name(),
             provider_message_id: sendResult.providerMessageId || null,
             status: "sent",
@@ -109,6 +114,11 @@ async function processEmailJob(jobId) {
     }, { merge: true });
     await firestore_1.db.collection(constants_1.COLLECTIONS.emailLogs).add({
         job_id: job.job_id,
+        event_id: job.event_id,
+        template_code: job.template_code,
+        channel: job.channel,
+        recipient_user_id: job.recipient_user_id || null,
+        recipient_email: job.recipient_email,
         provider: provider.name(),
         status: "failed",
         error_code: sendResult.errorCode || "provider_rejected",

@@ -68,6 +68,14 @@ export const templateRegistry: TemplateRegistryItem[] = [
     default_preheader_fr: "Voici pourquoi et comment la corriger",
   },
   {
+    template_code: "tpl_transactional_listing_expired_v1",
+    channel: "transactionnel",
+    category: "listings",
+    required_variables: ["listingTitle", "renewUrl"],
+    default_subject_fr: "Votre annonce a expiré",
+    default_preheader_fr: "Réactivez-la pour continuer à recevoir des contacts",
+  },
+  {
     template_code: "tpl_product_listing_expiring_soon_v1",
     channel: "produit",
     category: "listings",
@@ -136,6 +144,14 @@ export const templateRegistry: TemplateRegistryItem[] = [
     default_subject_fr: "Votre signalement a été pris en compte",
     default_preheader_fr: "Merci de contribuer à la sécurité de PRESTO",
   },
+  {
+    template_code: "tpl_transactional_moderation_report_resolved_v1",
+    channel: "transactionnel",
+    category: "moderation",
+    required_variables: ["firstName", "reportUrl", "resolutionSummary"],
+    default_subject_fr: "Votre signalement a été traité",
+    default_preheader_fr: "Consultez la décision de notre équipe",
+  },
   // ── Légal ─────────────────────────────────────────────────────────────────
   {
     template_code: "tpl_transactional_legal_terms_updated_v1",
@@ -144,6 +160,14 @@ export const templateRegistry: TemplateRegistryItem[] = [
     required_variables: ["termsUrl", "effectiveDate"],
     default_subject_fr: "Mise à jour de nos conditions générales",
     default_preheader_fr: "Applicables à partir du {{effectiveDate}}",
+  },
+  {
+    template_code: "tpl_transactional_legal_privacy_updated_v1",
+    channel: "transactionnel",
+    category: "legal",
+    required_variables: ["privacyUrl", "effectiveDate"],
+    default_subject_fr: "Mise à jour de notre politique de confidentialité",
+    default_preheader_fr: "Consultez les changements applicables le {{effectiveDate}}",
   },
   // ── Marketing / Onboarding ─────────────────────────────────────────────────
   {
@@ -186,6 +210,14 @@ export const templateRegistry: TemplateRegistryItem[] = [
     required_variables: ["firstName", "renewalDate", "planName", "manageUrl"],
     default_subject_fr: "Votre abonnement PRESTO se renouvelle bientôt",
     default_preheader_fr: "Renouvellement le {{renewalDate}}",
+  },
+  {
+    template_code: "tpl_transactional_billing_payment_succeeded_v1",
+    channel: "transactionnel",
+    category: "billing",
+    required_variables: ["firstName", "amount", "invoiceUrl"],
+    default_subject_fr: "Paiement confirmé",
+    default_preheader_fr: "Votre facture PRESTO a bien été réglée",
   },
   {
     template_code: "tpl_transactional_billing_payment_failed_v1",
@@ -269,6 +301,10 @@ export function getDefaultTemplateContent(templateCode: TemplateCode, locale: "f
       html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Votre annonce {{listingTitle}} n'a pas été publiée.</p><p>Raison: {{rejectionReason}}</p><p><a href="{{editUrl}}">Corriger l'annonce</a></p>`),
       text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nAnnonce refusée: {{listingTitle}}\nRaison: {{rejectionReason}}\n{{editUrl}}`),
     },
+    tpl_transactional_listing_expired_v1: {
+      html: wrapDefaultHtml(subject, preheader, `<p>Votre annonce {{listingTitle}} a expiré.</p><p><a href="{{renewUrl}}">La réactiver</a></p>`),
+      text: wrapDefaultText(subject, preheader, `Votre annonce {{listingTitle}} a expiré.\n{{renewUrl}}`),
+    },
     tpl_product_listing_expiring_soon_v1: {
       html: wrapDefaultHtml(subject, preheader, `<p>Votre annonce {{listingTitle}} expire bientôt.</p><p><a href="{{renewUrl}}">Renouveler</a></p>`),
       text: wrapDefaultText(subject, preheader, `Votre annonce {{listingTitle}} expire bientôt.\n{{renewUrl}}`),
@@ -301,9 +337,17 @@ export function getDefaultTemplateContent(templateCode: TemplateCode, locale: "f
       html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Votre signalement a été enregistré.</p>`),
       text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nVotre signalement a été enregistré.`),
     },
+    tpl_transactional_moderation_report_resolved_v1: {
+      html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Votre signalement a été traité.</p><p>{{resolutionSummary}}</p><p><a href="{{reportUrl}}">Consulter le suivi</a></p>`),
+      text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nVotre signalement a été traité.\n{{resolutionSummary}}\n{{reportUrl}}`),
+    },
     tpl_transactional_legal_terms_updated_v1: {
       html: wrapDefaultHtml(subject, preheader, `<p>Nos conditions changent à partir du {{effectiveDate}}.</p><p><a href="{{termsUrl}}">Consulter les conditions</a></p>`),
       text: wrapDefaultText(subject, preheader, `Conditions applicables à partir du {{effectiveDate}}.\n{{termsUrl}}`),
+    },
+    tpl_transactional_legal_privacy_updated_v1: {
+      html: wrapDefaultHtml(subject, preheader, `<p>Notre politique de confidentialité évolue à partir du {{effectiveDate}}.</p><p><a href="{{privacyUrl}}">Consulter la politique</a></p>`),
+      text: wrapDefaultText(subject, preheader, `Politique de confidentialité applicable à partir du {{effectiveDate}}.\n{{privacyUrl}}`),
     },
     tpl_marketing_onboarding_d1_v1: {
       html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Découvrez vos premiers pas sur PRESTO.</p><p><a href="{{dashboardUrl}}">Commencer</a></p>`),
@@ -324,6 +368,10 @@ export function getDefaultTemplateContent(templateCode: TemplateCode, locale: "f
     tpl_transactional_subscription_renewal_upcoming_v1: {
       html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Votre abonnement {{planName}} se renouvelle le {{renewalDate}}.</p><p><a href="{{manageUrl}}">Gérer l'abonnement</a></p>`),
       text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nRenouvellement de {{planName}} le {{renewalDate}}.\n{{manageUrl}}`),
+    },
+    tpl_transactional_billing_payment_succeeded_v1: {
+      html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Votre paiement de {{amount}} a bien été reçu.</p><p><a href="{{invoiceUrl}}">Consulter la facture</a></p>`),
+      text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nVotre paiement de {{amount}} a bien été reçu.\n{{invoiceUrl}}`),
     },
     tpl_transactional_billing_payment_failed_v1: {
       html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Le paiement de {{amount}} a échoué.</p><p><a href="{{retryUrl}}">Mettre à jour le paiement</a></p>`),

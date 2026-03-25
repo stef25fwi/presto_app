@@ -34,8 +34,15 @@ exports.syncEmailAnalytics = (0, scheduler_1.onSchedule)("every 1 hours", async 
         complained: 0,
         failed: 0,
     };
+    const byProvider = {};
+    const byTemplate = {};
     for (const doc of logsSnap.docs) {
-        const status = String(doc.data().status || "");
+        const data = doc.data();
+        const status = String(data.status || "");
+        const provider = String(data.provider || "unknown");
+        const templateCode = String(data.template_code || "unknown");
+        byProvider[provider] ??= { sent: 0, delivered: 0, bounced: 0, complained: 0, failed: 0 };
+        byTemplate[templateCode] ??= { sent: 0, delivered: 0, bounced: 0, complained: 0, failed: 0 };
         if (status === "sent")
             metrics.sent += 1;
         if (status === "delivered")
@@ -46,6 +53,26 @@ exports.syncEmailAnalytics = (0, scheduler_1.onSchedule)("every 1 hours", async 
             metrics.complained += 1;
         if (status === "failed")
             metrics.failed += 1;
+        if (status === "sent") {
+            byProvider[provider].sent += 1;
+            byTemplate[templateCode].sent += 1;
+        }
+        if (status === "delivered") {
+            byProvider[provider].delivered += 1;
+            byTemplate[templateCode].delivered += 1;
+        }
+        if (status === "bounced") {
+            byProvider[provider].bounced += 1;
+            byTemplate[templateCode].bounced += 1;
+        }
+        if (status === "complained") {
+            byProvider[provider].complained += 1;
+            byTemplate[templateCode].complained += 1;
+        }
+        if (status === "failed") {
+            byProvider[provider].failed += 1;
+            byTemplate[templateCode].failed += 1;
+        }
     }
     const deadLettersSnap = await firestore_1.db
         .collection(constants_1.COLLECTIONS.emailJobs)
@@ -60,12 +87,23 @@ exports.syncEmailAnalytics = (0, scheduler_1.onSchedule)("every 1 hours", async 
     if (recentDeadLetters > 0) {
         logger_1.logger.warn("email_dead_letters_detected", { recentDeadLetters });
     }
+    await firestore_1.db.collection(constants_1.COLLECTIONS.systemSettings).doc("email_dashboard_current").set({
+        updated_at: Date.now(),
+        window_hours: 1,
+        metrics,
+        recent_dead_letters: recentDeadLetters,
+        sampled_logs: logsSnap.size,
+        by_provider: byProvider,
+        by_template: byTemplate,
+    }, { merge: true });
     await firestore_1.db.collection(constants_1.COLLECTIONS.audits).add({
         action: "email.analytics.sync",
         created_at: Date.now(),
         metrics,
         recent_dead_letters: recentDeadLetters,
         sampled_logs: logsSnap.size,
+        by_provider: byProvider,
+        by_template: byTemplate,
     });
 });
 //# sourceMappingURL=scheduled.js.map

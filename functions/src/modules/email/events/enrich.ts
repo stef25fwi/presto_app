@@ -76,6 +76,12 @@ export async function enrichEventPayload(event: DomainEventPayload): Promise<Dom
           if (!event.payload.ticketNumber) extra.ticketNumber = String(s.ticket_number ?? event.source_id);
           if (!event.payload.ticketSubject) extra.ticketSubject = String(s.subject ?? "");
           if (!event.payload.replyUrl) extra.replyUrl = `https://presto.app/support/${event.source_id}`;
+        } else if (event.source_collection === COLLECTIONS.reports) {
+          if (!event.payload.reportId) extra.reportId = event.source_id;
+          if (!event.payload.reportUrl) extra.reportUrl = `https://presto.app/support/reports/${event.source_id}`;
+          if (!event.payload.resolutionSummary) {
+            extra.resolutionSummary = String(s.resolution_summary ?? s.resolutionSummary ?? s.moderator_note ?? "Votre signalement a été traité par notre équipe.");
+          }
         } else if (event.source_collection === COLLECTIONS.billingInvoices) {
           Object.assign(extra, buildBillingInvoiceEnrichment(s, event.payload));
         } else if (event.source_collection === COLLECTIONS.subscriptions) {
