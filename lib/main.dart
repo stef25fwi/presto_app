@@ -1190,6 +1190,36 @@ class _HomePageState extends State<HomePage>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   static const List<_HomeCategoryShortcut> _homeCategoryShortcuts = [
     _HomeCategoryShortcut(
+      icon: Icons.restaurant_outlined,
+      label: 'Restauration',
+      targetCategory: 'Restauration / Extra',
+    ),
+    _HomeCategoryShortcut(
+      icon: Icons.construction_outlined,
+      label: 'Bricolage',
+      targetCategory: 'Bricolage / Travaux',
+    ),
+    _HomeCategoryShortcut(
+      icon: Icons.home_outlined,
+      label: 'Aide domicile',
+      targetCategory: 'Aide à domicile',
+    ),
+    _HomeCategoryShortcut(
+      icon: Icons.child_care_outlined,
+      label: 'Garde enfants',
+      targetCategory: 'Garde d\'enfants',
+    ),
+    _HomeCategoryShortcut(
+      icon: Icons.music_note_outlined,
+      label: 'DJ / Sono',
+      targetCategory: 'Événementiel / DJ',
+    ),
+    _HomeCategoryShortcut(
+      icon: Icons.school_outlined,
+      label: 'Cours',
+      targetCategory: 'Cours & soutien',
+    ),
+    _HomeCategoryShortcut(
       icon: Icons.eco_outlined,
       label: 'Jardinage',
       targetCategory: 'Jardinage',
@@ -1201,23 +1231,13 @@ class _HomePageState extends State<HomePage>
     ),
     _HomeCategoryShortcut(
       icon: Icons.handyman_outlined,
-      label: 'Main-d’œuvre',
+      label: 'Main-d\'oeuvre',
       targetCategory: 'Main-d\'œuvre',
     ),
     _HomeCategoryShortcut(
       icon: Icons.other_houses_outlined,
       label: 'Autres',
       targetCategory: 'Autre',
-    ),
-    _HomeCategoryShortcut(
-      icon: Icons.child_care_outlined,
-      label: 'Garde enfants',
-      targetCategory: 'Garde d\'enfants',
-    ),
-    _HomeCategoryShortcut(
-      icon: Icons.music_note_outlined,
-      label: 'DJ / Sono',
-      targetCategory: 'Événementiel / DJ',
     ),
   ];
 
@@ -1418,7 +1438,7 @@ class _HomePageState extends State<HomePage>
         .collection('offers')
         .where(_publicOffersFilter())
         .orderBy('createdAt', descending: true)
-        .limit(8)
+        .limit(5)
         .get();
 
     // Listener pour hide/show bottom bar au scroll
@@ -1557,8 +1577,7 @@ class _HomePageState extends State<HomePage>
   }
 
   /// Animation "bump" séquentielle sur les 6 catégories
-  double _categoryScaleForIndex(int index) {
-    const count = 6;
+  double _categoryScaleForIndex(int index, {int count = 10}) {
     final t = _categoryController.value * count;
     final active = t.floor() % count;
     final localT = t - t.floor();
@@ -2463,7 +2482,7 @@ class _HomePageState extends State<HomePage>
                                   _CategoryChip(
                                     icon: shortcuts[index].icon,
                                     label: shortcuts[index].label,
-                                    iconScale: _categoryScaleForIndex(index),
+                                    iconScale: _categoryScaleForIndex(index, count: shortcuts.length),
                                     onTap: () => _goToCategoryOffers(
                                       shortcuts[index].targetCategory,
                                     ),
