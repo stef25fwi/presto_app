@@ -1243,100 +1243,6 @@ class _PracticalInfoCard extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      _AdvertiserAvatar(
-                        name: data.advertiserName,
-                        avatarUrl: data.advertiserAvatarUrl,
-                        compact: compact,
-                      ),
-                      SizedBox(width: compact ? 12 : 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            RichText(
-                              text: TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: data.advertiserRole.trim().isEmpty
-                                        ? 'Profil annonceur'
-                                        : data.advertiserRole,
-                                    style: TextStyle(
-                                      color: navy,
-                                      fontSize: compact ? 17 : 20,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: -0.3,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: compact ? 5 : 6),
-                            Row(
-                              children: [
-                                Icon(Icons.star_rounded, color: orange, size: compact ? 15 : 18),
-                                SizedBox(width: compact ? 4 : 5),
-                                Text(
-                                  data.advertiserRating.toStringAsFixed(1),
-                                  style: TextStyle(
-                                    color: orange,
-                                    fontSize: compact ? 14 : 16,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                SizedBox(width: compact ? 5 : 8),
-                                Text(
-                                  data.advertiserReviewCount > 0
-                                      ? '(${data.advertiserReviewCount} avis)'
-                                      : '(0 avis)',
-                                  style: TextStyle(
-                                    color: muted,
-                                    fontSize: compact ? 13 : 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: compact ? 10 : 14,
-                          vertical: compact ? 6 : 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F7F2),
-                          borderRadius: BorderRadius.circular(40),
-                          border: Border.all(
-                            color: const Color(0xFFDCEADB),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.check_circle_rounded,
-                              color: data.verified ? green : muted,
-                              size: compact ? 14 : 16,
-                            ),
-                            SizedBox(width: compact ? 5 : 6),
-                            Text(
-                              data.verified ? 'Profil vérifié' : 'Profil',
-                              style: TextStyle(
-                                color: navy,
-                                fontSize: compact ? 12 : 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: compact ? 10 : 14),
-                  const Divider(height: 1, thickness: 1, color: line),
                   _InfoLine(
                     icon: Icons.handyman_outlined,
                     label: 'Catégorie',
@@ -1377,13 +1283,21 @@ class _PracticalInfoCard extends StatelessWidget {
                   _InfoLine(
                     icon: Icons.work_outline_rounded,
                     label: 'Type de prestation',
-                    value: data.serviceType,
+                    value: data.serviceType.toLowerCase().contains('ponct')
+                        ? 'Ponctuelle'
+                        : data.serviceType,
                     compact: compact,
                   ),
                   _InfoLine(
                     icon: Icons.person_outline_rounded,
                     label: 'Annonceur',
                     value: data.advertiserName,
+                    compact: compact,
+                  ),
+                  _AdvertiserMetaLine(
+                    advertiserRating: data.advertiserRating,
+                    advertiserReviewCount: data.advertiserReviewCount,
+                    verified: data.verified,
                     compact: compact,
                   ),
                   _MaskedPhoneInfoLine(
@@ -1449,31 +1363,133 @@ class _InfoLine extends StatelessWidget {
         Padding(
           padding: EdgeInsets.symmetric(vertical: compact ? 10 : 12),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(icon, color: const Color(0xFF6C7384), size: compact ? 20 : 22),
               SizedBox(width: compact ? 8 : 10),
               Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: muted,
-                    fontSize: compact ? 15 : 16,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -0.1,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: muted,
+                      fontSize: compact ? 15 : 16,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.1,
+                    ),
                   ),
                 ),
               ),
               SizedBox(width: compact ? 8 : 10),
               Flexible(
-                child: Text(
-                  value,
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    color: navy,
-                    fontSize: compact ? 15 : 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.15,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    value,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: navy,
+                      fontSize: compact ? 15 : 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.15,
+                    ),
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1, thickness: 1, color: line),
+      ],
+    );
+  }
+}
+
+class _AdvertiserMetaLine extends StatelessWidget {
+  final double advertiserRating;
+  final int advertiserReviewCount;
+  final bool verified;
+  final bool compact;
+
+  const _AdvertiserMetaLine({
+    required this.advertiserRating,
+    required this.advertiserReviewCount,
+    required this.verified,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const navy = Color(0xFF18233D);
+    const muted = Color(0xFF6F7282);
+    const orange = Color(0xFFFF7B12);
+    const green = Color(0xFF45B36B);
+    const line = Color(0xFFE6E3E6);
+
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: compact ? 10 : 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: compact ? 26 : 30,
+                height: compact ? 26 : 30,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF2F7),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Icon(
+                  Icons.person_outline_rounded,
+                  size: compact ? 16 : 18,
+                  color: navy,
+                ),
+              ),
+              SizedBox(width: compact ? 8 : 10),
+              Text(
+                'Profil',
+                style: TextStyle(
+                  color: muted,
+                  fontSize: compact ? 15 : 16,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -0.1,
+                ),
+              ),
+              const Spacer(),
+              if (verified) ...[
+                Icon(
+                  Icons.check_circle_rounded,
+                  size: compact ? 15 : 17,
+                  color: green,
+                ),
+                SizedBox(width: compact ? 4 : 5),
+              ],
+              Icon(
+                Icons.star_rounded,
+                size: compact ? 15 : 17,
+                color: orange,
+              ),
+              SizedBox(width: compact ? 4 : 5),
+              Text(
+                advertiserRating.toStringAsFixed(1),
+                style: TextStyle(
+                  color: orange,
+                  fontSize: compact ? 14 : 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              SizedBox(width: compact ? 6 : 8),
+              Text(
+                advertiserReviewCount > 0
+                    ? '($advertiserReviewCount avis)'
+                    : '(0 avis)',
+                style: TextStyle(
+                  color: navy,
+                  fontSize: compact ? 14 : 15,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.1,
                 ),
               ),
             ],
@@ -1538,6 +1554,7 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
         Padding(
           padding: EdgeInsets.symmetric(vertical: widget.compact ? 10 : 12),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(
                 Icons.call_outlined,
@@ -1546,26 +1563,32 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
               ),
               SizedBox(width: widget.compact ? 8 : 10),
               Expanded(
-                child: Text(
-                  'Téléphone',
-                  style: TextStyle(
-                    color: muted,
-                    fontSize: widget.compact ? 15 : 16,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -0.1,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Téléphone',
+                    style: TextStyle(
+                      color: muted,
+                      fontSize: widget.compact ? 15 : 16,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.1,
+                    ),
                   ),
                 ),
               ),
               SizedBox(width: widget.compact ? 8 : 10),
               Flexible(
-                child: Text(
-                  displayedValue,
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    color: navy,
-                    fontSize: widget.compact ? 15 : 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.15,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    displayedValue,
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: navy,
+                      fontSize: widget.compact ? 15 : 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.15,
+                    ),
                   ),
                 ),
               ),
@@ -1779,61 +1802,6 @@ class _ShareOptionTile extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _AdvertiserAvatar extends StatelessWidget {
-  final String name;
-  final String avatarUrl;
-  final bool compact;
-
-  const _AdvertiserAvatar({required this.name, required this.avatarUrl, this.compact = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final initials = _buildInitials(name);
-
-    return Container(
-      width: compact ? 52 : 58,
-      height: compact ? 52 : 58,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: compact ? 1.5 : 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: compact ? 6 : 8,
-            offset: Offset(0, compact ? 2 : 3),
-          ),
-        ],
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFF7D25B), Color(0xFFC98E27)],
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: avatarUrl.isNotEmpty
-          ? Image.network(
-              avatarUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _AvatarFallback(initials: initials),
-            )
-          : _AvatarFallback(initials: initials),
-    );
-  }
-
-  String _buildInitials(String value) {
-    final parts = value
-        .split(RegExp(r'\s+'))
-        .map((item) => item.trim())
-        .where((item) => item.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) return 'P';
-    if (parts.length == 1) {
-      return parts.first.substring(0, parts.first.length >= 2 ? 2 : 1).toUpperCase();
-    }
-    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
 }
 
