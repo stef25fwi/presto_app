@@ -31,6 +31,7 @@ import 'pages/admin_space_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/offers/offer_details_page.dart';
 import 'pages/messages/conversations_list_page.dart';
+import 'pages/pro_profile_page.dart';
 import 'pages/toolbox_hub_page.dart';
 import 'services/city_search.dart';
 import 'services/account_social_auth_actions.dart';
@@ -9415,6 +9416,17 @@ class _AccountPageState extends State<AccountPage> {
                         },
                       ),
                       const SizedBox(height: 24),
+                      AccountMessagesSection(
+                        showTitle: false,
+                        onOpenMessages: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const MessagesPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 24),
                       _buildAccountSectionCard(
                         icon: Icons.chat_bubble_outline_rounded,
                         title: 'Mes messages',
@@ -9474,6 +9486,9 @@ class _AccountPageState extends State<AccountPage> {
                             onApply: () => _applyDraftFavorites(user),
                           ),
                         ),
+                      ),
+                      RepaintBoundary(
+                        child: const SizedBox.shrink(),
                       ),
                       const SizedBox(height: 28),
                       _buildAdminSpaceEntry(user),
