@@ -31,7 +31,6 @@ import 'pages/admin_space_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/offers/offer_details_page.dart';
 import 'pages/messages/conversations_list_page.dart';
-import 'pages/pro_profile_page.dart';
 import 'pages/toolbox_hub_page.dart';
 import 'services/city_search.dart';
 import 'services/account_social_auth_actions.dart';
@@ -1647,7 +1646,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildLatestOffersSection() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -1663,6 +1662,7 @@ class _HomePageState extends State<HomePage>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
                 'Dernières offres',
@@ -1674,6 +1674,14 @@ class _HomePageState extends State<HomePage>
               const Spacer(),
               TextButton(
                 onPressed: () => _onBottomTap(1),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
                 child: const Text(
                   'Voir tout',
                   style: TextStyle(
@@ -1685,7 +1693,7 @@ class _HomePageState extends State<HomePage>
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           FutureBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
             future: _latestOffersFuture,
             builder: (context, snapshot) {
@@ -4335,20 +4343,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                   width: double.infinity,
                   height: kToolbarHeight,
                   color: kPrestoOrange,
-                  padding: const EdgeInsets.fromLTRB(16, 0, 12, 0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          baseTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: kPrestoAppBarTitleStyle.copyWith(
-                            color: Colors.white,
-                          ),
-                        ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(
+                    child: Text(
+                      baseTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: kPrestoAppBarTitleStyle.copyWith(
+                        color: Colors.white,
                       ),
-                    ],
+                    ),
                   ),
                 ),
                 // ✅ Tuiles cliquables pour filtres actifs
@@ -9158,6 +9163,67 @@ class _AccountPageState extends State<AccountPage> {
 
   // Ancienne méthode _buildProfile supprimée - remplacée par PrestoPremiumAuthPage pour l'auth
 
+  Widget _buildAccountSectionCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFD),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: kPrestoBlue.withOpacity(0.10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: kPrestoBlue.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: kPrestoBlue, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF16324F),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
+    );
+  }
+
   Widget _buildProfile(User user) {
     // ✅ SessionState.userId est maintenant synchronisé automatiquement via authStateChanges()
     // Lier les crash reports à l'utilisateur connecté
@@ -9349,56 +9415,65 @@ class _AccountPageState extends State<AccountPage> {
                         },
                       ),
                       const SizedBox(height: 24),
-                      AccountMessagesSection(
-                        onOpenMessages: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const MessagesPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      const Text(
-                        "Mes annonces publiées",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
+                      _buildAccountSectionCard(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        title: 'Mes messages',
+                        description: 'Retrouve rapidement toutes tes conversations.',
+                        child: AccountMessagesSection(
+                          showTitle: false,
+                          onOpenMessages: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const MessagesPage(),
+                              ),
+                            );
+                          },
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      RepaintBoundary(
-                        child: UserOffersSection(userId: user.uid),
-                      ),
                       const SizedBox(height: 24),
-                      RepaintBoundary(
-                        child: FavoriteOffersSection(userId: user.uid),
-                      ),
-                      const SizedBox(height: 24),
-                      RepaintBoundary(
-                        child: AccountFavoriteCategoriesSection(
-                          categoriesCount: _draftFavoriteSelections
-                              .where((e) => !e.contains('—'))
-                              .length,
-                          subcategoriesCount: _draftFavoriteSelections
-                              .where((e) => e.contains('—'))
-                              .length,
-                          isSaving: _isSavingProfile,
-                          onOpenCategoryPicker: _openCategoryPickerSheet,
-                          onOpenSubcategoryPicker: _openSubcategoryPickerSheet,
-                          onApply: () => _applyDraftFavorites(user),
+                      _buildAccountSectionCard(
+                        icon: Icons.campaign_outlined,
+                        title: 'Mes annonces publiées',
+                        description: 'Gère les annonces que tu as déjà mises en ligne.',
+                        child: RepaintBoundary(
+                          child: UserOffersSection(
+                            userId: user.uid,
+                            showTitle: false,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      AccountProUpgradeSection(
-                        onOpenProProfile: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const ProProfilePage(),
-                            ),
-                          );
-                        },
+                      const SizedBox(height: 24),
+                      _buildAccountSectionCard(
+                        icon: Icons.favorite_border_rounded,
+                        title: 'Mes annonces favorites',
+                        description: 'Retrouve les annonces enregistrées pour plus tard.',
+                        child: RepaintBoundary(
+                          child: FavoriteOffersSection(
+                            userId: user.uid,
+                            showTitle: false,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      _buildAccountSectionCard(
+                        icon: Icons.tune_rounded,
+                        title: 'Mes catégories favorites',
+                        description: 'Organise les alertes qui correspondent à tes préférences.',
+                        child: RepaintBoundary(
+                          child: AccountFavoriteCategoriesSection(
+                            categoriesCount: _draftFavoriteSelections
+                                .where((e) => !e.contains('—'))
+                                .length,
+                            subcategoriesCount: _draftFavoriteSelections
+                                .where((e) => e.contains('—'))
+                                .length,
+                            isSaving: _isSavingProfile,
+                            showTitle: false,
+                            onOpenCategoryPicker: _openCategoryPickerSheet,
+                            onOpenSubcategoryPicker: _openSubcategoryPickerSheet,
+                            onApply: () => _applyDraftFavorites(user),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 28),
                       _buildAdminSpaceEntry(user),
@@ -9563,10 +9638,12 @@ class _AccountPageState extends State<AccountPage> {
 // 🔥 SECTION "Mes annonces publiées" dans Mon compte
 class UserOffersSection extends StatefulWidget {
   final String userId;
+  final bool showTitle;
 
   const UserOffersSection({
     super.key,
     required this.userId,
+    this.showTitle = true,
   });
 
   @override
@@ -9575,10 +9652,12 @@ class UserOffersSection extends StatefulWidget {
 
 class FavoriteOffersSection extends StatefulWidget {
   final String userId;
+  final bool showTitle;
 
   const FavoriteOffersSection({
     super.key,
     required this.userId,
+    this.showTitle = true,
   });
 
   @override
@@ -9822,34 +9901,36 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                "Mes annonces favorites",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+        if (widget.showTitle) ...[
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  "Mes annonces favorites",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: kPrestoOrange.withOpacity(0.10),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                '${docs.length}',
-                style: const TextStyle(
-                  color: kPrestoOrange,
-                  fontWeight: FontWeight.w800,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: kPrestoOrange.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${docs.length}',
+                  style: const TextStyle(
+                    color: kPrestoOrange,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
         InputDecorator(
           decoration: InputDecoration(
             labelText: 'Mes favoris',
@@ -10273,6 +10354,36 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (widget.showTitle) ...[
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Mes annonces publiées',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: kPrestoBlue.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${docs.length}',
+                  style: const TextStyle(
+                    color: kPrestoBlue,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
         InputDecorator(
           decoration: InputDecoration(
             labelText: 'Mes annonces',
@@ -10784,7 +10895,7 @@ class _AutoScrollingOffersCarouselState
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: SizedBox(
-        height: 60,
+        height: 56,
         child: ListView.separated(
           controller: _scrollController,
           scrollDirection: Axis.horizontal,

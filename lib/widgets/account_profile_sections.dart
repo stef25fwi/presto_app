@@ -219,6 +219,7 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
   final int categoriesCount;
   final int subcategoriesCount;
   final bool isSaving;
+  final bool showTitle;
   final VoidCallback onOpenCategoryPicker;
   final VoidCallback onOpenSubcategoryPicker;
   final VoidCallback onApply;
@@ -228,6 +229,7 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
     required this.categoriesCount,
     required this.subcategoriesCount,
     required this.isSaving,
+    this.showTitle = true,
     required this.onOpenCategoryPicker,
     required this.onOpenSubcategoryPicker,
     required this.onApply,
@@ -238,14 +240,15 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Mes catégories favorites',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
+        if (showTitle)
+          const Text(
+            'Mes catégories favorites',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
+        if (showTitle) const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -389,10 +392,12 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
 
 class AccountMessagesSection extends StatelessWidget {
   final VoidCallback onOpenMessages;
+  final bool showTitle;
 
   const AccountMessagesSection({
     super.key,
     required this.onOpenMessages,
+    this.showTitle = true,
   });
 
   @override
@@ -400,14 +405,15 @@ class AccountMessagesSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Mes messages',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
+        if (showTitle)
+          const Text(
+            'Mes messages',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
+        if (showTitle) const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
