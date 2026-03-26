@@ -1314,31 +1314,6 @@ class _PracticalInfoCard extends StatelessWidget {
                         : data.serviceType,
                     compact: compact,
                   ),
-                  _InfoLine(
-                    icon: Icons.person_outline_rounded,
-                    label: 'Annonceur',
-                    value: data.advertiserName,
-                    compact: compact,
-                  ),
-                  SizedBox(height: compact ? 12 : 14),
-                  Row(
-                    children: [
-                      Expanded(child: Divider(height: 1, thickness: 1, color: line)),
-                      SizedBox(width: compact ? 7 : 10),
-                      Icon(Icons.access_time_rounded, color: muted, size: compact ? 13 : 15),
-                      SizedBox(width: compact ? 4 : 5),
-                      Text(
-                        'Réponse en moins d\'une heure',
-                        style: TextStyle(
-                          color: muted,
-                          fontSize: compact ? 12 : 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      SizedBox(width: compact ? 7 : 10),
-                      Expanded(child: Divider(height: 1, thickness: 1, color: line)),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -1502,6 +1477,25 @@ class _AdvertiserHeaderLine extends StatelessWidget {
                             color: green,
                           ),
                         ],
+                      ],
+                    ),
+                    SizedBox(height: compact ? 4 : 5),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          color: muted,
+                          size: compact ? 13 : 14,
+                        ),
+                        SizedBox(width: compact ? 4 : 5),
+                        Text(
+                          'Réponse en moins d\'une heure',
+                          style: TextStyle(
+                            color: muted,
+                            fontSize: compact ? 12 : 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ],
                     ),
                   ],

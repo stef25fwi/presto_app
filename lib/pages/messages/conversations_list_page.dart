@@ -85,58 +85,28 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
   Widget _buildSearchField() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: TextField(
-          controller: _searchController,
-          onChanged: (_) => setState(() {}),
-          textInputAction: TextInputAction.search,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.white,
-            hintText: 'Rechercher une conversation',
-            hintStyle: const TextStyle(
-              fontSize: 14,
-              color: Colors.black45,
-              fontWeight: FontWeight.w500,
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            prefixIcon: const Icon(
-              Icons.search,
-              color: kPrestoBlue,
-              size: 22,
-            ),
-            suffixIcon: _searchController.text.isEmpty
-                ? null
-                : IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() {});
-                    },
-                  ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
-              borderSide: const BorderSide(color: kPrestoBlue, width: 1.5),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
-              borderSide: const BorderSide(color: kPrestoBlue, width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
-              borderSide: const BorderSide(color: kPrestoBlue, width: 2),
-            ),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (_) => setState(() {}),
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          hintText: 'Rechercher une conversation',
+          prefixIcon: const Icon(Icons.search_rounded, color: kPrestoBlue),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: const BorderSide(color: kPrestoBlue, width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: const BorderSide(color: kPrestoBlue, width: 2),
           ),
         ),
       ),
@@ -190,50 +160,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   Widget _buildMessagesAppBarTitle() {
-    return Row(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.18),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: Colors.white.withOpacity(0.28),
-            ),
-          ),
-          child: const Icon(
-            Icons.forum_rounded,
-            color: Colors.white,
-            size: 18,
-          ),
-        ),
-        const SizedBox(width: 10),
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Mes messages',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: kPrestoAppBarTitleStyle,
-              ),
-              Text(
-                'Conversations recentes',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Color(0xFFFFF4EC),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+    return const Text(
+      'Mes messages',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      style: kPrestoAppBarTitleStyle,
     );
   }
 
@@ -252,11 +184,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             'Mes messages',
             style: kPrestoAppBarTitleStyle,
           ),
+          centerTitle: true,
         ),
         body: Stack(
           children: [
             _buildWatermark(),
-            _buildEmptyState('Connectez-vous pour accéder à la messagerie.'),
+            _buildEmptyState('Connexion / inscription pour accéder à la messagerie.'),
           ],
         ),
       );
@@ -268,7 +201,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         elevation: 0,
-        titleSpacing: 10,
+        centerTitle: true,
         title: _buildMessagesAppBarTitle(),
         actions: [
           Stack(
@@ -338,7 +271,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
                     if (snapshot.hasError) {
                       final message = _isPermissionDenied(snapshot.error)
-                          ? 'Accès refusé à vos messages. Réouvrez la conversation après reconnexion.'
+                          ? 'Pas de conversation en cours.'
                           : 'Erreur de chargement des conversations.';
                       return _buildEmptyState(message);
                     }
