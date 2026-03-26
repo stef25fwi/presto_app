@@ -5340,7 +5340,7 @@ class _OfferBrowseTile extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 110),
+                      constraints: const BoxConstraints(maxWidth: 252),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -5359,18 +5359,26 @@ class _OfferBrowseTile extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          _OfferMissionDelayChip(
-                            label: data.missionDelayLabel,
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.end,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                _OfferMissionDelayChip(
+                                  label: data.missionDelayLabel,
+                                ),
+                                if (data.isUrgent) const _OfferStatusBadge(),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-                if (data.isUrgent) ...[
-                  const SizedBox(height: 10),
-                  const _OfferStatusBadge(),
-                ],
               ],
             ),
           ),
@@ -5380,54 +5388,80 @@ class _OfferBrowseTile extends StatelessWidget {
   }
 }
 
-class _OfferStatusBadge extends StatelessWidget {
+class _OfferStatusBadge extends StatefulWidget {
   const _OfferStatusBadge();
 
   @override
+  State<_OfferStatusBadge> createState() => _OfferStatusBadgeState();
+}
+
+class _OfferStatusBadgeState extends State<_OfferStatusBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _rotation;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    )..repeat(reverse: true);
+    final curved = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+    _rotation = Tween<double>(begin: -0.02, end: 0.02).animate(curved);
+    _scale = Tween<double>(begin: 0.98, end: 1.0).animate(curved);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 38,
-      constraints: const BoxConstraints(minWidth: 78),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        gradient: const LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            Color(0xFFFFA43A),
-            Color(0xFFFF6A00),
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.rotate(
+          angle: _rotation.value,
+          child: Transform.scale(
+            scale: _scale.value,
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        height: 38,
+        constraints: const BoxConstraints(minWidth: 86),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFF6600),
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
           ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color:
-                _ConsultOffersPageState._offersOrange.withValues(alpha: 0.22),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(
-            Icons.priority_high_rounded,
-            size: 15,
+        child: const Text(
+          'Urgent',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 12.5,
+            height: 1,
+            fontWeight: FontWeight.w800,
             color: Colors.white,
+            letterSpacing: 0.2,
           ),
-          const SizedBox(width: 6),
-          const Text(
-            'Urgent',
-            style: const TextStyle(
-              fontSize: 12.5,
-              height: 1,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              letterSpacing: -0.2,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -5440,9 +5474,9 @@ class _OfferMissionDelayChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxWidth = (MediaQuery.sizeOf(context).width * 0.42).clamp(
-      142.0,
-      196.0,
+    final maxWidth = (MediaQuery.sizeOf(context).width * 0.34).clamp(
+      112.0,
+      148.0,
     );
 
     return Container(
