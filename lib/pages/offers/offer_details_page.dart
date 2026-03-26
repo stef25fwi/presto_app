@@ -291,16 +291,41 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                   style: kPrestoSectionTitleStyle,
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  offerUrl,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF6B7280),
-                    height: 1.35,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          offerUrl,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF6B7280),
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: copyLink,
+                        tooltip: 'Copier le lien',
+                        icon: const Icon(
+                          Icons.content_copy_rounded,
+                          size: 20,
+                          color: Color(0xFF111827),
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        splashRadius: 20,
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -382,16 +407,6 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                           errorMessage: 'Impossible d\'ouvrir l\'application mail.',
                         );
                       },
-                    ),
-                    _ShareOptionTile(
-                      icon: const Icon(
-                        Icons.link_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                      label: 'Copier',
-                      color: const Color(0xFF111827),
-                      onTap: copyLink,
                     ),
                   ],
                 ),
