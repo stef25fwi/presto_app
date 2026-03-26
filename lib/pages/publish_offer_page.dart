@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, debugPrint;
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -41,7 +42,8 @@ class PublishOfferPage extends StatefulWidget {
   State<PublishOfferPage> createState() => _PublishOfferPageState();
 }
 
-class _PublishOfferPageState extends State<PublishOfferPage> {
+class _PublishOfferPageState extends State<PublishOfferPage>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late final CityRepoCompact _repo;
 
@@ -76,6 +78,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // Pour l'enregistrement audio premium
   late final AudioRecorder _audioRecorder;
+  late final AnimationController _recordingPulseController;
   bool _recording = false;
 
   final List<String> _categories = const [
@@ -95,6 +98,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     super.initState();
     _repo = widget.repo ?? CityRepoCompact();
     _audioRecorder = AudioRecorder();
+    _recordingPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
   }
 
   Future<void> trace(String step, Map<String, dynamic> data) async {
@@ -112,6 +119,124 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
+  String _normalizedCategoryValue(String value) {
+    var normalized = value.trim().toLowerCase();
+    const replacements = <String, String>{
+      'à': 'a',
+      'â': 'a',
+      'ä': 'a',
+      'ç': 'c',
+      'é': 'e',
+      'è': 'e',
+      'ê': 'e',
+      'ë': 'e',
+      'î': 'i',
+      'ï': 'i',
+      'ô': 'o',
+      'ö': 'o',
+      'ù': 'u',
+      'û': 'u',
+      'ü': 'u',
+      'œ': 'oe',
+      '-': ' ',
+      '/': ' ',
+      '_': ' ',
+    };
+    replacements.forEach((key, replacement) {
+      normalized = normalized.replaceAll(key, replacement);
+    });
+    return normalized.replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
+  String? _resolveSuggestedCategory(String rawCategory) {
+    final normalized = _normalizedCategoryValue(rawCategory);
+    if (normalized.isEmpty) return null;
+
+    for (final category in _categories) {
+      final normalizedCandidate = _normalizedCategoryValue(category);
+      if (normalizedCandidate == normalized ||
+          normalizedCandidate.contains(normalized) ||
+          normalized.contains(normalizedCandidate)) {
+        return category;
+      }
+    }
+
+    const keywordMap = <String, String>{
+      'jardin': 'Jardinage',
+      'bricol': 'Bricolage',
+      'menage': 'Ménage',
+      'restauration': 'Restauration / Extra',
+      'extra': 'Restauration / Extra',
+      'dj': 'DJ / Sono',
+      'sono': 'DJ / Sono',
+      'baby': 'Baby-sitting',
+      'livraison': 'Transport / Livraison',
+      'transport': 'Transport / Livraison',
+      'informatique': 'Informatique',
+      'autre': 'Autre',
+    };
+
+    for (final entry in keywordMap.entries) {
+      if (normalized.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+    return null;
+  }
+
+  void _startRecordingPulse() {
+    _recordingPulseController
+      ..stop()
+      ..reset()
+      ..repeat();
+  }
+
+  void _stopRecordingPulse() {
+    _recordingPulseController
+      ..stop()
+      ..reset();
+  }
+
+  String _buildDraftHint({
+    String transcript = '',
+    bool includeExistingDescription = false,
+  }) {
+    final parts = <String>[];
+
+    void addBlock(String label, String value) {
+      final clean = value.trim();
+      if (clean.isEmpty) return;
+      if (parts.any((part) => part.contains(clean))) return;
+      parts.add('$label:\n$clean');
+    }
+
+    final transcriptText = transcript.trim();
+    addBlock('Transcription vocale', transcriptText);
+
+    final typedHint = _aiHintCtrl.text.trim();
+    if (typedHint != transcriptText) {
+      addBlock('Précisions utilisateur', typedHint);
+    }
+
+    if (includeExistingDescription) {
+      final currentDescription = _descCtrl.text.trim();
+      if (currentDescription != transcriptText && currentDescription != typedHint) {
+        addBlock('Description actuelle', currentDescription);
+      }
+    }
+
+    return parts.join('\n\n').trim();
+  }
+
+  void _applyTranscriptFallback(String transcript) {
+    final cleanTranscript = transcript.trim();
+    if (cleanTranscript.isEmpty) return;
+
+    if (_descCtrl.text.trim().isEmpty) {
+      _descCtrl.text = cleanTranscript;
+    }
+  }
+
   // ignore: unused_element
   TextEditingController _activeController() {
     if (_titleFocus.hasFocus) return _titleCtrl;
@@ -124,20 +249,27 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return _descCtrl;
   }
 
-  void _applyDraftToForm(OfferDraft draft, {String? transcript}) {
+  void _applyDraftToForm(
+    OfferDraft draft, {
+    String? transcript,
+    bool replaceExistingTitleDescription = false,
+  }) {
     // ⚠️ Ne jamais modifier Téléphone / Budget ici.
+    var shouldRebuild = false;
 
     // Titre
-    final nextTitle = (draft.title ?? '').trim();
-    if (nextTitle.isNotEmpty && _titleCtrl.text.trim().isEmpty) {
+    final nextTitle = draft.bestTitle();
+    if (nextTitle.isNotEmpty &&
+        (replaceExistingTitleDescription || _titleCtrl.text.trim().isEmpty)) {
       _titleCtrl.text = nextTitle;
     }
 
     // Description
-    final nextDesc = (draft.description ?? '').trim();
+    final nextDesc = draft.composedDescription(transcript: transcript);
     final currentDesc = _descCtrl.text.trim();
     final transcriptTrim = (transcript ?? '').trim();
-    final canReplaceDesc = currentDesc.isEmpty ||
+    final canReplaceDesc = replaceExistingTitleDescription ||
+      currentDesc.isEmpty ||
         (transcriptTrim.isNotEmpty && currentDesc == transcriptTrim);
     if (nextDesc.isNotEmpty && canReplaceDesc) {
       _descCtrl.text = nextDesc;
@@ -145,12 +277,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     // Catégorie
     final nextCat = (draft.category ?? '').trim();
+    final resolvedCategory = _resolveSuggestedCategory(nextCat);
     if ((_category == null || _category!.trim().isEmpty) &&
-        nextCat.isNotEmpty) {
-      // On ne force que si la catégorie fait partie des choix affichés.
-      if (_categories.contains(nextCat)) {
-        _category = nextCat;
-      }
+        resolvedCategory != null) {
+      _category = resolvedCategory;
+      shouldRebuild = true;
     }
 
     // Ville / CP
@@ -161,6 +292,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     if (nextCp.isNotEmpty && _cpCtrl.text.trim().isEmpty) {
       _cpCtrl.text = nextCp;
+    }
+
+    final inferredBudget = draft.inferredFixedBudgetAmount();
+    if (inferredBudget != null && _budgetCtrl.text.trim().isEmpty) {
+      _budgetType = 'Fixe';
+      _budgetCtrl.text = inferredBudget.toString();
+      shouldRebuild = true;
+    }
+
+    if (shouldRebuild && mounted) {
+      setState(() {});
     }
   }
 
@@ -210,6 +352,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _budgetFocus.dispose();
 
     _audioRecorder.dispose();
+    _recordingPulseController.dispose();
     super.dispose();
   }
 
@@ -228,6 +371,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // final budgetCtrl = _budgetCtrl;
 
     // Si déjà rempli, on demande si on remplace
+    var replaceExistingTitleDescription = false;
     if (titleCtrl.text.trim().isNotEmpty || descCtrl.text.trim().isNotEmpty) {
       final replace = await showDialog<bool>(
         context: context,
@@ -254,38 +398,34 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         ),
       );
 
-      if (replace != true) return;
+      if (replace == null) return;
+      replaceExistingTitleDescription = replace;
     }
 
     if (_aiLoading) return;
+
+    final hint = _buildDraftHint(includeExistingDescription: true);
+    if (hint.isEmpty) {
+      showSuccessSnackBar(
+        context,
+        "Ajoutez quelques précisions avant de lancer l'assistant IA.",
+      );
+      return;
+    }
 
     setState(() => _aiLoading = true);
 
     try {
       final draft = await AiOfferService.generateDraft(
-        hint: _aiHintCtrl.text.trim(),
+        hint: hint,
         currentCity: cityCtrl.text.trim(),
         currentCategory: (_category ?? "").toString(),
       );
 
-      // ✅ Remplissages
-      if ((draft.title ?? "").trim().isNotEmpty)
-        titleCtrl.text = draft.title!.trim();
-      if ((draft.description ?? "").trim().isNotEmpty)
-        descCtrl.text = draft.description!.trim();
-
-      // Catégorie si renvoyée
-      if ((draft.category ?? "").trim().isNotEmpty) {
-        _category = draft.category!.trim();
-      }
-
-      // Ville / CP si renvoyés
-      if ((draft.city ?? "").trim().isNotEmpty)
-        cityCtrl.text = draft.city!.trim();
-      if ((draft.postalCode ?? "").trim().isNotEmpty)
-        cpCtrl.text = draft.postalCode!.trim();
-
-      // ❌ IMPORTANT : on ne modifie pas Téléphone / Budget
+      _applyDraftToForm(
+        draft,
+        replaceExistingTitleDescription: replaceExistingTitleDescription,
+      );
 
       if (mounted) {
         setState(() {});
@@ -310,6 +450,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     if (kIsWeb) {
       if (_recording) {
+        _stopRecordingPulse();
         if (!mounted) return;
         setState(() => _recording = false);
 
@@ -317,6 +458,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       } else {
         try {
           await _webRec.start();
+          _startRecordingPulse();
           if (!mounted) return;
           setState(() => _recording = true);
         } catch (e) {
@@ -330,6 +472,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (_recording) {
       // Arrêter l'enregistrement
       final path = await _audioRecorder.stop();
+      _stopRecordingPulse();
       if (!mounted) return;
 
       setState(() {
@@ -354,6 +497,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           path: filePath,
         );
 
+        _startRecordingPulse();
         if (!mounted) return;
         setState(() => _recording = true);
       } else {
@@ -364,84 +508,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _stopWebMicAndProcess() async {
-    if (_aiLoading) return;
-    setState(() => _aiLoading = true);
-
     try {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid == null) throw Exception('Not authenticated');
-
-      await CrashlyticsContext.setUserId(uid);
-      await CrashlyticsContext.setKey('flow', 'webMic');
-
       final blob = await _webRec.stopToBlob();
-      // Ultra perf: conversion côté navigateur -> WAV PCM16 16k mono (évite ffmpeg côté serveur)
       final wavBytes = await webBlobToWav16kMono(blob);
-
-      final bytes = wavBytes.length;
-      debugPrint('[IA AUDIO WEB] wavBytes=$bytes');
-
-      await trace('web_before_upload', {
-        'bytes': bytes,
-      });
-
-      if (bytes < 30000) {
-        throw Exception(
-          'Audio invalide (blob trop petit: $bytes bytes). Réessaie en parlant plus près du micro.',
-        );
-      }
-
-      final ts = DateTime.now().millisecondsSinceEpoch;
-      final storagePath = 'stt/${uid}_$ts.wav';
-
-      final ref = FirebaseStorage.instance.ref(storagePath);
-      await ref.putData(
-        wavBytes,
-        SettableMetadata(contentType: 'audio/wav'),
+      await _processRecordedAudioBytes(
+        audioBytes: wavBytes,
+        contentType: 'audio/wav',
+        extension: 'wav',
+        flow: 'webMic',
       );
-
-      await trace('web_after_upload', {
-        'storagePath': storagePath,
-        'bytes': bytes,
-      });
-
-      final out = await MicroIaService.processAudio(
-        storagePath: storagePath,
-        languageCode: 'fr-FR',
-      );
-
-      final transcript = (out['text'] ?? '').toString();
-      if (transcript.trim().isNotEmpty) {
-        _descCtrl.text = transcript.trim();
-      }
-
-      // Option A: après transcription, générer un brouillon (titre/catégorie/ville/CP)
-      try {
-        final draft = await AiOfferService.generateDraft(
-          hint: transcript.trim().isEmpty
-              ? _descCtrl.text.trim()
-              : transcript.trim(),
-          currentCity: _cityCtrl.text.trim(),
-          currentCategory: (_category ?? '').trim(),
-        );
-        _applyDraftToForm(draft, transcript: transcript);
-        await trace('web_after_draft', {
-          'title': draft.title,
-          'category': draft.category,
-          'city': draft.city,
-          'postalCode': draft.postalCode,
-        });
-      } catch (e) {
-        // best-effort: on garde au minimum la transcription.
-        await trace('web_draft_error', {
-          'error': e.toString(),
-        });
-      }
-
-      if (mounted) {
-        setState(() {});
-        showSuccessSnackBar(context, 'Transcription web OK ✅');
-      }
     } catch (e, st) {
       await CrashlyticsContext.recordError(
         e is Exception ? e : Exception(e.toString()),
@@ -455,18 +530,55 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
 
       if (mounted) {
-        if (isTimeoutError(e)) {
-          showTimeoutSnackBar(context);
-        } else {
-          showSuccessSnackBar(context, 'Erreur Premium IA (web) : $e');
-        }
+        showSuccessSnackBar(context, 'Erreur Premium IA (web) : $e');
       }
-    } finally {
-      if (mounted) setState(() => _aiLoading = false);
     }
   }
 
   Future<void> _uploadAndTranscribe(String audioPath) async {
+    if (_aiLoading) return;
+
+    try {
+      final audioBytes = await XFile(audioPath).readAsBytes();
+      final lower = audioPath.toLowerCase();
+      final extension = lower.endsWith('.m4a')
+          ? 'm4a'
+          : (lower.endsWith('.mp4') ? 'mp4' : 'wav');
+      final contentType = extension == 'wav' ? 'audio/wav' : 'audio/mp4';
+
+      await _processRecordedAudioBytes(
+        audioBytes: audioBytes,
+        contentType: contentType,
+        extension: extension,
+        flow: 'uploadAndTranscribe',
+      );
+    } catch (e, st) {
+      await CrashlyticsContext.recordError(
+        e is Exception ? e : Exception(e.toString()),
+        st,
+        reason: 'Upload/transcribe failed',
+        fatal: false,
+        keys: {
+          'component': 'PublishOfferPage',
+          'flow': 'uploadAndTranscribe',
+        },
+      );
+      if (mounted) {
+        if (isTimeoutError(e)) {
+          showTimeoutSnackBar(context);
+        } else {
+          showSuccessSnackBar(context, "Erreur Premium IA : $e");
+        }
+      }
+    }
+  }
+
+  Future<void> _processRecordedAudioBytes({
+    required Uint8List audioBytes,
+    required String contentType,
+    required String extension,
+    required String flow,
+  }) async {
     if (_aiLoading) return;
     setState(() => _aiLoading = true);
 
@@ -477,18 +589,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
 
       await CrashlyticsContext.setUserId(user.uid);
-      await CrashlyticsContext.setKey('flow', 'uploadAndTranscribe');
+      await CrashlyticsContext.setKey('flow', flow);
 
-      // Upload vers Cloud Storage (compatible Web: pas de dart:io / putFile)
-      final xfile = XFile(audioPath);
-      final audioBytes = await xfile.readAsBytes();
       final bytes = audioBytes.length;
+      debugPrint('[IA AUDIO] bytes=$bytes flow=$flow');
 
-      debugPrint('[IA AUDIO] bytes=$bytes path=$audioPath');
-
-      await trace('before_upload', {
-        'path': audioPath,
+      await trace('${flow}_before_upload', {
         'bytes': bytes,
+        'contentType': contentType,
       });
 
       if (bytes < 30000) {
@@ -497,16 +605,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         );
       }
 
-      final lower = audioPath.toLowerCase();
-      final isM4a = lower.endsWith('.m4a');
-      final isMp4 = lower.endsWith('.mp4');
-      final ext = isM4a ? 'm4a' : (isMp4 ? 'mp4' : 'wav');
-      final contentType = (isM4a || isMp4) ? 'audio/mp4' : 'audio/wav';
+      final normalizedExtension = extension.replaceFirst('.', '').toLowerCase();
+      final storagePath =
+          'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.$normalizedExtension';
 
-      final fileName =
-          'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.$ext';
-
-      final storageRef = FirebaseStorage.instance.ref().child(fileName);
+      final storageRef = FirebaseStorage.instance.ref().child(storagePath);
 
       await retry(
         () => storageRef
@@ -530,112 +633,78 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         },
       );
 
-      final meta = await storageRef.getMetadata();
-      debugPrint(
-        '[IA AUDIO] uploaded size=${meta.size} bytes contentType=${meta.contentType}',
-      );
-
-      await trace('after_upload', {
-        'storagePath': fileName,
+      await trace('${flow}_after_upload', {
+        'storagePath': storagePath,
         'bytes': bytes,
       });
 
-      // Construire le gcsUri
-      final bucket = FirebaseStorage.instance.ref().bucket;
-      final gcsUri = 'gs://$bucket/$fileName';
-
-      await CrashlyticsContext.setKeys({
-        'storagePath': fileName,
-        'gcsUri': gcsUri,
-      });
-
-      // Appeler le nouveau service Micro-IA
-      debugPrint(
-          "[IA AUDIO] calling microIaProcessAudio storagePath=$fileName");
       final out = await MicroIaService.processAudio(
-        storagePath: fileName, // le path dans le bucket
+        storagePath: storagePath,
         languageCode: 'fr-FR',
       );
 
-      debugPrint(
-        "[IA AUDIO] microIaProcessAudio OK mode=${out['modeUsed']} score=${out['quality']?['score']}",
-      );
-
+      final transcript = (out['text'] ?? '').toString().trim();
       final modeUsed = (out['modeUsed'] ?? '').toString();
       final score = ((out['quality']?['score'] ?? 0.0) as num).toDouble();
       final reasons = (out['quality']?['reasons'] ?? []).toString();
 
-      await trace('after_process', {
-        'storagePath': fileName,
+      await trace('${flow}_after_process', {
+        'storagePath': storagePath,
         'modeUsed': modeUsed,
         'score': score,
         'reasons': reasons,
       });
 
-      final transcript = (out['text'] ?? '').toString();
-      // Info qualité (optionnel)
+      _applyTranscriptFallback(transcript);
 
-      // Pour l'instant, on met le transcript dans la description
-      // Tu peux ensuite rappeler un autre callable pour générer le draft si besoin
-      if (transcript.trim().isNotEmpty) {
-        _descCtrl.text = transcript.trim();
-      }
+      final draftHint = _buildDraftHint(transcript: transcript);
+      if (draftHint.isNotEmpty) {
+        try {
+          final draft = await AiOfferService.generateDraft(
+            hint: draftHint,
+            currentCity: _cityCtrl.text.trim(),
+            currentCategory: (_category ?? '').trim(),
+          );
+          _applyDraftToForm(draft, transcript: transcript);
 
-      // Option A: après transcription, générer un brouillon (titre/catégorie/ville/CP)
-      try {
-        final draft = await AiOfferService.generateDraft(
-          hint: transcript.trim().isEmpty
-              ? _descCtrl.text.trim()
-              : transcript.trim(),
-          currentCity: _cityCtrl.text.trim(),
-          currentCategory: (_category ?? '').trim(),
-        );
-        _applyDraftToForm(draft, transcript: transcript);
-
-        await trace('after_draft', {
-          'title': draft.title,
-          'category': draft.category,
-          'city': draft.city,
-          'postalCode': draft.postalCode,
-        });
-      } catch (e) {
-        // best-effort: on garde au minimum la transcription.
-        await trace('draft_error', {
-          'error': e.toString(),
-        });
+          await trace('${flow}_after_draft', {
+            'title': draft.bestTitle(),
+            'category': draft.category,
+            'city': draft.city,
+            'postalCode': draft.postalCode,
+          });
+        } catch (e) {
+          await trace('${flow}_draft_error', {
+            'error': e.toString(),
+          });
+        }
       }
 
       if (mounted) {
         setState(() {});
+        final qualityPct = (score * 100).clamp(0, 100).toStringAsFixed(0);
         showSuccessSnackBar(
           context,
-          "IA: $modeUsed score=${(score * 100).toStringAsFixed(0)}% reasons=$reasons",
+          transcript.isEmpty
+              ? 'Analyse IA terminée. Vérifiez les champs.'
+              : 'Transcription IA appliquée ($qualityPct%). Vérifiez les champs avant publication.',
         );
       }
-
-      // Note: nettoyage local non applicable ici (XFile)
     } catch (e, st) {
-      await trace('error', {
-        'path': audioPath,
+      await trace('${flow}_error', {
         'error': e.toString(),
       });
       await CrashlyticsContext.recordError(
         e is Exception ? e : Exception(e.toString()),
         st,
-        reason: 'Upload/transcribe failed',
+        reason: 'Recorded audio processing failed',
         fatal: false,
         keys: {
           'component': 'PublishOfferPage',
-          'flow': 'uploadAndTranscribe',
+          'flow': flow,
         },
       );
-      if (mounted) {
-        if (isTimeoutError(e)) {
-          showTimeoutSnackBar(context);
-        } else {
-          showSuccessSnackBar(context, "Erreur Premium IA : $e");
-        }
-      }
+      rethrow;
     } finally {
       if (mounted) setState(() => _aiLoading = false);
     }
@@ -727,38 +796,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
               children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kPrestoBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                AnimatedBuilder(
+                  animation: _recordingPulseController,
+                  builder: (context, _) => _MicButton(
+                    listening: _recording,
+                    loading: _aiLoading,
+                    pulseValue: _recordingPulseController.value,
                     onPressed: _aiLoading ? null : _togglePremiumRecording,
-                    icon: _aiLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : Icon(
-                            _recording ? Icons.stop_circle : Icons.mic_rounded),
-                    label: Text(
-                      _aiLoading
-                          ? "Analyse en cours..."
-                          : (_recording
-                              ? "Arrêter l'enregistrement"
-                              : "Décrivez votre besoin"),
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -791,40 +835,21 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      // Bouton Premium avec enregistrement audio (Mobile uniquement)
-                      if (!kIsWeb) ...[
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: (_aiLoading || _recording)
-                                ? null
-                                : _togglePremiumRecording,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: kPrestoOrange,
-                              foregroundColor: Colors.white,
-                            ),
-                            icon: _recording
-                                ? const Icon(Icons.stop_circle,
-                                    color: Colors.white)
-                                : const Icon(Icons.mic, color: Colors.white),
-                            label: Text(_recording
-                                ? "Arrêter l'enregistrement"
-                                : "🎙️ Premium (Audio)"),
-                          ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: (_aiLoading || _recording)
+                              ? null
+                              : _onFillWithAI,
+                          icon: const Icon(Icons.auto_awesome_rounded),
+                          label: const Text('Remplir à partir du texte'),
                         ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          "Premium : Transcription Chirp 3 + Rédaction IA avancée. Téléphone et budget restent à saisir manuellement.",
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
-                      ],
-                      if (kIsWeb) ...[
-                        const SizedBox(height: 6),
-                        const Text(
-                          "📱 L'enregistrement audio Premium est disponible sur l'app mobile. Téléphone et budget restent à saisir manuellement.",
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
-                      ],
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        "Parlez avec le bouton au-dessus ou saisissez quelques précisions ici. L'IA complète le titre, la description, la catégorie, la ville, le code postal et le budget quand il est clairement détecté.",
+                        style: TextStyle(fontSize: 12, color: Colors.black54),
+                      ),
                     ],
                   ),
                 ),
@@ -970,63 +995,157 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 // ignore: unused_element
 class _MicButton extends StatelessWidget {
   final bool listening;
-  final VoidCallback onTap;
+  final bool loading;
+  final double pulseValue;
+  final VoidCallback? onPressed;
 
   const _MicButton({
     required this.listening,
-    required this.onTap,
+    required this.loading,
+    required this.pulseValue,
+    required this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Material(
-          color: listening ? kPrestoOrange : kPrestoBlue,
-          shape: const CircleBorder(),
-          elevation: 4,
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onTap,
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: listening
-                    ? null
-                    : const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [kPrestoBlue, Color(0xFF0D47A1)],
+    final isEnabled = onPressed != null;
+    final baseColor = listening ? const Color(0xFFD72638) : kPrestoBlue;
+    final glowColor = listening ? const Color(0xFFFF7A7A) : kPrestoBlue;
+    final title = loading
+        ? 'Analyse en cours...'
+        : (listening ? 'Stop' : 'Décrire mon besoin (IA)');
+    final subtitle = loading
+        ? 'Transcription et remplissage de l’annonce'
+        : (listening
+            ? 'Parlez maintenant puis appuyez sur stop'
+            : 'Touchez pour lancer l’enregistrement vocal');
+
+    return SizedBox(
+      height: 92,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          if (listening) ...[
+            Transform.scale(
+              scale: 1.0 + (pulseValue * 0.18),
+              child: Container(
+                height: 80,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  color: glowColor.withAlpha(40),
+                ),
+              ),
+            ),
+            Transform.scale(
+              scale: 1.0 + (pulseValue * 0.32),
+              child: Container(
+                height: 80,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  color: glowColor.withAlpha(18),
+                ),
+              ),
+            ),
+          ],
+          Opacity(
+            opacity: isEnabled ? 1 : 0.65,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(24),
+                onTap: onPressed,
+                child: Ink(
+                  height: 80,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: listening
+                          ? const [Color(0xFFE53935), Color(0xFFB71C1C)]
+                          : const [kPrestoBlue, Color(0xFF0D47A1)],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: baseColor.withAlpha(45),
+                        blurRadius: 18,
+                        offset: const Offset(0, 10),
                       ),
-              ),
-              child: Icon(
-                listening ? Icons.stop_rounded : Icons.mic_rounded,
-                color: Colors.white,
-                size: 30,
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 14),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withAlpha(28),
+                          ),
+                          child: loading
+                              ? const Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                )
+                              : Icon(
+                                  listening
+                                      ? Icons.stop_circle_rounded
+                                      : Icons.mic_rounded,
+                                  color: Colors.white,
+                                  size: 26,
+                                ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                subtitle,
+                                style: TextStyle(
+                                  color: Colors.white.withAlpha(220),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          listening
+                              ? Icons.radio_button_checked_rounded
+                              : Icons.graphic_eq_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: listening ? kPrestoOrange : kPrestoBlue,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            listening ? 'STOP' : 'IA 🎤',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
