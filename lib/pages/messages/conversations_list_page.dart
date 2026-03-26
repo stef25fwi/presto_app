@@ -256,7 +256,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         body: Stack(
           children: [
             _buildWatermark(),
-            _buildEmptyState('Connectez-vous pour accéder à vos conversations.'),
+            _buildEmptyState('Connectez-vous pour accéder à la messagerie.'),
           ],
         ),
       );
@@ -365,7 +365,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                     }).toList(growable: false);
 
                     if (filteredDocs.isEmpty) {
-                      return _buildEmptyState('Aucune conversation');
+                      return _buildEmptyState('Pas de conversation en cours.');
                     }
 
                     return ListView.builder(

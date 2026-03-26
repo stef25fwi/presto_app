@@ -1242,6 +1242,8 @@ class _HomePageState extends State<HomePage>
   ];
 
   late int _selectedIndex;
+  String? _consultCategoryFilter;
+  String? _consultSearchQuery;
   final PageController _carouselController = PageController();
   final ScrollController _scrollController = ScrollController();
   int _currentSlide = 0;
@@ -1337,28 +1339,22 @@ class _HomePageState extends State<HomePage>
     // ✅ Log la recherche
     _logSearch(q);
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => HomePage(
-          initialIndex: 1,
-          initialConsultSearchQuery: q,
-        ),
-      ),
-    );
+    setState(() {
+      _consultCategoryFilter = null;
+      _consultSearchQuery = q;
+      _selectedIndex = 1;
+    });
   }
 
   void _goToCategoryOffers(String category) {
     final normalizedCategory = category.trim();
     if (normalizedCategory.isEmpty) return;
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => HomePage(
-          initialIndex: 1,
-          initialConsultCategoryFilter: normalizedCategory,
-        ),
-      ),
-    );
+    setState(() {
+      _consultCategoryFilter = normalizedCategory;
+      _consultSearchQuery = null;
+      _selectedIndex = 1;
+    });
   }
 
   /// ✅ Enregistre la recherche effectuée
@@ -1395,6 +1391,8 @@ class _HomePageState extends State<HomePage>
     SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
 
     _selectedIndex = widget.initialIndex;
+    _consultCategoryFilter = widget.initialConsultCategoryFilter;
+    _consultSearchQuery = widget.initialConsultSearchQuery;
     _sessionStartTime = DateTime.now();
     WidgetsBinding.instance.addObserver(this);
 
@@ -1552,6 +1550,17 @@ class _HomePageState extends State<HomePage>
         debugPrint('Dynamic keywords stream error: $e');
       },
     );
+  }
+
+  @override
+  void didUpdateWidget(covariant HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.initialConsultCategoryFilter != oldWidget.initialConsultCategoryFilter ||
+        widget.initialConsultSearchQuery != oldWidget.initialConsultSearchQuery) {
+      _consultCategoryFilter = widget.initialConsultCategoryFilter;
+      _consultSearchQuery = widget.initialConsultSearchQuery;
+    }
   }
 
   @override
@@ -2224,10 +2233,12 @@ class _HomePageState extends State<HomePage>
                           children: [
                             _buildHomeContent(),
                             ConsultOffersPage(
+                              key: ValueKey<String>(
+                                'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
+                              ),
                               onScroll: _onPageScroll,
-                              categoryFilter:
-                                  widget.initialConsultCategoryFilter,
-                              searchQuery: widget.initialConsultSearchQuery,
+                              categoryFilter: _consultCategoryFilter,
+                              searchQuery: _consultSearchQuery,
                             ),
                             PublishOfferPage(onScroll: _onPageScroll),
                             const MessagesPage(),
