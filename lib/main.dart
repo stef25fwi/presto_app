@@ -2582,11 +2582,11 @@ class _HomePageState extends State<HomePage>
                 ),
                 const SizedBox(height: 12),
 
-                _buildLatestOffersSection(),
+                _buildHomeCategoriesSection(),
 
                 const SizedBox(height: 18),
 
-                _buildHomeCategoriesSection(),
+                _buildLatestOffersSection(),
 
                 const SizedBox(height: 20),
               ],
@@ -10002,6 +10002,15 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   String? _error;
   String? _selectedOfferId;
 
+  bool _isPermissionDeniedError(Object error) {
+    if (error is FirebaseException) {
+      return error.code == 'permission-denied';
+    }
+
+    final text = error.toString().toLowerCase();
+    return text.contains('permission-denied') || text.contains('permission denied');
+  }
+
   bool _isOfferPublished(Map<String, dynamic> data) {
     final isPublished = data['isPublished'];
     if (isPublished is bool && isPublished) return true;
@@ -10033,6 +10042,24 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     return v.isEmpty ? 'Catégorie non précisée' : v;
   }
 
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _loadOffersByOwnerField(
+    String field,
+  ) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('offers')
+          .where(field, isEqualTo: widget.userId)
+          .limit(120)
+          .get();
+      return snapshot.docs;
+    } on FirebaseException catch (e) {
+      if (_isPermissionDeniedError(e)) {
+        return const [];
+      }
+      rethrow;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -10051,27 +10078,23 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
 
     try {
-      final col = FirebaseFirestore.instance.collection('offers');
+      final snapshots = await Future.wait([
+        _loadOffersByOwnerField('userId'),
+        _loadOffersByOwnerField('uid'),
+        _loadOffersByOwnerField('ownerId'),
+      ]);
 
-      // ✅ Compat schémas: userId / ownerId / uid.
-      // On évite 3 requêtes séquentielles (et les cas où l'utilisateur a des
-      // docs répartis sur plusieurs champs) en utilisant un OR + tri client.
-      final snapshot = await col
-          .where(
-            Filter.or(
-              Filter('userId', isEqualTo: widget.userId),
-              Filter('ownerId', isEqualTo: widget.userId),
-              Filter('uid', isEqualTo: widget.userId),
-            ),
-          )
-          .limit(200)
-          .get();
+      final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+      for (final docs in snapshots) {
+        for (final doc in docs) {
+          byId[doc.id] = doc;
+        }
+      }
 
-      final docs = snapshot.docs
+      final docs = byId.values
           .where((d) => _isOfferPublished(d.data()))
-          .toList();
+          .toList(growable: false);
 
-      // Trie côté client pour éviter un index composite (where + orderBy).
       docs.sort((a, b) {
         final ta = a.data()['createdAt'];
         final tb = b.data()['createdAt'];
@@ -10094,7 +10117,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = _isPermissionDeniedError(e)
+            ? 'Vos annonces publiées sont momentanément indisponibles.'
+            : 'Impossible de charger vos annonces pour le moment.';
         _isLoading = false;
       });
     }
@@ -10118,15 +10143,44 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     }
 
     if (_error != null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(
-          "Erreur lors du chargement de vos annonces.\n$_error",
-          style: const TextStyle(
-            color: Colors.red,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red.shade50,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.red.shade100),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Mes annonces publiées',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _error!,
+              style: TextStyle(
+                color: Colors.red.shade700,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton(
+              onPressed: () {
+                setState(() {
+                  _isLoading = true;
+                  _error = null;
+                });
+                _loadOffers();
+              },
+              child: const Text('Réessayer'),
+            ),
+          ],
         ),
       );
     }
@@ -10134,9 +10188,14 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     final docs = _offers ?? [];
 
     if (docs.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Text(
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black.withOpacity(0.06)),
+        ),
+        child: const Text(
           "Tu n’as pas encore publié d’annonce.",
           style: TextStyle(
             fontSize: 13,
