@@ -1264,7 +1264,6 @@ class _HomePageState extends State<HomePage>
 
   /// Chargement figé à l'ouverture de la home pour stabiliser la section.
   late final Future<QuerySnapshot<Map<String, dynamic>>> _latestOffersFuture;
-  late final Future<List<_HomeCategoryShortcut>> _homeCategoryShortcutsFuture;
 
   /// Slogans animés (fade + slide) pour le 1er slide
   final List<String> _firstSlideSlogans = const [
@@ -1435,8 +1434,6 @@ class _HomePageState extends State<HomePage>
 
     _listenDynamicKeywords();
 
-    _homeCategoryShortcutsFuture = _loadHomeCategoryShortcuts();
-
     _latestOffersFuture = FirebaseFirestore.instance
         .collection('offers')
         .where(_publicOffersFilter())
@@ -1590,173 +1587,56 @@ class _HomePageState extends State<HomePage>
     return 1.0;
   }
 
-  List<_HomeCategoryShortcut> _availableCategoryShortcuts(
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
-  ) {
-    final publishedCategories = <String>{};
-    for (final doc in docs) {
-      final category = (canonicalizeOfferCategory(
-                (doc.data()['category'] ?? '').toString(),
-              ) ??
-              '')
-          .trim();
-      if (category.isNotEmpty) {
-        publishedCategories.add(category);
-      }
-    }
+  Widget _buildHomeCategoriesSection() {
+    const compactTargets = <String>[
+      'Jardinage',
+      'Peinture',
+      'Main-d\'œuvre',
+      'Autre',
+      'Garde d\'enfants',
+      'Événementiel / DJ',
+    ];
 
-    return _homeCategoryShortcuts
-        .where((item) => publishedCategories.contains(item.targetCategory))
+    final compactCategories = compactTargets
+        .map(
+          (target) => _homeCategoryShortcuts.firstWhere(
+            (item) => item.targetCategory == target,
+          ),
+        )
         .toList(growable: false);
-  }
 
-  Future<List<_HomeCategoryShortcut>> _loadHomeCategoryShortcuts() async {
-    try {
-      final snap = await FirebaseFirestore.instance
-          .collection('offers')
-          .where(_publicOffersFilter())
-          .orderBy('createdAt', descending: true)
-          .limit(120)
-          .get();
-
-      final docs = snap.docs
-          .where((doc) => _isPublishedOfferData(doc.data()))
-          .toList(growable: false);
-      return _availableCategoryShortcuts(docs);
-    } catch (e) {
-      debugPrint('Home categories load error: $e');
-      return const [];
-    }
-  }
-
-  Widget _buildCategorySectionPlaceholder() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: List.generate(5, (index) {
-          return Padding(
-            padding: EdgeInsets.only(right: index == 4 ? 0 : 8),
-            child: Column(
-              children: [
-                Container(
-                  width: 62,
-                  height: 62,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+    return AnimatedBuilder(
+      animation: _categoryController,
+      builder: (context, child) {
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (var index = 0; index < compactCategories.length; index++) ...[
+                if (index > 0) const SizedBox(width: 6),
+                _CategoryChip(
+                  icon: compactCategories[index].icon,
+                  label: compactCategories[index].label,
+                  iconScale: _categoryScaleForIndex(
+                    index,
+                    count: compactCategories.length,
                   ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  width: 72,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(999),
+                  onTap: () => _goToCategoryOffers(
+                    compactCategories[index].targetCategory,
                   ),
                 ),
               ],
-            ),
-          );
-        }),
-      ),
-    );
-  }
-
-  Widget _buildHomeCategoriesSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(10, 12, 10, 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'Catégories actives',
-            style: kPrestoSectionTitleStyle,
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Affichées uniquement si des annonces sont publiées.',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.black54,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 104,
-            child: FutureBuilder<List<_HomeCategoryShortcut>>(
-              future: _homeCategoryShortcutsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return _buildCategorySectionPlaceholder();
-                }
-
-                final shortcuts = snapshot.data ?? const <_HomeCategoryShortcut>[];
-                if (shortcuts.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'Aucune catégorie publiée pour le moment.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  );
-                }
-
-                return AnimatedBuilder(
-                  animation: _categoryController,
-                  builder: (context, child) {
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          for (var index = 0; index < shortcuts.length; index++) ...[
-                            if (index > 0) const SizedBox(width: 8),
-                            _CategoryChip(
-                              icon: shortcuts[index].icon,
-                              label: shortcuts[index].label,
-                              iconScale: _categoryScaleForIndex(
-                                index,
-                                count: shortcuts.length,
-                              ),
-                              onTap: () => _goToCategoryOffers(
-                                shortcuts[index].targetCategory,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildLatestOffersSection() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 18),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -1775,7 +1655,10 @@ class _HomePageState extends State<HomePage>
             children: [
               const Text(
                 'Dernières offres',
-                style: kPrestoSectionTitleStyle,
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
               const Spacer(),
               TextButton(
@@ -1791,13 +1674,13 @@ class _HomePageState extends State<HomePage>
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
             future: _latestOffersFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                return const SizedBox(
-                  height: 138,
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 10),
                   child: Center(
                     child: CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
@@ -1812,7 +1695,6 @@ class _HomePageState extends State<HomePage>
 
               final docs = (snapshot.data?.docs ?? const <QueryDocumentSnapshot<Map<String, dynamic>>>[])
                   .where((doc) => _isPublishedOfferData(doc.data()))
-                  .take(5)
                   .toList(growable: false);
 
               if (docs.isNotEmpty) {
@@ -1825,7 +1707,9 @@ class _HomePageState extends State<HomePage>
                 return const Text(
                   'Aucune offre publiée pour le moment.',
                   style: TextStyle(
+                    fontSize: 13,
                     color: Colors.black54,
+                    fontWeight: FontWeight.w500,
                   ),
                 );
               }
@@ -2698,11 +2582,11 @@ class _HomePageState extends State<HomePage>
                 ),
                 const SizedBox(height: 12),
 
-                _buildHomeCategoriesSection(),
+                _buildLatestOffersSection(),
 
                 const SizedBox(height: 18),
 
-                _buildLatestOffersSection(),
+                _buildHomeCategoriesSection(),
 
                 const SizedBox(height: 20),
               ],
@@ -10603,50 +10487,65 @@ class _AutoScrollingOffersCarousel extends StatefulWidget {
 }
 
 class _AutoScrollingOffersCarouselState
-    extends State<_AutoScrollingOffersCarousel> {
-  final PageController _pageController = PageController(viewportFraction: 0.94);
-  Timer? _autoScrollTimer;
+    extends State<_AutoScrollingOffersCarousel>
+    with SingleTickerProviderStateMixin {
+  final ScrollController _scrollController = ScrollController();
+  late final AnimationController _scrollTicker;
   bool _isHovered = false;
-  int _currentIndex = 0;
+  Duration _lastElapsed = Duration.zero;
+  static const double _pixelsPerSecond = 44.0;
 
   @override
   void initState() {
     super.initState();
-    _startAutoScroll();
+    _scrollTicker = AnimationController.unbounded(vsync: this)
+      ..addListener(_onTick)
+      ..repeat(min: 0, max: 1, period: const Duration(seconds: 1));
   }
 
   @override
   void didUpdateWidget(covariant _AutoScrollingOffersCarousel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.offers.length != widget.offers.length) {
-      _currentIndex = 0;
-      if (_pageController.hasClients) {
-        _pageController.jumpToPage(0);
+      _lastElapsed = Duration.zero;
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0);
       }
-      _startAutoScroll();
     }
   }
 
   @override
   void dispose() {
-    _autoScrollTimer?.cancel();
-    _pageController.dispose();
+    _scrollTicker
+      ..removeListener(_onTick)
+      ..dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  void _startAutoScroll() {
-    _autoScrollTimer?.cancel();
-    if (widget.offers.length < 2) return;
+  void _onTick() {
+    if (_isHovered || !_scrollController.hasClients) return;
 
-    _autoScrollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (_isHovered || !_pageController.hasClients) return;
-      _currentIndex = (_currentIndex + 1) % widget.offers.length;
-      _pageController.animateToPage(
-        _currentIndex,
-        duration: const Duration(milliseconds: 420),
-        curve: Curves.easeInOutCubic,
-      );
-    });
+    final elapsed = _scrollTicker.lastElapsedDuration;
+    if (elapsed == null) return;
+
+    final dtMs = (elapsed - _lastElapsed).inMilliseconds;
+    _lastElapsed = elapsed;
+    if (dtMs <= 0) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    if (maxScroll <= 0) return;
+
+    final loopPoint = maxScroll / 2;
+    if (loopPoint <= 0) return;
+
+    final delta = _pixelsPerSecond * (dtMs / 1000.0);
+    var next = _scrollController.offset + delta;
+    if (next >= loopPoint) {
+      next -= loopPoint;
+    }
+
+    _scrollController.jumpTo(next);
   }
 
   String _labelWhenFromTitle(String title) {
@@ -10693,6 +10592,7 @@ class _AutoScrollingOffersCarouselState
     return GestureDetector(
       onTap: () => widget.onOfferTap?.call(doc),
       child: Container(
+        width: 280,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -10704,14 +10604,11 @@ class _AutoScrollingOffersCarouselState
             ),
           ],
         ),
-        padding: const EdgeInsets.fromLTRB(
-          12,
-          6,
-          12,
-          10,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 8,
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               width: 36,
@@ -10769,51 +10666,20 @@ class _AutoScrollingOffersCarouselState
 
   @override
   Widget build(BuildContext context) {
+    final duplicatedOffers = [...widget.offers, ...widget.offers];
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            height: 70,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: widget.offers.length,
-              onPageChanged: (index) {
-                if (!mounted) return;
-                setState(() => _currentIndex = index);
-              },
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: _buildOfferCard(widget.offers[index]),
-                );
-              },
-            ),
-          ),
-          if (widget.offers.length > 1) ...[
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                widget.offers.length,
-                (index) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: _currentIndex == index ? 16 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: _currentIndex == index
-                        ? kPrestoOrange
-                        : const Color(0xFFD1D5DB),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ],
+      child: SizedBox(
+        height: 60,
+        child: ListView.separated(
+          controller: _scrollController,
+          scrollDirection: Axis.horizontal,
+          itemCount: duplicatedOffers.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (_, index) => _buildOfferCard(duplicatedOffers[index]),
+        ),
       ),
     );
   }
