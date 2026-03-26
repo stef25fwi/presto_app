@@ -5269,12 +5269,33 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    )..repeat(reverse: true);
+      duration: const Duration(milliseconds: 2200),
+    );
     _pulse = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeInOut,
+      curve: Curves.easeInOutCubic,
     );
+    _syncUrgentAnimation();
+  }
+
+  @override
+  void didUpdateWidget(covariant _OfferBrowseTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.data.isUrgent != widget.data.isUrgent) {
+      _syncUrgentAnimation();
+    }
+  }
+
+  void _syncUrgentAnimation() {
+    if (widget.data.isUrgent) {
+      if (!_controller.isAnimating) {
+        _controller.repeat(reverse: true);
+      }
+      return;
+    }
+
+    _controller.stop();
+    _controller.value = 0;
   }
 
   @override
@@ -5292,7 +5313,8 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
       animation: _controller,
       builder: (context, _) {
         final showUrgentContour = widget.data.isUrgent;
-        final pulse = _pulse.value;
+        final pulse = showUrgentContour ? _pulse.value : 0.0;
+        final blink = 0.32 + (0.68 * pulse);
 
         return Material(
           color: Colors.transparent,
@@ -5309,13 +5331,13 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                         end: Alignment.bottomRight,
                         colors: [
                           const Color(0xFF9CDEFF).withValues(
-                            alpha: 0.56 + (0.14 * pulse),
+                            alpha: 0.24 + (0.34 * blink),
                           ),
                           const Color(0xFF1A73E8).withValues(
-                            alpha: 0.84 + (0.10 * pulse),
+                            alpha: 0.34 + (0.50 * blink),
                           ),
                           const Color(0xFF5FB4FF).withValues(
-                            alpha: 0.60 + (0.14 * pulse),
+                            alpha: 0.26 + (0.38 * blink),
                           ),
                         ],
                       )
@@ -5338,25 +5360,25 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                   if (showUrgentContour)
                     BoxShadow(
                       color: const Color(0xFF1A73E8).withValues(
-                        alpha: 0.10 + (0.12 * pulse),
+                        alpha: 0.05 + (0.20 * blink),
                       ),
-                      blurRadius: 14 + (8 * pulse),
-                      spreadRadius: 0.5 + (0.7 * pulse),
+                      blurRadius: 10 + (12 * blink),
+                      spreadRadius: 0.2 + (1.0 * blink),
                       offset: const Offset(0, 0),
                     ),
                 ],
               ),
               child: Padding(
-                padding: EdgeInsets.all(showUrgentContour ? 1.5 : 0),
+                padding: EdgeInsets.all(showUrgentContour ? 1.6 + (0.6 * pulse) : 0),
                 child: Ink(
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.96),
                     borderRadius: BorderRadius.circular(innerRadius),
                     border: Border.all(
                       color: showUrgentContour
-                          ? Colors.white.withValues(alpha: 0.78)
+                          ? Colors.white.withValues(alpha: 0.72 + (0.14 * pulse))
                           : _ConsultOffersPageState._offersCardBorder,
-                      width: showUrgentContour ? 0.8 : 1,
+                      width: showUrgentContour ? 0.9 + (0.2 * pulse) : 1,
                     ),
                   ),
                   child: Padding(

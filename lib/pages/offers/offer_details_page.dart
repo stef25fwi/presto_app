@@ -645,6 +645,12 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                     compact: isCompactMobile,
                     onContactTap: () => _showContactOptionsSheet(context, data),
                   ),
+                  SizedBox(height: sectionGap),
+                  _AdvertiserContactCard(
+                    data: data,
+                    compact: isCompactMobile,
+                    onContactTap: () => _showContactOptionsSheet(context, data),
+                  ),
                 ],
               ),
             ),
@@ -1074,47 +1080,6 @@ class _HeroCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                if (data.isUrgent)
-                  Container(
-                    height: 28,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(999),
-                      gradient: const LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [Color(0xFFFFA43A), Color(0xFFFF6A00)],
-                      ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x2EFF8A00),
-                          blurRadius: 12,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(
-                          Icons.priority_high_rounded,
-                          size: 13,
-                          color: Colors.white,
-                        ),
-                        SizedBox(width: 5),
-                        Text(
-                          'URGENT',
-                          style: TextStyle(
-                            fontSize: 11,
-                            height: 1,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 const Spacer(),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -1130,7 +1095,16 @@ class _HeroCard extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: compact ? 6 : 8),
-                    _DelayBadge(text: data.averageDelay, compact: compact),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _DelayBadge(text: data.averageDelay, compact: compact),
+                        if (data.isUrgent) ...[
+                          SizedBox(width: compact ? 6 : 8),
+                          _UrgentBadge(compact: compact),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
               ],
@@ -1294,22 +1268,6 @@ class _PracticalInfoCard extends StatelessWidget {
                     value: data.advertiserName,
                     compact: compact,
                   ),
-                  _AdvertiserMetaLine(
-                    advertiserRating: data.advertiserRating,
-                    advertiserReviewCount: data.advertiserReviewCount,
-                    verified: data.verified,
-                    compact: compact,
-                  ),
-                  _MaskedPhoneInfoLine(
-                    phone: data.phone,
-                    compact: compact,
-                  ),
-                  SizedBox(height: compact ? 12 : 14),
-                  _InlineCta(
-                    label: 'Proposer mes services',
-                    compact: compact,
-                    onTap: onContactTap,
-                  ),
                   SizedBox(height: compact ? 12 : 14),
                   Row(
                     children: [
@@ -1335,6 +1293,173 @@ class _PracticalInfoCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AdvertiserContactCard extends StatelessWidget {
+  final _OfferUiData data;
+  final bool compact;
+  final VoidCallback onContactTap;
+
+  const _AdvertiserContactCard({
+    required this.data,
+    this.compact = false,
+    required this.onContactTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const blueSoft = Color(0xFFDCEBFF);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(compact ? 28 : 32),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF9B8E86).withOpacity(0.10),
+            blurRadius: compact ? 18 : 22,
+            offset: Offset(0, compact ? 8 : 10),
+          ),
+          BoxShadow(
+            color: blueSoft.withOpacity(0.55),
+            blurRadius: compact ? 15 : 18,
+            spreadRadius: 1,
+            offset: Offset(0, compact ? 11 : 14),
+          ),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFFBFAFA),
+          borderRadius: BorderRadius.circular(compact ? 20 : 24),
+        ),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            compact ? 14 : 18,
+            compact ? 12 : 16,
+            compact ? 14 : 18,
+            compact ? 14 : 18,
+          ),
+          child: Column(
+            children: [
+              _AdvertiserHeaderLine(
+                advertiserName: data.advertiserName,
+                verified: data.verified,
+                compact: compact,
+              ),
+              _AdvertiserMetaLine(
+                advertiserRating: data.advertiserRating,
+                advertiserReviewCount: data.advertiserReviewCount,
+                verified: data.verified,
+                compact: compact,
+              ),
+              _MaskedPhoneInfoLine(
+                phone: data.phone,
+                compact: compact,
+              ),
+              SizedBox(height: compact ? 12 : 14),
+              _InlineCta(
+                label: 'Proposer mes services',
+                compact: compact,
+                onTap: onContactTap,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AdvertiserHeaderLine extends StatelessWidget {
+  final String advertiserName;
+  final bool verified;
+  final bool compact;
+
+  const _AdvertiserHeaderLine({
+    required this.advertiserName,
+    required this.verified,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const navy = Color(0xFF18233D);
+    const muted = Color(0xFF6F7282);
+    const green = Color(0xFF45B36B);
+    const line = Color(0xFFE6E3E6);
+
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: compact ? 10 : 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: compact ? 34 : 38,
+                height: compact ? 34 : 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF2F7),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Icon(
+                  Icons.person_outline_rounded,
+                  size: compact ? 20 : 22,
+                  color: navy,
+                ),
+              ),
+              SizedBox(width: compact ? 10 : 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Annonceur',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: muted,
+                        fontSize: compact ? 14 : 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: compact ? 2 : 3),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            advertiserName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: navy,
+                              fontSize: compact ? 16 : 17,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.15,
+                            ),
+                          ),
+                        ),
+                        if (verified) ...[
+                          SizedBox(width: compact ? 6 : 8),
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: compact ? 16 : 18,
+                            color: green,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1, thickness: 1, color: line),
+      ],
     );
   }
 }
@@ -1674,6 +1799,56 @@ class _DelayBadge extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _UrgentBadge extends StatelessWidget {
+  final bool compact;
+
+  const _UrgentBadge({this.compact = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: compact ? 26 : 28,
+      padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Color(0xFFFFA43A), Color(0xFFFF6A00)],
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x2EFF8A00),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.priority_high_rounded,
+            size: compact ? 12 : 13,
+            color: Colors.white,
+          ),
+          SizedBox(width: compact ? 4 : 5),
+          Text(
+            'URGENT',
+            style: TextStyle(
+              fontSize: compact ? 10.5 : 11,
+              height: 1,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: 0.2,
+            ),
+          ),
         ],
       ),
     );
