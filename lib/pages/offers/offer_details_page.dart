@@ -653,7 +653,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         backgroundColor: _headerOrange,
         foregroundColor: Colors.white,
         elevation: 0,
-        centerTitle: false,
+        centerTitle: true,
         titleSpacing: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(

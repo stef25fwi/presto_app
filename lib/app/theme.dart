@@ -14,7 +14,7 @@ ThemeData buildPrestoTheme() {
     ),
     appBarTheme: AppBarTheme(
       elevation: 0,
-      centerTitle: false,
+      centerTitle: true,
       foregroundColor: Colors.white,
       titleTextStyle: kPrestoAppBarTitleStyle.copyWith(color: Colors.white),
       toolbarTextStyle: kPrestoBodyTextStyle.copyWith(color: Colors.white),
