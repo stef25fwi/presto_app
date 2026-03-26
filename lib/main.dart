@@ -5269,12 +5269,28 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1450),
+      duration: const Duration(milliseconds: 920),
     );
-    _pulse = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOutCubicEmphasized,
-    );
+    _pulse = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.0, end: 1.0).chain(
+          CurveTween(curve: Curves.easeOutCubic),
+        ),
+        weight: 42,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 0.18).chain(
+          CurveTween(curve: Curves.easeInCubic),
+        ),
+        weight: 26,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.18, end: 0.78).chain(
+          CurveTween(curve: Curves.easeOutBack),
+        ),
+        weight: 32,
+      ),
+    ]).animate(_controller);
     _syncUrgentAnimation();
   }
 
@@ -5289,7 +5305,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
   void _syncUrgentAnimation() {
     if (widget.data.isUrgent) {
       if (!_controller.isAnimating) {
-        _controller.repeat(reverse: true);
+        _controller.repeat();
       }
       return;
     }
@@ -5318,11 +5334,13 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
 
   Widget _buildTileFrame({required double pulse}) {
     const outerRadius = 24.0;
-    const innerRadius = 22.0;
-    const contourInset = 1.8;
 
     final showUrgentContour = widget.data.isUrgent;
-    final blink = 0.14 + (0.86 * pulse);
+    final blink = pulse.clamp(0.0, 1.0);
+    final urgentBorderWidth = 3.6 + (1.4 * blink);
+    final urgentBorderColor = const Color(0xFF1A73E8).withValues(
+      alpha: 0.48 + (0.44 * blink),
+    );
 
     return RepaintBoundary(
       child: Material(
@@ -5333,33 +5351,14 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
           onTap: widget.onTap,
           child: Ink(
             decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.98),
               borderRadius: BorderRadius.circular(outerRadius),
-              gradient: showUrgentContour
-                  ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFF9CDEFF).withValues(
-                          alpha: 0.08 + (0.50 * blink),
-                        ),
-                        const Color(0xFF1A73E8).withValues(
-                          alpha: 0.16 + (0.74 * blink),
-                        ),
-                        const Color(0xFF5FB4FF).withValues(
-                          alpha: 0.10 + (0.58 * blink),
-                        ),
-                      ],
-                    )
-                  : null,
-              color: showUrgentContour
-                  ? null
-                  : Colors.white.withValues(alpha: 0.96),
-              border: showUrgentContour
-                  ? null
-                  : Border.all(
-                      color: _ConsultOffersPageState._offersCardBorder,
-                      width: 1,
-                    ),
+              border: Border.all(
+                color: showUrgentContour
+                    ? urgentBorderColor
+                    : _ConsultOffersPageState._offersCardBorder,
+                width: showUrgentContour ? urgentBorderWidth : 1,
+              ),
               boxShadow: [
                 const BoxShadow(
                   color: Color(0x0C000000),
@@ -5369,116 +5368,92 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                 if (showUrgentContour)
                   BoxShadow(
                     color: const Color(0xFF1A73E8).withValues(
-                      alpha: 0.10 + (0.26 * blink),
+                      alpha: 0.05 + (0.08 * blink),
                     ),
-                    blurRadius: 14 + (18 * blink),
-                    spreadRadius: 0.6 + (1.4 * blink),
-                    offset: const Offset(0, 0),
-                  ),
-                if (showUrgentContour)
-                  BoxShadow(
-                    color: const Color(0xFF82D3FF).withValues(
-                      alpha: 0.05 + (0.18 * blink),
-                    ),
-                    blurRadius: 6 + (10 * blink),
-                    spreadRadius: 0.1 + (0.7 * blink),
+                    blurRadius: 10 + (6 * blink),
+                    spreadRadius: 0.1 + (0.5 * blink),
                     offset: const Offset(0, 0),
                   ),
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.all(contourInset),
-              child: Ink(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.96),
-                  borderRadius: BorderRadius.circular(innerRadius),
-                  border: Border.all(
-                    color: showUrgentContour
-                        ? Colors.white.withValues(alpha: 0.68 + (0.18 * blink))
-                        : _ConsultOffersPageState._offersCardBorder,
-                    width: 1,
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.data.title.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      height: 1.15,
+                      fontWeight: FontWeight.w700,
+                      color: _ConsultOffersPageState._offersNavy,
+                      letterSpacing: 0.15,
+                    ),
                   ),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 14),
+                  Text(
+                    widget.data.subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 1.0,
+                      fontWeight: FontWeight.w500,
+                      color: _ConsultOffersPageState._offersNavy.withValues(alpha: 0.82),
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        widget.data.title.toUpperCase(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          height: 1.15,
-                          fontWeight: FontWeight.w700,
-                          color: _ConsultOffersPageState._offersNavy,
-                          letterSpacing: 0.15,
+                      Expanded(
+                        child: Text(
+                          widget.data.publishedText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            height: 1.0,
+                            fontWeight: FontWeight.w500,
+                            color: _ConsultOffersPageState._offersSoftText,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 14),
-                      Text(
-                        widget.data.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1.0,
-                          fontWeight: FontWeight.w500,
-                          color: _ConsultOffersPageState._offersNavy.withValues(alpha: 0.82),
-                          letterSpacing: -0.1,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              widget.data.publishedText,
+                      const SizedBox(width: 12),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 148),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '${widget.data.price} €',
+                              textAlign: TextAlign.right,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 13,
+                                fontSize: 26,
                                 height: 1.0,
-                                fontWeight: FontWeight.w500,
-                                color: _ConsultOffersPageState._offersSoftText,
+                                fontWeight: FontWeight.w700,
+                                color: _ConsultOffersPageState._offersOrange,
+                                letterSpacing: -0.9,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 148),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  '${widget.data.price} €',
-                                  textAlign: TextAlign.right,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 26,
-                                    height: 1.0,
-                                    fontWeight: FontWeight.w700,
-                                    color: _ConsultOffersPageState._offersOrange,
-                                    letterSpacing: -0.9,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                _OfferMissionDelayChip(
-                                  label: widget.data.missionDelayLabel,
-                                ),
-                              ],
+                            const SizedBox(height: 8),
+                            _OfferMissionDelayChip(
+                              label: widget.data.missionDelayLabel,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
             ),
           ),
