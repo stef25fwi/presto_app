@@ -2192,19 +2192,6 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    final viewInsetsBottom = MediaQuery.of(context).viewInsets.bottom;
-    // Seuil de 10px pour éviter les faux positifs (résidus de padding)
-    final bool isKeyboardVisible = viewInsetsBottom > 10;
-
-    // Sur web/mobile, on évite de “doubler” le padding clavier sur les onglets
-    // qui gèrent déjà le clavier eux-mêmes (Compte, Publier, etc).
-    final bool shouldApplyKeyboardPadding = _selectedIndex == 0;
-
-    final double effectiveBottomInset =
-        (isKeyboardVisible && shouldApplyKeyboardPadding)
-            ? viewInsetsBottom
-            : 0;
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoBlue),
       child: GestureDetector(
@@ -2222,117 +2209,93 @@ class _HomePageState extends State<HomePage>
                 Expanded(
                   child: Stack(
                     children: [
-                      AnimatedPadding(
-                        duration: const Duration(milliseconds: 180),
-                        curve: Curves.easeOut,
-                        padding: EdgeInsets.only(
-                          bottom: effectiveBottomInset,
-                        ),
-                        child: IndexedStack(
-                          index: _selectedIndex,
-                          children: [
-                            _buildHomeContent(),
-                            ConsultOffersPage(
-                              key: ValueKey<String>(
-                                'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
-                              ),
-                              onScroll: _onPageScroll,
-                              categoryFilter: _consultCategoryFilter,
-                              searchQuery: _consultSearchQuery,
+                      IndexedStack(
+                        index: _selectedIndex,
+                        children: [
+                          _buildHomeContent(),
+                          ConsultOffersPage(
+                            key: ValueKey<String>(
+                              'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
                             ),
-                            PublishOfferPage(onScroll: _onPageScroll),
-                            const MessagesPage(),
-                            const AccountPage(),
-                          ],
-                        ),
+                            onScroll: _onPageScroll,
+                            categoryFilter: _consultCategoryFilter,
+                            searchQuery: _consultSearchQuery,
+                          ),
+                          PublishOfferPage(onScroll: _onPageScroll),
+                          const MessagesPage(),
+                          const AccountPage(),
+                        ],
                       ),
                       Positioned(
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Color(0xFF1A73E8),
-                                Color(0xFF0D47A1),
-                              ],
+                        child: MediaQuery.removeViewInsets(
+                          removeBottom: true,
+                          context: context,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(0xFF1A73E8),
+                                  Color(0xFF0D47A1),
+                                ],
+                              ),
+                              borderRadius:
+                                  BorderRadius.vertical(top: Radius.circular(24)),
                             ),
-                            borderRadius:
-                                BorderRadius.vertical(top: Radius.circular(24)),
-                          ),
-                          padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-                          child: SafeArea(
-                            top: false,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Expanded(
-                                  child: HomeBottomNavItem(
-                                    icon: Icons.home,
-                                    label: "Accueil",
-                                    selected: _selectedIndex == 0,
-                                    onTap: () => _onBottomTap(0),
+                            padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+                            child: SafeArea(
+                              top: false,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: HomeBottomNavItem(
+                                      icon: Icons.home,
+                                      label: "Accueil",
+                                      selected: _selectedIndex == 0,
+                                      onTap: () => _onBottomTap(0),
+                                    ),
                                   ),
-                                ),
-                                Expanded(
-                                  child: HomeBottomNavItem(
-                                    icon: Icons.search,
-                                    label: "Je consulte\nles offres",
-                                    selected: _selectedIndex == 1,
-                                    onTap: () => _onBottomTap(1),
+                                  Expanded(
+                                    child: HomeBottomNavItem(
+                                      icon: Icons.search,
+                                      label: "Je consulte\nles offres",
+                                      selected: _selectedIndex == 1,
+                                      onTap: () => _onBottomTap(1),
+                                    ),
                                   ),
-                                ),
-                                Expanded(
-                                  flex: 1,
-                                  child: HomeBottomNavItem(
-                                    icon: Icons.add_circle_outline,
-                                    label: "Publier\nune offre",
-                                    isBig: true,
-                                    onTap: () => _onBottomTap(2),
+                                  Expanded(
+                                    child: HomeBottomNavItem(
+                                      icon: Icons.add_circle_outline,
+                                      label: "Publier\nune offre",
+                                      isBig: true,
+                                      selected: _selectedIndex == 2,
+                                      onTap: () => _onBottomTap(2),
+                                    ),
                                   ),
-                                ),
-                                Expanded(
-                                  child: StreamBuilder<User?>(
-                                    stream: FirebaseAuth.instance
-                                        .authStateChanges(),
-                                    builder: (context, authSnapshot) {
-                                      final user = authSnapshot.data;
-                                      if (user == null) {
-                                        return HomeBottomNavItem(
-                                          icon: Icons.chat_bubble_outline,
-                                          label: "Messages",
-                                          selected: _selectedIndex == 3,
-                                          onTap: () => _onBottomTap(3),
-                                        );
-                                      }
-
-                                      return _UnreadInboxBell(
-                                        userId: user.uid,
-                                        builder: (context, badgeCount) =>
-                                            HomeBottomNavItem(
-                                          icon: Icons.chat_bubble_outline,
-                                          label: "Messages",
-                                          selected: _selectedIndex == 3,
-                                          badgeCount: badgeCount,
-                                          onTap: () => _onBottomTap(3),
-                                        ),
-                                      );
-                                    },
+                                  Expanded(
+                                    child: HomeBottomNavItem(
+                                      icon: Icons.chat_bubble_outline,
+                                      label: "Messages",
+                                      selected: _selectedIndex == 3,
+                                      onTap: () => _onBottomTap(3),
+                                    ),
                                   ),
-                                ),
-                                Expanded(
-                                  child: HomeBottomNavItem(
-                                    icon: Icons.person_outline,
-                                    label: "Compte",
-                                    selected: _selectedIndex == 4,
-                                    onTap: () => _onBottomTap(4),
+                                  Expanded(
+                                    child: HomeBottomNavItem(
+                                      icon: Icons.person_outline,
+                                      label: "Compte",
+                                      selected: _selectedIndex == 4,
+                                      onTap: () => _onBottomTap(4),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
