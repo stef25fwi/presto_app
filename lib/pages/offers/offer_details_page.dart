@@ -251,6 +251,16 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       builder: (sheetContext) {
+        Future<void> copyLink() async {
+          await Clipboard.setData(ClipboardData(text: offerUrl));
+          if (!sheetContext.mounted) return;
+          Navigator.of(sheetContext).pop();
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Lien de l\'annonce copié.')),
+          );
+        }
+
         Future<void> openInstagram() async {
           await Clipboard.setData(ClipboardData(text: shareText));
           if (!sheetContext.mounted) return;
@@ -280,17 +290,34 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: kPrestoSectionTitleStyle,
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  offerUrl,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6B7280),
+                    height: 1.35,
+                  ),
+                ),
                 const SizedBox(height: 14),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
+                GridView.count(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 14,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio: 0.8,
                   children: [
                     _ShareOptionTile(
-                        icon: const FaIcon(
-                          FontAwesomeIcons.whatsapp,
-                          color: Color(0xFF25D366),
-                          size: 24,
-                        ),
+                      icon: const FaIcon(
+                        FontAwesomeIcons.whatsapp,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                       label: 'WhatsApp',
                       color: const Color(0xFF25D366),
                       onTap: () async {
@@ -307,8 +334,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                     _ShareOptionTile(
                       icon: const FaIcon(
                         FontAwesomeIcons.facebookF,
-                        color: Color(0xFF1877F2),
-                        size: 24,
+                        color: Colors.white,
+                        size: 20,
                       ),
                       label: 'Facebook',
                       color: const Color(0xFF1877F2),
@@ -326,8 +353,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                     _ShareOptionTile(
                       icon: const FaIcon(
                         FontAwesomeIcons.instagram,
-                        color: Color(0xFFE1306C),
-                        size: 24,
+                        color: Colors.white,
+                        size: 22,
                       ),
                       label: 'Instagram',
                       color: const Color(0xFFE1306C),
@@ -336,8 +363,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                     _ShareOptionTile(
                       icon: const FaIcon(
                         FontAwesomeIcons.envelope,
-                        color: Color(0xFF0459D9),
-                        size: 24,
+                        color: Colors.white,
+                        size: 20,
                       ),
                       label: 'Mail',
                       color: const Color(0xFF0459D9),
@@ -355,6 +382,16 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                           errorMessage: 'Impossible d\'ouvrir l\'application mail.',
                         );
                       },
+                    ),
+                    _ShareOptionTile(
+                      icon: const Icon(
+                        Icons.link_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      label: 'Copier',
+                      color: const Color(0xFF111827),
+                      onTap: copyLink,
                     ),
                   ],
                 ),
@@ -1956,44 +1993,59 @@ class _ShareOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 92,
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFFE5E7EB),
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x12000000),
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: const Color(0xFFE5E7EB),
                   ),
-                ],
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x12000000),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(child: icon),
+                  ),
+                ),
               ),
-              child: Center(child: icon),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF111827),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

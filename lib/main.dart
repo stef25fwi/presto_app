@@ -5269,11 +5269,11 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2200),
+      duration: const Duration(milliseconds: 1450),
     );
     _pulse = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeInOutCubic,
+      curve: Curves.easeInOutCubicEmphasized,
     );
     _syncUrgentAnimation();
   }
@@ -5322,7 +5322,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
     const contourInset = 1.8;
 
     final showUrgentContour = widget.data.isUrgent;
-    final blink = 0.32 + (0.68 * pulse);
+    final blink = 0.14 + (0.86 * pulse);
 
     return RepaintBoundary(
       child: Material(
@@ -5340,13 +5340,13 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                       end: Alignment.bottomRight,
                       colors: [
                         const Color(0xFF9CDEFF).withValues(
-                          alpha: 0.24 + (0.34 * blink),
+                          alpha: 0.08 + (0.50 * blink),
                         ),
                         const Color(0xFF1A73E8).withValues(
-                          alpha: 0.34 + (0.50 * blink),
+                          alpha: 0.16 + (0.74 * blink),
                         ),
                         const Color(0xFF5FB4FF).withValues(
-                          alpha: 0.26 + (0.38 * blink),
+                          alpha: 0.10 + (0.58 * blink),
                         ),
                       ],
                     )
@@ -5369,10 +5369,19 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                 if (showUrgentContour)
                   BoxShadow(
                     color: const Color(0xFF1A73E8).withValues(
-                      alpha: 0.05 + (0.20 * blink),
+                      alpha: 0.10 + (0.26 * blink),
                     ),
-                    blurRadius: 10 + (12 * blink),
-                    spreadRadius: 0.2 + (1.0 * blink),
+                    blurRadius: 14 + (18 * blink),
+                    spreadRadius: 0.6 + (1.4 * blink),
+                    offset: const Offset(0, 0),
+                  ),
+                if (showUrgentContour)
+                  BoxShadow(
+                    color: const Color(0xFF82D3FF).withValues(
+                      alpha: 0.05 + (0.18 * blink),
+                    ),
+                    blurRadius: 6 + (10 * blink),
+                    spreadRadius: 0.1 + (0.7 * blink),
                     offset: const Offset(0, 0),
                   ),
               ],
@@ -5385,7 +5394,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                   borderRadius: BorderRadius.circular(innerRadius),
                   border: Border.all(
                     color: showUrgentContour
-                        ? Colors.white.withValues(alpha: 0.82)
+                        ? Colors.white.withValues(alpha: 0.68 + (0.18 * blink))
                         : _ConsultOffersPageState._offersCardBorder,
                     width: 1,
                   ),
@@ -10594,27 +10603,27 @@ class _AutoScrollingOffersCarousel extends StatefulWidget {
 }
 
 class _AutoScrollingOffersCarouselState
-    extends State<_AutoScrollingOffersCarousel>
-    with SingleTickerProviderStateMixin {
+    extends State<_AutoScrollingOffersCarousel> {
   final ScrollController _scrollController = ScrollController();
-  late final AnimationController _scrollTicker;
+  Timer? _scrollTimer;
   bool _isHovered = false;
-  Duration _lastElapsed = Duration.zero;
+  DateTime? _lastTickAt;
   static const double _pixelsPerSecond = 44.0;
 
   @override
   void initState() {
     super.initState();
-    _scrollTicker = AnimationController.unbounded(vsync: this)
-      ..addListener(_onTick)
-      ..repeat(min: 0, max: 1, period: const Duration(seconds: 1));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _startAutoScroll();
+    });
   }
 
   @override
   void didUpdateWidget(covariant _AutoScrollingOffersCarousel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.offers.length != widget.offers.length) {
-      _lastElapsed = Duration.zero;
+      _lastTickAt = null;
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(0);
       }
@@ -10623,21 +10632,29 @@ class _AutoScrollingOffersCarouselState
 
   @override
   void dispose() {
-    _scrollTicker
-      ..removeListener(_onTick)
-      ..dispose();
+    _scrollTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _startAutoScroll() {
+    _scrollTimer?.cancel();
+    _lastTickAt = null;
+    _scrollTimer = Timer.periodic(
+      const Duration(milliseconds: 16),
+      (_) => _onTick(),
+    );
   }
 
   void _onTick() {
     if (_isHovered || !_scrollController.hasClients) return;
 
-    final elapsed = _scrollTicker.lastElapsedDuration;
-    if (elapsed == null) return;
+    final now = DateTime.now();
+    final lastTickAt = _lastTickAt;
+    _lastTickAt = now;
+    if (lastTickAt == null) return;
 
-    final dtMs = (elapsed - _lastElapsed).inMilliseconds;
-    _lastElapsed = elapsed;
+    final dtMs = now.difference(lastTickAt).inMilliseconds;
     if (dtMs <= 0) return;
 
     final maxScroll = _scrollController.position.maxScrollExtent;
