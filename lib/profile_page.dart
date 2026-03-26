@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'pages/pro_profile_page.dart';
 import 'services/email_action_service.dart';
 import 'utils/friendly_snackbar.dart';
 import 'constants.dart';
@@ -1205,6 +1206,8 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
 
         const SizedBox(height: 24),
+        _buildProAccessCard(),
+        const SizedBox(height: 24),
         _buildPrestoPromoCard(colorScheme),
       ],
     );
@@ -1276,6 +1279,98 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildProAccessCard() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFFF6600).withOpacity(0.12),
+            const Color(0xFF1A73E8).withOpacity(0.08),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: const Color(0xFFFF6600).withOpacity(0.22),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6600),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.business_center_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Vous êtes une entreprise ?',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Créez votre profil Pro pour préparer votre présence sur iLiPresto et accéder aux options dédiées.',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.4,
+              color: Color(0xFF374151),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ProProfilePage(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kIliPrestoOrange,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              icon: const Icon(Icons.business_center_outlined),
+              label: const Text(
+                'Créer un compte Pro',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
