@@ -5334,12 +5334,13 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
 
   Widget _buildTileFrame({required double pulse}) {
     const outerRadius = 24.0;
+    const innerUrgentInset = 3.0;
+    const innerUrgentWidth = 4.0;
 
     final showUrgentContour = widget.data.isUrgent;
     final blink = pulse.clamp(0.0, 1.0);
-    final urgentBorderWidth = 3.6 + (1.4 * blink);
     final urgentBorderColor = const Color(0xFF1A73E8).withValues(
-      alpha: 0.48 + (0.44 * blink),
+      alpha: 0.26 + (0.58 * blink),
     );
 
     return RepaintBoundary(
@@ -5354,10 +5355,8 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
               color: Colors.white.withValues(alpha: 0.98),
               borderRadius: BorderRadius.circular(outerRadius),
               border: Border.all(
-                color: showUrgentContour
-                    ? urgentBorderColor
-                    : _ConsultOffersPageState._offersCardBorder,
-                width: showUrgentContour ? urgentBorderWidth : 1,
+                color: _ConsultOffersPageState._offersCardBorder,
+                width: 1,
               ),
               boxShadow: [
                 const BoxShadow(
@@ -5365,96 +5364,110 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                   blurRadius: 18,
                   offset: Offset(0, 8),
                 ),
-                if (showUrgentContour)
-                  BoxShadow(
-                    color: const Color(0xFF1A73E8).withValues(
-                      alpha: 0.05 + (0.08 * blink),
-                    ),
-                    blurRadius: 10 + (6 * blink),
-                    spreadRadius: 0.1 + (0.5 * blink),
-                    offset: const Offset(0, 0),
-                  ),
               ],
             ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.data.title.toUpperCase(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      height: 1.15,
-                      fontWeight: FontWeight.w700,
-                      color: _ConsultOffersPageState._offersNavy,
-                      letterSpacing: 0.15,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    widget.data.subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      height: 1.0,
-                      fontWeight: FontWeight.w500,
-                      color: _ConsultOffersPageState._offersNavy.withValues(alpha: 0.82),
-                      letterSpacing: -0.1,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          widget.data.publishedText,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            height: 1.0,
-                            fontWeight: FontWeight.w500,
-                            color: _ConsultOffersPageState._offersSoftText,
+            child: Stack(
+              children: [
+                if (showUrgentContour)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Padding(
+                        padding: const EdgeInsets.all(innerUrgentInset),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(
+                              outerRadius - innerUrgentInset,
+                            ),
+                            border: Border.all(
+                              color: urgentBorderColor,
+                              width: innerUrgentWidth,
+                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 148),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '${widget.data.price} €',
-                              textAlign: TextAlign.right,
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.data.title.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          height: 1.15,
+                          fontWeight: FontWeight.w700,
+                          color: _ConsultOffersPageState._offersNavy,
+                          letterSpacing: 0.15,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        widget.data.subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.0,
+                          fontWeight: FontWeight.w500,
+                          color: _ConsultOffersPageState._offersNavy.withValues(alpha: 0.82),
+                          letterSpacing: -0.1,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.data.publishedText,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 26,
+                                fontSize: 13,
                                 height: 1.0,
-                                fontWeight: FontWeight.w700,
-                                color: _ConsultOffersPageState._offersOrange,
-                                letterSpacing: -0.9,
+                                fontWeight: FontWeight.w500,
+                                color: _ConsultOffersPageState._offersSoftText,
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            _OfferMissionDelayChip(
-                              label: widget.data.missionDelayLabel,
+                          ),
+                          const SizedBox(width: 12),
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 148),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '${widget.data.price} €',
+                                  textAlign: TextAlign.right,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 26,
+                                    height: 1.0,
+                                    fontWeight: FontWeight.w700,
+                                    color: _ConsultOffersPageState._offersOrange,
+                                    letterSpacing: -0.9,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                _OfferMissionDelayChip(
+                                  label: widget.data.missionDelayLabel,
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

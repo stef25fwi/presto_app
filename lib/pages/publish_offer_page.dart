@@ -778,7 +778,7 @@ class _PublishOfferPageState extends State<PublishOfferPage>
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        centerTitle: false,
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.home_outlined),
