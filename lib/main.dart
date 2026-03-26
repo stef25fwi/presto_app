@@ -1263,7 +1263,7 @@ class _HomePageState extends State<HomePage>
   bool _showSearchSuggestions = true;
 
   /// Chargement figé à l'ouverture de la home pour stabiliser la section.
-  late final Future<QuerySnapshot<Map<String, dynamic>>> _latestOffersFuture;
+  late final Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _latestOffersFuture;
 
   /// Slogans animés (fade + slide) pour le 1er slide
   final List<String> _firstSlideSlogans = const [
@@ -1434,12 +1434,7 @@ class _HomePageState extends State<HomePage>
 
     _listenDynamicKeywords();
 
-    _latestOffersFuture = FirebaseFirestore.instance
-        .collection('offers')
-        .where(_publicOffersFilter())
-        .orderBy('createdAt', descending: true)
-      .limit(12)
-        .get();
+    _latestOffersFuture = _loadLatestOffers();
 
     // Listener pour hide/show bottom bar au scroll
     _scrollController.addListener(() {
@@ -1587,6 +1582,23 @@ class _HomePageState extends State<HomePage>
     return 1.0;
   }
 
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _loadLatestOffers() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('offers')
+        .where(
+          'createdAt',
+          isGreaterThan: Timestamp.fromMillisecondsSinceEpoch(0),
+        )
+        .orderBy('createdAt', descending: true)
+        .limit(60)
+        .get();
+
+    return snapshot.docs
+        .where((doc) => _isPublishedOfferData(doc.data()))
+        .take(12)
+        .toList(growable: false);
+  }
+
   Widget _buildHomeCategoriesSection() {
     const compactTargets = <String>[
       'Jardinage',
@@ -1675,7 +1687,7 @@ class _HomePageState extends State<HomePage>
             ],
           ),
           const SizedBox(height: 6),
-          FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          FutureBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
             future: _latestOffersFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
@@ -1690,12 +1702,20 @@ class _HomePageState extends State<HomePage>
               }
 
               if (snapshot.hasError) {
-                return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    _friendlyFirestoreErrorMessage(snapshot.error!),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
               }
 
-              final docs = (snapshot.data?.docs ?? const <QueryDocumentSnapshot<Map<String, dynamic>>>[])
-                  .where((doc) => _isPublishedOfferData(doc.data()))
-                  .toList(growable: false);
+              final docs = snapshot.data ?? const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
 
               if (docs.isNotEmpty) {
                 PrestoMonitoring.I.trackOtherStream(
@@ -5528,27 +5548,35 @@ class _EmptyOffers extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: const [
-            const Icon(
-              Icons.priority_high_rounded,
-              size: 56,
-              color: Colors.black26,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Urgent',
+            Text(
+              "Les annonces peuvent arriver à tout moment.",
               style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+                fontSize: 17,
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+                height: 1.45,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 16),
             Text(
-              "Les annonces peuvent arriver à tout moment.\n⭐ Ajoutez cette catégorie en favori pour être alerté dès qu'une annonce est publiée.\n👤 Créez un compte pour enregistrer vos favoris et activer les notifications.",
+              "Ajoutez cette catégorie en favori pour être alerté dès qu'une annonce est publiée.",
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 17,
                 color: Colors.black54,
                 fontWeight: FontWeight.w500,
+                height: 1.45,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16),
+            Text(
+              "Créez un compte pour enregistrer vos favoris et activer les notifications.",
+              style: TextStyle(
+                fontSize: 17,
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
+                height: 1.45,
               ),
               textAlign: TextAlign.center,
             ),
