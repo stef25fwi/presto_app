@@ -398,6 +398,7 @@ class _PublishOfferPageState extends State<PublishOfferPage>
         ),
       );
 
+      if (!mounted) return;
       if (replace == null) return;
       replaceExistingTitleDescription = replace;
     }
