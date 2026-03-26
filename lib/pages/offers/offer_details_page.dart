@@ -1756,50 +1756,50 @@ class _DelayBadge extends StatelessWidget {
     final headline = parts.first.trim();
     final subline = normalized.contains('en moyenne') ? 'en moyenne' : '';
 
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 7 : 8,
-        vertical: compact ? 3 : 4,
-      ),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+    return _HeaderPillBadge(
+      compact: compact,
+      minWidth: compact ? 88 : 96,
+      padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [Color(0xFFFFB13B), Color(0xFFFF6A00)],
         ),
-        borderRadius: BorderRadius.circular(compact ? 9 : 10),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: Color(0x26FF7A00),
-            blurRadius: 10,
+            blurRadius: 12,
             offset: Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          Text(
-            headline,
-            style: TextStyle(
-              color: headlineColor,
-              fontSize: compact ? 11 : 12,
-              fontWeight: FontWeight.w800,
-              height: 1,
-            ),
-          ),
-          if (subline.isNotEmpty) ...[
-            SizedBox(height: compact ? 0.5 : 1),
-            Text(
-              subline,
+      child: RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: headline,
               style: TextStyle(
-                color: sublineColor,
-                fontSize: compact ? 8 : 9,
-                fontWeight: FontWeight.w700,
+                color: headlineColor,
+                fontSize: compact ? 10.5 : 11,
+                fontWeight: FontWeight.w800,
                 height: 1,
+                letterSpacing: 0.2,
               ),
             ),
+            if (subline.isNotEmpty)
+              TextSpan(
+                text: '  $subline',
+                style: TextStyle(
+                  color: sublineColor,
+                  fontSize: compact ? 8.5 : 9,
+                  fontWeight: FontWeight.w700,
+                  height: 1,
+                ),
+              ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -1812,17 +1812,17 @@ class _UrgentBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: compact ? 26 : 28,
-      padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        gradient: const LinearGradient(
+    return _HeaderPillBadge(
+      compact: compact,
+      minWidth: compact ? 88 : 96,
+      padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [Color(0xFFFFA43A), Color(0xFFFF6A00)],
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: Color(0x2EFF8A00),
             blurRadius: 12,
@@ -1830,27 +1830,47 @@ class _UrgentBadge extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.priority_high_rounded,
-            size: compact ? 12 : 13,
-            color: Colors.white,
-          ),
-          SizedBox(width: compact ? 4 : 5),
-          Text(
-            'URGENT',
-            style: TextStyle(
-              fontSize: compact ? 10.5 : 11,
-              height: 1,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ],
+      child: Text(
+        'URGENT',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: compact ? 10.5 : 11,
+          height: 1,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+          letterSpacing: 0.2,
+        ),
       ),
+    );
+  }
+}
+
+class _HeaderPillBadge extends StatelessWidget {
+  final bool compact;
+  final double minWidth;
+  final EdgeInsetsGeometry padding;
+  final BoxDecoration decoration;
+  final Widget child;
+
+  const _HeaderPillBadge({
+    required this.compact,
+    required this.minWidth,
+    required this.padding,
+    required this.decoration,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(minWidth: minWidth),
+      height: compact ? 26 : 28,
+      padding: padding,
+      decoration: decoration.copyWith(
+        borderRadius: BorderRadius.circular(999),
+      ),
+      alignment: Alignment.center,
+      child: child,
     );
   }
 }
