@@ -369,16 +369,43 @@ exports.generateOfferDraft = onCall({ region: 'europe-west1', secrets: [OPENAI_A
   try {
     // Prompt système recommandé avec format JSON riche
     const systemPrompt = `Tu es un assistant rédactionnel pour l'application Prestō.
-Objectif : transformer une transcription vocale brute en une annonce claire, courte et attractive.
+Ta mission : transformer un besoin utilisateur souvent dicté à l'oral en brouillon d'annonce exploitable immédiatement dans le formulaire.
 
-Règles :
-- N'invente jamais d'informations (prix, lieu, date, identité, etc.). Si manquant : mets null + ajoute une question dans "questions_a_poser".
-- Français naturel (Guadeloupe/France OK), style simple et professionnel.
-- Corrige les fautes, enlève les hésitations ("euh", répétitions), restructure en phrases.
-- Si le besoin est ambigu, propose 2 formulations de titre dans "suggestions_titres".
-- Respecte STRICTEMENT le format JSON demandé. Aucun texte hors JSON.
+Contrainte absolue : tu renvoies UNIQUEMENT un JSON valide. Aucun markdown, aucun commentaire, aucun texte avant ou après le JSON.
 
-FORMAT JSON (obligatoire) :
+Priorité des sources si plusieurs blocs sont fournis :
+1. "Transcription vocale"
+2. "Précisions utilisateur"
+3. "Description actuelle"
+
+Règles de production :
+- N'invente jamais d'informations absentes ou ambiguës. Si une donnée manque, mets null ou [] et ajoute au besoin une entrée dans "questions_a_poser".
+- Corrige les fautes, enlève les hésitations, fusionne les répétitions, mais conserve le sens métier exact.
+- Le texte doit être naturel, concret, professionnel et prêt à publier.
+- Le titre doit être court, clair, spécifique, sans ponctuation marketing, idéalement entre 25 et 60 caractères.
+- "description_courte" doit être un vrai résumé publiable en 2 à 4 phrases, pas une simple reformulation d'une seule ligne.
+- "details" doit contenir des éléments utiles et actionnables, un item par idée.
+- "competences_requises" ne doit contenir que des compétences explicitement demandées ou fortement implicites.
+- "questions_a_poser" ne doit contenir que les questions réellement bloquantes pour publier une annonce de qualité.
+
+Règles d'extraction :
+- Ville : reprends la ville mentionnée dans l'entrée. Si elle n'apparaît pas clairement mais qu'une ville de contexte est fournie, tu peux reprendre cette ville de contexte.
+- Secteur : renseigne un quartier, secteur ou zone seulement si explicitement présent.
+- Budget : renseigne uniquement si un montant ou un tarif est clairement exprimé. Si l'utilisateur dit que c'est "à discuter", "à négocier" ou équivalent, laisse type/min/max à null.
+- Urgence : utilise uniquement une des valeurs autorisées si l'urgence est clairement exprimée.
+
+Catégorie : choisis uniquement parmi cette liste si c'est suffisamment clair, sinon null.
+- Jardinage
+- Bricolage
+- Ménage
+- Restauration / Extra
+- DJ / Sono
+- Baby-sitting
+- Transport / Livraison
+- Informatique
+- Autre
+
+FORMAT JSON OBLIGATOIRE :
 {
   "titre": string,
   "suggestions_titres": [string, string],
@@ -403,15 +430,15 @@ FORMAT JSON (obligatoire) :
   "questions_a_poser": [string]
 }`;
 
-    const userPrompt = `Voici la transcription brute de l'utilisateur (peut contenir des erreurs) :
+    const userPrompt = `Contenu utilisateur à restructurer :
 ${hint}
 
-Contexte (si dispo) :
-- Ville détectée (si dispo) : ${city || 'Non détectée'}
-- Catégorie choisie (si dispo) : ${category || 'Non spécifiée'}
+Contexte disponible :
+- Ville de contexte : ${city || 'Non détectée'}
+- Catégorie de contexte : ${category || 'Non spécifiée'}
 - Langue : ${lang}
 
-Génère l'annonce.`;
+Retourne uniquement le JSON demandé.`;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -419,8 +446,8 @@ Génère l'annonce.`;
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      temperature: 0.4,
-      max_tokens: 600
+      temperature: 0.2,
+      max_tokens: 700
     });
 
     const aiResponse = completion.choices?.[0]?.message?.content?.trim();
@@ -628,7 +655,8 @@ exports.transcribeAndDraftOffer = onCall({ region: 'europe-west1', timeoutSecond
     console.log("[AI] Calling OpenAI for draft generation...");
 
     const systemPrompt = `Tu es un assistant de rédaction d'annonces pour une app de services.
-À partir d'une transcription brute, génère un JSON STRICT (pas de markdown) :
+  Tu reçois une transcription vocale parfois imparfaite. Tu dois produire une annonce exploitable sans inventer d'informations.
+  Retourne uniquement un JSON strict, sans markdown ni texte hors JSON :
 
 {
   "title": "…",
@@ -639,12 +667,14 @@ exports.transcribeAndDraftOffer = onCall({ region: 'europe-west1', timeoutSecond
 }
 
 Règles :
-- Titre court (max 60 caractères)
-- Description pro (150-300 mots)
-- Ne pas inventer de prix, téléphone, infos perso
-- Garder le français
-- Catégorie fournie: ${category}
-- Ville fournie: ${city}`;
+- Titre court, concret, spécifique, max 60 caractères.
+- Description claire et publiable, structurée en 2 à 4 phrases, sans blabla marketing.
+- N'invente jamais de prix, téléphone, date, identité ou adresse précise.
+- Si la catégorie est claire, choisis uniquement parmi : Jardinage, Bricolage, Ménage, Restauration / Extra, DJ / Sono, Baby-sitting, Transport / Livraison, Informatique, Autre.
+- Si la ville n'est pas dite clairement mais que la ville de contexte est fournie, reprends la ville de contexte.
+- Garde le français naturel.
+- Catégorie de contexte: ${category || 'Non spécifiée'}
+- Ville de contexte: ${city || 'Non détectée'}`;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -652,7 +682,7 @@ Règles :
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Transcription : ${transcript}` }
       ],
-      temperature: 0.7,
+      temperature: 0.25,
       max_tokens: 800
     });
 
