@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
@@ -400,14 +401,14 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                       backgroundColor: const Color(0xFFFF6A00),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                     icon: const Icon(Icons.chat_bubble_outline),
                     label: const Text('Envoyer un message'),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 16),
                 SizedBox(
                   height: 50,
                   child: ElevatedButton.icon(
@@ -419,7 +420,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                       backgroundColor: const Color(0xFF0459D9),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                     icon: const Icon(Icons.call_outlined),
@@ -429,6 +430,158 @@ class PrestoOfferDetailsPage extends StatelessWidget {
               ],
             ),
           ),
+        );
+      },
+    );
+  }
+
+  Future<void> _toggleFavorite(
+    BuildContext context,
+    _OfferUiData data,
+    bool isFavorite,
+  ) async {
+    final authUser = FirebaseAuth.instance.currentUser;
+    final uid = authUser?.uid.trim() ?? '';
+
+    if (uid.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Connectez-vous pour enregistrer vos favoris.'),
+        ),
+      );
+      return;
+    }
+
+    final offerId = data.offerId.trim();
+    if (offerId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Annonce introuvable.')),
+      );
+      return;
+    }
+
+    try {
+      final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+      final batch = FirebaseFirestore.instance.batch();
+
+      batch.set(
+        userRef,
+        {
+          'favoriteOfferIds': isFavorite
+              ? FieldValue.arrayRemove([offerId])
+              : FieldValue.arrayUnion([offerId]),
+          'favoriteOffersUpdatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      if (isFavorite) {
+        batch.delete(userRef.collection('favoriteOffers').doc(offerId));
+      } else {
+        batch.set(
+          userRef.collection('favoriteOffers').doc(offerId),
+          _buildFavoriteOfferPayload(data),
+          SetOptions(merge: true),
+        );
+      }
+
+      await batch.commit();
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isFavorite
+                ? 'Annonce retirée des favoris.'
+                : 'Annonce ajoutée aux favoris.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la mise à jour du favori : $e')),
+      );
+    }
+  }
+
+  Map<String, dynamic> _buildFavoriteOfferPayload(_OfferUiData data) {
+    final dynamic rawOffer = offer;
+    final imageUrls = (_OfferUiData._read(() => rawOffer.imageUrls) as List<dynamic>? ?? const [])
+        .map((e) => e.toString().trim())
+        .where((e) => e.isNotEmpty)
+        .toList(growable: false);
+    final createdAt = _OfferUiData._read(() => rawOffer.createdAt);
+
+    return {
+      'offerId': data.offerId,
+      'title': data.title,
+      'location': data.city,
+      'city': data.city,
+      'postalCode': data.postalCode,
+      'category': data.category,
+      'description': data.description,
+      'urgent': data.isUrgent,
+      'budget': data.price,
+      'price': data.price,
+      'imageUrls': imageUrls,
+      'imageUrl': imageUrls.isNotEmpty ? imageUrls.first : '',
+      'userId': data.advertiserId,
+      'pseudo': data.advertiserName,
+      'userName': data.advertiserName,
+      'serviceArea': data.serviceArea,
+      'canTravel': data.canTravel,
+      'schedule': data.schedule,
+      'missionDelay': data.missionDelay,
+      'averageDelay': data.averageDelay,
+      'paymentMethod': data.paymentMethod,
+      'serviceType': data.serviceType,
+      'phone': data.phone,
+      'availability': data.availability,
+      'verified': data.verified,
+      'rating': data.advertiserRating,
+      'reviewsCount': data.advertiserReviewCount,
+      'bio': data.advertiserRole,
+      'avatarUrl': data.advertiserAvatarUrl,
+      'addedAt': FieldValue.serverTimestamp(),
+      if (createdAt is Timestamp) 'createdAt': createdAt,
+    };
+  }
+
+  Widget _buildFavoriteAction(BuildContext context, _OfferUiData data) {
+    final authUser = FirebaseAuth.instance.currentUser;
+    final uid = authUser?.uid.trim() ?? '';
+
+    if (uid.isEmpty) {
+      return IconButton(
+        tooltip: 'Ajouter aux favoris',
+        onPressed: () => _toggleFavorite(context, data, false),
+        icon: const Icon(Icons.favorite_border_rounded),
+        color: Colors.white,
+        splashRadius: 20,
+      );
+    }
+
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+      builder: (context, snapshot) {
+        final favoriteIds =
+            (snapshot.data?.data()?['favoriteOfferIds'] as List<dynamic>? ?? const [])
+                .map((e) => e.toString().trim())
+                .where((e) => e.isNotEmpty)
+                .toSet();
+
+        final isFavorite =
+            data.offerId.trim().isNotEmpty && favoriteIds.contains(data.offerId.trim());
+
+        return IconButton(
+          tooltip: isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
+          onPressed: () => _toggleFavorite(context, data, isFavorite),
+          icon: Icon(
+            isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+          ),
+          color: Colors.white,
+          splashRadius: 20,
         );
       },
     );
@@ -465,13 +618,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
             color: Colors.white,
             splashRadius: 20,
           ),
-          IconButton(
-            tooltip: 'Favori',
-            onPressed: () {},
-            icon: const Icon(Icons.favorite_border_rounded),
-            color: Colors.white,
-            splashRadius: 20,
-          ),
+          _buildFavoriteAction(context, data),
           const SizedBox(width: 6),
         ],
       ),
@@ -1056,7 +1203,6 @@ class _PracticalInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const navy = Color(0xFF18233D);
-    const blue = Color(0xFF0459D9);
     const blueSoft = Color(0xFFDCEBFF);
     const muted = Color(0xFF6F7282);
     const line = Color(0xFFE6E3E6);
@@ -1083,28 +1229,6 @@ class _PracticalInfoCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              compact ? 16 : 18,
-              compact ? 14 : 16,
-              compact ? 16 : 18,
-              compact ? 10 : 12,
-            ),
-            child: Row(
-              children: [
-                Text(
-                  'Info annonceur',
-                  style: TextStyle(
-                    color: blue,
-                    fontSize: compact ? 20 : 22,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.4,
-                    height: 1.0,
-                  ),
-                ),
-              ],
-            ),
-          ),
           Container(
             decoration: BoxDecoration(
               color: const Color(0xFFFBFAFA),
@@ -1252,7 +1376,10 @@ class _PracticalInfoCard extends StatelessWidget {
                     icon: Icons.work_outline_rounded,
                     label: 'Type de prestation',
                     value: 'Ponctuelle',
-                    showDivider: false,
+                    compact: compact,
+                  ),
+                  _MaskedPhoneInfoLine(
+                    phone: data.phone,
                     compact: compact,
                   ),
                   SizedBox(height: compact ? 12 : 14),
@@ -1294,14 +1421,12 @@ class _InfoLine extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final bool showDivider;
   final bool compact;
 
   const _InfoLine({
     required this.icon,
     required this.label,
     required this.value,
-    this.showDivider = true,
     this.compact = false,
   });
 
@@ -1346,7 +1471,99 @@ class _InfoLine extends StatelessWidget {
             ],
           ),
         ),
-        if (showDivider) const Divider(height: 1, thickness: 1, color: line),
+        const Divider(height: 1, thickness: 1, color: line),
+      ],
+    );
+  }
+}
+
+class _MaskedPhoneInfoLine extends StatefulWidget {
+  final String phone;
+  final bool compact;
+
+  const _MaskedPhoneInfoLine({
+    required this.phone,
+    this.compact = false,
+  });
+
+  @override
+  State<_MaskedPhoneInfoLine> createState() => _MaskedPhoneInfoLineState();
+}
+
+class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
+  bool _isPhoneVisible = false;
+
+  String _maskedLabel(String rawPhone) {
+    final normalized = rawPhone.trim();
+    if (normalized.isEmpty) return 'Non renseigné';
+    return 'Numéro masqué';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const navy = Color(0xFF18233D);
+    const muted = Color(0xFF6F7282);
+    const line = Color(0xFFE6E3E6);
+
+    final hasPhone = widget.phone.trim().isNotEmpty;
+    final displayedValue = _isPhoneVisible
+        ? widget.phone.trim()
+        : _maskedLabel(widget.phone);
+
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: widget.compact ? 10 : 12),
+          child: Row(
+            children: [
+              Icon(
+                Icons.call_outlined,
+                color: const Color(0xFF6C7384),
+                size: widget.compact ? 20 : 22,
+              ),
+              SizedBox(width: widget.compact ? 8 : 10),
+              Expanded(
+                child: Text(
+                  'Téléphone',
+                  style: TextStyle(
+                    color: muted,
+                    fontSize: widget.compact ? 15 : 16,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+              ),
+              SizedBox(width: widget.compact ? 8 : 10),
+              Flexible(
+                child: Text(
+                  displayedValue,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    color: navy,
+                    fontSize: widget.compact ? 15 : 16,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.15,
+                  ),
+                ),
+              ),
+              SizedBox(width: widget.compact ? 4 : 6),
+              IconButton(
+                onPressed: hasPhone
+                    ? () => setState(() => _isPhoneVisible = !_isPhoneVisible)
+                    : null,
+                tooltip: _isPhoneVisible ? 'Masquer le numéro' : 'Voir le numéro',
+                visualDensity: VisualDensity.compact,
+                splashRadius: widget.compact ? 18 : 20,
+                icon: Icon(
+                  _isPhoneVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: hasPhone ? navy : muted,
+                  size: widget.compact ? 20 : 22,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1, thickness: 1, color: line),
       ],
     );
   }
