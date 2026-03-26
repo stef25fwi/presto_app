@@ -27,6 +27,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Flutter: Analyze",
+      "type": "shell",
+      "command": "flutter analyze",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Status Snapshot",
       "type": "shell",
       "command": "git status --short --branch",

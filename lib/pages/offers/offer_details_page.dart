@@ -112,7 +112,7 @@ class OfferDetailsPage extends StatelessWidget {
   final Object? offer;
   final String currentUserId;
 
-  OfferDetailsPage({
+  const OfferDetailsPage({
     super.key,
     this.offer,
     this.currentUserId = 'buyer_demo_001',

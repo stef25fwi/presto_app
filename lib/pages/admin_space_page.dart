@@ -1019,6 +1019,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                     : 'Dernière connexion : ${user!.metadata.lastSignInTime!.toLocal().toIso8601String()}',
                 onCopyUid: () async {
                   await Clipboard.setData(ClipboardData(text: user?.uid ?? ''));
+                  if (!context.mounted) return;
                   showSuccessSnackBar(context, 'UID copié');
                 },
               ),
