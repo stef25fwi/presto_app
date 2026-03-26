@@ -1259,7 +1259,9 @@ class _PracticalInfoCard extends StatelessWidget {
                               text: TextSpan(
                                 children: [
                                   TextSpan(
-                                    text: data.advertiserName,
+                                    text: data.advertiserRole.trim().isEmpty
+                                        ? 'Profil annonceur'
+                                        : data.advertiserRole,
                                     style: TextStyle(
                                       color: navy,
                                       fontSize: compact ? 17 : 20,
@@ -1375,7 +1377,13 @@ class _PracticalInfoCard extends StatelessWidget {
                   _InfoLine(
                     icon: Icons.work_outline_rounded,
                     label: 'Type de prestation',
-                    value: 'Ponctuelle',
+                    value: data.serviceType,
+                    compact: compact,
+                  ),
+                  _InfoLine(
+                    icon: Icons.person_outline_rounded,
+                    label: 'Annonceur',
+                    value: data.advertiserName,
                     compact: compact,
                   ),
                   _MaskedPhoneInfoLine(
@@ -1496,7 +1504,22 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
   String _maskedLabel(String rawPhone) {
     final normalized = rawPhone.trim();
     if (normalized.isEmpty) return 'Non renseigné';
-    return 'Numéro masqué';
+
+    final compact = normalized.replaceAll(RegExp(r'\s+'), ' ');
+    final internationalPrefix = RegExp(r'^(\+\d{1,4})').firstMatch(compact)?.group(1);
+    if (internationalPrefix != null && internationalPrefix.isNotEmpty) {
+      return '$internationalPrefix ******';
+    }
+
+    final digitsOnly = compact.replaceAll(RegExp(r'\D'), '');
+    if (digitsOnly.length >= 4) {
+      return '${digitsOnly.substring(0, 4)} ******';
+    }
+    if (digitsOnly.isNotEmpty) {
+      return '$digitsOnly ******';
+    }
+
+    return '******';
   }
 
   @override
