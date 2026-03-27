@@ -69,6 +69,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Commit Messaging + Home Fixes",
+      "type": "shell",
+      "command": "git commit -m \"fix(messages): harden list-thread loading and home latest offers\"",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Push Main",
       "type": "shell",
       "command": "git push origin main",
@@ -96,6 +102,21 @@
       "label": "Firebase: Deploy",
       "type": "shell",
       "command": "firebase deploy --project presto-app-74abe",
+      "problemMatcher": []
+    },
+    {
+      "label": "Release: Messaging + Home Fixes",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: Add All",
+        "Functions: Build",
+        "Functions: Test",
+        "Flutter: Analyze",
+        "Flutter: Build Web Release",
+        "Git: Commit Messaging + Home Fixes",
+        "Git: Push Main",
+        "Firebase: Deploy"
+      ],
       "problemMatcher": []
     },
     {

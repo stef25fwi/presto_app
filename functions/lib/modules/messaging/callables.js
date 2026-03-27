@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = void 0;
+exports.readConversationMessageCount = readConversationMessageCount;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../config/env");
@@ -54,6 +55,13 @@ function sanitizeMessageText(value) {
         .map((line) => line.replace(/\s+$/g, ""))
         .join("\n")
         .trim();
+}
+function readConversationMessageCount(data) {
+    const rawCount = data.messageCount;
+    if (typeof rawCount === "number" && Number.isFinite(rawCount) && rawCount > 0) {
+        return Math.floor(rawCount);
+    }
+    return String(data.lastMessage || "").trim() !== "" ? 1 : 0;
 }
 function toDateOrNull(value) {
     if (value instanceof firebase_admin_1.default.firestore.Timestamp)
@@ -178,6 +186,7 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
             updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
             lastMessageAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
             lastMessage: "",
+            messageCount: 0,
             unreadCount: {
                 [currentUserId]: 0,
                 [otherUserId]: 0,
@@ -204,10 +213,7 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
     if (!canSend) {
         throw new https_1.HttpsError("resource-exhausted", "too many messages sent too quickly");
     }
-    const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
-    if ((0, state_1.isConversationBlocked)(data)) {
-        throw new https_1.HttpsError("failed-precondition", "conversation is blocked");
-    }
+    const { convRef } = await loadConversationForParticipant(conversationId, currentUserId);
     const latestMessageSnap = await convRef
         .collection("messages")
         .orderBy("createdAt", "desc")
@@ -232,36 +238,51 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
     }
     const senderUserSnap = await firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(currentUserId).get();
     const senderName = readUserDisplayName(senderUserSnap.data(), request.auth?.token?.name, request.auth?.token?.email, currentUserId);
-    // Premier message si lastMessage est encore vide (valeur initiale de la conversation).
-    // Ce flag est lu par le trigger pour éviter la race condition du comptage frères.
-    const isFirstMessage = String(data.lastMessage || "").trim() === "";
     const messageRef = convRef.collection("messages").doc();
-    const batch = firestore_1.db.batch();
-    batch.set(messageRef, {
-        text,
-        senderId: currentUserId,
-        senderName,
-        isFirstMessage,
-        createdAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+    let participantsToRefresh = [];
+    await firestore_1.db.runTransaction(async (transaction) => {
+        const convSnap = await transaction.get(convRef);
+        if (!convSnap.exists) {
+            throw new https_1.HttpsError("not-found", "conversation not found");
+        }
+        const data = (convSnap.data() ?? {});
+        const participants = Array.isArray(data.participants)
+            ? data.participants.map((value) => String(value || "").trim()).filter(Boolean)
+            : [];
+        if (!participants.includes(currentUserId)) {
+            throw new https_1.HttpsError("permission-denied", "not allowed to access this conversation");
+        }
+        if ((0, state_1.isConversationBlocked)(data)) {
+            throw new https_1.HttpsError("failed-precondition", "conversation is blocked");
+        }
+        const isFirstMessage = readConversationMessageCount(data) === 0;
+        transaction.set(messageRef, {
+            text,
+            senderId: currentUserId,
+            senderName,
+            isFirstMessage,
+            createdAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+        });
+        const conversationUpdate = {
+            lastMessage: text,
+            lastSenderId: currentUserId,
+            lastSenderName: senderName,
+            status: "open",
+            lastMessageAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            messageCount: firebase_admin_1.default.firestore.FieldValue.increment(1),
+            [`participantNames.${currentUserId}`]: senderName,
+        };
+        for (const participantId of participants) {
+            conversationUpdate[`archivedBy.${participantId}`] = false;
+            conversationUpdate[`unreadCount.${participantId}`] = participantId == currentUserId
+                ? 0
+                : firebase_admin_1.default.firestore.FieldValue.increment(1);
+        }
+        transaction.update(convRef, conversationUpdate);
+        participantsToRefresh = participants;
     });
-    const conversationUpdate = {
-        lastMessage: text,
-        lastSenderId: currentUserId,
-        lastSenderName: senderName,
-        status: "open",
-        lastMessageAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-        [`participantNames.${currentUserId}`]: senderName,
-    };
-    for (const participantId of participants) {
-        conversationUpdate[`archivedBy.${participantId}`] = false;
-        conversationUpdate[`unreadCount.${participantId}`] = participantId == currentUserId
-            ? 0
-            : firebase_admin_1.default.firestore.FieldValue.increment(1);
-    }
-    batch.update(convRef, conversationUpdate);
-    await batch.commit();
-    await Promise.all(participants.map((participantId) => (0, counters_1.refreshUnreadMessageCount)(participantId)));
+    await Promise.all(participantsToRefresh.map((participantId) => (0, counters_1.refreshUnreadMessageCount)(participantId)));
     return {
         ok: true,
         messageId: messageRef.id,
