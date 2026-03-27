@@ -45,6 +45,10 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, create, update, delete: if isSignedIn() && userId == uid();
 
+      match /push_tokens/{tokenId} {
+        allow read, create, update, delete: if false;
+      }
+
       // Sous-collection notifications (si jamais utilisée un jour)
       match /notifications/{notifId} {
         allow read, update, delete: if isSignedIn() && userId == uid();

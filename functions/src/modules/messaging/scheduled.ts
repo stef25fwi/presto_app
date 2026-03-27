@@ -2,6 +2,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { db } from "../../core/firestore";
 import { COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
+import { APP_BASE_URL } from "../../config/env";
 
 export const enqueueUnreadMessageReminders = onSchedule("every 2 hours", async () => {
   const now = Date.now();
@@ -52,7 +53,7 @@ export const enqueueUnreadMessageReminders = onSchedule("every 2 hours", async (
           occurred_at: now,
           payload: {
             recipient_email: email,
-            conversationUrl: `https://presto.app/messages/${doc.id}`,
+            conversationUrl: `${APP_BASE_URL}/messages/${doc.id}`,
           },
           status: "created",
         }, { merge: true });

@@ -1,7 +1,9 @@
 import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { db } from "../../core/firestore";
+import { APP_BASE_URL } from "../../config/env";
 import { COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
+import { createInAppNotification, sendPushToUser } from "../notifications/push";
 
 function getOwnerId(data: Record<string, unknown> | undefined): string {
   if (!data) return "";
@@ -13,7 +15,80 @@ function getTitle(data: Record<string, unknown> | undefined): string {
 }
 
 function getOfferUrl(sourceId: string): string {
-  return `https://presto.app/offers/${sourceId}`;
+  return `${APP_BASE_URL}/offers/${sourceId}`;
+}
+
+function getCategory(data: Record<string, unknown> | undefined): string {
+  return String(data?.category || "").trim();
+}
+
+async function notifyFavoriteCategoryUsers({
+  offerId,
+  offerData,
+  ownerId,
+}: {
+  offerId: string;
+  offerData: Record<string, unknown>;
+  ownerId: string;
+}): Promise<void> {
+  const category = getCategory(offerData);
+  if (!category) return;
+
+  const [selectedSnap, legacySnap] = await Promise.all([
+    db.collection(COLLECTIONS.users)
+      .where("selectedFavoriteCategories", "array-contains", category)
+      .limit(500)
+      .get(),
+    db.collection(COLLECTIONS.users)
+      .where("favoriteCategories", "array-contains", category)
+      .limit(500)
+      .get(),
+  ]);
+
+  const recipients = new Set<string>();
+  for (const doc of [...selectedSnap.docs, ...legacySnap.docs]) {
+    if (doc.id && doc.id !== ownerId) {
+      recipients.add(doc.id);
+    }
+  }
+
+  if (recipients.size === 0) return;
+
+  const title = getTitle(offerData);
+  const routeName = `/offers/${encodeURIComponent(offerId)}`;
+
+  for (const userId of recipients) {
+    const notificationId = `notif_favorite_listing_${offerId}_${userId}`;
+    await Promise.all([
+      createInAppNotification({
+        notificationId,
+        userId,
+        title: `Nouvelle annonce dans ${category}`,
+        message: title,
+        type: "favorite_listing_new",
+        routeName,
+        offerId,
+        data: {
+          category,
+        },
+      }),
+      sendPushToUser({
+        userId,
+        topic: "favorites",
+        title: `Nouvelle annonce dans ${category}`,
+        body: title,
+        routeName,
+        channelId: "ilipresto_activity",
+        collapseKey: `favorite_offer_${offerId}`,
+        data: {
+          type: "favorite_listing_new",
+          offerId,
+          category,
+          notificationId,
+        },
+      }),
+    ]);
+  }
 }
 
 function normalizeStatus(data: Record<string, unknown> | undefined): string {
@@ -108,6 +183,11 @@ export const onOfferCreated = onDocumentCreated("offers/{offerId}", async (event
         listingUrl: getOfferUrl(offerId),
       },
     });
+    await notifyFavoriteCategoryUsers({
+      offerId,
+      offerData: after,
+      ownerId,
+    });
   }
 });
 
@@ -143,6 +223,11 @@ export const onOfferUpdated = onDocumentUpdated("offers/{offerId}", async (event
         listingTitle: getTitle(after),
         listingUrl: getOfferUrl(offerId),
       },
+    });
+    await notifyFavoriteCategoryUsers({
+      offerId,
+      offerData: after,
+      ownerId,
     });
   }
 
