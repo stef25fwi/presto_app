@@ -1768,6 +1768,14 @@ class _HomePageState extends State<HomePage>
                             data: data,
                           ),
                           currentUserId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                          onBackToConsult: () {
+                            if (!mounted) return;
+                            setState(() {
+                              _consultCategoryFilter = null;
+                              _consultSearchQuery = null;
+                              _selectedIndex = 1;
+                            });
+                          },
                         ),
                       ),
                     );
@@ -7484,6 +7492,40 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
+  String _storageExtFromPhoto(XFile photo) {
+    final mime = (photo.mimeType ?? '').toLowerCase().trim();
+    if (mime == 'image/webp') return 'webp';
+    if (mime == 'image/png') return 'png';
+    if (mime == 'image/heic' || mime == 'image/heif') return 'heic';
+    if (mime == 'image/gif') return 'gif';
+
+    final path = photo.path.toLowerCase();
+    if (path.endsWith('.webp')) return 'webp';
+    if (path.endsWith('.png')) return 'png';
+    if (path.endsWith('.heic') || path.endsWith('.heif')) return 'heic';
+    if (path.endsWith('.gif')) return 'gif';
+    return 'jpg';
+  }
+
+  String _storageContentTypeFromPhoto(XFile photo) {
+    final mime = (photo.mimeType ?? '').toLowerCase().trim();
+    if (mime.startsWith('image/')) return mime;
+
+    final ext = _storageExtFromPhoto(photo);
+    switch (ext) {
+      case 'webp':
+        return 'image/webp';
+      case 'png':
+        return 'image/png';
+      case 'heic':
+        return 'image/heic';
+      case 'gif':
+        return 'image/gif';
+      default:
+        return 'image/jpeg';
+    }
+  }
+
   Future<void> _uploadPhotos({required String uid}) async {
     if (_selectedPhotos.isEmpty) {
       _uploadedPhotoUrls.clear();
@@ -7501,11 +7543,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       for (int i = 0; i < _selectedPhotos.length; i++) {
         final photo = _selectedPhotos[i];
         final ts = DateTime.now().millisecondsSinceEpoch;
-        final rawPath = 'offers_raw/$uid/${ts}_$i.jpg';
+        final sourceExt = _storageExtFromPhoto(photo);
+        final sourceContentType = _storageContentTypeFromPhoto(photo);
+        final rawPath = 'offers_raw/$uid/${ts}_$i.$sourceExt';
 
         final ref = FirebaseStorage.instance.ref().child(rawPath);
         final bytes = await photo.readAsBytes();
-        await ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+        await ref.putData(
+          bytes,
+          SettableMetadata(contentType: sourceContentType),
+        );
 
         final res = await callable.call<dynamic>({
           'storagePath': rawPath,

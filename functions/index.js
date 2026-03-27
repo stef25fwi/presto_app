@@ -1802,7 +1802,7 @@ exports.processOfferPhoto = onCall(
           fit: 'inside',
           withoutEnlargement: true,
         })
-        .jpeg({ quality: 75, mozjpeg: true })
+        .webp({ quality: 75 })
         .toBuffer({ resolveWithObject: true });
 
       const w = resized.info?.width || 1280;
@@ -1831,7 +1831,7 @@ exports.processOfferPhoto = onCall(
             gravity: 'southwest',
           },
         ])
-        .jpeg({ quality: 75, mozjpeg: true })
+        .webp({ quality: 75 })
         .toBuffer();
 
       out = withMark;
@@ -1841,12 +1841,15 @@ exports.processOfferPhoto = onCall(
     }
 
     // Upload final
-    const destPath = storagePath.replace(/^offers_raw\//, 'offers/');
+    const baseDestPath = storagePath
+      .replace(/^offers_raw\//, 'offers/')
+      .replace(/\.[^/.]+$/, '');
+    const destPath = `${baseDestPath}.webp`;
     const token = randomUUID();
 
     try {
       await bucket.file(destPath).save(out, {
-        contentType: 'image/jpeg',
+        contentType: 'image/webp',
         resumable: false,
         metadata: {
           cacheControl: 'public,max-age=31536000',
