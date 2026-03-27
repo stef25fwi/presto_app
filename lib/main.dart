@@ -7616,22 +7616,30 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         status: 'active',
       );
 
-      final docRef = await FirebaseFirestore.instance.collection('offers').add({
+      final rawDoc = <String, dynamic>{
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
-        'subCategory': _selectedSubCategory,
-        'missionDelay': _missionDelay,
-        'averageDelay': _missionDelay,
+        if (_selectedSubCategory != null) 'subCategory': _selectedSubCategory,
+        if (_missionDelay != null) 'missionDelay': _missionDelay,
+        if (_missionDelay != null) 'averageDelay': _missionDelay,
         'urgent': _isUrgent,
-        'phone': _phoneController.text.trim(),
-        'budget': budgetRaw,
+        if (_phoneController.text.trim().isNotEmpty)
+          'phone': _phoneController.text.trim(),
+        if (budgetRaw.isNotEmpty) 'budget': budgetRaw,
         'budgetType': _budgetType,
-        'imageUrls': _uploadedPhotoUrls.isEmpty ? null : _uploadedPhotoUrls,
+        if (_uploadedPhotoUrls.isNotEmpty) 'imageUrls': _uploadedPhotoUrls,
         'userId': user.uid,
         'ownerId': user.uid,
-        'createdAt': Timestamp.now(),
-        ...normalizedOffer,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      // Ajouter les champs d'index en ignorant les null
+      normalizedOffer.forEach((k, v) {
+        if (v != null) rawDoc[k] = v;
       });
+
+      final docRef =
+          await FirebaseFirestore.instance.collection('offers').add(rawDoc);
 
       // ✅ Analytics: publication
       await _logOfferPublished(
