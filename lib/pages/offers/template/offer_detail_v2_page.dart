@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:presto_app/main.dart';
+import 'package:presto_app/pages/messages/conversation_thread_page.dart'
+  show ConversationThreadPage;
 import 'package:presto_app/services/conversation_service.dart';
 
 class OfferDetailV2Page extends StatefulWidget {
@@ -222,6 +224,7 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
   Future<void> _openOrCreateConversation({
     required BuildContext context,
     required String annonceurId,
+    required String annonceurName,
     required String offerTitle,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
@@ -239,22 +242,32 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
       return;
     }
 
+    final currentUserName = user?.displayName?.trim().isNotEmpty == true
+        ? user!.displayName!.trim()
+        : (user?.email ?? 'Utilisateur');
+    final initialDraftText =
+      'Bonjour $annonceurName, je vous contacte au sujet de votre annonce "$offerTitle".';
+
     final conversationId = await ConversationService.ensureConversation(
       offerId: widget.offerId,
       offerTitle: offerTitle,
       currentUserId: me,
       otherUserId: annonceurId,
+      currentUserName: currentUserName,
+      otherUserName: annonceurName,
     );
 
     if (!context.mounted) return;
 
-    // Ouvre la messagerie après création/récupération de la conversation.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Conversation prête. Ouverture de la messagerie...")),
-    );
-
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const MessagesPage()),
+      MaterialPageRoute(
+        builder: (_) => ConversationThreadPage(
+          conversationId: conversationId,
+          offerTitle: offerTitle,
+          currentUserId: me,
+          initialDraftText: initialDraftText,
+        ),
+      ),
     );
   }
 
@@ -349,6 +362,7 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
   Future<void> _showContactOptionsSheet({
     required BuildContext context,
     required String annonceurId,
+    required String annonceurName,
     required String offerTitle,
     required String? phone,
   }) async {
@@ -384,10 +398,11 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       Navigator.of(sheetContext).pop();
-                      _openExternalMessaging(
-                        context,
-                        phone: phone,
-                        title: offerTitle,
+                      _openOrCreateConversation(
+                        context: context,
+                        annonceurId: annonceurId,
+                        annonceurName: annonceurName,
+                        offerTitle: offerTitle,
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -541,6 +556,7 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                   onPressed: () => _showContactOptionsSheet(
                     context: context,
                     annonceurId: annonceurId,
+                    annonceurName: annonceurPseudo,
                     offerTitle: title,
                     phone: phone,
                   ),

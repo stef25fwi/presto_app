@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../constants.dart';
 import 'conversation_thread_page.dart';
@@ -9,6 +10,11 @@ const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
 const kMessagesPageBackground = Color(0xFFFFFEFE);
 const kWhatsappGreen = Color(0xFF25D366);
+const kMessagesStatusBarStyle = SystemUiOverlayStyle(
+  statusBarColor: kPrestoBlue,
+  statusBarIconBrightness: Brightness.light,
+  statusBarBrightness: Brightness.dark,
+);
 
 class ConversationsListPage extends StatefulWidget {
   const ConversationsListPage({super.key});
@@ -32,7 +38,16 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     return text.contains('permission-denied') || text.contains('permission denied');
   }
 
-  String _conversationTitle(Map<String, dynamic> data) {
+  String _conversationTitle(Map<String, dynamic> data, String userId) {
+    final participantNames = data['participantNames'];
+    if (participantNames is Map) {
+      for (final entry in participantNames.entries) {
+        if (entry.key.toString() == userId) continue;
+        final value = (entry.value ?? '').toString().trim();
+        if (value.isNotEmpty) return value;
+      }
+    }
+
     final candidates = [
       data['otherUserName'],
       data['participantName'],
@@ -67,7 +82,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
   String _searchableConversationText(Map<String, dynamic> data, String userId) {
     return [
-      _conversationTitle(data),
+      _conversationTitle(data, userId),
       _conversationPreview(data, userId),
       (data['offerTitle'] ?? '').toString(),
       (data['lastMessage'] ?? '').toString(),
@@ -178,6 +193,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       return Scaffold(
         backgroundColor: kMessagesPageBackground,
         appBar: AppBar(
+          systemOverlayStyle: kMessagesStatusBarStyle,
           backgroundColor: kPrestoOrange,
           foregroundColor: Colors.white,
           title: const Text(
@@ -198,6 +214,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     return Scaffold(
       backgroundColor: kMessagesPageBackground,
       appBar: AppBar(
+        systemOverlayStyle: kMessagesStatusBarStyle,
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -307,7 +324,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                       itemBuilder: (context, index) {
                         final doc = filteredDocs[index];
                         final data = doc.data();
-                        final title = _conversationTitle(data);
+                        final title = _conversationTitle(data, userId);
                         final offerTitle = (data['offerTitle'] ?? '').toString().trim();
                         final preview = _conversationPreview(data, userId);
                         final unreadMap = data['unreadCount'];
