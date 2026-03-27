@@ -183,11 +183,19 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       return;
     }
 
+    final currentUserName = authUser?.displayName?.trim().isNotEmpty == true
+        ? authUser!.displayName!.trim()
+        : (authUser?.email ?? 'Utilisateur');
+    final initialDraftText =
+      'Bonjour ${data.advertiserName}, je vous contacte au sujet de votre annonce "${data.title}".';
+
     final resolvedConversationId = await ConversationService.ensureConversation(
       offerId: data.offerId,
       offerTitle: data.title,
       currentUserId: me,
       otherUserId: data.advertiserId,
+      currentUserName: currentUserName,
+      otherUserName: data.advertiserName,
     );
 
     if (!context.mounted) return;
@@ -197,6 +205,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           conversationId: resolvedConversationId,
           offerTitle: data.title,
           currentUserId: me,
+          initialDraftText: initialDraftText,
         ),
       ),
     );
@@ -695,13 +704,13 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                   _PracticalInfoCard(
                     data: data,
                     compact: isCompactMobile,
-                    onContactTap: () => _showContactOptionsSheet(context, data),
+                    onContactTap: () => _openInternalMessaging(context, data),
                   ),
                   SizedBox(height: sectionGap),
                   _AdvertiserContactCard(
                     data: data,
                     compact: isCompactMobile,
-                    onContactTap: () => _showContactOptionsSheet(context, data),
+                    onContactTap: () => _openInternalMessaging(context, data),
                   ),
                 ],
               ),
@@ -1388,7 +1397,7 @@ class _AdvertiserContactCard extends StatelessWidget {
               ),
               SizedBox(height: compact ? 12 : 14),
               _InlineCta(
-                label: 'Proposer mes services',
+                label: 'Envoyer un message',
                 compact: compact,
                 onTap: onContactTap,
               ),

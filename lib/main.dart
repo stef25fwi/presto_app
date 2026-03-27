@@ -31,7 +31,6 @@ import 'pages/admin_space_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/offers/offer_details_page.dart';
 import 'pages/messages/conversations_list_page.dart';
-import 'pages/pro_profile_page.dart';
 import 'pages/toolbox_hub_page.dart';
 import 'services/city_search.dart';
 import 'services/account_social_auth_actions.dart';
@@ -2191,6 +2190,8 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoBlue),
       child: GestureDetector(
@@ -2278,12 +2279,26 @@ class _HomePageState extends State<HomePage>
                                     ),
                                   ),
                                   Expanded(
-                                    child: HomeBottomNavItem(
-                                      icon: Icons.chat_bubble_outline,
-                                      label: "Messages",
-                                      selected: _selectedIndex == 3,
-                                      onTap: () => _onBottomTap(3),
-                                    ),
+                                    child: currentUser == null
+                                        ? HomeBottomNavItem(
+                                            icon: Icons.chat_bubble_outline,
+                                            label: "Messages",
+                                            selected: _selectedIndex == 3,
+                                            onTap: () => _onBottomTap(3),
+                                          )
+                                        : _UnreadInboxBell(
+                                            userId: currentUser.uid,
+                                            monitoringKeyPrefix:
+                                                'bottomBar.messages',
+                                            builder: (context, badgeCount) =>
+                                                HomeBottomNavItem(
+                                              icon: Icons.chat_bubble_outline,
+                                              label: "Messages",
+                                              badgeCount: badgeCount,
+                                              selected: _selectedIndex == 3,
+                                              onTap: () => _onBottomTap(3),
+                                            ),
+                                          ),
                                   ),
                                   Expanded(
                                     child: HomeBottomNavItem(
@@ -9416,37 +9431,10 @@ class _AccountPageState extends State<AccountPage> {
                         },
                       ),
                       const SizedBox(height: 24),
-                      AccountMessagesSection(
-                        showTitle: false,
-                        onOpenMessages: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const MessagesPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      _buildAccountSectionCard(
-                        icon: Icons.chat_bubble_outline_rounded,
-                        title: 'Mes messages',
-                        description: 'Retrouve rapidement toutes tes conversations.',
-                        child: AccountMessagesSection(
-                          showTitle: false,
-                          onOpenMessages: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const MessagesPage(),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 24),
                       _buildAccountSectionCard(
                         icon: Icons.campaign_outlined,
-                        title: 'Mes annonces publiées',
-                        description: 'Gère les annonces que tu as déjà mises en ligne.',
+                        title: 'Gérer mes annonces',
+                        description: 'Retrouve tes annonces par statut, modifie-les ou supprime-les avec confirmation.',
                         child: RepaintBoundary(
                           child: UserOffersSection(
                             userId: user.uid,
@@ -10137,11 +10125,30 @@ class _FavoriteOfferItem {
   });
 }
 
+enum _OfferManagementSection {
+  pending,
+  published,
+  rejected,
+  archived,
+}
+
+class _ManagedOfferItem {
+  final String offerId;
+  final Map<String, dynamic> data;
+  final _OfferManagementSection section;
+
+  const _ManagedOfferItem({
+    required this.offerId,
+    required this.data,
+    required this.section,
+  });
+}
+
 class _UserOffersSectionState extends State<UserOffersSection> {
-  List<QueryDocumentSnapshot<Map<String, dynamic>>>? _offers;
+  List<_ManagedOfferItem> _offers = const [];
   bool _isLoading = true;
   String? _error;
-  String? _selectedOfferId;
+  String? _busyOfferId;
 
   bool _isPermissionDeniedError(Object error) {
     if (error is FirebaseException) {
@@ -10155,6 +10162,13 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   bool _isOfferPublished(Map<String, dynamic> data) {
     final isPublished = data['isPublished'];
     if (isPublished is bool && isPublished) return true;
+
+    final moderation = data['moderation'];
+    if (moderation is Map) {
+      final moderationStatus =
+          (moderation['status'] ?? '').toString().trim().toLowerCase();
+      if (moderationStatus == 'approved') return true;
+    }
 
     final status = (data['status'] ?? '').toString().trim().toLowerCase();
     if (status == 'published' || status == 'active') return true;
@@ -10171,6 +10185,71 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     return false;
   }
 
+  bool _isOfferRejected(Map<String, dynamic> data) {
+    final moderation = data['moderation'];
+    if (moderation is Map) {
+      final moderationStatus =
+          (moderation['status'] ?? '').toString().trim().toLowerCase();
+      if (moderationStatus == 'rejected') return true;
+    }
+
+    final status = (data['status'] ?? '').toString().trim().toLowerCase();
+    return status == 'rejected' ||
+        status == 'refused' ||
+        status == 'declined';
+  }
+
+  bool _isOfferArchived(Map<String, dynamic> data) {
+    final status = (data['status'] ?? '').toString().trim().toLowerCase();
+    if (status == 'archived' ||
+        status == 'archivé' ||
+        status == 'deleted' ||
+        status == 'removed') {
+      return true;
+    }
+
+    return data['archivedAt'] != null || data['deletedAt'] != null;
+  }
+
+  bool _isOfferPending(Map<String, dynamic> data) {
+    if (_isOfferArchived(data) ||
+        _isOfferRejected(data) ||
+        _isOfferPublished(data)) {
+      return false;
+    }
+
+    final moderation = data['moderation'];
+    if (moderation is Map) {
+      final moderationStatus =
+          (moderation['status'] ?? '').toString().trim().toLowerCase();
+      if (moderationStatus == 'pending' || moderationStatus == 'error') {
+        return true;
+      }
+    }
+
+    final status = (data['status'] ?? '').toString().trim().toLowerCase();
+    return status == 'submitted' ||
+        status == 'pending' ||
+        status == 'in_moderation' ||
+        status == 'pending_moderation';
+  }
+
+  _OfferManagementSection _resolveSection(Map<String, dynamic> data) {
+    if (_isOfferArchived(data)) {
+      return _OfferManagementSection.archived;
+    }
+    if (_isOfferRejected(data)) {
+      return _OfferManagementSection.rejected;
+    }
+    if (_isOfferPublished(data)) {
+      return _OfferManagementSection.published;
+    }
+    if (_isOfferPending(data)) {
+      return _OfferManagementSection.pending;
+    }
+    return _OfferManagementSection.pending;
+  }
+
   String _offerLocation(Map<String, dynamic> data) {
     final v = (data['location'] ?? data['city'] ?? data['serviceArea'] ?? '')
         .toString()
@@ -10179,8 +10258,135 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   }
 
   String _offerCategory(Map<String, dynamic> data) {
-    final v = (data['category'] ?? data['subcategory'] ?? '').toString().trim();
+    final v =
+        (data['category'] ?? data['subCategory'] ?? data['subcategory'] ?? '')
+            .toString()
+            .trim();
     return v.isEmpty ? 'Catégorie non précisée' : v;
+  }
+
+  String _offerTitle(Map<String, dynamic> data) {
+    final value = (data['title'] ?? 'Sans titre').toString().trim();
+    return value.isEmpty ? 'Sans titre' : value;
+  }
+
+  DateTime? _dateFromDynamic(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    if (value is String) return DateTime.tryParse(value);
+    return null;
+  }
+
+  String _formatOfferDate(Map<String, dynamic> data) {
+    final date = _dateFromDynamic(
+          data['createdAt'] ?? data['updatedAt'] ?? data['archivedAt'],
+        ) ??
+        DateTime.now();
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
+  }
+
+  int _offerSortValue(Map<String, dynamic> data) {
+    final date = _dateFromDynamic(
+      data['updatedAt'] ??
+          data['createdAt'] ??
+          data['archivedAt'] ??
+          data['deletedAt'],
+    );
+    return date?.millisecondsSinceEpoch ?? 0;
+  }
+
+  String? _offerStatusDetails(Map<String, dynamic> data) {
+    if (_isOfferRejected(data)) {
+      final moderation = data['moderation'];
+      if (moderation is Map) {
+        final message = (moderation['userMessage'] ?? moderation['reason'] ?? '')
+            .toString()
+            .trim();
+        if (message.isNotEmpty) return message;
+      }
+
+      final fallback = (data['rejectionReason'] ??
+              data['moderationReason'] ??
+              data['rejectedReason'] ??
+              '')
+          .toString()
+          .trim();
+      if (fallback.isNotEmpty) return fallback;
+      return 'Annonce à corriger avant nouvelle publication.';
+    }
+
+    if (_isOfferArchived(data)) {
+      final reason =
+          (data['deletedReason'] ?? data['archiveReason'] ?? '')
+              .toString()
+              .trim();
+      if (reason.isNotEmpty) return reason;
+    }
+
+    return null;
+  }
+
+  String _sectionTitle(_OfferManagementSection section) {
+    switch (section) {
+      case _OfferManagementSection.pending:
+        return 'En attente de validation';
+      case _OfferManagementSection.published:
+        return 'Publiées';
+      case _OfferManagementSection.rejected:
+        return 'Refusées';
+      case _OfferManagementSection.archived:
+        return 'Supprimées / archivées';
+    }
+  }
+
+  String _sectionEmptyLabel(_OfferManagementSection section) {
+    switch (section) {
+      case _OfferManagementSection.pending:
+        return 'Aucune annonce en attente de validation.';
+      case _OfferManagementSection.published:
+        return 'Aucune annonce publiée pour le moment.';
+      case _OfferManagementSection.rejected:
+        return 'Aucune annonce refusée.';
+      case _OfferManagementSection.archived:
+        return 'Aucune annonce supprimée ou archivée.';
+    }
+  }
+
+  String _statusLabel(_OfferManagementSection section) {
+    switch (section) {
+      case _OfferManagementSection.pending:
+        return 'En attente';
+      case _OfferManagementSection.published:
+        return 'Publiée';
+      case _OfferManagementSection.rejected:
+        return 'Refusée';
+      case _OfferManagementSection.archived:
+        return 'Archivée';
+    }
+  }
+
+  Color _statusColor(_OfferManagementSection section) {
+    switch (section) {
+      case _OfferManagementSection.pending:
+        return const Color(0xFFE67E22);
+      case _OfferManagementSection.published:
+        return kPrestoBlue;
+      case _OfferManagementSection.rejected:
+        return const Color(0xFFC0392B);
+      case _OfferManagementSection.archived:
+        return const Color(0xFF6B7280);
+    }
+  }
+
+  bool _canEditOffer(_OfferManagementSection section) {
+    return section == _OfferManagementSection.pending ||
+        section == _OfferManagementSection.rejected;
+  }
+
+  bool _canDeleteOffer(_OfferManagementSection section) {
+    return section != _OfferManagementSection.archived;
   }
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _loadOffersByOwnerField(
@@ -10233,27 +10439,23 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       }
 
       final docs = byId.values
-          .where((d) => _isOfferPublished(d.data()))
-          .toList(growable: false);
-
-      docs.sort((a, b) {
-        final ta = a.data()['createdAt'];
-        final tb = b.data()['createdAt'];
-        final ma = ta is Timestamp ? ta.millisecondsSinceEpoch : 0;
-        final mb = tb is Timestamp ? tb.millisecondsSinceEpoch : 0;
-        return mb.compareTo(ma);
-      });
+          .map(
+            (doc) => _ManagedOfferItem(
+              offerId: doc.id,
+              data: doc.data(),
+              section: _resolveSection(doc.data()),
+            ),
+          )
+          .toList(growable: false)
+        ..sort(
+          (a, b) => _offerSortValue(b.data).compareTo(_offerSortValue(a.data)),
+        );
 
       if (!mounted) return;
 
       setState(() {
         _offers = docs;
         _isLoading = false;
-
-        final ids = docs.map((d) => d.id).toSet();
-        if (_selectedOfferId == null || !ids.contains(_selectedOfferId)) {
-          _selectedOfferId = docs.isNotEmpty ? docs.first.id : null;
-        }
       });
     } catch (e) {
       if (!mounted) return;
@@ -10326,9 +10528,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       );
     }
 
-    final docs = _offers ?? [];
-
-    if (docs.isEmpty) {
+    if (_offers.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -10337,7 +10537,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
           border: Border.all(color: Colors.black.withOpacity(0.06)),
         ),
         child: const Text(
-          "Tu n’as pas encore publié d’annonce.",
+          'Tu n’as pas encore d’annonce à gérer.',
           style: TextStyle(
             fontSize: 13,
             color: Colors.black54,
@@ -10347,24 +10547,18 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       );
     }
 
-    final selectedId = _selectedOfferId;
-    final selectedDoc = (selectedId == null)
-        ? docs.first
-        : (docs.where((d) => d.id == selectedId).isNotEmpty
-            ? docs.firstWhere((d) => d.id == selectedId)
-            : docs.first);
+    final sections = {
+      for (final section in _OfferManagementSection.values)
+        section: _offers.where((item) => item.section == section).toList(),
+    };
 
-    final selectedData = selectedDoc.data();
-    final selectedTitle =
-        (selectedData['title'] ?? 'Sans titre').toString().trim();
-    final selectedLocation = _offerLocation(selectedData);
-    final selectedCategory = _offerCategory(selectedData);
-    final selectedBudget = selectedData['budget'];
-
-    String subtitle = "$selectedLocation · $selectedCategory";
-    if (selectedBudget != null && selectedBudget.toString().trim().isNotEmpty) {
-      subtitle += " · ${selectedBudget.toString()} €";
-    }
+    final visibleSections = <_OfferManagementSection>[
+      _OfferManagementSection.pending,
+      _OfferManagementSection.published,
+      _OfferManagementSection.rejected,
+      if ((sections[_OfferManagementSection.archived] ?? const []).isNotEmpty)
+        _OfferManagementSection.archived,
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -10374,7 +10568,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
             children: [
               const Expanded(
                 child: Text(
-                  'Mes annonces publiées',
+                  'Gérer mes annonces',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -10388,7 +10582,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  '${docs.length}',
+                  '${_offers.length}',
                   style: const TextStyle(
                     color: kPrestoBlue,
                     fontWeight: FontWeight.w800,
@@ -10399,125 +10593,270 @@ class _UserOffersSectionState extends State<UserOffersSection> {
           ),
           const SizedBox(height: 8),
         ],
-        InputDecorator(
-          decoration: InputDecoration(
-            labelText: 'Mes annonces',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.black.withOpacity(0.06)),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              isExpanded: true,
-              value: selectedDoc.id,
-              items: docs.map((doc) {
-                final data = doc.data();
-                final title = (data['title'] ?? 'Sans titre').toString().trim();
-                return DropdownMenuItem<String>(
-                  value: doc.id,
-                  child: Text(
-                    title.isEmpty ? 'Sans titre' : title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                );
-              }).toList(),
-              onChanged: (v) {
-                if (v == null) return;
-                setState(() => _selectedOfferId = v);
-              },
+          child: const Text(
+            'Classe tes annonces par statut et gère les actions disponibles sans quitter ton compte.',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.black54,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+        const SizedBox(height: 14),
+        ...visibleSections.expand((section) {
+          final items = sections[section] ?? const <_ManagedOfferItem>[];
+          return [
+            _buildOfferSection(section, items),
+            const SizedBox(height: 14),
+          ];
+        }).toList()
+          ..removeLast(),
+      ],
+    );
+  }
+
+  Widget _buildOfferSection(
+    _OfferManagementSection section,
+    List<_ManagedOfferItem> items,
+  ) {
+    final color = _statusColor(section);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withOpacity(0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _sectionTitle(section),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${items.length}',
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
           ),
-          child: ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Color(0xFFFFF3E0),
-              child: Icon(
-                Icons.work_outline,
-                color: kPrestoOrange,
-              ),
-            ),
-            title: Text(
-              selectedTitle.isEmpty ? 'Sans titre' : selectedTitle,
+          const SizedBox(height: 12),
+          if (items.isEmpty)
+            Text(
+              _sectionEmptyLabel(section),
               style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            subtitle: Text(
-              subtitle,
-              style: const TextStyle(
-                fontSize: 12,
+                fontSize: 13,
+                color: Colors.black54,
                 fontWeight: FontWeight.w500,
               ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => OfferDetailsPage(
-                        offer: _buildOfferDetailsOffer(
-                          offerId: selectedDoc.id,
-                          data: selectedData,
-                        ),
-                        currentUserId:
-                            FirebaseAuth.instance.currentUser?.uid ?? '',
-                      ),
-                    ),
-                  );
-                },
-                child: const Text('Voir détail'),
+            )
+          else
+            ...items.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildOfferTile(item),
               ),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOfferTile(_ManagedOfferItem item) {
+    final data = item.data;
+    final statusColor = _statusColor(item.section);
+    final isBusy = _busyOfferId == item.offerId;
+    final canEdit = _canEditOffer(item.section) && !isBusy;
+    final canDelete = _canDeleteOffer(item.section) && !isBusy;
+    final details = _offerStatusDetails(data);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDFDFD),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  _offerTitle(data),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
                   ),
-                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
                 ),
-                onPressed: () async {
-                  final deleted = await _confirmDeleteOffer(
-                    context,
-                    selectedDoc.id,
-                    selectedTitle.isEmpty ? 'Sans titre' : selectedTitle,
-                  );
-                  if (deleted) {
-                    await _loadOffers();
-                  }
-                },
-                child: const Text('Supprimer'),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  _statusLabel(item.section),
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              _buildMetaChip(Icons.category_outlined, _offerCategory(data)),
+              _buildMetaChip(Icons.event_outlined, _formatOfferDate(data)),
+              _buildMetaChip(Icons.place_outlined, _offerLocation(data)),
+            ],
+          ),
+          if (details != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                details,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.35,
+                  color: statusColor,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
-        ),
-      ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  onPressed: canEdit
+                      ? () => _showEditOfferDialog(context, item.offerId, data)
+                      : null,
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  label: const Text('Modifier'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: const Color(0xFFE5E7EB),
+                    disabledForegroundColor: const Color(0xFF6B7280),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  onPressed: canDelete
+                      ? () => _deleteOffer(item)
+                      : null,
+                  icon: isBusy
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Icon(Icons.delete_outline, size: 18),
+                  label: Text(isBusy ? 'Suppression...' : 'Supprimer'),
+                ),
+              ),
+            ],
+          ),
+          if (!canEdit && item.section == _OfferManagementSection.published) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Modification indisponible pour une annonce déjà publiée.',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetaChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F8FA),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.black54),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -10600,6 +10939,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                   if (ctx.mounted) {
                     Navigator.of(ctx).pop();
                   }
+                  await _loadOffers();
+                  if (!mounted || !context.mounted) return;
                   showSuccessSnackBar(context, "Annonce mise à jour ✅");
                 } catch (e) {
                   if (!mounted || !context.mounted) return;
@@ -10614,88 +10955,148 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     );
   }
 
-  Future<bool> _confirmDeleteOffer(
-    BuildContext context,
-    String offerId,
-    String title,
-  ) async {
-    final confirmed = await showDialog<bool>(
+  Future<void> _deleteOffer(_ManagedOfferItem item) async {
+    final title = _offerTitle(item.data);
+    final reason = await _showDeleteOfferDialog(context);
+    if (reason == null || !mounted) return;
+
+    setState(() => _busyOfferId = item.offerId);
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('offers')
+          .doc(item.offerId)
+          .get();
+
+      final latestData = doc.data() ?? item.data;
+      final imageUrls = (latestData['imageUrls'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString())
+          .where((e) => e.isNotEmpty)
+          .toList();
+
+      for (final url in imageUrls) {
+        try {
+          final ref = FirebaseStorage.instance.refFromURL(url);
+          await ref.delete();
+        } catch (_) {
+          // Best-effort: une image manquante ne doit pas bloquer la suppression.
+        }
+      }
+
+      debugPrint('Suppression offre ${item.offerId} avec motif: $reason');
+
+      await FirebaseFirestore.instance
+          .collection('offers')
+          .doc(item.offerId)
+          .delete();
+
+      if (!mounted) return;
+
+      await _loadOffers();
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Annonce "$title" supprimée');
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur lors de la suppression');
+    } finally {
+      if (mounted) {
+        setState(() => _busyOfferId = null);
+      }
+    }
+  }
+
+  Future<String?> _showDeleteOfferDialog(BuildContext context) async {
+    String? selectedReason;
+    const reasons = [
+      'J’ai fait une erreur dans l’annonce',
+      'J ai deja trouve un prestataire',
+      'J’ai trouvé quelqu’un sur ilipresto',
+    ];
+
+    return showDialog<String>(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text("Supprimer l’annonce"),
-          content: Text(
-            'Voulez-vous vraiment supprimer :\n"$title" ?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text("Annuler"),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final canSubmit =
+                selectedReason != null && selectedReason!.trim().isNotEmpty;
+
+            return AlertDialog(
+              title: const Text('Supprimer cette annonce ?'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Pour continuer, veuillez sélectionner le motif de suppression.',
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: selectedReason,
+                    decoration: InputDecoration(
+                      labelText: 'Motif principal',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    items: reasons
+                        .map(
+                          (reason) => DropdownMenuItem<String>(
+                            value: reason,
+                            child: Text(reason),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setDialogState(() => selectedReason = value);
+                    },
+                  ),
+                  if (!canSubmit) ...[
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Veuillez sélectionner les champs obligatoires.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFFB91C1C),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text("Supprimer"),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor:
+                        MaterialStateProperty.resolveWith<Color>((states) {
+                      if (states.contains(MaterialState.disabled)) {
+                        return const Color(0xFFE5E7EB);
+                      }
+                      return const Color(0xFFDC2626);
+                    }),
+                    foregroundColor:
+                        MaterialStateProperty.resolveWith<Color>((states) {
+                      if (states.contains(MaterialState.disabled)) {
+                        return const Color(0xFF6B7280);
+                      }
+                      return Colors.white;
+                    }),
+                  ),
+                  onPressed: canSubmit
+                      ? () => Navigator.of(dialogContext).pop(selectedReason)
+                      : null,
+                  child: const Text('Supprimer'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
-
-    if (!context.mounted) return false;
-
-    if (confirmed == true) {
-      try {
-        // 1️⃣ Récupérer les URLs des images avant suppression
-        final doc = await FirebaseFirestore.instance
-            .collection('offers')
-            .doc(offerId)
-            .get();
-
-        final imageUrls = (doc.data()?['imageUrls'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [];
-
-        // 2️⃣ Supprimer les images de Storage
-        if (imageUrls.isNotEmpty) {
-          debugPrint(
-              '🗑️ [DELETE] Suppression de ${imageUrls.length} images...');
-          for (final url in imageUrls) {
-            try {
-              final ref = FirebaseStorage.instance.refFromURL(url);
-              await ref.delete();
-              debugPrint('✅ [DELETE] Image supprimée: $url');
-            } catch (e) {
-              debugPrint('⚠️ [DELETE] Erreur suppression image: $e');
-              // Continue même si une image échoue
-            }
-          }
-        }
-
-        // 3️⃣ Supprimer le document Firestore
-        await FirebaseFirestore.instance
-            .collection('offers')
-            .doc(offerId)
-            .delete();
-
-        if (!context.mounted) return false;
-
-        showSuccessSnackBar(context, "Annonce supprimée ✅");
-        return true;
-      } catch (e) {
-        debugPrint('❌ [DELETE] Erreur: $e');
-        if (!context.mounted) return false;
-
-        showErrorSnackBar(context, "Erreur lors de la suppression");
-        return false;
-      }
-    }
-
-    return false;
   }
 }
 
