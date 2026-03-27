@@ -154,7 +154,7 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                   opacity: widget.isEditing ? 1.0 : 0.6,
                   child: PhoneInputFieldCompact(
                     controller: widget.phoneController,
-                    labelText: 'Téléphone',
+                    labelText: 'Téléphone (optionnel)',
                     hintText: '690123456',
                   ),
                 ),
