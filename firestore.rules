@@ -26,9 +26,13 @@ service cloud.firestore {
     }
 
     function isPublicOffer() {
-      // Public si explicitement public OU si "status" legacy = active
+      // Toute annonce publiée est visible publiquement, quel que soit le modèle
+      // utilisé par la version du client qui l'a écrite.
       return (resource.data.visibility.isPublic == true)
-        || (resource.data.status == 'active');
+        || (resource.data.isPublished == true)
+        || (resource.data.isActive == true)
+        || (resource.data.status == 'active')
+        || (resource.data.status == 'published');
     }
 
     // ⛔️ Server-only: rate limits (Functions)
