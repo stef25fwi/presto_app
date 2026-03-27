@@ -1,16 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class ConversationService {
-  static String canonicalConversationId({
-    required String offerId,
-    required String currentUserId,
-    required String otherUserId,
-  }) {
-    String sanitize(String value) => value.replaceAll('/', '_').trim();
-
-    final participants = [sanitize(currentUserId), sanitize(otherUserId)]..sort();
-    return 'offer_${sanitize(offerId)}__${participants.join('__')}';
-  }
+  static final FirebaseFunctions _functions =
+      FirebaseFunctions.instanceFor(region: 'europe-west1');
 
   static Future<String> ensureConversation({
     required String offerId,
@@ -20,63 +12,52 @@ class ConversationService {
     String? currentUserName,
     String? otherUserName,
   }) async {
-    final convCol = FirebaseFirestore.instance.collection('conversations');
-    final normalizedCurrentUserName = _normalizeParticipantName(currentUserName);
-    final normalizedOtherUserName = _normalizeParticipantName(otherUserName);
-    final participantNames = <String, String>{
-      currentUserId: normalizedCurrentUserName,
-      otherUserId: normalizedOtherUserName,
-    };
-
-    final existing = await convCol
-        .where('participants', arrayContains: currentUserId)
-        .where('offerId', isEqualTo: offerId)
-        .limit(20)
-        .get();
-
-    for (final doc in existing.docs) {
-      final participants = (doc.data()['participants'] as List<dynamic>? ?? const [])
-          .map((entry) => entry.toString())
-          .toList();
-      if (participants.contains(otherUserId)) {
-        await doc.reference.set({
-          'participantNames': participantNames,
-          'otherUserName': normalizedOtherUserName,
-        }, SetOptions(merge: true));
-        return doc.id;
-      }
-    }
-
-    final conversationId = canonicalConversationId(
-      offerId: offerId,
-      currentUserId: currentUserId,
-      otherUserId: otherUserId,
+    final callable = _functions.httpsCallable(
+      'ensureOfferConversation',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
     );
-    final participants = [currentUserId, otherUserId]..sort();
-    final convRef = convCol.doc(conversationId);
-
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
-      final snap = await transaction.get(convRef);
-      if (snap.exists) return;
-
-      transaction.set(convRef, {
-        'offerId': offerId,
-        'offerTitle': offerTitle,
-        'participants': participants,
-        'participantNames': participantNames,
-        'otherUserName': normalizedOtherUserName,
-        'createdAt': FieldValue.serverTimestamp(),
-        'lastMessageAt': FieldValue.serverTimestamp(),
-        'lastMessage': '',
-        'unreadCount': {currentUserId: 0, otherUserId: 0},
-      });
+    final response = await callable.call(<String, dynamic>{
+      'offerId': offerId,
+      'offerTitle': offerTitle,
+      'currentUserId': currentUserId,
+      'otherUserId': otherUserId,
+      'currentUserName': currentUserName,
+      'otherUserName': otherUserName,
     });
 
+    final data = Map<String, dynamic>.from(
+      (response.data as Map?)?.cast<String, dynamic>() ?? const {},
+    );
+    final conversationId = (data['conversationId'] ?? '').toString().trim();
+    if (conversationId.isEmpty) {
+      throw StateError('Conversation introuvable');
+    }
     return conversationId;
   }
 
-  static String _normalizeParticipantName(String? value) {
-    final trimmed = (value ?? '').trim();
-    return trimmed.isEmpty ? 'Utilisateur' : trimmed;
+  static Future<void> sendMessage({
+    required String conversationId,
+    required String text,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'sendConversationMessage',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 20)),
+    );
+    await callable.call(<String, dynamic>{
+      'conversationId': conversationId,
+      'text': text,
+    });
+  }
+
+  static Future<void> markAsRead({
+    required String conversationId,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'markConversationRead',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+    );
+    await callable.call(<String, dynamic>{
+      'conversationId': conversationId,
+    });
   }
 }
