@@ -8502,6 +8502,11 @@ class _AccountPageState extends State<AccountPage> {
   int _profileLoadRetries = 0;
   static const int _maxProfileLoadRetries = 3;
 
+  static const List<String> _requiredProfileFieldLabels = <String>[
+    'Pseudo',
+    'Ville',
+  ];
+
   // Admin: paramètres Micro-IA (Remote Config)
   bool _adminConfigLoaded = false;
   bool _adminSaving = false;
@@ -8806,11 +8811,19 @@ class _AccountPageState extends State<AccountPage> {
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
     });
+    _profilePseudoController.addListener(_handleProfileCompletenessChanged);
+    _profileCityController.addListener(_handleProfileCompletenessChanged);
+    _profilePhoneController.addListener(_handleProfileCompletenessChanged);
 
     // Sur Web, vérifie si l'utilisateur revient d'un redirect Google Sign-In
     if (kIsWeb) {
       _checkGoogleRedirectResult();
     }
+  }
+
+  void _handleProfileCompletenessChanged() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   Future<void> _checkGoogleRedirectResult() async {
@@ -8845,6 +8858,9 @@ class _AccountPageState extends State<AccountPage> {
     // _emailController.dispose(); // Maintenant géré par PrestoPremiumAuthPage
     // _passwordController.dispose();
     // _passwordConfirmController.dispose();
+    _profilePseudoController.removeListener(_handleProfileCompletenessChanged);
+    _profileCityController.removeListener(_handleProfileCompletenessChanged);
+    _profilePhoneController.removeListener(_handleProfileCompletenessChanged);
     _profilePseudoController.dispose();
     _profileCityController.dispose();
     _profilePhoneController.dispose();
@@ -8967,16 +8983,23 @@ class _AccountPageState extends State<AccountPage> {
     return true;
   }
 
+  List<String> _missingRequiredProfileFields() {
+    final missing = <String>[];
+
+    if (_profilePseudoController.text.trim().isEmpty) {
+      missing.add('pseudo');
+    }
+    if (_profileCityController.text.trim().isEmpty) {
+      missing.add('ville');
+    }
+
+    return missing;
+  }
+
   double _calculateProfileCompleteness() {
-    int filled = 0;
-    int total = 4;
-
-    if (_profilePseudoController.text.trim().isNotEmpty) filled++;
-    if (_profileCityController.text.trim().isNotEmpty) filled++;
-    if (_profilePhoneController.text.trim().isNotEmpty) filled++;
-    if (_favoriteCategories.isNotEmpty) filled++;
-
-    return filled / total;
+    final missingCount = _missingRequiredProfileFields().length;
+    final filled = _requiredProfileFieldLabels.length - missingCount;
+    return filled / _requiredProfileFieldLabels.length;
   }
 
   Future<bool> _saveProfile(
@@ -9490,52 +9513,85 @@ class _AccountPageState extends State<AccountPage> {
                             const SizedBox(height: 12),
                             // ✅ Indicateur de complétude du profil
                             if (_profileLoaded)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 8, horizontal: 12),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF5F5F5),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      "Complétude du profil",
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.black54,
-                                      ),
+                              Builder(
+                                builder: (context) {
+                                  final completeness =
+                                      _calculateProfileCompleteness();
+                                  final missingFields =
+                                      _missingRequiredProfileFields();
+                                  final isComplete = missingFields.isEmpty;
+
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 8, horizontal: 12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF5F5F5),
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                    const SizedBox(height: 6),
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(4),
-                                      child: LinearProgressIndicator(
-                                        value: _calculateProfileCompleteness(),
-                                        minHeight: 6,
-                                        backgroundColor: Colors.grey.shade300,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                          _calculateProfileCompleteness() >= 1.0
-                                              ? Colors.green
-                                              : _calculateProfileCompleteness() >=
-                                                      0.75
-                                                  ? Colors.orange
-                                                  : Colors.red,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          "Complétude du profil",
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.black54,
+                                          ),
                                         ),
-                                      ),
+                                        const SizedBox(height: 6),
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                          child: LinearProgressIndicator(
+                                            value: completeness,
+                                            minHeight: 6,
+                                            backgroundColor:
+                                                Colors.grey.shade300,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              completeness >= 1.0
+                                                  ? Colors.green
+                                                  : completeness >= 0.75
+                                                      ? Colors.orange
+                                                      : Colors.red,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '${(completeness * 100).toStringAsFixed(0)}% complet',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Champs requis : ${_requiredProfileFieldLabels.join(', ')}.',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          isComplete
+                                              ? 'Tous les champs requis sont renseignés.'
+                                              : 'Champ${missingFields.length > 1 ? 's' : ''} requis manquant${missingFields.length > 1 ? 's' : ''} : ${missingFields.join(', ')}.',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: isComplete
+                                                ? Colors.green.shade700
+                                                : Colors.red.shade700,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '${(_calculateProfileCompleteness() * 100).toStringAsFixed(0)}% complet',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  );
+                                },
                               ),
                             if (_profileLoadError)
                               Container(

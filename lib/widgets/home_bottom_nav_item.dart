@@ -65,9 +65,7 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
     final fontWeight = widget.selected ? FontWeight.w700 : FontWeight.w500;
     final String? badgeLabel = widget.badgeCount <= 0
         ? null
-        : widget.badgeCount > 9
-            ? '9+'
-            : widget.badgeCount.toString();
+        : widget.badgeCount.toString();
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
