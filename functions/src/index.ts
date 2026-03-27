@@ -16,6 +16,7 @@ export { onNewsletterCampaignCreated, onNewsletterCampaignUpdated } from "./modu
 
 export { onMessageCreated, onConversationSubMessageCreated } from "./modules/messaging/triggers";
 export { enqueueUnreadMessageReminders } from "./modules/messaging/scheduled";
+export { ensureOfferConversation, sendConversationMessage, markConversationRead } from "./modules/messaging/callables";
 
 export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/support/triggers";
 export { onReportCreated, onReportUpdated } from "./modules/moderation/triggers";

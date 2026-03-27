@@ -17,7 +17,7 @@ async function emitConversationMessageEvent({ conversationId, messageId, recipie
     if (!recipientEmail)
         return;
     const now = Date.now();
-    const eventId = `evt_message_created_${messageId}_${recipientId}_${now}`;
+    const eventId = `evt_message_created_${messageId}_${recipientId}_${eventName.replace(/\./g, "_")}`;
     await firestore_2.db.collection(constants_1.COLLECTIONS.emailEvents).doc(eventId).set({
         event_id: eventId,
         event_name: eventName,

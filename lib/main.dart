@@ -36,6 +36,7 @@ import 'services/city_search.dart';
 import 'services/account_social_auth_actions.dart';
 import 'services/google_auth_service.dart';
 import 'services/email_action_service.dart';
+import 'services/app_route_parser.dart';
 import 'services/notification_service.dart';
 import 'services/offer_indexing.dart';
 import 'utils/crashlytics_context.dart';
@@ -756,11 +757,24 @@ Future<void> main() async {
 class PrestoApp extends StatelessWidget {
   const PrestoApp({super.key});
 
+  Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
+    final target = parseAppDeepLink(settings.name);
+    if (target == null) return null;
+
+    return MaterialPageRoute(
+      settings: settings,
+      builder: (_) => MessagesPage(
+        initialConversationId: target.conversationId,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'iliprestō',
       debugShowCheckedModeBanner: false,
+      onGenerateRoute: _onGenerateRoute,
       routes: {
         '/publish': (_) => const PublishOfferPage(),
         '/messages': (_) => const MessagesPage(),
@@ -6026,11 +6040,18 @@ String formatAgeSince(Timestamp? ts) {
 /// PAGE MESSAGES (LISTE DE CONVERSATIONS) //////////////////////////////////
 
 class MessagesPage extends StatelessWidget {
-  const MessagesPage({super.key});
+  final String? initialConversationId;
+
+  const MessagesPage({
+    super.key,
+    this.initialConversationId,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const ConversationsListPage();
+    return ConversationsListPage(
+      initialConversationId: initialConversationId,
+    );
   }
 }
 

@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../constants.dart';
+import '../../services/conversation_service.dart';
 import '../../utils/friendly_snackbar.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
@@ -37,6 +38,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
       _conversationSubscription;
   bool _isSending = false;
+  bool _isMarkingRead = false;
   List<String> _participants = const [];
   bool _metaLoaded = false;
   bool _didApplyInitialDraft = false;
@@ -284,12 +286,16 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Future<void> _markAsRead() async {
+    if (_isMarkingRead) return;
+    _isMarkingRead = true;
     try {
-      await FirebaseFirestore.instance.collection('conversations').doc(widget.conversationId).update({
-        'unreadCount.${widget.currentUserId}': 0,
-      });
+      await ConversationService.markAsRead(
+        conversationId: widget.conversationId,
+      );
     } catch (e) {
       debugPrint('[ConversationThread] _markAsRead error: $e');
+    } finally {
+      _isMarkingRead = false;
     }
   }
 
@@ -313,33 +319,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       _isSending = true;
     });
 
-    final convRef = FirebaseFirestore.instance.collection('conversations').doc(widget.conversationId);
-    final senderName = authUser.displayName?.trim().isNotEmpty == true
-        ? authUser.displayName!.trim()
-        : (authUser.email ?? 'Utilisateur');
-
     try {
-      await convRef.collection('messages').add({
-        'text': text,
-        'senderId': widget.currentUserId,
-        'senderName': senderName,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      final update = <String, dynamic>{
-        'lastMessage': text,
-        'lastSenderId': widget.currentUserId,
-        'lastSenderName': senderName,
-        'lastMessageAt': FieldValue.serverTimestamp(),
-      };
-      for (final participant in _participants) {
-        if (participant == widget.currentUserId) {
-          update['unreadCount.$participant'] = 0;
-        } else {
-          update['unreadCount.$participant'] = FieldValue.increment(1);
-        }
-      }
-      await convRef.set(update, SetOptions(merge: true));
+      await ConversationService.sendMessage(
+        conversationId: widget.conversationId,
+        text: text,
+      );
 
       _controller.clear();
       await _markAsRead();

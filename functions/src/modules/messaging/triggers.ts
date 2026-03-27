@@ -33,7 +33,7 @@ async function emitConversationMessageEvent({
   if (!recipientEmail) return;
 
   const now = Date.now();
-  const eventId = `evt_message_created_${messageId}_${recipientId}_${now}`;
+  const eventId = `evt_message_created_${messageId}_${recipientId}_${eventName.replace(/\./g, "_")}`;
 
   await db.collection(COLLECTIONS.emailEvents).doc(eventId).set({
     event_id: eventId,
