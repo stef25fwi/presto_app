@@ -27,6 +27,10 @@ Future<void> prestoFirebaseMessagingBackgroundHandler(RemoteMessage message) asy
 /// Service pour gérer Firebase Cloud Messaging (notifications push)
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
+  static const String _webVapidKey = String.fromEnvironment(
+    'FCM_WEB_VAPID_KEY',
+    defaultValue: 'BMVwXhhckC038dAe0sdu-Q34tjeJBVofwehlfEeF1X9KtHVe16sF46E6S4UmbsNiVi5kmfYaRxLdL3CZB49MxgY',
+  );
   static const AndroidNotificationChannel _messagesChannel = AndroidNotificationChannel(
     'ilipresto_messages',
     'Messages IliPresto',
@@ -65,7 +69,9 @@ class NotificationService {
     required GlobalKey<NavigatorState> navigatorKey,
   }) async {
     _navigatorKey = navigatorKey;
-    await ensureLocalNotificationsInitialized();
+    if (!kIsWeb) {
+      await ensureLocalNotificationsInitialized();
+    }
     if (_initialized) {
       _schedulePendingRouteFlush();
       return;
@@ -85,20 +91,26 @@ class NotificationService {
     debugPrint(
         '[Notifications] Permission status: ${settings.authorizationStatus}');
 
-    await _messaging.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    if (!kIsWeb) {
+      await _messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
 
     // Handler pour les messages en background
-    FirebaseMessaging.onBackgroundMessage(
-      prestoFirebaseMessagingBackgroundHandler,
-    );
+    if (!kIsWeb) {
+      FirebaseMessaging.onBackgroundMessage(
+        prestoFirebaseMessagingBackgroundHandler,
+      );
+    }
 
     // Handler pour les messages en foreground
     FirebaseMessaging.onMessage.listen((message) async {
-      await showForegroundNotification(message);
+      if (!kIsWeb) {
+        await showForegroundNotification(message);
+      }
       _foregroundHandler(message);
     });
 
@@ -108,7 +120,7 @@ class NotificationService {
     _authSubscription ??=
         FirebaseAuth.instance.authStateChanges().listen((user) async {
       if (user == null) return;
-      final token = await _messaging.getToken();
+      final token = await _fetchMessagingToken();
       if (token != null) {
         _lastRegisteredToken = token;
         await _registerPushToken(token);
@@ -122,7 +134,7 @@ class NotificationService {
     }
 
     // Récupérer et afficher le token FCM
-    final token = await _messaging.getToken();
+    final token = await _fetchMessagingToken();
     debugPrint('[Notifications] FCM Token: $token');
     if (token != null) {
       _lastRegisteredToken = token;
@@ -141,6 +153,7 @@ class NotificationService {
   }
 
   Future<void> ensureLocalNotificationsInitialized() async {
+    if (kIsWeb) return;
     if (_localNotificationsReady) return;
 
     const initializationSettings = InitializationSettings(
@@ -197,6 +210,7 @@ class NotificationService {
   }
 
   Future<void> showForegroundNotification(RemoteMessage message) async {
+    if (kIsWeb) return;
     await ensureLocalNotificationsInitialized();
     final notification = message.notification;
     if (notification == null) return;
@@ -262,7 +276,17 @@ class NotificationService {
   }
 
   Future<void> detachCurrentDevice() async {
-    final token = _lastRegisteredToken ?? await _messaging.getToken();
+    final token = await Future<String?>.value(
+      _lastRegisteredToken,
+    ).then((cachedToken) async {
+      if (cachedToken != null && cachedToken.isNotEmpty) {
+        return cachedToken;
+      }
+      return _fetchMessagingToken();
+    }).timeout(
+      const Duration(seconds: 4),
+      onTimeout: () => null,
+    );
     if (token == null) return;
 
     try {
@@ -272,7 +296,9 @@ class NotificationService {
           timeout: const Duration(seconds: 10),
         ),
       );
-      await callable.call(<String, dynamic>{'token': token});
+      await callable.call(<String, dynamic>{'token': token}).timeout(
+        const Duration(seconds: 6),
+      );
     } catch (error) {
       debugPrint('[Notifications] unregister push token error: $error');
     }
@@ -295,6 +321,25 @@ class NotificationService {
       });
     } catch (error) {
       debugPrint('[Notifications] register push token error: $error');
+    }
+  }
+
+  Future<String?> _fetchMessagingToken() async {
+    try {
+      if (kIsWeb) {
+        if (_webVapidKey.isEmpty) {
+          debugPrint(
+            '[Notifications] Web push disabled: FCM_WEB_VAPID_KEY non configure.',
+          );
+          return null;
+        }
+        return await _messaging.getToken(vapidKey: _webVapidKey);
+      }
+
+      return await _messaging.getToken();
+    } catch (error) {
+      debugPrint('[Notifications] getToken error: $error');
+      return null;
     }
   }
 
@@ -361,6 +406,6 @@ class NotificationService {
 
   /// Récupérer le token FCM actuel
   Future<String?> getToken() async {
-    return await _messaging.getToken();
+    return await _fetchMessagingToken();
   }
 }

@@ -36,6 +36,7 @@ import 'services/city_search.dart';
 import 'services/account_social_auth_actions.dart';
 import 'services/google_auth_service.dart';
 import 'services/email_action_service.dart';
+import 'services/inbox_counts.dart';
 import 'services/app_route_parser.dart';
 import 'services/notification_service.dart';
 import 'services/offer_indexing.dart';
@@ -743,15 +744,14 @@ Future<void> main() async {
 
     await CitySearch.instance.ensureLoaded();
 
-    // Initialisation des notifications push (mobile uniquement)
-    if (!kIsWeb) {
-      try {
-        await NotificationService().initialize(
-          navigatorKey: appNavigatorKey,
-        );
-      } catch (e) {
-        debugPrint('[Notifications] init error: $e');
-      }
+    // Initialisation des notifications push sur toutes les plateformes.
+    // Sur Web, l'enregistrement du token dépend de FCM_WEB_VAPID_KEY.
+    try {
+      await NotificationService().initialize(
+        navigatorKey: appNavigatorKey,
+      );
+    } catch (e) {
+      debugPrint('[Notifications] init error: $e');
     }
 
     runApp(const PrestoApp());
@@ -2351,6 +2351,8 @@ class _HomePageState extends State<HomePage>
                                             userId: currentUser.uid,
                                             monitoringKeyPrefix:
                                                 'bottomBar.messages',
+                                          countType:
+                                            InboxCountType.unreadMessages,
                                             builder: (context, badgeCount) =>
                                                 HomeBottomNavItem(
                                               icon: Icons.chat_bubble_outline,
@@ -3039,12 +3041,14 @@ class _NotificationBellBase extends StatelessWidget {
 class _UnreadInboxBell extends StatelessWidget {
   final String userId;
   final String? monitoringKeyPrefix;
+  final InboxCountType countType;
   final Widget Function(BuildContext context, int badgeCount) builder;
 
   const _UnreadInboxBell({
     required this.userId,
     required this.builder,
     this.monitoringKeyPrefix,
+    this.countType = InboxCountType.totalUnread,
   });
 
   @override
@@ -3069,7 +3073,7 @@ class _UnreadInboxBell extends StatelessWidget {
         final inboxCounts =
             (snapshot.data?.data()?['inboxCounts'] as Map<String, dynamic>?) ??
             const <String, dynamic>{};
-        final badgeCount = (inboxCounts['totalUnread'] as num?)?.toInt() ?? 0;
+        final badgeCount = readInboxCount(inboxCounts, type: countType);
 
         if (monitoringKeyPrefix != null) {
           PrestoMonitoring.I.trackOtherStream(
@@ -8499,6 +8503,7 @@ class _AccountPageState extends State<AccountPage> {
   bool _profileLoaded = false;
   bool _profileLoadRequested = false;
   bool _isSavingProfile = false;
+  bool _isSigningOut = false;
   bool _isEditingProfile = false; // ✅ Mode édition du profil
   bool _profileLoadError = false;
   int _profileLoadRetries = 0;
@@ -9314,12 +9319,29 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _signOut() async {
+    if (_isSigningOut) return;
+
+    setState(() => _isSigningOut = true);
     try {
       await NotificationService().detachCurrentDevice();
-      await _auth.signOut();
-      // ✅ SessionState.userId sera automatiquement mis à null via authStateChanges()
+      await _auth.signOut().timeout(const Duration(seconds: 10));
+      SessionState.userId = null;
+      sessionState.logOut();
       await CrashlyticsContext.setUserId(null);
-    } catch (_) {}
+
+      if (!mounted) return;
+      showSuccessSnackBar(context, 'Déconnecté');
+    } on TimeoutException {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'La déconnexion a expiré. Réessayez.');
+    } catch (error) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur de déconnexion : $error');
+    } finally {
+      if (mounted) {
+        setState(() => _isSigningOut = false);
+      }
+    }
   }
 
   // Ancienne méthode _buildProfile supprimée - remplacée par PrestoPremiumAuthPage pour l'auth
@@ -9628,11 +9650,19 @@ class _AccountPageState extends State<AccountPage> {
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
-                          onPressed: _signOut,
-                          icon: const Icon(Icons.logout),
-                          label: const Text(
-                            "Se déconnecter",
-                            style: TextStyle(
+                          onPressed: _isSigningOut ? null : _signOut,
+                          icon: _isSigningOut
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.logout),
+                          label: Text(
+                            _isSigningOut ? 'Déconnexion...' : 'Se déconnecter',
+                            style: const TextStyle(
                               fontWeight: FontWeight.w700,
                             ),
                           ),
