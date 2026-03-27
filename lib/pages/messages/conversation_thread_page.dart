@@ -40,14 +40,15 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _isSending = false;
   bool _isMarkingRead = false;
   List<String> _participants = const [];
+  Map<String, dynamic> _lastReadAt = const {};
   bool _metaLoaded = false;
   bool _didApplyInitialDraft = false;
+  int _messageLimit = 50;
 
   @override
   void initState() {
     super.initState();
     _bindConversationListener();
-    _loadConversationMeta();
     _markAsRead();
   }
 
@@ -83,9 +84,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
-  Widget _buildThreadDateChip() {
-    final now = DateTime.now();
-    final label = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+  Widget _buildThreadDateChip(DateTime? date) {
+    final label = date != null
+        ? '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}'
+        : '--/--/----';
     return Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 8),
       child: Center(
@@ -275,6 +277,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (mounted) {
         setState(() {
           _participants = participants;
+          _lastReadAt = (data['lastReadAt'] as Map<String, dynamic>?) ?? const {};
           _metaLoaded = true;
         });
       }
@@ -283,6 +286,21 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         _markAsRead();
       }
     });
+  }
+
+  String? _readReceiptLabel(DateTime? sentAt) {
+    if (sentAt == null) return null;
+
+    final otherParticipantId = _participants.firstWhere(
+      (participantId) => participantId != widget.currentUserId,
+      orElse: () => '',
+    );
+    if (otherParticipantId.isEmpty) return null;
+
+    final raw = _lastReadAt[otherParticipantId];
+    final readAt = raw is Timestamp ? raw.toDate() : null;
+    if (readAt == null || readAt.isBefore(sentAt)) return null;
+    return 'Vu';
   }
 
   Future<void> _markAsRead() async {
@@ -393,7 +411,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       .doc(widget.conversationId)
                       .collection('messages')
                       .orderBy('createdAt', descending: true)
-                      .limit(200)
+                      .limit(_messageLimit)
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -449,7 +467,32 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       itemCount: docs.length + 1,
                       itemBuilder: (context, index) {
                         if (index == docs.length) {
-                          return _buildThreadDateChip();
+                          // Dernier item (visuellement en haut) : date + bouton charger plus
+                          final oldest = docs.isNotEmpty
+                              ? (docs.last.data()['createdAt'] is Timestamp
+                                  ? (docs.last.data()['createdAt'] as Timestamp).toDate()
+                                  : null)
+                              : null;
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (docs.length >= _messageLimit)
+                                TextButton.icon(
+                                  onPressed: () =>
+                                      setState(() => _messageLimit += 50),
+                                  icon: const Icon(Icons.history_rounded, size: 16),
+                                  label: const Text('Charger les messages plus anciens'),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: const Color(0xFF6B7280),
+                                    textStyle: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              _buildThreadDateChip(oldest),
+                            ],
+                          );
                         }
 
                         final data = docs[index].data();
@@ -459,6 +502,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                         final timestamp = data['createdAt'];
                         final sentAt = timestamp is Timestamp ? timestamp.toDate() : null;
                         final isMine = senderId == widget.currentUserId;
+                        final readReceipt = isMine ? _readReceiptLabel(sentAt) : null;
 
                         return Align(
                           alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
@@ -508,7 +552,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    _formatMessageTimestamp(sentAt),
+                                    [
+                                      _formatMessageTimestamp(sentAt),
+                                      if (readReceipt != null) readReceipt,
+                                    ].join(' · '),
                                     style: kPrestoMetaTextStyle.copyWith(
                                       fontSize: 11,
                                       color: const Color(0xFF6B7280),
