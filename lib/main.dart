@@ -55,6 +55,8 @@ import 'widgets/premium_ai_button.dart';
 import 'widgets/phone_input_field.dart';
 import 'widgets/photo_selector_tile.dart';
 
+final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
+
 class PrestoRemoteConfig {
   static String audioPipeline = 'HYBRID';
 
@@ -619,9 +621,13 @@ Future<void> main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    if (kIsWeb) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } else {
+      await Firebase.initializeApp();
+    }
 
     // 📋 Diagnostics
     debugPrint('=== Firebase Initialization ===');
@@ -740,7 +746,9 @@ Future<void> main() async {
     // Initialisation des notifications push (mobile uniquement)
     if (!kIsWeb) {
       try {
-        await NotificationService().initialize();
+        await NotificationService().initialize(
+          navigatorKey: appNavigatorKey,
+        );
       } catch (e) {
         debugPrint('[Notifications] init error: $e');
       }
@@ -761,6 +769,15 @@ class PrestoApp extends StatelessWidget {
     final target = parseAppDeepLink(settings.name);
     if (target == null) return null;
 
+    if (target.offerId != null) {
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => OfferDeepLinkPage(
+          offerId: target.offerId!,
+        ),
+      );
+    }
+
     return MaterialPageRoute(
       settings: settings,
       builder: (_) => MessagesPage(
@@ -774,6 +791,7 @@ class PrestoApp extends StatelessWidget {
     return MaterialApp(
       title: 'iliprestō',
       debugShowCheckedModeBanner: false,
+      navigatorKey: appNavigatorKey,
       onGenerateRoute: _onGenerateRoute,
       routes: {
         '/publish': (_) => const PublishOfferPage(),
@@ -2082,6 +2100,8 @@ class _HomePageState extends State<HomePage>
                   final message = data['message'] as String? ?? '';
                   final isRead = data['read'] as bool? ?? false;
                   final offerId = data['offerId'] as String?;
+                  final conversationId = data['conversationId'] as String?;
+                  final routeName = (data['routeName'] as String? ?? '').trim();
 
                   return ListTile(
                     leading: Icon(
@@ -2114,16 +2134,35 @@ class _HomePageState extends State<HomePage>
                             .update({'read': true});
                       }
 
-                      // Naviguer vers l'offre si disponible
-                      if (offerId != null && context.mounted) {
-                        Navigator.of(context).pop();
-                        // Ouvrir la page ConsultOffersPage avec un filtre sur cette offre
+                      if (!context.mounted) return;
+                      Navigator.of(context).pop();
+
+                      if (routeName.isNotEmpty) {
+                        Navigator.of(context).pushNamed(routeName);
+                        return;
+                      }
+
+                      if (conversationId != null) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const HomePage(initialIndex: 1),
+                            builder: (_) => MessagesPage(
+                              initialConversationId: conversationId,
+                            ),
                           ),
                         );
+                        return;
                       }
+
+                      if (offerId != null) {
+                        Navigator.of(context).pushNamed('/offers/$offerId');
+                        return;
+                      }
+
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const HomePage(initialIndex: 1),
+                        ),
+                      );
                     },
                   );
                 },
@@ -3014,6 +3053,13 @@ int _countUnreadMessages(
   return unreadMessagesCount;
 }
 
+int _countUnreadNotifications(
+  QuerySnapshot<Map<String, dynamic>>? snapshot,
+) {
+  if (snapshot == null) return 0;
+  return snapshot.docs.where((doc) => doc.data()['read'] != true).length;
+}
+
 class _UnreadInboxBell extends StatelessWidget {
   final String userId;
   final String? monitoringKeyPrefix;
@@ -3055,8 +3101,19 @@ class _UnreadInboxBell extends StatelessWidget {
           return builder(context, 0);
         }
 
-        final badgeCount = _countUnreadMessages(snapshot.data, userId);
-        return builder(context, badgeCount);
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('notifications')
+              .where('userId', isEqualTo: userId)
+              .where('read', isEqualTo: false)
+              .snapshots(),
+          builder: (context, notificationSnapshot) {
+            final badgeCount =
+                _countUnreadMessages(snapshot.data, userId) +
+                _countUnreadNotifications(notificationSnapshot.data);
+            return builder(context, badgeCount);
+          },
+        );
       },
     );
   }
@@ -6059,6 +6116,52 @@ class MessagesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ConversationsListPage(
       initialConversationId: initialConversationId,
+    );
+  }
+}
+
+class OfferDeepLinkPage extends StatelessWidget {
+  final String offerId;
+
+  const OfferDeepLinkPage({
+    super.key,
+    required this.offerId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      future: FirebaseFirestore.instance.collection('offers').doc(offerId).get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        final data = snapshot.data?.data();
+        if (data == null) {
+          return Scaffold(
+            appBar: AppBar(
+              backgroundColor: kPrestoOrange,
+              foregroundColor: Colors.white,
+              title: const Text('Annonce introuvable'),
+            ),
+            body: const Center(
+              child: Text('Cette annonce n\'est plus disponible.'),
+            ),
+          );
+        }
+
+        return OfferDetailsPage(
+          offer: _buildOfferDetailsOffer(
+            offerId: offerId,
+            data: data,
+          ),
+        );
+      },
     );
   }
 }
@@ -9247,6 +9350,7 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<void> _signOut() async {
     try {
+      await NotificationService().detachCurrentDevice();
       await _auth.signOut();
       // ✅ SessionState.userId sera automatiquement mis à null via authStateChanges()
       await CrashlyticsContext.setUserId(null);

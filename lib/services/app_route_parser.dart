@@ -1,10 +1,12 @@
 class AppDeepLinkTarget {
   final String routeName;
   final String? conversationId;
+  final String? offerId;
 
   const AppDeepLinkTarget._({
     required this.routeName,
     this.conversationId,
+    this.offerId,
   });
 
   const AppDeepLinkTarget.messages() : this._(routeName: '/messages');
@@ -13,6 +15,12 @@ class AppDeepLinkTarget {
       : this._(
           routeName: '/messages',
           conversationId: conversationId,
+        );
+
+  const AppDeepLinkTarget.offerDetail(String offerId)
+      : this._(
+          routeName: '/offers',
+          offerId: offerId,
         );
 }
 
@@ -51,6 +59,14 @@ AppDeepLinkTarget? parseAppDeepLink(String? rawName) {
       segments.first == 'messages' &&
       segments[1].isNotEmpty) {
     return AppDeepLinkTarget.messageThread(
+      Uri.decodeComponent(segments[1]),
+    );
+  }
+
+  if (segments.length == 2 &&
+      segments.first == 'offers' &&
+      segments[1].isNotEmpty) {
+    return AppDeepLinkTarget.offerDetail(
       Uri.decodeComponent(segments[1]),
     );
   }

@@ -2,7 +2,12 @@ import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
+import { canProceedRateLimited } from "../../core/rate_limit";
 import { COLLECTIONS } from "../../shared/constants";
+
+const MESSAGE_SEND_WINDOW_MS = 10 * 1000;
+const MESSAGE_SEND_LIMIT = 6;
+const DUPLICATE_MESSAGE_WINDOW_MS = 15 * 1000;
 
 function requireAuthUid(request: { auth?: { uid?: string; token?: Record<string, unknown> } }): string {
   const uid = String(request.auth?.uid || "").trim();
@@ -52,6 +57,21 @@ function readUserDisplayName(data: Record<string, unknown> | undefined, ...fallb
     data?.name,
     ...fallbacks,
   );
+}
+
+function sanitizeMessageText(value: unknown): string {
+  return String(value ?? "")
+    .split("\n")
+    .map((line) => line.replace(/\s+$/g, ""))
+    .join("\n")
+    .trim();
+}
+
+function toDateOrNull(value: unknown): Date | null {
+  if (value instanceof admin.firestore.Timestamp) return value.toDate();
+  if (value instanceof Date) return value;
+  if (typeof value === "number" && Number.isFinite(value)) return new Date(value);
+  return null;
 }
 
 async function loadConversationForParticipant(conversationId: string, currentUserId: string) {
@@ -146,7 +166,7 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async 
     await doc.ref.set({
       participantNames,
       otherUserName,
-      updatedAt: Date.now(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }, { merge: true });
 
     return {
@@ -166,7 +186,7 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async 
       transaction.set(convRef, {
         participantNames,
         otherUserName,
-        updatedAt: Date.now(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
       return;
     }
@@ -177,8 +197,12 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async 
       participants,
       participantNames,
       otherUserName,
+      status: "open",
+      archivedBy: {},
+      blockedBy: {},
+      lastReadAt: {},
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: Date.now(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
       lastMessage: "",
       unreadCount: {
@@ -198,7 +222,7 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async 
 export const sendConversationMessage = onCall({ region: PROJECT_REGION }, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
-  const text = String(request.data?.text || "").trim();
+  const text = sanitizeMessageText(request.data?.text);
 
   if (!conversationId || !text) {
     throw new HttpsError("invalid-argument", "conversationId and text are required");
@@ -208,7 +232,43 @@ export const sendConversationMessage = onCall({ region: PROJECT_REGION }, async 
     throw new HttpsError("invalid-argument", "message is too long");
   }
 
-  const { convRef, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+  const canSend = await canProceedRateLimited(
+    "msg_send",
+    `${currentUserId}:${conversationId}`,
+    MESSAGE_SEND_LIMIT,
+    MESSAGE_SEND_WINDOW_MS,
+  );
+  if (!canSend) {
+    throw new HttpsError("resource-exhausted", "too many messages sent too quickly");
+  }
+
+  const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+
+  const latestMessageSnap = await convRef
+    .collection("messages")
+    .orderBy("createdAt", "desc")
+    .limit(1)
+    .get();
+  const latestMessageDoc = latestMessageSnap.docs[0];
+  if (latestMessageDoc) {
+    const latestData = latestMessageDoc.data() as Record<string, unknown>;
+    const latestSenderId = String(latestData.senderId || "").trim();
+    const latestText = sanitizeMessageText(latestData.text);
+    const latestCreatedAt = toDateOrNull(latestData.createdAt);
+    if (
+      latestSenderId === currentUserId &&
+      latestText === text &&
+      latestCreatedAt != null &&
+      Date.now() - latestCreatedAt.getTime() <= DUPLICATE_MESSAGE_WINDOW_MS
+    ) {
+      return {
+        ok: true,
+        deduplicated: true,
+        messageId: latestMessageDoc.id,
+      };
+    }
+  }
+
   const senderUserSnap = await db.collection(COLLECTIONS.users).doc(currentUserId).get();
   const senderName = readUserDisplayName(
     senderUserSnap.data() as Record<string, unknown> | undefined,
@@ -217,6 +277,10 @@ export const sendConversationMessage = onCall({ region: PROJECT_REGION }, async 
     currentUserId,
   );
 
+  // Premier message si lastMessage est encore vide (valeur initiale de la conversation).
+  // Ce flag est lu par le trigger pour éviter la race condition du comptage frères.
+  const isFirstMessage = String(data.lastMessage || "").trim() === "";
+
   const messageRef = convRef.collection("messages").doc();
   const batch = db.batch();
 
@@ -224,6 +288,7 @@ export const sendConversationMessage = onCall({ region: PROJECT_REGION }, async 
     text,
     senderId: currentUserId,
     senderName,
+    isFirstMessage,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
@@ -232,7 +297,7 @@ export const sendConversationMessage = onCall({ region: PROJECT_REGION }, async 
     lastSenderId: currentUserId,
     lastSenderName: senderName,
     lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: Date.now(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     [`participantNames.${currentUserId}`]: senderName,
   };
 
@@ -263,7 +328,7 @@ export const markConversationRead = onCall({ region: PROJECT_REGION }, async (re
   await convRef.update({
     [`unreadCount.${currentUserId}`]: 0,
     [`lastReadAt.${currentUserId}`]: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: Date.now(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
   return { ok: true };

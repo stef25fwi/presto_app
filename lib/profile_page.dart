@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'pages/pro_profile_page.dart';
 import 'services/email_action_service.dart';
+import 'services/notification_service.dart';
 import 'utils/friendly_snackbar.dart';
 import 'constants.dart';
 import 'widgets/phone_input_field.dart';
@@ -160,29 +161,43 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadNotificationPreferences(String userId) async {
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('notification_preferences')
-          .doc(userId)
-          .get();
-      final data = doc.data();
-      if (data == null || !mounted) return;
+      final results = await Future.wait([
+      FirebaseFirestore.instance
+        .collection('notification_preferences')
+        .doc(userId)
+        .get(),
+      FirebaseFirestore.instance.collection('users').doc(userId).get(),
+      ]);
+      final prefsData = results[0].data();
+      final userData = results[1].data();
+      if (!mounted) return;
 
       final emailPrefs =
-          (data['email'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+        (prefsData?['email'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+      final pushPrefs =
+        (prefsData?['push'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
       final savedSearches =
           (emailPrefs['saved_searches'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
       final messaging =
           (emailPrefs['messaging'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-        final listings =
+      final listings =
           (emailPrefs['listings'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
       final favorites =
           (emailPrefs['favorites'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
       final support =
           (emailPrefs['support'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-        final marketing =
+      final marketing =
           (emailPrefs['marketing'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-        final quietHours =
-          (data['quiet_hours'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+      final quietHours =
+        (prefsData?['quiet_hours'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+      final pushMessaging =
+        (pushPrefs['messaging'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+      final pushFavorites =
+        (pushPrefs['favorites'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+      final pushSupport =
+        (pushPrefs['support'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+      final favoriteCategoryMap =
+        (userData?['favoriteCategoryMap'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
 
       setState(() {
         final savedSearchMode = (savedSearches['mode'] ?? 'daily').toString();
@@ -194,16 +209,32 @@ class _ProfilePageState extends State<ProfilePage> {
         _listingEmailMode = listingMode;
 
         _notifNearby = _savedSearchEmailMode != 'off';
-        _notifAcceptOffer = _messagingEmailMode != 'off';
-        _notifFavorites = favorites['enabled'] != false;
-        _notifSystem = support['enabled'] != false;
+        _notifAcceptOffer =
+            _messagingEmailMode != 'off' && pushMessaging['enabled'] != false;
+        _notifFavorites =
+            favorites['enabled'] != false && pushFavorites['enabled'] != false;
+        _notifSystem = support['enabled'] != false && pushSupport['enabled'] != false;
         _marketingEmailsEnabled = marketing['enabled'] == true;
         _quietHoursEnabled = quietHours['enabled'] != false;
-        _timezone = (data['timezone'] ?? 'America/Guadeloupe').toString();
+        _timezone = (prefsData?['timezone'] ?? 'America/Guadeloupe').toString();
         _quietHoursStart = (quietHours['start_local'] ?? '22:00').toString();
         _quietHoursEnd = (quietHours['end_local'] ?? '08:00').toString();
 
-        final locale = (data['locale'] ?? 'fr').toString();
+        _favoriteCategories
+          ..clear()
+          ..addAll(
+            favoriteCategoryMap.map(
+              (key, value) => MapEntry(
+                key,
+                (value as List<dynamic>? ?? const [])
+                    .map((entry) => entry.toString())
+                    .where((entry) => entry.isNotEmpty)
+                    .toList(growable: true),
+              ),
+            ),
+          );
+
+        final locale = (prefsData?['locale'] ?? 'fr').toString();
         if (locale == 'en') {
           _language = 'Anglais';
         } else if (_language == 'Anglais') {
@@ -349,6 +380,14 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() => _isLoading = true);
     try {
       final displayName = _nameCtrl.text.trim();
+      final favoriteCategoryKeys =
+          _favoriteCategories.keys.toSet().toList(growable: false);
+      final favoriteSubcategories = _favoriteCategories.values
+          .expand((items) => items)
+          .map((entry) => entry.trim())
+          .where((entry) => entry.isNotEmpty)
+          .toSet()
+          .toList(growable: false);
       if (displayName.isNotEmpty) {
         await user.updateDisplayName(displayName);
       }
@@ -360,10 +399,19 @@ class _ProfilePageState extends State<ProfilePage> {
         'phone': _phoneCtrl.text.trim(),
         'email': _emailCtrl.text.trim(),
         'accountType': _accountType,
+        'favoriteCategories': favoriteCategoryKeys,
+        'selectedFavoriteCategories': favoriteCategoryKeys,
+        'selectedFavoriteSubcategories': favoriteSubcategories,
+        'favoriteCategoryMap': _favoriteCategories.map(
+          (key, value) => MapEntry(
+            key,
+            value.toSet().toList(growable: false),
+          ),
+        ),
         'preferences': {
           'notifNearby': _savedSearchEmailMode != 'off',
           'notifFavorites': _notifFavorites,
-          'notifAcceptOffer': _messagingEmailMode != 'off',
+          'notifAcceptOffer': _notifAcceptOffer,
           'notifSystem': _notifSystem,
           'savedSearchMode': _savedSearchEmailMode,
           'messagingMode': _messagingEmailMode,
@@ -400,6 +448,13 @@ class _ProfilePageState extends State<ProfilePage> {
             'enabled': _marketingEmailsEnabled,
             'frequency_cap_per_week': 2,
           },
+        },
+        'push': {
+          'messaging': {'enabled': _notifAcceptOffer},
+          'listings': {'enabled': _listingEmailMode != 'off'},
+          'saved_searches': {'enabled': _savedSearchEmailMode != 'off'},
+          'favorites': {'enabled': _notifFavorites},
+          'support': {'enabled': _notifSystem},
         },
         'updated_at': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
@@ -740,6 +795,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _onLogout() async {
     try {
+      await NotificationService().detachCurrentDevice();
       await _auth.signOut();
       if (!mounted) return;
       showSuccessSnackBar(context, 'Déconnecté');

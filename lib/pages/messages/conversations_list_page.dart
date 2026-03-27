@@ -113,7 +113,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     final title = _conversationTitle(data, userId);
     final offerTitle = (data['offerTitle'] ?? '').toString().trim();
 
-    await _markConversationRead(conversationId, userId);
+    // Fire-and-forget : ne pas bloquer la navigation sur le réseau
+    _markConversationRead(conversationId, userId);
     if (!context.mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -329,6 +330,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                       .collection('conversations')
                       .where('participants', arrayContains: userId)
                       .orderBy('lastMessageAt', descending: true)
+                      .limit(100)
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {

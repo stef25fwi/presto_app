@@ -39,6 +39,13 @@ exports.onUserCreated = (0, firestore_1.onDocumentCreated)(`${constants_1.COLLEC
                 support: { enabled: true },
                 marketing: { enabled: false, frequency_cap_per_week: 2 },
             },
+            push: {
+                messaging: { enabled: true },
+                listings: { enabled: true },
+                saved_searches: { enabled: true },
+                favorites: { enabled: true },
+                support: { enabled: true },
+            },
             created_at: now,
             updated_at: now,
         });

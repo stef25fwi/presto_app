@@ -14,9 +14,10 @@ export { onLegalTermsSettingsUpdated, onLegalPrivacySettingsUpdated } from "./mo
 export { enqueueMarketingOnboardingEmails } from "./modules/marketing/scheduled";
 export { onNewsletterCampaignCreated, onNewsletterCampaignUpdated } from "./modules/marketing/triggers";
 
-export { onMessageCreated, onConversationSubMessageCreated } from "./modules/messaging/triggers";
+export { onConversationSubMessageCreated } from "./modules/messaging/triggers";
 export { enqueueUnreadMessageReminders } from "./modules/messaging/scheduled";
 export { ensureOfferConversation, sendConversationMessage, markConversationRead } from "./modules/messaging/callables";
+export { registerPushToken, unregisterPushToken } from "./modules/notifications/callables";
 
 export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/support/triggers";
 export { onReportCreated, onReportUpdated } from "./modules/moderation/triggers";
