@@ -794,14 +794,24 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _onLogout() async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
     try {
       await NotificationService().detachCurrentDevice();
-      await _auth.signOut();
+      await _auth.signOut().timeout(const Duration(seconds: 10));
       if (!mounted) return;
       showSuccessSnackBar(context, 'Déconnecté');
+    } on TimeoutException {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'La déconnexion a expiré. Réessayez.');
     } catch (e) {
       if (!mounted) return;
       showErrorSnackBar(context, 'Erreur déconnexion: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -1536,7 +1546,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               IconButton(
-                onPressed: () async => _onLogout(),
+                onPressed: _isLoading ? null : _onLogout,
                 icon: const Icon(Icons.logout, color: Colors.white),
                 tooltip: 'Déconnexion',
                 style: IconButton.styleFrom(
