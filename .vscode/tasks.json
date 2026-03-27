@@ -33,6 +33,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Flutter: Test app_route_parser",
+      "type": "shell",
+      "command": "flutter test test/app_route_parser_test.dart",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Status Snapshot",
       "type": "shell",
       "command": "git status --short --branch",
@@ -53,7 +59,7 @@
     {
       "label": "Git: Commit All",
       "type": "shell",
-      "command": "git commit -m \"chore(firestore): add managed composite indexes\"",
+      "command": "git commit -m \"fix(messaging): harden conversation flow\"",
       "problemMatcher": []
     },
     {
@@ -90,6 +96,12 @@
       "label": "Firebase: List Firestore Indexes",
       "type": "shell",
       "command": "gcloud firestore indexes composite list --project=presto-app-74abe",
+      "problemMatcher": []
+    },
+    {
+      "label": "Messaging: Smoke Test Existing Accounts",
+      "type": "shell",
+      "command": "node tools/messaging_existing_accounts_smoke.cjs",
       "problemMatcher": []
     }
   ]

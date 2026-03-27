@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../constants.dart';
+import '../../services/conversation_service.dart';
+import '../../utils/friendly_snackbar.dart';
 import 'conversation_thread_page.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
@@ -17,7 +19,12 @@ const kMessagesStatusBarStyle = SystemUiOverlayStyle(
 );
 
 class ConversationsListPage extends StatefulWidget {
-  const ConversationsListPage({super.key});
+  final String? initialConversationId;
+
+  const ConversationsListPage({
+    super.key,
+    this.initialConversationId,
+  });
 
   @override
   State<ConversationsListPage> createState() => _ConversationsListPageState();
@@ -26,6 +33,7 @@ class ConversationsListPage extends StatefulWidget {
 class _ConversationsListPageState extends State<ConversationsListPage> {
   final TextEditingController _searchController = TextEditingController();
   int _totalUnread = 0;
+  bool _didHandleInitialConversation = false;
 
   @override
   void dispose() {
@@ -92,10 +100,55 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
   Future<void> _markConversationRead(String conversationId, String currentUserId) async {
     try {
-      await FirebaseFirestore.instance.collection('conversations').doc(conversationId).update({
-        'unreadCount.$currentUserId': 0,
-      });
+      await ConversationService.markAsRead(conversationId: conversationId);
     } catch (_) {}
+  }
+
+  Future<void> _openConversation(
+    BuildContext context,
+    String conversationId,
+    Map<String, dynamic> data,
+    String userId,
+  ) async {
+    final title = _conversationTitle(data, userId);
+    final offerTitle = (data['offerTitle'] ?? '').toString().trim();
+
+    await _markConversationRead(conversationId, userId);
+    if (!context.mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ConversationThreadPage(
+          conversationId: conversationId,
+          offerTitle: offerTitle.isEmpty ? title : offerTitle,
+          currentUserId: userId,
+        ),
+      ),
+    );
+  }
+
+  void _maybeOpenInitialConversation(
+    BuildContext context,
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    String userId,
+  ) {
+    final initialConversationId = widget.initialConversationId?.trim() ?? '';
+    if (_didHandleInitialConversation || initialConversationId.isEmpty) return;
+
+    final match = docs.where((doc) => doc.id == initialConversationId).toList();
+    _didHandleInitialConversation = true;
+
+    if (match.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showErrorSnackBar(context, 'Conversation introuvable ou inaccessible.');
+      });
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await _openConversation(context, match.first.id, match.first.data(), userId);
+    });
   }
 
   Widget _buildSearchField() {
@@ -294,6 +347,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                     }
 
                     final docs = snapshot.data?.docs ?? const [];
+                    _maybeOpenInitialConversation(context, docs, userId);
                     var computedUnread = 0;
                     for (final doc in docs) {
                       final unread = doc.data()['unreadCount'];
@@ -324,8 +378,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                       itemBuilder: (context, index) {
                         final doc = filteredDocs[index];
                         final data = doc.data();
-                        final title = _conversationTitle(data, userId);
                         final offerTitle = (data['offerTitle'] ?? '').toString().trim();
+                        final title = _conversationTitle(data, userId);
                         final preview = _conversationPreview(data, userId);
                         final unreadMap = data['unreadCount'];
                         final unreadCount = unreadMap is Map<String, dynamic>
@@ -342,16 +396,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                             child: InkWell(
                               borderRadius: BorderRadius.circular(18),
                               onTap: () async {
-                                await _markConversationRead(doc.id, userId);
-                                if (!context.mounted) return;
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => ConversationThreadPage(
-                                      conversationId: doc.id,
-                                      offerTitle: offerTitle.isEmpty ? title : offerTitle,
-                                      currentUserId: userId,
-                                    ),
-                                  ),
+                                await _openConversation(
+                                  context,
+                                  doc.id,
+                                  data,
+                                  userId,
                                 );
                               },
                               child: Container(
