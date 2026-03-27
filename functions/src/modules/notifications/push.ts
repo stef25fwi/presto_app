@@ -2,6 +2,8 @@ import admin from "firebase-admin";
 import { db } from "../../core/firestore";
 import { COLLECTIONS } from "../../shared/constants";
 
+const FCM_MULTICAST_TOKEN_LIMIT = 500;
+
 export type PushTopic = "messaging" | "favorites" | "support" | "listings" | "saved_searches";
 
 function readBoolean(value: unknown, fallback = true): boolean {
@@ -123,55 +125,57 @@ export async function sendPushToUser({
 
   const tokenEntries = await listPushTokens(userId);
   if (tokenEntries.length === 0) return;
+  const invalidDocIds = new Set<string>();
 
-  const multicast = {
-    tokens: tokenEntries.map((entry) => entry.token),
-    notification: {
-      title,
-      body,
-    },
-    data: toStringMap({
-      ...data,
-      routeName,
-      channelId,
-    }),
-    android: {
-      priority: "high" as const,
-      collapseKey,
+  for (let index = 0; index < tokenEntries.length; index += FCM_MULTICAST_TOKEN_LIMIT) {
+    const batchEntries = tokenEntries.slice(index, index + FCM_MULTICAST_TOKEN_LIMIT);
+    const multicast = {
+      tokens: batchEntries.map((entry) => entry.token),
       notification: {
+        title,
+        body,
+      },
+      data: toStringMap({
+        ...data,
+        routeName,
         channelId,
-        tag: collapseKey,
-        sound: "default",
-        clickAction: "FLUTTER_NOTIFICATION_CLICK",
-      },
-    },
-    apns: {
-      headers: {
-        "apns-priority": "10",
-      },
-      payload: {
-        aps: {
+      }),
+      android: {
+        priority: "high" as const,
+        collapseKey,
+        notification: {
+          channelId,
+          tag: collapseKey,
           sound: "default",
-          contentAvailable: true,
+          clickAction: "FLUTTER_NOTIFICATION_CLICK",
         },
       },
-    },
-  };
+      apns: {
+        headers: {
+          "apns-priority": "10",
+        },
+        payload: {
+          aps: {
+            sound: "default",
+            contentAvailable: true,
+          },
+        },
+      },
+    };
 
-  const response = await admin.messaging().sendEachForMulticast(multicast);
-  const invalidDocIds: string[] = [];
+    const response = await admin.messaging().sendEachForMulticast(multicast);
+    response.responses.forEach((result, responseIndex) => {
+      if (result.success) return;
 
-  response.responses.forEach((result, index) => {
-    if (result.success) return;
+      const code = result.error?.code || "";
+      if (
+        code === "messaging/registration-token-not-registered" ||
+        code === "messaging/invalid-registration-token"
+      ) {
+        invalidDocIds.add(batchEntries[responseIndex]!.docId);
+      }
+    });
+  }
 
-    const code = result.error?.code || "";
-    if (
-      code === "messaging/registration-token-not-registered" ||
-      code === "messaging/invalid-registration-token"
-    ) {
-      invalidDocIds.push(tokenEntries[index]!.docId);
-    }
-  });
-
-  await cleanupInvalidTokens(userId, invalidDocIds);
+  await cleanupInvalidTokens(userId, Array.from(invalidDocIds));
 }

@@ -16,8 +16,17 @@ export { onNewsletterCampaignCreated, onNewsletterCampaignUpdated } from "./modu
 
 export { onConversationSubMessageCreated } from "./modules/messaging/triggers";
 export { enqueueUnreadMessageReminders } from "./modules/messaging/scheduled";
-export { ensureOfferConversation, sendConversationMessage, markConversationRead } from "./modules/messaging/callables";
+export {
+  ensureOfferConversation,
+  sendConversationMessage,
+  markConversationRead,
+  archiveConversation,
+  unarchiveConversation,
+  blockConversation,
+  unblockConversation,
+} from "./modules/messaging/callables";
 export { registerPushToken, unregisterPushToken } from "./modules/notifications/callables";
+export { onNotificationCreated, onNotificationUpdated } from "./modules/notifications/triggers";
 
 export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/support/triggers";
 export { onReportCreated, onReportUpdated } from "./modules/moderation/triggers";
