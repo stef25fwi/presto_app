@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../constants.dart';
 import '../../services/conversation_service.dart';
+import '../../services/inbox_counts.dart';
 import '../../services/conversation_state.dart';
 import '../../utils/friendly_snackbar.dart';
 import 'conversation_thread_page.dart';
@@ -33,7 +34,6 @@ class ConversationsListPage extends StatefulWidget {
 
 class _ConversationsListPageState extends State<ConversationsListPage> {
   final TextEditingController _searchController = TextEditingController();
-  int _totalUnread = 0;
   bool _didHandleInitialConversation = false;
   int _conversationLimit = 50;
   bool _showArchivedOnly = false;
@@ -326,46 +326,59 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             icon: Icon(_showArchivedOnly ? Icons.inbox_outlined : Icons.archive_outlined),
             tooltip: _showArchivedOnly ? 'Afficher la boite principale' : 'Afficher les conversations archivees',
           ),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(right: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.16),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.mark_chat_unread_outlined),
-                  tooltip: 'Nouveaux messages',
-                ),
-              ),
-              if (_totalUnread > 0)
-                Positioned(
-                  right: 6,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            stream: FirebaseFirestore.instance.collection('users').doc(userId).snapshots(),
+            builder: (context, snapshot) {
+              final inboxCounts =
+                  (snapshot.data?.data()?['inboxCounts'] as Map<String, dynamic>?) ??
+                  const <String, dynamic>{};
+              final unreadMessages = readInboxCount(
+                inboxCounts,
+                type: InboxCountType.unreadMessages,
+              );
+
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
                     decoration: BoxDecoration(
-                      color: kWhatsappGreen,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 1.5,
-                      ),
+                      color: Colors.white.withOpacity(0.16),
+                      borderRadius: BorderRadius.circular(999),
                     ),
-                    child: Text(
-                      '$_totalUnread',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.mark_chat_unread_outlined),
+                      tooltip: 'Nouveaux messages',
                     ),
                   ),
-                ),
-            ],
+                  if (unreadMessages > 0)
+                    Positioned(
+                      right: 6,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: kWhatsappGreen,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Text(
+                          '$unreadMessages',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -401,19 +414,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
                     final docs = snapshot.data?.docs ?? const [];
                     _maybeOpenInitialConversation(context, docs, userId);
-                    var computedUnread = 0;
-                    for (final doc in docs) {
-                      final unread = doc.data()['unreadCount'];
-                      if (unread is Map<String, dynamic>) {
-                        final value = unread[userId];
-                        if (value is int) computedUnread += value;
-                      }
-                    }
-                    if (computedUnread != _totalUnread) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) setState(() => _totalUnread = computedUnread);
-                      });
-                    }
 
                     final query = _searchController.text.trim().toLowerCase();
                     final visibleDocs = docs.where((doc) {
