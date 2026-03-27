@@ -71,6 +71,9 @@ Filter _publicOffersFilter() {
   return Filter.or(
     Filter('visibility.isPublic', isEqualTo: true),
     Filter('status', isEqualTo: 'active'),
+    Filter('status', isEqualTo: 'published'),
+    Filter('isActive', isEqualTo: true),
+    Filter('isPublished', isEqualTo: true),
   );
 }
 
@@ -1615,6 +1618,7 @@ class _HomePageState extends State<HomePage>
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _loadLatestOffers() async {
     final snapshot = await FirebaseFirestore.instance
         .collection('offers')
+        .where(_publicOffersFilter())
         .where(
           'createdAt',
           isGreaterThan: Timestamp.fromMillisecondsSinceEpoch(0),
@@ -3921,13 +3925,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }
 
   bool _offerIsActive(Map<String, dynamic> data) {
-    final dynamic isActive = data['isActive'];
-    if (isActive is bool) return isActive;
-
-    final status = (data['status'] ?? '').toString().trim().toLowerCase();
-    if (status.isNotEmpty) return status == 'active';
-
-    return true;
+    return _isPublishedOfferData(data);
   }
 
   String _offerCategoryLabel(Map<String, dynamic> data) {
@@ -5714,16 +5712,11 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
 
     final docs = byId.values.toList(growable: false);
 
-    // Filtrer “en cours”: public (nouveau modèle) ou status=active (legacy)
+    // Toute annonce publiée doit être visible dans le profil public.
     final filtered = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
     for (final doc in docs) {
       final data = doc.data();
-      final visibility = (data['visibility'] is Map)
-          ? (data['visibility'] as Map)
-          : const <String, dynamic>{};
-      final isPublic =
-          visibility['isPublic'] == true || data['status'] == 'active';
-      if (!isPublic) continue;
+      if (!_isPublishedOfferData(data)) continue;
       filtered.add(doc);
     }
     return filtered;
