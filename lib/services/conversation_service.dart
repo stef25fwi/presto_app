@@ -60,4 +60,52 @@ class ConversationService {
       'conversationId': conversationId,
     });
   }
+
+  static Future<void> archiveConversation({
+    required String conversationId,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'archiveConversation',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+    );
+    await callable.call(<String, dynamic>{
+      'conversationId': conversationId,
+    });
+  }
+
+  static Future<void> unarchiveConversation({
+    required String conversationId,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'unarchiveConversation',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+    );
+    await callable.call(<String, dynamic>{
+      'conversationId': conversationId,
+    });
+  }
+
+  static Future<void> blockConversation({
+    required String conversationId,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'blockConversation',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+    );
+    await callable.call(<String, dynamic>{
+      'conversationId': conversationId,
+    });
+  }
+
+  static Future<void> unblockConversation({
+    required String conversationId,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'unblockConversation',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+    );
+    await callable.call(<String, dynamic>{
+      'conversationId': conversationId,
+    });
+  }
 }

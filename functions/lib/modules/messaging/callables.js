@@ -3,13 +3,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = void 0;
+exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = void 0;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../config/env");
 const firestore_1 = require("../../core/firestore");
 const rate_limit_1 = require("../../core/rate_limit");
 const constants_1 = require("../../shared/constants");
+const counters_1 = require("../notifications/counters");
+const state_1 = require("./state");
 const MESSAGE_SEND_WINDOW_MS = 10 * 1000;
 const MESSAGE_SEND_LIMIT = 6;
 const DUPLICATE_MESSAGE_WINDOW_MS = 15 * 1000;
@@ -120,16 +122,27 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         .limit(20)
         .get();
     for (const doc of existing.docs) {
-        const participants = Array.isArray(doc.data().participants)
-            ? doc.data().participants
+        const docData = doc.data();
+        const participants = Array.isArray(docData.participants)
+            ? docData.participants
                 .map((value) => String(value || "").trim())
                 .filter(Boolean)
             : [];
         if (!participants.includes(otherUserId))
             continue;
+        if ((0, state_1.isConversationBlocked)(docData)) {
+            throw new https_1.HttpsError("failed-precondition", "conversation is blocked");
+        }
+        const archivedBy = {
+            ...(0, state_1.readConversationFlagMap)(docData, "archivedBy"),
+            [currentUserId]: false,
+        };
+        const blockedBy = (0, state_1.readConversationFlagMap)(docData, "blockedBy");
         await doc.ref.set({
             participantNames,
             otherUserName,
+            [`archivedBy.${currentUserId}`]: false,
+            status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
             updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
         }, { merge: true });
         return {
@@ -192,6 +205,9 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         throw new https_1.HttpsError("resource-exhausted", "too many messages sent too quickly");
     }
     const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+    if ((0, state_1.isConversationBlocked)(data)) {
+        throw new https_1.HttpsError("failed-precondition", "conversation is blocked");
+    }
     const latestMessageSnap = await convRef
         .collection("messages")
         .orderBy("createdAt", "desc")
@@ -232,17 +248,20 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         lastMessage: text,
         lastSenderId: currentUserId,
         lastSenderName: senderName,
+        status: "open",
         lastMessageAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
         [`participantNames.${currentUserId}`]: senderName,
     };
     for (const participantId of participants) {
+        conversationUpdate[`archivedBy.${participantId}`] = false;
         conversationUpdate[`unreadCount.${participantId}`] = participantId == currentUserId
             ? 0
             : firebase_admin_1.default.firestore.FieldValue.increment(1);
     }
     batch.update(convRef, conversationUpdate);
     await batch.commit();
+    await Promise.all(participants.map((participantId) => (0, counters_1.refreshUnreadMessageCount)(participantId)));
     return {
         ok: true,
         messageId: messageRef.id,
@@ -258,6 +277,86 @@ exports.markConversationRead = (0, https_1.onCall)({ region: env_1.PROJECT_REGIO
     await convRef.update({
         [`unreadCount.${currentUserId}`]: 0,
         [`lastReadAt.${currentUserId}`]: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+    });
+    await (0, counters_1.refreshUnreadMessageCount)(currentUserId);
+    return { ok: true };
+});
+exports.archiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+    const currentUserId = requireAuthUid(request);
+    const conversationId = String(request.data?.conversationId || "").trim();
+    if (!conversationId) {
+        throw new https_1.HttpsError("invalid-argument", "conversationId is required");
+    }
+    const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+    const archivedBy = {
+        ...(0, state_1.readConversationFlagMap)(data, "archivedBy"),
+        [currentUserId]: true,
+    };
+    const blockedBy = (0, state_1.readConversationFlagMap)(data, "blockedBy");
+    await convRef.update({
+        [`archivedBy.${currentUserId}`]: true,
+        status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
+        updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+    });
+    return { ok: true };
+});
+exports.unarchiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+    const currentUserId = requireAuthUid(request);
+    const conversationId = String(request.data?.conversationId || "").trim();
+    if (!conversationId) {
+        throw new https_1.HttpsError("invalid-argument", "conversationId is required");
+    }
+    const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+    const archivedBy = {
+        ...(0, state_1.readConversationFlagMap)(data, "archivedBy"),
+        [currentUserId]: false,
+    };
+    const blockedBy = (0, state_1.readConversationFlagMap)(data, "blockedBy");
+    await convRef.update({
+        [`archivedBy.${currentUserId}`]: false,
+        status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
+        updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+    });
+    return { ok: true };
+});
+exports.blockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+    const currentUserId = requireAuthUid(request);
+    const conversationId = String(request.data?.conversationId || "").trim();
+    if (!conversationId) {
+        throw new https_1.HttpsError("invalid-argument", "conversationId is required");
+    }
+    const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+    const archivedBy = (0, state_1.readConversationFlagMap)(data, "archivedBy");
+    const blockedBy = {
+        ...(0, state_1.readConversationFlagMap)(data, "blockedBy"),
+        [currentUserId]: true,
+    };
+    await convRef.update({
+        [`blockedBy.${currentUserId}`]: true,
+        status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
+        updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+    });
+    return { ok: true };
+});
+exports.unblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+    const currentUserId = requireAuthUid(request);
+    const conversationId = String(request.data?.conversationId || "").trim();
+    if (!conversationId) {
+        throw new https_1.HttpsError("invalid-argument", "conversationId is required");
+    }
+    const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+    if (!(0, state_1.isConversationFlagEnabledForUser)(data, "blockedBy", currentUserId)) {
+        return { ok: true };
+    }
+    const archivedBy = (0, state_1.readConversationFlagMap)(data, "archivedBy");
+    const blockedBy = {
+        ...(0, state_1.readConversationFlagMap)(data, "blockedBy"),
+        [currentUserId]: false,
+    };
+    await convRef.update({
+        [`blockedBy.${currentUserId}`]: false,
+        status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
         updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
     });
     return { ok: true };

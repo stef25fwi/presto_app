@@ -3036,30 +3036,6 @@ class _NotificationBellBase extends StatelessWidget {
   }
 }
 
-int _countUnreadMessages(
-  QuerySnapshot<Map<String, dynamic>>? snapshot,
-  String userId,
-) {
-  if (snapshot == null) return 0;
-
-  var unreadMessagesCount = 0;
-  for (final doc in snapshot.docs) {
-    final data = doc.data();
-    final unreadMap = (data['unreadCount'] as Map<String, dynamic>?) ?? {};
-    final value = unreadMap[userId];
-    if (value is int) unreadMessagesCount += value;
-  }
-
-  return unreadMessagesCount;
-}
-
-int _countUnreadNotifications(
-  QuerySnapshot<Map<String, dynamic>>? snapshot,
-) {
-  if (snapshot == null) return 0;
-  return snapshot.docs.where((doc) => doc.data()['read'] != true).length;
-}
-
 class _UnreadInboxBell extends StatelessWidget {
   final String userId;
   final String? monitoringKeyPrefix;
@@ -3073,47 +3049,36 @@ class _UnreadInboxBell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stream = FirebaseFirestore.instance
-        .collection('conversations')
-        .where('participants', arrayContains: userId)
-        .snapshots()
-        .map((snap) {
-      if (monitoringKeyPrefix != null) {
-        PrestoMonitoring.I.trackOtherStream(
-          key: monitoringKeyPrefix!,
-          docsCount: snap.docs.length,
-        );
-      }
-      return snap;
-    });
-
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: stream,
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           final error = snapshot.error;
           if (error != null) {
             PrestoMonitoring.I.trackError(
-              '${monitoringKeyPrefix ?? 'messages'}.stream',
+              '${monitoringKeyPrefix ?? 'messages'}.badge',
               error,
             );
           }
           return builder(context, 0);
         }
 
-        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance
-              .collection('notifications')
-              .where('userId', isEqualTo: userId)
-              .where('read', isEqualTo: false)
-              .snapshots(),
-          builder: (context, notificationSnapshot) {
-            final badgeCount =
-                _countUnreadMessages(snapshot.data, userId) +
-                _countUnreadNotifications(notificationSnapshot.data);
-            return builder(context, badgeCount);
-          },
-        );
+        final inboxCounts =
+            (snapshot.data?.data()?['inboxCounts'] as Map<String, dynamic>?) ??
+            const <String, dynamic>{};
+        final badgeCount = (inboxCounts['totalUnread'] as num?)?.toInt() ?? 0;
+
+        if (monitoringKeyPrefix != null) {
+          PrestoMonitoring.I.trackOtherStream(
+            key: '${monitoringKeyPrefix!}.badge',
+            docsCount: badgeCount,
+          );
+        }
+
+        return builder(context, badgeCount);
       },
     );
   }

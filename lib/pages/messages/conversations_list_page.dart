@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../constants.dart';
 import '../../services/conversation_service.dart';
+import '../../services/conversation_state.dart';
 import '../../utils/friendly_snackbar.dart';
 import 'conversation_thread_page.dart';
 
@@ -34,6 +35,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   final TextEditingController _searchController = TextEditingController();
   int _totalUnread = 0;
   bool _didHandleInitialConversation = false;
+  int _conversationLimit = 50;
+  bool _showArchivedOnly = false;
 
   @override
   void dispose() {
@@ -104,6 +107,39 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     } catch (_) {}
   }
 
+  Future<void> _handleConversationAction({
+    required String conversationId,
+    required _ConversationMenuAction action,
+  }) async {
+    try {
+      switch (action) {
+        case _ConversationMenuAction.archive:
+          await ConversationService.archiveConversation(conversationId: conversationId);
+          if (!mounted) return;
+          showSuccessSnackBar(context, 'Conversation archivee.');
+          return;
+        case _ConversationMenuAction.unarchive:
+          await ConversationService.unarchiveConversation(conversationId: conversationId);
+          if (!mounted) return;
+          showSuccessSnackBar(context, 'Conversation restauree.');
+          return;
+        case _ConversationMenuAction.block:
+          await ConversationService.blockConversation(conversationId: conversationId);
+          if (!mounted) return;
+          showSuccessSnackBar(context, 'Conversation bloquee.');
+          return;
+        case _ConversationMenuAction.unblock:
+          await ConversationService.unblockConversation(conversationId: conversationId);
+          if (!mounted) return;
+          showSuccessSnackBar(context, 'Conversation debloquee.');
+          return;
+      }
+    } catch (error) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Action impossible sur cette conversation : $error');
+    }
+  }
+
   Future<void> _openConversation(
     BuildContext context,
     String conversationId,
@@ -136,15 +172,25 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     if (_didHandleInitialConversation || initialConversationId.isEmpty) return;
 
     final match = docs.where((doc) => doc.id == initialConversationId).toList();
-    _didHandleInitialConversation = true;
 
     if (match.isEmpty) {
+      if (docs.length >= _conversationLimit) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() => _conversationLimit += 50);
+        });
+        return;
+      }
+
+      _didHandleInitialConversation = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         showErrorSnackBar(context, 'Conversation introuvable ou inaccessible.');
       });
       return;
     }
+
+    _didHandleInitialConversation = true;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
@@ -275,6 +321,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         centerTitle: true,
         title: _buildMessagesAppBarTitle(),
         actions: [
+          IconButton(
+            onPressed: () => setState(() => _showArchivedOnly = !_showArchivedOnly),
+            icon: Icon(_showArchivedOnly ? Icons.inbox_outlined : Icons.archive_outlined),
+            tooltip: _showArchivedOnly ? 'Afficher la boite principale' : 'Afficher les conversations archivees',
+          ),
           Stack(
             alignment: Alignment.center,
             children: [
@@ -330,7 +381,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                       .collection('conversations')
                       .where('participants', arrayContains: userId)
                       .orderBy('lastMessageAt', descending: true)
-                      .limit(100)
+                      .limit(_conversationLimit)
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -365,19 +416,51 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                     }
 
                     final query = _searchController.text.trim().toLowerCase();
-                    final filteredDocs = docs.where((doc) {
+                    final visibleDocs = docs.where((doc) {
+                      return shouldShowConversation(
+                        data: doc.data(),
+                        userId: userId,
+                        showArchivedOnly: _showArchivedOnly,
+                      );
+                    }).toList(growable: false);
+
+                    final filteredDocs = visibleDocs.where((doc) {
                       if (query.isEmpty) return true;
                       return _searchableConversationText(doc.data(), userId).contains(query);
                     }).toList(growable: false);
 
                     if (filteredDocs.isEmpty) {
-                      return _buildEmptyState('Pas de conversation en cours.');
+                      return _buildEmptyState(
+                        _showArchivedOnly
+                            ? 'Aucune conversation archivee.'
+                            : 'Pas de conversation en cours.',
+                      );
                     }
 
                     return ListView.builder(
                       padding: const EdgeInsets.fromLTRB(10, 6, 10, 18),
-                      itemCount: filteredDocs.length,
+                      itemCount: filteredDocs.length + (docs.length >= _conversationLimit ? 1 : 0),
                       itemBuilder: (context, index) {
+                        if (index == filteredDocs.length) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Center(
+                              child: TextButton.icon(
+                                onPressed: () => setState(() => _conversationLimit += 50),
+                                icon: const Icon(Icons.history_rounded, size: 16),
+                                label: const Text('Charger les conversations plus anciennes'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF6B7280),
+                                  textStyle: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
                         final doc = filteredDocs[index];
                         final data = doc.data();
                         final offerTitle = (data['offerTitle'] ?? '').toString().trim();
@@ -387,6 +470,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                         final unreadCount = unreadMap is Map<String, dynamic>
                             ? ((unreadMap[userId] as int?) ?? 0)
                             : 0;
+                        final archived = isConversationArchivedForUser(data, userId);
+                        final blocked = isConversationBlocked(data);
+                        final blockedForUser = isConversationBlockedForUser(data, userId);
                         final lastMessageAt = data['lastMessageAt'];
                         final lastDate = lastMessageAt is Timestamp ? lastMessageAt.toDate() : null;
 
@@ -498,6 +584,25 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                               fontSize: 14,
                                             ),
                                           ),
+                                          if (archived || blocked) ...[
+                                            const SizedBox(height: 6),
+                                            Wrap(
+                                              spacing: 6,
+                                              runSpacing: 6,
+                                              children: [
+                                                if (archived)
+                                                  _ConversationStateChip(
+                                                    label: 'Archivee',
+                                                    color: const Color(0xFF6B7280),
+                                                  ),
+                                                if (blocked)
+                                                  _ConversationStateChip(
+                                                    label: blockedForUser ? 'Bloquee par vous' : 'Bloquee',
+                                                    color: const Color(0xFFB91C1C),
+                                                  ),
+                                              ],
+                                            ),
+                                          ],
                                         ],
                                       ),
                                     ),
@@ -506,6 +611,34 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       crossAxisAlignment: CrossAxisAlignment.end,
                                       children: [
+                                        PopupMenuButton<_ConversationMenuAction>(
+                                          tooltip: 'Actions conversation',
+                                          onSelected: (action) => _handleConversationAction(
+                                            conversationId: doc.id,
+                                            action: action,
+                                          ),
+                                          itemBuilder: (context) => [
+                                            PopupMenuItem<_ConversationMenuAction>(
+                                              value: archived
+                                                  ? _ConversationMenuAction.unarchive
+                                                  : _ConversationMenuAction.archive,
+                                              child: Text(archived ? 'Restaurer' : 'Archiver'),
+                                            ),
+                                            PopupMenuItem<_ConversationMenuAction>(
+                                              value: blockedForUser
+                                                  ? _ConversationMenuAction.unblock
+                                                  : _ConversationMenuAction.block,
+                                              child: Text(blockedForUser ? 'Debloquer' : 'Bloquer'),
+                                            ),
+                                          ],
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(4),
+                                            child: Icon(
+                                              Icons.more_horiz_rounded,
+                                              color: Color(0xFF9CA3AF),
+                                            ),
+                                          ),
+                                        ),
                                         Text(
                                           _formatTimestamp(lastDate),
                                           style: kPrestoMetaTextStyle.copyWith(
@@ -554,6 +687,43 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+enum _ConversationMenuAction {
+  archive,
+  unarchive,
+  block,
+  unblock,
+}
+
+class _ConversationStateChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _ConversationStateChip({
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.24)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

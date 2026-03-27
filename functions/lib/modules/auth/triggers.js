@@ -17,13 +17,21 @@ exports.onUserCreated = (0, firestore_1.onDocumentCreated)(`${constants_1.COLLEC
     if (!data)
         return;
     const userId = event.params.userId;
+    const now = Date.now();
+    await event.data?.ref.set({
+        inboxCounts: {
+            unreadMessages: 0,
+            unreadNotifications: 0,
+            totalUnread: 0,
+            updatedAt: now,
+        },
+    }, { merge: true });
     const email = String(data.email || "").trim();
     if (!email)
         return;
     // Idempotence : ne crée les préférences que si elles n'existent pas encore
     const prefsRef = firestore_2.db.collection(constants_1.COLLECTIONS.notificationPreferences).doc(userId);
     const prefsSnap = await prefsRef.get();
-    const now = Date.now();
     if (!prefsSnap.exists) {
         await prefsRef.set({
             user_id: userId,

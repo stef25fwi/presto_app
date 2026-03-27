@@ -39,6 +39,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Flutter: Test conversation state",
+      "type": "shell",
+      "command": "flutter test test/conversation_state_test.dart test/app_route_parser_test.dart",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Status Snapshot",
       "type": "shell",
       "command": "git status --short --branch",
