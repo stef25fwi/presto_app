@@ -683,6 +683,32 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           const SizedBox(width: 6),
         ],
       ),
+      bottomSheet: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+          color: Colors.transparent,
+          child: SizedBox(
+            height: 64,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _headerOrange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 10,
+                textStyle: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              onPressed: () => _showContactOptionsSheet(context, data),
+              child: const Text('Proposer mes services'),
+            ),
+          ),
+        ),
+      ),
       body: Stack(
         children: [
           const _BackgroundDecor(),
@@ -694,7 +720,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                 isCompactMobile ? 14 : 16,
                 isCompactMobile ? 10 : 12,
                 isCompactMobile ? 14 : 16,
-                isCompactMobile ? 20 : 24,
+                isCompactMobile ? 116 : 124,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -704,13 +730,13 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                   _PracticalInfoCard(
                     data: data,
                     compact: isCompactMobile,
-                    onContactTap: () => _openInternalMessaging(context, data),
+                    onContactTap: () => _showContactOptionsSheet(context, data),
                   ),
                   SizedBox(height: sectionGap),
                   _AdvertiserContactCard(
                     data: data,
                     compact: isCompactMobile,
-                    onContactTap: () => _openInternalMessaging(context, data),
+                    onContactTap: () => _showContactOptionsSheet(context, data),
                   ),
                 ],
               ),
@@ -1397,7 +1423,7 @@ class _AdvertiserContactCard extends StatelessWidget {
               ),
               SizedBox(height: compact ? 12 : 14),
               _InlineCta(
-                label: 'Envoyer un message',
+                label: 'Proposer mes services',
                 compact: compact,
                 onTap: onContactTap,
               ),
