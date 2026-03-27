@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -15,12 +17,14 @@ class ConversationThreadPage extends StatefulWidget {
   final String conversationId;
   final String offerTitle;
   final String currentUserId;
+  final String? initialDraftText;
 
   const ConversationThreadPage({
     super.key,
     required this.conversationId,
     required this.offerTitle,
     required this.currentUserId,
+    this.initialDraftText,
   });
 
   @override
@@ -30,19 +34,24 @@ class ConversationThreadPage extends StatefulWidget {
 class _ConversationThreadPageState extends State<ConversationThreadPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+      _conversationSubscription;
   bool _isSending = false;
   List<String> _participants = const [];
   bool _metaLoaded = false;
+  bool _didApplyInitialDraft = false;
 
   @override
   void initState() {
     super.initState();
+    _bindConversationListener();
     _loadConversationMeta();
     _markAsRead();
   }
 
   @override
   void dispose() {
+    _conversationSubscription?.cancel();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -242,6 +251,38 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
   }
 
+  void _bindConversationListener() {
+    _conversationSubscription?.cancel();
+    _conversationSubscription = FirebaseFirestore.instance
+        .collection('conversations')
+        .doc(widget.conversationId)
+        .snapshots()
+        .listen((snapshot) {
+      final data = snapshot.data();
+      if (data == null) return;
+
+      final participants = (data['participants'] as List<dynamic>? ?? [])
+          .map((entry) => entry.toString())
+          .where((entry) => entry.isNotEmpty)
+          .toList();
+      final unreadMap = data['unreadCount'];
+      final unreadCount = unreadMap is Map<String, dynamic>
+          ? ((unreadMap[widget.currentUserId] as int?) ?? 0)
+          : 0;
+
+      if (mounted) {
+        setState(() {
+          _participants = participants;
+          _metaLoaded = true;
+        });
+      }
+
+      if (unreadCount > 0) {
+        _markAsRead();
+      }
+    });
+  }
+
   Future<void> _markAsRead() async {
     try {
       await FirebaseFirestore.instance.collection('conversations').doc(widget.conversationId).update({
@@ -321,6 +362,25 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
   }
 
+  void _applyInitialDraftIfNeeded(bool hasMessages) {
+    if (_didApplyInitialDraft || hasMessages) return;
+
+    final initialDraft = widget.initialDraftText?.trim() ?? '';
+    if (initialDraft.isEmpty || _controller.text.trim().isNotEmpty) {
+      _didApplyInitialDraft = true;
+      return;
+    }
+
+    _didApplyInitialDraft = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _controller.value = TextEditingValue(
+        text: initialDraft,
+        selection: TextSelection.collapsed(offset: initialDraft.length),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -376,6 +436,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                     }
 
                     final docs = snapshot.data?.docs ?? const [];
+                    _applyInitialDraftIfNeeded(docs.isNotEmpty);
+
                     if (docs.isEmpty) {
                       return Center(
                         child: Padding(

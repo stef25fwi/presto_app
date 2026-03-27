@@ -17,8 +17,16 @@ class ConversationService {
     required String offerTitle,
     required String currentUserId,
     required String otherUserId,
+    String? currentUserName,
+    String? otherUserName,
   }) async {
     final convCol = FirebaseFirestore.instance.collection('conversations');
+    final normalizedCurrentUserName = _normalizeParticipantName(currentUserName);
+    final normalizedOtherUserName = _normalizeParticipantName(otherUserName);
+    final participantNames = <String, String>{
+      currentUserId: normalizedCurrentUserName,
+      otherUserId: normalizedOtherUserName,
+    };
 
     final existing = await convCol
         .where('participants', arrayContains: currentUserId)
@@ -31,6 +39,10 @@ class ConversationService {
           .map((entry) => entry.toString())
           .toList();
       if (participants.contains(otherUserId)) {
+        await doc.reference.set({
+          'participantNames': participantNames,
+          'otherUserName': normalizedOtherUserName,
+        }, SetOptions(merge: true));
         return doc.id;
       }
     }
@@ -51,6 +63,8 @@ class ConversationService {
         'offerId': offerId,
         'offerTitle': offerTitle,
         'participants': participants,
+        'participantNames': participantNames,
+        'otherUserName': normalizedOtherUserName,
         'createdAt': FieldValue.serverTimestamp(),
         'lastMessageAt': FieldValue.serverTimestamp(),
         'lastMessage': '',
@@ -59,5 +73,10 @@ class ConversationService {
     });
 
     return conversationId;
+  }
+
+  static String _normalizeParticipantName(String? value) {
+    final trimmed = (value ?? '').trim();
+    return trimmed.isEmpty ? 'Utilisateur' : trimmed;
   }
 }
