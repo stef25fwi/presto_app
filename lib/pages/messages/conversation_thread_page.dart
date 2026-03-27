@@ -294,7 +294,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Future<void> _sendMessage() async {
-    final text = _controller.text.trim();
+    final rawDraft = _controller.text;
+    final text = rawDraft.trim();
     if (text.isEmpty || _isSending) return;
 
     final authUser = FirebaseAuth.instance.currentUser;
@@ -316,8 +317,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     final senderName = authUser.displayName?.trim().isNotEmpty == true
         ? authUser.displayName!.trim()
         : (authUser.email ?? 'Utilisateur');
-
-    _controller.clear();
 
     try {
       await convRef.collection('messages').add({
@@ -342,6 +341,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       }
       await convRef.set(update, SetOptions(merge: true));
 
+      _controller.clear();
       await _markAsRead();
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -352,7 +352,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       }
     } catch (error) {
       if (!mounted) return;
-      showSuccessSnackBar(context, 'Erreur lors de l\'envoi du message : $error');
+      _controller.value = TextEditingValue(
+        text: rawDraft,
+        selection: TextSelection.collapsed(offset: rawDraft.length),
+      );
+      showErrorSnackBar(context, 'Erreur lors de l\'envoi du message : $error');
     } finally {
       if (mounted) {
         setState(() {
