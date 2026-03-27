@@ -74,6 +74,15 @@ function sanitizeMessageText(value: unknown): string {
     .trim();
 }
 
+export function readConversationMessageCount(data: Record<string, unknown>): number {
+  const rawCount = data.messageCount;
+  if (typeof rawCount === "number" && Number.isFinite(rawCount) && rawCount > 0) {
+    return Math.floor(rawCount);
+  }
+
+  return String(data.lastMessage || "").trim() !== "" ? 1 : 0;
+}
+
 function toDateOrNull(value: unknown): Date | null {
   if (value instanceof admin.firestore.Timestamp) return value.toDate();
   if (value instanceof Date) return value;
@@ -225,6 +234,7 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async 
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
       lastMessage: "",
+      messageCount: 0,
       unreadCount: {
         [currentUserId]: 0,
         [otherUserId]: 0,
@@ -262,11 +272,7 @@ export const sendConversationMessage = onCall({ region: PROJECT_REGION }, async 
     throw new HttpsError("resource-exhausted", "too many messages sent too quickly");
   }
 
-  const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
-
-  if (isConversationBlocked(data)) {
-    throw new HttpsError("failed-precondition", "conversation is blocked");
-  }
+  const { convRef } = await loadConversationForParticipant(conversationId, currentUserId);
 
   const latestMessageSnap = await convRef
     .collection("messages")
@@ -301,42 +307,62 @@ export const sendConversationMessage = onCall({ region: PROJECT_REGION }, async 
     currentUserId,
   );
 
-  // Premier message si lastMessage est encore vide (valeur initiale de la conversation).
-  // Ce flag est lu par le trigger pour éviter la race condition du comptage frères.
-  const isFirstMessage = String(data.lastMessage || "").trim() === "";
-
   const messageRef = convRef.collection("messages").doc();
-  const batch = db.batch();
+  let participantsToRefresh: string[] = [];
 
-  batch.set(messageRef, {
-    text,
-    senderId: currentUserId,
-    senderName,
-    isFirstMessage,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  await db.runTransaction(async (transaction) => {
+    const convSnap = await transaction.get(convRef);
+
+    if (!convSnap.exists) {
+      throw new HttpsError("not-found", "conversation not found");
+    }
+
+    const data = (convSnap.data() ?? {}) as Record<string, unknown>;
+    const participants = Array.isArray(data.participants)
+      ? data.participants.map((value) => String(value || "").trim()).filter(Boolean)
+      : [];
+
+    if (!participants.includes(currentUserId)) {
+      throw new HttpsError("permission-denied", "not allowed to access this conversation");
+    }
+
+    if (isConversationBlocked(data)) {
+      throw new HttpsError("failed-precondition", "conversation is blocked");
+    }
+
+    const isFirstMessage = readConversationMessageCount(data) === 0;
+
+    transaction.set(messageRef, {
+      text,
+      senderId: currentUserId,
+      senderName,
+      isFirstMessage,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    const conversationUpdate: Record<string, unknown> = {
+      lastMessage: text,
+      lastSenderId: currentUserId,
+      lastSenderName: senderName,
+      status: "open",
+      lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      messageCount: admin.firestore.FieldValue.increment(1),
+      [`participantNames.${currentUserId}`]: senderName,
+    };
+
+    for (const participantId of participants) {
+      conversationUpdate[`archivedBy.${participantId}`] = false;
+      conversationUpdate[`unreadCount.${participantId}`] = participantId == currentUserId
+        ? 0
+        : admin.firestore.FieldValue.increment(1);
+    }
+
+    transaction.update(convRef, conversationUpdate);
+    participantsToRefresh = participants;
   });
 
-  const conversationUpdate: Record<string, unknown> = {
-    lastMessage: text,
-    lastSenderId: currentUserId,
-    lastSenderName: senderName,
-    status: "open",
-    lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    [`participantNames.${currentUserId}`]: senderName,
-  };
-
-  for (const participantId of participants) {
-    conversationUpdate[`archivedBy.${participantId}`] = false;
-    conversationUpdate[`unreadCount.${participantId}`] = participantId == currentUserId
-      ? 0
-      : admin.firestore.FieldValue.increment(1);
-  }
-
-  batch.update(convRef, conversationUpdate);
-  await batch.commit();
-
-  await Promise.all(participants.map((participantId) => refreshUnreadMessageCount(participantId)));
+  await Promise.all(participantsToRefresh.map((participantId) => refreshUnreadMessageCount(participantId)));
 
   return {
     ok: true,

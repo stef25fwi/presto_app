@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../constants.dart';
 import '../../services/conversation_service.dart';
 import '../../services/conversation_state.dart';
+import '../../services/firestore_date_parser.dart';
 import '../../utils/friendly_snackbar.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
@@ -34,26 +35,50 @@ class ConversationThreadPage extends StatefulWidget {
 }
 
 class _ConversationThreadPageState extends State<ConversationThreadPage> {
+  static const int _messagePageSize = 50;
+
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
       _conversationSubscription;
+  final List<QueryDocumentSnapshot<Map<String, dynamic>>> _olderMessageDocs =
+      <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+  QueryDocumentSnapshot<Map<String, dynamic>>? _paginationAnchorDoc;
+  late Stream<QuerySnapshot<Map<String, dynamic>>> _messageStream;
   bool _isSending = false;
   bool _isMarkingRead = false;
+  bool _hasAttemptedOlderPagination = false;
+  bool _isLoadingMoreMessages = false;
+  bool _hasMoreMessages = true;
   List<String> _participants = const [];
   Map<String, dynamic> _lastReadAt = const {};
   bool _metaLoaded = false;
   bool _didApplyInitialDraft = false;
-  int _messageLimit = 50;
   bool _isBlocked = false;
   bool _isBlockedForCurrentUser = false;
   bool _isArchivedForCurrentUser = false;
 
+  Stream<QuerySnapshot<Map<String, dynamic>>> _buildLiveStream({
+    QueryDocumentSnapshot<Map<String, dynamic>>? anchorDoc,
+  }) {
+    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+        .collection('conversations')
+        .doc(widget.conversationId)
+        .collection('messages')
+        .orderBy('createdAt', descending: true);
+    if (anchorDoc != null) {
+      query = query.endAtDocument(anchorDoc);
+    } else {
+      query = query.limit(_messagePageSize);
+    }
+    return query.snapshots();
+  }
+
   @override
   void initState() {
     super.initState();
+    _messageStream = _buildLiveStream();
     _bindConversationListener();
-    _markAsRead();
   }
 
   @override
@@ -111,6 +136,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         ),
       ),
     );
+  }
+
+  bool _isSameCalendarDay(DateTime? left, DateTime? right) {
+    if (left == null || right == null) return false;
+    return left.year == right.year &&
+        left.month == right.month &&
+        left.day == right.day;
   }
 
   String _conversationInitial() {
@@ -231,34 +263,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     );
   }
 
-  Future<void> _loadConversationMeta() async {
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('conversations')
-          .doc(widget.conversationId)
-          .get();
-      final data = doc.data();
-      if (data == null) return;
-      final participants = (data['participants'] as List<dynamic>? ?? [])
-          .map((entry) => entry.toString())
-          .where((entry) => entry.isNotEmpty)
-          .toList();
-      if (!mounted) return;
-      setState(() {
-        _participants = participants;
-        _metaLoaded = true;
-      });
-    } catch (e) {
-      debugPrint('[ConversationThread] _loadConversationMeta error: $e');
-      // Fallback : on sait au moins que le currentUser est participant
-      if (!mounted) return;
-      setState(() {
-        _participants = [widget.currentUserId];
-        _metaLoaded = true;
-      });
-    }
-  }
-
   void _bindConversationListener() {
     _conversationSubscription?.cancel();
     _conversationSubscription = FirebaseFirestore.instance
@@ -305,7 +309,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     if (otherParticipantId.isEmpty) return null;
 
     final raw = _lastReadAt[otherParticipantId];
-    final readAt = raw is Timestamp ? raw.toDate() : null;
+    final readAt = parseFirestoreDateTime(raw);
     if (readAt == null || readAt.isBefore(sentAt)) return null;
     return 'Vu';
   }
@@ -324,6 +328,88 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
   }
 
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _mergeMessageDocs(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> liveDocs,
+  ) {
+    final merged = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    final seenIds = <String>{};
+
+    for (final doc in [...liveDocs, ..._olderMessageDocs]) {
+      if (seenIds.add(doc.id)) {
+        merged.add(doc);
+      }
+    }
+
+    return merged;
+  }
+
+  Future<void> _loadMoreMessages(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> liveDocs,
+  ) async {
+    if (_isLoadingMoreMessages) return;
+
+    // Cursor : oldest doc in older pages already loaded, or oldest live doc.
+    final cursor = _olderMessageDocs.isNotEmpty
+        ? _olderMessageDocs.last
+        : liveDocs.isNotEmpty
+            ? liveDocs.last
+            : null;
+    if (cursor == null) return;
+
+    setState(() {
+      _isLoadingMoreMessages = true;
+    });
+
+    // On first pagination: anchor the live stream to avoid gaps when new
+    // messages push older docs outside the .limit() window.
+    final isFirstPagination = _paginationAnchorDoc == null && _olderMessageDocs.isEmpty;
+    final anchorDoc = isFirstPagination
+        ? (liveDocs.isNotEmpty ? liveDocs.last : null)
+        : _paginationAnchorDoc;
+
+    try {
+      final olderSnapshot = await FirebaseFirestore.instance
+          .collection('conversations')
+          .doc(widget.conversationId)
+          .collection('messages')
+          .orderBy('createdAt', descending: true)
+          .startAfterDocument(cursor)
+          .limit(_messagePageSize)
+          .get();
+
+      final fetchedDocs = olderSnapshot.docs;
+      if (!mounted) return;
+
+      setState(() {
+        if (isFirstPagination && anchorDoc != null) {
+          _paginationAnchorDoc = anchorDoc;
+          _messageStream = _buildLiveStream(anchorDoc: anchorDoc);
+        }
+        final existingIds = _olderMessageDocs.map((doc) => doc.id).toSet();
+        for (final doc in fetchedDocs) {
+          if (!existingIds.contains(doc.id)) {
+            _olderMessageDocs.add(doc);
+          }
+        }
+        _hasAttemptedOlderPagination = true;
+        _hasMoreMessages = fetchedDocs.length == _messagePageSize;
+      });
+    } catch (e) {
+      debugPrint('[ConversationThread] _loadMoreMessages error: $e');
+      if (!mounted) return;
+      showErrorSnackBar(
+        context,
+        'Erreur lors du chargement des messages plus anciens.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingMoreMessages = false;
+        });
+      }
+    }
+  }
+
   Future<void> _sendMessage() async {
     final rawDraft = _controller.text;
     final text = rawDraft.trim();
@@ -339,11 +425,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       return;
     }
 
-    // Si les participants n'ont pas encore été chargés, on retente le chargement
-    if (!_metaLoaded || _participants.length < 2) {
-      await _loadConversationMeta();
-    }
-
     setState(() {
       _isSending = true;
     });
@@ -355,7 +436,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       );
 
       _controller.clear();
-      await _markAsRead();
+      unawaited(_markAsRead());
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           0,
@@ -495,13 +576,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               _buildStateBanner(),
               Expanded(
                 child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseFirestore.instance
-                      .collection('conversations')
-                      .doc(widget.conversationId)
-                      .collection('messages')
-                      .orderBy('createdAt', descending: true)
-                      .limit(_messageLimit)
-                      .snapshots(),
+                  stream: _messageStream,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(
@@ -530,8 +605,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       );
                     }
 
-                    final docs = snapshot.data?.docs ?? const [];
-                    _applyInitialDraftIfNeeded(docs.isNotEmpty);
+                    final liveDocs = snapshot.data?.docs ?? const [];
+                    _applyInitialDraftIfNeeded(liveDocs.isNotEmpty);
+                    final docs = _mergeMessageDocs(liveDocs);
+                    final canLoadMore = docs.isNotEmpty &&
+                      (_hasAttemptedOlderPagination
+                        ? _hasMoreMessages
+                        : liveDocs.length >= _messagePageSize);
 
                     if (docs.isEmpty) {
                       return Center(
@@ -556,21 +636,29 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       itemCount: docs.length + 1,
                       itemBuilder: (context, index) {
                         if (index == docs.length) {
-                          // Dernier item (visuellement en haut) : date + bouton charger plus
-                          final oldest = docs.isNotEmpty
-                              ? (docs.last.data()['createdAt'] is Timestamp
-                                  ? (docs.last.data()['createdAt'] as Timestamp).toDate()
-                                  : null)
-                              : null;
+                          // Dernier item (visuellement en haut) : bouton charger plus
                           return Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              if (docs.length >= _messageLimit)
+                              if (canLoadMore)
                                 TextButton.icon(
-                                  onPressed: () =>
-                                      setState(() => _messageLimit += 50),
-                                  icon: const Icon(Icons.history_rounded, size: 16),
-                                  label: const Text('Charger les messages plus anciens'),
+                                  onPressed: _isLoadingMoreMessages
+                                      ? null
+                                      : () => _loadMoreMessages(liveDocs),
+                                  icon: _isLoadingMoreMessages
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Icon(Icons.history_rounded, size: 16),
+                                  label: Text(
+                                    _isLoadingMoreMessages
+                                        ? 'Chargement...'
+                                        : 'Charger les messages plus anciens',
+                                  ),
                                   style: TextButton.styleFrom(
                                     foregroundColor: const Color(0xFF6B7280),
                                     textStyle: const TextStyle(
@@ -579,7 +667,6 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     ),
                                   ),
                                 ),
-                              _buildThreadDateChip(oldest),
                             ],
                           );
                         }
@@ -588,12 +675,19 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                         final text = (data['text'] ?? '').toString();
                         final senderId = (data['senderId'] ?? '').toString();
                         final senderName = (data['senderName'] ?? '').toString();
-                        final timestamp = data['createdAt'];
-                        final sentAt = timestamp is Timestamp ? timestamp.toDate() : null;
+                        final sentAt = parseFirestoreDateTime(data['createdAt']);
+                        final olderMessageDate = index + 1 < docs.length
+                            ? parseFirestoreDateTime(
+                                docs[index + 1].data()['createdAt'],
+                              )
+                            : null;
+                        final showDateChip = sentAt != null &&
+                            (olderMessageDate == null ||
+                                !_isSameCalendarDay(sentAt, olderMessageDate));
                         final isMine = senderId == widget.currentUserId;
                         final readReceipt = isMine ? _readReceiptLabel(sentAt) : null;
 
-                        return Align(
+                        final messageBubble = Align(
                           alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 320),
@@ -630,7 +724,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                           color: const Color(0xFF2563EB),
                                         ),
                                       ),
-                                    ),
+                                  ),
                                   Text(
                                     text,
                                     style: kPrestoBodyTextStyle.copyWith(
@@ -654,6 +748,18 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                               ),
                             ),
                           ),
+                        );
+
+                        if (!showDateChip) {
+                          return messageBubble;
+                        }
+
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildThreadDateChip(sentAt),
+                            messageBubble,
+                          ],
                         );
                       },
                     );

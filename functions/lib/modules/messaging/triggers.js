@@ -53,8 +53,8 @@ exports.onConversationSubMessageCreated = (0, firestore_1.onDocumentCreated)("co
     const senderId = String(message.senderId || message.sender_id || "");
     const senderName = String(message.senderName || message.sender_name || "Quelqu'un");
     const messagePreview = buildMessagePreview(message.text);
-    // isFirstMessage est positionné par le callable sendConversationMessage.
-    // Cela évite la race condition lié au comptage de messages frères.
+    // isFirstMessage est positionné de manière transactionnelle par le callable.
+    // Le trigger ne recalcule rien pour éviter les races entre messages concurrents.
     const isFirstMessage = message.isFirstMessage === true;
     const eventName = isFirstMessage
         ? "message.created.new_thread"

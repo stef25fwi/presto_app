@@ -7,6 +7,7 @@ import '../../constants.dart';
 import '../../services/conversation_service.dart';
 import '../../services/inbox_counts.dart';
 import '../../services/conversation_state.dart';
+import '../../services/firestore_date_parser.dart';
 import '../../utils/friendly_snackbar.dart';
 import 'conversation_thread_page.dart';
 
@@ -274,6 +275,51 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     );
   }
 
+  Widget _buildFilteredEmptyState({
+    required String message,
+    required bool canLoadMore,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 42,
+              color: Colors.grey.shade500,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: kPrestoBodyTextStyle.copyWith(
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF4B5563),
+              ),
+            ),
+            if (canLoadMore) ...[
+              const SizedBox(height: 14),
+              TextButton.icon(
+                onPressed: () => setState(() => _conversationLimit += 50),
+                icon: const Icon(Icons.history_rounded, size: 16),
+                label: const Text('Charger d\'autres conversations'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF6B7280),
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMessagesAppBarTitle() {
     return const Text(
       'Mes messages',
@@ -434,18 +480,24 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                               .contains(query);
                         }).toList(growable: false);
 
+                        final canLoadMoreConversations =
+                            docs.length >= _conversationLimit;
+
                         if (filteredDocs.isEmpty) {
-                          return _buildEmptyState(
-                            _showArchivedOnly
-                                ? 'Aucune conversation archivee.'
-                                : 'Pas de conversation en cours.',
+                          return _buildFilteredEmptyState(
+                            message: query.isNotEmpty
+                                ? 'Aucune conversation ne correspond a votre recherche.'
+                                : _showArchivedOnly
+                                    ? 'Aucune conversation archivee dans les resultats charges.'
+                                    : 'Pas de conversation visible pour le moment.',
+                            canLoadMore: canLoadMoreConversations,
                           );
                         }
 
                         return ListView.builder(
                           padding: const EdgeInsets.fromLTRB(10, 6, 10, 18),
                           itemCount: filteredDocs.length +
-                              (docs.length >= _conversationLimit ? 1 : 0),
+                              (canLoadMoreConversations ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (index == filteredDocs.length) {
                               return Padding(
@@ -485,9 +537,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                             final blocked = isConversationBlocked(data);
                             final blockedForUser =
                                 isConversationBlockedForUser(data, userId);
-                            final lastMessageAt = data['lastMessageAt'];
                             final lastDate =
-                                lastMessageAt is Timestamp ? lastMessageAt.toDate() : null;
+                              parseFirestoreDateTime(data['lastMessageAt']);
 
                             return Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 6),
