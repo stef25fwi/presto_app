@@ -140,6 +140,10 @@ Map<String, dynamic> buildOfferIndexFields({
     'dept': dept,
     'budgetValue': budgetValue,
     'isActive': active,
+    'isPublished': active,
     'status': active ? 'active' : (status ?? 'inactive'),
+    'visibility': {
+      'isPublic': active,
+    },
   };
 }
