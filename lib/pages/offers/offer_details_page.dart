@@ -111,11 +111,13 @@ class Offer {
 class OfferDetailsPage extends StatelessWidget {
   final Object? offer;
   final String currentUserId;
+  final VoidCallback? onBackToConsult;
 
   const OfferDetailsPage({
     super.key,
     this.offer,
     this.currentUserId = 'buyer_demo_001',
+    this.onBackToConsult,
   });
 
   @override
@@ -123,6 +125,7 @@ class OfferDetailsPage extends StatelessWidget {
     return PrestoOfferDetailsPage(
       offer: offer,
       currentUserId: currentUserId,
+      onBackToConsult: onBackToConsult,
     );
   }
 }
@@ -130,6 +133,7 @@ class OfferDetailsPage extends StatelessWidget {
 class PrestoOfferDetailsPage extends StatelessWidget {
   final Object? offer;
   final String currentUserId;
+  final VoidCallback? onBackToConsult;
 
   static const Color _headerOrange = Color(0xFFFF6600);
 
@@ -137,6 +141,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     super.key,
     this.offer,
     required this.currentUserId,
+    this.onBackToConsult,
   });
 
   String _toE164Like(String raw) {
@@ -659,6 +664,14 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
+        leading: IconButton(
+          tooltip: 'Retour',
+          onPressed: () {
+            onBackToConsult?.call();
+            Navigator.of(context).maybePop();
+          },
+          icon: const Icon(Icons.arrow_back),
+        ),
         backgroundColor: _headerOrange,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -683,32 +696,6 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           const SizedBox(width: 6),
         ],
       ),
-      bottomSheet: SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
-          color: Colors.transparent,
-          child: SizedBox(
-            height: 64,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _headerOrange,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 10,
-                textStyle: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              onPressed: () => _showContactOptionsSheet(context, data),
-              child: const Text('Proposer mes services'),
-            ),
-          ),
-        ),
-      ),
       body: Stack(
         children: [
           const _BackgroundDecor(),
@@ -720,7 +707,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                 isCompactMobile ? 14 : 16,
                 isCompactMobile ? 10 : 12,
                 isCompactMobile ? 14 : 16,
-                isCompactMobile ? 116 : 124,
+                isCompactMobile ? 14 : 16,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

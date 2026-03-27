@@ -137,12 +137,16 @@ service cloud.firestore {
         && (!('ownerId' in request.resource.data) || request.resource.data.ownerId == uid())
         && (!('uid' in request.resource.data) || request.resource.data.uid == uid());
 
-      // Update/Delete uniquement propriétaire (et champs server-only protégés)
-      allow update, delete: if isSignedIn()
+      // Update uniquement propriétaire (et champs server-only protégés)
+      allow update: if isSignedIn()
         && isOwnerByField(resource.data)
         // Interdit d'éditer des champs réservés aux Functions
         && !( 'moderation' in request.resource.data )
         && !( 'visibility' in request.resource.data );
+
+      // Delete uniquement propriétaire
+      allow delete: if isSignedIn()
+        && isOwnerByField(resource.data);
     }
 
     // ✅ Conversations & messages
