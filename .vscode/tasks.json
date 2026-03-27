@@ -59,7 +59,7 @@
     {
       "label": "Git: Commit All",
       "type": "shell",
-      "command": "git commit -m \"fix(messaging): harden conversation flow\"",
+      "command": "git commit -m \"chore(tasks): update commit task message\"",
       "problemMatcher": []
     },
     {
