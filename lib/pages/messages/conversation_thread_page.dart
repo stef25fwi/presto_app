@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../constants.dart';
 import '../../services/conversation_service.dart';
+import '../../services/conversation_state.dart';
 import '../../utils/friendly_snackbar.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
@@ -44,6 +45,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _metaLoaded = false;
   bool _didApplyInitialDraft = false;
   int _messageLimit = 50;
+  bool _isBlocked = false;
+  bool _isBlockedForCurrentUser = false;
+  bool _isArchivedForCurrentUser = false;
 
   @override
   void initState() {
@@ -279,6 +283,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           _participants = participants;
           _lastReadAt = (data['lastReadAt'] as Map<String, dynamic>?) ?? const {};
           _metaLoaded = true;
+          _isBlocked = isConversationBlocked(data);
+          _isBlockedForCurrentUser = isConversationBlockedForUser(data, widget.currentUserId);
+          _isArchivedForCurrentUser = isConversationArchivedForUser(data, widget.currentUserId);
         });
       }
 
@@ -321,6 +328,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     final rawDraft = _controller.text;
     final text = rawDraft.trim();
     if (text.isEmpty || _isSending) return;
+    if (_isBlocked) {
+      showErrorSnackBar(context, 'Cette conversation est bloquee.');
+      return;
+    }
 
     final authUser = FirebaseAuth.instance.currentUser;
     if (authUser == null) {
@@ -368,6 +379,64 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
   }
 
+  Future<void> _handleConversationAction(_ConversationThreadAction action) async {
+    try {
+      switch (action) {
+        case _ConversationThreadAction.archive:
+          await ConversationService.archiveConversation(conversationId: widget.conversationId);
+          if (!mounted) return;
+          showSuccessSnackBar(context, 'Conversation archivee.');
+          return;
+        case _ConversationThreadAction.unarchive:
+          await ConversationService.unarchiveConversation(conversationId: widget.conversationId);
+          if (!mounted) return;
+          showSuccessSnackBar(context, 'Conversation restauree.');
+          return;
+        case _ConversationThreadAction.block:
+          await ConversationService.blockConversation(conversationId: widget.conversationId);
+          if (!mounted) return;
+          showSuccessSnackBar(context, 'Conversation bloquee.');
+          return;
+        case _ConversationThreadAction.unblock:
+          await ConversationService.unblockConversation(conversationId: widget.conversationId);
+          if (!mounted) return;
+          showSuccessSnackBar(context, 'Conversation debloquee.');
+          return;
+      }
+    } catch (error) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Action impossible sur cette conversation : $error');
+    }
+  }
+
+  Widget _buildStateBanner() {
+    if (_isBlocked) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+        child: _ConversationBanner(
+          icon: Icons.block_rounded,
+          color: const Color(0xFFB91C1C),
+          message: _isBlockedForCurrentUser
+              ? 'Vous avez bloque cette conversation. Debloquez-la pour reprendre les echanges.'
+              : 'Cette conversation est actuellement bloquee.',
+        ),
+      );
+    }
+
+    if (_isArchivedForCurrentUser) {
+      return const Padding(
+        padding: EdgeInsets.fromLTRB(12, 10, 12, 0),
+        child: _ConversationBanner(
+          icon: Icons.archive_outlined,
+          color: Color(0xFF6B7280),
+          message: 'Conversation archivee pour vous. Un nouveau message la restaurera automatiquement.',
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
   void _applyInitialDraftIfNeeded(bool hasMessages) {
     if (_didApplyInitialDraft || hasMessages) return;
 
@@ -397,6 +466,25 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         elevation: 0,
         titleSpacing: 8,
         title: _buildThreadAppBarTitle(),
+        actions: [
+          PopupMenuButton<_ConversationThreadAction>(
+            onSelected: _handleConversationAction,
+            itemBuilder: (context) => [
+              PopupMenuItem<_ConversationThreadAction>(
+                value: _isArchivedForCurrentUser
+                    ? _ConversationThreadAction.unarchive
+                    : _ConversationThreadAction.archive,
+                child: Text(_isArchivedForCurrentUser ? 'Restaurer' : 'Archiver'),
+              ),
+              PopupMenuItem<_ConversationThreadAction>(
+                value: _isBlockedForCurrentUser
+                    ? _ConversationThreadAction.unblock
+                    : _ConversationThreadAction.block,
+                child: Text(_isBlockedForCurrentUser ? 'Debloquer' : 'Bloquer'),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -404,6 +492,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           Column(
             children: [
               _buildOfferContextBanner(),
+              _buildStateBanner(),
               Expanded(
                 child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: FirebaseFirestore.instance
@@ -596,13 +685,16 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                           child: TextField(
                             controller: _controller,
                             textInputAction: TextInputAction.send,
+                            enabled: !_isBlocked,
                             minLines: 1,
                             maxLines: 4,
                             onSubmitted: (_) => _sendMessage(),
-                            decoration: const InputDecoration(
-                              hintText: 'Votre message...',
+                            decoration: InputDecoration(
+                              hintText: _isBlocked
+                                  ? 'Conversation bloquee'
+                                  : 'Votre message...',
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
+                              contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 13,
                               ),
@@ -612,7 +704,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       ),
                       const SizedBox(width: 8),
                       FilledButton(
-                        onPressed: _isSending ? null : _sendMessage,
+                        onPressed: (_isSending || _isBlocked) ? null : _sendMessage,
                         style: FilledButton.styleFrom(
                           backgroundColor: kWhatsappGreen,
                           foregroundColor: Colors.white,
@@ -635,6 +727,53 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _ConversationThreadAction {
+  archive,
+  unarchive,
+  block,
+  unblock,
+}
+
+class _ConversationBanner extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String message;
+
+  const _ConversationBanner({
+    required this.icon,
+    required this.color,
+    required this.message,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.20)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: kPrestoMetaTextStyle.copyWith(
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),

@@ -8,6 +8,7 @@ exports.sendPushToUser = sendPushToUser;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const firestore_1 = require("../../core/firestore");
 const constants_1 = require("../../shared/constants");
+const FCM_MULTICAST_TOKEN_LIMIT = 500;
 function readBoolean(value, fallback = true) {
     return typeof value === "boolean" ? value : fallback;
 }
@@ -83,50 +84,53 @@ async function sendPushToUser({ userId, topic, title, body, routeName, channelId
     const tokenEntries = await listPushTokens(userId);
     if (tokenEntries.length === 0)
         return;
-    const multicast = {
-        tokens: tokenEntries.map((entry) => entry.token),
-        notification: {
-            title,
-            body,
-        },
-        data: toStringMap({
-            ...data,
-            routeName,
-            channelId,
-        }),
-        android: {
-            priority: "high",
-            collapseKey,
+    const invalidDocIds = new Set();
+    for (let index = 0; index < tokenEntries.length; index += FCM_MULTICAST_TOKEN_LIMIT) {
+        const batchEntries = tokenEntries.slice(index, index + FCM_MULTICAST_TOKEN_LIMIT);
+        const multicast = {
+            tokens: batchEntries.map((entry) => entry.token),
             notification: {
+                title,
+                body,
+            },
+            data: toStringMap({
+                ...data,
+                routeName,
                 channelId,
-                tag: collapseKey,
-                sound: "default",
-                clickAction: "FLUTTER_NOTIFICATION_CLICK",
-            },
-        },
-        apns: {
-            headers: {
-                "apns-priority": "10",
-            },
-            payload: {
-                aps: {
+            }),
+            android: {
+                priority: "high",
+                collapseKey,
+                notification: {
+                    channelId,
+                    tag: collapseKey,
                     sound: "default",
-                    contentAvailable: true,
+                    clickAction: "FLUTTER_NOTIFICATION_CLICK",
                 },
             },
-        },
-    };
-    const response = await firebase_admin_1.default.messaging().sendEachForMulticast(multicast);
-    const invalidDocIds = [];
-    response.responses.forEach((result, index) => {
-        if (result.success)
-            return;
-        const code = result.error?.code || "";
-        if (code === "messaging/registration-token-not-registered" ||
-            code === "messaging/invalid-registration-token") {
-            invalidDocIds.push(tokenEntries[index].docId);
-        }
-    });
-    await cleanupInvalidTokens(userId, invalidDocIds);
+            apns: {
+                headers: {
+                    "apns-priority": "10",
+                },
+                payload: {
+                    aps: {
+                        sound: "default",
+                        contentAvailable: true,
+                    },
+                },
+            },
+        };
+        const response = await firebase_admin_1.default.messaging().sendEachForMulticast(multicast);
+        response.responses.forEach((result, responseIndex) => {
+            if (result.success)
+                return;
+            const code = result.error?.code || "";
+            if (code === "messaging/registration-token-not-registered" ||
+                code === "messaging/invalid-registration-token") {
+                invalidDocIds.add(batchEntries[responseIndex].docId);
+            }
+        });
+    }
+    await cleanupInvalidTokens(userId, Array.from(invalidDocIds));
 }
 //# sourceMappingURL=push.js.map

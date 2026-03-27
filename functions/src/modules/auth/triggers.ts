@@ -15,13 +15,23 @@ export const onUserCreated = onDocumentCreated(`${COLLECTIONS.users}/{userId}`, 
   if (!data) return;
 
   const userId = event.params.userId;
+  const now = Date.now();
+
+  await event.data?.ref.set({
+    inboxCounts: {
+      unreadMessages: 0,
+      unreadNotifications: 0,
+      totalUnread: 0,
+      updatedAt: now,
+    },
+  }, { merge: true });
+
   const email = String(data.email || "").trim();
   if (!email) return;
 
   // Idempotence : ne crée les préférences que si elles n'existent pas encore
   const prefsRef = db.collection(COLLECTIONS.notificationPreferences).doc(userId);
   const prefsSnap = await prefsRef.get();
-  const now = Date.now();
 
   if (!prefsSnap.exists) {
     await prefsRef.set({
