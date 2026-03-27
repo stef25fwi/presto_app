@@ -1533,21 +1533,12 @@ class _HomePageState extends State<HomePage>
     // Important perf: ne pas écouter toute la collection `offers`.
     // On se limite aux dernières offres pour alimenter des suggestions utiles,
     // sans déclencher des rebuilds massifs quand la collection grossit.
-    _dynamicKeywordsSubscription = FirebaseFirestore.instance
-        .collection('offers')
-        .where(_publicOffersFilter())
-        .where(
-          'createdAt',
-          isGreaterThan: Timestamp.fromMillisecondsSinceEpoch(0),
-        )
-        .orderBy('createdAt', descending: true)
-        .limit(200)
-        .snapshots()
-        .listen(
+    _dynamicKeywordsSubscription = _recentOffersQuery().snapshots().listen(
       (snapshot) {
         final words = <String>{};
         for (final doc in snapshot.docs) {
           final data = doc.data();
+          if (!_isPublishedOfferData(data)) continue;
           final title = (data['title'] ?? '').toString().toLowerCase();
           final description =
               (data['description'] ?? '').toString().toLowerCase();
@@ -1615,17 +1606,15 @@ class _HomePageState extends State<HomePage>
     return 1.0;
   }
 
-  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _loadLatestOffers() async {
-    final snapshot = await FirebaseFirestore.instance
+  Query<Map<String, dynamic>> _recentOffersQuery({int limit = 200}) {
+    return FirebaseFirestore.instance
         .collection('offers')
-        .where(_publicOffersFilter())
-        .where(
-          'createdAt',
-          isGreaterThan: Timestamp.fromMillisecondsSinceEpoch(0),
-        )
         .orderBy('createdAt', descending: true)
-        .limit(60)
-        .get();
+        .limit(limit);
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _loadLatestOffers() async {
+    final snapshot = await _recentOffersQuery().get();
 
     return snapshot.docs
         .where((doc) => _isPublishedOfferData(doc.data()))
