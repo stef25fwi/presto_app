@@ -414,10 +414,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                           stream: _conversationStream('participant_ids', userId),
                           builder: (context, legacySnapshot) {
-                            if ((currentSnapshot.connectionState == ConnectionState.waiting &&
-                                    !currentSnapshot.hasData) ||
-                                (legacySnapshot.connectionState == ConnectionState.waiting &&
-                                    !legacySnapshot.hasData)) {
+                            // Attendre uniquement le flux principal ; le flux
+                            // legacy peut échouer (permission-denied) si le
+                            // champ participant_ids n'existe pas.
+                            if (currentSnapshot.connectionState == ConnectionState.waiting &&
+                                !currentSnapshot.hasData) {
                               return const Center(
                                 child: CircularProgressIndicator(
                                   valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
@@ -425,13 +426,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                               );
                             }
 
-                            if (legacySnapshot.hasError) {
-                              final message = _isPermissionDenied(legacySnapshot.error)
-                                  ? 'Pas de conversation en cours.'
-                                  : 'Erreur de chargement des conversations.';
-                              return _buildEmptyState(message);
-                            }
-
+                            // Ne PAS retourner d'état vide si seul le flux
+                            // legacy échoue : les conversations du flux
+                            // principal restent visibles.
                             final docs = _mergeConversationDocs(
                               currentSnapshot.data?.docs ?? const [],
                               legacySnapshot.data?.docs ?? const [],
