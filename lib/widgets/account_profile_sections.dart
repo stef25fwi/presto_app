@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/city_search.dart';
 import 'phone_input_field.dart';
 
+const double _kAccountSectionTileHorizontalPadding = 12;
+
 class AccountProfileFormSection extends StatefulWidget {
   final TextEditingController pseudoController;
   final TextEditingController cityController;
@@ -54,7 +56,10 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
               ),
             ],
           ),
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: _kAccountSectionTileHorizontalPadding,
+            vertical: 14,
+          ),
           child: Column(
             children: [
               TextField(
@@ -154,7 +159,7 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                   opacity: widget.isEditing ? 1.0 : 0.6,
                   child: PhoneInputFieldCompact(
                     controller: widget.phoneController,
-                    labelText: 'Téléphone (optionnel)',
+                    labelText: 'Téléphone',
                     hintText: '690123456',
                   ),
                 ),
@@ -261,7 +266,10 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
               ),
             ],
           ),
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: _kAccountSectionTileHorizontalPadding,
+            vertical: 12,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -285,7 +293,7 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
+                      horizontal: 10,
                       vertical: 10,
                     ),
                   ),
@@ -324,7 +332,7 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
+                      horizontal: 10,
                       vertical: 10,
                     ),
                   ),
@@ -426,7 +434,10 @@ class AccountMessagesSection extends StatelessWidget {
               ),
             ],
           ),
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: _kAccountSectionTileHorizontalPadding,
+            vertical: 14,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -470,7 +481,10 @@ class AccountProUpgradeSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.symmetric(
+        horizontal: _kAccountSectionTileHorizontalPadding,
+        vertical: 18,
+      ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [

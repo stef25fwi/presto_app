@@ -20,8 +20,7 @@ Future<void> prestoFirebaseMessagingBackgroundHandler(RemoteMessage message) asy
   } else {
     await Firebase.initializeApp();
   }
-  await NotificationService().ensureLocalNotificationsInitialized();
-  await NotificationService().showForegroundNotification(message);
+  debugPrint('[Notifications-Background] Message reçu: ${message.messageId}');
 }
 
 /// Service pour gérer Firebase Cloud Messaging (notifications push)
@@ -108,7 +107,7 @@ class NotificationService {
 
     // Handler pour les messages en foreground
     FirebaseMessaging.onMessage.listen((message) async {
-      if (!kIsWeb) {
+      if (_shouldShowLocalForegroundNotification(message)) {
         await showForegroundNotification(message);
       }
       _foregroundHandler(message);
@@ -207,6 +206,12 @@ class NotificationService {
     if (message.notification != null) {
       debugPrint('[Notifications-Foreground] Contient une notification');
     }
+  }
+
+  bool _shouldShowLocalForegroundNotification(RemoteMessage message) {
+    if (kIsWeb) return false;
+    if (message.notification == null) return false;
+    return defaultTargetPlatform == TargetPlatform.android;
   }
 
   Future<void> showForegroundNotification(RemoteMessage message) async {
