@@ -8,6 +8,7 @@ const constants_1 = require("../../shared/constants");
 const hash_1 = require("../../utils/hash");
 const env_1 = require("../../config/env");
 const push_1 = require("../notifications/push");
+const participants_1 = require("./participants");
 // Cooldown de 15 min par conversation × destinataire pour éviter le spam
 const MESSAGE_EMAIL_COOLDOWN_MS = 15 * 60 * 1000;
 function buildMessagePreview(value) {
@@ -61,13 +62,7 @@ exports.onConversationSubMessageCreated = (0, firestore_1.onDocumentCreated)("co
         : "message.created.existing_thread";
     const conversationSnap = await firestore_2.db.collection(constants_1.COLLECTIONS.conversations).doc(conversationId).get();
     const conversation = conversationSnap.data() ?? {};
-    const participantSource = Array.isArray(conversation.participants)
-        ? conversation.participants
-        : Array.isArray(conversation.participant_ids)
-            ? conversation.participant_ids
-            : [];
-    const participants = participantSource
-        .map((value) => String(value || ""))
+    const participants = (0, participants_1.readConversationParticipants)(conversation)
         .filter((value) => value.length > 0 && value !== senderId);
     const offerTitle = String(conversation.offerTitle || "Annonce IliPresto").trim();
     const offerId = String(conversation.offerId || "").trim();
