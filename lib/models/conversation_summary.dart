@@ -108,7 +108,12 @@ class ConversationSummary {
   }
 
   bool get hasRenderableContent {
-    return messageCount > 0 || lastMessage.isNotEmpty || lastMessageAt != null;
+    // Keep conversations visible even before the first message if basic context exists.
+    return messageCount > 0 ||
+        lastMessage.isNotEmpty ||
+        lastMessageAt != null ||
+        offerTitle.trim().isNotEmpty ||
+        otherUserName.trim().isNotEmpty;
   }
 
   DateTime? get sortDate {

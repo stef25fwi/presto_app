@@ -6,10 +6,6 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    function uid() {
-      return request.auth.uid;
-    }
-
     function hasClaimRole(role) {
       return isSignedIn()
         && (request.auth.token.roles is list)
