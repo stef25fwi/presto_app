@@ -8494,6 +8494,7 @@ class _AccountPageState extends State<AccountPage> {
   static const List<String> _requiredProfileFieldLabels = <String>[
     'Pseudo',
     'Ville',
+    'Numéro de téléphone',
   ];
 
   // Admin: paramètres Micro-IA (Remote Config)
@@ -8936,6 +8937,7 @@ class _AccountPageState extends State<AccountPage> {
 
   bool _validateProfile() {
     final pseudo = _profilePseudoController.text.trim();
+    final city = _profileCityController.text.trim();
     final phone = _profilePhoneController.text.trim();
 
     // Validation pseudo
@@ -8960,13 +8962,20 @@ class _AccountPageState extends State<AccountPage> {
       return false;
     }
 
-    // Validation phone (optionnel mais si rempli)
-    if (phone.isNotEmpty) {
-      if (!RegExp(r'^[+]?[0-9]{10,15}$').hasMatch(phone.replaceAll(' ', ''))) {
-        showErrorSnackBar(
-            context, "Le numéro de téléphone doit contenir 10-15 chiffres");
-        return false;
-      }
+    if (city.isEmpty) {
+      showErrorSnackBar(context, "La ville est obligatoire");
+      return false;
+    }
+
+    if (phone.isEmpty) {
+      showErrorSnackBar(context, "Le numéro de téléphone est obligatoire");
+      return false;
+    }
+
+    if (!RegExp(r'^[+]?[0-9]{10,15}$').hasMatch(phone.replaceAll(' ', ''))) {
+      showErrorSnackBar(
+          context, "Le numéro de téléphone doit contenir 10-15 chiffres");
+      return false;
     }
 
     return true;
@@ -8980,6 +8989,9 @@ class _AccountPageState extends State<AccountPage> {
     }
     if (_profileCityController.text.trim().isEmpty) {
       missing.add('ville');
+    }
+    if (_profilePhoneController.text.trim().isEmpty) {
+      missing.add('numéro de téléphone');
     }
 
     return missing;
@@ -9484,6 +9496,15 @@ class _AccountPageState extends State<AccountPage> {
                                   : null,
                             ),
                             const SizedBox(height: 10),
+                            const Text(
+                              'Bon retour sur iliprestō',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
                             Text(
                               displayName,
                               style: const TextStyle(
