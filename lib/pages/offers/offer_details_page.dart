@@ -5,8 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:presto_app/constants.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:presto_app/pages/messages/conversation_thread_page.dart';
+import 'package:presto_app/data/marketplace/favorite_repository.dart';
+import 'package:presto_app/data/marketplace/report_repository.dart';
+import 'package:presto_app/models/marketplace_enums.dart';
+import 'package:presto_app/models/marketplace_report.dart';
+import 'package:presto_app/pages/messages/conversations_list_page.dart';
 import 'package:presto_app/services/conversation_service.dart';
+import 'package:presto_app/services/marketplace_human_verification.dart';
 
 // ─── Data models ─────────────────────────────────────────────────────────────
 
@@ -136,6 +141,10 @@ class PrestoOfferDetailsPage extends StatelessWidget {
   final VoidCallback? onBackToConsult;
 
   static const Color _headerOrange = Color(0xFFFF6600);
+  static final FavoriteRepository _favoriteRepository = FavoriteRepository();
+  static final ReportRepository _reportRepository = ReportRepository();
+  static const MarketplaceHumanVerification _verification =
+      MarketplaceHumanVerification();
 
   const PrestoOfferDetailsPage({
     super.key,
@@ -206,10 +215,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     if (!context.mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ConversationThreadPage(
-          conversationId: resolvedConversationId,
-          offerTitle: data.title,
-          currentUserId: me,
+        builder: (_) => ConversationsListPage(
+          initialConversationId: resolvedConversationId,
           initialDraftText: initialDraftText,
         ),
       ),
@@ -255,7 +262,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
   }
 
   Future<void> _showShareOptionsSheet(BuildContext context, _OfferUiData data) async {
-    final offerUrl = 'https://presto-app-74abe.web.app/#/offers/${data.offerId}';
+    final detailPath = data.isMarketplace ? 'listings' : 'offers';
+    final offerUrl = 'https://presto-app-74abe.web.app/#/$detailPath/${data.offerId}';
     final shareText = '${data.title} - ${data.city}\n$offerUrl';
 
     await showModalBottomSheet<void>(
@@ -527,6 +535,21 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     }
 
     try {
+      if (data.isMarketplace) {
+        final active = await _favoriteRepository.toggleFavorite(offerId);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              active
+                  ? 'Annonce ajoutée aux favoris.'
+                  : 'Annonce retirée des favoris.',
+            ),
+          ),
+        );
+        return;
+      }
+
       final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
       final batch = FirebaseFirestore.instance.batch();
 
@@ -571,9 +594,173 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     }
   }
 
+  Future<void> _showReportSheet(BuildContext context, _OfferUiData data) async {
+    final authUser = FirebaseAuth.instance.currentUser;
+    final uid = authUser?.uid.trim() ?? '';
+
+    if (uid.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Connectez-vous pour signaler cette annonce.'),
+        ),
+      );
+      return;
+    }
+
+    if (!data.isMarketplace || data.offerId.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Le signalement est disponible uniquement pour Marketplace.'),
+        ),
+      );
+      return;
+    }
+
+    if (data.advertiserId.trim().isNotEmpty && data.advertiserId.trim() == uid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vous ne pouvez pas signaler votre propre annonce.'),
+        ),
+      );
+      return;
+    }
+
+    final reason = await showModalBottomSheet<ListingReportReasonCode>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text(
+                  'Signaler l\'annonce',
+                  textAlign: TextAlign.center,
+                  style: kPrestoSectionTitleStyle,
+                ),
+              ),
+              ...ListingReportReasonCode.values.map(
+                (entry) => ListTile(
+                  leading: const Icon(Icons.flag_outlined),
+                  title: Text(_reportReasonLabel(entry)),
+                  onTap: () => Navigator.of(sheetContext).pop(entry),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (reason == null) {
+      return;
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+
+    String? reasonText;
+    if (reason == ListingReportReasonCode.other) {
+      final controller = TextEditingController();
+      try {
+        reasonText = await showDialog<String>(
+          context: context,
+          builder: (dialogContext) {
+            return AlertDialog(
+              title: const Text('Précisez le motif'),
+              content: TextField(
+                controller: controller,
+                maxLines: 4,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  hintText: 'Décrivez brièvement le problème',
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Annuler'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(
+                    controller.text.trim(),
+                  ),
+                  child: const Text('Envoyer'),
+                ),
+              ],
+            );
+          },
+        );
+      } finally {
+        controller.dispose();
+      }
+
+      if (!context.mounted) {
+        return;
+      }
+    }
+
+    try {
+      final recaptchaToken = await _verification.obtainToken(
+        MarketplaceHumanVerificationAction.listingReport,
+      );
+      final ok = await _reportRepository.reportListing(
+        ListingReportDraft(
+          listingId: data.offerId,
+          reasonCode: reason,
+          reasonText: (reasonText ?? '').trim().isEmpty
+              ? null
+              : reasonText!.trim(),
+        ),
+        recaptchaToken: recaptchaToken,
+      );
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            ok
+                ? 'Signalement envoyé. Merci pour votre retour.'
+                : 'Le signalement n\'a pas pu être envoyé.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors du signalement : $e')),
+      );
+    }
+  }
+
+  String _reportReasonLabel(ListingReportReasonCode reason) {
+    return switch (reason) {
+      ListingReportReasonCode.spam => 'Spam',
+      ListingReportReasonCode.fraud => 'Fraude',
+      ListingReportReasonCode.inappropriate => 'Contenu inapproprié',
+      ListingReportReasonCode.duplicate => 'Doublon',
+      ListingReportReasonCode.wrongCategory => 'Mauvaise catégorie',
+      ListingReportReasonCode.fakeListing => 'Annonce trompeuse',
+      ListingReportReasonCode.harassment => 'Harcèlement',
+      ListingReportReasonCode.other => 'Autre motif',
+    };
+  }
+
   Map<String, dynamic> _buildFavoriteOfferPayload(_OfferUiData data) {
     final dynamic rawOffer = offer;
-    final imageUrls = (_OfferUiData._read(() => rawOffer.imageUrls) as List<dynamic>? ?? const [])
+    final imageUrls = ((_OfferUiData._read(() => rawOffer['imageUrls']) ??
+                    _OfferUiData._read(() => rawOffer.imageUrls))
+                as List<dynamic>? ??
+            const [])
         .map((e) => e.toString().trim())
         .where((e) => e.isNotEmpty)
         .toList(growable: false);
@@ -628,6 +815,27 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       );
     }
 
+    if (data.isMarketplace) {
+      return StreamBuilder<Set<String>>(
+        stream: _favoriteRepository.watchFavoriteListingIds(uid),
+        builder: (context, snapshot) {
+          final favoriteIds = snapshot.data ?? const <String>{};
+          final isFavorite =
+              data.offerId.trim().isNotEmpty && favoriteIds.contains(data.offerId.trim());
+
+          return IconButton(
+            tooltip: isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
+            onPressed: () => _toggleFavorite(context, data, isFavorite),
+            icon: Icon(
+              isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            ),
+            color: Colors.white,
+            splashRadius: 20,
+          );
+        },
+      );
+    }
+
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
       builder: (context, snapshot) {
@@ -667,7 +875,10 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         leading: IconButton(
           tooltip: 'Retour',
           onPressed: () {
-            onBackToConsult?.call();
+            if (onBackToConsult != null) {
+              onBackToConsult!();
+              return;
+            }
             Navigator.of(context).maybePop();
           },
           icon: const Icon(Icons.arrow_back),
@@ -692,6 +903,14 @@ class PrestoOfferDetailsPage extends StatelessWidget {
             color: Colors.white,
             splashRadius: 20,
           ),
+          if (data.isMarketplace)
+            IconButton(
+              tooltip: 'Signaler',
+              onPressed: () => _showReportSheet(context, data),
+              icon: const Icon(Icons.flag_outlined),
+              color: Colors.white,
+              splashRadius: 20,
+            ),
           _buildFavoriteAction(context, data),
           const SizedBox(width: 6),
         ],
@@ -737,6 +956,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
 class _OfferUiData {
   final String offerId;
+  final bool isMarketplace;
   final String title;
   final String detail;
   final String city;
@@ -769,6 +989,7 @@ class _OfferUiData {
 
   const _OfferUiData({
     required this.offerId,
+    required this.isMarketplace,
     required this.title,
     required this.detail,
     required this.city,
@@ -817,74 +1038,149 @@ class _OfferUiData {
 
   factory _OfferUiData.fromOffer(Object? offer) {
     final dynamic o = offer;
-    final dynamic advertiser = _read(() => o.advertiser);
-    final dynamic practical = _read(() => o.practicalInfo);
+    dynamic readValue(String key, [dynamic Function()? getter]) {
+      if (o is Map) {
+        return o[key];
+      }
+      return getter == null ? null : _read(getter);
+    }
 
-    final offerId = _asString(_read(() => o.id), fallback: '');
-    final title = _asString(_read(() => o.title), fallback: 'Montage meuble');
-    final detail = _asString(_read(() => o.shortDescription), fallback: '+ fixation TV');
-    final city = _asString(_read(() => o.city), fallback: 'Les Abymes');
-    final postalCode = _asString(_read(() => o.postalCode), fallback: '');
-    final category = _asString(_read(() => o.category), fallback: 'Bricolage');
+    dynamic readNestedValue(dynamic source, String key, [dynamic Function()? getter]) {
+      if (source is Map) {
+        return source[key];
+      }
+      return getter == null ? null : _read(getter);
+    }
+
+    final dynamic advertiser = readValue('advertiser', () => o.advertiser);
+    final dynamic practical = readValue('practicalInfo', () => o.practicalInfo);
+
+    final offerId = _asString(
+      readValue('id', () => o.id) ?? readValue('offerId') ?? readValue('listingId'),
+      fallback: '',
+    );
+    final marketplaceFlag = readValue('isMarketplace', () => o.isMarketplace);
+    final isMarketplace = marketplaceFlag is bool
+      ? marketplaceFlag
+        : _asString(readValue('categoryId', () => o.categoryId), fallback: '').isNotEmpty ||
+            _asString(readValue('cityId', () => o.cityId), fallback: '').isNotEmpty ||
+            _asString(readValue('visibility', () => o.visibility), fallback: '').isNotEmpty;
+    final title = _asString(readValue('title', () => o.title), fallback: 'Montage meuble');
+    final detail = _asString(
+      readValue('shortDescription', () => o.shortDescription) ?? readValue('detail'),
+      fallback: '+ fixation TV',
+    );
+    final city = _asString(
+      readValue('city', () => o.city) ?? readValue('location'),
+      fallback: 'Les Abymes',
+    );
+    final postalCode = _asString(
+      readValue('postalCode', () => o.postalCode) ?? readValue('cp'),
+      fallback: '',
+    );
+    final category = _asString(readValue('category', () => o.category), fallback: 'Bricolage');
 
     final fullDescription = _asString(
-      _read(() => o.description),
+      readValue('description', () => o.description),
       fallback: 'Montage d\'un petit meuble + fixation d\'une\nTV au mur (support déjà acheté). Mur béton.\nPrévoir perceuse.',
     );
-    final phone = _asString(_read(() => o.phone), fallback: '');
+    final phone = _asString(readValue('phone', () => o.phone), fallback: '');
     final publishedAtLabel = _asString(
-      _read(() => o.publishedAtLabel),
+      readValue('publishedAtLabel', () => o.publishedAtLabel),
       fallback: 'Publication récente',
     );
     final availability = _asString(
-      _read(() => o.availability),
+      readValue('availability', () => o.availability),
       fallback: 'Disponibilité à confirmer',
     );
-    final actionType = _read(() => o.actionType) is OfferActionType
-        ? _read(() => o.actionType) as OfferActionType
+    final actionTypeRaw = readValue('actionType', () => o.actionType);
+    final actionType = actionTypeRaw is OfferActionType
+        ? actionTypeRaw
         : OfferActionType.contact;
-    final statusBadges = _asStringList(_read(() => o.statusBadges));
-    final urgentRaw = _read(() => o.isUrgent);
+    final statusBadges = _asStringList(readValue('statusBadges', () => o.statusBadges));
+    final urgentRaw = readValue('isUrgent', () => o.isUrgent) ?? readValue('urgent');
     final isUrgent = urgentRaw is bool
       ? urgentRaw
       : statusBadges.any(
         (badge) => badge.toLowerCase().contains('urgent'),
         );
 
-    final price = _asDouble(_read(() => o.price), fallback: 90);
+    final price = _asDouble(
+      readValue('price', () => o.price) ?? readValue('budget'),
+      fallback: 90,
+    );
 
     final advertiserId = _asString(
-      _read(() => advertiser.id) ??
-          _read(() => o.userId) ??
-          _read(() => o.uid) ??
-          _read(() => o.ownerId),
+      readNestedValue(advertiser, 'id', () => advertiser.id) ??
+          readValue('userId', () => o.userId) ??
+          readValue('uid', () => o.uid) ??
+          readValue('ownerId', () => o.ownerId),
       fallback: '',
     );
-    final advertiserName = _asString(_read(() => advertiser.name), fallback: 'Bastien');
-    final advertiserRole = _asString(_read(() => advertiser.bio), fallback: 'Bricoleur expérimenté');
-    final advertiserAvatarUrl = _asString(_read(() => advertiser.avatarUrl), fallback: '');
-    final advertiserRating = _asDouble(_read(() => advertiser.rating), fallback: 4.9);
+    final advertiserName = _asString(
+      readNestedValue(advertiser, 'name', () => advertiser.name) ?? readValue('userName'),
+      fallback: 'Bastien',
+    );
+    final advertiserRole = _asString(
+      readNestedValue(advertiser, 'bio', () => advertiser.bio) ?? readValue('bio'),
+      fallback: 'Bricoleur expérimenté',
+    );
+    final advertiserAvatarUrl = _asString(
+      readNestedValue(advertiser, 'avatarUrl', () => advertiser.avatarUrl) ??
+          readValue('avatarUrl'),
+      fallback: '',
+    );
+    final advertiserRating = _asDouble(
+      readNestedValue(advertiser, 'rating', () => advertiser.rating) ?? readValue('rating'),
+      fallback: 4.9,
+    );
     final advertiserReviewCount = _asInt(
-      _read(() => advertiser.reviewsCount) ?? _read(() => advertiser.reviewCount),
+      readNestedValue(advertiser, 'reviewsCount', () => advertiser.reviewsCount) ??
+          readNestedValue(advertiser, 'reviewCount', () => advertiser.reviewCount) ??
+          readValue('reviewsCount'),
       fallback: 0,
     );
-    final verified = _asBool(_read(() => advertiser.verified), fallback: true);
+    final verified = _asBool(
+      readNestedValue(advertiser, 'verified', () => advertiser.verified) ??
+          readValue('verified'),
+      fallback: true,
+    );
 
-    final serviceArea = _asString(_read(() => practical.serviceArea), fallback: city);
-    final canTravel = _asBool(_read(() => practical.canTravel), fallback: true);
-    final schedule = _asString(_read(() => practical.schedule), fallback: 'Horaires à convenir');
+    final serviceArea = _asString(
+      readNestedValue(practical, 'serviceArea', () => practical.serviceArea),
+      fallback: city,
+    );
+    final canTravel = _asBool(
+      readNestedValue(practical, 'canTravel', () => practical.canTravel),
+      fallback: true,
+    );
+    final schedule = _asString(
+      readNestedValue(practical, 'schedule', () => practical.schedule),
+      fallback: 'Horaires à convenir',
+    );
     final missionDelay = _asString(
-      _read(() => practical.missionDelay) ??
-          _read(() => o.missionDelay) ??
-          _read(() => o.averageDelay),
+      readNestedValue(practical, 'missionDelay', () => practical.missionDelay) ??
+          readValue('missionDelay', () => o.missionDelay) ??
+          readValue('averageDelay', () => o.averageDelay),
       fallback: 'Délai non précisé',
     );
-    final averageDelay = _asString(_read(() => practical.averageDelay), fallback: '30 min en moyenne');
-    final paymentMethod = _asString(_read(() => practical.paymentMethod), fallback: 'Paiement à convenir');
-    final serviceType = _asString(_read(() => practical.serviceType), fallback: 'Prestation ponctuelle');
+    final averageDelay = _asString(
+      readNestedValue(practical, 'averageDelay', () => practical.averageDelay) ??
+          readValue('averageDelay', () => o.averageDelay),
+      fallback: '30 min en moyenne',
+    );
+    final paymentMethod = _asString(
+      readNestedValue(practical, 'paymentMethod', () => practical.paymentMethod),
+      fallback: 'Paiement à convenir',
+    );
+    final serviceType = _asString(
+      readNestedValue(practical, 'serviceType', () => practical.serviceType),
+      fallback: 'Prestation ponctuelle',
+    );
 
     return _OfferUiData(
       offerId: offerId,
+      isMarketplace: isMarketplace,
       title: title,
       detail: detail,
       city: city,

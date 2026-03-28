@@ -38,6 +38,7 @@ import 'services/google_auth_service.dart';
 import 'services/email_action_service.dart';
 import 'services/inbox_counts.dart';
 import 'services/app_route_parser.dart';
+import 'services/marketplace_publish_service.dart';
 import 'services/notification_service.dart';
 import 'services/offer_indexing.dart';
 import 'utils/crashlytics_context.dart';
@@ -777,6 +778,7 @@ class PrestoApp extends StatelessWidget {
         settings: settings,
         builder: (_) => OfferDeepLinkPage(
           offerId: target.offerId!,
+          preferMarketplace: target.preferMarketplace,
         ),
       );
     }
@@ -1819,6 +1821,7 @@ class _HomePageState extends State<HomePage>
                               _consultSearchQuery = null;
                               _selectedIndex = 1;
                             });
+                            Navigator.of(context).pop();
                           },
                         ),
                       ),
@@ -2125,6 +2128,8 @@ class _HomePageState extends State<HomePage>
                   final title = data['title'] as String? ?? '';
                   final message = data['message'] as String? ?? '';
                   final isRead = data['read'] as bool? ?? false;
+                    final notificationType =
+                      (data['type'] as String? ?? '').trim();
                   final offerId = data['offerId'] as String?;
                   final conversationId = data['conversationId'] as String?;
                   final routeName = (data['routeName'] as String? ?? '').trim();
@@ -2163,16 +2168,36 @@ class _HomePageState extends State<HomePage>
                       if (!context.mounted) return;
                       Navigator.of(context).pop();
 
+                      final normalizedConversationId =
+                          (conversationId ?? '').trim();
+                      final shouldOpenMessages =
+                          normalizedConversationId.isNotEmpty &&
+                              (notificationType == 'new_message' ||
+                                  routeName.isEmpty ||
+                                  routeName.startsWith('/messages/'));
+
+                      if (shouldOpenMessages) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => MessagesPage(
+                              initialConversationId: normalizedConversationId,
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
                       if (routeName.isNotEmpty) {
                         Navigator.of(context).pushNamed(routeName);
                         return;
                       }
 
-                      if (conversationId != null) {
+                      if (normalizedConversationId.isNotEmpty) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => MessagesPage(
-                              initialConversationId: conversationId,
+                              initialConversationId:
+                                  normalizedConversationId,
                             ),
                           ),
                         );
@@ -6090,32 +6115,67 @@ String formatAgeSince(Timestamp? ts) {
 
 class MessagesPage extends StatelessWidget {
   final String? initialConversationId;
+  final String? initialDraftText;
 
   const MessagesPage({
     super.key,
     this.initialConversationId,
+    this.initialDraftText,
   });
 
   @override
   Widget build(BuildContext context) {
     return ConversationsListPage(
       initialConversationId: initialConversationId,
+      initialDraftText: initialDraftText,
     );
   }
 }
 
 class OfferDeepLinkPage extends StatelessWidget {
   final String offerId;
+  final bool preferMarketplace;
 
   const OfferDeepLinkPage({
     super.key,
     required this.offerId,
+    this.preferMarketplace = false,
   });
+
+  Future<Map<String, dynamic>?> _loadOfferPayload() async {
+    final firestore = FirebaseFirestore.instance;
+
+    Future<Map<String, dynamic>?> loadDocument(
+      String collectionName, {
+      required bool isMarketplace,
+    }) async {
+      final snapshot =
+          await firestore.collection(collectionName).doc(offerId).get();
+      final data = snapshot.data();
+      if (data == null) {
+        return null;
+      }
+      return <String, dynamic>{
+        ...data,
+        'id': offerId,
+        'offerId': offerId,
+        'isMarketplace': isMarketplace,
+      };
+    }
+
+    if (preferMarketplace) {
+      return await loadDocument('listings', isMarketplace: true) ??
+          await loadDocument('offers', isMarketplace: false);
+    }
+
+    return await loadDocument('offers', isMarketplace: false) ??
+        await loadDocument('listings', isMarketplace: true);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      future: FirebaseFirestore.instance.collection('offers').doc(offerId).get(),
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: _loadOfferPayload(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -6125,7 +6185,7 @@ class OfferDeepLinkPage extends StatelessWidget {
           );
         }
 
-        final data = snapshot.data?.data();
+        final data = snapshot.data;
         if (data == null) {
           return Scaffold(
             appBar: AppBar(
@@ -6139,11 +6199,15 @@ class OfferDeepLinkPage extends StatelessWidget {
           );
         }
 
+        final isMarketplace = data['isMarketplace'] == true;
         return OfferDetailsPage(
-          offer: _buildOfferDetailsOffer(
-            offerId: offerId,
-            data: data,
-          ),
+          offer: isMarketplace
+              ? data
+              : _buildOfferDetailsOffer(
+                  offerId: offerId,
+                  data: data,
+                ),
+          currentUserId: FirebaseAuth.instance.currentUser?.uid ?? '',
         );
       },
     );
@@ -6165,6 +6229,9 @@ class PublishOfferPage extends StatefulWidget {
 }
 
 class _PublishOfferPageState extends State<PublishOfferPage> {
+  static final MarketplacePublishService _marketplacePublishService =
+      MarketplacePublishService();
+
   // ✅ NOUVEAU: Variables pour le streaming
   final StreamController<String> _transcriptionStream =
       StreamController<String>.broadcast();
@@ -7681,56 +7748,32 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
 
     try {
-      // Récupérer l'utilisateur actuel
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         throw Exception('Utilisateur non connecté');
       }
-
-      // Uploader les photos (optionnel) -> traitement serveur (resize + filigrane UID)
-      await _uploadPhotos(uid: user.uid);
-
-      // Sauvegarder l'offre dans Firestore
-      final city = _locationController.text.trim();
-      final postalCode = _postalCodeController.text.trim();
-      final budgetRaw = _budgetController.text.trim();
-      final normalizedOffer = buildOfferIndexFields(
-        category: _category,
-        city: city,
-        postalCode: postalCode,
-        budget: budgetRaw,
-        isActive: true,
-        status: 'active',
+      final budgetValue = _budgetType == 'À négocier'
+          ? 0.0
+          : (_parseBudget(_budgetController.text) ?? 0.0);
+      final publishResult = await _marketplacePublishService.publish(
+        ownerId: user.uid,
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        category: (_category ?? '').trim(),
+        city: _locationController.text.trim(),
+        postalCode: _postalCodeController.text.trim(),
+        phone: _phoneController.text.trim(),
+        subCategory: _selectedSubCategory,
+        missionDelay: _missionDelay,
+        isUrgent: _isUrgent,
+        price: budgetValue,
+        budgetType: _budgetType,
+        photos: List<XFile>.from(_selectedPhotos),
       );
-
-      final rawDoc = <String, dynamic>{
-        'title': _titleController.text.trim(),
-        'description': _descriptionController.text.trim(),
-        if (_selectedSubCategory != null) 'subCategory': _selectedSubCategory,
-        if (_missionDelay != null) 'missionDelay': _missionDelay,
-        if (_missionDelay != null) 'averageDelay': _missionDelay,
-        'urgent': _isUrgent,
-        if (_phoneController.text.trim().isNotEmpty)
-          'phone': _phoneController.text.trim(),
-        if (budgetRaw.isNotEmpty) 'budget': budgetRaw,
-        'budgetType': _budgetType,
-        if (_uploadedPhotoUrls.isNotEmpty) 'imageUrls': _uploadedPhotoUrls,
-        'userId': user.uid,
-        'ownerId': user.uid,
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-      // Ajouter les champs d'index en ignorant les null
-      normalizedOffer.forEach((k, v) {
-        if (v != null) rawDoc[k] = v;
-      });
-
-      final docRef =
-          await FirebaseFirestore.instance.collection('offers').add(rawDoc);
 
       // ✅ Analytics: publication
       await _logOfferPublished(
-        offerId: docRef.id,
+        offerId: publishResult.listingId,
         title: _titleController.text.trim(),
         category: (_category ?? '').toString().trim(),
         budget: _budgetController.text.trim(),
@@ -7739,7 +7782,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       // Créer des notifications pour les utilisateurs ayant cette catégorie en favori
       await _createNotificationsForFavorites(
-        docRef.id,
+        publishResult.listingId,
         _category ?? '',
         _selectedSubCategory,
         _titleController.text.trim(),
@@ -7747,21 +7790,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
 
       if (!mounted) return;
-
-      final offerId = docRef.id;
-      final title = _titleController.text.trim();
-      final location = _locationController.text.trim();
-      final category = (_category ?? '').toString().trim();
-      final subcategory = _selectedSubCategory;
-      final missionDelay = _missionDelay;
-      final budgetNum = _budgetType == 'À négocier'
-          ? null
-          : _parseBudget(_budgetController.text);
-      final description = _descriptionController.text.trim();
-      final phone = _phoneController.text.trim();
-      final imageUrls = _uploadedPhotoUrls.isEmpty
-          ? null
-          : List<String>.from(_uploadedPhotoUrls);
 
       // ✅ Checkmark bleu au milieu de l'écran.
       showDialog<void>(
@@ -7787,23 +7815,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => OfferDetailsPage(
-            offer: _buildOfferDetailsOffer(
-              offerId: offerId,
-              data: {
-                'title': title,
-                'location': location,
-                'category': category,
-                'subcategory': subcategory,
-                'missionDelay': missionDelay,
-                'averageDelay': missionDelay,
-                'budget': budgetNum,
-                'description': description,
-                'phone': phone,
-                'imageUrls': imageUrls,
-                'userId': user.uid,
-              },
-            ),
+            offer: publishResult.detailData,
             currentUserId: user.uid,
+            onBackToConsult: () {
+              appNavigatorKey.currentState?.pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => const HomePage(initialIndex: 1),
+                ),
+              );
+            },
           ),
         ),
       );

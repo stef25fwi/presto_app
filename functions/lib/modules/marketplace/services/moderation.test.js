@@ -1,0 +1,68 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const strict_1 = __importDefault(require("node:assert/strict"));
+const node_test_1 = __importDefault(require("node:test"));
+const moderation_1 = require("./moderation");
+(0, node_test_1.default)("computeModerationDecision blocks severe high-risk content", () => {
+    const decision = (0, moderation_1.computeModerationDecision)({
+        riskScore: 82,
+        autoFlags: ["adult_content"],
+    });
+    strict_1.default.deepEqual(decision, {
+        moderationDecision: "blocked",
+        moderationReason: "high_risk_content_detected",
+    });
+});
+(0, node_test_1.default)("computeModerationDecision sends duplicates to manual review", () => {
+    const decision = (0, moderation_1.computeModerationDecision)({
+        riskScore: 24,
+        autoFlags: ["duplicate_listing"],
+    });
+    strict_1.default.deepEqual(decision, {
+        moderationDecision: "manual_review",
+        moderationReason: "manual_review_required",
+    });
+});
+(0, node_test_1.default)("finalizeListingPublication keeps approved listings private when auto-approval is disabled", () => {
+    const now = Symbol("serverTimestamp");
+    const publication = (0, moderation_1.finalizeListingPublication)({
+        evaluation: {
+            safeSearchResult: {},
+            autoFlags: [],
+            riskScore: 12,
+            imageScanStatus: "completed",
+            textScanStatus: "completed",
+            moderationDecision: "approved",
+            moderationReason: "approved_automatically",
+        },
+        now,
+        autoApproveEnabled: false,
+    });
+    strict_1.default.equal(publication.status, "pending");
+    strict_1.default.equal(publication.moderationStatus, "pending");
+    strict_1.default.equal(publication.visibility, "private");
+    strict_1.default.equal(publication.publishedAt, null);
+});
+(0, node_test_1.default)("finalizeListingPublication rejects blocked listings", () => {
+    const now = Symbol("serverTimestamp");
+    const publication = (0, moderation_1.finalizeListingPublication)({
+        evaluation: {
+            safeSearchResult: {},
+            autoFlags: ["banned_term"],
+            riskScore: 91,
+            imageScanStatus: "completed",
+            textScanStatus: "completed",
+            moderationDecision: "blocked",
+            moderationReason: "high_risk_content_detected",
+        },
+        now,
+    });
+    strict_1.default.equal(publication.status, "rejected");
+    strict_1.default.equal(publication.moderationStatus, "blocked");
+    strict_1.default.equal(publication.visibility, "hidden");
+    strict_1.default.equal(publication.publishedAt, null);
+});
+//# sourceMappingURL=moderation.test.js.map

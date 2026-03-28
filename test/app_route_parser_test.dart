@@ -26,5 +26,14 @@ void main() {
       expect(target!.routeName, '/messages');
       expect(target.conversationId, 'conv_hash');
     });
+
+    test('parse une annonce marketplace', () {
+      final target = parseAppDeepLink('/listings/listing_123');
+
+      expect(target, isNotNull);
+      expect(target!.routeName, '/listings');
+      expect(target.offerId, 'listing_123');
+      expect(target.preferMarketplace, isTrue);
+    });
   });
 }

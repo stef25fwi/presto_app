@@ -4,7 +4,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteConversationMessage = exports.deleteConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = void 0;
-exports.readConversationMessageCount = readConversationMessageCount;
+exports.resolveOfferLikeData = resolveOfferLikeData;
+exports.mergeConversationParticipants = mergeConversationParticipants;
+exports.computeUnreadCountAfterMessageDeletion = computeUnreadCountAfterMessageDeletion;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../config/env");
@@ -14,9 +16,28 @@ const constants_1 = require("../../shared/constants");
 const counters_1 = require("../notifications/counters");
 const state_1 = require("./state");
 const participants_1 = require("./participants");
+const mirror_1 = require("./mirror");
 const MESSAGE_SEND_WINDOW_MS = 10 * 1000;
 const MESSAGE_SEND_LIMIT = 6;
 const DUPLICATE_MESSAGE_WINDOW_MS = 15 * 1000;
+async function findConversationSnapshotsForParticipant(currentUserId, offerId) {
+    const conversationCollection = firestore_1.db.collection(constants_1.COLLECTIONS.conversations);
+    const offerFieldAliases = offerId ? ["offerId", "offer_id"] : [null];
+    const snapshots = await Promise.all(participants_1.CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES.flatMap((participantField) => offerFieldAliases.map((offerField) => {
+        let query = conversationCollection.where(participantField, "array-contains", currentUserId);
+        if (offerId && offerField) {
+            query = query.where(offerField, "==", offerId);
+        }
+        return query.limit(20).get();
+    })));
+    const deduped = new Map();
+    for (const snapshot of snapshots) {
+        for (const doc of snapshot.docs) {
+            deduped.set(doc.id, doc);
+        }
+    }
+    return [...deduped.values()];
+}
 function requireAuthUid(request) {
     const uid = String(request.auth?.uid || "").trim();
     if (!uid) {
@@ -47,6 +68,29 @@ function readOfferOwnerId(data) {
     }
     return "";
 }
+function resolveOfferLikeData({ offerData, listingData, }) {
+    if (offerData != null) {
+        return { data: offerData, source: "offers" };
+    }
+    if (listingData != null) {
+        return { data: listingData, source: "listings" };
+    }
+    throw new https_1.HttpsError("not-found", "offer not found");
+}
+async function loadOfferLikeSnapshot(offerId) {
+    const [offerSnap, listingSnap] = await Promise.all([
+        firestore_1.db.collection(constants_1.COLLECTIONS.offers).doc(offerId).get(),
+        firestore_1.db.collection(constants_1.COLLECTIONS.listings).doc(offerId).get(),
+    ]);
+    return resolveOfferLikeData({
+        offerData: offerSnap.exists
+            ? (offerSnap.data() ?? {})
+            : null,
+        listingData: listingSnap.exists
+            ? (listingSnap.data() ?? {})
+            : null,
+    });
+}
 function readUserDisplayName(data, ...fallbacks) {
     return normalizeParticipantName(data?.displayName, data?.display_name, data?.name, ...fallbacks);
 }
@@ -57,12 +101,12 @@ function sanitizeMessageText(value) {
         .join("\n")
         .trim();
 }
-function readConversationMessageCount(data) {
-    const rawCount = data.messageCount;
-    if (typeof rawCount === "number" && Number.isFinite(rawCount) && rawCount > 0) {
-        return Math.floor(rawCount);
-    }
-    return String(data.lastMessage || "").trim() !== "" ? 1 : 0;
+function mergeConversationParticipants(existingParticipants, requiredParticipants) {
+    return [...existingParticipants, ...requiredParticipants]
+        .map((value) => String(value || "").trim())
+        .filter(Boolean)
+        .filter((value, index, all) => all.indexOf(value) === index)
+        .sort();
 }
 function toDateOrNull(value) {
     if (value instanceof firebase_admin_1.default.firestore.Timestamp)
@@ -72,6 +116,20 @@ function toDateOrNull(value) {
     if (typeof value === "number" && Number.isFinite(value))
         return new Date(value);
     return null;
+}
+function computeUnreadCountAfterMessageDeletion({ participants, unreadCount, lastReadAt, deletedSenderId, deletedCreatedAt, }) {
+    const result = {};
+    for (const participantId of participants) {
+        const currentUnread = Number(unreadCount[participantId] || 0);
+        if (participantId === deletedSenderId || deletedCreatedAt == null) {
+            result[participantId] = Math.max(0, currentUnread);
+            continue;
+        }
+        const lastReadAtForParticipant = toDateOrNull(lastReadAt[participantId]);
+        const shouldDecrement = !lastReadAtForParticipant || deletedCreatedAt > lastReadAtForParticipant;
+        result[participantId] = Math.max(0, currentUnread - (shouldDecrement ? 1 : 0));
+    }
+    return result;
 }
 async function loadConversationForParticipant(conversationId, currentUserId) {
     const convRef = firestore_1.db.collection(constants_1.COLLECTIONS.conversations).doc(conversationId);
@@ -96,17 +154,13 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
     if (currentUserId == otherUserId) {
         throw new https_1.HttpsError("failed-precondition", "cannot create a conversation with yourself");
     }
-    const offerSnap = await firestore_1.db.collection(constants_1.COLLECTIONS.offers).doc(offerId).get();
-    if (!offerSnap.exists) {
-        throw new https_1.HttpsError("not-found", "offer not found");
-    }
-    const offerData = (offerSnap.data() ?? {});
+    const { data: offerData, source: offerSource } = await loadOfferLikeSnapshot(offerId);
     const offerOwnerId = readOfferOwnerId(offerData);
     if (!offerOwnerId) {
-        throw new https_1.HttpsError("failed-precondition", "offer owner is missing");
+        throw new https_1.HttpsError("failed-precondition", `${offerSource} owner is missing`);
     }
     if (offerOwnerId != otherUserId) {
-        throw new https_1.HttpsError("permission-denied", "conversation target does not match offer owner");
+        throw new https_1.HttpsError("permission-denied", `conversation target does not match ${offerSource} owner`);
     }
     const offerTitle = String(offerData.title || request.data?.offerTitle || "").trim();
     if (!offerTitle) {
@@ -123,43 +177,36 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         [otherUserId]: otherUserName,
     };
     const convCol = firestore_1.db.collection(constants_1.COLLECTIONS.conversations);
-    const [existingCurrent, existingLegacy] = await Promise.all([
-        convCol
-            .where("participants", "array-contains", currentUserId)
-            .where("offerId", "==", offerId)
-            .limit(20)
-            .get(),
-        convCol
-            .where("participant_ids", "array-contains", currentUserId)
-            .where("offerId", "==", offerId)
-            .limit(20)
-            .get(),
-    ]);
-    const existingDocs = new Map();
-    for (const doc of [...existingCurrent.docs, ...existingLegacy.docs]) {
-        existingDocs.set(doc.id, doc);
-    }
-    for (const doc of existingDocs.values()) {
+    const existingDocs = await findConversationSnapshotsForParticipant(currentUserId, offerId);
+    for (const doc of existingDocs) {
         const docData = doc.data();
-        const participants = (0, participants_1.readConversationParticipants)(docData);
-        if (!participants.includes(otherUserId))
+        const conversation = (0, mirror_1.readConversationMirrorData)(docData);
+        if (!conversation.participants.includes(otherUserId))
             continue;
+        const normalizedParticipants = mergeConversationParticipants(conversation.participants, [currentUserId, otherUserId]);
         if ((0, state_1.isConversationBlocked)(docData)) {
             throw new https_1.HttpsError("failed-precondition", "conversation is blocked");
         }
         const archivedBy = {
-            ...(0, state_1.readConversationFlagMap)(docData, "archivedBy"),
+            ...conversation.archivedBy,
             [currentUserId]: false,
         };
-        const blockedBy = (0, state_1.readConversationFlagMap)(docData, "blockedBy");
-        await doc.ref.set({
-            ...(0, participants_1.buildConversationParticipantFields)(participants),
-            participantNames,
+        const blockedBy = conversation.blockedBy;
+        await doc.ref.set((0, mirror_1.buildConversationMirrorFields)({
+            ...conversation,
+            participants: normalizedParticipants,
+            participantNames: {
+                ...conversation.participantNames,
+                ...participantNames,
+            },
             otherUserName,
-            [`archivedBy.${currentUserId}`]: false,
-            status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
+            offerId,
+            offerTitle,
+            archivedBy,
+            blockedBy,
+            status: (0, state_1.computeConversationStatus)(normalizedParticipants, archivedBy, blockedBy),
             updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-        }, { merge: true });
+        }), { merge: true });
         return {
             ok: true,
             conversationId: doc.id,
@@ -173,24 +220,36 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         const snap = await transaction.get(convRef);
         if (snap.exists) {
             const data = (snap.data() ?? {});
-            const existingParticipants = (0, participants_1.readConversationParticipants)(data);
-            const normalizedParticipants = existingParticipants.length > 0
-                ? existingParticipants
-                : participants;
-            transaction.set(convRef, {
-                ...(0, participants_1.buildConversationParticipantFields)(normalizedParticipants),
-                participantNames,
+            const conversation = (0, mirror_1.readConversationMirrorData)(data);
+            const normalizedParticipants = mergeConversationParticipants(conversation.participants, participants);
+            const archivedBy = {
+                ...conversation.archivedBy,
+                [currentUserId]: false,
+            };
+            const blockedBy = conversation.blockedBy;
+            transaction.set(convRef, (0, mirror_1.buildConversationMirrorFields)({
+                ...conversation,
+                participants: normalizedParticipants,
+                participantNames: {
+                    ...conversation.participantNames,
+                    ...participantNames,
+                },
                 otherUserName,
+                offerId,
+                offerTitle,
+                archivedBy,
+                blockedBy,
+                status: (0, state_1.computeConversationStatus)(normalizedParticipants, archivedBy, blockedBy),
                 updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-            }, { merge: true });
+            }), { merge: true });
             return;
         }
-        transaction.set(convRef, {
-            offerId,
-            offerTitle,
-            ...(0, participants_1.buildConversationParticipantFields)(participants),
+        transaction.set(convRef, (0, mirror_1.buildConversationMirrorFields)({
+            participants,
             participantNames,
             otherUserName,
+            offerId,
+            offerTitle,
             status: "open",
             archivedBy: {},
             blockedBy: {},
@@ -199,12 +258,14 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
             updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
             lastMessageAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
             lastMessage: "",
+            lastSenderId: "",
+            lastSenderName: "",
             messageCount: 0,
             unreadCount: {
                 [currentUserId]: 0,
                 [otherUserId]: 0,
             },
-        });
+        }));
     });
     return {
         ok: true,
@@ -259,23 +320,47 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
             throw new https_1.HttpsError("not-found", "conversation not found");
         }
         const data = (convSnap.data() ?? {});
-        const participants = (0, participants_1.readConversationParticipants)(data);
+        const conversation = (0, mirror_1.readConversationMirrorData)(data);
+        const participants = conversation.participants;
         if (!participants.includes(currentUserId)) {
             throw new https_1.HttpsError("permission-denied", "not allowed to access this conversation");
         }
         if ((0, state_1.isConversationBlocked)(data)) {
             throw new https_1.HttpsError("failed-precondition", "conversation is blocked");
         }
-        const isFirstMessage = readConversationMessageCount(data) === 0;
+        const isFirstMessage = (0, mirror_1.readConversationMessageCount)(data) === 0;
         transaction.set(messageRef, {
             text,
+            body: text,
             senderId: currentUserId,
+            sender_id: currentUserId,
             senderName,
+            sender_name: senderName,
             isFirstMessage,
             createdAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            created_at: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
         });
-        const conversationUpdate = {
-            ...(0, participants_1.buildConversationParticipantFields)(participants),
+        const archivedBy = {
+            ...conversation.archivedBy,
+        };
+        const unreadCount = {
+            ...conversation.unreadCount,
+        };
+        for (const participantId of participants) {
+            archivedBy[participantId] = false;
+            unreadCount[participantId] = participantId == currentUserId
+                ? 0
+                : firebase_admin_1.default.firestore.FieldValue.increment(1);
+        }
+        transaction.update(convRef, (0, mirror_1.buildConversationMirrorFields)({
+            ...conversation,
+            participants,
+            participantNames: {
+                ...conversation.participantNames,
+                [currentUserId]: senderName,
+            },
+            archivedBy,
+            unreadCount,
             lastMessage: text,
             lastSenderId: currentUserId,
             lastSenderName: senderName,
@@ -283,15 +368,7 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
             lastMessageAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
             messageCount: firebase_admin_1.default.firestore.FieldValue.increment(1),
-            [`participantNames.${currentUserId}`]: senderName,
-        };
-        for (const participantId of participants) {
-            conversationUpdate[`archivedBy.${participantId}`] = false;
-            conversationUpdate[`unreadCount.${participantId}`] = participantId == currentUserId
-                ? 0
-                : firebase_admin_1.default.firestore.FieldValue.increment(1);
-        }
-        transaction.update(convRef, conversationUpdate);
+        }));
         participantsToRefresh = participants;
     });
     await Promise.all(participantsToRefresh.map((participantId) => (0, counters_1.refreshUnreadMessageCount)(participantId)));
@@ -306,12 +383,20 @@ exports.markConversationRead = (0, https_1.onCall)({ region: env_1.PROJECT_REGIO
     if (!conversationId) {
         throw new https_1.HttpsError("invalid-argument", "conversationId is required");
     }
-    const { convRef } = await loadConversationForParticipant(conversationId, currentUserId);
-    await convRef.update({
-        [`unreadCount.${currentUserId}`]: 0,
-        [`lastReadAt.${currentUserId}`]: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+    const { convRef, data } = await loadConversationForParticipant(conversationId, currentUserId);
+    const conversation = (0, mirror_1.readConversationMirrorData)(data);
+    await convRef.update((0, mirror_1.buildConversationMirrorFields)({
+        ...conversation,
+        unreadCount: {
+            ...conversation.unreadCount,
+            [currentUserId]: 0,
+        },
+        lastReadAt: {
+            ...conversation.lastReadAt,
+            [currentUserId]: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+        },
         updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-    });
+    }));
     await (0, counters_1.refreshUnreadMessageCount)(currentUserId);
     return { ok: true };
 });
@@ -322,16 +407,20 @@ exports.archiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION
         throw new https_1.HttpsError("invalid-argument", "conversationId is required");
     }
     const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+    const conversation = (0, mirror_1.readConversationMirrorData)(data);
     const archivedBy = {
-        ...(0, state_1.readConversationFlagMap)(data, "archivedBy"),
+        ...conversation.archivedBy,
         [currentUserId]: true,
     };
-    const blockedBy = (0, state_1.readConversationFlagMap)(data, "blockedBy");
-    await convRef.update({
-        [`archivedBy.${currentUserId}`]: true,
+    const blockedBy = conversation.blockedBy;
+    await convRef.update((0, mirror_1.buildConversationMirrorFields)({
+        ...conversation,
+        participants,
+        archivedBy,
+        blockedBy,
         status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
         updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-    });
+    }));
     return { ok: true };
 });
 exports.unarchiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
@@ -341,16 +430,20 @@ exports.unarchiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGI
         throw new https_1.HttpsError("invalid-argument", "conversationId is required");
     }
     const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+    const conversation = (0, mirror_1.readConversationMirrorData)(data);
     const archivedBy = {
-        ...(0, state_1.readConversationFlagMap)(data, "archivedBy"),
+        ...conversation.archivedBy,
         [currentUserId]: false,
     };
-    const blockedBy = (0, state_1.readConversationFlagMap)(data, "blockedBy");
-    await convRef.update({
-        [`archivedBy.${currentUserId}`]: false,
+    const blockedBy = conversation.blockedBy;
+    await convRef.update((0, mirror_1.buildConversationMirrorFields)({
+        ...conversation,
+        participants,
+        archivedBy,
+        blockedBy,
         status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
         updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-    });
+    }));
     return { ok: true };
 });
 exports.blockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
@@ -360,16 +453,20 @@ exports.blockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }
         throw new https_1.HttpsError("invalid-argument", "conversationId is required");
     }
     const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
-    const archivedBy = (0, state_1.readConversationFlagMap)(data, "archivedBy");
+    const conversation = (0, mirror_1.readConversationMirrorData)(data);
+    const archivedBy = conversation.archivedBy;
     const blockedBy = {
-        ...(0, state_1.readConversationFlagMap)(data, "blockedBy"),
+        ...conversation.blockedBy,
         [currentUserId]: true,
     };
-    await convRef.update({
-        [`blockedBy.${currentUserId}`]: true,
+    await convRef.update((0, mirror_1.buildConversationMirrorFields)({
+        ...conversation,
+        participants,
+        archivedBy,
+        blockedBy,
         status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
         updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-    });
+    }));
     return { ok: true };
 });
 exports.unblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
@@ -383,15 +480,19 @@ exports.unblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION
         return { ok: true };
     }
     const archivedBy = (0, state_1.readConversationFlagMap)(data, "archivedBy");
+    const conversation = (0, mirror_1.readConversationMirrorData)(data);
     const blockedBy = {
-        ...(0, state_1.readConversationFlagMap)(data, "blockedBy"),
+        ...conversation.blockedBy,
         [currentUserId]: false,
     };
-    await convRef.update({
-        [`blockedBy.${currentUserId}`]: false,
+    await convRef.update((0, mirror_1.buildConversationMirrorFields)({
+        ...conversation,
+        participants,
+        archivedBy,
+        blockedBy,
         status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
         updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
-    });
+    }));
     return { ok: true };
 });
 exports.deleteConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
@@ -445,18 +546,60 @@ exports.deleteConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_
     if (!conversationId || !messageId) {
         throw new https_1.HttpsError("invalid-argument", "conversationId and messageId are required");
     }
-    const { convRef } = await loadConversationForParticipant(conversationId, currentUserId);
+    const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+    const conversation = (0, mirror_1.readConversationMirrorData)(data);
     const messageRef = convRef.collection("messages").doc(messageId);
     const messageSnap = await messageRef.get();
     if (!messageSnap.exists) {
         throw new https_1.HttpsError("not-found", "message not found");
     }
     const messageData = (messageSnap.data() ?? {});
-    const senderId = String(messageData.senderId || "").trim();
+    const senderId = String(messageData.senderId || messageData.sender_id || "").trim();
+    const deletedCreatedAt = toDateOrNull(messageData.createdAt || messageData.created_at);
     if (senderId !== currentUserId) {
         throw new https_1.HttpsError("permission-denied", "you can only delete your own messages");
     }
     await messageRef.delete();
+    const messagesRef = convRef.collection("messages");
+    const [latestMessageSnap, messageCountSnap] = await Promise.all([
+        messagesRef.orderBy("createdAt", "desc").limit(1).get(),
+        messagesRef.count().get(),
+    ]);
+    const latestMessage = latestMessageSnap.docs[0]?.data();
+    const remainingMessageCount = messageCountSnap.data().count;
+    const unreadCount = computeUnreadCountAfterMessageDeletion({
+        participants,
+        unreadCount: conversation.unreadCount,
+        lastReadAt: conversation.lastReadAt,
+        deletedSenderId: senderId,
+        deletedCreatedAt,
+    });
+    const archivedBy = {
+        ...conversation.archivedBy,
+    };
+    for (const participantId of participants) {
+        archivedBy[participantId] = false;
+    }
+    await convRef.set((0, mirror_1.buildConversationMirrorFields)({
+        ...conversation,
+        participants,
+        unreadCount,
+        archivedBy,
+        lastMessage: latestMessage
+            ? sanitizeMessageText(latestMessage.text ?? latestMessage.body)
+            : "",
+        lastSenderId: latestMessage
+            ? String(latestMessage.senderId || latestMessage.sender_id || "").trim()
+            : "",
+        lastSenderName: latestMessage
+            ? normalizeParticipantName(latestMessage.senderName, latestMessage.sender_name)
+            : "",
+        lastMessageAt: latestMessage?.createdAt ?? latestMessage?.created_at,
+        messageCount: remainingMessageCount,
+        status: (0, state_1.computeConversationStatus)(participants, archivedBy, conversation.blockedBy),
+        updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+    }), { merge: true });
+    await Promise.all(participants.map((participantId) => (0, counters_1.refreshUnreadMessageCount)(participantId)));
     return { ok: true };
 });
 //# sourceMappingURL=callables.js.map
