@@ -24,6 +24,8 @@ export {
   unarchiveConversation,
   blockConversation,
   unblockConversation,
+  deleteConversation,
+  deleteConversationMessage,
 } from "./modules/messaging/callables";
 export { registerPushToken, unregisterPushToken } from "./modules/notifications/callables";
 export { onNotificationCreated, onNotificationUpdated } from "./modules/notifications/triggers";

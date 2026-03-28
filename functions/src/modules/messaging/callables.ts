@@ -489,3 +489,88 @@ export const unblockConversation = onCall({ region: PROJECT_REGION }, async (req
 
   return { ok: true };
 });
+
+export const deleteConversation = onCall({ region: PROJECT_REGION }, async (request) => {
+  const currentUserId = requireAuthUid(request);
+  const conversationId = String(request.data?.conversationId || "").trim();
+
+  if (!conversationId) {
+    throw new HttpsError("invalid-argument", "conversationId is required");
+  }
+
+  const { convRef, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+
+  // Delete messages subcollection in batches
+  const messagesRef = convRef.collection("messages");
+  let batch = db.batch();
+  let batchCount = 0;
+  const BATCH_SIZE = 400;
+
+  const messagesSnap = await messagesRef.limit(BATCH_SIZE).get();
+  let remaining = messagesSnap.size;
+
+  for (const doc of messagesSnap.docs) {
+    batch.delete(doc.ref);
+    batchCount++;
+    if (batchCount >= BATCH_SIZE) {
+      await batch.commit();
+      batch = db.batch();
+      batchCount = 0;
+    }
+  }
+
+  if (batchCount > 0) {
+    await batch.commit();
+  }
+
+  // If there could be more messages beyond the first batch, continue
+  if (remaining >= BATCH_SIZE) {
+    let moreSnap = await messagesRef.limit(BATCH_SIZE).get();
+    while (moreSnap.size > 0) {
+      const deleteBatch = db.batch();
+      for (const doc of moreSnap.docs) {
+        deleteBatch.delete(doc.ref);
+      }
+      await deleteBatch.commit();
+      moreSnap = await messagesRef.limit(BATCH_SIZE).get();
+    }
+  }
+
+  // Delete the conversation document itself
+  await convRef.delete();
+
+  // Refresh unread counts for all participants
+  await Promise.all(participants.map((pid) => refreshUnreadMessageCount(pid)));
+
+  return { ok: true };
+});
+
+export const deleteConversationMessage = onCall({ region: PROJECT_REGION }, async (request) => {
+  const currentUserId = requireAuthUid(request);
+  const conversationId = String(request.data?.conversationId || "").trim();
+  const messageId = String(request.data?.messageId || "").trim();
+
+  if (!conversationId || !messageId) {
+    throw new HttpsError("invalid-argument", "conversationId and messageId are required");
+  }
+
+  const { convRef } = await loadConversationForParticipant(conversationId, currentUserId);
+
+  const messageRef = convRef.collection("messages").doc(messageId);
+  const messageSnap = await messageRef.get();
+
+  if (!messageSnap.exists) {
+    throw new HttpsError("not-found", "message not found");
+  }
+
+  const messageData = (messageSnap.data() ?? {}) as Record<string, unknown>;
+  const senderId = String(messageData.senderId || "").trim();
+
+  if (senderId !== currentUserId) {
+    throw new HttpsError("permission-denied", "you can only delete your own messages");
+  }
+
+  await messageRef.delete();
+
+  return { ok: true };
+});
