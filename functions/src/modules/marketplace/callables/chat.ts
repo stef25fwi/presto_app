@@ -29,10 +29,6 @@ function normalizeString(value: unknown): string {
   return String(value ?? "").trim();
 }
 
-function buildThreadId(listingId: string, participants: string[]): string {
-  return `${listingId}__${participants.sort().join("__")}`;
-}
-
 function canonicalConversationId(listingId: string, participants: string[]): string {
   return `offer_${listingId.replaceAll("/", "_")}__${participants
     .map((value) => value.replaceAll("/", "_"))

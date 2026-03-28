@@ -29,9 +29,6 @@ function requireAuthUid(request) {
 function normalizeString(value) {
     return String(value ?? "").trim();
 }
-function buildThreadId(listingId, participants) {
-    return `${listingId}__${participants.sort().join("__")}`;
-}
 function canonicalConversationId(listingId, participants) {
     return `offer_${listingId.replaceAll("/", "_")}__${participants
         .map((value) => value.replaceAll("/", "_"))
