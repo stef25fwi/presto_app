@@ -2488,20 +2488,32 @@ class _HomePageState extends State<HomePage>
 
                 const SizedBox(height: 8),
 
-                _buildSmartSearchBar(),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: _buildSmartSearchBar(),
+                ),
 
                 const SizedBox(height: 14),
 
                 // SLIDER
-                SizedBox(
-                  height: 220,
-                  child: OverflowBox(
-                    alignment: Alignment.center,
-                    minWidth: MediaQuery.of(context).size.width,
-                    maxWidth: MediaQuery.of(context).size.width,
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width,
-                      child: Stack(
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: SizedBox(
+                    height: 220,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(22),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: 14,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: Stack(
                         children: [
                           PageView.builder(
                             controller: _carouselController,
@@ -2557,6 +2569,13 @@ class _HomePageState extends State<HomePage>
                                                 _homeSlideTitleFontSize, // taille bien grosse
                                             fontWeight: FontWeight.w900,
                                             height: 1.25,
+                                            shadows: [
+                                              Shadow(
+                                                color: Color(0x4D000000),
+                                                blurRadius: 6,
+                                                offset: Offset(0, 1.5),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                         SizedBox(height: 12),
@@ -2569,6 +2588,13 @@ class _HomePageState extends State<HomePage>
                                             fontSize: 15,
                                             fontWeight: FontWeight.w500,
                                             height: 1.3,
+                                            shadows: [
+                                              Shadow(
+                                                color: Color(0x40000000),
+                                                blurRadius: 4,
+                                                offset: Offset(0, 1),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ],
@@ -2633,6 +2659,13 @@ class _HomePageState extends State<HomePage>
                                                     _homeSlideTitleFontSize,
                                                 fontWeight: FontWeight.w900,
                                                 height: 1.25,
+                                                shadows: [
+                                                  Shadow(
+                                                    color: Color(0x4D000000),
+                                                    blurRadius: 6,
+                                                    offset: Offset(0, 1.5),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                             const SizedBox(height: 6),
@@ -2644,6 +2677,13 @@ class _HomePageState extends State<HomePage>
                                                 color: Colors.white70,
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w500,
+                                                shadows: [
+                                                  Shadow(
+                                                    color: Color(0x40000000),
+                                                    blurRadius: 4,
+                                                    offset: Offset(0, 1),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ],
@@ -2702,6 +2742,7 @@ class _HomePageState extends State<HomePage>
                     ),
                   ),
                 ),
+              ),
                 const SizedBox(height: 12),
 
                 _buildHomeCategoriesSection(),
