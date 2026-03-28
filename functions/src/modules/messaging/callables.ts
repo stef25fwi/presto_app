@@ -11,6 +11,10 @@ import {
   isConversationFlagEnabledForUser,
   readConversationFlagMap,
 } from "./state";
+import {
+  buildConversationParticipantFields,
+  readConversationParticipants,
+} from "./participants";
 
 const MESSAGE_SEND_WINDOW_MS = 10 * 1000;
 const MESSAGE_SEND_LIMIT = 6;
@@ -99,9 +103,7 @@ async function loadConversationForParticipant(conversationId: string, currentUse
   }
 
   const data = (convSnap.data() ?? {}) as Record<string, unknown>;
-  const participants = Array.isArray(data.participants)
-    ? data.participants.map((value) => String(value || "").trim()).filter(Boolean)
-    : [];
+  const participants = readConversationParticipants(data);
 
   if (!participants.includes(currentUserId)) {
     throw new HttpsError("permission-denied", "not allowed to access this conversation");
@@ -165,19 +167,27 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async 
   };
 
   const convCol = db.collection(COLLECTIONS.conversations);
-  const existing = await convCol
-    .where("participants", "array-contains", currentUserId)
-    .where("offerId", "==", offerId)
-    .limit(20)
-    .get();
+  const [existingCurrent, existingLegacy] = await Promise.all([
+    convCol
+      .where("participants", "array-contains", currentUserId)
+      .where("offerId", "==", offerId)
+      .limit(20)
+      .get(),
+    convCol
+      .where("participant_ids", "array-contains", currentUserId)
+      .where("offerId", "==", offerId)
+      .limit(20)
+      .get(),
+  ]);
 
-  for (const doc of existing.docs) {
+  const existingDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+  for (const doc of [...existingCurrent.docs, ...existingLegacy.docs]) {
+    existingDocs.set(doc.id, doc);
+  }
+
+  for (const doc of existingDocs.values()) {
     const docData = doc.data() as Record<string, unknown>;
-    const participants = Array.isArray(docData.participants)
-      ? docData.participants
-        .map((value: unknown) => String(value || "").trim())
-        .filter(Boolean)
-      : [];
+    const participants = readConversationParticipants(docData);
     if (!participants.includes(otherUserId)) continue;
 
     if (isConversationBlocked(docData)) {
@@ -191,6 +201,7 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async 
     const blockedBy = readConversationFlagMap(docData, "blockedBy");
 
     await doc.ref.set({
+      ...buildConversationParticipantFields(participants),
       participantNames,
       otherUserName,
       [`archivedBy.${currentUserId}`]: false,
@@ -212,7 +223,14 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async 
   await db.runTransaction(async (transaction) => {
     const snap = await transaction.get(convRef);
     if (snap.exists) {
+      const data = (snap.data() ?? {}) as Record<string, unknown>;
+      const existingParticipants = readConversationParticipants(data);
+      const normalizedParticipants = existingParticipants.length > 0
+        ? existingParticipants
+        : participants;
+
       transaction.set(convRef, {
+        ...buildConversationParticipantFields(normalizedParticipants),
         participantNames,
         otherUserName,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -223,7 +241,7 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async 
     transaction.set(convRef, {
       offerId,
       offerTitle,
-      participants,
+      ...buildConversationParticipantFields(participants),
       participantNames,
       otherUserName,
       status: "open",
@@ -318,9 +336,7 @@ export const sendConversationMessage = onCall({ region: PROJECT_REGION }, async 
     }
 
     const data = (convSnap.data() ?? {}) as Record<string, unknown>;
-    const participants = Array.isArray(data.participants)
-      ? data.participants.map((value) => String(value || "").trim()).filter(Boolean)
-      : [];
+    const participants = readConversationParticipants(data);
 
     if (!participants.includes(currentUserId)) {
       throw new HttpsError("permission-denied", "not allowed to access this conversation");
@@ -341,6 +357,7 @@ export const sendConversationMessage = onCall({ region: PROJECT_REGION }, async 
     });
 
     const conversationUpdate: Record<string, unknown> = {
+      ...buildConversationParticipantFields(participants),
       lastMessage: text,
       lastSenderId: currentUserId,
       lastSenderName: senderName,
