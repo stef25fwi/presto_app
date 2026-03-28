@@ -14,13 +14,21 @@ async function setInboxCounts(userId: string, unreadMessages: number, unreadNoti
 }
 
 export async function refreshUnreadMessageCount(userId: string): Promise<void> {
-  const conversationsSnap = await db
-    .collection(COLLECTIONS.conversations)
-    .where("participants", "array-contains", userId)
-    .get();
+  const [currentSnap, legacySnap] = await Promise.all([
+    db.collection(COLLECTIONS.conversations)
+      .where("participants", "array-contains", userId)
+      .get(),
+    db.collection(COLLECTIONS.conversations)
+      .where("participant_ids", "array-contains", userId)
+      .get(),
+  ]);
 
+  const seen = new Set<string>();
   let unreadMessages = 0;
-  for (const doc of conversationsSnap.docs) {
+
+  for (const doc of [...currentSnap.docs, ...legacySnap.docs]) {
+    if (seen.has(doc.id)) continue;
+    seen.add(doc.id);
     const unreadMap = (doc.data().unreadCount || {}) as Record<string, unknown>;
     unreadMessages += Number(unreadMap[userId] || 0);
   }

@@ -19,12 +19,20 @@ async function setInboxCounts(userId, unreadMessages, unreadNotifications) {
     }, { merge: true });
 }
 async function refreshUnreadMessageCount(userId) {
-    const conversationsSnap = await firestore_1.db
-        .collection(constants_1.COLLECTIONS.conversations)
-        .where("participants", "array-contains", userId)
-        .get();
+    const [currentSnap, legacySnap] = await Promise.all([
+        firestore_1.db.collection(constants_1.COLLECTIONS.conversations)
+            .where("participants", "array-contains", userId)
+            .get(),
+        firestore_1.db.collection(constants_1.COLLECTIONS.conversations)
+            .where("participant_ids", "array-contains", userId)
+            .get(),
+    ]);
+    const seen = new Set();
     let unreadMessages = 0;
-    for (const doc of conversationsSnap.docs) {
+    for (const doc of [...currentSnap.docs, ...legacySnap.docs]) {
+        if (seen.has(doc.id))
+            continue;
+        seen.add(doc.id);
         const unreadMap = (doc.data().unreadCount || {});
         unreadMessages += Number(unreadMap[userId] || 0);
     }

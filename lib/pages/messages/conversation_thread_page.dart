@@ -483,6 +483,33 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation debloquee.');
           return;
+        case _ConversationThreadAction.delete:
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Supprimer la conversation'),
+              content: const Text(
+                'Cette action est irreversible. Tous les messages seront supprimes.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Annuler'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  child: const Text('Supprimer'),
+                ),
+              ],
+            ),
+          );
+          if (confirmed != true || !mounted) return;
+          await ConversationService.deleteConversation(conversationId: widget.conversationId);
+          if (!mounted) return;
+          showSuccessSnackBar(context, 'Conversation supprimee.');
+          Navigator.of(context).pop();
+          return;
       }
     } catch (error) {
       if (!mounted) return;
@@ -562,6 +589,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                     ? _ConversationThreadAction.unblock
                     : _ConversationThreadAction.block,
                 child: Text(_isBlockedForCurrentUser ? 'Debloquer' : 'Bloquer'),
+              ),
+              const PopupMenuItem<_ConversationThreadAction>(
+                value: _ConversationThreadAction.delete,
+                child: Text(
+                  'Supprimer',
+                  style: TextStyle(color: Colors.red),
+                ),
               ),
             ],
           ),
@@ -686,8 +720,55 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                 !_isSameCalendarDay(sentAt, olderMessageDate));
                         final isMine = senderId == widget.currentUserId;
                         final readReceipt = isMine ? _readReceiptLabel(sentAt) : null;
+                        final messageDocId = docs[index].id;
 
-                        final messageBubble = Align(
+                        final messageBubble = GestureDetector(
+                          onLongPress: isMine
+                              ? () async {
+                                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text('Supprimer ce message'),
+                                      content: const Text(
+                                        'Ce message sera definitivement supprime.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.of(ctx).pop(false),
+                                          child: const Text('Annuler'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.of(ctx).pop(true),
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: Colors.red,
+                                          ),
+                                          child: const Text('Supprimer'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed != true || !mounted) return;
+                                  try {
+                                    await ConversationService.deleteMessage(
+                                      conversationId: widget.conversationId,
+                                      messageId: messageDocId,
+                                    );
+                                    if (!mounted) return;
+                                    scaffoldMessenger.showSnackBar(
+                                      const SnackBar(content: Text('Message supprime.')),
+                                    );
+                                  } catch (error) {
+                                    if (!mounted) return;
+                                    scaffoldMessenger.showSnackBar(
+                                      SnackBar(
+                                        content: Text('Impossible de supprimer ce message : $error'),
+                                      ),
+                                    );
+                                  }
+                                }
+                              : null,
+                          child: Align(
                           alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 320),
@@ -747,6 +828,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                 ],
                               ),
                             ),
+                          ),
                           ),
                         );
 
@@ -845,6 +927,7 @@ enum _ConversationThreadAction {
   unarchive,
   block,
   unblock,
+  delete,
 }
 
 class _ConversationBanner extends StatelessWidget {

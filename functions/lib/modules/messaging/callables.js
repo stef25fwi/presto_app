@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = void 0;
+exports.deleteConversationMessage = exports.deleteConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = void 0;
 exports.readConversationMessageCount = readConversationMessageCount;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
@@ -380,6 +380,71 @@ exports.unblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION
         status: (0, state_1.computeConversationStatus)(participants, archivedBy, blockedBy),
         updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
     });
+    return { ok: true };
+});
+exports.deleteConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+    const currentUserId = requireAuthUid(request);
+    const conversationId = String(request.data?.conversationId || "").trim();
+    if (!conversationId) {
+        throw new https_1.HttpsError("invalid-argument", "conversationId is required");
+    }
+    const { convRef, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+    // Delete messages subcollection in batches
+    const messagesRef = convRef.collection("messages");
+    let batch = firestore_1.db.batch();
+    let batchCount = 0;
+    const BATCH_SIZE = 400;
+    const messagesSnap = await messagesRef.limit(BATCH_SIZE).get();
+    let remaining = messagesSnap.size;
+    for (const doc of messagesSnap.docs) {
+        batch.delete(doc.ref);
+        batchCount++;
+        if (batchCount >= BATCH_SIZE) {
+            await batch.commit();
+            batch = firestore_1.db.batch();
+            batchCount = 0;
+        }
+    }
+    if (batchCount > 0) {
+        await batch.commit();
+    }
+    // If there could be more messages beyond the first batch, continue
+    if (remaining >= BATCH_SIZE) {
+        let moreSnap = await messagesRef.limit(BATCH_SIZE).get();
+        while (moreSnap.size > 0) {
+            const deleteBatch = firestore_1.db.batch();
+            for (const doc of moreSnap.docs) {
+                deleteBatch.delete(doc.ref);
+            }
+            await deleteBatch.commit();
+            moreSnap = await messagesRef.limit(BATCH_SIZE).get();
+        }
+    }
+    // Delete the conversation document itself
+    await convRef.delete();
+    // Refresh unread counts for all participants
+    await Promise.all(participants.map((pid) => (0, counters_1.refreshUnreadMessageCount)(pid)));
+    return { ok: true };
+});
+exports.deleteConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+    const currentUserId = requireAuthUid(request);
+    const conversationId = String(request.data?.conversationId || "").trim();
+    const messageId = String(request.data?.messageId || "").trim();
+    if (!conversationId || !messageId) {
+        throw new https_1.HttpsError("invalid-argument", "conversationId and messageId are required");
+    }
+    const { convRef } = await loadConversationForParticipant(conversationId, currentUserId);
+    const messageRef = convRef.collection("messages").doc(messageId);
+    const messageSnap = await messageRef.get();
+    if (!messageSnap.exists) {
+        throw new https_1.HttpsError("not-found", "message not found");
+    }
+    const messageData = (messageSnap.data() ?? {});
+    const senderId = String(messageData.senderId || "").trim();
+    if (senderId !== currentUserId) {
+        throw new https_1.HttpsError("permission-denied", "you can only delete your own messages");
+    }
+    await messageRef.delete();
     return { ok: true };
 });
 //# sourceMappingURL=callables.js.map
