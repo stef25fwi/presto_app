@@ -58,6 +58,8 @@ export function buildConversationParticipantFields(participants: string[]): {
   participants: string[];
   participant_ids: string[];
   participantIds: string[];
+  userIds: string[];
+  memberIds: string[];
 } {
   const normalized = participants
     .map((value) => String(value || "").trim())
@@ -68,5 +70,7 @@ export function buildConversationParticipantFields(participants: string[]): {
     participants: normalized,
     participantIds: normalized,
     participant_ids: normalized,
+    userIds: normalized,
+    memberIds: normalized,
   };
 }
