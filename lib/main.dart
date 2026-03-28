@@ -3104,6 +3104,35 @@ class _UnreadInboxBell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (countType == InboxCountType.unreadMessages) {
+      return StreamBuilder<int>(
+        stream: streamVisibleUnreadMessageCount(userId: userId),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            final error = snapshot.error;
+            if (error != null) {
+              PrestoMonitoring.I.trackError(
+                '${monitoringKeyPrefix ?? 'messages'}.badge',
+                error,
+              );
+            }
+            return builder(context, 0);
+          }
+
+          final badgeCount = snapshot.data ?? 0;
+
+          if (monitoringKeyPrefix != null) {
+            PrestoMonitoring.I.trackOtherStream(
+              key: '${monitoringKeyPrefix!}.badge',
+              docsCount: badgeCount,
+            );
+          }
+
+          return builder(context, badgeCount);
+        },
+      );
+    }
+
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('users')
