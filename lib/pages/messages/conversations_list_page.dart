@@ -37,6 +37,15 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   bool _didHandleInitialConversation = false;
   bool _showArchivedOnly = false;
 
+  Object? _conversationValue(Map<String, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      if (!data.containsKey(key)) continue;
+      final value = data[key];
+      if (value != null) return value;
+    }
+    return null;
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -49,7 +58,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   String _conversationTitle(Map<String, dynamic> data, String userId) {
-    final participantNames = data['participantNames'];
+    final participantNames = _conversationValue(
+      data,
+      const ['participantNames', 'participant_names'],
+    );
     if (participantNames is Map) {
       for (final entry in participantNames.entries) {
         if (entry.key.toString() == userId) continue;
@@ -59,10 +71,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
 
     final candidates = [
-      data['otherUserName'],
-      data['participantName'],
-      data['participantDisplayName'],
-      data['offerTitle'],
+      _conversationValue(data, const ['otherUserName', 'other_user_name']),
+      _conversationValue(data, const ['participantName', 'participant_name']),
+      _conversationValue(
+        data,
+        const ['participantDisplayName', 'participant_display_name'],
+      ),
+      _conversationValue(data, const ['offerTitle', 'offer_title']),
     ];
     for (final candidate in candidates) {
       final value = (candidate ?? '').toString().trim();
@@ -72,9 +87,24 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   String _conversationPreview(Map<String, dynamic> data, String userId) {
-    final lastMessage = (data['lastMessage'] ?? '').toString().trim();
-    final lastSenderId = (data['lastSenderId'] ?? '').toString().trim();
-    final offerTitle = (data['offerTitle'] ?? '').toString().trim();
+    final lastMessage = _conversationValue(
+          data,
+          const ['lastMessage', 'last_message'],
+        )
+            .toString()
+            .trim();
+    final lastSenderId = _conversationValue(
+          data,
+          const ['lastSenderId', 'last_sender_id'],
+        )
+            .toString()
+            .trim();
+    final offerTitle = _conversationValue(
+          data,
+          const ['offerTitle', 'offer_title'],
+        )
+            .toString()
+            .trim();
 
     if (lastMessage.isNotEmpty) {
       if (lastSenderId == userId) {
@@ -94,16 +124,23 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     return [
       _conversationTitle(data, userId),
       _conversationPreview(data, userId),
-      (data['offerTitle'] ?? '').toString(),
-      (data['lastMessage'] ?? '').toString(),
-      (data['lastSenderName'] ?? '').toString(),
+      _conversationValue(data, const ['offerTitle', 'offer_title']).toString(),
+      _conversationValue(data, const ['lastMessage', 'last_message']).toString(),
+      _conversationValue(data, const ['lastSenderName', 'last_sender_name'])
+          .toString(),
     ].join(' ').toLowerCase();
   }
 
   DateTime? _conversationSortDate(Map<String, dynamic> data) {
-    return parseFirestoreDateTime(data['lastMessageAt']) ??
-        parseFirestoreDateTime(data['updatedAt']) ??
-        parseFirestoreDateTime(data['createdAt']);
+    return parseFirestoreDateTime(
+          _conversationValue(data, const ['lastMessageAt', 'last_message_at']),
+        ) ??
+        parseFirestoreDateTime(
+          _conversationValue(data, const ['updatedAt', 'updated_at']),
+        ) ??
+        parseFirestoreDateTime(
+          _conversationValue(data, const ['createdAt', 'created_at']),
+        );
   }
 
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _mergeConversationDocs(
@@ -463,23 +500,29 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                               itemBuilder: (context, index) {
                                 final doc = filteredDocs[index];
                                 final data = doc.data();
-                                final offerTitle =
-                                    (data['offerTitle'] ?? '').toString().trim();
+                                final offerTitle = _conversationValue(
+                                    data,
+                                    const ['offerTitle', 'offer_title'],
+                                  )
+                                    .toString()
+                                    .trim();
                                 final title = _conversationTitle(data, userId);
                                 final preview = _conversationPreview(data, userId);
-                                final unreadMap = data['unreadCount'];
+                                final unreadMap = _conversationValue(
+                                  data,
+                                  const ['unreadCount', 'unread_count'],
+                                );
                                 final unreadCount = unreadMap is Map<String, dynamic>
                                     ? ((unreadMap[userId] as int?) ?? 0)
+                                  : unreadMap is Map
+                                    ? ((unreadMap[userId] as num?)?.toInt() ?? 0)
                                     : 0;
                                 final archived =
                                     isConversationArchivedForUser(data, userId);
                                 final blocked = isConversationBlocked(data);
                                 final blockedForUser =
                                     isConversationBlockedForUser(data, userId);
-                                final lastDate =
-                                    parseFirestoreDateTime(data['lastMessageAt']) ??
-                                    parseFirestoreDateTime(data['updatedAt']) ??
-                                    parseFirestoreDateTime(data['createdAt']);
+                                final lastDate = _conversationSortDate(data);
 
                                 Future<void> openConversation() {
                                   return _openConversation(
