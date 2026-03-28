@@ -1614,12 +1614,45 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _loadLatestOffers() async {
-    final snapshot = await _recentOffersQuery().get();
+    // Query primaire : offres avec status='published', triées par date.
+    // Fonctionne pour les utilisateurs connectés ET non connectés grâce aux
+    // Firestore rules qui autorisent la lecture de toute offre publique.
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('offers')
+          .where('status', isEqualTo: 'published')
+          .orderBy('createdAt', descending: true)
+          .limit(12)
+          .get();
 
-    return snapshot.docs
-        .where((doc) => _isPublishedOfferData(doc.data()))
-        .take(12)
-        .toList(growable: false);
+      if (snapshot.docs.length >= 12) return snapshot.docs;
+
+      // Compléter avec les offres isPublished=true (ancien format)
+      final fallback = await FirebaseFirestore.instance
+          .collection('offers')
+          .where('isPublished', isEqualTo: true)
+          .orderBy('createdAt', descending: true)
+          .limit(24)
+          .get();
+
+      final seen = snapshot.docs.map((d) => d.id).toSet();
+      final merged = [...snapshot.docs];
+      for (final doc in fallback.docs) {
+        if (seen.contains(doc.id)) continue;
+        merged.add(doc);
+        if (merged.length >= 12) break;
+      }
+      return merged;
+    } catch (error) {
+      // Si l'index n'est pas encore prêt, fallback sur la query générique
+      // avec filtre côté client.
+      debugPrint('[LatestOffers] Primary query failed, falling back: $error');
+      final fallback = await _recentOffersQuery().get();
+      return fallback.docs
+          .where((doc) => _isPublishedOfferData(doc.data()))
+          .take(12)
+          .toList(growable: false);
+    }
   }
 
   Widget _buildHomeCategoriesSection() {
