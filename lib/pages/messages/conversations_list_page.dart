@@ -42,6 +42,9 @@ class ConversationsListPage extends StatefulWidget {
 class _ConversationsListPageState extends State<ConversationsListPage> {
   final TextEditingController _searchController = TextEditingController();
   bool _didHandleInitialConversation = false;
+  bool _isResolvingInitialConversation = false;
+  int _initialConversationResolveAttempts = 0;
+  Timer? _initialConversationRetryTimer;
   _ConversationListFilter _activeFilter = _ConversationListFilter.all;
   Stream<_ConversationQueryState>? _conversationStateStream;
   String? _conversationStateUserId;
@@ -57,6 +60,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
   @override
   void dispose() {
+    _initialConversationRetryTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -353,30 +357,97 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     String userId,
   ) {
     final initialConversationId = widget.initialConversationId?.trim() ?? '';
-    if (_didHandleInitialConversation || initialConversationId.isEmpty) return;
+    if (_didHandleInitialConversation ||
+        _isResolvingInitialConversation ||
+        initialConversationId.isEmpty) {
+      return;
+    }
 
     final match = docs.where((doc) => doc.id == initialConversationId).toList();
 
-    if (match.isEmpty) {
+    if (match.isNotEmpty) {
       _didHandleInitialConversation = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
-        showErrorSnackBar(context, 'Conversation introuvable ou inaccessible.');
+        await _openConversation(
+          context,
+          ConversationSummary.fromFirestore(match.first),
+          userId,
+          widget.initialDraftText,
+        );
       });
       return;
     }
 
-    _didHandleInitialConversation = true;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      await _openConversation(
+    unawaited(
+      _resolveInitialConversationById(
         context,
-        ConversationSummary.fromFirestore(match.first),
-        userId,
-        widget.initialDraftText,
-      );
-    });
+        userId: userId,
+        conversationId: initialConversationId,
+      ),
+    );
+  }
+
+  Future<void> _resolveInitialConversationById(
+    BuildContext context, {
+    required String userId,
+    required String conversationId,
+  }) async {
+    _isResolvingInitialConversation = true;
+    _initialConversationResolveAttempts += 1;
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('conversations')
+          .doc(conversationId)
+          .get();
+
+      final data = snapshot.data();
+      if (data != null) {
+        final normalizedData = Map<String, dynamic>.from(data);
+        final conversation = ConversationSummary.fromMap(
+          snapshot.id,
+          normalizedData,
+        );
+
+        if (conversation.includesUser(userId)) {
+          _didHandleInitialConversation = true;
+          if (!context.mounted) return;
+          await _openConversation(
+            context,
+            conversation,
+            userId,
+            widget.initialDraftText,
+          );
+          return;
+        }
+      }
+
+      if (_initialConversationResolveAttempts < 8 && mounted) {
+        _initialConversationRetryTimer?.cancel();
+        _initialConversationRetryTimer = Timer(
+          const Duration(milliseconds: 350),
+          () {
+            if (!mounted) return;
+            unawaited(
+              _resolveInitialConversationById(
+                context,
+                userId: userId,
+                conversationId: conversationId,
+              ),
+            );
+          },
+        );
+        return;
+      }
+
+      _didHandleInitialConversation = true;
+      if (!context.mounted) return;
+      showErrorSnackBar(context, 'Conversation introuvable ou inaccessible.');
+    } finally {
+      _isResolvingInitialConversation = false;
+    }
   }
 
   Widget _buildFilterTabs() {
