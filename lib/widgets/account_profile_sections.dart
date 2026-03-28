@@ -9,20 +9,24 @@ class AccountProfileFormSection extends StatefulWidget {
   final TextEditingController pseudoController;
   final TextEditingController cityController;
   final TextEditingController phoneController;
+  final String phoneCountryCode;
   final bool isEditing;
   final bool isSaving;
   final VoidCallback onStartEditing;
   final VoidCallback onSave;
+  final ValueChanged<String> onPhoneCountryCodeChanged;
 
   const AccountProfileFormSection({
     super.key,
     required this.pseudoController,
     required this.cityController,
     required this.phoneController,
+    required this.phoneCountryCode,
     required this.isEditing,
     required this.isSaving,
     required this.onStartEditing,
     required this.onSave,
+    required this.onPhoneCountryCodeChanged,
   });
 
   @override
@@ -161,6 +165,8 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                     controller: widget.phoneController,
                     labelText: 'Téléphone',
                     hintText: '690123456',
+                    initialCountryCode: widget.phoneCountryCode,
+                    onCountryCodeChanged: widget.onPhoneCountryCodeChanged,
                   ),
                 ),
               ),
