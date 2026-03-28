@@ -8510,6 +8510,7 @@ class _AccountPageState extends State<AccountPage> {
       TextEditingController();
   final TextEditingController _profileCityController = TextEditingController();
   final TextEditingController _profilePhoneController = TextEditingController();
+  String _profilePhoneCountryCode = '+33';
 
   Set<String> _favoriteCategories = <String>{};
   Set<String> _selectedFavoriteCategories = <String>{};
@@ -8849,6 +8850,56 @@ class _AccountPageState extends State<AccountPage> {
     setState(() {});
   }
 
+  String _normalizeProfilePhoneForSave(String countryCode, String rawPhone) {
+    final codeDigits = countryCode.replaceAll(RegExp(r'\D'), '');
+    var phoneDigits = rawPhone.replaceAll(RegExp(r'\D'), '');
+
+    if (codeDigits.isEmpty || phoneDigits.isEmpty) {
+      return '';
+    }
+
+    if (phoneDigits.startsWith('00')) {
+      phoneDigits = phoneDigits.substring(2);
+    }
+
+    if (phoneDigits.startsWith(codeDigits)) {
+      return '+$phoneDigits';
+    }
+
+    if (phoneDigits.startsWith('0')) {
+      phoneDigits = phoneDigits.substring(1);
+    }
+
+    return '+$codeDigits$phoneDigits';
+  }
+
+  void _applyLoadedProfilePhone(String rawPhone) {
+    final trimmed = rawPhone.trim();
+    if (trimmed.isEmpty) {
+      _profilePhoneCountryCode = '+33';
+      _profilePhoneController.text = '';
+      return;
+    }
+
+    final compact = trimmed.replaceAll(RegExp(r'\s+'), '');
+    const knownCodes = <String>['+590', '+596', '+594', '+689', '+262', '+33'];
+
+    for (final code in knownCodes) {
+      if (!compact.startsWith(code)) continue;
+
+      final codeDigits = code.replaceAll(RegExp(r'\D'), '');
+      final allDigits = compact.replaceAll(RegExp(r'\D'), '');
+      final localDigits = allDigits.substring(codeDigits.length);
+
+      _profilePhoneCountryCode = code;
+      _profilePhoneController.text = localDigits;
+      return;
+    }
+
+    _profilePhoneCountryCode = '+33';
+    _profilePhoneController.text = trimmed;
+  }
+
   Future<void> _checkGoogleRedirectResult() async {
     try {
       final result = await _auth.getRedirectResult();
@@ -8904,9 +8955,15 @@ class _AccountPageState extends State<AccountPage> {
 
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
-        _profilePseudoController.text = (data['pseudo'] ?? '').toString();
-        _profileCityController.text = (data['city'] ?? '').toString();
-        _profilePhoneController.text = (data['phone'] ?? '').toString();
+        _profilePseudoController.text = ((data['pseudo'] ?? data['displayName']) ??
+                user.displayName ??
+                '')
+            .toString();
+        _profileCityController.text =
+            ((data['city'] ?? data['location']) ?? '').toString();
+        _applyLoadedProfilePhone(
+          ((data['phone'] ?? data['phoneNumber']) ?? '').toString(),
+        );
         final favs = (data['favoriteCategories'] as List<dynamic>? ?? [])
             .map((e) => e.toString())
             .toList();
@@ -8972,6 +9029,8 @@ class _AccountPageState extends State<AccountPage> {
     final pseudo = _profilePseudoController.text.trim();
     final city = _profileCityController.text.trim();
     final phone = _profilePhoneController.text.trim();
+    final normalizedPhone =
+        _normalizeProfilePhoneForSave(_profilePhoneCountryCode, phone);
 
     // Validation pseudo
     if (pseudo.isEmpty) {
@@ -9005,7 +9064,7 @@ class _AccountPageState extends State<AccountPage> {
       return false;
     }
 
-    if (!RegExp(r'^[+]?[0-9]{10,15}$').hasMatch(phone.replaceAll(' ', ''))) {
+    if (!RegExp(r'^\+[0-9]{10,15}$').hasMatch(normalizedPhone)) {
       showErrorSnackBar(
           context, "Le numéro de téléphone doit contenir 10-15 chiffres");
       return false;
@@ -9052,11 +9111,15 @@ class _AccountPageState extends State<AccountPage> {
       final pseudo = _profilePseudoController.text.trim();
       final city = _profileCityController.text.trim();
       final phone = _profilePhoneController.text.trim();
+      final normalizedPhone =
+          _normalizeProfilePhoneForSave(_profilePhoneCountryCode, phone);
 
       final profileData = {
         'pseudo': pseudo,
+        'displayName': pseudo,
         'city': city,
-        'phone': phone,
+        'location': city,
+        'phone': normalizedPhone,
         'favoriteCategories': _favoriteCategories.toList(),
         'selectedFavoriteCategories': _selectedFavoriteCategories.toList(),
         'selectedFavoriteSubcategories':
@@ -9680,10 +9743,15 @@ class _AccountPageState extends State<AccountPage> {
                         pseudoController: _profilePseudoController,
                         cityController: _profileCityController,
                         phoneController: _profilePhoneController,
+                        phoneCountryCode: _profilePhoneCountryCode,
                         isEditing: _isEditingProfile,
                         isSaving: _isSavingProfile,
                         onStartEditing: () {
                           setState(() => _isEditingProfile = true);
+                        },
+                        onPhoneCountryCodeChanged: (code) {
+                          if (!mounted || _profilePhoneCountryCode == code) return;
+                          setState(() => _profilePhoneCountryCode = code);
                         },
                         onSave: () {
                           _saveProfile(user);
