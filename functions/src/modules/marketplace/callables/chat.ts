@@ -5,7 +5,13 @@ import { db } from "../../../core/firestore";
 import { canProceedRateLimited } from "../../../core/rate_limit";
 import { logger } from "../../../core/logger";
 import { COLLECTIONS } from "../../../shared/constants";
-import { createInAppNotification } from "../../notifications/push";
+import { refreshUnreadMessageCount } from "../../notifications/counters";
+import {
+  CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES,
+  readConversationParticipants,
+} from "../../messaging/participants";
+import { buildConversationMirrorFields, readConversationMirrorData } from "../../messaging/mirror";
+import { isConversationBlocked } from "../../messaging/state";
 import { trackProductEventBackend } from "../services/analytics";
 import { toHttpsError } from "../services/errors";
 import { verifyRecaptchaAssessment } from "../services/recaptcha";
@@ -25,6 +31,158 @@ function normalizeString(value: unknown): string {
 
 function buildThreadId(listingId: string, participants: string[]): string {
   return `${listingId}__${participants.sort().join("__")}`;
+}
+
+function canonicalConversationId(listingId: string, participants: string[]): string {
+  return `offer_${listingId.replaceAll("/", "_")}__${participants
+    .map((value) => value.replaceAll("/", "_"))
+    .sort()
+    .join("__")}`;
+}
+
+function readListingOwnerId(listingData: Record<string, unknown>): string {
+  return normalizeString(listingData.ownerId) ||
+    normalizeString(listingData.userId) ||
+    normalizeString(listingData.uid);
+}
+
+function normalizeDisplayName(...values: unknown[]): string {
+  for (const value of values) {
+    const normalized = normalizeString(value);
+    if (normalized) return normalized;
+  }
+  return "Utilisateur";
+}
+
+async function findExistingConversationIdForListing(
+  listingId: string,
+  participantA: string,
+  participantB: string,
+): Promise<string | null> {
+  const snapshots = await Promise.all(
+    CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES.flatMap((field) => [
+      db.collection(COLLECTIONS.conversations)
+        .where(field, "array-contains", participantA)
+        .where("offerId", "==", listingId)
+        .limit(20)
+        .get(),
+      db.collection(COLLECTIONS.conversations)
+        .where(field, "array-contains", participantA)
+        .where("offer_id", "==", listingId)
+        .limit(20)
+        .get(),
+    ]),
+  );
+
+  const deduped = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+  for (const snapshot of snapshots) {
+    for (const doc of snapshot.docs) {
+      deduped.set(doc.id, doc);
+    }
+  }
+
+  for (const doc of deduped.values()) {
+    const participants = readConversationParticipants((doc.data() ?? {}) as Record<string, unknown>);
+    if (participants.includes(participantA) && participants.includes(participantB)) {
+      return doc.id;
+    }
+  }
+
+  return null;
+}
+
+async function appendConversationMessage({
+  conversationId,
+  senderId,
+  senderName,
+  body,
+}: {
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  body: string;
+}): Promise<{ messageId: string; listingId: string; participants: string[] }> {
+  const convRef = db.collection(COLLECTIONS.conversations).doc(conversationId);
+  const messageRef = convRef.collection("messages").doc();
+  let participantsToRefresh: string[] = [];
+  let listingId = "";
+
+  await db.runTransaction(async (transaction) => {
+    const convSnap = await transaction.get(convRef);
+    if (!convSnap.exists) {
+      throw new HttpsError("not-found", "Conversation not found");
+    }
+
+    const data = (convSnap.data() ?? {}) as Record<string, unknown>;
+    const participants = readConversationParticipants(data);
+    if (!participants.includes(senderId)) {
+      throw new HttpsError("permission-denied", "You are not a participant of this conversation");
+    }
+    if (isConversationBlocked(data)) {
+      throw new HttpsError("failed-precondition", "Conversation is blocked");
+    }
+
+    const conversation = readConversationMirrorData(data);
+    const isFirstMessage = Number(conversation.messageCount || 0) <= 0;
+    listingId = normalizeString(conversation.offerId);
+
+    transaction.set(messageRef, {
+      text: body,
+      body,
+      senderId,
+      sender_id: senderId,
+      senderName,
+      sender_name: senderName,
+      isFirstMessage,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      created_at: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    const archivedBy = {
+      ...conversation.archivedBy,
+    };
+    const unreadCount = {
+      ...conversation.unreadCount,
+    };
+
+    for (const participantId of participants) {
+      archivedBy[participantId] = false;
+      unreadCount[participantId] = participantId === senderId
+        ? 0
+        : admin.firestore.FieldValue.increment(1);
+    }
+
+    transaction.set(
+      convRef,
+      buildConversationMirrorFields({
+        ...conversation,
+        participants,
+        participantNames: {
+          ...conversation.participantNames,
+          [senderId]: senderName,
+        },
+        archivedBy,
+        unreadCount,
+        lastMessage: body,
+        lastSenderId: senderId,
+        lastSenderName: senderName,
+        status: "open",
+        lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        messageCount: admin.firestore.FieldValue.increment(1),
+      }),
+      { merge: true },
+    );
+
+    participantsToRefresh = participants;
+  });
+
+  await Promise.all(participantsToRefresh.map((participantId) => refreshUnreadMessageCount(participantId)));
+  return {
+    messageId: messageRef.id,
+    listingId,
+    participants: participantsToRefresh,
+  };
 }
 
 export const createChatThreadFromListing = onCall({ region: PROJECT_REGION }, async (request) => {
@@ -63,80 +221,80 @@ export const createChatThreadFromListing = onCall({ region: PROJECT_REGION }, as
     }
 
     const listingData = (listingSnap.data() ?? {}) as Record<string, unknown>;
-    const ownerId = normalizeString(listingData.ownerId);
+    const ownerId = readListingOwnerId(listingData);
     if (!ownerId || ownerId === senderId) {
       throw new HttpsError("failed-precondition", "Cannot open a thread on your own listing");
     }
 
-    const threadId = buildThreadId(listingId, [senderId, ownerId]);
-    const threadRef = db.collection(COLLECTIONS.chatThreads).doc(threadId);
-    const messageRef = threadRef.collection("messages").doc();
-    const now = admin.firestore.FieldValue.serverTimestamp();
+    const existingConversationId = await findExistingConversationIdForListing(
+      listingId,
+      senderId,
+      ownerId,
+    );
+    const conversationId = existingConversationId ?? canonicalConversationId(listingId, [senderId, ownerId]);
 
-    await db.runTransaction(async (transaction) => {
-      const threadSnap = await transaction.get(threadRef);
-      const unreadCountByUser = {
-        [senderId]: 0,
-        [ownerId]: 1,
-      };
+    if (!existingConversationId) {
+      const [ownerUserSnap, senderUserSnap] = await Promise.all([
+        db.collection(COLLECTIONS.users).doc(ownerId).get(),
+        db.collection(COLLECTIONS.users).doc(senderId).get(),
+      ]);
 
-      if (!threadSnap.exists) {
-        transaction.set(threadRef, {
-          id: threadId,
-          listingId,
-          ownerId,
-          buyerId: senderId,
+      const ownerData = (ownerUserSnap.data() ?? {}) as Record<string, unknown>;
+      const senderData = (senderUserSnap.data() ?? {}) as Record<string, unknown>;
+
+      await db.collection(COLLECTIONS.conversations).doc(conversationId).set(
+        buildConversationMirrorFields({
           participants: [senderId, ownerId].sort(),
+          participantNames: {
+            [ownerId]: normalizeDisplayName(ownerData.displayName, ownerData.display_name, ownerData.name),
+            [senderId]: normalizeDisplayName(senderData.displayName, senderData.display_name, senderData.name),
+          },
+          otherUserName: normalizeDisplayName(ownerData.displayName, ownerData.display_name, ownerData.name),
+          offerId: listingId,
+          offerTitle: normalizeString(listingData.title) || "Annonce IliPresto",
           status: "open",
-          lastMessageAt: now,
-          lastMessagePreview: body.slice(0, 160),
-          unreadCountByUser,
+          archivedBy: {},
           blockedBy: {},
-          createdAt: now,
-          updatedAt: now,
-        });
-      } else {
-        transaction.set(threadRef, {
-          lastMessageAt: now,
-          lastMessagePreview: body.slice(0, 160),
-          unreadCountByUser,
-          updatedAt: now,
-        }, { merge: true });
-      }
+          lastReadAt: {},
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastMessage: "",
+          lastSenderId: "",
+          lastSenderName: "",
+          messageCount: 0,
+          unreadCount: {
+            [senderId]: 0,
+            [ownerId]: 0,
+          },
+        }),
+        { merge: true },
+      );
+    }
 
-      transaction.set(messageRef, {
-        id: messageRef.id,
-        threadId,
-        listingId,
-        senderId,
-        body,
-        moderationStatus: "clean",
-        createdAt: now,
-      });
-    });
-
-    await createInAppNotification({
-      notificationId: `chat_message_${messageRef.id}`,
-      userId: ownerId,
-      title: "Nouveau message",
-      message: body.slice(0, 120),
-      type: "new_chat_message",
-      routeName: `/chat/${encodeURIComponent(threadId)}`,
-      conversationId: threadId,
-      offerId: listingId,
+    const senderName = normalizeDisplayName(
+      request.data?.senderName,
+      request.auth?.token?.name,
+      request.auth?.token?.email,
+    );
+    const { messageId } = await appendConversationMessage({
+      conversationId,
+      senderId,
+      senderName,
+      body,
     });
 
     await trackProductEventBackend({
       eventName: "listing_message_started",
       userId: senderId,
       listingId,
-      threadId,
+      threadId: conversationId,
     });
 
     return {
       ok: true,
-      threadId,
-      messageId: messageRef.id,
+      threadId: conversationId,
+      messageId,
     };
   } catch (error) {
     throw toHttpsError(error, "Unable to create chat thread");
@@ -157,75 +315,27 @@ export const sendChatMessage = onCall({ region: PROJECT_REGION }, async (request
 
   try {
     const body = validateChatMessageBody(request.data?.message);
-    const threadRef = db.collection(COLLECTIONS.chatThreads).doc(threadId);
-    const threadSnap = await threadRef.get();
-    if (!threadSnap.exists) {
-      throw new HttpsError("not-found", "Thread not found");
-    }
-
-    const threadData = (threadSnap.data() ?? {}) as Record<string, unknown>;
-    const participants = Array.isArray(threadData.participants)
-      ? threadData.participants.map((value) => normalizeString(value)).filter(Boolean)
-      : [];
-    if (!participants.includes(senderId)) {
-      throw new HttpsError("permission-denied", "You are not a participant of this thread");
-    }
-
-    const blockedBy = (threadData.blockedBy ?? {}) as Record<string, unknown>;
-    if (blockedBy[senderId] === true) {
-      throw new HttpsError("failed-precondition", "Thread is blocked for this participant");
-    }
-
-    const recipientId = participants.find((participantId) => participantId !== senderId) || "";
-    const messageRef = threadRef.collection("messages").doc();
-    const now = admin.firestore.FieldValue.serverTimestamp();
-    const unreadCountByUser = {
-      ...(threadData.unreadCountByUser as Record<string, unknown> | undefined ?? {}),
-      [senderId]: 0,
-      [recipientId]: Number((threadData.unreadCountByUser as Record<string, unknown> | undefined ?? {})[recipientId] || 0) + 1,
-    };
-
-    await db.runTransaction(async (transaction) => {
-      transaction.set(messageRef, {
-        id: messageRef.id,
-        threadId,
-        listingId: normalizeString(threadData.listingId),
-        senderId,
-        body,
-        moderationStatus: "clean",
-        createdAt: now,
-      });
-
-      transaction.set(threadRef, {
-        lastMessageAt: now,
-        lastMessagePreview: body.slice(0, 160),
-        unreadCountByUser,
-        updatedAt: now,
-      }, { merge: true });
+    const senderName = normalizeDisplayName(
+      request.data?.senderName,
+      request.auth?.token?.name,
+      request.auth?.token?.email,
+    );
+    const { messageId } = await appendConversationMessage({
+      conversationId: threadId,
+      senderId,
+      senderName,
+      body,
     });
-
-    if (recipientId) {
-      await createInAppNotification({
-        notificationId: `chat_message_${messageRef.id}`,
-        userId: recipientId,
-        title: "Nouveau message",
-        message: body.slice(0, 120),
-        type: "new_chat_message",
-        routeName: `/chat/${encodeURIComponent(threadId)}`,
-        conversationId: threadId,
-        offerId: normalizeString(threadData.listingId),
-      });
-    }
 
     logger.info("marketplace_chat_message_sent", {
       threadId,
       senderId,
-      messageId: messageRef.id,
+      messageId,
     });
 
     return {
       ok: true,
-      messageId: messageRef.id,
+      messageId,
     };
   } catch (error) {
     throw toHttpsError(error, "Unable to send chat message");

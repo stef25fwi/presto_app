@@ -354,8 +354,18 @@ class NotificationService {
     final routeName = (message.data['routeName'] ?? '').toString().trim();
 
     if (conversationId.isNotEmpty &&
-        (type == 'new_message' || routeName.startsWith('/messages/'))) {
+        (type == 'new_message' ||
+            type == 'new_chat_message' ||
+            routeName.startsWith('/messages/') ||
+            routeName.startsWith('/chat/'))) {
       return '/messages/${Uri.encodeComponent(conversationId)}';
+    }
+
+    if (routeName.startsWith('/chat/')) {
+      final segments = Uri.tryParse(routeName)?.pathSegments ?? const <String>[];
+      if (segments.length >= 2 && segments[1].trim().isNotEmpty) {
+        return '/messages/${Uri.encodeComponent(segments[1].trim())}';
+      }
     }
 
     if (routeName.isNotEmpty) return routeName;
