@@ -6,8 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:presto_app/main.dart';
-import 'package:presto_app/pages/messages/conversations_list_page.dart'
-  show ConversationsListPage;
+import 'package:presto_app/services/app_route_parser.dart';
 import 'package:presto_app/services/conversation_service.dart';
 
 class OfferDetailV2Page extends StatefulWidget {
@@ -259,12 +258,10 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
 
     if (!context.mounted) return;
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ConversationsListPage(
-          initialConversationId: conversationId,
-          initialDraftText: initialDraftText,
-        ),
+    Navigator.of(context).pushNamed(
+      buildMessagesRoute(
+        conversationId: conversationId,
+        initialDraftText: initialDraftText,
       ),
     );
   }

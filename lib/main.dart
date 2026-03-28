@@ -785,8 +785,10 @@ class PrestoApp extends StatelessWidget {
 
     return MaterialPageRoute(
       settings: settings,
-      builder: (_) => MessagesPage(
-        initialConversationId: target.conversationId,
+      builder: (_) => HomePage(
+        initialIndex: 3,
+        initialMessagesConversationId: target.conversationId,
+        initialMessagesDraftText: target.initialDraftText,
       ),
     );
   }
@@ -800,7 +802,7 @@ class PrestoApp extends StatelessWidget {
       onGenerateRoute: _onGenerateRoute,
       routes: {
         '/publish': (_) => const PublishOfferPage(),
-        '/messages': (_) => const MessagesPage(),
+        '/messages': (_) => const HomePage(initialIndex: 3),
         '/account': (_) => const AccountPage(),
         /*
         '/auth': (context) => PrestoPremiumAuthPage(
@@ -1200,12 +1202,16 @@ class HomePage extends StatefulWidget {
   final int initialIndex;
   final String? initialConsultCategoryFilter;
   final String? initialConsultSearchQuery;
+  final String? initialMessagesConversationId;
+  final String? initialMessagesDraftText;
 
   const HomePage({
     super.key,
     this.initialIndex = 0,
     this.initialConsultCategoryFilter,
     this.initialConsultSearchQuery,
+    this.initialMessagesConversationId,
+    this.initialMessagesDraftText,
   });
 
   @override
@@ -2177,11 +2183,9 @@ class _HomePageState extends State<HomePage>
                                   routeName.startsWith('/messages/'));
 
                       if (shouldOpenMessages) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => MessagesPage(
-                              initialConversationId: normalizedConversationId,
-                            ),
+                        Navigator.of(context).pushNamed(
+                          buildMessagesRoute(
+                            conversationId: normalizedConversationId,
                           ),
                         );
                         return;
@@ -2193,12 +2197,9 @@ class _HomePageState extends State<HomePage>
                       }
 
                       if (normalizedConversationId.isNotEmpty) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => MessagesPage(
-                              initialConversationId:
-                                  normalizedConversationId,
-                            ),
+                        Navigator.of(context).pushNamed(
+                          buildMessagesRoute(
+                            conversationId: normalizedConversationId,
                           ),
                         );
                         return;
@@ -2334,7 +2335,12 @@ class _HomePageState extends State<HomePage>
                             searchQuery: _consultSearchQuery,
                           ),
                           PublishOfferPage(onScroll: _onPageScroll),
-                          const MessagesPage(),
+                            MessagesPage(
+                            initialConversationId:
+                              widget.initialMessagesConversationId,
+                            initialDraftText:
+                              widget.initialMessagesDraftText,
+                            ),
                           const AccountPage(),
                         ],
                       ),
@@ -3738,9 +3744,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           userId: user.uid,
           builder: (context, badgeCount) => IconButton(
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const MessagesPage()),
-              );
+              Navigator.of(context).pushNamed('/messages');
             },
             icon: _NotificationBellBase(
               badgeCount: badgeCount,

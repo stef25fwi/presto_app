@@ -27,6 +27,17 @@ void main() {
       expect(target.conversationId, 'conv_hash');
     });
 
+    test('parse un thread de conversation avec brouillon initial', () {
+      final target = parseAppDeepLink(
+        '/messages/conv_456?draft=Bonjour%20vendeur',
+      );
+
+      expect(target, isNotNull);
+      expect(target!.routeName, '/messages');
+      expect(target.conversationId, 'conv_456');
+      expect(target.initialDraftText, 'Bonjour vendeur');
+    });
+
     test('parse une annonce marketplace', () {
       final target = parseAppDeepLink('/listings/listing_123');
 
@@ -34,6 +45,22 @@ void main() {
       expect(target!.routeName, '/listings');
       expect(target.offerId, 'listing_123');
       expect(target.preferMarketplace, isTrue);
+    });
+  });
+
+  group('buildMessagesRoute', () {
+    test('construit la route simple messages', () {
+      expect(buildMessagesRoute(), '/messages');
+    });
+
+    test('construit la route thread avec draft encode', () {
+      expect(
+        buildMessagesRoute(
+          conversationId: 'conv_123',
+          initialDraftText: 'Bonjour vendeur',
+        ),
+        '/messages/conv_123?draft=Bonjour+vendeur',
+      );
     });
   });
 }

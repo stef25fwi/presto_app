@@ -1,22 +1,32 @@
 class AppDeepLinkTarget {
   final String routeName;
   final String? conversationId;
+  final String? initialDraftText;
   final String? offerId;
   final bool preferMarketplace;
 
   const AppDeepLinkTarget._({
     required this.routeName,
     this.conversationId,
+    this.initialDraftText,
     this.offerId,
     this.preferMarketplace = false,
   });
 
-  const AppDeepLinkTarget.messages() : this._(routeName: '/messages');
+  const AppDeepLinkTarget.messages({String? initialDraftText})
+      : this._(
+          routeName: '/messages',
+          initialDraftText: initialDraftText,
+        );
 
-  const AppDeepLinkTarget.messageThread(String conversationId)
+  const AppDeepLinkTarget.messageThread(
+    String conversationId, {
+    String? initialDraftText,
+  })
       : this._(
           routeName: '/messages',
           conversationId: conversationId,
+          initialDraftText: initialDraftText,
         );
 
   const AppDeepLinkTarget.offerDetail(String offerId)
@@ -31,6 +41,29 @@ class AppDeepLinkTarget {
           offerId: offerId,
           preferMarketplace: true,
         );
+}
+
+String buildMessagesRoute({
+  String? conversationId,
+  String? initialDraftText,
+}) {
+  final normalizedConversationId = (conversationId ?? '').trim();
+  final normalizedDraftText = (initialDraftText ?? '').trim();
+
+  final path = normalizedConversationId.isEmpty
+      ? '/messages'
+      : '/messages/${Uri.encodeComponent(normalizedConversationId)}';
+
+  if (normalizedDraftText.isEmpty) {
+    return path;
+  }
+
+  return Uri(
+    path: path,
+    queryParameters: <String, String>{
+      'draft': normalizedDraftText,
+    },
+  ).toString();
 }
 
 AppDeepLinkTarget? parseAppDeepLink(String? rawName) {
@@ -59,9 +92,11 @@ AppDeepLinkTarget? parseAppDeepLink(String? rawName) {
       .map((segment) => segment.trim())
       .where((segment) => segment.isNotEmpty)
       .toList(growable: false);
+  final initialDraftText = (uri.queryParameters['draft'] ?? '').trim();
+  final normalizedDraftText = initialDraftText.isEmpty ? null : initialDraftText;
 
   if (segments.length == 1 && segments.first == 'messages') {
-    return const AppDeepLinkTarget.messages();
+    return AppDeepLinkTarget.messages(initialDraftText: normalizedDraftText);
   }
 
   if (segments.length == 2 &&
@@ -69,6 +104,7 @@ AppDeepLinkTarget? parseAppDeepLink(String? rawName) {
       segments[1].isNotEmpty) {
     return AppDeepLinkTarget.messageThread(
       Uri.decodeComponent(segments[1]),
+      initialDraftText: normalizedDraftText,
     );
   }
 
@@ -77,6 +113,7 @@ AppDeepLinkTarget? parseAppDeepLink(String? rawName) {
       segments[1].isNotEmpty) {
     return AppDeepLinkTarget.messageThread(
       Uri.decodeComponent(segments[1]),
+      initialDraftText: normalizedDraftText,
     );
   }
 
