@@ -43,7 +43,10 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
 
   List<String> _listStr(dynamic v) {
     if (v is List) {
-      return v.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList();
+      return v
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
     return const [];
   }
@@ -108,13 +111,15 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
   }
 
   double _pickRating(Map<String, dynamic> data) {
-    final r = _num(data['rating'] ?? data['averageRating'] ?? data['sellerRating']);
+    final r =
+        _num(data['rating'] ?? data['averageRating'] ?? data['sellerRating']);
     if (r == null) return 0;
     return r.toDouble().clamp(0, 5);
   }
 
   int _pickReviewsCount(Map<String, dynamic> data) {
-    final v = _num(data['reviewsCount'] ?? data['avisCount'] ?? data['ratingsCount']);
+    final v =
+        _num(data['reviewsCount'] ?? data['avisCount'] ?? data['ratingsCount']);
     return v?.toInt() ?? 0;
   }
 
@@ -142,16 +147,22 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     final safeCommune = (commune ?? '').trim();
 
     if (safeLoc.isNotEmpty) {
-      out = out.replaceAll(RegExp(RegExp.escape(safeLoc), caseSensitive: false), ' ');
+      out = out.replaceAll(
+          RegExp(RegExp.escape(safeLoc), caseSensitive: false), ' ');
     }
     if (safeCp.isNotEmpty) {
-      out = out.replaceAll(RegExp('\\b${RegExp.escape(safeCp)}\\b', caseSensitive: false), ' ');
+      out = out.replaceAll(
+          RegExp('\\b${RegExp.escape(safeCp)}\\b', caseSensitive: false), ' ');
     }
     if (safeCommune.isNotEmpty) {
-      out = out.replaceAll(RegExp(RegExp.escape(safeCommune), caseSensitive: false), ' ');
+      out = out.replaceAll(
+          RegExp(RegExp.escape(safeCommune), caseSensitive: false), ' ');
     }
 
-    out = out.replaceAll(RegExp(r'\s+'), ' ').replaceAll(RegExp(r'\s*[-–|/]\s*$'), '').trim();
+    out = out
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .replaceAll(RegExp(r'\s*[-–|/]\s*$'), '')
+        .trim();
     return out.isEmpty ? rawTitle.trim() : out;
   }
 
@@ -163,7 +174,8 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     return null;
   }
 
-  String _formatPrice(num? b) => b == null ? "—" : "${b.toDouble().toStringAsFixed(0)} €";
+  String _formatPrice(num? b) =>
+      b == null ? "—" : "${b.toDouble().toStringAsFixed(0)} €";
 
   String _extractDuration(String title) {
     final reg = RegExp(r'(\d+\s*(h|min))', caseSensitive: false);
@@ -187,8 +199,10 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     if (digits.isEmpty) return '';
 
     // FR convention
-    if (digits.length == 10 && digits.startsWith('0')) return '+33${digits.substring(1)}';
-    if (digits.length == 9 && (digits.startsWith('6') || digits.startsWith('7'))) return '+33$digits';
+    if (digits.length == 10 && digits.startsWith('0'))
+      return '+33${digits.substring(1)}';
+    if (digits.length == 9 &&
+        (digits.startsWith('6') || digits.startsWith('7'))) return '+33$digits';
 
     return digits;
   }
@@ -230,7 +244,8 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     final me = user?.uid;
 
     if (me == null) {
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AccountPage()));
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const AccountPage()));
       return;
     }
 
@@ -245,7 +260,7 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
         ? user!.displayName!.trim()
         : (user?.email ?? 'Utilisateur');
     final initialDraftText =
-      'Bonjour $annonceurName, je vous contacte au sujet de votre annonce "$offerTitle".';
+        'Bonjour $annonceurName, je vous contacte au sujet de votre annonce "$offerTitle".';
 
     final conversationId = await ConversationService.ensureConversation(
       offerId: widget.offerId,
@@ -282,7 +297,8 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     if (!context.mounted) return;
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Impossible de lancer l'appel sur cet appareil.")),
+        const SnackBar(
+            content: Text("Impossible de lancer l'appel sur cet appareil.")),
       );
       return;
     }
@@ -297,7 +313,8 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     if (!context.mounted) return;
     if (phone == null || phone.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Aucun numéro disponible pour envoyer un message.")),
+        const SnackBar(
+            content: Text("Aucun numéro disponible pour envoyer un message.")),
       );
       return;
     }
@@ -315,7 +332,9 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     if (!context.mounted) return;
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Impossible d'ouvrir la messagerie sur cet appareil.")),
+        const SnackBar(
+            content:
+                Text("Impossible d'ouvrir la messagerie sur cet appareil.")),
       );
       return;
     }
@@ -332,7 +351,8 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
     );
   }
 
-  Future<void> _shareBasic(BuildContext context, String title, String location) async {
+  Future<void> _shareBasic(
+      BuildContext context, String title, String location) async {
     // Simple: on copie le texte dans le presse-papier (fiable partout)
     final url = 'https://prestoo.app/offers/${widget.offerId}';
     final text = "$title – $location\n$url";
@@ -450,8 +470,13 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
   // Streams
   // ----------------------------
   Stream<DocumentSnapshot<Map<String, dynamic>>> _offerStream() {
-    return FirebaseFirestore.instance.collection('offers').doc(widget.offerId).snapshots().map((snap) {
-      PrestoMonitoring.I.trackOtherStream(key: 'offerDetailV2.offerDoc', docsCount: snap.exists ? 1 : 0);
+    return FirebaseFirestore.instance
+        .collection('offers')
+        .doc(widget.offerId)
+        .snapshots()
+        .map((snap) {
+      PrestoMonitoring.I.trackOtherStream(
+          key: 'offerDetailV2.offerDoc', docsCount: snap.exists ? 1 : 0);
       return snap;
     });
   }
@@ -493,11 +518,14 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
         final duration = _pickMissionDelay(data);
 
         final phone = _pickPhone(data);
-        final images = _listStr(data['imageUrls'] ?? data['photos'] ?? data['images']);
+        final images =
+            _listStr(data['imageUrls'] ?? data['photos'] ?? data['images']);
 
         final hasPhone = (phone ?? '').trim().isNotEmpty;
         final phoneDisplay = hasPhone
-            ? (_isPhoneVisible ? _formatPhoneWithIndicatif(phone!) : _maskPhone(phone!))
+            ? (_isPhoneVisible
+                ? _formatPhoneWithIndicatif(phone!)
+                : _maskPhone(phone!))
             : "Numéro non renseigné";
 
         return Scaffold(
@@ -544,9 +572,11 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: kPrestoOrange,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                     elevation: 10,
-                    textStyle: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                    textStyle: const TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.w900),
                   ),
                   onPressed: () => _showContactOptionsSheet(
                     context: context,
@@ -569,8 +599,11 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                 blue: kPrestoBlue,
                 title: headerTitle,
                 rightPrice: _formatPrice(budget),
-                locationLine: postalCode.isNotEmpty ? "$location ($postalCode)" : location,
-                chipLeft: _ChipSpec(label: "Rapide", bg: kPrestoBlue, fg: Colors.white),
+                locationLine: postalCode.isNotEmpty
+                    ? "$location ($postalCode)"
+                    : location,
+                chipLeft: _ChipSpec(
+                    label: "Rapide", bg: kPrestoBlue, fg: Colors.white),
                 chipRight: _ChipSpec(
                   label: _s(data['distance'] ?? '15 km'),
                   bg: const Color(0xFFE9EDF3),
@@ -580,7 +613,6 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                 rightDelayBadge: duration != "Non précisé" ? duration : null,
               ),
               const SizedBox(height: 12),
-
               if (images.isNotEmpty) ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
@@ -594,9 +626,11 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                           child: PageView.builder(
                             controller: _pageCtrl,
                             itemCount: images.length,
-                            onPageChanged: (i) => setState(() => _pageIndex = i),
+                            onPageChanged: (i) =>
+                                setState(() => _pageIndex = i),
                             itemBuilder: (_, i) => Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 6),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 6),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(14),
                                 child: Image.network(
@@ -631,28 +665,34 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                     padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
                     child: Row(
                       children: const [
-                        Expanded(child: _MockPhotoTile(icon: Icons.local_shipping_outlined, label: "Utilitaire")),
+                        Expanded(
+                            child: _MockPhotoTile(
+                                icon: Icons.local_shipping_outlined,
+                                label: "Utilitaire")),
                         SizedBox(width: 10),
-                        Expanded(child: _MockPhotoTile(icon: Icons.inventory_2_outlined, label: "Colis")),
+                        Expanded(
+                            child: _MockPhotoTile(
+                                icon: Icons.inventory_2_outlined,
+                                label: "Colis")),
                         SizedBox(width: 10),
-                        Expanded(child: _MockPhotoTile(icon: Icons.location_on_outlined, label: "Localisation")),
+                        Expanded(
+                            child: _MockPhotoTile(
+                                icon: Icons.location_on_outlined,
+                                label: "Localisation")),
                       ],
                     ),
                   ),
                 ),
               ],
-
               const SizedBox(height: 14),
               const _SectionTitle("Description"),
               const SizedBox(height: 8),
               _SectionBody(_s(data['description']).isEmpty
                   ? "Aucune description détaillée fournie."
                   : _descriptionWithLineBreaks(_s(data['description']))),
-
               const SizedBox(height: 16),
               const _SectionTitle("Info annonceur"),
               const SizedBox(height: 10),
-
               _AnnonceurInfoCard(
                 pseudo: annonceurPseudo,
                 isProfileVerified: isProfileVerified,
@@ -660,16 +700,18 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                 reviewsCount: reviewsCount,
                 missionDelay: missionDelay,
               ),
-
               const SizedBox(height: 16),
               const _SectionTitle("Contact"),
               const SizedBox(height: 10),
               _ContactCard(
                 blue: kPrestoBlue,
                 phoneText: phoneDisplay,
-                toggleLabel:
-                    hasPhone ? (_isPhoneVisible ? "Masquer" : "Afficher le numéro") : "Indisponible",
-                onToggle: hasPhone ? () => setState(() => _isPhoneVisible = !_isPhoneVisible) : null,
+                toggleLabel: hasPhone
+                    ? (_isPhoneVisible ? "Masquer" : "Afficher le numéro")
+                    : "Indisponible",
+                onToggle: hasPhone
+                    ? () => setState(() => _isPhoneVisible = !_isPhoneVisible)
+                    : null,
                 onMessage: () => _openExternalMessaging(
                   context,
                   phone: phone,
@@ -704,7 +746,8 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
           ),
         ),
         body: const Center(
-          child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange)),
+          child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange)),
         ),
       );
 
@@ -740,7 +783,9 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 10),
-                Text("ID : ${widget.offerId}", style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                Text("ID : ${widget.offerId}",
+                    style:
+                        const TextStyle(fontSize: 12, color: Colors.black54)),
               ],
             ),
           ),
@@ -795,17 +840,22 @@ class _TopOfferCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: orange,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(18)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.local_shipping_rounded, color: Colors.white, size: 18),
+                const Icon(Icons.local_shipping_rounded,
+                    color: Colors.white, size: 18),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -841,13 +891,24 @@ class _TopOfferCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _RowInfo(icon: Icons.place_outlined, iconColor: orange, text: locationLine),
+                _RowInfo(
+                    icon: Icons.place_outlined,
+                    iconColor: orange,
+                    text: locationLine),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _Pill(label: chipLeft.label, bg: chipLeft.bg, fg: chipLeft.fg, border: chipLeft.border),
+                    _Pill(
+                        label: chipLeft.label,
+                        bg: chipLeft.bg,
+                        fg: chipLeft.fg,
+                        border: chipLeft.border),
                     const SizedBox(width: 10),
-                    _Pill(label: chipRight.label, bg: chipRight.bg, fg: chipRight.fg, border: chipRight.border),
+                    _Pill(
+                        label: chipRight.label,
+                        bg: chipRight.bg,
+                        fg: chipRight.fg,
+                        border: chipRight.border),
                     const Spacer(),
                   ],
                 ),
@@ -903,7 +964,8 @@ class _AnnonceurInfoCard extends StatelessWidget {
                   color: const Color(0xFFEFF2F7),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.person_outline, color: Color(0xFF0F172A)),
+                child:
+                    const Icon(Icons.person_outline, color: Color(0xFF0F172A)),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -918,7 +980,8 @@ class _AnnonceurInfoCard extends StatelessWidget {
               ),
               if (isProfileVerified)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE8F7EE),
                     borderRadius: BorderRadius.circular(999),
@@ -937,7 +1000,8 @@ class _AnnonceurInfoCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 20),
+              const Icon(Icons.star_rounded,
+                  color: Color(0xFFF59E0B), size: 20),
               const SizedBox(width: 6),
               Text(
                 rating > 0 ? rating.toStringAsFixed(1) : 'N/A',
@@ -978,7 +1042,8 @@ class _RowInfo extends StatelessWidget {
   final Color iconColor;
   final String text;
 
-  const _RowInfo({required this.icon, required this.iconColor, required this.text});
+  const _RowInfo(
+      {required this.icon, required this.iconColor, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -989,7 +1054,10 @@ class _RowInfo extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF111827)),
+            style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF111827)),
           ),
         ),
       ],
@@ -1002,7 +1070,8 @@ class _ChipSpec {
   final Color bg;
   final Color fg;
   final Color? border;
-  const _ChipSpec({required this.label, required this.bg, required this.fg, this.border});
+  const _ChipSpec(
+      {required this.label, required this.bg, required this.fg, this.border});
 }
 
 class _Pill extends StatelessWidget {
@@ -1011,7 +1080,8 @@ class _Pill extends StatelessWidget {
   final Color fg;
   final Color? border;
 
-  const _Pill({required this.label, required this.bg, required this.fg, this.border});
+  const _Pill(
+      {required this.label, required this.bg, required this.fg, this.border});
 
   @override
   Widget build(BuildContext context) {
@@ -1022,7 +1092,9 @@ class _Pill extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: border != null ? Border.all(color: border!, width: 1) : null,
       ),
-      child: Text(label, style: TextStyle(color: fg, fontSize: 14, fontWeight: FontWeight.w900)),
+      child: Text(label,
+          style:
+              TextStyle(color: fg, fontSize: 14, fontWeight: FontWeight.w900)),
     );
   }
 }
@@ -1033,7 +1105,11 @@ class _Dots extends StatelessWidget {
   final Color active;
   final Color inactive;
 
-  const _Dots({required this.count, required this.index, required this.active, required this.inactive});
+  const _Dots(
+      {required this.count,
+      required this.index,
+      required this.active,
+      required this.inactive});
 
   @override
   Widget build(BuildContext context) {
@@ -1069,9 +1145,14 @@ class _MockPhotoTile extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 34, color: const Color(0xFF111827).withOpacity(0.70)),
+            Icon(icon,
+                size: 34, color: const Color(0xFF111827).withOpacity(0.70)),
             const SizedBox(height: 6),
-            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF111827))),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827))),
           ],
         ),
       ),
@@ -1087,7 +1168,8 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF111827)),
+      style: const TextStyle(
+          fontSize: 26, fontWeight: FontWeight.w900, color: Color(0xFF111827)),
     );
   }
 }
@@ -1108,7 +1190,11 @@ class _SectionBody extends StatelessWidget {
         padding: const EdgeInsets.only(top: 10),
         child: Text(
           text,
-          style: const TextStyle(fontSize: 18, height: 1.35, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
+          style: const TextStyle(
+              fontSize: 18,
+              height: 1.35,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF111827)),
         ),
       ),
     );
@@ -1143,7 +1229,10 @@ class _ContactCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.black.withOpacity(0.06)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 14, offset: const Offset(0, 8)),
+          BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 14,
+              offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -1156,7 +1245,9 @@ class _ContactCard extends StatelessWidget {
                 child: Container(
                   width: 42,
                   height: 42,
-                  decoration: BoxDecoration(color: const Color(0xFFEFF2F7), borderRadius: BorderRadius.circular(14)),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFFEFF2F7),
+                      borderRadius: BorderRadius.circular(14)),
                   child: const Icon(Icons.call, color: Color(0xFF0F172A)),
                 ),
               ),
@@ -1164,7 +1255,10 @@ class _ContactCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   phoneText,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                  style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF0F172A)),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1175,11 +1269,13 @@ class _ContactCard extends StatelessWidget {
                     backgroundColor: blue,
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                   ),
                   onPressed: onToggle,
-                  child: Text(toggleLabel, style: const TextStyle(fontWeight: FontWeight.w900)),
+                  child: Text(toggleLabel,
+                      style: const TextStyle(fontWeight: FontWeight.w900)),
                 ),
               ),
             ],
@@ -1195,11 +1291,14 @@ class _ContactCard extends StatelessWidget {
                       backgroundColor: blue,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
                     ),
                     onPressed: onMessage,
                     icon: const Icon(Icons.mail_outline_rounded),
-                    label: const Text("Message", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+                    label: const Text("Message",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w900, fontSize: 18)),
                   ),
                 ),
               ),
@@ -1212,11 +1311,14 @@ class _ContactCard extends StatelessWidget {
                       backgroundColor: kPrestoOrange,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
                     ),
                     onPressed: onShare,
                     icon: const Icon(Icons.send_rounded),
-                    label: const Text("Partager", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+                    label: const Text("Partager",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w900, fontSize: 18)),
                   ),
                 ),
               ),

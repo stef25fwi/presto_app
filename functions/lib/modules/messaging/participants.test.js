@@ -25,12 +25,14 @@ const participants_1 = require("./participants");
     });
     strict_1.default.deepEqual(participants, ["user_a", "user_b", "user_c"]);
 });
-(0, node_test_1.default)("buildConversationParticipantFields writes both participant fields", () => {
+(0, node_test_1.default)("buildConversationParticipantFields writes all participant aliases", () => {
     const fields = (0, participants_1.buildConversationParticipantFields)(["user_b", "user_a", "user_b"]);
     strict_1.default.deepEqual(fields, {
         participants: ["user_b", "user_a"],
         participant_ids: ["user_b", "user_a"],
         participantIds: ["user_b", "user_a"],
+        userIds: ["user_b", "user_a"],
+        memberIds: ["user_b", "user_a"],
     });
 });
 //# sourceMappingURL=participants.test.js.map

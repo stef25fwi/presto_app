@@ -1,4 +1,7 @@
 class AppDeepLinkTarget {
+  static const String messagesRouteName = '/messages';
+  static const String messagesV2RouteName = '/messages-2';
+
   final String routeName;
   final String? conversationId;
   final String? initialDraftText;
@@ -15,7 +18,13 @@ class AppDeepLinkTarget {
 
   const AppDeepLinkTarget.messages({String? initialDraftText})
       : this._(
-          routeName: '/messages',
+          routeName: messagesRouteName,
+          initialDraftText: initialDraftText,
+        );
+
+  const AppDeepLinkTarget.messagesV2({String? initialDraftText})
+      : this._(
+          routeName: messagesV2RouteName,
           initialDraftText: initialDraftText,
         );
 
@@ -24,7 +33,17 @@ class AppDeepLinkTarget {
     String? initialDraftText,
   })
       : this._(
-          routeName: '/messages',
+          routeName: messagesRouteName,
+          conversationId: conversationId,
+          initialDraftText: initialDraftText,
+        );
+
+  const AppDeepLinkTarget.messageThreadV2(
+    String conversationId, {
+    String? initialDraftText,
+  })
+      : this._(
+          routeName: messagesV2RouteName,
           conversationId: conversationId,
           initialDraftText: initialDraftText,
         );
@@ -47,12 +66,35 @@ String buildMessagesRoute({
   String? conversationId,
   String? initialDraftText,
 }) {
+  return _buildMessageRoute(
+    routeName: AppDeepLinkTarget.messagesRouteName,
+    conversationId: conversationId,
+    initialDraftText: initialDraftText,
+  );
+}
+
+String buildMessagesV2Route({
+  String? conversationId,
+  String? initialDraftText,
+}) {
+  return _buildMessageRoute(
+    routeName: AppDeepLinkTarget.messagesV2RouteName,
+    conversationId: conversationId,
+    initialDraftText: initialDraftText,
+  );
+}
+
+String _buildMessageRoute({
+  required String routeName,
+  String? conversationId,
+  String? initialDraftText,
+}) {
   final normalizedConversationId = (conversationId ?? '').trim();
   final normalizedDraftText = (initialDraftText ?? '').trim();
 
   final path = normalizedConversationId.isEmpty
-      ? '/messages'
-      : '/messages/${Uri.encodeComponent(normalizedConversationId)}';
+      ? routeName
+      : '$routeName/${Uri.encodeComponent(normalizedConversationId)}';
 
   if (normalizedDraftText.isEmpty) {
     return path;
@@ -103,6 +145,19 @@ AppDeepLinkTarget? parseAppDeepLink(String? rawName) {
       segments.first == 'messages' &&
       segments[1].isNotEmpty) {
     return AppDeepLinkTarget.messageThread(
+      Uri.decodeComponent(segments[1]),
+      initialDraftText: normalizedDraftText,
+    );
+  }
+
+  if (segments.length == 1 && segments.first == 'messages-2') {
+    return AppDeepLinkTarget.messagesV2(initialDraftText: normalizedDraftText);
+  }
+
+  if (segments.length == 2 &&
+      segments.first == 'messages-2' &&
+      segments[1].isNotEmpty) {
+    return AppDeepLinkTarget.messageThreadV2(
       Uri.decodeComponent(segments[1]),
       initialDraftText: normalizedDraftText,
     );

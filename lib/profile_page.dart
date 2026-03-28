@@ -8,6 +8,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'pages/pro_profile_page.dart';
 import 'services/email_action_service.dart';
 import 'services/notification_service.dart';
+import 'services/app_route_parser.dart';
 import 'utils/friendly_snackbar.dart';
 import 'constants.dart';
 import 'widgets/phone_input_field.dart';
@@ -746,6 +747,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _onSupportTapped() async {
     await _openSupportTicketComposer();
+  }
+
+  Future<void> _onOpenMessagesTapped() async {
+    await Navigator.of(context).pushNamed(buildMessagesRoute());
+  }
+
+  Future<void> _onOpenMessagesV2Tapped() async {
+    await Navigator.of(context).pushNamed(buildMessagesV2Route());
   }
 
   Future<void> _onDeleteAccountTapped() async {
@@ -1984,6 +1993,27 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ],
             ),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        _buildSectionTitle('Messagerie'),
+        _buildProfileCard(
+          child: Column(
+            children: [
+              _buildProfileActionTile(
+                icon: Icons.chat_bubble_outline,
+                title: 'Ouvrir mes messages',
+                onTap: _onOpenMessagesTapped,
+              ),
+              const Divider(height: 0),
+              _buildProfileActionTile(
+                icon: Icons.forum_outlined,
+                title: 'Ouvrir mes messages 2',
+                onTap: _onOpenMessagesV2Tapped,
+              ),
+            ],
           ),
         ),
 

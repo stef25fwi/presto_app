@@ -1,7 +1,8 @@
 import admin from "firebase-admin";
 import { db } from "../../core/firestore";
 import { COLLECTIONS } from "../../shared/constants";
-import { CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES } from "../messaging/participants";
+
+const CONVERSATION_PRIMARY_PARTICIPANT_FIELD = "participants";
 
 async function setInboxCounts(userId: string, unreadMessages: number, unreadNotifications: number): Promise<void> {
   await db.collection(COLLECTIONS.users).doc(userId).set({
@@ -15,20 +16,13 @@ async function setInboxCounts(userId: string, unreadMessages: number, unreadNoti
 }
 
 export async function refreshUnreadMessageCount(userId: string): Promise<void> {
-  const snapshots = await Promise.all(
-    CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES.map((field) =>
-      db.collection(COLLECTIONS.conversations)
-        .where(field, "array-contains", userId)
-        .get(),
-    ),
-  );
+  const snapshot = await db.collection(COLLECTIONS.conversations)
+    .where(CONVERSATION_PRIMARY_PARTICIPANT_FIELD, "array-contains", userId)
+    .get();
 
-  const seen = new Set<string>();
   let unreadMessages = 0;
 
-  for (const doc of snapshots.flatMap((snapshot) => snapshot.docs)) {
-    if (seen.has(doc.id)) continue;
-    seen.add(doc.id);
+  for (const doc of snapshot.docs) {
     const unreadMap = ((doc.data().unreadCount || doc.data().unread_count || {}) as Record<string, unknown>);
     unreadMessages += Number(unreadMap[userId] || 0);
   }

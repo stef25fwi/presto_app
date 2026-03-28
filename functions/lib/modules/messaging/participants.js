@@ -61,6 +61,8 @@ function buildConversationParticipantFields(participants) {
         participants: normalized,
         participantIds: normalized,
         participant_ids: normalized,
+        userIds: normalized,
+        memberIds: normalized,
     };
 }
 //# sourceMappingURL=participants.js.map

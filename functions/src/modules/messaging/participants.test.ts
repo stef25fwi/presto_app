@@ -28,12 +28,14 @@ test("readConversationParticipants falls back to alias fields and metadata maps"
   assert.deepEqual(participants, ["user_a", "user_b", "user_c"]);
 });
 
-test("buildConversationParticipantFields writes both participant fields", () => {
+test("buildConversationParticipantFields writes all participant aliases", () => {
   const fields = buildConversationParticipantFields(["user_b", "user_a", "user_b"]);
 
   assert.deepEqual(fields, {
     participants: ["user_b", "user_a"],
     participant_ids: ["user_b", "user_a"],
     participantIds: ["user_b", "user_a"],
+    userIds: ["user_b", "user_a"],
+    memberIds: ["user_b", "user_a"],
   });
 });
