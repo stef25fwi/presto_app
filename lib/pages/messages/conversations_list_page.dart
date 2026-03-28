@@ -28,11 +28,13 @@ const kMessagesStatusBarStyle = SystemUiOverlayStyle(
 class ConversationsListPage extends StatefulWidget {
   final String? initialConversationId;
   final String? initialDraftText;
+  final String appBarTitle;
 
   const ConversationsListPage({
     super.key,
     this.initialConversationId,
     this.initialDraftText,
+    this.appBarTitle = 'Mes messages',
   });
 
   @override
@@ -584,8 +586,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   Widget _buildMessagesAppBarTitle() {
-    return const Text(
-      'Mes messages',
+    return Text(
+      widget.appBarTitle,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       textAlign: TextAlign.center,
@@ -608,8 +610,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               systemOverlayStyle: kMessagesStatusBarStyle,
               backgroundColor: kPrestoOrange,
               foregroundColor: Colors.white,
-              title: const Text(
-                'Mes messages',
+              title: Text(
+                widget.appBarTitle,
                 style: kPrestoAppBarTitleStyle,
               ),
               centerTitle: true,

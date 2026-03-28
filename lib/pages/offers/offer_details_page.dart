@@ -164,8 +164,10 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     final digits = trimmed.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return '';
-    if (digits.length == 10 && digits.startsWith('0')) return '+33${digits.substring(1)}';
-    if (digits.length == 9 && (digits.startsWith('6') || digits.startsWith('7'))) return '+33$digits';
+    if (digits.length == 10 && digits.startsWith('0'))
+      return '+33${digits.substring(1)}';
+    if (digits.length == 9 &&
+        (digits.startsWith('6') || digits.startsWith('7'))) return '+33$digits';
     return digits;
   }
 
@@ -178,7 +180,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     if (me.isEmpty || me == 'buyer_demo_001') {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Connectez-vous pour envoyer un message.")),
+        const SnackBar(
+            content: Text("Connectez-vous pour envoyer un message.")),
       );
       return;
     }
@@ -192,7 +195,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     if (data.advertiserId == me) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Vous ne pouvez pas vous envoyer un message.")),
+        const SnackBar(
+            content: Text("Vous ne pouvez pas vous envoyer un message.")),
       );
       return;
     }
@@ -201,7 +205,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         ? authUser!.displayName!.trim()
         : (authUser?.email ?? 'Utilisateur');
     final initialDraftText =
-      'Bonjour ${data.advertiserName}, je vous contacte au sujet de votre annonce "${data.title}".';
+        'Bonjour ${data.advertiserName}, je vous contacte au sujet de votre annonce "${data.title}".';
 
     final resolvedConversationId = await ConversationService.ensureConversation(
       offerId: data.offerId,
@@ -235,7 +239,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     if (!ok) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Impossible de lancer l'appel sur cet appareil.")),
+        const SnackBar(
+            content: Text("Impossible de lancer l'appel sur cet appareil.")),
       );
       return;
     }
@@ -259,9 +264,11 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  Future<void> _showShareOptionsSheet(BuildContext context, _OfferUiData data) async {
+  Future<void> _showShareOptionsSheet(
+      BuildContext context, _OfferUiData data) async {
     final detailPath = data.isMarketplace ? 'listings' : 'offers';
-    final offerUrl = 'https://presto-app-74abe.web.app/#/$detailPath/${data.offerId}';
+    final offerUrl =
+        'https://presto-app-74abe.web.app/#/$detailPath/${data.offerId}';
     final shareText = '${data.title} - ${data.city}\n$offerUrl';
 
     await showModalBottomSheet<void>(
@@ -292,7 +299,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           );
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Texte copié. Collez-le dans Instagram.')),
+            const SnackBar(
+                content: Text('Texte copié. Collez-le dans Instagram.')),
           );
         }
 
@@ -312,7 +320,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF9FAFB),
                     borderRadius: BorderRadius.circular(14),
@@ -424,7 +433,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                               'body': shareText,
                             },
                           ),
-                          errorMessage: 'Impossible d\'ouvrir l\'application mail.',
+                          errorMessage:
+                              'Impossible d\'ouvrir l\'application mail.',
                         );
                       },
                     ),
@@ -438,7 +448,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     );
   }
 
-  Future<void> _showContactOptionsSheet(BuildContext context, _OfferUiData data) async {
+  Future<void> _showContactOptionsSheet(
+      BuildContext context, _OfferUiData data) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: false,
@@ -608,13 +619,15 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     if (!data.isMarketplace || data.offerId.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Le signalement est disponible uniquement pour Marketplace.'),
+          content: Text(
+              'Le signalement est disponible uniquement pour Marketplace.'),
         ),
       );
       return;
     }
 
-    if (data.advertiserId.trim().isNotEmpty && data.advertiserId.trim() == uid) {
+    if (data.advertiserId.trim().isNotEmpty &&
+        data.advertiserId.trim() == uid) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Vous ne pouvez pas signaler votre propre annonce.'),
@@ -715,9 +728,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         ListingReportDraft(
           listingId: data.offerId,
           reasonCode: reason,
-          reasonText: (reasonText ?? '').trim().isEmpty
-              ? null
-              : reasonText!.trim(),
+          reasonText:
+              (reasonText ?? '').trim().isEmpty ? null : reasonText!.trim(),
         ),
         recaptchaToken: recaptchaToken,
       );
@@ -818,14 +830,16 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         stream: _favoriteRepository.watchFavoriteListingIds(uid),
         builder: (context, snapshot) {
           final favoriteIds = snapshot.data ?? const <String>{};
-          final isFavorite =
-              data.offerId.trim().isNotEmpty && favoriteIds.contains(data.offerId.trim());
+          final isFavorite = data.offerId.trim().isNotEmpty &&
+              favoriteIds.contains(data.offerId.trim());
 
           return IconButton(
             tooltip: isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
             onPressed: () => _toggleFavorite(context, data, isFavorite),
             icon: Icon(
-              isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              isFavorite
+                  ? Icons.favorite_rounded
+                  : Icons.favorite_border_rounded,
             ),
             color: Colors.white,
             splashRadius: 20,
@@ -835,16 +849,18 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     }
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+      stream:
+          FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
       builder: (context, snapshot) {
         final favoriteIds =
-            (snapshot.data?.data()?['favoriteOfferIds'] as List<dynamic>? ?? const [])
+            (snapshot.data?.data()?['favoriteOfferIds'] as List<dynamic>? ??
+                    const [])
                 .map((e) => e.toString().trim())
                 .where((e) => e.isNotEmpty)
                 .toSet();
 
-        final isFavorite =
-            data.offerId.trim().isNotEmpty && favoriteIds.contains(data.offerId.trim());
+        final isFavorite = data.offerId.trim().isNotEmpty &&
+            favoriteIds.contains(data.offerId.trim());
 
         return IconButton(
           tooltip: isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
@@ -1024,13 +1040,19 @@ class _OfferUiData {
     final postalTrim = postalCode.trim();
 
     if (cityTrim.isNotEmpty) {
-      out = out.replaceAll(RegExp(RegExp.escape(cityTrim), caseSensitive: false), ' ');
+      out = out.replaceAll(
+          RegExp(RegExp.escape(cityTrim), caseSensitive: false), ' ');
     }
     if (postalTrim.isNotEmpty) {
-      out = out.replaceAll(RegExp('\\b${RegExp.escape(postalTrim)}\\b', caseSensitive: false), ' ');
+      out = out.replaceAll(
+          RegExp('\\b${RegExp.escape(postalTrim)}\\b', caseSensitive: false),
+          ' ');
     }
 
-    out = out.replaceAll(RegExp(r'\s+'), ' ').replaceAll(RegExp(r'\s*[-–|/]\s*$'), '').trim();
+    out = out
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .replaceAll(RegExp(r'\s*[-–|/]\s*$'), '')
+        .trim();
     return out.isEmpty ? title.trim() : out;
   }
 
@@ -1043,7 +1065,8 @@ class _OfferUiData {
       return getter == null ? null : _read(getter);
     }
 
-    dynamic readNestedValue(dynamic source, String key, [dynamic Function()? getter]) {
+    dynamic readNestedValue(dynamic source, String key,
+        [dynamic Function()? getter]) {
       if (source is Map) {
         return source[key];
       }
@@ -1054,18 +1077,25 @@ class _OfferUiData {
     final dynamic practical = readValue('practicalInfo', () => o.practicalInfo);
 
     final offerId = _asString(
-      readValue('id', () => o.id) ?? readValue('offerId') ?? readValue('listingId'),
+      readValue('id', () => o.id) ??
+          readValue('offerId') ??
+          readValue('listingId'),
       fallback: '',
     );
     final marketplaceFlag = readValue('isMarketplace', () => o.isMarketplace);
     final isMarketplace = marketplaceFlag is bool
-      ? marketplaceFlag
-        : _asString(readValue('categoryId', () => o.categoryId), fallback: '').isNotEmpty ||
-            _asString(readValue('cityId', () => o.cityId), fallback: '').isNotEmpty ||
-            _asString(readValue('visibility', () => o.visibility), fallback: '').isNotEmpty;
-    final title = _asString(readValue('title', () => o.title), fallback: 'Montage meuble');
+        ? marketplaceFlag
+        : _asString(readValue('categoryId', () => o.categoryId), fallback: '')
+                .isNotEmpty ||
+            _asString(readValue('cityId', () => o.cityId), fallback: '')
+                .isNotEmpty ||
+            _asString(readValue('visibility', () => o.visibility), fallback: '')
+                .isNotEmpty;
+    final title = _asString(readValue('title', () => o.title),
+        fallback: 'Montage meuble');
     final detail = _asString(
-      readValue('shortDescription', () => o.shortDescription) ?? readValue('detail'),
+      readValue('shortDescription', () => o.shortDescription) ??
+          readValue('detail'),
       fallback: '+ fixation TV',
     );
     final city = _asString(
@@ -1076,11 +1106,13 @@ class _OfferUiData {
       readValue('postalCode', () => o.postalCode) ?? readValue('cp'),
       fallback: '',
     );
-    final category = _asString(readValue('category', () => o.category), fallback: 'Bricolage');
+    final category = _asString(readValue('category', () => o.category),
+        fallback: 'Bricolage');
 
     final fullDescription = _asString(
       readValue('description', () => o.description),
-      fallback: 'Montage d\'un petit meuble + fixation d\'une\nTV au mur (support déjà acheté). Mur béton.\nPrévoir perceuse.',
+      fallback:
+          'Montage d\'un petit meuble + fixation d\'une\nTV au mur (support déjà acheté). Mur béton.\nPrévoir perceuse.',
     );
     final phone = _asString(readValue('phone', () => o.phone), fallback: '');
     final publishedAtLabel = _asString(
@@ -1095,13 +1127,15 @@ class _OfferUiData {
     final actionType = actionTypeRaw is OfferActionType
         ? actionTypeRaw
         : OfferActionType.contact;
-    final statusBadges = _asStringList(readValue('statusBadges', () => o.statusBadges));
-    final urgentRaw = readValue('isUrgent', () => o.isUrgent) ?? readValue('urgent');
+    final statusBadges =
+        _asStringList(readValue('statusBadges', () => o.statusBadges));
+    final urgentRaw =
+        readValue('isUrgent', () => o.isUrgent) ?? readValue('urgent');
     final isUrgent = urgentRaw is bool
-      ? urgentRaw
-      : statusBadges.any(
-        (badge) => badge.toLowerCase().contains('urgent'),
-        );
+        ? urgentRaw
+        : statusBadges.any(
+            (badge) => badge.toLowerCase().contains('urgent'),
+          );
 
     final price = _asDouble(
       readValue('price', () => o.price) ?? readValue('budget'),
@@ -1116,11 +1150,13 @@ class _OfferUiData {
       fallback: '',
     );
     final advertiserName = _asString(
-      readNestedValue(advertiser, 'name', () => advertiser.name) ?? readValue('userName'),
+      readNestedValue(advertiser, 'name', () => advertiser.name) ??
+          readValue('userName'),
       fallback: 'Bastien',
     );
     final advertiserRole = _asString(
-      readNestedValue(advertiser, 'bio', () => advertiser.bio) ?? readValue('bio'),
+      readNestedValue(advertiser, 'bio', () => advertiser.bio) ??
+          readValue('bio'),
       fallback: 'Bricoleur expérimenté',
     );
     final advertiserAvatarUrl = _asString(
@@ -1129,12 +1165,15 @@ class _OfferUiData {
       fallback: '',
     );
     final advertiserRating = _asDouble(
-      readNestedValue(advertiser, 'rating', () => advertiser.rating) ?? readValue('rating'),
+      readNestedValue(advertiser, 'rating', () => advertiser.rating) ??
+          readValue('rating'),
       fallback: 4.9,
     );
     final advertiserReviewCount = _asInt(
-      readNestedValue(advertiser, 'reviewsCount', () => advertiser.reviewsCount) ??
-          readNestedValue(advertiser, 'reviewCount', () => advertiser.reviewCount) ??
+      readNestedValue(
+              advertiser, 'reviewsCount', () => advertiser.reviewsCount) ??
+          readNestedValue(
+              advertiser, 'reviewCount', () => advertiser.reviewCount) ??
           readValue('reviewsCount'),
       fallback: 0,
     );
@@ -1157,18 +1196,21 @@ class _OfferUiData {
       fallback: 'Horaires à convenir',
     );
     final missionDelay = _asString(
-      readNestedValue(practical, 'missionDelay', () => practical.missionDelay) ??
+      readNestedValue(
+              practical, 'missionDelay', () => practical.missionDelay) ??
           readValue('missionDelay', () => o.missionDelay) ??
           readValue('averageDelay', () => o.averageDelay),
       fallback: 'Délai non précisé',
     );
     final averageDelay = _asString(
-      readNestedValue(practical, 'averageDelay', () => practical.averageDelay) ??
+      readNestedValue(
+              practical, 'averageDelay', () => practical.averageDelay) ??
           readValue('averageDelay', () => o.averageDelay),
       fallback: '30 min en moyenne',
     );
     final paymentMethod = _asString(
-      readNestedValue(practical, 'paymentMethod', () => practical.paymentMethod),
+      readNestedValue(
+          practical, 'paymentMethod', () => practical.paymentMethod),
       fallback: 'Paiement à convenir',
     );
     final serviceType = _asString(
@@ -1852,7 +1894,8 @@ class _InfoLine extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(icon, color: const Color(0xFF6C7384), size: compact ? 20 : 22),
+              Icon(icon,
+                  color: const Color(0xFF6C7384), size: compact ? 20 : 22),
               SizedBox(width: compact ? 8 : 10),
               Expanded(
                 child: Align(
@@ -2009,7 +2052,8 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     if (normalized.isEmpty) return 'Non renseigné';
 
     final compact = normalized.replaceAll(RegExp(r'\s+'), ' ');
-    final internationalPrefix = RegExp(r'^(\+\d{1,4})').firstMatch(compact)?.group(1);
+    final internationalPrefix =
+        RegExp(r'^(\+\d{1,4})').firstMatch(compact)?.group(1);
     if (internationalPrefix != null && internationalPrefix.isNotEmpty) {
       return '$internationalPrefix ******';
     }
@@ -2032,9 +2076,8 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
     const line = Color(0xFFE6E3E6);
 
     final hasPhone = widget.phone.trim().isNotEmpty;
-    final displayedValue = _isPhoneVisible
-        ? widget.phone.trim()
-        : _maskedLabel(widget.phone);
+    final displayedValue =
+        _isPhoneVisible ? widget.phone.trim() : _maskedLabel(widget.phone);
 
     return Column(
       children: [
@@ -2084,11 +2127,14 @@ class _MaskedPhoneInfoLineState extends State<_MaskedPhoneInfoLine> {
                 onPressed: hasPhone
                     ? () => setState(() => _isPhoneVisible = !_isPhoneVisible)
                     : null,
-                tooltip: _isPhoneVisible ? 'Masquer le numéro' : 'Voir le numéro',
+                tooltip:
+                    _isPhoneVisible ? 'Masquer le numéro' : 'Voir le numéro',
                 visualDensity: VisualDensity.compact,
                 splashRadius: widget.compact ? 18 : 20,
                 icon: Icon(
-                  _isPhoneVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  _isPhoneVisible
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                   color: hasPhone ? navy : muted,
                   size: widget.compact ? 20 : 22,
                 ),
@@ -2242,7 +2288,8 @@ class _InlineCta extends StatelessWidget {
   final bool compact;
   final VoidCallback onTap;
 
-  const _InlineCta({required this.label, this.compact = false, required this.onTap});
+  const _InlineCta(
+      {required this.label, this.compact = false, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
