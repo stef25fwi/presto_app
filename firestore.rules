@@ -161,8 +161,10 @@ service cloud.firestore {
     match /conversations/{conversationId} {
       function isParticipant() {
         return isSignedIn()
-          && (resource.data.participants is list)
-          && resource.data.participants.hasAny([uid()]);
+          && (
+            ((resource.data.participants is list) && resource.data.participants.hasAny([uid()]))
+            || ((resource.data.participant_ids is list) && resource.data.participant_ids.hasAny([uid()]))
+          );
       }
 
       function parentConversationExists() {
@@ -170,10 +172,13 @@ service cloud.firestore {
       }
 
       function isParentConversationParticipant() {
+        let convData = get(/databases/$(database)/documents/conversations/$(conversationId)).data;
         return isSignedIn()
           && parentConversationExists()
-          && (get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants is list)
-          && get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants.hasAny([uid()]);
+          && (
+            ((convData.participants is list) && convData.participants.hasAny([uid()]))
+            || ((convData.participant_ids is list) && convData.participant_ids.hasAny([uid()]))
+          );
       }
 
       allow read: if isParticipant();
