@@ -18,20 +18,11 @@ Stream<int> streamVisibleUnreadMessageCount({required String userId}) {
   }
 
   final controller = StreamController<int>();
-  final docsByField =
-      <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
-  final subscriptions = <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
+  var docs = const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? subscription;
 
   void emit() {
-    final mergedDocs = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
-    for (final field in conversationParticipantQueryFieldAliases) {
-      for (final doc in docsByField[field] ??
-          const <QueryDocumentSnapshot<Map<String, dynamic>>>[]) {
-        mergedDocs.putIfAbsent(doc.id, () => doc);
-      }
-    }
-
-    final unreadMessages = mergedDocs.values.fold<int>(0, (total, doc) {
+    final unreadMessages = docs.fold<int>(0, (total, doc) {
       final conversation = ConversationSummary.fromFirestore(doc);
       if (!conversation.includesUser(normalizedUserId)) {
         return total;
@@ -50,29 +41,23 @@ Stream<int> streamVisibleUnreadMessageCount({required String userId}) {
     }
   }
 
-  for (final field in conversationParticipantQueryFieldAliases) {
-    subscriptions.add(
-      FirebaseFirestore.instance
-          .collection('conversations')
-          .where(field, arrayContains: normalizedUserId)
-          .snapshots()
-          .listen(
-            (snapshot) {
-              docsByField[field] = snapshot.docs;
-              emit();
-            },
-            onError: (Object error, StackTrace stackTrace) {
-              docsByField[field] = const [];
-              emit();
-            },
-          ),
-    );
-  }
+  subscription = FirebaseFirestore.instance
+      .collection('conversations')
+      .where(conversationPrimaryParticipantField, arrayContains: normalizedUserId)
+      .snapshots()
+      .listen(
+        (snapshot) {
+          docs = snapshot.docs;
+          emit();
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          docs = const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+          emit();
+        },
+      );
 
   controller.onCancel = () async {
-    for (final subscription in subscriptions) {
-      await subscription.cancel();
-    }
+    await subscription?.cancel();
   };
 
   return controller.stream;

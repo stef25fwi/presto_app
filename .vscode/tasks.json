@@ -65,7 +65,7 @@
     {
       "label": "Git: Stage Messages Release",
       "type": "shell",
-      "command": "git add .vscode/tasks.json lib/main.dart lib/pages/offers/offer_details_page.dart lib/pages/offers/template/offer_detail_v2_page.dart lib/services/app_route_parser.dart test/app_route_parser_test.dart tools/create_test_messaging_scenario.cjs tools/inspect_conversation_visibility.cjs tools/verify_messages_list_visibility.cjs",
+      "command": "git add .vscode/tasks.json lib/main.dart lib/pages/messages/conversations_list_page.dart lib/pages/offers/offer_details_page.dart lib/pages/offers/template/offer_detail_v2_page.dart lib/services/app_route_parser.dart lib/services/conversation_participants.dart lib/services/inbox_counts.dart test/app_route_parser_test.dart tools/create_test_messaging_scenario.cjs tools/inspect_conversation_visibility.cjs tools/recreate_offer_conversation_via_callable.cjs tools/send_real_conversation_message.cjs tools/verify_messages_list_visibility.cjs",
       "problemMatcher": []
     },
     {
@@ -77,7 +77,7 @@
     {
       "label": "Git: Commit Messaging + Home Fixes",
       "type": "shell",
-      "command": "git commit -m \"fix(messages): unify entry points and add visibility diagnostics\"",
+      "command": "git commit -m \"fix(messages): use canonical conversation query\"",
       "problemMatcher": []
     },
     {
@@ -183,6 +183,18 @@
       "label": "Messaging: Inspect Conversation Visibility",
       "type": "shell",
       "command": "node tools/inspect_conversation_visibility.cjs offer_KTctKNE2gKK8mEm1yrTM__4TMLQxgGZZTvkScQYDxyfILOjsH2__modRxXduO8TnMlD6MFxobuKigVy2",
+      "problemMatcher": []
+    },
+    {
+      "label": "Messaging: Recreate Real Missing Conversation",
+      "type": "shell",
+      "command": "node tools/recreate_offer_conversation_via_callable.cjs KTctKNE2gKK8mEm1yrTM modRxXduO8TnMlD6MFxobuKigVy2 4TMLQxgGZZTvkScQYDxyfILOjsH2",
+      "problemMatcher": []
+    },
+    {
+      "label": "Messaging: Send Real Conversation Message",
+      "type": "shell",
+      "command": "node tools/send_real_conversation_message.cjs",
       "problemMatcher": []
     }
   ]

@@ -181,72 +181,56 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _conversationStream(
-    String participantField,
     String userId,
   ) {
     return FirebaseFirestore.instance
         .collection('conversations')
-        .where(participantField, arrayContains: userId)
+        .where(conversationPrimaryParticipantField, arrayContains: userId)
         .snapshots();
   }
 
   Stream<_ConversationQueryState> _buildConversationStateStream(String userId) {
     final controller = StreamController<_ConversationQueryState>();
-    final docsByField = <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
     final errorsByField = <String, Object>{};
-    final readyFields = <String>{};
-    final subscriptions = <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
+    var docs = const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? subscription;
 
     void emit() {
-      final docs = _mergeConversationDocs([
-        for (final field in conversationParticipantQueryFieldAliases)
-          docsByField[field] ?? const <QueryDocumentSnapshot<Map<String, dynamic>>>[],
-      ]);
       if (controller.isClosed) return;
       controller.add(
         _ConversationQueryState(
           docs: docs,
           errorsByField: Map<String, Object>.unmodifiable(errorsByField),
-          isLoading: readyFields.length < conversationParticipantQueryFieldAliases.length &&
-              docs.isEmpty &&
-              errorsByField.isEmpty,
+          isLoading: docs.isEmpty && errorsByField.isEmpty,
         ),
       );
     }
 
-    for (final field in conversationParticipantQueryFieldAliases) {
-      subscriptions.add(
-        _conversationStream(field, userId).listen(
-          (snapshot) {
-            docsByField[field] = snapshot.docs;
-            errorsByField.remove(field);
-            readyFields.add(field);
-            if (kDebugMode) {
-              debugPrint(
-                '[MessagesList] query field=$field docs=${snapshot.docs.length} user=$userId',
-              );
-            }
-            emit();
-          },
-          onError: (error, stackTrace) {
-            docsByField[field] = const [];
-            errorsByField[field] = error;
-            readyFields.add(field);
-            if (kDebugMode) {
-              debugPrint(
-                '[MessagesList] query error field=$field user=$userId error=$error',
-              );
-            }
-            emit();
-          },
-        ),
-      );
-    }
+    subscription = _conversationStream(userId).listen(
+      (snapshot) {
+        docs = snapshot.docs;
+        errorsByField.remove(conversationPrimaryParticipantField);
+        if (kDebugMode) {
+          debugPrint(
+            '[MessagesList] query field=$conversationPrimaryParticipantField docs=${snapshot.docs.length} user=$userId',
+          );
+        }
+        emit();
+      },
+      onError: (error, stackTrace) {
+        docs = const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+        errorsByField[conversationPrimaryParticipantField] = error;
+        if (kDebugMode) {
+          debugPrint(
+            '[MessagesList] query error field=$conversationPrimaryParticipantField user=$userId error=$error',
+          );
+        }
+        emit();
+      },
+    );
 
     controller.onCancel = () async {
-      for (final subscription in subscriptions) {
-        await subscription.cancel();
-      }
+      await subscription?.cancel();
     };
 
     return controller.stream;
