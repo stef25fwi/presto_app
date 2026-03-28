@@ -1,17 +1,60 @@
+const conversationParticipantQueryFieldAliases = <String>[
+  'participants',
+  'participant_ids',
+  'participantIds',
+];
+
+const conversationParticipantFieldAliases = <String>[
+  ...conversationParticipantQueryFieldAliases,
+  'userIds',
+  'memberIds',
+];
+
+const conversationParticipantMapAliases = <String>[
+  'participantNames',
+  'participant_names',
+  'unreadCount',
+  'unread_count',
+  'lastReadAt',
+  'last_read_at',
+  'archivedBy',
+  'blockedBy',
+];
+
 List<String> readConversationParticipants(Map<String, dynamic> data) {
   final result = <String>[];
   final seen = <String>{};
 
-  for (final field in const ['participants', 'participant_ids']) {
+  void addParticipant(dynamic value) {
+    final participantId = value.toString().trim();
+    if (participantId.isEmpty || !seen.add(participantId)) return;
+    result.add(participantId);
+  }
+
+  for (final field in conversationParticipantFieldAliases) {
     final raw = data[field];
     if (raw is! List) continue;
 
     for (final entry in raw) {
-      final participantId = entry.toString().trim();
-      if (participantId.isEmpty || !seen.add(participantId)) continue;
-      result.add(participantId);
+      addParticipant(entry);
     }
   }
 
+  for (final field in conversationParticipantMapAliases) {
+    final raw = data[field];
+    if (raw is! Map) continue;
+
+    for (final key in raw.keys) {
+      addParticipant(key);
+    }
+  }
+
+  result.sort();
   return result;
+}
+
+bool conversationIncludesUser(Map<String, dynamic> data, String userId) {
+  final normalizedUserId = userId.trim();
+  if (normalizedUserId.isEmpty) return false;
+  return readConversationParticipants(data).contains(normalizedUserId);
 }

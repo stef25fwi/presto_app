@@ -87,15 +87,45 @@
       "problemMatcher": []
     },
     {
+      "label": "Functions: Install Dependencies",
+      "type": "shell",
+      "command": "npm --prefix functions install",
+      "problemMatcher": []
+    },
+    {
       "label": "Functions: Test",
       "type": "shell",
       "command": "npm --prefix functions test",
       "problemMatcher": []
     },
     {
+      "label": "Functions: Messaging Mirror Backfill Dry Run",
+      "type": "shell",
+      "command": "npm --prefix functions run messaging:backfill:mirror:dry-run",
+      "problemMatcher": []
+    },
+    {
+      "label": "Functions: Messaging Mirror Backfill",
+      "type": "shell",
+      "command": "npm --prefix functions run messaging:backfill:mirror",
+      "problemMatcher": []
+    },
+    {
       "label": "Flutter: Build Web Release",
       "type": "shell",
       "command": "flutter build web --release",
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Pub Get",
+      "type": "shell",
+      "command": "flutter pub get",
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Test Marketplace",
+      "type": "shell",
+      "command": "flutter test test/marketplace_models_test.dart",
       "problemMatcher": []
     },
     {

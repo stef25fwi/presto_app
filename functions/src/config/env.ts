@@ -12,6 +12,14 @@ export const EMAIL_FROM = process.env.EMAIL_FROM || "PRESTO <no-reply@presto.app
 
 export const PROJECT_REGION = process.env.FUNCTION_REGION || "europe-west1";
 export const APP_BASE_URL = process.env.APP_BASE_URL || "https://presto.app";
+export const GCP_PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "";
+export const RECAPTCHA_ENTERPRISE_SITE_KEY = process.env.RECAPTCHA_ENTERPRISE_SITE_KEY || "";
+export const MARKETPLACE_MAX_MEDIA_COUNT = Number(process.env.MARKETPLACE_MAX_MEDIA_COUNT || 10);
+export const MARKETPLACE_LISTING_DRAFT_LIMIT = Number(process.env.MARKETPLACE_LISTING_DRAFT_LIMIT || 50);
+export const MARKETPLACE_AUTO_APPROVE_ENABLED = process.env.MARKETPLACE_AUTO_APPROVE_ENABLED !== "false";
+export const MARKETPLACE_REPORT_REVIEW_THRESHOLD = Number(process.env.MARKETPLACE_REPORT_REVIEW_THRESHOLD || 3);
+export const MARKETPLACE_RECAPTCHA_MIN_SCORE = Number(process.env.MARKETPLACE_RECAPTCHA_MIN_SCORE || 0.5);
+export const MARKETPLACE_VIEW_RATE_LIMIT = Number(process.env.MARKETPLACE_VIEW_RATE_LIMIT || 20);
 
 export const EMAIL_PROVIDER_SECRETS = [
 	EMAIL_PROVIDER_API_KEY,

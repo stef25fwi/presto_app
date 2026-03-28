@@ -1,3 +1,4 @@
+import admin from "firebase-admin";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { db } from "../../core/firestore";
 import { canProceedRateLimited } from "../../core/rate_limit";
@@ -5,7 +6,12 @@ import { COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
 import { APP_BASE_URL } from "../../config/env";
 import { createInAppNotification, sendPushToUser } from "../notifications/push";
+import { computeConversationStatus } from "./state";
 import { readConversationParticipants } from "./participants";
+import {
+  buildConversationMirrorFields,
+  readConversationMirrorData,
+} from "./mirror";
 
 // Cooldown de 15 min par conversation × destinataire pour éviter le spam
 const MESSAGE_EMAIL_COOLDOWN_MS = 15 * 60 * 1000;
@@ -83,8 +89,38 @@ export const onConversationSubMessageCreated = onDocumentCreated(
       : "message.created.existing_thread";
 
     const conversationSnap = await db.collection(COLLECTIONS.conversations).doc(conversationId).get();
-    const conversation = conversationSnap.data() ?? {};
-    const participants = readConversationParticipants(conversation)
+    const conversation = readConversationMirrorData(conversationSnap.data() ?? {});
+    const normalizedParticipants = readConversationParticipants(conversationSnap.data() ?? {});
+    const normalizedMessageText = String(message.text || message.body || "").trim();
+
+    if (normalizedParticipants.length > 0) {
+      const archivedBy = conversation.archivedBy;
+      const blockedBy = conversation.blockedBy;
+      const participantNames = {
+        ...conversation.participantNames,
+      };
+      if (senderId && senderName) {
+        participantNames[senderId] = senderName;
+      }
+
+      await db.collection(COLLECTIONS.conversations).doc(conversationId).set(
+        buildConversationMirrorFields({
+          ...conversation,
+          participants: normalizedParticipants,
+          participantNames,
+          lastMessage: normalizedMessageText || conversation.lastMessage,
+          lastSenderId: senderId || conversation.lastSenderId,
+          lastSenderName: senderName || conversation.lastSenderName,
+          messageCount: conversation.messageCount > 0 ? conversation.messageCount : 1,
+          status: computeConversationStatus(normalizedParticipants, archivedBy, blockedBy),
+          lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }),
+        { merge: true },
+      );
+    }
+
+    const participants = normalizedParticipants
       .filter((value) => value.length > 0 && value !== senderId);
     const offerTitle = String(conversation.offerTitle || "Annonce IliPresto").trim();
     const offerId = String(conversation.offerId || "").trim();

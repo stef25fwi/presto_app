@@ -17,6 +17,42 @@ service cloud.firestore {
         && (get(/databases/$(database)/documents/admins/$(uid())).data.enabled != false);
     }
 
+    function hasClaimRole(role) {
+      return isSignedIn()
+        && (request.auth.token.roles is list)
+        && request.auth.token.roles.hasAny([role]);
+    }
+
+    function isMarketplaceModerator() {
+      return hasClaimRole('moderator')
+        || hasClaimRole('admin')
+        || hasClaimRole('superadmin')
+        || isAdmin();
+    }
+
+    function isMarketplaceAdmin() {
+      return hasClaimRole('admin')
+        || hasClaimRole('superadmin')
+        || isAdmin();
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function isPublicListingData(data) {
+      return data.status == 'active' && data.visibility == 'public';
+    }
+
+    function isListingOwner(data) {
+      return isSignedIn() && data.ownerId == uid();
+    }
+
+    function isChatParticipant(data) {
+      return isSignedIn()
+        && ((data.participants is list) && data.participants.hasAny([uid()]));
+    }
+
     function isOwnerByField(data) {
       return isSignedIn() && (
         (data.userId is string && data.userId == uid()) ||
@@ -47,7 +83,32 @@ service cloud.firestore {
 
     // ✅ Users: chaque utilisateur gère son doc
     match /users/{userId} {
-      allow read, create, update, delete: if isSignedIn() && userId == uid();
+      allow read: if isSignedIn() && (userId == uid() || isMarketplaceModerator());
+      allow create: if isSignedIn()
+        && userId == uid()
+        && !request.resource.data.keys().hasAny([
+          'roles',
+          'primaryRole',
+          'status',
+          'moderationStrikeCount',
+          'spamScore',
+          'trustedSeller',
+          'lastRoleSyncAt',
+          'lastRecaptchaScore'
+        ]);
+      allow update: if isSignedIn()
+        && userId == uid()
+        && !changedKeys().hasAny([
+          'roles',
+          'primaryRole',
+          'status',
+          'moderationStrikeCount',
+          'spamScore',
+          'trustedSeller',
+          'lastRoleSyncAt',
+          'lastRecaptchaScore'
+        ]);
+      allow delete: if isSignedIn() && userId == uid();
 
       match /push_tokens/{tokenId} {
         allow read, create, update, delete: if false;
@@ -62,6 +123,117 @@ service cloud.firestore {
       match /favoriteOffers/{offerId} {
         allow read, create, update, delete: if isSignedIn() && userId == uid();
       }
+    }
+
+    match /profiles/{profileId} {
+      allow read: if true;
+      allow create: if isSignedIn()
+        && profileId == uid()
+        && request.resource.data.userId == uid()
+        && !request.resource.data.keys().hasAny(['roles', 'status', 'isVerified', 'trustedSeller']);
+      allow update: if isSignedIn()
+        && profileId == uid()
+        && resource.data.userId == uid()
+        && request.resource.data.userId == resource.data.userId
+        && !changedKeys().hasAny(['roles', 'status', 'isVerified', 'trustedSeller']);
+      allow delete: if false;
+    }
+
+    match /listingDrafts/{draftId} {
+      allow read: if isSignedIn() && resource.data.ownerId == uid();
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == uid()
+        && !request.resource.data.keys().hasAny([
+          'listingId',
+          'submittedAt',
+          'moderationStatus',
+          'riskScore',
+          'reportCount',
+          'favoriteCount',
+          'viewCount',
+          'contactCount',
+          'publishedAt',
+          'reviewedBy',
+          'reviewedAt'
+        ]);
+      allow update: if isSignedIn()
+        && resource.data.ownerId == uid()
+        && request.resource.data.ownerId == resource.data.ownerId
+        && !changedKeys().hasAny([
+          'listingId',
+          'submittedAt',
+          'moderationStatus',
+          'riskScore',
+          'reportCount',
+          'favoriteCount',
+          'viewCount',
+          'contactCount',
+          'publishedAt',
+          'reviewedBy',
+          'reviewedAt'
+        ]);
+      allow delete: if isSignedIn() && resource.data.ownerId == uid();
+    }
+
+    match /listings/{listingId} {
+      allow read: if isPublicListingData(resource.data)
+        || isListingOwner(resource.data)
+        || isMarketplaceModerator();
+      allow create, update, delete: if false;
+    }
+
+    match /listingModeration/{listingId} {
+      allow read: if isMarketplaceModerator()
+        || (isSignedIn() && resource.data.ownerId == uid());
+      allow write: if false;
+    }
+
+    match /listingReports/{reportId} {
+      allow read: if isMarketplaceModerator()
+        || (isSignedIn() && resource.data.reporterId == uid());
+      allow create, update, delete: if false;
+    }
+
+    match /favorites/{favoriteId} {
+      allow read: if isSignedIn() && resource.data.userId == uid();
+      allow write: if false;
+    }
+
+    match /chatThreads/{threadId} {
+      allow read: if isChatParticipant(resource.data) || isMarketplaceModerator();
+      allow create, update, delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn()
+          && exists(/databases/$(database)/documents/chatThreads/$(threadId))
+          && isChatParticipant(get(/databases/$(database)/documents/chatThreads/$(threadId)).data);
+        allow create, update, delete: if false;
+      }
+    }
+
+    match /adminActions/{actionId} {
+      allow read: if isMarketplaceModerator();
+      allow write: if false;
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /cities/{cityId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /analyticsSnapshots/{snapshotId} {
+      allow read: if isMarketplaceAdmin();
+      allow write: if false;
+    }
+
+    match /appConfig/{configId} {
+      allow read: if isMarketplaceAdmin();
+      allow write: if false;
     }
 
     match /notification_preferences/{userId} {
@@ -164,6 +336,9 @@ service cloud.firestore {
           && (
             ((resource.data.participants is list) && resource.data.participants.hasAny([uid()]))
             || ((resource.data.participant_ids is list) && resource.data.participant_ids.hasAny([uid()]))
+            || ((resource.data.participantIds is list) && resource.data.participantIds.hasAny([uid()]))
+            || ((resource.data.userIds is list) && resource.data.userIds.hasAny([uid()]))
+            || ((resource.data.memberIds is list) && resource.data.memberIds.hasAny([uid()]))
           );
       }
 
@@ -178,6 +353,9 @@ service cloud.firestore {
           && (
             ((convData.participants is list) && convData.participants.hasAny([uid()]))
             || ((convData.participant_ids is list) && convData.participant_ids.hasAny([uid()]))
+            || ((convData.participantIds is list) && convData.participantIds.hasAny([uid()]))
+            || ((convData.userIds is list) && convData.userIds.hasAny([uid()]))
+            || ((convData.memberIds is list) && convData.memberIds.hasAny([uid()]))
           );
       }
 

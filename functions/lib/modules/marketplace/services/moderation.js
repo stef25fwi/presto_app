@@ -1,0 +1,327 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.loadModerationConfig = loadModerationConfig;
+exports.moderateListingMedia = moderateListingMedia;
+exports.evaluateListingText = evaluateListingText;
+exports.computeModerationDecision = computeModerationDecision;
+exports.evaluateListingRisk = evaluateListingRisk;
+exports.finalizeListingPublication = finalizeListingPublication;
+exports.persistModerationResult = persistModerationResult;
+const firebase_admin_1 = __importDefault(require("firebase-admin"));
+const firestore_1 = require("../../../core/firestore");
+const logger_1 = require("../../../core/logger");
+const env_1 = require("../../../config/env");
+const constants_1 = require("../../../shared/constants");
+const google_api_1 = require("./google_api");
+const SAFE_SEARCH_SCORES = {
+    UNKNOWN: 0,
+    VERY_UNLIKELY: 0,
+    UNLIKELY: 10,
+    POSSIBLE: 40,
+    LIKELY: 70,
+    VERY_LIKELY: 100,
+};
+const DEFAULT_BANNED_TERMS = ["escort", "arme", "fausse carte", "crypto miracle"];
+const DEFAULT_RISKY_TERMS = ["telegram", "whatsapp", "paiement avance", "urgent cash"];
+function normalizeTerms(values, fallback) {
+    if (!Array.isArray(values)) {
+        return fallback;
+    }
+    const result = values
+        .map((value) => String(value || "").trim().toLowerCase())
+        .filter(Boolean);
+    return result.length > 0 ? Array.from(new Set(result)) : fallback;
+}
+function normalizeText(value) {
+    return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+function includesAnyTerm(source, terms) {
+    return terms.some((term) => source.includes(term));
+}
+function computeSafeSearchRisk(annotation) {
+    const autoFlags = new Set();
+    let score = 0;
+    const adultScore = Math.max(SAFE_SEARCH_SCORES[annotation.adult || "UNKNOWN"] || 0, SAFE_SEARCH_SCORES[annotation.racy || "UNKNOWN"] || 0);
+    const violenceScore = Math.max(SAFE_SEARCH_SCORES[annotation.violence || "UNKNOWN"] || 0, SAFE_SEARCH_SCORES[annotation.medical || "UNKNOWN"] || 0);
+    if (adultScore >= 40)
+        autoFlags.add("adult_content");
+    if (violenceScore >= 40)
+        autoFlags.add("violent_content");
+    score += Math.floor(adultScore * 0.35);
+    score += Math.floor(violenceScore * 0.35);
+    return {
+        autoFlags: Array.from(autoFlags),
+        score: Math.min(100, score),
+    };
+}
+async function loadModerationConfig() {
+    const snap = await firestore_1.db.collection(constants_1.COLLECTIONS.appConfig).doc("marketplace").get();
+    const data = (snap.data() ?? {});
+    const moderation = (data.moderation ?? {});
+    return {
+        bannedTerms: normalizeTerms(moderation.bannedTerms, DEFAULT_BANNED_TERMS),
+        riskyTerms: normalizeTerms(moderation.riskyTerms, DEFAULT_RISKY_TERMS),
+        autoApproveEnabled: typeof moderation.autoApproveEnabled === "boolean"
+            ? moderation.autoApproveEnabled
+            : env_1.MARKETPLACE_AUTO_APPROVE_ENABLED,
+        maxMediaCount: typeof moderation.maxMediaCount === "number"
+            ? moderation.maxMediaCount
+            : env_1.MARKETPLACE_MAX_MEDIA_COUNT,
+        maxDraftsPerUser: typeof moderation.maxDraftsPerUser === "number"
+            ? moderation.maxDraftsPerUser
+            : env_1.MARKETPLACE_LISTING_DRAFT_LIMIT,
+    };
+}
+async function moderateListingMedia(media) {
+    if (media.length === 0) {
+        return {
+            safeSearchResult: {},
+            autoFlags: [],
+            imageScanStatus: "completed",
+            riskScore: 0,
+        };
+    }
+    try {
+        const bucket = firebase_admin_1.default.storage().bucket().name;
+        const responses = await Promise.all(media.map(async (entry) => {
+            const imageUri = entry.storagePath.startsWith("gs://")
+                ? entry.storagePath
+                : `gs://${bucket}/${entry.storagePath}`;
+            const response = await (0, google_api_1.fetchGoogleApiJson)({
+                url: "https://vision.googleapis.com/v1/images:annotate",
+                body: {
+                    requests: [
+                        {
+                            image: { source: { imageUri } },
+                            features: [{ type: "SAFE_SEARCH_DETECTION" }],
+                        },
+                    ],
+                },
+            });
+            return response.responses?.[0]?.safeSearchAnnotation ?? {};
+        }));
+        const aggregate = {};
+        let riskScore = 0;
+        const flagSet = new Set();
+        for (const annotation of responses) {
+            for (const [key, value] of Object.entries(annotation)) {
+                const currentScore = SAFE_SEARCH_SCORES[aggregate[key] || "UNKNOWN"] || 0;
+                const nextScore = SAFE_SEARCH_SCORES[value || "UNKNOWN"] || 0;
+                if (nextScore >= currentScore) {
+                    aggregate[key] = value;
+                }
+            }
+            const result = computeSafeSearchRisk(annotation);
+            riskScore = Math.max(riskScore, result.score);
+            for (const flag of result.autoFlags) {
+                flagSet.add(flag);
+            }
+        }
+        return {
+            safeSearchResult: {
+                provider: "google_vision_safe_search",
+                region: env_1.PROJECT_REGION,
+                summary: aggregate,
+            },
+            autoFlags: Array.from(flagSet),
+            imageScanStatus: "completed",
+            riskScore,
+        };
+    }
+    catch (error) {
+        logger_1.logger.warn("marketplace_safe_search_failed", {
+            error: error instanceof Error ? error.message : String(error),
+            mediaCount: media.length,
+        });
+        return {
+            safeSearchResult: {
+                provider: "google_vision_safe_search",
+                error: error instanceof Error ? error.message : String(error),
+            },
+            autoFlags: [],
+            imageScanStatus: "failed",
+            riskScore: 45,
+        };
+    }
+}
+async function evaluateListingText({ title, description, ownerSignals, config, }) {
+    const text = normalizeText(`${title} ${description}`);
+    const autoFlags = new Set();
+    let riskScore = 0;
+    const reasons = [];
+    if (includesAnyTerm(text, config.bannedTerms)) {
+        autoFlags.add("banned_term");
+        riskScore += 65;
+        reasons.push("banned_terms_detected");
+    }
+    if (includesAnyTerm(text, config.riskyTerms)) {
+        autoFlags.add("suspicious_text");
+        riskScore += 25;
+        reasons.push("risky_terms_detected");
+    }
+    const spamIndicators = ["http://", "https://", "@@", "100%", "!!!"].filter((entry) => text.includes(entry));
+    if (spamIndicators.length >= 2) {
+        autoFlags.add("spam_pattern");
+        riskScore += 20;
+        reasons.push("spam_markers_detected");
+    }
+    if (ownerSignals.hasSimilarActiveListing) {
+        autoFlags.add("duplicate_listing");
+        riskScore += 20;
+        reasons.push("similar_active_listing_detected");
+    }
+    if (ownerSignals.recentListingCount >= 5) {
+        autoFlags.add("too_many_posts");
+        riskScore += 20;
+        reasons.push("posting_velocity_high");
+    }
+    if (ownerSignals.spamScore >= 60 || ownerSignals.moderationStrikeCount >= 3) {
+        autoFlags.add("risky_user");
+        riskScore += 20;
+        reasons.push("risky_user_profile");
+    }
+    if (ownerSignals.lastRecaptchaScore != null && ownerSignals.lastRecaptchaScore < 0.3) {
+        riskScore += 15;
+        reasons.push("low_recaptcha_score");
+    }
+    return {
+        autoFlags: Array.from(autoFlags),
+        textScanStatus: "completed",
+        riskScore: Math.min(100, riskScore),
+        reason: reasons.join(",") || "clean",
+    };
+}
+function computeModerationDecision({ riskScore, autoFlags, }) {
+    const severeFlags = new Set(["adult_content", "violent_content", "banned_term"]);
+    if (autoFlags.some((flag) => severeFlags.has(flag)) && riskScore >= 70) {
+        return {
+            moderationDecision: "blocked",
+            moderationReason: "high_risk_content_detected",
+        };
+    }
+    if (riskScore >= 55 || autoFlags.includes("duplicate_listing") || autoFlags.includes("too_many_posts")) {
+        return {
+            moderationDecision: "manual_review",
+            moderationReason: "manual_review_required",
+        };
+    }
+    if (riskScore >= 35) {
+        return {
+            moderationDecision: "auto_flagged",
+            moderationReason: "auto_flags_detected",
+        };
+    }
+    return {
+        moderationDecision: "approved",
+        moderationReason: "approved_automatically",
+    };
+}
+async function evaluateListingRisk(input) {
+    const config = await loadModerationConfig();
+    const [mediaReview, textReview] = await Promise.all([
+        moderateListingMedia(input.media),
+        evaluateListingText({
+            title: input.title,
+            description: input.description,
+            ownerSignals: input.ownerSignals,
+            config,
+        }),
+    ]);
+    const flagSet = new Set([
+        ...mediaReview.autoFlags,
+        ...textReview.autoFlags,
+    ]);
+    const riskScore = Math.min(100, mediaReview.riskScore + textReview.riskScore);
+    const decision = computeModerationDecision({
+        riskScore,
+        autoFlags: Array.from(flagSet),
+    });
+    return {
+        safeSearchResult: mediaReview.safeSearchResult,
+        autoFlags: Array.from(flagSet),
+        riskScore,
+        imageScanStatus: mediaReview.imageScanStatus,
+        textScanStatus: textReview.textScanStatus,
+        moderationDecision: decision.moderationDecision,
+        moderationReason: decision.moderationReason,
+    };
+}
+function finalizeListingPublication({ evaluation, now, autoApproveEnabled, }) {
+    const allowAutoApproval = autoApproveEnabled ?? env_1.MARKETPLACE_AUTO_APPROVE_ENABLED;
+    if (evaluation.moderationDecision === "approved" && allowAutoApproval) {
+        return {
+            status: "active",
+            moderationStatus: "approved",
+            visibility: "public",
+            publishedAt: now,
+            riskScore: evaluation.riskScore,
+        };
+    }
+    if (evaluation.moderationDecision === "approved") {
+        return {
+            status: "pending",
+            moderationStatus: "pending",
+            visibility: "private",
+            publishedAt: null,
+            riskScore: evaluation.riskScore,
+        };
+    }
+    if (evaluation.moderationDecision === "blocked") {
+        return {
+            status: "rejected",
+            moderationStatus: "blocked",
+            visibility: "hidden",
+            publishedAt: null,
+            riskScore: evaluation.riskScore,
+        };
+    }
+    const moderationStatus = evaluation.moderationDecision === "auto_flagged"
+        ? "auto_flagged"
+        : "manual_review";
+    const status = evaluation.moderationDecision === "rejected" ? "rejected" : "pending";
+    const visibility = evaluation.moderationDecision === "rejected" ? "hidden" : "private";
+    return {
+        status,
+        moderationStatus,
+        visibility,
+        publishedAt: null,
+        riskScore: evaluation.riskScore,
+    };
+}
+async function persistModerationResult({ listingId, ownerId, evaluation, }) {
+    const now = firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
+    const listingPatch = finalizeListingPublication({
+        evaluation,
+        now,
+    });
+    await Promise.all([
+        firestore_1.db.collection(constants_1.COLLECTIONS.listingModeration).doc(listingId).set({
+            id: listingId,
+            listingId,
+            ownerId,
+            safeSearchResult: evaluation.safeSearchResult,
+            autoFlags: evaluation.autoFlags,
+            moderationDecision: evaluation.moderationDecision,
+            moderationReason: evaluation.moderationReason,
+            source: "automatic",
+            imageScanStatus: evaluation.imageScanStatus,
+            textScanStatus: evaluation.textScanStatus,
+            riskScore: evaluation.riskScore,
+            createdAt: now,
+            updatedAt: now,
+        }, { merge: true }),
+        firestore_1.db.collection(constants_1.COLLECTIONS.listings).doc(listingId).set({
+            moderationStatus: listingPatch.moderationStatus,
+            status: listingPatch.status,
+            visibility: listingPatch.visibility,
+            publishedAt: listingPatch.publishedAt,
+            riskScore: listingPatch.riskScore,
+            updatedAt: now,
+        }, { merge: true }),
+    ]);
+    return listingPatch;
+}
+//# sourceMappingURL=moderation.js.map

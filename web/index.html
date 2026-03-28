@@ -36,6 +36,62 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <script>
+    (function () {
+      let recaptchaLoader = null;
+
+      function ensureRecaptchaEnterprise(siteKey) {
+        if (!siteKey) {
+          return Promise.resolve();
+        }
+        if (window.grecaptcha && window.grecaptcha.enterprise) {
+          return Promise.resolve();
+        }
+        if (recaptchaLoader) {
+          return recaptchaLoader;
+        }
+
+        recaptchaLoader = new Promise(function (resolve, reject) {
+          const script = document.createElement('script');
+          script.src = 'https://www.google.com/recaptcha/enterprise.js?render=' + encodeURIComponent(siteKey);
+          script.async = true;
+          script.defer = true;
+          script.onload = function () {
+            resolve();
+          };
+          script.onerror = function () {
+            reject(new Error('Impossible de charger reCAPTCHA Enterprise.'));
+          };
+          document.head.appendChild(script);
+        });
+
+        return recaptchaLoader;
+      }
+
+      window.prestoMarketplaceRecaptcha = {
+        execute: function (siteKey, action) {
+          if (!siteKey || !action) {
+            return Promise.resolve('');
+          }
+
+          return ensureRecaptchaEnterprise(siteKey).then(function () {
+            return new Promise(function (resolve, reject) {
+              if (!window.grecaptcha || !window.grecaptcha.enterprise) {
+                reject(new Error('grecaptcha.enterprise indisponible.'));
+                return;
+              }
+
+              window.grecaptcha.enterprise.ready(function () {
+                window.grecaptcha.enterprise.execute(siteKey, { action: action })
+                  .then(resolve)
+                  .catch(reject);
+              });
+            });
+          });
+        }
+      };
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
   <!-- Google AdSense (remplacer client par votre ID: ca-pub-XXXXXXXXXX) -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXX" crossorigin="anonymous"></script>
