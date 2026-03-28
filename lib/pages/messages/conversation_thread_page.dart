@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../constants.dart';
 import '../../services/conversation_service.dart';
 import '../../services/conversation_state.dart';
+import '../../services/conversation_participants.dart';
 import '../../services/firestore_date_parser.dart';
 import '../../utils/friendly_snackbar.dart';
 
@@ -273,10 +274,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       final data = snapshot.data();
       if (data == null) return;
 
-      final participants = (data['participants'] as List<dynamic>? ?? [])
-          .map((entry) => entry.toString())
-          .where((entry) => entry.isNotEmpty)
-          .toList();
+      final participants = readConversationParticipants(data);
       final unreadMap = data['unreadCount'];
       final unreadCount = unreadMap is Map<String, dynamic>
           ? ((unreadMap[widget.currentUserId] as int?) ?? 0)

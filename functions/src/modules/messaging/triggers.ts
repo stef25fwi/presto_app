@@ -5,6 +5,7 @@ import { COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
 import { APP_BASE_URL } from "../../config/env";
 import { createInAppNotification, sendPushToUser } from "../notifications/push";
+import { readConversationParticipants } from "./participants";
 
 // Cooldown de 15 min par conversation × destinataire pour éviter le spam
 const MESSAGE_EMAIL_COOLDOWN_MS = 15 * 60 * 1000;
@@ -83,13 +84,7 @@ export const onConversationSubMessageCreated = onDocumentCreated(
 
     const conversationSnap = await db.collection(COLLECTIONS.conversations).doc(conversationId).get();
     const conversation = conversationSnap.data() ?? {};
-    const participantSource = Array.isArray(conversation.participants)
-      ? conversation.participants
-      : Array.isArray(conversation.participant_ids)
-        ? conversation.participant_ids
-        : [];
-    const participants = participantSource
-      .map((value) => String(value || ""))
+    const participants = readConversationParticipants(conversation)
       .filter((value) => value.length > 0 && value !== senderId);
     const offerTitle = String(conversation.offerTitle || "Annonce IliPresto").trim();
     const offerId = String(conversation.offerId || "").trim();

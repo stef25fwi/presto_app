@@ -6,6 +6,7 @@ const firestore_1 = require("../../core/firestore");
 const constants_1 = require("../../shared/constants");
 const hash_1 = require("../../utils/hash");
 const env_1 = require("../../config/env");
+const participants_1 = require("./participants");
 exports.enqueueUnreadMessageReminders = (0, scheduler_1.onSchedule)("every 2 hours", async () => {
     const now = Date.now();
     const threshold = now - 24 * 60 * 60 * 1000;
@@ -25,11 +26,7 @@ exports.enqueueUnreadMessageReminders = (0, scheduler_1.onSchedule)("every 2 hou
             const status = String(data.status || "open").toLowerCase();
             if (status !== "open" && status !== "active" && status.length > 0)
                 continue;
-            const participantIds = Array.isArray(data.participants)
-                ? data.participants
-                : Array.isArray(data.participant_ids)
-                    ? data.participant_ids
-                    : [];
+            const participantIds = (0, participants_1.readConversationParticipants)(data);
             const unreadCount = (data.unreadCount || data.unread_count || {});
             const reminderBucket = Math.floor(now / (12 * 60 * 60 * 1000));
             for (const uid of participantIds) {
