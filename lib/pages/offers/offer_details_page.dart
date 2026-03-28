@@ -9,7 +9,7 @@ import 'package:presto_app/data/marketplace/favorite_repository.dart';
 import 'package:presto_app/data/marketplace/report_repository.dart';
 import 'package:presto_app/models/marketplace_enums.dart';
 import 'package:presto_app/models/marketplace_report.dart';
-import 'package:presto_app/pages/messages/conversations_list_page.dart';
+import 'package:presto_app/services/app_route_parser.dart';
 import 'package:presto_app/services/conversation_service.dart';
 import 'package:presto_app/services/marketplace_human_verification.dart';
 
@@ -213,12 +213,10 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     );
 
     if (!context.mounted) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ConversationsListPage(
-          initialConversationId: resolvedConversationId,
-          initialDraftText: initialDraftText,
-        ),
+    Navigator.of(context).pushNamed(
+      buildMessagesRoute(
+        conversationId: resolvedConversationId,
+        initialDraftText: initialDraftText,
       ),
     );
   }
