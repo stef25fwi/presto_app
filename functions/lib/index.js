@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.syncEmailAnalytics = exports.purgeOldEmailLogs = exports.purgeOldEmailWebhooks = exports.handleEmailProviderWebhook = exports.cleanupExpiredEmailJobs = exports.retryFailedEmailJobs = exports.processScheduledEmailDigests = exports.processEmailJobTrigger = exports.enqueueEmailJobsFromEventTrigger = exports.onBillingInvoiceUpdated = exports.onSubscriptionUpdated = exports.onReportUpdated = exports.onReportCreated = exports.onSupportTicketReplied = exports.onSupportTicketCreated = exports.onNotificationUpdated = exports.onNotificationCreated = exports.unregisterPushToken = exports.registerPushToken = exports.deleteConversationMessage = exports.deleteConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = exports.enqueueUnreadMessageReminders = exports.onConversationSubMessageCreated = exports.onNewsletterCampaignUpdated = exports.onNewsletterCampaignCreated = exports.enqueueMarketingOnboardingEmails = exports.onLegalPrivacySettingsUpdated = exports.onLegalTermsSettingsUpdated = exports.enqueueExpiringListingEmails = exports.onOfferUpdated = exports.onOfferCreated = exports.onListingPublished = exports.trackUserLogin = exports.reportPasswordChanged = exports.requestEmailVerificationEmail = exports.requestPasswordResetEmail = exports.onUserCreated = void 0;
+exports.retryFailedEmailJobs = exports.processScheduledEmailDigests = exports.processEmailJobTrigger = exports.enqueueEmailJobsFromEventTrigger = exports.onBillingInvoiceUpdated = exports.onSubscriptionUpdated = exports.onReportUpdated = exports.onReportCreated = exports.onSupportTicketReplied = exports.onSupportTicketCreated = exports.onNotificationUpdated = exports.onNotificationCreated = exports.unregisterPushToken = exports.registerPushToken = exports.deleteConversationMessage = exports.deleteConversation = exports.unblockConversation = exports.blockConversation = exports.unarchiveConversation = exports.archiveConversation = exports.markConversationRead = exports.sendConversationMessage = exports.ensureOfferConversation = exports.enqueueUnreadMessageReminders = exports.onConversationSubMessageCreated = exports.onNewsletterCampaignUpdated = exports.onNewsletterCampaignCreated = exports.enqueueMarketingOnboardingEmails = exports.onLegalPrivacySettingsUpdated = exports.onLegalTermsSettingsUpdated = exports.expireOldListings = exports.notifyListingRejected = exports.notifyListingApproved = exports.logAdminAction = exports.applyUserRoleClaims = exports.sendChatMessage = exports.createChatThreadFromListing = exports.toggleFavorite = exports.reportListing = exports.incrementListingView = exports.submitListingDraft = exports.enqueueExpiringListingEmails = exports.onOfferUpdated = exports.onOfferCreated = exports.onListingPublished = exports.trackUserLogin = exports.reportPasswordChanged = exports.requestEmailVerificationEmail = exports.requestPasswordResetEmail = exports.onUserCreated = void 0;
+exports.syncEmailAnalytics = exports.purgeOldEmailLogs = exports.purgeOldEmailWebhooks = exports.handleEmailProviderWebhook = exports.cleanupExpiredEmailJobs = void 0;
 const v2_1 = require("firebase-functions/v2");
 const env_1 = require("./config/env");
 (0, v2_1.setGlobalOptions)({
@@ -19,6 +20,24 @@ Object.defineProperty(exports, "onOfferCreated", { enumerable: true, get: functi
 Object.defineProperty(exports, "onOfferUpdated", { enumerable: true, get: function () { return triggers_2.onOfferUpdated; } });
 var scheduled_1 = require("./modules/listings/scheduled");
 Object.defineProperty(exports, "enqueueExpiringListingEmails", { enumerable: true, get: function () { return scheduled_1.enqueueExpiringListingEmails; } });
+var listings_1 = require("./modules/marketplace/callables/listings");
+Object.defineProperty(exports, "submitListingDraft", { enumerable: true, get: function () { return listings_1.submitListingDraft; } });
+Object.defineProperty(exports, "incrementListingView", { enumerable: true, get: function () { return listings_1.incrementListingView; } });
+var reports_1 = require("./modules/marketplace/callables/reports");
+Object.defineProperty(exports, "reportListing", { enumerable: true, get: function () { return reports_1.reportListing; } });
+var favorites_1 = require("./modules/marketplace/callables/favorites");
+Object.defineProperty(exports, "toggleFavorite", { enumerable: true, get: function () { return favorites_1.toggleFavorite; } });
+var chat_1 = require("./modules/marketplace/callables/chat");
+Object.defineProperty(exports, "createChatThreadFromListing", { enumerable: true, get: function () { return chat_1.createChatThreadFromListing; } });
+Object.defineProperty(exports, "sendChatMessage", { enumerable: true, get: function () { return chat_1.sendChatMessage; } });
+var admin_1 = require("./modules/marketplace/callables/admin");
+Object.defineProperty(exports, "applyUserRoleClaims", { enumerable: true, get: function () { return admin_1.applyUserRoleClaims; } });
+Object.defineProperty(exports, "logAdminAction", { enumerable: true, get: function () { return admin_1.logAdminAction; } });
+var notifications_1 = require("./modules/marketplace/triggers/notifications");
+Object.defineProperty(exports, "notifyListingApproved", { enumerable: true, get: function () { return notifications_1.notifyListingApproved; } });
+Object.defineProperty(exports, "notifyListingRejected", { enumerable: true, get: function () { return notifications_1.notifyListingRejected; } });
+var listings_2 = require("./modules/marketplace/scheduled/listings");
+Object.defineProperty(exports, "expireOldListings", { enumerable: true, get: function () { return listings_2.expireOldListings; } });
 var triggers_3 = require("./modules/legal/triggers");
 Object.defineProperty(exports, "onLegalTermsSettingsUpdated", { enumerable: true, get: function () { return triggers_3.onLegalTermsSettingsUpdated; } });
 Object.defineProperty(exports, "onLegalPrivacySettingsUpdated", { enumerable: true, get: function () { return triggers_3.onLegalPrivacySettingsUpdated; } });

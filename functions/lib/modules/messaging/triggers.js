@@ -1,6 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onConversationSubMessageCreated = void 0;
+const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const firestore_1 = require("firebase-functions/v2/firestore");
 const firestore_2 = require("../../core/firestore");
 const rate_limit_1 = require("../../core/rate_limit");
@@ -8,7 +12,9 @@ const constants_1 = require("../../shared/constants");
 const hash_1 = require("../../utils/hash");
 const env_1 = require("../../config/env");
 const push_1 = require("../notifications/push");
+const state_1 = require("./state");
 const participants_1 = require("./participants");
+const mirror_1 = require("./mirror");
 // Cooldown de 15 min par conversation × destinataire pour éviter le spam
 const MESSAGE_EMAIL_COOLDOWN_MS = 15 * 60 * 1000;
 function buildMessagePreview(value) {
@@ -61,8 +67,32 @@ exports.onConversationSubMessageCreated = (0, firestore_1.onDocumentCreated)("co
         ? "message.created.new_thread"
         : "message.created.existing_thread";
     const conversationSnap = await firestore_2.db.collection(constants_1.COLLECTIONS.conversations).doc(conversationId).get();
-    const conversation = conversationSnap.data() ?? {};
-    const participants = (0, participants_1.readConversationParticipants)(conversation)
+    const conversation = (0, mirror_1.readConversationMirrorData)(conversationSnap.data() ?? {});
+    const normalizedParticipants = (0, participants_1.readConversationParticipants)(conversationSnap.data() ?? {});
+    const normalizedMessageText = String(message.text || message.body || "").trim();
+    if (normalizedParticipants.length > 0) {
+        const archivedBy = conversation.archivedBy;
+        const blockedBy = conversation.blockedBy;
+        const participantNames = {
+            ...conversation.participantNames,
+        };
+        if (senderId && senderName) {
+            participantNames[senderId] = senderName;
+        }
+        await firestore_2.db.collection(constants_1.COLLECTIONS.conversations).doc(conversationId).set((0, mirror_1.buildConversationMirrorFields)({
+            ...conversation,
+            participants: normalizedParticipants,
+            participantNames,
+            lastMessage: normalizedMessageText || conversation.lastMessage,
+            lastSenderId: senderId || conversation.lastSenderId,
+            lastSenderName: senderName || conversation.lastSenderName,
+            messageCount: conversation.messageCount > 0 ? conversation.messageCount : 1,
+            status: (0, state_1.computeConversationStatus)(normalizedParticipants, archivedBy, blockedBy),
+            lastMessageAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+        }), { merge: true });
+    }
+    const participants = normalizedParticipants
         .filter((value) => value.length > 0 && value !== senderId);
     const offerTitle = String(conversation.offerTitle || "Annonce IliPresto").trim();
     const offerId = String(conversation.offerId || "").trim();

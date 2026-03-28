@@ -10,6 +10,25 @@ export { requestPasswordResetEmail, requestEmailVerificationEmail, reportPasswor
 
 export { onListingPublished, onOfferCreated, onOfferUpdated } from "./modules/listings/triggers";
 export { enqueueExpiringListingEmails } from "./modules/listings/scheduled";
+export {
+  submitListingDraft,
+  incrementListingView,
+} from "./modules/marketplace/callables/listings";
+export { reportListing } from "./modules/marketplace/callables/reports";
+export { toggleFavorite } from "./modules/marketplace/callables/favorites";
+export {
+  createChatThreadFromListing,
+  sendChatMessage,
+} from "./modules/marketplace/callables/chat";
+export {
+  applyUserRoleClaims,
+  logAdminAction,
+} from "./modules/marketplace/callables/admin";
+export {
+  notifyListingApproved,
+  notifyListingRejected,
+} from "./modules/marketplace/triggers/notifications";
+export { expireOldListings } from "./modules/marketplace/scheduled/listings";
 export { onLegalTermsSettingsUpdated, onLegalPrivacySettingsUpdated } from "./modules/legal/triggers";
 export { enqueueMarketingOnboardingEmails } from "./modules/marketing/scheduled";
 export { onNewsletterCampaignCreated, onNewsletterCampaignUpdated } from "./modules/marketing/triggers";

@@ -349,10 +349,17 @@ class NotificationService {
   }
 
   String _resolveRouteName(RemoteMessage message) {
+    final type = (message.data['type'] ?? '').toString().trim();
+    final conversationId = (message.data['conversationId'] ?? '').toString().trim();
     final routeName = (message.data['routeName'] ?? '').toString().trim();
+
+    if (conversationId.isNotEmpty &&
+        (type == 'new_message' || routeName.startsWith('/messages/'))) {
+      return '/messages/${Uri.encodeComponent(conversationId)}';
+    }
+
     if (routeName.isNotEmpty) return routeName;
 
-    final conversationId = (message.data['conversationId'] ?? '').toString().trim();
     if (conversationId.isNotEmpty) {
       return '/messages/${Uri.encodeComponent(conversationId)}';
     }
