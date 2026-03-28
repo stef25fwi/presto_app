@@ -59,6 +59,15 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _isBlockedForCurrentUser = false;
   bool _isArchivedForCurrentUser = false;
 
+  Object? _conversationValue(Map<String, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      if (!data.containsKey(key)) continue;
+      final value = data[key];
+      if (value != null) return value;
+    }
+    return null;
+  }
+
   Stream<QuerySnapshot<Map<String, dynamic>>> _buildLiveStream({
     QueryDocumentSnapshot<Map<String, dynamic>>? anchorDoc,
   }) {
@@ -275,15 +284,28 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (data == null) return;
 
       final participants = readConversationParticipants(data);
-      final unreadMap = data['unreadCount'];
+      final unreadMap = _conversationValue(
+        data,
+        const ['unreadCount', 'unread_count'],
+      );
       final unreadCount = unreadMap is Map<String, dynamic>
           ? ((unreadMap[widget.currentUserId] as int?) ?? 0)
+          : unreadMap is Map
+              ? ((unreadMap[widget.currentUserId] as num?)?.toInt() ?? 0)
           : 0;
 
       if (mounted) {
         setState(() {
           _participants = participants;
-          _lastReadAt = (data['lastReadAt'] as Map<String, dynamic>?) ?? const {};
+          final lastReadAt = _conversationValue(
+            data,
+            const ['lastReadAt', 'last_read_at'],
+          );
+          _lastReadAt = lastReadAt is Map<String, dynamic>
+              ? lastReadAt
+              : lastReadAt is Map
+                  ? Map<String, dynamic>.from(lastReadAt)
+                  : const {};
           _metaLoaded = true;
           _isBlocked = isConversationBlocked(data);
           _isBlockedForCurrentUser = isConversationBlockedForUser(data, widget.currentUserId);
@@ -704,13 +726,18 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                         }
 
                         final data = docs[index].data();
-                        final text = (data['text'] ?? '').toString();
-                        final senderId = (data['senderId'] ?? '').toString();
-                        final senderName = (data['senderName'] ?? '').toString();
-                        final sentAt = parseFirestoreDateTime(data['createdAt']);
+                        final text = ((data['text'] ?? data['body']) ?? '').toString();
+                        final senderId =
+                            ((data['senderId'] ?? data['sender_id']) ?? '').toString();
+                        final senderName =
+                            ((data['senderName'] ?? data['sender_name']) ?? '').toString();
+                        final sentAt = parseFirestoreDateTime(
+                          (data['createdAt'] ?? data['created_at']),
+                        );
                         final olderMessageDate = index + 1 < docs.length
                             ? parseFirestoreDateTime(
-                                docs[index + 1].data()['createdAt'],
+                                (docs[index + 1].data()['createdAt'] ??
+                                    docs[index + 1].data()['created_at']),
                               )
                             : null;
                         final showDateChip = sentAt != null &&
