@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 
 import '../../constants.dart';
 import '../../services/conversation_service.dart';
-import '../../services/inbox_counts.dart';
 import '../../services/conversation_state.dart';
 import '../../services/firestore_date_parser.dart';
 import '../../utils/friendly_snackbar.dart';
@@ -174,6 +173,32 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation debloquee.');
           return;
+        case _ConversationMenuAction.delete:
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Supprimer la conversation'),
+              content: const Text(
+                'Cette action est irreversible. Tous les messages seront supprimes.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Annuler'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  child: const Text('Supprimer'),
+                ),
+              ],
+            ),
+          );
+          if (confirmed != true || !mounted) return;
+          await ConversationService.deleteConversation(conversationId: conversationId);
+          if (!mounted) return;
+          showSuccessSnackBar(context, 'Conversation supprimee.');
+          return;
       }
     } catch (error) {
       if (!mounted) return;
@@ -307,35 +332,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     );
   }
 
-  Widget _buildFilteredEmptyState({
-    required String message,
-  }) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.chat_bubble_outline_rounded,
-              size: 42,
-              color: Colors.grey.shade500,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: kPrestoBodyTextStyle.copyWith(
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF4B5563),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildMessagesAppBarTitle() {
     return const Text(
       'Mes messages',
@@ -395,57 +391,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                     ? 'Afficher toutes les conversations'
                     : 'Afficher seulement les conversations archivees',
               ),
-              StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                stream: FirebaseFirestore.instance.collection('users').doc(userId).snapshots(),
-                builder: (context, snapshot) {
-                  final inboxCounts =
-                      (snapshot.data?.data()?['inboxCounts'] as Map<String, dynamic>?) ??
-                      const <String, dynamic>{};
-                  final unreadMessages = readInboxCount(
-                    inboxCounts,
-                    type: InboxCountType.unreadMessages,
-                  );
-
-                  return Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(right: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.16),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: IconButton(
-                          onPressed: () {},
-                          icon: const Icon(Icons.mark_chat_unread_outlined),
-                          tooltip: 'Nouveaux messages',
-                        ),
-                      ),
-                      if (unreadMessages > 0)
-                        Positioned(
-                          right: 6,
-                          top: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: kWhatsappGreen,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.white, width: 1.5),
-                            ),
-                            child: Text(
-                              '$unreadMessages',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
+              const SizedBox(width: 8),
             ],
           ),
           body: Stack(
@@ -505,8 +451,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                             }).toList(growable: false);
 
                             if (filteredDocs.isEmpty) {
-                              return _buildFilteredEmptyState(
-                                message: query.isNotEmpty
+                              return _buildEmptyState(
+                                query.isNotEmpty
                                     ? 'Aucune conversation ne correspond a votre recherche.'
                                     : _showArchivedOnly
                                         ? 'Aucune conversation archivee.'
@@ -727,6 +673,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                                             : 'Bloquer',
                                                       ),
                                                     ),
+                                                    const PopupMenuItem<_ConversationMenuAction>(
+                                                      value: _ConversationMenuAction.delete,
+                                                      child: Text(
+                                                        'Supprimer',
+                                                        style: TextStyle(color: Colors.red),
+                                                      ),
+                                                    ),
                                                   ],
                                                   child: const Padding(
                                                     padding: EdgeInsets.all(4),
@@ -816,7 +769,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 }
 
-enum _ConversationMenuAction { archive, unarchive, block, unblock }
+enum _ConversationMenuAction { archive, unarchive, block, unblock, delete }
 
 class _ConversationStateChip extends StatelessWidget {
   final String label;

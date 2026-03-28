@@ -108,4 +108,30 @@ class ConversationService {
       'conversationId': conversationId,
     });
   }
+
+  static Future<void> deleteConversation({
+    required String conversationId,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'deleteConversation',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
+    );
+    await callable.call(<String, dynamic>{
+      'conversationId': conversationId,
+    });
+  }
+
+  static Future<void> deleteMessage({
+    required String conversationId,
+    required String messageId,
+  }) async {
+    final callable = _functions.httpsCallable(
+      'deleteConversationMessage',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+    );
+    await callable.call(<String, dynamic>{
+      'conversationId': conversationId,
+      'messageId': messageId,
+    });
+  }
 }
