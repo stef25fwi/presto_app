@@ -1,3 +1,5 @@
+const conversationPrimaryParticipantField = 'participants';
+
 const conversationParticipantQueryFieldAliases = <String>[
   'participants',
   'participant_ids',
