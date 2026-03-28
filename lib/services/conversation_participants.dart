@@ -8,8 +8,6 @@ const conversationParticipantQueryFieldAliases = <String>[
 
 const conversationParticipantFieldAliases = <String>[
   ...conversationParticipantQueryFieldAliases,
-  'userIds',
-  'memberIds',
 ];
 
 const conversationParticipantMapAliases = <String>[
