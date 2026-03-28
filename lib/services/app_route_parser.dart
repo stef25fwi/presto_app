@@ -73,6 +73,14 @@ AppDeepLinkTarget? parseAppDeepLink(String? rawName) {
   }
 
   if (segments.length == 2 &&
+      segments.first == 'chat' &&
+      segments[1].isNotEmpty) {
+    return AppDeepLinkTarget.messageThread(
+      Uri.decodeComponent(segments[1]),
+    );
+  }
+
+  if (segments.length == 2 &&
       segments.first == 'offers' &&
       segments[1].isNotEmpty) {
     return AppDeepLinkTarget.offerDetail(
