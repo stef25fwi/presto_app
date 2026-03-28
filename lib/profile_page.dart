@@ -54,8 +54,8 @@ class _ProfilePageState extends State<ProfilePage> {
           defaultTargetPlatform == TargetPlatform.macOS);
 
   String get _authHeadline => _authMode == AuthMode.login
-      ? 'Bon retour sur Presto'
-      : 'Bienvenue sur Presto';
+      ? 'Bon retour sur iliprestō'
+      : 'Bienvenue sur iliprestō';
 
   String get _authSubtitle => _authMode == AuthMode.login
       ? 'Connectez-vous pour retrouver vos offres, vos messages et vos préférences.'

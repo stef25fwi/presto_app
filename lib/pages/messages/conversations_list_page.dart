@@ -36,7 +36,6 @@ class ConversationsListPage extends StatefulWidget {
 class _ConversationsListPageState extends State<ConversationsListPage> {
   final TextEditingController _searchController = TextEditingController();
   bool _didHandleInitialConversation = false;
-  int _conversationLimit = 50;
   bool _showArchivedOnly = false;
 
   @override
@@ -100,6 +99,47 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       (data['lastMessage'] ?? '').toString(),
       (data['lastSenderName'] ?? '').toString(),
     ].join(' ').toLowerCase();
+  }
+
+  DateTime? _conversationSortDate(Map<String, dynamic> data) {
+    return parseFirestoreDateTime(data['lastMessageAt']) ??
+        parseFirestoreDateTime(data['updatedAt']) ??
+        parseFirestoreDateTime(data['createdAt']);
+  }
+
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _mergeConversationDocs(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> currentDocs,
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> legacyDocs,
+  ) {
+    final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{
+      for (final doc in currentDocs) doc.id: doc,
+    };
+    for (final doc in legacyDocs) {
+      byId.putIfAbsent(doc.id, () => doc);
+    }
+
+    final merged = byId.values.toList(growable: false);
+    merged.sort((left, right) {
+      final rightDate = _conversationSortDate(right.data());
+      final leftDate = _conversationSortDate(left.data());
+      if (leftDate == null && rightDate == null) {
+        return right.id.compareTo(left.id);
+      }
+      if (leftDate == null) return 1;
+      if (rightDate == null) return -1;
+      return rightDate.compareTo(leftDate);
+    });
+    return merged;
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> _conversationStream(
+    String participantField,
+    String userId,
+  ) {
+    return FirebaseFirestore.instance
+        .collection('conversations')
+        .where(participantField, arrayContains: userId)
+        .snapshots();
   }
 
   Future<void> _markConversationRead(String conversationId, String currentUserId) async {
@@ -175,14 +215,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     final match = docs.where((doc) => doc.id == initialConversationId).toList();
 
     if (match.isEmpty) {
-      if (docs.length >= _conversationLimit) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          setState(() => _conversationLimit += 50);
-        });
-        return;
-      }
-
       _didHandleInitialConversation = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -277,7 +309,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
   Widget _buildFilteredEmptyState({
     required String message,
-    required bool canLoadMore,
   }) {
     return Center(
       child: Padding(
@@ -299,21 +330,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                 color: const Color(0xFF4B5563),
               ),
             ),
-            if (canLoadMore) ...[
-              const SizedBox(height: 14),
-              TextButton.icon(
-                onPressed: () => setState(() => _conversationLimit += 50),
-                icon: const Icon(Icons.history_rounded, size: 16),
-                label: const Text('Charger d\'autres conversations'),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF6B7280),
-                  textStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -373,11 +389,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               IconButton(
                 onPressed: () => setState(() => _showArchivedOnly = !_showArchivedOnly),
                 icon: Icon(
-                  _showArchivedOnly ? Icons.inbox_outlined : Icons.archive_outlined,
+                  _showArchivedOnly ? Icons.forum_outlined : Icons.archive_outlined,
                 ),
                 tooltip: _showArchivedOnly
-                    ? 'Afficher la boite principale'
-                    : 'Afficher les conversations archivees',
+                    ? 'Afficher toutes les conversations'
+                    : 'Afficher seulement les conversations archivees',
               ),
               StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
                 stream: FirebaseFirestore.instance.collection('users').doc(userId).snapshots(),
@@ -440,324 +456,317 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                   _buildSearchField(),
                   Expanded(
                     child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream: FirebaseFirestore.instance
-                          .collection('conversations')
-                          .where('participants', arrayContains: userId)
-                          .orderBy('lastMessageAt', descending: true)
-                          .limit(_conversationLimit)
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                            ),
-                          );
-                        }
-
-                        if (snapshot.hasError) {
-                          final message = _isPermissionDenied(snapshot.error)
+                      stream: _conversationStream('participants', userId),
+                      builder: (context, currentSnapshot) {
+                        if (currentSnapshot.hasError) {
+                          final message = _isPermissionDenied(currentSnapshot.error)
                               ? 'Pas de conversation en cours.'
                               : 'Erreur de chargement des conversations.';
                           return _buildEmptyState(message);
                         }
 
-                        final docs = snapshot.data?.docs ?? const [];
-                        _maybeOpenInitialConversation(context, docs, userId);
-
-                        final query = _searchController.text.trim().toLowerCase();
-                        final visibleDocs = docs.where((doc) {
-                          return shouldShowConversation(
-                            data: doc.data(),
-                            userId: userId,
-                            showArchivedOnly: _showArchivedOnly,
-                          );
-                        }).toList(growable: false);
-
-                        final filteredDocs = visibleDocs.where((doc) {
-                          if (query.isEmpty) return true;
-                          return _searchableConversationText(doc.data(), userId)
-                              .contains(query);
-                        }).toList(growable: false);
-
-                        final canLoadMoreConversations =
-                            docs.length >= _conversationLimit;
-
-                        if (filteredDocs.isEmpty) {
-                          return _buildFilteredEmptyState(
-                            message: query.isNotEmpty
-                                ? 'Aucune conversation ne correspond a votre recherche.'
-                                : _showArchivedOnly
-                                    ? 'Aucune conversation archivee dans les resultats charges.'
-                                    : 'Pas de conversation visible pour le moment.',
-                            canLoadMore: canLoadMoreConversations,
-                          );
-                        }
-
-                        return ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(10, 6, 10, 18),
-                          itemCount: filteredDocs.length +
-                              (canLoadMoreConversations ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            if (index == filteredDocs.length) {
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                child: Center(
-                                  child: TextButton.icon(
-                                    onPressed: () =>
-                                        setState(() => _conversationLimit += 50),
-                                    icon: const Icon(Icons.history_rounded, size: 16),
-                                    label: const Text(
-                                      'Charger les conversations plus anciennes',
-                                    ),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: const Color(0xFF6B7280),
-                                      textStyle: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
+                        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                          stream: _conversationStream('participant_ids', userId),
+                          builder: (context, legacySnapshot) {
+                            if ((currentSnapshot.connectionState == ConnectionState.waiting &&
+                                    !currentSnapshot.hasData) ||
+                                (legacySnapshot.connectionState == ConnectionState.waiting &&
+                                    !legacySnapshot.hasData)) {
+                              return const Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
                                 ),
                               );
                             }
 
-                            final doc = filteredDocs[index];
-                            final data = doc.data();
-                            final offerTitle =
-                                (data['offerTitle'] ?? '').toString().trim();
-                            final title = _conversationTitle(data, userId);
-                            final preview = _conversationPreview(data, userId);
-                            final unreadMap = data['unreadCount'];
-                            final unreadCount = unreadMap is Map<String, dynamic>
-                                ? ((unreadMap[userId] as int?) ?? 0)
-                                : 0;
-                            final archived =
-                                isConversationArchivedForUser(data, userId);
-                            final blocked = isConversationBlocked(data);
-                            final blockedForUser =
-                                isConversationBlockedForUser(data, userId);
-                            final lastDate =
-                              parseFirestoreDateTime(data['lastMessageAt']);
+                            if (legacySnapshot.hasError) {
+                              final message = _isPermissionDenied(legacySnapshot.error)
+                                  ? 'Pas de conversation en cours.'
+                                  : 'Erreur de chargement des conversations.';
+                              return _buildEmptyState(message);
+                            }
 
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 6),
-                              child: Material(
-                                color: Colors.white.withOpacity(0.96),
-                                borderRadius: BorderRadius.circular(18),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(18),
-                                  onTap: () async {
-                                    await _openConversation(
-                                      context,
-                                      doc.id,
-                                      data,
-                                      userId,
-                                    );
-                                  },
-                                  child: Container(
-                                    margin: const EdgeInsets.symmetric(vertical: 4),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(18),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.035),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Stack(
-                                          children: [
-                                            CircleAvatar(
-                                              radius: 27,
-                                              backgroundColor: const Color(0xFFEAF2FF),
-                                              foregroundColor: kPrestoBlue,
-                                              child: Text(
-                                                title.isNotEmpty
-                                                    ? title[0].toUpperCase()
-                                                    : '?',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w800,
-                                                  fontSize: 18,
-                                                ),
-                                              ),
+                            final docs = _mergeConversationDocs(
+                              currentSnapshot.data?.docs ?? const [],
+                              legacySnapshot.data?.docs ?? const [],
+                            );
+                            _maybeOpenInitialConversation(context, docs, userId);
+
+                            final query = _searchController.text.trim().toLowerCase();
+                            final visibleDocs = docs.where((doc) {
+                              if (!_showArchivedOnly) return true;
+                              return isConversationArchivedForUser(doc.data(), userId);
+                            }).toList(growable: false);
+
+                            final filteredDocs = visibleDocs.where((doc) {
+                              if (query.isEmpty) return true;
+                              return _searchableConversationText(doc.data(), userId)
+                                  .contains(query);
+                            }).toList(growable: false);
+
+                            if (filteredDocs.isEmpty) {
+                              return _buildFilteredEmptyState(
+                                message: query.isNotEmpty
+                                    ? 'Aucune conversation ne correspond a votre recherche.'
+                                    : _showArchivedOnly
+                                        ? 'Aucune conversation archivee.'
+                                        : 'Aucune conversation pour le moment.',
+                              );
+                            }
+
+                            return ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(10, 6, 10, 18),
+                              itemCount: filteredDocs.length,
+                              itemBuilder: (context, index) {
+                                final doc = filteredDocs[index];
+                                final data = doc.data();
+                                final offerTitle =
+                                    (data['offerTitle'] ?? '').toString().trim();
+                                final title = _conversationTitle(data, userId);
+                                final preview = _conversationPreview(data, userId);
+                                final unreadMap = data['unreadCount'];
+                                final unreadCount = unreadMap is Map<String, dynamic>
+                                    ? ((unreadMap[userId] as int?) ?? 0)
+                                    : 0;
+                                final archived =
+                                    isConversationArchivedForUser(data, userId);
+                                final blocked = isConversationBlocked(data);
+                                final blockedForUser =
+                                    isConversationBlockedForUser(data, userId);
+                                final lastDate =
+                                    parseFirestoreDateTime(data['lastMessageAt']) ??
+                                    parseFirestoreDateTime(data['updatedAt']) ??
+                                    parseFirestoreDateTime(data['createdAt']);
+
+                                Future<void> openConversation() {
+                                  return _openConversation(
+                                    context,
+                                    doc.id,
+                                    data,
+                                    userId,
+                                  );
+                                }
+
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                                  child: Material(
+                                    color: Colors.white.withOpacity(0.98),
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(16),
+                                      onTap: openConversation,
+                                      child: Container(
+                                        margin: const EdgeInsets.symmetric(vertical: 2),
+                                        padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border(
+                                            bottom: BorderSide(
+                                              color: Colors.black.withOpacity(0.06),
                                             ),
-                                            Positioned(
-                                              right: 1,
-                                              bottom: 1,
-                                              child: Container(
-                                                width: 12,
-                                                height: 12,
-                                                decoration: BoxDecoration(
-                                                  color: unreadCount > 0
-                                                      ? kWhatsappGreen
-                                                      : const Color(0xFFD1D5DB),
-                                                  shape: BoxShape.circle,
-                                                  border: Border.all(
-                                                    color: Colors.white,
-                                                    width: 2,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(
-                                                title,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: kPrestoCardTitleStyle.copyWith(
-                                                  fontWeight: unreadCount > 0
-                                                      ? FontWeight.w800
-                                                      : FontWeight.w700,
-                                                  color: const Color(0xFF111827),
-                                                ),
-                                              ),
-                                              if (offerTitle.isNotEmpty &&
-                                                  offerTitle != title) ...[
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  offerTitle,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: kPrestoMetaTextStyle.copyWith(
-                                                    color: const Color(0xFF6B7280),
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ],
-                                              const SizedBox(height: 5),
-                                              Text(
-                                                preview,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: kPrestoBodyTextStyle.copyWith(
-                                                  color: unreadCount > 0
-                                                      ? const Color(0xFF111827)
-                                                      : const Color(0xFF6B7280),
-                                                  fontWeight: unreadCount > 0
-                                                      ? FontWeight.w600
-                                                      : FontWeight.w500,
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                              if (archived || blocked) ...[
-                                                const SizedBox(height: 6),
-                                                Wrap(
-                                                  spacing: 6,
-                                                  runSpacing: 6,
-                                                  children: [
-                                                    if (archived)
-                                                      _ConversationStateChip(
-                                                        label: 'Archivee',
-                                                        color: const Color(0xFF6B7280),
-                                                      ),
-                                                    if (blocked)
-                                                      _ConversationStateChip(
-                                                        label: blockedForUser
-                                                            ? 'Bloquee par vous'
-                                                            : 'Bloquee',
-                                                        color: const Color(0xFFB91C1C),
-                                                      ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ],
                                           ),
                                         ),
-                                        const SizedBox(width: 10),
-                                        Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            PopupMenuButton<_ConversationMenuAction>(
-                                              tooltip: 'Actions conversation',
-                                              onSelected: (action) =>
-                                                  _handleConversationAction(
-                                                conversationId: doc.id,
-                                                action: action,
+                                            GestureDetector(
+                                              onTap: openConversation,
+                                              child: Stack(
+                                                children: [
+                                                  CircleAvatar(
+                                                    radius: 27,
+                                                    backgroundColor: const Color(0xFFEAF2FF),
+                                                    foregroundColor: kPrestoBlue,
+                                                    child: Text(
+                                                      title.isNotEmpty
+                                                          ? title[0].toUpperCase()
+                                                          : '?',
+                                                      style: const TextStyle(
+                                                        fontWeight: FontWeight.w800,
+                                                        fontSize: 18,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Positioned(
+                                                    right: 1,
+                                                    bottom: 1,
+                                                    child: Container(
+                                                      width: 12,
+                                                      height: 12,
+                                                      decoration: BoxDecoration(
+                                                        color: unreadCount > 0
+                                                            ? kWhatsappGreen
+                                                            : const Color(0xFFD1D5DB),
+                                                        shape: BoxShape.circle,
+                                                        border: Border.all(
+                                                          color: Colors.white,
+                                                          width: 2,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              itemBuilder: (context) => [
-                                                PopupMenuItem<_ConversationMenuAction>(
-                                                  value: archived
-                                                      ? _ConversationMenuAction.unarchive
-                                                      : _ConversationMenuAction.archive,
-                                                  child: Text(
-                                                    archived ? 'Restaurer' : 'Archiver',
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Row(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          title,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          style: kPrestoCardTitleStyle.copyWith(
+                                                            fontWeight: unreadCount > 0
+                                                                ? FontWeight.w800
+                                                                : FontWeight.w700,
+                                                            color: const Color(0xFF111827),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      Text(
+                                                        _formatTimestamp(lastDate),
+                                                        style: kPrestoMetaTextStyle.copyWith(
+                                                          color: unreadCount > 0
+                                                              ? kWhatsappGreen
+                                                              : const Color(0xFF9CA3AF),
+                                                          fontWeight: unreadCount > 0
+                                                              ? FontWeight.w700
+                                                              : FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  if (offerTitle.isNotEmpty &&
+                                                      offerTitle != title) ...[
+                                                    const SizedBox(height: 2),
+                                                    Text(
+                                                      offerTitle,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: kPrestoMetaTextStyle.copyWith(
+                                                        color: const Color(0xFF6B7280),
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  const SizedBox(height: 5),
+                                                  Text(
+                                                    preview,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: kPrestoBodyTextStyle.copyWith(
+                                                      color: unreadCount > 0
+                                                          ? const Color(0xFF111827)
+                                                          : const Color(0xFF6B7280),
+                                                      fontWeight: unreadCount > 0
+                                                          ? FontWeight.w600
+                                                          : FontWeight.w500,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                  if (archived || blocked) ...[
+                                                    const SizedBox(height: 6),
+                                                    Wrap(
+                                                      spacing: 6,
+                                                      runSpacing: 6,
+                                                      children: [
+                                                        if (archived)
+                                                          _ConversationStateChip(
+                                                            label: 'Archivee',
+                                                            color: const Color(0xFF6B7280),
+                                                          ),
+                                                        if (blocked)
+                                                          _ConversationStateChip(
+                                                            label: blockedForUser
+                                                                ? 'Bloquee par vous'
+                                                                : 'Bloquee',
+                                                            color: const Color(0xFFB91C1C),
+                                                          ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              crossAxisAlignment: CrossAxisAlignment.end,
+                                              children: [
+                                                PopupMenuButton<_ConversationMenuAction>(
+                                                  tooltip: 'Actions conversation',
+                                                  onSelected: (action) =>
+                                                      _handleConversationAction(
+                                                    conversationId: doc.id,
+                                                    action: action,
+                                                  ),
+                                                  itemBuilder: (context) => [
+                                                    PopupMenuItem<_ConversationMenuAction>(
+                                                      value: archived
+                                                          ? _ConversationMenuAction.unarchive
+                                                          : _ConversationMenuAction.archive,
+                                                      child: Text(
+                                                        archived ? 'Restaurer' : 'Archiver',
+                                                      ),
+                                                    ),
+                                                    PopupMenuItem<_ConversationMenuAction>(
+                                                      value: blockedForUser
+                                                          ? _ConversationMenuAction.unblock
+                                                          : _ConversationMenuAction.block,
+                                                      child: Text(
+                                                        blockedForUser
+                                                            ? 'Debloquer'
+                                                            : 'Bloquer',
+                                                      ),
+                                                    ),
+                                                  ],
+                                                  child: const Padding(
+                                                    padding: EdgeInsets.all(4),
+                                                    child: Icon(
+                                                      Icons.more_horiz_rounded,
+                                                      color: Color(0xFF9CA3AF),
+                                                    ),
                                                   ),
                                                 ),
-                                                PopupMenuItem<_ConversationMenuAction>(
-                                                  value: blockedForUser
-                                                      ? _ConversationMenuAction.unblock
-                                                      : _ConversationMenuAction.block,
-                                                  child: Text(
-                                                    blockedForUser
-                                                        ? 'Debloquer'
-                                                        : 'Bloquer',
+                                                if (unreadCount > 0) ...[
+                                                  const SizedBox(height: 10),
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 3,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: kWhatsappGreen,
+                                                      borderRadius:
+                                                          BorderRadius.circular(999),
+                                                    ),
+                                                    child: Text(
+                                                      '$unreadCount',
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
                                                   ),
-                                                ),
+                                                ],
                                               ],
-                                              child: const Padding(
-                                                padding: EdgeInsets.all(4),
-                                                child: Icon(
-                                                  Icons.more_horiz_rounded,
-                                                  color: Color(0xFF9CA3AF),
-                                                ),
-                                              ),
                                             ),
-                                            Text(
-                                              _formatTimestamp(lastDate),
-                                              style: kPrestoMetaTextStyle.copyWith(
-                                                color: unreadCount > 0
-                                                    ? kWhatsappGreen
-                                                    : const Color(0xFF9CA3AF),
-                                                fontWeight: unreadCount > 0
-                                                    ? FontWeight.w700
-                                                    : FontWeight.w500,
-                                              ),
-                                            ),
-                                            if (unreadCount > 0) ...[
-                                              const SizedBox(height: 8),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 8,
-                                                  vertical: 3,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: kWhatsappGreen,
-                                                  borderRadius:
-                                                      BorderRadius.circular(999),
-                                                ),
-                                                child: Text(
-                                                  '$unreadCount',
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
                                           ],
                                         ),
-                                      ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
+                                );
+                              },
                             );
                           },
                         );
@@ -772,14 +781,42 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       },
     );
   }
+
+  String _formatTimestamp(DateTime? value) {
+    if (value == null) return '';
+
+    final local = value.toLocal();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final date = DateTime(local.year, local.month, local.day);
+    final diff = today.difference(date).inDays;
+
+    if (diff <= 0) {
+      final hour = local.hour.toString().padLeft(2, '0');
+      final minute = local.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    }
+    if (diff == 1) return 'Hier';
+
+    const months = <String>[
+      'janv.',
+      'fevr.',
+      'mars',
+      'avr.',
+      'mai',
+      'juin',
+      'juil.',
+      'aout',
+      'sept.',
+      'oct.',
+      'nov.',
+      'dec.',
+    ];
+    return '${local.day} ${months[local.month - 1]}';
+  }
 }
 
-enum _ConversationMenuAction {
-  archive,
-  unarchive,
-  block,
-  unblock,
-}
+enum _ConversationMenuAction { archive, unarchive, block, unblock }
 
 class _ConversationStateChip extends StatelessWidget {
   final String label;
@@ -793,11 +830,10 @@ class _ConversationStateChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.24)),
       ),
       child: Text(
         label,
@@ -809,17 +845,4 @@ class _ConversationStateChip extends StatelessWidget {
       ),
     );
   }
-}
-
-String _formatTimestamp(DateTime? date) {
-  if (date == null) return '--:--';
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final dateOnly = DateTime(date.year, date.month, date.day);
-
-  if (dateOnly == today) {
-    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-  }
-
-  return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
 }
