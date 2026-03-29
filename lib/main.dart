@@ -3178,40 +3178,8 @@ class _UnreadInboxBell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (countType == InboxCountType.unreadMessages) {
-      return StreamBuilder<int>(
-        stream: streamVisibleUnreadMessageCount(userId: userId),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            final error = snapshot.error;
-            if (error != null) {
-              PrestoMonitoring.I.trackError(
-                '${monitoringKeyPrefix ?? 'messages'}.badge',
-                error,
-              );
-            }
-            return builder(context, 0);
-          }
-
-          final badgeCount = snapshot.data ?? 0;
-
-          if (monitoringKeyPrefix != null) {
-            PrestoMonitoring.I.trackOtherStream(
-              key: '${monitoringKeyPrefix!}.badge',
-              docsCount: badgeCount,
-            );
-          }
-
-          return builder(context, badgeCount);
-        },
-      );
-    }
-
-    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .snapshots(),
+    return StreamBuilder<int>(
+      stream: streamInboxCount(userId: userId, type: countType),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           final error = snapshot.error;
@@ -3224,10 +3192,7 @@ class _UnreadInboxBell extends StatelessWidget {
           return builder(context, 0);
         }
 
-        final inboxCounts =
-            (snapshot.data?.data()?['inboxCounts'] as Map<String, dynamic>?) ??
-                const <String, dynamic>{};
-        final badgeCount = readInboxCount(inboxCounts, type: countType);
+        final badgeCount = snapshot.data ?? 0;
 
         if (monitoringKeyPrefix != null) {
           PrestoMonitoring.I.trackOtherStream(
