@@ -55,6 +55,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   Map<String, dynamic> _lastReadAt = const {};
   bool _metaLoaded = false;
   bool _didApplyInitialDraft = false;
+  bool _didShowNewConversationSafetyDialog = false;
   bool _isBlocked = false;
   bool _isBlockedForCurrentUser = false;
   bool _isArchivedForCurrentUser = false;
@@ -101,7 +102,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
   bool _isPermissionDenied(Object? error) {
     final text = (error ?? '').toString().toLowerCase();
-    return text.contains('permission-denied') || text.contains('permission denied');
+    return text.contains('permission-denied') ||
+        text.contains('permission denied');
   }
 
   Widget _buildWatermark() {
@@ -292,7 +294,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           ? ((unreadMap[widget.currentUserId] as int?) ?? 0)
           : unreadMap is Map
               ? ((unreadMap[widget.currentUserId] as num?)?.toInt() ?? 0)
-          : 0;
+              : 0;
 
       if (mounted) {
         setState(() {
@@ -308,8 +310,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                   : const {};
           _metaLoaded = true;
           _isBlocked = isConversationBlocked(data);
-          _isBlockedForCurrentUser = isConversationBlockedForUser(data, widget.currentUserId);
-          _isArchivedForCurrentUser = isConversationArchivedForUser(data, widget.currentUserId);
+          _isBlockedForCurrentUser =
+              isConversationBlockedForUser(data, widget.currentUserId);
+          _isArchivedForCurrentUser =
+              isConversationArchivedForUser(data, widget.currentUserId);
         });
       }
 
@@ -382,7 +386,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
     // On first pagination: anchor the live stream to avoid gaps when new
     // messages push older docs outside the .limit() window.
-    final isFirstPagination = _paginationAnchorDoc == null && _olderMessageDocs.isEmpty;
+    final isFirstPagination =
+        _paginationAnchorDoc == null && _olderMessageDocs.isEmpty;
     final anchorDoc = isFirstPagination
         ? (liveDocs.isNotEmpty ? liveDocs.last : null)
         : _paginationAnchorDoc;
@@ -480,26 +485,31 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     }
   }
 
-  Future<void> _handleConversationAction(_ConversationThreadAction action) async {
+  Future<void> _handleConversationAction(
+      _ConversationThreadAction action) async {
     try {
       switch (action) {
         case _ConversationThreadAction.archive:
-          await ConversationService.archiveConversation(conversationId: widget.conversationId);
+          await ConversationService.archiveConversation(
+              conversationId: widget.conversationId);
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation archivee.');
           return;
         case _ConversationThreadAction.unarchive:
-          await ConversationService.unarchiveConversation(conversationId: widget.conversationId);
+          await ConversationService.unarchiveConversation(
+              conversationId: widget.conversationId);
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation restauree.');
           return;
         case _ConversationThreadAction.block:
-          await ConversationService.blockConversation(conversationId: widget.conversationId);
+          await ConversationService.blockConversation(
+              conversationId: widget.conversationId);
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation bloquee.');
           return;
         case _ConversationThreadAction.unblock:
-          await ConversationService.unblockConversation(conversationId: widget.conversationId);
+          await ConversationService.unblockConversation(
+              conversationId: widget.conversationId);
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation debloquee.');
           return;
@@ -525,7 +535,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             ),
           );
           if (confirmed != true || !mounted) return;
-          await ConversationService.deleteConversation(conversationId: widget.conversationId);
+          await ConversationService.deleteConversation(
+              conversationId: widget.conversationId);
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation supprimee.');
           Navigator.of(context).pop();
@@ -533,7 +544,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       }
     } catch (error) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Action impossible sur cette conversation : $error');
+      showErrorSnackBar(
+          context, 'Action impossible sur cette conversation : $error');
     }
   }
 
@@ -557,7 +569,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         child: _ConversationBanner(
           icon: Icons.archive_outlined,
           color: Color(0xFF6B7280),
-          message: 'Conversation archivee pour vous. Un nouveau message la restaurera automatiquement.',
+          message:
+              'Conversation archivee pour vous. Un nouveau message la restaurera automatiquement.',
         ),
       );
     }
@@ -584,6 +597,116 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     });
   }
 
+  void _showNewConversationSafetyDialogIfNeeded(bool hasMessages) {
+    if (_didShowNewConversationSafetyDialog || hasMessages) return;
+
+    _didShowNewConversationSafetyDialog = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 24,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.12),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF4EC),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(
+                          Icons.shield_outlined,
+                          color: kPrestoOrange,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Sécurité',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Ne partagez jamais vos coordonnées bancaires, codes, mots de passe ou informations sensibles dans cette conversation.',
+                    style: kPrestoBodyTextStyle.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF374151),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Signalez tout comportement suspect.',
+                    style: kPrestoBodyTextStyle.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFB91C1C),
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrestoOrange,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        'J\'ai compris',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -602,7 +725,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                 value: _isArchivedForCurrentUser
                     ? _ConversationThreadAction.unarchive
                     : _ConversationThreadAction.archive,
-                child: Text(_isArchivedForCurrentUser ? 'Restaurer' : 'Archiver'),
+                child:
+                    Text(_isArchivedForCurrentUser ? 'Restaurer' : 'Archiver'),
               ),
               PopupMenuItem<_ConversationThreadAction>(
                 value: _isBlockedForCurrentUser
@@ -635,7 +759,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(kPrestoOrange),
                         ),
                       );
                     }
@@ -661,11 +786,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
                     final liveDocs = snapshot.data?.docs ?? const [];
                     _applyInitialDraftIfNeeded(liveDocs.isNotEmpty);
+                    _showNewConversationSafetyDialogIfNeeded(
+                      liveDocs.isNotEmpty,
+                    );
                     final docs = _mergeMessageDocs(liveDocs);
                     final canLoadMore = docs.isNotEmpty &&
-                      (_hasAttemptedOlderPagination
-                        ? _hasMoreMessages
-                        : liveDocs.length >= _messagePageSize);
+                        (_hasAttemptedOlderPagination
+                            ? _hasMoreMessages
+                            : liveDocs.length >= _messagePageSize);
 
                     if (docs.isEmpty) {
                       return Center(
@@ -707,7 +835,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                             strokeWidth: 2,
                                           ),
                                         )
-                                      : const Icon(Icons.history_rounded, size: 16),
+                                      : const Icon(Icons.history_rounded,
+                                          size: 16),
                                   label: Text(
                                     _isLoadingMoreMessages
                                         ? 'Chargement...'
@@ -726,11 +855,14 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                         }
 
                         final data = docs[index].data();
-                        final text = ((data['text'] ?? data['body']) ?? '').toString();
+                        final text =
+                            ((data['text'] ?? data['body']) ?? '').toString();
                         final senderId =
-                            ((data['senderId'] ?? data['sender_id']) ?? '').toString();
+                            ((data['senderId'] ?? data['sender_id']) ?? '')
+                                .toString();
                         final senderName =
-                            ((data['senderName'] ?? data['sender_name']) ?? '').toString();
+                            ((data['senderName'] ?? data['sender_name']) ?? '')
+                                .toString();
                         final sentAt = parseFirestoreDateTime(
                           (data['createdAt'] ?? data['created_at']),
                         );
@@ -744,13 +876,15 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                             (olderMessageDate == null ||
                                 !_isSameCalendarDay(sentAt, olderMessageDate));
                         final isMine = senderId == widget.currentUserId;
-                        final readReceipt = isMine ? _readReceiptLabel(sentAt) : null;
+                        final readReceipt =
+                            isMine ? _readReceiptLabel(sentAt) : null;
                         final messageDocId = docs[index].id;
 
                         final messageBubble = GestureDetector(
                           onLongPress: isMine
                               ? () async {
-                                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                                  final scaffoldMessenger =
+                                      ScaffoldMessenger.of(context);
                                   final confirmed = await showDialog<bool>(
                                     context: context,
                                     builder: (ctx) => AlertDialog(
@@ -760,11 +894,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                       ),
                                       actions: [
                                         TextButton(
-                                          onPressed: () => Navigator.of(ctx).pop(false),
+                                          onPressed: () =>
+                                              Navigator.of(ctx).pop(false),
                                           child: const Text('Annuler'),
                                         ),
                                         TextButton(
-                                          onPressed: () => Navigator.of(ctx).pop(true),
+                                          onPressed: () =>
+                                              Navigator.of(ctx).pop(true),
                                           style: TextButton.styleFrom(
                                             foregroundColor: Colors.red,
                                           ),
@@ -781,79 +917,90 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                     );
                                     if (!mounted) return;
                                     scaffoldMessenger.showSnackBar(
-                                      const SnackBar(content: Text('Message supprime.')),
+                                      const SnackBar(
+                                          content: Text('Message supprime.')),
                                     );
                                   } catch (error) {
                                     if (!mounted) return;
                                     scaffoldMessenger.showSnackBar(
                                       SnackBar(
-                                        content: Text('Impossible de supprimer ce message : $error'),
+                                        content: Text(
+                                            'Impossible de supprimer ce message : $error'),
                                       ),
                                     );
                                   }
                                 }
                               : null,
                           child: Align(
-                          alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 320),
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(vertical: 4),
-                              padding: const EdgeInsets.fromLTRB(12, 9, 12, 8),
-                              decoration: BoxDecoration(
-                                color: isMine ? kThreadMineColor : kThreadOtherColor,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: const Radius.circular(18),
-                                  topRight: const Radius.circular(18),
-                                  bottomLeft: Radius.circular(isMine ? 18 : 4),
-                                  bottomRight: Radius.circular(isMine ? 4 : 18),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.06),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
+                            alignment: isMine
+                                ? Alignment.centerRight
+                                : Alignment.centerLeft,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 320),
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(vertical: 4),
+                                padding:
+                                    const EdgeInsets.fromLTRB(12, 9, 12, 8),
+                                decoration: BoxDecoration(
+                                  color: isMine
+                                      ? kThreadMineColor
+                                      : kThreadOtherColor,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: const Radius.circular(18),
+                                    topRight: const Radius.circular(18),
+                                    bottomLeft:
+                                        Radius.circular(isMine ? 18 : 4),
+                                    bottomRight:
+                                        Radius.circular(isMine ? 4 : 18),
                                   ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment:
-                                    isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                                children: [
-                                  if (!isMine && senderName.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(bottom: 3),
-                                      child: Text(
-                                        senderName,
-                                        style: kPrestoMetaTextStyle.copyWith(
-                                          fontWeight: FontWeight.w700,
-                                          color: const Color(0xFF2563EB),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.06),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: isMine
+                                      ? CrossAxisAlignment.end
+                                      : CrossAxisAlignment.start,
+                                  children: [
+                                    if (!isMine && senderName.isNotEmpty)
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 3),
+                                        child: Text(
+                                          senderName,
+                                          style: kPrestoMetaTextStyle.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF2563EB),
+                                          ),
                                         ),
                                       ),
-                                  ),
-                                  Text(
-                                    text,
-                                    style: kPrestoBodyTextStyle.copyWith(
-                                      color: const Color(0xFF111827),
-                                      height: 1.3,
-                                      fontSize: 15,
+                                    Text(
+                                      text,
+                                      style: kPrestoBodyTextStyle.copyWith(
+                                        color: const Color(0xFF111827),
+                                        height: 1.3,
+                                        fontSize: 15,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    [
-                                      _formatMessageTimestamp(sentAt),
-                                      if (readReceipt != null) readReceipt,
-                                    ].join(' · '),
-                                    style: kPrestoMetaTextStyle.copyWith(
-                                      fontSize: 11,
-                                      color: const Color(0xFF6B7280),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      [
+                                        _formatMessageTimestamp(sentAt),
+                                        if (readReceipt != null) readReceipt,
+                                      ].join(' · '),
+                                      style: kPrestoMetaTextStyle.copyWith(
+                                        fontSize: 11,
+                                        color: const Color(0xFF6B7280),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
                           ),
                         );
 
@@ -917,7 +1064,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                       ),
                       const SizedBox(width: 8),
                       FilledButton(
-                        onPressed: (_isSending || _isBlocked) ? null : _sendMessage,
+                        onPressed:
+                            (_isSending || _isBlocked) ? null : _sendMessage,
                         style: FilledButton.styleFrom(
                           backgroundColor: kWhatsappGreen,
                           foregroundColor: Colors.white,

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 /// Les écrans peuvent encore surcharger localement certains textes,
 /// mais les niveaux de base sont définis ici.
 const TextStyle kPrestoAppBarTitleStyle = TextStyle(
-  fontSize: 20,
+  fontSize: 21,
   fontWeight: FontWeight.w700,
   height: 1.1,
   letterSpacing: 0.1,

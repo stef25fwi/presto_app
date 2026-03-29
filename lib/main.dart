@@ -1306,7 +1306,7 @@ class _HomePageState extends State<HomePage>
   late final AnimationController _categoryController;
 
   // Taille de police de référence pour les titres des slides (alignée sur le slide 1)
-  static const double _homeSlideTitleFontSize = 26;
+  static const double _homeSlideTitleFontSize = 30;
 
   bool _isSeeding = false;
 
@@ -1320,7 +1320,7 @@ class _HomePageState extends State<HomePage>
   /// Slogans animés (fade + slide) pour le 1er slide
   final List<String> _firstSlideSlogans = const [
     "Trouvez immédiatement quelqu’un pour faire le job.",
-    "Une personne disponible près de chez vous.",
+    "Une personne près de chez vous.",
     "Publiez… ils arrivent aussitôt.",
   ];
   int _sloganIndex = 0;
@@ -1361,8 +1361,8 @@ class _HomePageState extends State<HomePage>
   final List<_HomeSlide> _slides = const [
     _HomeSlide(
       title: "Trouvez immédiatement quelqu’un pour faire le job.",
-      subtitle: "Carte des personnes disponibles en quelques secondes.",
-      badge: "Disponible",
+      subtitle: "Trouvez une personne près de chez vous en quelques secondes.",
+      badge: "",
       // plus d'image chrono ici
       imageAsset: null,
     ),
@@ -1735,7 +1735,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildLatestOffersSection() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -2580,27 +2580,15 @@ class _HomePageState extends State<HomePage>
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: const [
-                                          Text(
-                                            "DISPONIBLE",
-                                            style: TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w700,
-                                              letterSpacing: 1.2,
-                                            ),
-                                          ),
-                                          SizedBox(height: 10),
                                           // ✅ Phrase principale en très gros sur toute la largeur
                                           Text(
                                             bigText,
-                                            maxLines: 3,
-                                            overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
                                               color: Colors.white,
                                               fontSize:
                                                   _homeSlideTitleFontSize, // taille bien grosse
                                               fontWeight: FontWeight.w900,
-                                              height: 1.25,
+                                              height: 1.18,
                                               shadows: [
                                                 Shadow(
                                                   color: Color(0x4D000000),
@@ -2612,7 +2600,7 @@ class _HomePageState extends State<HomePage>
                                           ),
                                           SizedBox(height: 12),
                                           Text(
-                                            "Une personne disponible près de chez vous, en quelques minutes.",
+                                            "Une personne près de chez vous, en quelques minutes.",
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
@@ -8944,6 +8932,37 @@ class _AccountPageState extends State<AccountPage> {
     setState(() {});
   }
 
+  bool _hasProfileValuesInMemory() {
+    return _profilePseudoController.text.trim().isNotEmpty ||
+        _profileCityController.text.trim().isNotEmpty ||
+        _profilePhoneController.text.trim().isNotEmpty;
+  }
+
+  String _firstNonEmptyProfileValue(
+    Map<String, dynamic>? data,
+    List<String> keys, {
+    List<String> fallbackValues = const <String>[],
+  }) {
+    if (data != null) {
+      for (final key in keys) {
+        final raw = data[key];
+        final value = raw?.toString().trim() ?? '';
+        if (value.isNotEmpty) {
+          return value;
+        }
+      }
+    }
+
+    for (final fallback in fallbackValues) {
+      final value = fallback.trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+
+    return '';
+  }
+
   String _normalizeProfilePhoneForSave(String countryCode, String rawPhone) {
     final codeDigits = countryCode.replaceAll(RegExp(r'\D'), '');
     var phoneDigits = rawPhone.replaceAll(RegExp(r'\D'), '');
@@ -9039,75 +9058,133 @@ class _AccountPageState extends State<AccountPage> {
 
   // Ancienne méthode - maintenant gérée par PrestoPremiumAuthPage
 
-  Future<void> _loadUserProfile(User user, {bool isRetry = false}) async {
+  Future<void> _loadUserProfile(User user, {int attempt = 0}) async {
+    final previousPseudo = _profilePseudoController.text.trim();
+    final previousCity = _profileCityController.text.trim();
+    final previousPhoneCountryCode = _profilePhoneCountryCode;
+    final previousPhone = _profilePhoneController.text.trim();
+    final previousFavoriteCategories = _favoriteCategories.toSet();
+    final previousSelectedFavoriteCategories =
+        _selectedFavoriteCategories.toSet();
+    final previousSelectedFavoriteSubcategories =
+        _selectedFavoriteSubcategories.toSet();
+    final previousDraftFavoriteSelections = _draftFavoriteSelections.toSet();
+
     try {
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
-          .get()
+          .get(const GetOptions(source: Source.serverAndCache))
           .timeout(const Duration(seconds: 8));
 
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
-        _profilePseudoController.text =
-            ((data['pseudo'] ?? data['displayName']) ?? user.displayName ?? '')
-                .toString();
-        _profileCityController.text =
-            ((data['city'] ?? data['location']) ?? '').toString();
-        _applyLoadedProfilePhone(
-          ((data['phone'] ?? data['phoneNumber']) ?? '').toString(),
+        _profilePseudoController.text = _firstNonEmptyProfileValue(
+          data,
+          const ['pseudo', 'displayName', 'userName', 'user_name', 'name'],
+          fallbackValues: <String>[user.displayName ?? '', previousPseudo],
         );
+        _profileCityController.text = _firstNonEmptyProfileValue(
+          data,
+          const ['city', 'location', 'serviceArea', 'service_area'],
+          fallbackValues: <String>[previousCity],
+        );
+
+        final loadedPhone = _firstNonEmptyProfileValue(
+          data,
+          const ['phone', 'phoneNumber', 'phone_number'],
+          fallbackValues: <String>[user.phoneNumber ?? ''],
+        );
+        if (loadedPhone.isNotEmpty) {
+          _applyLoadedProfilePhone(loadedPhone);
+        } else if (previousPhone.isNotEmpty) {
+          _profilePhoneCountryCode = previousPhoneCountryCode;
+          _profilePhoneController.text = previousPhone;
+        } else {
+          _applyLoadedProfilePhone('');
+        }
+
         final favs = (data['favoriteCategories'] as List<dynamic>? ?? [])
             .map((e) => e.toString())
             .toList();
-        _favoriteCategories = favs.toSet();
-        _draftFavoriteSelections = _favoriteCategories.toSet();
+        final hasFavoriteCategoriesKey = data.containsKey('favoriteCategories');
+        _favoriteCategories = hasFavoriteCategoriesKey
+            ? favs.toSet()
+            : previousFavoriteCategories;
+        _draftFavoriteSelections = hasFavoriteCategoriesKey
+            ? _favoriteCategories.toSet()
+            : previousDraftFavoriteSelections;
         final selectedCats =
             (data['selectedFavoriteCategories'] as List<dynamic>? ?? [])
                 .map((e) => e.toString())
                 .toList();
-        _selectedFavoriteCategories = selectedCats.toSet();
+        final hasSelectedFavoriteCategoriesKey =
+            data.containsKey('selectedFavoriteCategories');
+        _selectedFavoriteCategories = hasSelectedFavoriteCategoriesKey
+            ? selectedCats.toSet()
+            : previousSelectedFavoriteCategories;
         final selectedSubcats =
             (data['selectedFavoriteSubcategories'] as List<dynamic>? ?? [])
                 .map((e) => e.toString())
                 .toList();
-        _selectedFavoriteSubcategories = selectedSubcats.toSet();
+        final hasSelectedFavoriteSubcategoriesKey =
+            data.containsKey('selectedFavoriteSubcategories');
+        _selectedFavoriteSubcategories = hasSelectedFavoriteSubcategoriesKey
+            ? selectedSubcats.toSet()
+            : previousSelectedFavoriteSubcategories;
 
         // ✅ Si les champs sont remplis, ne pas être en mode édition par défaut
-        final hasProfile = _profilePseudoController.text.isNotEmpty ||
-            _profileCityController.text.isNotEmpty ||
-            _profilePhoneController.text.isNotEmpty;
+        final hasProfile = _hasProfileValuesInMemory();
         _isEditingProfile = !hasProfile;
         _profileLoadError = false;
         _profileLoadRetries = 0;
       } else {
-        // Profil vide : créer un document par défaut
-        _favoriteCategories = <String>{};
-        _selectedFavoriteCategories = <String>{};
-        _selectedFavoriteSubcategories = <String>{};
-        _draftFavoriteSelections = <String>{};
-        _isEditingProfile = true;
+        _profilePseudoController.text =
+            user.displayName?.trim().isNotEmpty == true
+                ? user.displayName!.trim()
+                : previousPseudo;
+        _profileCityController.text = previousCity;
+        if (previousPhone.isNotEmpty) {
+          _profilePhoneCountryCode = previousPhoneCountryCode;
+          _profilePhoneController.text = previousPhone;
+        }
+        _favoriteCategories = previousFavoriteCategories;
+        _selectedFavoriteCategories = previousSelectedFavoriteCategories;
+        _selectedFavoriteSubcategories = previousSelectedFavoriteSubcategories;
+        _draftFavoriteSelections = previousDraftFavoriteSelections;
+        _isEditingProfile = !_hasProfileValuesInMemory();
         _profileLoadError = false;
       }
     } catch (e) {
       debugPrint('[Profile] Erreur chargement profil: $e');
 
       // Retry automatique jusqu'à 3 fois
-      if (!isRetry && _profileLoadRetries < _maxProfileLoadRetries) {
-        _profileLoadRetries++;
+      if (attempt < _maxProfileLoadRetries) {
+        _profileLoadRetries = attempt + 1;
         await Future.delayed(const Duration(milliseconds: 800));
         if (mounted) {
-          await _loadUserProfile(user, isRetry: true);
+          await _loadUserProfile(user, attempt: attempt + 1);
           return;
         }
       }
 
-      _favoriteCategories = <String>{};
-      _selectedFavoriteCategories = <String>{};
-      _selectedFavoriteSubcategories = <String>{};
-      _draftFavoriteSelections = <String>{};
+      if (previousPseudo.isNotEmpty && _profilePseudoController.text.isEmpty) {
+        _profilePseudoController.text = previousPseudo;
+      }
+      if (previousCity.isNotEmpty && _profileCityController.text.isEmpty) {
+        _profileCityController.text = previousCity;
+      }
+      if (previousPhone.isNotEmpty && _profilePhoneController.text.isEmpty) {
+        _profilePhoneCountryCode = previousPhoneCountryCode;
+        _profilePhoneController.text = previousPhone;
+      }
+
+      _favoriteCategories = previousFavoriteCategories;
+      _selectedFavoriteCategories = previousSelectedFavoriteCategories;
+      _selectedFavoriteSubcategories = previousSelectedFavoriteSubcategories;
+      _draftFavoriteSelections = previousDraftFavoriteSelections;
       _profileLoadError = true;
-      _isEditingProfile = true;
+      _isEditingProfile = !_hasProfileValuesInMemory();
     }
 
     if (mounted) {
@@ -11783,7 +11860,7 @@ class _AutoScrollingOffersCarouselState
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: SizedBox(
-        height: 56,
+        height: 52,
         child: ListView.separated(
           controller: _scrollController,
           scrollDirection: Axis.horizontal,
