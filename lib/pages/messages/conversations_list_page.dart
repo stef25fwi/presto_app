@@ -158,20 +158,42 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         );
   }
 
-  List<QueryDocumentSnapshot<Map<String, dynamic>>> _mergeConversationDocs(
-    Iterable<List<QueryDocumentSnapshot<Map<String, dynamic>>>> docLists,
+  String? _notificationConversationId(Map<String, dynamic> data) {
+    final directValue = _conversationValue(
+      data,
+      const ['conversationId', 'conversation_id'],
+    );
+    final normalizedDirectValue = (directValue ?? '').toString().trim();
+    if (normalizedDirectValue.isNotEmpty) {
+      return normalizedDirectValue;
+    }
+
+    final routeName = (data['routeName'] ?? data['route_name'] ?? '')
+        .toString()
+        .trim();
+    if (routeName.isEmpty) return null;
+    if (!routeName.startsWith('/messages/')) return null;
+
+    final segments = routeName.split('/');
+    if (segments.length < 3) return null;
+    final conversationId = segments[2].trim();
+    return conversationId.isEmpty ? null : conversationId;
+  }
+
+  List<ConversationSummary> _mergeConversationDocs(
+    Iterable<List<ConversationSummary>> docLists,
   ) {
-    final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+    final byId = <String, ConversationSummary>{};
     for (final docs in docLists) {
-      for (final doc in docs) {
-        byId.putIfAbsent(doc.id, () => doc);
+      for (final conversation in docs) {
+        byId.putIfAbsent(conversation.id, () => conversation);
       }
     }
 
     final merged = byId.values.toList(growable: false);
     merged.sort((left, right) {
-      final rightDate = _conversationSortDate(right.data());
-      final leftDate = _conversationSortDate(left.data());
+      final rightDate = right.sortDate;
+      final leftDate = left.sortDate;
       if (leftDate == null && rightDate == null) {
         return right.id.compareTo(left.id);
       }
@@ -195,12 +217,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   Stream<_ConversationQueryState> _buildConversationStateStream(String userId) {
     final controller = StreamController<_ConversationQueryState>();
     final errorsByField = <String, Object>{};
-    final docsByField = <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+    final docsByField = <String, List<ConversationSummary>>{};
     final retryCountsByField = <String, int>{};
-    var docs = const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    var docs = const <ConversationSummary>[];
     final subscriptionsByField =
         <String, StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>{};
     final retryTimersByField = <String, Timer>{};
+    const notificationsFallbackSource = '__notifications__';
 
     void emit() {
       if (controller.isClosed) return;
@@ -227,12 +250,76 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
     late void Function(String participantField) scheduleRetry;
     late void Function(String participantField) listenField;
+    late void Function() listenNotifications;
+
+    Future<void> refreshNotificationFallback(
+      List<QueryDocumentSnapshot<Map<String, dynamic>>> notificationDocs,
+    ) async {
+      try {
+        final conversationIds = <String>[];
+        final seenConversationIds = <String>{};
+        for (final notificationDoc in notificationDocs) {
+          final conversationId = _notificationConversationId(notificationDoc.data());
+          if (conversationId == null || !seenConversationIds.add(conversationId)) {
+            continue;
+          }
+          conversationIds.add(conversationId);
+        }
+
+        if (conversationIds.isEmpty) {
+          docsByField[notificationsFallbackSource] = const <ConversationSummary>[];
+          errorsByField.remove(notificationsFallbackSource);
+          retryCountsByField[notificationsFallbackSource] = 0;
+          emit();
+          return;
+        }
+
+        final snapshots = await Future.wait(
+          conversationIds.map(
+            (conversationId) => FirebaseFirestore.instance
+                .collection('conversations')
+                .doc(conversationId)
+                .get(),
+          ),
+        );
+
+        if (controller.isClosed) return;
+
+        docsByField[notificationsFallbackSource] = snapshots
+            .where((snapshot) => snapshot.exists)
+            .map((snapshot) {
+              final data = snapshot.data();
+              if (data == null) return null;
+              return ConversationSummary.fromMap(
+                snapshot.id,
+                Map<String, dynamic>.from(data),
+              );
+            })
+            .whereType<ConversationSummary>()
+            .where((conversation) => conversation.includesUser(userId))
+            .toList(growable: false);
+        errorsByField.remove(notificationsFallbackSource);
+        retryCountsByField[notificationsFallbackSource] = 0;
+        emit();
+      } catch (error) {
+        errorsByField[notificationsFallbackSource] = error;
+        if (kDebugMode) {
+          debugPrint(
+            '[MessagesList] notifications fallback error user=$userId error=$error',
+          );
+        }
+        emit();
+        scheduleRetry(notificationsFallbackSource);
+      }
+    }
 
     listenField = (String participantField) {
       subscriptionsByField.remove(participantField)?.cancel();
       final subscription = _conversationStream(participantField, userId).listen(
         (snapshot) {
-          docsByField[participantField] = snapshot.docs;
+          docsByField[participantField] = snapshot.docs
+              .map(ConversationSummary.fromFirestore)
+              .toList(growable: false);
           errorsByField.remove(participantField);
           retryCountsByField[participantField] = 0;
           retryTimersByField.remove(participantField)?.cancel();
@@ -257,12 +344,43 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       subscriptionsByField[participantField] = subscription;
     };
 
+    listenNotifications = () {
+      subscriptionsByField.remove(notificationsFallbackSource)?.cancel();
+      final subscription = FirebaseFirestore.instance
+          .collection('notifications')
+          .where('userId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .limit(60)
+          .snapshots()
+          .listen(
+        (snapshot) {
+          retryTimersByField.remove(notificationsFallbackSource)?.cancel();
+          unawaited(refreshNotificationFallback(snapshot.docs));
+        },
+        onError: (error, stackTrace) {
+          errorsByField[notificationsFallbackSource] = error;
+          if (kDebugMode) {
+            debugPrint(
+              '[MessagesList] notifications stream error user=$userId error=$error',
+            );
+          }
+          emit();
+          scheduleRetry(notificationsFallbackSource);
+        },
+      );
+      subscriptionsByField[notificationsFallbackSource] = subscription;
+    };
+
     scheduleRetry = (String participantField) {
       retryTimersByField.remove(participantField)?.cancel();
       final delay = retryDelayForField(participantField);
       retryTimersByField[participantField] = Timer(delay, () {
         retryTimersByField.remove(participantField);
         if (controller.isClosed) return;
+        if (participantField == notificationsFallbackSource) {
+          listenNotifications();
+          return;
+        }
         listenField(participantField);
       });
     };
@@ -270,6 +388,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     for (final participantField in conversationParticipantQueryFieldAliases) {
       listenField(participantField);
     }
+    listenNotifications();
 
     controller.onCancel = () async {
       for (final timer in retryTimersByField.values) {
@@ -386,7 +505,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
   void _maybeOpenInitialConversation(
     BuildContext context,
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    List<ConversationSummary> docs,
     String userId,
   ) {
     final initialConversationId = widget.initialConversationId?.trim() ?? '';
@@ -405,7 +524,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         if (!mounted) return;
         await _openConversation(
           context,
-          ConversationSummary.fromFirestore(match.first),
+          match.first,
           userId,
           widget.initialDraftText,
         );
@@ -789,26 +908,14 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                           );
                         }
 
-                        final docs = state?.docs ?? const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+                        final docs = state?.docs ?? const <ConversationSummary>[];
                         final errorsByField = state?.errorsByField ?? const <String, Object>{};
                         _maybeOpenInitialConversation(context, docs, userId);
 
                         final query = _searchController.text.trim().toLowerCase();
                         var orphanCount = 0;
                         var hiddenWithoutPreviewCount = 0;
-                        final conversations = docs
-                            .map(ConversationSummary.fromFirestore)
-                            .toList(growable: false)
-                          ..sort((left, right) {
-                            final rightDate = right.sortDate;
-                            final leftDate = left.sortDate;
-                            if (leftDate == null && rightDate == null) {
-                              return right.id.compareTo(left.id);
-                            }
-                            if (leftDate == null) return 1;
-                            if (rightDate == null) return -1;
-                            return rightDate.compareTo(leftDate);
-                          });
+                        final conversations = docs;
 
                         final visibleConversations = conversations.where((conversation) {
                           if (!conversation.includesUser(userId)) {
@@ -1225,7 +1332,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 }
 
 class _ConversationQueryState {
-  final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs;
+  final List<ConversationSummary> docs;
   final Map<String, Object> errorsByField;
   final bool isLoading;
 
