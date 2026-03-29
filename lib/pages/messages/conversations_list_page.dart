@@ -196,8 +196,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     final controller = StreamController<_ConversationQueryState>();
     final errorsByField = <String, Object>{};
     final docsByField = <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+    final retryCountsByField = <String, int>{};
     var docs = const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-    final subscriptions = <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
+    final subscriptionsByField =
+        <String, StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>{};
+    final retryTimersByField = <String, Timer>{};
 
     void emit() {
       if (controller.isClosed) return;
@@ -211,11 +214,28 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       );
     }
 
-    for (final participantField in conversationParticipantQueryFieldAliases) {
+    Duration retryDelayForField(String participantField) {
+      final failureCount = (retryCountsByField[participantField] ?? 0) + 1;
+      retryCountsByField[participantField] = failureCount;
+      final seconds = failureCount <= 1
+          ? 2
+          : failureCount == 2
+              ? 5
+              : 10;
+      return Duration(seconds: seconds);
+    }
+
+    late void Function(String participantField) scheduleRetry;
+    late void Function(String participantField) listenField;
+
+    listenField = (String participantField) {
+      subscriptionsByField.remove(participantField)?.cancel();
       final subscription = _conversationStream(participantField, userId).listen(
         (snapshot) {
           docsByField[participantField] = snapshot.docs;
           errorsByField.remove(participantField);
+          retryCountsByField[participantField] = 0;
+          retryTimersByField.remove(participantField)?.cancel();
           if (kDebugMode) {
             debugPrint(
               '[MessagesList] query field=$participantField docs=${snapshot.docs.length} user=$userId',
@@ -224,7 +244,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           emit();
         },
         onError: (error, stackTrace) {
-          docsByField.remove(participantField);
           errorsByField[participantField] = error;
           if (kDebugMode) {
             debugPrint(
@@ -232,15 +251,35 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             );
           }
           emit();
+          scheduleRetry(participantField);
         },
       );
-      subscriptions.add(subscription);
+      subscriptionsByField[participantField] = subscription;
+    };
+
+    scheduleRetry = (String participantField) {
+      retryTimersByField.remove(participantField)?.cancel();
+      final delay = retryDelayForField(participantField);
+      retryTimersByField[participantField] = Timer(delay, () {
+        retryTimersByField.remove(participantField);
+        if (controller.isClosed) return;
+        listenField(participantField);
+      });
+    };
+
+    for (final participantField in conversationParticipantQueryFieldAliases) {
+      listenField(participantField);
     }
 
     controller.onCancel = () async {
-      for (final subscription in subscriptions) {
+      for (final timer in retryTimersByField.values) {
+        timer.cancel();
+      }
+      retryTimersByField.clear();
+      for (final subscription in subscriptionsByField.values) {
         await subscription.cancel();
       }
+      subscriptionsByField.clear();
     };
 
     return controller.stream;
@@ -565,7 +604,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
     if (errorsByField.isNotEmpty) {
       if (errorsByField.containsKey(conversationPrimaryParticipantField)) {
-        lines.add('La source principale participants a echoue ; un affichage de secours tente de recuperer les conversations via les alias legacy.');
+        lines.add('La source principale participants a echoue temporairement ; un affichage de secours tente de recuperer les conversations via les alias legacy pendant la relance automatique.');
       } else {
         lines.add('Certaines sources Firestore ont echoue ; la liste affiche seulement les conversations recuperables.');
       }
