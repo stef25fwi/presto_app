@@ -8613,6 +8613,8 @@ class _AccountPageState extends State<AccountPage> {
   bool _isSavingProfile = false;
   bool _isSigningOut = false;
   bool _isEditingProfile = false; // ✅ Mode édition du profil
+  bool _isPublishedOffersExpanded = false;
+  bool _isFavoriteOffersExpanded = false;
   bool _profileLoadError = false;
   int _profileLoadRetries = 0;
   static const int _maxProfileLoadRetries = 3;
@@ -9555,9 +9557,58 @@ class _AccountPageState extends State<AccountPage> {
     required String title,
     required String description,
     required Widget child,
+    bool isExpanded = true,
+    VoidCallback? onToggle,
   }) {
+    final isCollapsible = onToggle != null;
+    final header = Row(
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: kPrestoBlue.withOpacity(0.10),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: kPrestoBlue, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF16324F),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (isCollapsible)
+          Icon(
+            isExpanded
+                ? Icons.keyboard_arrow_up_rounded
+                : Icons.keyboard_arrow_down_rounded,
+            color: const Color(0xFF16324F),
+          ),
+      ],
+    );
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFD),
         borderRadius: BorderRadius.circular(20),
@@ -9566,46 +9617,21 @@ class _AccountPageState extends State<AccountPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: kPrestoBlue.withOpacity(0.10),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: kPrestoBlue, size: 20),
+          if (isCollapsible)
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onToggle,
+                borderRadius: BorderRadius.circular(16),
+                child: header,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF16324F),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      description,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          child,
+            )
+          else
+            header,
+          if (!isCollapsible || isExpanded) ...[
+            const SizedBox(height: 14),
+            child,
+          ],
         ],
       ),
     );
@@ -9655,7 +9681,7 @@ class _AccountPageState extends State<AccountPage> {
           ),
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 500),
                 child: SingleChildScrollView(
@@ -9855,6 +9881,13 @@ class _AccountPageState extends State<AccountPage> {
                         title: 'Gérer mes annonces',
                         description:
                             'Retrouve tes annonces par statut, modifie-les ou supprime-les avec confirmation.',
+                        isExpanded: _isPublishedOffersExpanded,
+                        onToggle: () {
+                          setState(() {
+                            _isPublishedOffersExpanded =
+                                !_isPublishedOffersExpanded;
+                          });
+                        },
                         child: RepaintBoundary(
                           child: UserOffersSection(
                             userId: user.uid,
@@ -9868,6 +9901,13 @@ class _AccountPageState extends State<AccountPage> {
                         title: 'Mes annonces favorites',
                         description:
                             'Retrouve les annonces enregistrées pour plus tard.',
+                        isExpanded: _isFavoriteOffersExpanded,
+                        onToggle: () {
+                          setState(() {
+                            _isFavoriteOffersExpanded =
+                                !_isFavoriteOffersExpanded;
+                          });
+                        },
                         child: RepaintBoundary(
                           child: FavoriteOffersSection(
                             userId: user.uid,
@@ -9878,7 +9918,7 @@ class _AccountPageState extends State<AccountPage> {
                       const SizedBox(height: 24),
                       _buildAccountSectionCard(
                         icon: Icons.tune_rounded,
-                        title: 'Mes catégories favorites',
+                        title: 'Mes alertes catégories d\'annonces',
                         description:
                             'Organise les alertes qui correspondent à tes préférences.',
                         child: RepaintBoundary(
