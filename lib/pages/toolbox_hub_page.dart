@@ -101,24 +101,13 @@ class ToolboxHubPage extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             if (isPhone) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 8, bottom: 4),
-                        child: firstCard,
-                      ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 4, bottom: 8),
-                        child: secondCard,
-                      ),
-                    ),
-                  ],
-                ),
+              return ListView(
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 18),
+                children: [
+                  firstCard,
+                  const SizedBox(height: 12),
+                  secondCard,
+                ],
               );
             }
 
@@ -176,13 +165,14 @@ class _ToolCard extends StatelessWidget {
       ),
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          compact ? 10 : 12,
-          compact ? 10 : 12,
-          compact ? 10 : 12,
-          compact ? 10 : 12,
+          compact ? 14 : 16,
+          compact ? 14 : 16,
+          compact ? 14 : 16,
+          compact ? 14 : 16,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,29 +186,27 @@ class _ToolCard extends StatelessWidget {
                       Text(
                         title,
                         style: kPrestoCardTitleStyle.copyWith(
-                          fontSize: compact ? 15 : 16,
+                          fontSize: compact ? 18 : 19,
                           fontWeight: FontWeight.w800,
+                          height: 1.15,
                         ),
                       ),
                       SizedBox(height: compact ? 3 : 4),
                       Text(
                         subtitle,
-                        maxLines: compact ? 1 : 2,
-                        overflow: TextOverflow.ellipsis,
                         style: kPrestoMetaTextStyle.copyWith(
-                          fontSize: compact ? 12 : 13,
+                          fontSize: compact ? 13.5 : 14,
                           fontWeight: FontWeight.w600,
+                          height: 1.3,
                         ),
                       ),
                       SizedBox(height: compact ? 4 : 5),
                       Text(
                         description,
-                        maxLines: compact ? 2 : 3,
-                        overflow: TextOverflow.ellipsis,
                         style: kPrestoMetaTextStyle.copyWith(
-                          fontSize: compact ? 11 : 12,
+                          fontSize: compact ? 13 : 13.5,
                           color: Colors.black.withOpacity(0.70),
-                          height: 1.25,
+                          height: 1.35,
                         ),
                       ),
                     ],
@@ -226,13 +214,12 @@ class _ToolCard extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: compact ? 8 : 10),
+            SizedBox(height: compact ? 14 : 16),
             _BulletsGrid(bullets: bullets),
-            if (compact) const Spacer() else const SizedBox(height: 12),
-            SizedBox(height: compact ? 8 : 0),
+            SizedBox(height: compact ? 16 : 18),
             SizedBox(
               width: double.infinity,
-              height: compact ? 41 : 44,
+              height: compact ? 54 : 58,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: buttonGradient,
@@ -259,7 +246,7 @@ class _ToolCard extends StatelessWidget {
                   child: Text(
                     buttonText,
                     style: TextStyle(
-                      fontSize: compact ? 13 : 14,
+                      fontSize: compact ? 15 : 16,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -279,53 +266,57 @@ class _BulletsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final left = <String>[];
-    final right = <String>[];
-    for (int i = 0; i < bullets.length; i++) {
-      (i.isEven ? left : right).add(bullets[i]);
-    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+        final itemWidth = (constraints.maxWidth - spacing) / 2;
 
-    return Row(
-      children: [
-        Expanded(child: _BulletColumn(items: left)),
-        const SizedBox(width: 12),
-        Expanded(child: _BulletColumn(items: right)),
-      ],
+        return Wrap(
+          spacing: spacing,
+          runSpacing: 10,
+          children: bullets
+              .map(
+                (bullet) => SizedBox(
+                  width: itemWidth,
+                  child: _BulletItem(text: bullet),
+                ),
+              )
+              .toList(),
+        );
+      },
     );
   }
 }
 
-class _BulletColumn extends StatelessWidget {
-  const _BulletColumn({required this.items});
-  final List<String> items;
+class _BulletItem extends StatelessWidget {
+  const _BulletItem({required this.text});
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: items
-          .map(
-            (t) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.check_circle_rounded,
-                      size: 15, color: Color(0xFF2EAD6B)),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      t,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 1),
+          child: Icon(
+            Icons.check_circle_rounded,
+            size: 17,
+            color: Color(0xFF2EAD6B),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
             ),
-          )
-          .toList(),
+          ),
+        ),
+      ],
     );
   }
 }
