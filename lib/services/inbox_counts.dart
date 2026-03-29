@@ -11,6 +11,27 @@ enum InboxCountType {
   unreadNotifications,
 }
 
+Stream<int> streamInboxCount({
+  required String userId,
+  InboxCountType type = InboxCountType.totalUnread,
+}) {
+  final normalizedUserId = userId.trim();
+  if (normalizedUserId.isEmpty) {
+    return Stream<int>.value(0);
+  }
+
+  return FirebaseFirestore.instance
+      .collection('users')
+      .doc(normalizedUserId)
+      .snapshots()
+      .map((snapshot) {
+        final inboxCounts =
+            (snapshot.data()?['inboxCounts'] as Map<String, dynamic>?) ??
+                const <String, dynamic>{};
+        return readInboxCount(inboxCounts, type: type);
+      });
+}
+
 Stream<int> streamVisibleUnreadMessageCount({required String userId}) {
   final normalizedUserId = userId.trim();
   if (normalizedUserId.isEmpty) {
