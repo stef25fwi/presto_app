@@ -589,8 +589,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   Widget _buildDiagnosticsBanner({
     required Map<String, Object> errorsByField,
     required int orphanCount,
+    bool hasVisibleConversations = false,
   }) {
-    if (errorsByField.isEmpty && orphanCount <= 0) {
+    final shouldExposeErrors = !hasVisibleConversations || kDebugMode;
+    if ((errorsByField.isEmpty || !shouldExposeErrors) && orphanCount <= 0) {
       return const SizedBox.shrink();
     }
 
@@ -602,7 +604,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             : '$orphanCount conversations ignorees car les participants sont invalides.',
       );
     }
-    if (errorsByField.isNotEmpty) {
+    if (errorsByField.isNotEmpty && shouldExposeErrors) {
       if (errorsByField.containsKey(conversationPrimaryParticipantField)) {
         lines.add('La source principale participants a echoue temporairement ; un affichage de secours tente de recuperer les conversations via les alias legacy pendant la relance automatique.');
       } else {
@@ -859,6 +861,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                               _buildDiagnosticsBanner(
                                 errorsByField: errorsByField,
                                 orphanCount: orphanCount,
+                                hasVisibleConversations: false,
                               ),
                               Expanded(child: _buildEmptyState(message)),
                             ],
@@ -870,6 +873,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                             _buildDiagnosticsBanner(
                               errorsByField: errorsByField,
                               orphanCount: orphanCount,
+                              hasVisibleConversations: filteredConversations.isNotEmpty,
                             ),
                             Expanded(
                               child: ListView.builder(
