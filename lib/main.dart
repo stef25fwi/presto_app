@@ -23,6 +23,7 @@ import 'app_core.dart';
 import 'constants.dart';
 import 'firebase_options.dart';
 import 'dev/seed_offers.dart';
+import 'debug_auth.dart';
 import 'features/ai_draft/ai_draft_service.dart';
 import 'features/micro_ia/micro_ia_service.dart';
 import 'features/micro_ia/web_audio_recorder.dart';
@@ -706,6 +707,10 @@ Future<void> main() async {
     // L'auth anonyme sera gérée au besoin par chaque page qui en a besoin
     try {
       final auth = FirebaseAuth.instance;
+      if (kDebugMode) {
+        DebugAuth.installAuthStateLogs();
+        unawaited(DebugAuth.debugRedirectResultAtStartup());
+      }
       // Ne force plus signInAnonymously() au démarrage
       if (auth.currentUser != null) {
         debugPrint('[Auth] User already signed in: ${auth.currentUser!.uid}');

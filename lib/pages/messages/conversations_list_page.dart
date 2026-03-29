@@ -183,56 +183,64 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _conversationStream(
+    String participantField,
     String userId,
   ) {
     return FirebaseFirestore.instance
         .collection('conversations')
-        .where(conversationPrimaryParticipantField, arrayContains: userId)
+        .where(participantField, arrayContains: userId)
         .snapshots();
   }
 
   Stream<_ConversationQueryState> _buildConversationStateStream(String userId) {
     final controller = StreamController<_ConversationQueryState>();
     final errorsByField = <String, Object>{};
+    final docsByField = <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
     var docs = const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? subscription;
+    final subscriptions = <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
 
     void emit() {
       if (controller.isClosed) return;
+      docs = _mergeConversationDocs(docsByField.values);
       controller.add(
         _ConversationQueryState(
           docs: docs,
           errorsByField: Map<String, Object>.unmodifiable(errorsByField),
-          isLoading: docs.isEmpty && errorsByField.isEmpty,
+          isLoading: docsByField.isEmpty && errorsByField.isEmpty,
         ),
       );
     }
 
-    subscription = _conversationStream(userId).listen(
-      (snapshot) {
-        docs = snapshot.docs;
-        errorsByField.remove(conversationPrimaryParticipantField);
-        if (kDebugMode) {
-          debugPrint(
-            '[MessagesList] query field=$conversationPrimaryParticipantField docs=${snapshot.docs.length} user=$userId',
-          );
-        }
-        emit();
-      },
-      onError: (error, stackTrace) {
-        docs = const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-        errorsByField[conversationPrimaryParticipantField] = error;
-        if (kDebugMode) {
-          debugPrint(
-            '[MessagesList] query error field=$conversationPrimaryParticipantField user=$userId error=$error',
-          );
-        }
-        emit();
-      },
-    );
+    for (final participantField in conversationParticipantQueryFieldAliases) {
+      final subscription = _conversationStream(participantField, userId).listen(
+        (snapshot) {
+          docsByField[participantField] = snapshot.docs;
+          errorsByField.remove(participantField);
+          if (kDebugMode) {
+            debugPrint(
+              '[MessagesList] query field=$participantField docs=${snapshot.docs.length} user=$userId',
+            );
+          }
+          emit();
+        },
+        onError: (error, stackTrace) {
+          docsByField.remove(participantField);
+          errorsByField[participantField] = error;
+          if (kDebugMode) {
+            debugPrint(
+              '[MessagesList] query error field=$participantField user=$userId error=$error',
+            );
+          }
+          emit();
+        },
+      );
+      subscriptions.add(subscription);
+    }
 
     controller.onCancel = () async {
-      await subscription?.cancel();
+      for (final subscription in subscriptions) {
+        await subscription.cancel();
+      }
     };
 
     return controller.stream;
@@ -556,7 +564,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       );
     }
     if (errorsByField.isNotEmpty) {
-      lines.add('Certaines sources Firestore ont echoue ; la liste affiche seulement les conversations recuperables.');
+      if (errorsByField.containsKey(conversationPrimaryParticipantField)) {
+        lines.add('La source principale participants a echoue ; un affichage de secours tente de recuperer les conversations via les alias legacy.');
+      } else {
+        lines.add('Certaines sources Firestore ont echoue ; la liste affiche seulement les conversations recuperables.');
+      }
       if (kDebugMode) {
         for (final entry in errorsByField.entries) {
           lines.add('${entry.key}: ${entry.value}');
@@ -595,13 +607,91 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     );
   }
 
+  Widget _buildCurrentAccountBanner(User user) {
+    final email = (user.email ?? '').trim();
+    final uid = user.uid.trim();
+    final copyValue = 'email=${email.isEmpty ? 'aucun' : email}\nuid=$uid';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEAF2FF),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFC9DCF8)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(top: 1),
+              child: Icon(
+                Icons.verified_user_outlined,
+                color: kPrestoBlue,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Compte actuellement connecté',
+                    style: kPrestoMetaTextStyle.copyWith(
+                      color: const Color(0xFF0F3D91),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    email.isEmpty ? 'Email non disponible' : email,
+                    style: kPrestoBodyTextStyle.copyWith(
+                      color: const Color(0xFF111827),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  SelectableText(
+                    'UID: $uid',
+                    style: kPrestoMetaTextStyle.copyWith(
+                      color: const Color(0xFF4B5563),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'Copier les identifiants',
+              visualDensity: VisualDensity.compact,
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: copyValue));
+                if (!mounted) return;
+                showSuccessSnackBar(context, 'Identifiants du compte copiés.');
+              },
+              icon: const Icon(
+                Icons.copy_rounded,
+                color: kPrestoBlue,
+                size: 18,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       initialData: FirebaseAuth.instance.currentUser,
       builder: (context, authSnapshot) {
-        final userId = authSnapshot.data?.uid;
+        final currentUser = authSnapshot.data;
+        final userId = currentUser?.uid;
 
         if (userId == null) {
           return Scaffold(
@@ -640,6 +730,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               _buildWatermark(),
               Column(
                 children: [
+                  if (currentUser != null) _buildCurrentAccountBanner(currentUser),
                   _buildSearchField(),
                   _buildFilterTabs(),
                   Expanded(

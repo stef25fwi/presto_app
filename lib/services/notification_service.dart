@@ -107,6 +107,13 @@ class NotificationService {
 
     // Handler pour les messages en foreground
     FirebaseMessaging.onMessage.listen((message) async {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      debugPrint(
+        '[Notifications-Foreground] currentUser=${currentUser?.uid} email=${currentUser?.email}',
+      );
+      debugPrint(
+        '[Notifications-Foreground] route=${_resolveRouteName(message)} data=${message.data}',
+      );
       if (_shouldShowLocalForegroundNotification(message)) {
         await showForegroundNotification(message);
       }
@@ -225,6 +232,10 @@ class NotificationService {
     final channel = requestedChannelId == _messagesChannel.id
         ? _messagesChannel
         : _activityChannel;
+
+    debugPrint(
+      '[Notifications-Foreground] local notification channel=${channel.id} title=${notification.title} body=${notification.body}',
+    );
 
     await _localNotifications.show(
       message.messageId.hashCode,
