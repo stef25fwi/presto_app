@@ -77,7 +77,7 @@
     {
       "label": "Git: Commit Messaging + Home Fixes",
       "type": "shell",
-      "command": "git commit -m \"fix(messages): hide transient firestore warnings when conversations load\"",
+      "command": "git commit -m \"fix(messages): add runtime diagnostics for account and notifications\"",
       "problemMatcher": []
     },
     {
