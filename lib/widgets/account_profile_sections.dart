@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/city_search.dart';
 import 'phone_input_field.dart';
 
-const double _kAccountSectionTileHorizontalPadding = 12;
+const double _kAccountSectionTileHorizontalPadding = 10;
 
 class AccountProfileFormSection extends StatefulWidget {
   final TextEditingController pseudoController;
@@ -253,7 +253,7 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
       children: [
         if (showTitle)
           const Text(
-            'Mes catégories favorites',
+            'Mes alertes catégories d\'annonces',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
