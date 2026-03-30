@@ -7,6 +7,7 @@ import { logger } from "../../../core/logger";
 import { COLLECTIONS } from "../../../shared/constants";
 import { createInAppNotification } from "../../notifications/push";
 import { trackProductEventBackend } from "../services/analytics";
+import { processOfferPhotoStoragePath } from "./media";
 import {
   evaluateListingRisk,
   loadModerationConfig,
@@ -15,6 +16,7 @@ import {
 import { verifyRecaptchaAssessment } from "../services/recaptcha";
 import { toHttpsError } from "../services/errors";
 import { validateListingDraftPayload } from "../validators/listings";
+import type { ListingMedia } from "../models/firestore";
 
 function requireAuthUid(request: { auth?: { uid?: string } }): string {
   const uid = String(request.auth?.uid || "").trim();
@@ -26,6 +28,43 @@ function requireAuthUid(request: { auth?: { uid?: string } }): string {
 
 function normalizeString(value: unknown): string {
   return String(value ?? "").trim();
+}
+
+async function normalizeListingMediaForSubmission({
+  ownerId,
+  media,
+}: {
+  ownerId: string;
+  media: ListingMedia[];
+}): Promise<ListingMedia[]> {
+  return Promise.all(media.map(async (entry) => {
+    const storagePath = normalizeString(entry.storagePath);
+    const mimeType = normalizeString(entry.mimeType).toLowerCase();
+
+    if (!storagePath) {
+      throw new HttpsError("invalid-argument", "Media storagePath is required");
+    }
+
+    if (storagePath.toLowerCase().endsWith(".webp") && mimeType === "image/webp") {
+      return entry;
+    }
+
+    const processed = await processOfferPhotoStoragePath({
+      uid: ownerId,
+      storagePath,
+    });
+
+    return {
+      storagePath: processed.storagePath,
+      downloadUrl: processed.downloadUrl,
+      thumbnailUrl: processed.thumbnailUrl,
+      mimeType: processed.mimeType,
+      width: processed.width,
+      height: processed.height,
+      sizeBytes: processed.sizeBytes,
+      safeSearchStatus: "pending",
+    };
+  }));
 }
 
 async function loadDraftSnapshot(draftId: string) {
@@ -137,16 +176,6 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
     const validated = validateListingDraftPayload(draftData, config.maxMediaCount || MARKETPLACE_MAX_MEDIA_COUNT);
     const refsData = await ensureCategoryAndCityAreActive(validated.categoryId, validated.cityId);
     const ownerSignals = await readOwnerSignals(ownerId, validated.title.toLowerCase());
-    const evaluation = await evaluateListingRisk({
-      ownerId,
-      title: validated.title,
-      description: validated.description,
-      media: validated.media,
-      ownerSignals: {
-        ...ownerSignals,
-        lastRecaptchaScore: recaptcha.score,
-      },
-    });
 
     const listingId = draftId;
     const listingRef = db.collection(COLLECTIONS.listings).doc(listingId);
@@ -167,6 +196,7 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
       status: "pending",
       moderationStatus: "pending",
       visibility: "private",
+      mediaProcessingStatus: validated.media.length > 0 ? "processing" : "completed",
       reportCount: 0,
       favoriteCount: 0,
       viewCount: 0,
@@ -182,8 +212,34 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
         ? cityData.geo
         : null,
       sourceDraftId: draftId,
-      riskScore: evaluation.riskScore,
+      riskScore: 0,
     }, { merge: true });
+
+    const normalizedMedia = await normalizeListingMediaForSubmission({
+      ownerId,
+      media: validated.media,
+    });
+    const thumbnailUrl = normalizedMedia[0]?.thumbnailUrl || normalizedMedia[0]?.downloadUrl || "";
+
+    if (normalizedMedia.length > 0) {
+      await listingRef.set({
+        media: normalizedMedia,
+        thumbnailUrl,
+        mediaProcessingStatus: "completed",
+        updatedAt: now,
+      }, { merge: true });
+    }
+
+    const evaluation = await evaluateListingRisk({
+      ownerId,
+      title: validated.title,
+      description: validated.description,
+      media: normalizedMedia,
+      ownerSignals: {
+        ...ownerSignals,
+        lastRecaptchaScore: recaptcha.score,
+      },
+    });
 
     const publication = await persistModerationResult({
       listingId,
@@ -276,6 +332,8 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
       moderationStatus: publication.moderationStatus,
       visibility: publication.visibility,
       riskScore: evaluation.riskScore,
+      media: normalizedMedia,
+      thumbnailUrl,
     };
   } catch (error) {
     throw toHttpsError(error, "Unable to submit listing draft");

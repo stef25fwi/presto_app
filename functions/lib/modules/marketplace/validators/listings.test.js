@@ -57,8 +57,8 @@ const listings_1 = require("./listings");
     strict_1.default.equal(payload.media.length, 0);
     strict_1.default.equal(payload.thumbnailUrl, "");
 });
-(0, node_test_1.default)("validateListingDraftPayload rejects non-webp media", () => {
-    strict_1.default.throws(() => (0, listings_1.validateListingDraftPayload)({
+(0, node_test_1.default)("validateListingDraftPayload accepts raw image formats for backend conversion", () => {
+    const payload = (0, listings_1.validateListingDraftPayload)({
         title: "Montage meuble cuisine complet",
         description: "Montage d'un meuble de cuisine avec fixation murale et finitions propres.",
         price: "95",
@@ -66,16 +66,14 @@ const listings_1 = require("./listings");
         cityId: "97139_les-abymes",
         media: [
             {
-                storagePath: "listings/u1/photo.jpg",
+                storagePath: "offers_raw/u1/photo.jpg",
                 downloadUrl: "https://cdn.example/photo.jpg",
                 mimeType: "image/jpeg",
             },
         ],
-    }, 10), (error) => {
-        strict_1.default.ok(error instanceof errors_1.ValidationError);
-        strict_1.default.ok(error.issues.includes("Photo #1 must be processed as WebP before submission"));
-        return true;
-    });
+    }, 10);
+    strict_1.default.equal(payload.media.length, 1);
+    strict_1.default.equal(payload.media[0]?.mimeType, "image/jpeg");
 });
 (0, node_test_1.default)("validateListingReportPayload rejects unsupported reason codes", () => {
     strict_1.default.throws(() => (0, listings_1.validateListingReportPayload)({

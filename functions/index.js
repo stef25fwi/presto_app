@@ -362,13 +362,14 @@ Règles d'extraction :
 
 Catégorie : choisis uniquement parmi cette liste si c'est suffisamment clair, sinon null.
 - Jardinage
-- Bricolage
-- Ménage
+- Bricolage / Travaux
+- Aide à domicile
 - Restauration / Extra
-- DJ / Sono
-- Baby-sitting
-- Transport / Livraison
-- Informatique
+- Événementiel / DJ
+- Garde d'enfants
+- Cours & soutien
+- Peinture
+- Main-d'œuvre
 - Autre
 
 FORMAT JSON OBLIGATOIRE :

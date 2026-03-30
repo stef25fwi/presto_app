@@ -48,6 +48,42 @@ function requireAuthUid(request) {
 function sanitizeConversationPart(value) {
     return value.replaceAll("/", "_").trim();
 }
+async function deleteNotificationsForConversation(conversationId) {
+    const routeName = `/messages/${encodeURIComponent(conversationId)}`;
+    const [conversationIdSnap, routeNameSnap] = await Promise.all([
+        firestore_1.db.collection(constants_1.COLLECTIONS.notifications).where("conversationId", "==", conversationId).get(),
+        firestore_1.db.collection(constants_1.COLLECTIONS.notifications).where("routeName", "==", routeName).get(),
+    ]);
+    const notificationDocs = new Map();
+    for (const snapshot of [conversationIdSnap, routeNameSnap]) {
+        for (const doc of snapshot.docs) {
+            notificationDocs.set(doc.id, doc);
+        }
+    }
+    if (notificationDocs.size == 0) {
+        return new Set();
+    }
+    let batch = firestore_1.db.batch();
+    let batchCount = 0;
+    const affectedUserIds = new Set();
+    for (const doc of notificationDocs.values()) {
+        batch.delete(doc.ref);
+        batchCount += 1;
+        const userId = String(doc.data().userId || "").trim();
+        if (userId) {
+            affectedUserIds.add(userId);
+        }
+        if (batchCount >= 400) {
+            await batch.commit();
+            batch = firestore_1.db.batch();
+            batchCount = 0;
+        }
+    }
+    if (batchCount > 0) {
+        await batch.commit();
+    }
+    return affectedUserIds;
+}
 function canonicalConversationId({ offerId, currentUserId, otherUserId, }) {
     const participants = [sanitizeConversationPart(currentUserId), sanitizeConversationPart(otherUserId)].sort();
     return `offer_${sanitizeConversationPart(offerId)}__${participants.join("__")}`;
@@ -502,6 +538,7 @@ exports.deleteConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
         throw new https_1.HttpsError("invalid-argument", "conversationId is required");
     }
     const { convRef, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+    const notificationUserIds = await deleteNotificationsForConversation(conversationId);
     // Delete messages subcollection in batches
     const messagesRef = convRef.collection("messages");
     let batch = firestore_1.db.batch();
@@ -537,6 +574,7 @@ exports.deleteConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
     await convRef.delete();
     // Refresh unread counts for all participants
     await Promise.all(participants.map((pid) => (0, counters_1.refreshUnreadMessageCount)(pid)));
+    await Promise.all(Array.from(notificationUserIds, (userId) => (0, counters_1.refreshUnreadNotificationCount)(userId)));
     return { ok: true };
 });
 exports.deleteConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {

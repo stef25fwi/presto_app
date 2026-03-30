@@ -81,6 +81,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Commit Publish + Messages",
+      "type": "shell",
+      "command": "git commit -m \"fix(publish,messages): relax publish media flow and cleanup conversation deletion\"",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Push Main",
       "type": "shell",
       "command": "git push origin main",

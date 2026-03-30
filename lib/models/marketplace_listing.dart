@@ -110,6 +110,8 @@ class ListingSubmissionResult {
   final ModerationStatus moderationStatus;
   final ListingVisibility visibility;
   final int riskScore;
+  final String thumbnailUrl;
+  final List<Map<String, dynamic>> media;
 
   const ListingSubmissionResult({
     required this.listingId,
@@ -117,6 +119,8 @@ class ListingSubmissionResult {
     required this.moderationStatus,
     required this.visibility,
     required this.riskScore,
+    required this.thumbnailUrl,
+    required this.media,
   });
 
   factory ListingSubmissionResult.fromMap(Map<String, dynamic> data) {
@@ -128,6 +132,11 @@ class ListingSubmissionResult {
       ),
       visibility: ListingVisibilityParsing.fromString((data['visibility'] ?? '').toString()),
       riskScore: (data['riskScore'] is num) ? (data['riskScore'] as num).toInt() : 0,
+      thumbnailUrl: (data['thumbnailUrl'] ?? '').toString().trim(),
+      media: ((data['media'] as List?) ?? const <dynamic>[])
+          .whereType<Map>()
+          .map((entry) => Map<String, dynamic>.from(entry.cast<String, dynamic>()))
+          .toList(growable: false),
     );
   }
 }
