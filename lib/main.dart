@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -11999,27 +12000,26 @@ class _AutoScrollingOffersCarousel extends StatefulWidget {
 }
 
 class _AutoScrollingOffersCarouselState
-    extends State<_AutoScrollingOffersCarousel> {
-  final ScrollController _scrollController = ScrollController();
-  Timer? _scrollTimer;
-  bool _isHovered = false;
-  DateTime? _lastTickAt;
+    extends State<_AutoScrollingOffersCarousel>
+    with SingleTickerProviderStateMixin {
+  late final ScrollController _scrollController;
+  late final Ticker _ticker;
+  bool _isUserDragging = false;
+  Duration _lastElapsed = Duration.zero;
   static const double _pixelsPerSecond = 44.0;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _startAutoScroll();
-    });
+    _scrollController = ScrollController();
+    _ticker = createTicker(_onTick)..start();
   }
 
   @override
   void didUpdateWidget(covariant _AutoScrollingOffersCarousel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.offers.length != widget.offers.length) {
-      _lastTickAt = null;
+      _lastElapsed = Duration.zero;
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(0);
       }
@@ -12028,29 +12028,19 @@ class _AutoScrollingOffersCarouselState
 
   @override
   void dispose() {
-    _scrollTimer?.cancel();
+    _ticker.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _startAutoScroll() {
-    _scrollTimer?.cancel();
-    _lastTickAt = null;
-    _scrollTimer = Timer.periodic(
-      const Duration(milliseconds: 16),
-      (_) => _onTick(),
-    );
-  }
+  void _onTick(Duration elapsed) {
+    if (_isUserDragging || !_scrollController.hasClients) {
+      _lastElapsed = elapsed;
+      return;
+    }
 
-  void _onTick() {
-    if (_isHovered || !_scrollController.hasClients) return;
-
-    final now = DateTime.now();
-    final lastTickAt = _lastTickAt;
-    _lastTickAt = now;
-    if (lastTickAt == null) return;
-
-    final dtMs = now.difference(lastTickAt).inMilliseconds;
+    final dtMs = (elapsed - _lastElapsed).inMilliseconds;
+    _lastElapsed = elapsed;
     if (dtMs <= 0) return;
 
     final maxScroll = _scrollController.position.maxScrollExtent;
@@ -12186,19 +12176,32 @@ class _AutoScrollingOffersCarouselState
 
   @override
   Widget build(BuildContext context) {
-    final duplicatedOffers = [...widget.offers, ...widget.offers];
+    final duplicatedOffers = widget.offers.length > 1
+        ? [...widget.offers, ...widget.offers]
+        : widget.offers;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollStartNotification &&
+            notification.dragDetails != null) {
+          _isUserDragging = true;
+        } else if (notification is ScrollEndNotification) {
+          _isUserDragging = false;
+        }
+        return false;
+      },
       child: SizedBox(
         height: 52,
         child: ListView.separated(
           controller: _scrollController,
           scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
           itemCount: duplicatedOffers.length,
+          addAutomaticKeepAlives: false,
           separatorBuilder: (_, __) => const SizedBox(width: 8),
-          itemBuilder: (_, index) => _buildOfferCard(duplicatedOffers[index]),
+          itemBuilder: (_, index) => RepaintBoundary(
+            child: _buildOfferCard(duplicatedOffers[index]),
+          ),
         ),
       ),
     );
