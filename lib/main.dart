@@ -9525,16 +9525,25 @@ class _AccountPageState extends State<AccountPage> {
       final normalizedPhone =
           _normalizeProfilePhoneForSave(_profilePhoneCountryCode, phone);
 
-      final profileData = {
+      final profileData = <String, dynamic>{
         'pseudo': pseudo,
         'displayName': pseudo,
+        'userName': pseudo,
+        'user_name': pseudo,
+        'name': pseudo,
         'city': city,
         'location': city,
+        'serviceArea': city,
+        'service_area': city,
         'phone': normalizedPhone,
+        'phoneNumber': normalizedPhone,
+        'phone_number': normalizedPhone,
+        'phoneCountryCode': _profilePhoneCountryCode,
         'favoriteCategories': _favoriteCategories.toList(),
         'selectedFavoriteCategories': _selectedFavoriteCategories.toList(),
         'selectedFavoriteSubcategories':
             _selectedFavoriteSubcategories.toList(),
+        'updatedAt': FieldValue.serverTimestamp(),
         'profileUpdatedAt': FieldValue.serverTimestamp(),
         'profileCompleteness': _calculateProfileCompleteness(),
       };
@@ -9551,10 +9560,20 @@ class _AccountPageState extends State<AccountPage> {
           await user.updateDisplayName(pseudo).timeout(
                 const Duration(seconds: 5),
               );
+          await user.reload().timeout(
+                const Duration(seconds: 5),
+              );
         } catch (e) {
           debugPrint('[Profile] Erreur mise à jour displayName: $e');
           // Continue même si échoue
         }
+      }
+
+      try {
+        final refreshedUser = FirebaseAuth.instance.currentUser ?? user;
+        await _loadUserProfile(refreshedUser);
+      } catch (e) {
+        debugPrint('[Profile] Erreur rechargement profil après sauvegarde: $e');
       }
 
       // ✅ Vérifier l'email si pas encore vérifié
@@ -9573,15 +9592,32 @@ class _AccountPageState extends State<AccountPage> {
         }
       }
       return true;
-    } catch (e) {
+    } on FirebaseException catch (e) {
       if (mounted) {
-        String errorMsg = "Erreur lors de la sauvegarde du profil";
-        if (e.toString().contains('TimeoutException')) {
-          errorMsg = "Délai d'attente dépassé. Vérifiez votre connexion";
-        } else if (e.toString().contains('PermissionDenied')) {
-          errorMsg = "Vous n'êtes pas autorisé à modifier ce profil";
+        String errorMsg = 'Erreur lors de la sauvegarde du profil';
+        if (e.code == 'permission-denied') {
+          errorMsg = 'Vous n\'êtes pas autorisé à modifier ce profil';
+        } else if (e.code == 'unavailable') {
+          errorMsg = 'Service indisponible. Réessayez dans un instant';
+        } else if (e.code == 'deadline-exceeded') {
+          errorMsg = 'Délai d\'attente dépassé. Vérifiez votre connexion';
+        } else if ((e.message ?? '').trim().isNotEmpty) {
+          errorMsg = e.message!.trim();
         }
         showErrorSnackBar(context, errorMsg);
+      }
+      return false;
+    } on TimeoutException {
+      if (mounted) {
+        showErrorSnackBar(
+          context,
+          'Délai d\'attente dépassé. Vérifiez votre connexion',
+        );
+      }
+      return false;
+    } catch (e) {
+      if (mounted) {
+        showErrorSnackBar(context, 'Erreur lors de la sauvegarde du profil');
       }
       return false;
     } finally {
