@@ -68,6 +68,74 @@ class PrestoRemoteConfig {
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
+const String kOfferDeleteReasonFoundOnIliPresto =
+    'J’ai trouvé quelqu’un sur iliprestō';
+const Duration kOfferJobDoneOverlayDuration = Duration(hours: 1);
+
+String _normalizeOfferDeletionReason(String input) {
+  return input
+      .trim()
+      .toLowerCase()
+      .replaceAll('’', "'")
+      .replaceAll(RegExp(r'[àâä]'), 'a')
+      .replaceAll('ç', 'c')
+      .replaceAll(RegExp(r'[éèêë]'), 'e')
+      .replaceAll(RegExp(r'[îï]'), 'i')
+      .replaceAll(RegExp(r'[ôöō]'), 'o')
+      .replaceAll(RegExp(r'[ùûü]'), 'u')
+      .replaceAll(RegExp(r'\s+'), ' ');
+}
+
+bool _isOfferJobDoneDeletionReason(String? reason) {
+  final normalized = _normalizeOfferDeletionReason(reason ?? '');
+  return normalized.contains('trouve quelqu') &&
+      normalized.contains('ilipresto');
+}
+
+DateTime? _offerDateTimeFromDynamic(dynamic value) {
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+  if (value is String) return DateTime.tryParse(value);
+  return null;
+}
+
+DateTime? _offerJobDoneVisibleUntil(Map<String, dynamic> data) {
+  return _offerDateTimeFromDynamic(
+    data['jobDoneOverlayVisibleUntil'] ??
+        data['removeFromBrowseAt'] ??
+        data['pendingScreenRemovalUntil'],
+  );
+}
+
+bool _isOfferArchivedLike(Map<String, dynamic> data) {
+  final status = (data['status'] ?? '').toString().trim().toLowerCase();
+  if (status == 'archived' ||
+      status == 'archivé' ||
+      status == 'deleted' ||
+      status == 'removed' ||
+      status == 'sold') {
+    return true;
+  }
+
+  return data['archivedAt'] != null || data['deletedAt'] != null;
+}
+
+bool _isOfferJobDoneOverlayVisible(Map<String, dynamic> data) {
+  final visibleUntil = _offerJobDoneVisibleUntil(data);
+  if (visibleUntil == null || !visibleUntil.isAfter(DateTime.now())) {
+    return false;
+  }
+
+  final visibleFlag = data['jobDoneOverlayVisible'];
+  if (visibleFlag is bool && !visibleFlag) {
+    return false;
+  }
+
+  final reason =
+      (data['deletedReason'] ?? data['archiveReason'] ?? '').toString().trim();
+  return visibleFlag == true || _isOfferJobDoneDeletionReason(reason);
+}
 
 Filter _publicOffersFilter() {
   return Filter.or(
@@ -80,6 +148,8 @@ Filter _publicOffersFilter() {
 }
 
 bool _isPublishedOfferData(Map<String, dynamic> data) {
+  if (_isOfferArchivedLike(data)) return false;
+
   final isPublished = data['isPublished'];
   if (isPublished is bool && isPublished) return true;
 
@@ -3649,6 +3719,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   Map<String, List<DocumentSnapshot<Map<String, dynamic>>>>? _queryResultsCache;
   String? _lastCachedQuerySignature;
   Timer? _cacheInvalidationTimer;
+  Timer? _jobDoneOverlayTimer;
+  DateTime? _nextJobDoneOverlayRefreshAt;
 
   /// Normalise un texte pour la recherche (diacritiques, casse, séparateurs)
   String _normalizeText(String input) {
@@ -3946,6 +4018,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     _cityCtrl.dispose();
     _budgetMinCtrl.dispose();
     _budgetMaxCtrl.dispose();
+    _jobDoneOverlayTimer?.cancel();
     super.dispose();
   }
 
@@ -4046,7 +4119,52 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   }
 
   bool _offerIsActive(Map<String, dynamic> data) {
-    return _isPublishedOfferData(data);
+    return _isOfferJobDoneOverlayVisible(data) || _isPublishedOfferData(data);
+  }
+
+  void _scheduleJobDoneOverlayRefresh(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    DateTime? earliestExpiry;
+
+    for (final doc in docs) {
+      final expiry = _offerJobDoneVisibleUntil(doc.data());
+      if (expiry == null || !expiry.isAfter(DateTime.now())) {
+        continue;
+      }
+      if (!_isOfferJobDoneOverlayVisible(doc.data())) {
+        continue;
+      }
+      if (earliestExpiry == null || expiry.isBefore(earliestExpiry)) {
+        earliestExpiry = expiry;
+      }
+    }
+
+    if (earliestExpiry == null) {
+      _jobDoneOverlayTimer?.cancel();
+      _jobDoneOverlayTimer = null;
+      _nextJobDoneOverlayRefreshAt = null;
+      return;
+    }
+
+    if (_nextJobDoneOverlayRefreshAt == earliestExpiry &&
+        _jobDoneOverlayTimer != null) {
+      return;
+    }
+
+    _jobDoneOverlayTimer?.cancel();
+    _nextJobDoneOverlayRefreshAt = earliestExpiry;
+
+    final delay = earliestExpiry.difference(DateTime.now());
+    _jobDoneOverlayTimer = Timer(
+      delay.isNegative ? Duration.zero : delay + const Duration(seconds: 1),
+      () {
+        if (!mounted) return;
+        setState(() {
+          _nextJobDoneOverlayRefreshAt = null;
+        });
+      },
+    );
   }
 
   String _offerCategoryLabel(Map<String, dynamic> data) {
@@ -4630,6 +4748,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                               .where((d) => _matchesOfferFilters(d.data()))
                               .toList();
 
+                      _scheduleJobDoneOverlayRefresh(rawDocs);
+
                       docs.sort((a, b) {
                         final aTs = a.data()['createdAt'];
                         final bTs = b.data()['createdAt'];
@@ -4743,6 +4863,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                     ? 'Publication récente'
                                     : 'Publié il y a $publishedAge';
                                 final isUrgent = data['urgent'] == true;
+                                final showJobDoneOverlay =
+                                    _isOfferJobDoneOverlayVisible(data);
                                 final missionDelayLabel =
                                     _extractMissionDelayLabel(data);
                                 final cleanTitle = _sanitizeOfferTitle(
@@ -4755,24 +4877,28 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                   child: Padding(
                                     padding: const EdgeInsets.only(bottom: 6),
                                     child: _OfferBrowseTile(
-                                      onTap: () {
-                                        _logOfferClicked(offerId, title);
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) => OfferDetailsPage(
-                                              offer: _buildOfferDetailsOffer(
-                                                offerId: offerId,
-                                                data: data,
-                                              ),
-                                              currentUserId: FirebaseAuth
-                                                      .instance
-                                                      .currentUser
-                                                      ?.uid ??
-                                                  '',
-                                            ),
-                                          ),
-                                        );
-                                      },
+                                      onTap: showJobDoneOverlay
+                                          ? null
+                                          : () {
+                                              _logOfferClicked(offerId, title);
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      OfferDetailsPage(
+                                                    offer:
+                                                        _buildOfferDetailsOffer(
+                                                      offerId: offerId,
+                                                      data: data,
+                                                    ),
+                                                    currentUserId: FirebaseAuth
+                                                            .instance
+                                                            .currentUser
+                                                            ?.uid ??
+                                                        '',
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                       data: _OfferBrowseTileData(
                                         title: cleanTitle,
                                         subtitle: [
@@ -4783,8 +4909,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                         publishedText: publishedText,
                                         price: budget,
                                         missionDelayLabel: missionDelayLabel,
-                                        isUrgent: isUrgent,
+                                        isUrgent:
+                                            isUrgent && !showJobDoneOverlay,
                                         icon: _categoryIcon(category),
+                                        showJobDoneOverlay: showJobDoneOverlay,
                                       ),
                                     ),
                                   ),
@@ -5426,6 +5554,7 @@ class _OfferBrowseTileData {
   final String missionDelayLabel;
   final bool isUrgent;
   final IconData icon;
+  final bool showJobDoneOverlay;
 
   const _OfferBrowseTileData({
     required this.title,
@@ -5435,6 +5564,7 @@ class _OfferBrowseTileData {
     required this.missionDelayLabel,
     required this.isUrgent,
     required this.icon,
+    required this.showJobDoneOverlay,
   });
 }
 
@@ -5489,13 +5619,14 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
   @override
   void didUpdateWidget(covariant _OfferBrowseTile oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.data.isUrgent != widget.data.isUrgent) {
+    if (oldWidget.data.isUrgent != widget.data.isUrgent ||
+        oldWidget.data.showJobDoneOverlay != widget.data.showJobDoneOverlay) {
       _syncUrgentAnimation();
     }
   }
 
   void _syncUrgentAnimation() {
-    if (widget.data.isUrgent) {
+    if (widget.data.isUrgent && !widget.data.showJobDoneOverlay) {
       if (!_controller.isAnimating) {
         _controller.repeat();
       }
@@ -5514,7 +5645,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.data.isUrgent) {
+    if (!widget.data.isUrgent || widget.data.showJobDoneOverlay) {
       return _buildTileFrame(pulse: 0);
     }
 
@@ -5661,6 +5792,27 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                     ],
                   ),
                 ),
+                if (widget.data.showJobDoneOverlay)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(outerRadius),
+                        child: Container(
+                          color: Colors.white.withValues(alpha: 0.78),
+                          alignment: Alignment.center,
+                          child: Padding(
+                            padding: const EdgeInsets.all(18),
+                            child: Image.asset(
+                              'assets/images/jobfait.webp',
+                              height: 132,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -10728,6 +10880,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   }
 
   bool _isOfferPublished(Map<String, dynamic> data) {
+    if (_isOfferArchivedLike(data)) return false;
+
     final isPublished = data['isPublished'];
     if (isPublished is bool && isPublished) return true;
 
@@ -10766,15 +10920,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   }
 
   bool _isOfferArchived(Map<String, dynamic> data) {
-    final status = (data['status'] ?? '').toString().trim().toLowerCase();
-    if (status == 'archived' ||
-        status == 'archivé' ||
-        status == 'deleted' ||
-        status == 'removed') {
-      return true;
-    }
-
-    return data['archivedAt'] != null || data['deletedAt'] != null;
+    return _isOfferArchivedLike(data);
   }
 
   bool _isOfferPending(Map<String, dynamic> data) {
@@ -11536,32 +11682,65 @@ class _UserOffersSectionState extends State<UserOffersSection> {
           .get();
 
       final latestData = doc.data() ?? item.data;
+      final shouldKeepVisibleWithJobDone =
+          _isOfferJobDoneDeletionReason(reason);
       final imageUrls = (latestData['imageUrls'] as List<dynamic>? ?? const [])
           .map((e) => e.toString())
           .where((e) => e.isNotEmpty)
           .toList();
 
-      for (final url in imageUrls) {
-        try {
-          final ref = FirebaseStorage.instance.refFromURL(url);
-          await ref.delete();
-        } catch (_) {
-          // Best-effort: une image manquante ne doit pas bloquer la suppression.
+      if (!shouldKeepVisibleWithJobDone) {
+        for (final url in imageUrls) {
+          try {
+            final ref = FirebaseStorage.instance.refFromURL(url);
+            await ref.delete();
+          } catch (_) {
+            // Best-effort: une image manquante ne doit pas bloquer la suppression.
+          }
         }
       }
 
       debugPrint('Suppression offre ${item.offerId} avec motif: $reason');
 
-      await FirebaseFirestore.instance
-          .collection('offers')
-          .doc(item.offerId)
-          .delete();
+      if (shouldKeepVisibleWithJobDone) {
+        final visibleUntil = Timestamp.fromDate(
+          DateTime.now().add(kOfferJobDoneOverlayDuration),
+        );
+
+        await FirebaseFirestore.instance
+            .collection('offers')
+            .doc(item.offerId)
+            .update({
+          'status': 'sold',
+          'isActive': true,
+          'isPublished': false,
+          'deletedAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+          'deletedReason': reason,
+          'archiveReason': reason,
+          'jobDoneOverlayVisible': true,
+          'jobDoneOverlayVisibleUntil': visibleUntil,
+          'removeFromBrowseAt': visibleUntil,
+        });
+      } else {
+        await FirebaseFirestore.instance
+            .collection('offers')
+            .doc(item.offerId)
+            .delete();
+      }
 
       if (!mounted) return;
 
       await _loadOffers();
       if (!mounted) return;
-      showSuccessSnackBar(context, 'Annonce "$title" supprimée');
+      if (shouldKeepVisibleWithJobDone) {
+        showSuccessSnackBar(
+          context,
+          'Annonce "$title" marquée comme réalisée. Elle restera visible 1 h avec jobfait.',
+        );
+      } else {
+        showSuccessSnackBar(context, 'Annonce "$title" supprimée');
+      }
     } catch (e) {
       if (!mounted) return;
       showErrorSnackBar(context, 'Erreur lors de la suppression');
@@ -11577,7 +11756,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     const reasons = [
       'J’ai fait une erreur dans l’annonce',
       'J ai deja trouve un prestataire',
-      'J’ai trouvé quelqu’un sur ilipresto',
+      kOfferDeleteReasonFoundOnIliPresto,
     ];
 
     return showDialog<String>(
