@@ -87,6 +87,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Commit Home + Offer Detail",
+      "type": "shell",
+      "command": "git commit -m \"feat(home,offer): freeze latest offers and refine detail view\"",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Push Main",
       "type": "shell",
       "command": "git push origin main",
