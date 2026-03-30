@@ -52,6 +52,30 @@ test("validateListingDraftPayload reports aggregated issues", () => {
   );
 });
 
+test("validateListingDraftPayload rejects non-webp media", () => {
+  assert.throws(
+    () => validateListingDraftPayload({
+      title: "Montage meuble cuisine complet",
+      description: "Montage d'un meuble de cuisine avec fixation murale et finitions propres.",
+      price: "95",
+      categoryId: "bricolage-travaux",
+      cityId: "97139_les-abymes",
+      media: [
+        {
+          storagePath: "listings/u1/photo.jpg",
+          downloadUrl: "https://cdn.example/photo.jpg",
+          mimeType: "image/jpeg",
+        },
+      ],
+    }, 10),
+    (error: unknown) => {
+      assert.ok(error instanceof ValidationError);
+      assert.ok(error.issues.includes("Photo #1 must be processed as WebP before submission"));
+      return true;
+    },
+  );
+});
+
 test("validateListingReportPayload rejects unsupported reason codes", () => {
   assert.throws(
     () => validateListingReportPayload({

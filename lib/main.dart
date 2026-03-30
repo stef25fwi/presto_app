@@ -7819,14 +7819,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_library_outlined),
-                  title: const Text('Galerie'),
+                  title: Text(kIsWeb ? 'Fichiers / galerie' : 'Galerie'),
                   onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
                 ),
                 ListTile(
                   enabled: !kIsWeb,
                   leading: const Icon(Icons.photo_camera_outlined),
                   title: const Text('Appareil photo'),
-                  subtitle: kIsWeb ? const Text('Indisponible sur Web') : null,
+                  subtitle: kIsWeb
+                      ? const Text('Disponible sur mobile uniquement')
+                      : null,
                   onTap: kIsWeb
                       ? null
                       : () => Navigator.of(ctx).pop(ImageSource.camera),
@@ -11750,7 +11752,11 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       }
     } catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Erreur lors de la suppression');
+      debugPrint('Erreur suppression offre ${item.offerId}: $e');
+      final message = e is FirebaseException && e.code == 'permission-denied'
+          ? 'Suppression refusée par les règles Firestore.'
+          : 'Erreur lors de la suppression';
+      showErrorSnackBar(context, message);
     } finally {
       if (mounted) {
         setState(() => _busyOfferId = null);

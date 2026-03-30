@@ -68,7 +68,18 @@ class MarketplacePublishService {
           : const <String, dynamic>{};
       final storagePath = (data['storagePath'] ?? '').toString().trim();
       final downloadUrl = (data['downloadUrl'] ?? '').toString().trim();
-      if (storagePath.isEmpty || downloadUrl.isEmpty) {
+      final thumbnailUrl =
+          (data['thumbnailUrl'] ?? downloadUrl).toString().trim();
+      final mimeType = (data['mimeType'] ?? 'image/webp').toString().trim();
+      final width = data['width'] is num ? (data['width'] as num).toInt() : null;
+      final height =
+          data['height'] is num ? (data['height'] as num).toInt() : null;
+      final sizeBytes =
+          data['sizeBytes'] is num ? (data['sizeBytes'] as num).toInt() : null;
+      if (storagePath.isEmpty ||
+          downloadUrl.isEmpty ||
+          !storagePath.toLowerCase().endsWith('.webp') ||
+          mimeType.toLowerCase() != 'image/webp') {
         throw StateError('Le traitement d\'image marketplace a renvoyé un payload incomplet.');
       }
 
@@ -76,9 +87,11 @@ class MarketplacePublishService {
         ListingMediaInput(
           storagePath: storagePath,
           downloadUrl: downloadUrl,
-          thumbnailUrl: downloadUrl,
-          mimeType: 'image/webp',
-          sizeBytes: bytes.length,
+          thumbnailUrl: thumbnailUrl.isEmpty ? downloadUrl : thumbnailUrl,
+          width: width,
+          height: height,
+          mimeType: mimeType,
+          sizeBytes: sizeBytes ?? bytes.length,
         ),
       );
     }
