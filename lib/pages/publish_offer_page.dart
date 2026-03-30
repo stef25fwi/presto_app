@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, debugPrint;
+    show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:typed_data';
@@ -102,21 +102,6 @@ class _PublishOfferPageState extends State<PublishOfferPage>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     );
-  }
-
-  Future<void> trace(String step, Map<String, dynamic> data) async {
-    try {
-      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
-      await FirebaseFirestore.instance.collection('debug_microia').add({
-        'uid': uid,
-        'step': step,
-        'data': data,
-        'ts': FieldValue.serverTimestamp(),
-        'platform': kIsWeb ? 'web' : defaultTargetPlatform.toString(),
-      });
-    } catch (e) {
-      debugPrint('[debug_microia] trace failed: $e');
-    }
   }
 
   String _normalizedCategoryValue(String value) {
@@ -237,18 +222,6 @@ class _PublishOfferPageState extends State<PublishOfferPage>
     }
   }
 
-  // ignore: unused_element
-  TextEditingController _activeController() {
-    if (_titleFocus.hasFocus) return _titleCtrl;
-    if (_descFocus.hasFocus) return _descCtrl;
-    if (_cityFocus.hasFocus) return _cityCtrl;
-    if (_cpFocus.hasFocus) return _cpCtrl;
-    if (_phoneFocus.hasFocus) return _phoneCtrl;
-    if (_budgetFocus.hasFocus) return _budgetCtrl;
-    // Par défaut : description (logique "décrire le besoin")
-    return _descCtrl;
-  }
-
   void _applyDraftToForm(
     OfferDraft draft, {
     String? transcript,
@@ -306,12 +279,6 @@ class _PublishOfferPageState extends State<PublishOfferPage>
     }
   }
 
-  // ignore: unused_element
-  Future<void> _toggleMic() async {
-    // STT désactivé : on force MicroIA
-    await _togglePremiumRecording();
-  }
-
   InputDecoration _decoration(String hint, {Widget? suffix}) {
     return InputDecoration(
       hintText: hint,
@@ -356,7 +323,6 @@ class _PublishOfferPageState extends State<PublishOfferPage>
     super.dispose();
   }
 
-  // ignore: unused_element
   Future<void> _onFillWithAI() async {
     if (_aiLoading) return;
     // ⚠️ adapte ces noms si tes controllers s'appellent autrement
@@ -518,20 +484,14 @@ class _PublishOfferPageState extends State<PublishOfferPage>
         extension: 'wav',
         flow: 'webMic',
       );
-    } catch (e, st) {
-      await CrashlyticsContext.recordError(
-        e is Exception ? e : Exception(e.toString()),
-        st,
-        reason: 'Web mic record/process failed',
-        fatal: false,
-        keys: {
-          'component': 'PublishOfferPage',
-          'flow': 'webMic',
-        },
-      );
-
+    } catch (e) {
+      // Crashlytics already reported inside _processRecordedAudioBytes
       if (mounted) {
-        showSuccessSnackBar(context, 'Erreur Premium IA (web) : $e');
+        if (isTimeoutError(e)) {
+          showTimeoutSnackBar(context);
+        } else {
+          showSuccessSnackBar(context, 'Erreur Premium IA (web) : $e');
+        }
       }
     }
   }
@@ -553,17 +513,8 @@ class _PublishOfferPageState extends State<PublishOfferPage>
         extension: extension,
         flow: 'uploadAndTranscribe',
       );
-    } catch (e, st) {
-      await CrashlyticsContext.recordError(
-        e is Exception ? e : Exception(e.toString()),
-        st,
-        reason: 'Upload/transcribe failed',
-        fatal: false,
-        keys: {
-          'component': 'PublishOfferPage',
-          'flow': 'uploadAndTranscribe',
-        },
-      );
+    } catch (e) {
+      // Crashlytics already reported inside _processRecordedAudioBytes
       if (mounted) {
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
@@ -594,11 +545,6 @@ class _PublishOfferPageState extends State<PublishOfferPage>
 
       final bytes = audioBytes.length;
       debugPrint('[IA AUDIO] bytes=$bytes flow=$flow');
-
-      await trace('${flow}_before_upload', {
-        'bytes': bytes,
-        'contentType': contentType,
-      });
 
       if (bytes < 30000) {
         throw Exception(
@@ -634,50 +580,43 @@ class _PublishOfferPageState extends State<PublishOfferPage>
         },
       );
 
-      await trace('${flow}_after_upload', {
-        'storagePath': storagePath,
-        'bytes': bytes,
-      });
-
+      // ⚡ Single round-trip: STT + Draft combined in one CF call
+      // Global timeout 90s to avoid 3×75s worst-case retry stacking
       final out = await MicroIaService.processAudio(
         storagePath: storagePath,
         languageCode: 'fr-FR',
-      );
+        generateDraft: true,
+        draftCity: _cityCtrl.text.trim(),
+        draftCategory: (_category ?? '').trim(),
+      ).timeout(const Duration(seconds: 90));
 
       final transcript = (out['text'] ?? '').toString().trim();
-      final modeUsed = (out['modeUsed'] ?? '').toString();
       final score = ((out['quality']?['score'] ?? 0.0) as num).toDouble();
-      final reasons = (out['quality']?['reasons'] ?? []).toString();
 
-      await trace('${flow}_after_process', {
-        'storagePath': storagePath,
-        'modeUsed': modeUsed,
-        'score': score,
-        'reasons': reasons,
-      });
-
+      // Apply transcript immediately as fallback
       _applyTranscriptFallback(transcript);
 
-      final draftHint = _buildDraftHint(transcript: transcript);
-      if (draftHint.isNotEmpty) {
+      // Use the server-side draft if available (combined mode)
+      final serverDraft = out['draft'];
+      if (serverDraft is Map) {
+        final draft = OfferDraft.fromMap(
+          Map<String, dynamic>.from(serverDraft),
+        );
+        _applyDraftToForm(draft, transcript: transcript);
+      } else if (transcript.isNotEmpty) {
+        // Fallback: server draft failed, try client-side call
         try {
-          final draft = await AiOfferService.generateDraft(
-            hint: draftHint,
-            currentCity: _cityCtrl.text.trim(),
-            currentCategory: (_category ?? '').trim(),
-          );
-          _applyDraftToForm(draft, transcript: transcript);
-
-          await trace('${flow}_after_draft', {
-            'title': draft.bestTitle(),
-            'category': draft.category,
-            'city': draft.city,
-            'postalCode': draft.postalCode,
-          });
-        } catch (e) {
-          await trace('${flow}_draft_error', {
-            'error': e.toString(),
-          });
+          final draftHint = _buildDraftHint(transcript: transcript);
+          if (draftHint.isNotEmpty) {
+            final draft = await AiOfferService.generateDraft(
+              hint: draftHint,
+              currentCity: _cityCtrl.text.trim(),
+              currentCategory: (_category ?? '').trim(),
+            );
+            _applyDraftToForm(draft, transcript: transcript);
+          }
+        } catch (_) {
+          // Draft is best-effort; transcript already applied above
         }
       }
 
@@ -692,9 +631,6 @@ class _PublishOfferPageState extends State<PublishOfferPage>
         );
       }
     } catch (e, st) {
-      await trace('${flow}_error', {
-        'error': e.toString(),
-      });
       await CrashlyticsContext.recordError(
         e is Exception ? e : Exception(e.toString()),
         st,
@@ -866,7 +802,7 @@ class _PublishOfferPageState extends State<PublishOfferPage>
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  initialValue: _category,
+                  value: _category,
                   items: _categories
                       .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                       .toList(),
@@ -924,7 +860,7 @@ class _PublishOfferPageState extends State<PublishOfferPage>
                     Expanded(
                       flex: 2,
                       child: DropdownButtonFormField<String>(
-                        initialValue: _budgetType,
+                        value: _budgetType,
                         items: _budgetTypes
                             .map((t) =>
                                 DropdownMenuItem(value: t, child: Text(t)))
@@ -993,7 +929,6 @@ class _PublishOfferPageState extends State<PublishOfferPage>
   }
 }
 
-// ignore: unused_element
 class _MicButton extends StatelessWidget {
   final bool listening;
   final bool loading;

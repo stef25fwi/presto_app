@@ -71,7 +71,7 @@
     {
       "label": "Git: Commit All",
       "type": "shell",
-      "command": "git commit -m \"ui(home): vsync carousel, info icon blue/white, remove splash logo\"",
+      "command": "git commit -m \"fix(publish): fix IA pipeline — drop dead code, fix dropdown value, add global timeout, remove orphaned CF\"",
       "problemMatcher": []
     },
     {
