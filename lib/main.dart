@@ -8072,7 +8072,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      showSuccessSnackBar(context, 'Erreur lors de la publication : $e');
+      final message = e is FirebaseFunctionsException
+          ? 'Publication refusée : ${e.message ?? e.code}'
+          : e.toString().replaceFirst('Exception: ', '').replaceFirst('StateError: ', '');
+      showErrorSnackBar(context, 'Erreur lors de la publication : $message');
     } finally {
       if (mounted) {
         setState(() {
