@@ -71,7 +71,7 @@
     {
       "label": "Git: Commit All",
       "type": "shell",
-      "command": "git commit -m \"fix(publish): handle channel connection errors during submit\"",
+      "command": "git commit -m \"fix(account): persist profile edits reliably\"",
       "problemMatcher": []
     },
     {
