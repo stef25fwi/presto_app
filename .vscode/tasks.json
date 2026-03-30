@@ -71,7 +71,7 @@
     {
       "label": "Git: Commit All",
       "type": "shell",
-      "command": "git commit -m \"fix(account): persist profile edits reliably\"",
+      "command": "git commit -m \"fix(offers): decouple consult count from scroll pagination\"",
       "problemMatcher": []
     },
     {
