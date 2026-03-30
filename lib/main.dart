@@ -68,6 +68,8 @@ class PrestoRemoteConfig {
 
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
+const String kOfferDeleteReasonFoundProvider =
+  'J ai deja trouve un prestataire';
 const String kOfferDeleteReasonFoundOnIliPresto =
     'J’ai trouvé quelqu’un sur iliprestō';
 const Duration kOfferJobDoneOverlayDuration = Duration(hours: 1);
@@ -88,8 +90,13 @@ String _normalizeOfferDeletionReason(String input) {
 
 bool _isOfferJobDoneDeletionReason(String? reason) {
   final normalized = _normalizeOfferDeletionReason(reason ?? '');
-  return normalized.contains('trouve quelqu') &&
+  final foundOnIliPresto =
+      normalized.contains('trouve quelqu') &&
       normalized.contains('ilipresto');
+  final foundProvider =
+      normalized.contains('deja trouve') &&
+      normalized.contains('prestataire');
+  return foundOnIliPresto || foundProvider;
 }
 
 DateTime? _offerDateTimeFromDynamic(dynamic value) {
@@ -11755,7 +11762,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     String? selectedReason;
     const reasons = [
       'J’ai fait une erreur dans l’annonce',
-      'J ai deja trouve un prestataire',
+      kOfferDeleteReasonFoundProvider,
       kOfferDeleteReasonFoundOnIliPresto,
     ];
 
