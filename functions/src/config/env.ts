@@ -11,6 +11,7 @@ export const DEFAULT_TIMEZONE = process.env.DEFAULT_TIMEZONE || "Europe/Paris";
 export const EMAIL_FROM = process.env.EMAIL_FROM || "PRESTO <no-reply@presto.app>";
 
 export const PROJECT_REGION = process.env.FUNCTION_REGION || "europe-west1";
+export const ENFORCE_APP_CHECK = String(process.env.ENFORCE_APP_CHECK || "").toLowerCase() === "true";
 export const APP_BASE_URL = process.env.APP_BASE_URL || "https://presto.app";
 export const GCP_PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "";
 export const RECAPTCHA_ENTERPRISE_SITE_KEY = process.env.RECAPTCHA_ENTERPRISE_SITE_KEY || "";

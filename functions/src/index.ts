@@ -14,6 +14,7 @@ export {
   submitListingDraft,
   incrementListingView,
 } from "./modules/marketplace/callables/listings";
+export { processOfferPhoto } from "./modules/marketplace/callables/media";
 export { reportListing } from "./modules/marketplace/callables/reports";
 export { toggleFavorite } from "./modules/marketplace/callables/favorites";
 export {
