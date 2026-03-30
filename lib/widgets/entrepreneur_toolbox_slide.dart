@@ -73,7 +73,7 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
             top: 12,
             child: PrestoInfoIconAnimated(
               size: 130,
-              badgeText: 'Nouveau',
+              badgeText: 'Clique ici!',
               showBadge: true,
               onTap: () {
                 Navigator.of(context).push(

@@ -80,18 +80,10 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       boxShadow: [
-                        // Halo bleu léger
                         BoxShadow(
-                          color: kBlue.withValues(alpha: 0.20),
-                          blurRadius: 26,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 0),
-                        ),
-                        // Ombre "card"
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.18),
+                          color: Colors.black.withValues(alpha: 0.12),
                           blurRadius: 16,
-                          offset: const Offset(0, 8),
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
@@ -99,10 +91,6 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: Colors.white,
-                        border: Border.all(
-                          color: kBlue,
-                          width: 2.2,
-                        ),
                       ),
                       child: Center(
                         child: Icon(

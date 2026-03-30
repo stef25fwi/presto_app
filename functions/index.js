@@ -128,27 +128,29 @@ function findPostalCode(cityName) {
 
 /**
  * Prétraite le texte transcrit pour corriger les erreurs communes
- * de reconnaissance vocale française
+ * de reconnaissance vocale française.
+ * IMPORTANT : ne met PAS en lowercase — Google STT renvoie du texte
+ * correctement casé qu'OpenAI exploite mieux tel quel.
  */
 function preprocessTranscript(text) {
   if (!text) return '';
   
-  let cleaned = text.toLowerCase().trim();
+  let cleaned = text.trim();
   
-  // Corrections communes pour les villes des Antilles
+  // Corrections communes pour les villes des Antilles (case-insensitive)
   const cityCorrections = {
-    'baie ma haut': 'baie-mahault',
-    'baie mahaut': 'baie-mahault',
-    'bye mahaut': 'baie-mahault',
-    'les zabîmes': 'les abymes',
-    'les abîmes': 'les abymes',
-    'pointe à pitre': 'pointe-à-pitre',
-    'fort de france': 'fort-de-france',
-    'le lamentin': 'le lamentin',
-    'petit bourg': 'petit-bourg',
-    'le gosier': 'le gosier',
-    'sainte anne': 'sainte-anne',
-    'saint françois': 'saint-françois',
+    'baie ma haut': 'Baie-Mahault',
+    'baie mahaut': 'Baie-Mahault',
+    'bye mahaut': 'Baie-Mahault',
+    'les zabîmes': 'Les Abymes',
+    'les abîmes': 'Les Abymes',
+    'pointe à pitre': 'Pointe-à-Pitre',
+    'fort de france': 'Fort-de-France',
+    'le lamentin': 'Le Lamentin',
+    'petit bourg': 'Petit-Bourg',
+    'le gosier': 'Le Gosier',
+    'sainte anne': 'Sainte-Anne',
+    'saint françois': 'Saint-François',
   };
   
   for (const [wrong, correct] of Object.entries(cityCorrections)) {
@@ -328,47 +330,11 @@ exports.placesDetails = onCall(
   }
 );
 
-/**
- * Cloud Function qui génère un brouillon d'offre avec l'IA
- * 
- * Entrée : { hint, city, category, lang }
- * Sortie : { title, description, category, city, postalCode }
- */
-exports.generateOfferDraft = onCall({ region: 'europe-west1', secrets: [OPENAI_API_KEY], enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
-  // 🔒 Auth requise (y compris auth anonyme côté app)
-  assertAuthenticated(request);
+// ============================================================================
+// Core draft generation logic (shared by generateOfferDraft + microIaProcessAudio)
+// ============================================================================
 
-  let { hint, city, category, lang = 'fr' } = request.data;
-
-  // Prétraiter le texte transcrit
-  const originalHint = hint;
-  hint = preprocessTranscript(hint);
-  
-  if (originalHint !== hint) {
-    console.log('[generateOfferDraft] Texte prétraité:', { original: originalHint, cleaned: hint });
-  }
-
-  // Validation basique
-  if (!hint || typeof hint !== 'string' || hint.trim().length === 0) {
-    throw new HttpsError('invalid-argument', 'Le paramètre "hint" est requis');
-  }
-
-  // Initialiser OpenAI ici avec la clé d'environnement
-  const apiKey = OPENAI_API_KEY.value();
-  if (!apiKey) {
-    throw new HttpsError('failed-precondition', 'OPENAI_API_KEY manquante (configure la secret avec firebase functions:secrets:set OPENAI_API_KEY)');
-  }
-  const openai = new OpenAI({ apiKey });
-  console.log('[generateOfferDraft] start', {
-    hintLength: hint.length,
-    city: city || '',
-    category: category || '',
-    lang,
-  });
-
-  try {
-    // Prompt système recommandé avec format JSON riche
-    const systemPrompt = `Tu es un assistant rédactionnel pour l'application Prestō.
+const DRAFT_SYSTEM_PROMPT = `Tu es un assistant rédactionnel pour l'application Prestō.
 Ta mission : transformer un besoin utilisateur souvent dicté à l'oral en brouillon d'annonce exploitable immédiatement dans le formulaire.
 
 Contrainte absolue : tu renvoies UNIQUEMENT un JSON valide. Aucun markdown, aucun commentaire, aucun texte avant ou après le JSON.
@@ -430,313 +396,132 @@ FORMAT JSON OBLIGATOIRE :
   "questions_a_poser": [string]
 }`;
 
-    const userPrompt = `Contenu utilisateur à restructurer :
+async function _internalGenerateDraft({ openai, hint, city, category, lang }) {
+  const userPrompt = `Contenu utilisateur à restructurer :
 ${hint}
 
 Contexte disponible :
 - Ville de contexte : ${city || 'Non détectée'}
 - Catégorie de contexte : ${category || 'Non spécifiée'}
-- Langue : ${lang}
+- Langue : ${lang || 'fr'}
 
 Retourne uniquement le JSON demandé.`;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.2,
-      max_tokens: 700
-    });
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: DRAFT_SYSTEM_PROMPT },
+      { role: 'user', content: userPrompt }
+    ],
+    temperature: 0.2,
+    max_tokens: 500
+  });
 
-    const aiResponse = completion.choices?.[0]?.message?.content?.trim();
-    if (!aiResponse) {
-      throw new Error('Pas de réponse de OpenAI');
+  const aiResponse = completion.choices?.[0]?.message?.content?.trim();
+  if (!aiResponse) {
+    throw new Error('Pas de réponse de OpenAI');
+  }
+
+  let draft;
+  try {
+    let cleaned = aiResponse;
+    if (cleaned.startsWith('```json')) {
+      cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
     }
-
-    let draft;
-    try {
-      let cleaned = aiResponse;
-      if (cleaned.startsWith('```json')) {
-        cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-      } else if (cleaned.startsWith('```')) {
-        cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
-      }
-      draft = JSON.parse(cleaned);
-    } catch (e) {
-      // Fallback minimal si le JSON est invalide - format riche
-      console.warn('[generateOfferDraft] Parsing JSON échoué, utilisation fallback:', e.message);
-      draft = {
-        titre: 'Nouvelle demande',
-        suggestions_titres: [],
-        description_courte: `Je recherche: ${hint}`,
-        categorie: category || null,
-        ville: city || null,
-        secteur: null,
-        budget: { type: null, min: null, max: null, devise: 'EUR' },
-        urgence: null,
-        details: [],
-        competences_requises: [],
-        materiel: { fourni_par_demandeur: [], a_prevoir_par_prestataire: [] },
-        disponibilites: null,
-        questions_a_poser: []
-      };
-    }
-
-    // Validation du format (titre obligatoire)
-    if (!draft.titre && !draft.title) {
-      throw new Error('Réponse IA invalide : titre manquant');
-    }
-
-    console.log('[generateOfferDraft] success', {
-      titre: draft.titre || draft.title || '',
-      categorie: draft.categorie || category || null,
-      ville: draft.ville || city || null,
-      hasQuestions: (draft.questions_a_poser || []).length
-    });
-
-    // Déduire le code postal à partir de la ville si non fourni par l'IA
-    const finalCity = draft.ville || city || '';
-    let finalPostalCode = '';
-    
-    if (finalCity && !draft.postalCode) {
-      finalPostalCode = findPostalCode(finalCity);
-      console.log('[generateOfferDraft] Code postal déduit:', { city: finalCity, postalCode: finalPostalCode });
-    } else {
-      finalPostalCode = draft.postalCode || '';
-    }
-
-    // Retourne le brouillon enrichi (nouveau format)
-    return {
-      // Compatibilité avec ancien format
-      title: draft.titre || draft.title || '',
-      description: draft.description_courte || draft.description || '',
-      category: draft.categorie || category || 'Autre',
-      city: finalCity,
-      postalCode: finalPostalCode,
-      
-      // Nouveau format riche
-      titre: draft.titre || draft.title || '',
-      suggestions_titres: draft.suggestions_titres || [],
-      description_courte: draft.description_courte || draft.description || '',
-      categorie: draft.categorie || category || null,
-      ville: finalCity,
-      secteur: draft.secteur || null,
-      budget: draft.budget || { type: null, min: null, max: null, devise: 'EUR' },
-      urgence: draft.urgence || null,
-      details: draft.details || [],
-      competences_requises: draft.competences_requises || [],
-      materiel: draft.materiel || { fourni_par_demandeur: [], a_prevoir_par_prestataire: [] },
-      disponibilites: draft.disponibilites || null,
-      questions_a_poser: draft.questions_a_poser || []
+    draft = JSON.parse(cleaned);
+  } catch (e) {
+    console.warn('[_internalGenerateDraft] JSON parse failed, using fallback:', e.message);
+    draft = {
+      titre: 'Nouvelle demande',
+      suggestions_titres: [],
+      description_courte: `Je recherche: ${hint.substring(0, 200)}`,
+      categorie: category || null,
+      ville: city || null,
+      secteur: null,
+      budget: { type: null, min: null, max: null, devise: 'EUR' },
+      urgence: null,
+      details: [],
+      competences_requises: [],
+      materiel: { fourni_par_demandeur: [], a_prevoir_par_prestataire: [] },
+      disponibilites: null,
+      questions_a_poser: []
     };
+  }
 
+  if (!draft.titre && !draft.title) {
+    throw new Error('Réponse IA invalide : titre manquant');
+  }
+
+  const finalCity = draft.ville || city || '';
+  let finalPostalCode = '';
+  if (finalCity && !draft.postalCode) {
+    finalPostalCode = findPostalCode(finalCity);
+  } else {
+    finalPostalCode = draft.postalCode || '';
+  }
+
+  return {
+    title: draft.titre || draft.title || '',
+    description: draft.description_courte || draft.description || '',
+    category: draft.categorie || category || 'Autre',
+    city: finalCity,
+    postalCode: finalPostalCode,
+    titre: draft.titre || draft.title || '',
+    suggestions_titres: draft.suggestions_titres || [],
+    description_courte: draft.description_courte || draft.description || '',
+    categorie: draft.categorie || category || null,
+    ville: finalCity,
+    secteur: draft.secteur || null,
+    budget: draft.budget || { type: null, min: null, max: null, devise: 'EUR' },
+    urgence: draft.urgence || null,
+    details: draft.details || [],
+    competences_requises: draft.competences_requises || [],
+    materiel: draft.materiel || { fourni_par_demandeur: [], a_prevoir_par_prestataire: [] },
+    disponibilites: draft.disponibilites || null,
+    questions_a_poser: draft.questions_a_poser || []
+  };
+}
+
+/**
+ * Cloud Function qui génère un brouillon d'offre avec l'IA
+ * 
+ * Entrée : { hint, city, category, lang }
+ * Sortie : { title, description, category, city, postalCode }
+ */
+exports.generateOfferDraft = onCall({ region: 'europe-west1', secrets: [OPENAI_API_KEY], enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+  // 🔒 Auth requise (y compris auth anonyme côté app)
+  const uid = assertAuthenticated(request);
+
+  // 🔒 Rate limiting: 15 appels / 60s par utilisateur
+  await rateLimitOrThrow({ uid, action: 'generate_offer_draft', limit: 15, windowSec: 60 });
+
+  let { hint, city, category, lang = 'fr' } = request.data;
+
+  hint = preprocessTranscript(hint);
+
+  if (!hint || typeof hint !== 'string' || hint.trim().length === 0) {
+    throw new HttpsError('invalid-argument', 'Le paramètre "hint" est requis');
+  }
+
+  const apiKey = OPENAI_API_KEY.value();
+  if (!apiKey) {
+    throw new HttpsError('failed-precondition', 'OPENAI_API_KEY manquante');
+  }
+  const openai = new OpenAI({ apiKey });
+
+  try {
+    return await _internalGenerateDraft({ openai, hint, city, category, lang });
   } catch (error) {
-    console.error('Erreur generateOfferDraft:', error);
-    
-    if (error.message?.includes('JSON')) {
-      throw new HttpsError('internal', 'Erreur de parsing de la réponse IA');
-    }
-    
+    console.error('Erreur generateOfferDraft:', error?.message || error);
+    if (error instanceof HttpsError) throw error;
     throw new HttpsError('internal', `Erreur IA : ${error.message}`);
   }
 });
 
-// ============================================================================
-// Fonction de transcription audio + rédaction avec OpenAI
-// ============================================================================
-
-exports.transcribeAndDraftOffer = onCall({ region: 'europe-west1', timeoutSeconds: 120, secrets: [OPENAI_API_KEY], enforceAppCheck: ENFORCE_APP_CHECK }, async (req) => {
-  // 🔒 Auth requise (y compris auth anonyme côté app)
-  const uid = assertAuthenticated(req);
-
-  const {
-    gcsUri,               // ex: "gs://bucket/stt/xxx.wav"
-    languageCode = "fr-FR",
-    category = "",
-    city = "",
-  } = req.data || {};
-
-  if (!gcsUri) throw new HttpsError("invalid-argument", "gcsUri manquant.");
-
-  // 🔒 Validation stricte de l'URI + ownership
-  const parsed = parseGsUri(gcsUri);
-  if (!parsed) throw new HttpsError('invalid-argument', 'gcsUri invalide (format gs://bucket/object requis).');
-
-  // Bucket doit être le bucket Firebase du projet
-  const defaultBucket = admin.storage().bucket();
-  const defaultBucketName = defaultBucket?.name;
-  if (defaultBucketName && parsed.bucket !== defaultBucketName) {
-    throw new HttpsError('permission-denied', 'gcsUri bucket non autorisé.');
-  }
-
-  // Doit provenir du dossier stt/ et appartenir à l'utilisateur
-  const expectedPrefix = `stt/${uid}_`;
-  const objectPath = parsed.object;
-  const isWav = objectPath.endsWith('.wav');
-  if (!objectPath.startsWith(expectedPrefix) || !isWav) {
-    throw new HttpsError('permission-denied', 'gcsUri non autorisé (stt/${uid}_*.wav requis).');
-  }
-
-  // Garde-fous taille + durée (approx) via metadata Storage
-  const file = defaultBucket.file(objectPath);
-  let meta;
-  try {
-    const [m] = await file.getMetadata();
-    meta = m || null;
-  } catch (_) {
-    throw new HttpsError('not-found', 'Fichier audio introuvable.');
-  }
-
-  const objectBytes = Number(meta?.size || 0);
-  const maxBytes = 20_000_000; // 20MB
-  if (!Number.isFinite(objectBytes) || objectBytes <= 0) {
-    throw new HttpsError('failed-precondition', 'Audio vide.');
-  }
-  if (objectBytes > maxBytes) {
-    throw new HttpsError('failed-precondition', `Audio trop gros (${objectBytes} bytes).`);
-  }
-
-  const ct = String(meta?.contentType || '').toLowerCase();
-  if (ct && !isAllowedAudioContentType(ct)) {
-    throw new HttpsError('failed-precondition', `Type audio invalide (contentType=${ct}).`);
-  }
-
-  // Approx: WAV PCM16 16kHz mono ≈ 32000 bytes/sec. On accepte un peu de marge.
-  const approxBytesPerSec = 32_000;
-  const approxDurationSec = objectBytes / approxBytesPerSec;
-  const maxDurationSec = 120;
-  if (Number.isFinite(approxDurationSec) && approxDurationSec > (maxDurationSec + 10)) {
-    throw new HttpsError('failed-precondition', `Audio trop long (~${approxDurationSec.toFixed(1)}s). Max ${maxDurationSec}s.`);
-  }
-
-  // Anti-abus: limite d'appels par utilisateur
-  await rateLimitOrThrow({ uid, action: 'transcribe_and_draft', limit: 10, windowSec: 60 });
-
-  try {
-    // 1) Transcription : utiliser l'API Speech-to-Text v1
-    const speech = require("@google-cloud/speech");
-    const speechClient = new speech.SpeechClient();
-
-    console.log("[STT] Starting transcription for:", gcsUri);
-
-    const request = {
-      audio: { uri: gcsUri },
-      config: {
-        encoding: "LINEAR16",
-        languageCode: languageCode,
-        enableAutomaticPunctuation: true,
-      },
-    };
-
-    const [response] = await speechClient.recognize(request);
-    let transcript = (response.results || [])
-      .map(r => (r.alternatives?.[0]?.transcript || ""))
-      .join("\n")
-      .trim();
-
-    // Corrections simples (accents/villes)
-    transcript = preprocessTranscript(transcript);
-
-    console.log("[STT] Transcript received:", transcript.substring(0, 100));
-
-    if (!transcript) {
-      throw new HttpsError("failed-precondition", "Transcription vide (audio trop court/bruité ?).");
-    }
-
-    // 2) Rédaction IA avec OpenAI (plus fiable que Vertex AI)
-    const apiKey2 = OPENAI_API_KEY.value();
-    if (!apiKey2) {
-      throw new HttpsError('failed-precondition', 'OPENAI_API_KEY manquante');
-    }
-    const openai = new OpenAI({ apiKey: apiKey2 });
-
-    console.log("[AI] Calling OpenAI for draft generation...");
-
-    const systemPrompt = `Tu es un assistant de rédaction d'annonces pour une app de services.
-  Tu reçois une transcription vocale parfois imparfaite. Tu dois produire une annonce exploitable sans inventer d'informations.
-  Retourne uniquement un JSON strict, sans markdown ni texte hors JSON :
-
-{
-  "title": "…",
-  "description": "…",
-  "category": "…",
-  "city": "…",
-  "postalCode": "…"
-}
-
-Règles :
-- Titre court, concret, spécifique, max 60 caractères.
-- Description claire et publiable, structurée en 2 à 4 phrases, sans blabla marketing.
-- N'invente jamais de prix, téléphone, date, identité ou adresse précise.
-- Si la catégorie est claire, choisis uniquement parmi : Jardinage, Bricolage, Ménage, Restauration / Extra, DJ / Sono, Baby-sitting, Transport / Livraison, Informatique, Autre.
-- Si la ville n'est pas dite clairement mais que la ville de contexte est fournie, reprends la ville de contexte.
-- Garde le français naturel.
-- Catégorie de contexte: ${category || 'Non spécifiée'}
-- Ville de contexte: ${city || 'Non détectée'}`;
-
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Transcription : ${transcript}` }
-      ],
-      temperature: 0.25,
-      max_tokens: 800
-    });
-
-    const aiResponse = completion.choices[0]?.message?.content?.trim();
-    console.log("[AI] OpenAI response received");
-
-    if (!aiResponse) {
-      throw new Error('Pas de réponse de OpenAI');
-    }
-
-    // Parse le JSON
-    let draft;
-    try {
-      let cleanedText = aiResponse;
-      if (cleanedText.startsWith('```json')) {
-        cleanedText = cleanedText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-      } else if (cleanedText.startsWith('```')) {
-        cleanedText = cleanedText.replace(/^```\s*/, '').replace(/\s*```$/, '');
-      }
-      draft = JSON.parse(cleanedText);
-    } catch (e) {
-      console.error("[AI] JSON parse error:", e.message);
-      // Fallback
-      draft = {
-        title: "Nouvelle offre",
-        description: transcript,
-        category: category || "Autre",
-        city: city || "",
-        postalCode: ""
-      };
-    }
-
-    // Déduire ville & code postal si manquant
-    const finalCity = (draft.city || city || '').trim();
-    let finalPostalCode = (draft.postalCode || '').trim();
-    if (finalCity && !finalPostalCode) {
-      finalPostalCode = findPostalCode(finalCity);
-    }
-
-    console.log("[DONE] Returning flattened draft");
-    return {
-      transcript,
-      title: draft.title || '',
-      description: draft.description || transcript,
-      category: draft.category || category || 'Autre',
-      city: finalCity,
-      postalCode: finalPostalCode,
-    };
-
-  } catch (error) {
-    console.error('[transcribeAndDraftOffer] Error:', error);
-    throw new HttpsError('internal', `Erreur transcription : ${error.message}`);
-  }
-});
+// [REMOVED] transcribeAndDraftOffer — orphaned, replaced by microIaProcessAudio combined mode.
+// See microIaProcessAudio with generateDraft=true.
 
 // =====================================================
 // Micro-IA Router: HYBRID / GOOGLE_ONLY / WHISPER_ONLY
@@ -1377,31 +1162,22 @@ exports.microIaProcessAudio = onCall(
     console.log("[microIaProcessAudio] version=2026-01-01-ffmpeg-webm-1");
     try {
       const requestId = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-      const { storagePath, languageCode } = req.data || {};
-
-      console.log("[microIaProcessAudio] CALL", {
-        uid: req.auth?.uid || null,
-        storagePath,
-        languageCode,
-      });
+      const { storagePath, languageCode, generateDraft: wantDraft, draftCity, draftCategory } = req.data || {};
 
       const uid = req.auth?.uid || null;
-      const storagePathRedacted = redactStoragePath(storagePath);
-
-      console.log("[microIaProcessAudio] CALL", {
-        requestId,
-        storagePath: storagePathRedacted,
-        languageCode,
-        uid,
-      });
 
       if (!uid) {
         throw new HttpsError("unauthenticated", "Authentication required.");
       }
 
+      // 🔒 Rate limiting: 10 appels / 60s par utilisateur
+      await rateLimitOrThrow({ uid, action: 'micro_ia_process', limit: 10, windowSec: 60 });
+
       if (!storagePath || typeof storagePath !== "string") {
         throw new HttpsError("invalid-argument", "storagePath is required (Firebase Storage path).");
       }
+
+      const storagePathRedacted = redactStoragePath(storagePath);
 
       // Empêche chemins bizarres / traversal
       if (storagePath.includes('..') || storagePath.startsWith('/') || storagePath.includes('\\')) {
@@ -1486,27 +1262,11 @@ exports.microIaProcessAudio = onCall(
       }
 
       console.log("[microIaProcessAudio] AUDIO", {
-        isWav: audioInfo?.isWav,
-        sampleRate: audioInfo?.sampleRate,
-        numChannels: audioInfo?.numChannels,
-        bitsPerSample: audioInfo?.bitsPerSample,
-        dataBytes: audioInfo?.dataBytes,
-      });
-      console.log("[microIaProcessAudio] audioInfo=", audioInfo, "bufBytes=", audioBuffer?.length);
-
-      if (audioBuffer?.length && objectBytes && audioBuffer.length !== objectBytes) {
-        console.warn("[microIaProcessAudio] SIZE_MISMATCH", {
-          requestId,
-          storagePath: storagePathRedacted,
-          metaBytes: objectBytes,
-          downloadedBytes: audioBuffer.length,
-        });
-      }
-
-      console.log("[microIaProcessAudio] AUDIO", {
         requestId,
         bytes: audioBuffer?.length || 0,
-        audioInfo,
+        isWav: audioInfo?.isWav,
+        sampleRate: audioInfo?.sampleRate,
+        bitsPerSample: audioInfo?.bitsPerSample,
       });
 
       // Hardening: on attend un WAV PCM 16-bit (cohérent avec l'app)
@@ -1547,7 +1307,7 @@ exports.microIaProcessAudio = onCall(
       const threshold = ultraFastEnabled ? 0.10 : cfg.qualityThreshold;
       const fallbackEnabled = ultraFastEnabled ? true : cfg.fallbackEnabled;
 
-      const needsOpenAI = tryOrder.some((m) => m !== "GOOGLE_ONLY");
+      const needsOpenAI = tryOrder.some((m) => m !== "GOOGLE_ONLY") || wantDraft;
       const openai = needsOpenAI ? new OpenAI({ apiKey: OPENAI_API_KEY.value() }) : null;
 
       let best = null;
@@ -1587,17 +1347,10 @@ exports.microIaProcessAudio = onCall(
           });
 
           console.log("[microIaProcessAudio] TRY", {
-            attemptMode,
-            score: quality?.score,
-            reasons: quality?.reasons,
-          });
-
-          console.log("[microIaProcessAudio] TRY", {
             requestId,
             attemptMode,
             score: quality.score,
-            reasons: quality.reasons,
-            googleConfidence: out.googleConfidence ?? null,
+            textLen: (out.text || '').length,
           });
 
           best = {
@@ -1629,19 +1382,37 @@ exports.microIaProcessAudio = onCall(
         );
       }
 
-      console.log(
-        "[microIaProcessAudio] modeUsed=",
-        best?.modeUsed,
-        "score=",
-        best?.quality?.score,
-        "reasons=",
-        best?.quality?.reasons
-      );
-
       console.log("[microIaProcessAudio] DONE", {
         modeUsed: best?.modeUsed,
         score: best?.quality?.score,
       });
+
+      // ⚡ Mode combiné: STT + Draft en un seul round-trip (objectif <4s)
+      if (wantDraft && best.text && best.text.trim().length > 0) {
+        try {
+          const draftOpenai = openai || new OpenAI({ apiKey: OPENAI_API_KEY.value() });
+          const draftResult = await withTimeout(
+            _internalGenerateDraft({
+              openai: draftOpenai,
+              hint: preprocessTranscript(best.text),
+              city: draftCity || '',
+              category: draftCategory || '',
+              lang: lang?.startsWith('fr') ? 'fr' : (lang || 'fr'),
+            }),
+            15_000,
+            'generate_draft'
+          );
+          best.draft = draftResult;
+        } catch (draftErr) {
+          console.warn("[microIaProcessAudio] DRAFT_ERROR", {
+            requestId,
+            err: draftErr?.message || String(draftErr),
+          });
+          // Draft failure is non-fatal: client can still use the transcript
+          best.draft = null;
+          best.draftError = draftErr?.message || 'Draft generation failed';
+        }
+      }
 
       return best;
     } catch (error) {
