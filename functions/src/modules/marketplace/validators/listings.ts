@@ -39,10 +39,6 @@ export function validateListingMedia(rawMedia: unknown, maxMediaCount: number): 
     throw new ValidationError("Listing media must be an array");
   }
 
-  if (rawMedia.length === 0) {
-    throw new ValidationError("At least one photo is required");
-  }
-
   if (rawMedia.length > maxMediaCount) {
     throw new ValidationError(`Too many photos, maximum is ${maxMediaCount}`);
   }
