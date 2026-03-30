@@ -278,13 +278,22 @@ service cloud.firestore {
     match /reports/{reportId} {
       allow read: if isSignedIn() && resource.data.reporter_id == uid();
       allow create: if isSignedIn()
-        && request.resource.data.reporter_id == uid();
+        && request.resource.data.reporter_id == uid()
+        && request.resource.data.keys().hasAll(['reporter_id', 'reason'])
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() > 0
+        && request.resource.data.reason.size() <= 2000;
       allow update, delete: if false;
     }
 
     // ✅ Pros: chaque pro gère son doc (profil + statut)
     match /pros/{proId} {
-      allow read, create, update, delete: if isSignedIn() && proId == uid();
+      allow read: if isSignedIn() && proId == uid();
+      allow create: if isSignedIn() && proId == uid()
+        && !request.resource.data.keys().hasAny(['verified', 'trustedSeller', 'roles', 'status']);
+      allow update: if isSignedIn() && proId == uid()
+        && !changedKeys().hasAny(['verified', 'trustedSeller', 'roles', 'status']);
+      allow delete: if isSignedIn() && proId == uid();
     }
 
     // ✅ Notifications globales (utilisées par l'app)
@@ -315,13 +324,27 @@ service cloud.firestore {
         // Empêche de créer une annonce "au nom" d'un autre
         && (!('userId' in request.resource.data) || request.resource.data.userId == uid())
         && (!('ownerId' in request.resource.data) || request.resource.data.ownerId == uid())
-        && (!('uid' in request.resource.data) || request.resource.data.uid == uid());
+        && (!('uid' in request.resource.data) || request.resource.data.uid == uid())
+        // Limite de taille (title, description)
+        && (!('title' in request.resource.data) || request.resource.data.title.size() <= 200)
+        && (!('description' in request.resource.data) || request.resource.data.description.size() <= 5000)
+        // Bloque les champs réservés aux Functions
+        && !request.resource.data.keys().hasAny([
+          'moderation', 'visibility', 'riskScore', 'reportCount',
+          'favoriteCount', 'viewCount', 'contactCount', 'reviewedBy', 'reviewedAt'
+        ]);
 
       // Update uniquement propriétaire (et champs server-only protégés)
       allow update: if isSignedIn()
         && isOwnerByField(resource.data)
         // Interdit d'éditer des champs réservés aux Functions
-        && !changedKeys().hasAny(['moderation', 'visibility']);
+        && !changedKeys().hasAny([
+          'moderation', 'visibility', 'riskScore', 'reportCount',
+          'favoriteCount', 'viewCount', 'contactCount', 'reviewedBy', 'reviewedAt'
+        ])
+        // Limite de taille
+        && (!('title' in request.resource.data) || request.resource.data.title.size() <= 200)
+        && (!('description' in request.resource.data) || request.resource.data.description.size() <= 5000);
 
       // Delete uniquement propriétaire
       allow delete: if isSignedIn()

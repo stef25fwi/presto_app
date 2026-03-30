@@ -1210,18 +1210,6 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                   */
-                  const SizedBox(
-                    width: 156,
-                    height: 96,
-                    child: Center(
-                      child: Image(
-                        image: AssetImage('assets/images/logowebp.webp'),
-                        fit: BoxFit.contain,
-                        filterQuality: FilterQuality.high,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
                   ScaleTransition(
                     scale: _scaleAnimation,
                     child: const Text(
@@ -4291,13 +4279,24 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     }
 
     try {
-      final snapshot = await FirebaseFirestore.instance
+      final baseQuery = FirebaseFirestore.instance
           .collection('offers')
-          .where(_publicOffersFilter())
-          .get();
+          .where(_publicOffersFilter());
 
-      final int visibleCount =
-          snapshot.docs.where((doc) => _matchesOfferFilters(doc.data())).length;
+      int visibleCount;
+
+      if (!_hasActiveClientFilters) {
+        // ⚡ Aucun filtre client actif → count aggregation (0 lecture doc)
+        final countSnap = await baseQuery.count().get();
+        visibleCount = countSnap.count ?? 0;
+      } else {
+        // Filtres actifs → on doit charger les docs pour filtrer côté client
+        // Limiter à 500 docs maximum pour protéger le quota
+        final snapshot = await baseQuery.limit(500).get();
+        visibleCount = snapshot.docs
+            .where((doc) => _matchesOfferFilters(doc.data()))
+            .length;
+      }
 
       if (!mounted || requestId != _visibleOffersCountRequestId) {
         return;
@@ -10831,6 +10830,8 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
                           width: 72,
                           height: 72,
                           fit: BoxFit.cover,
+                          cacheWidth: 144,
+                          cacheHeight: 144,
                           errorBuilder: (_, __, ___) =>
                               _buildFavoritePlaceholder(),
                         )
