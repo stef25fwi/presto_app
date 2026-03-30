@@ -9,7 +9,7 @@
     },
     {
       "label": "Docs: Déplacer les .md racine -> docs_md",
-      "command": "git commit -m \"fix(analytics): ignore non-blocking publish tracking failures\"",
+      "command": "git commit -m \"fix(tasks): restore docs task command\"",
       "command": "python3 tools/move_root_md_to_docs_md.py",
       "problemMatcher": []
     },
