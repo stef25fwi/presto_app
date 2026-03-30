@@ -69,7 +69,7 @@ class PrestoRemoteConfig {
 const kPrestoOrange = Color(0xFFFF6600);
 const kPrestoBlue = Color(0xFF1A73E8);
 const String kOfferDeleteReasonFoundProvider =
-  'J ai deja trouve un prestataire';
+    'J ai deja trouve un prestataire';
 const String kOfferDeleteReasonFoundOnIliPresto =
     'J’ai trouvé quelqu’un sur iliprestō';
 const Duration kOfferJobDoneOverlayDuration = Duration(hours: 1);
@@ -91,11 +91,9 @@ String _normalizeOfferDeletionReason(String input) {
 bool _isOfferJobDoneDeletionReason(String? reason) {
   final normalized = _normalizeOfferDeletionReason(reason ?? '');
   final foundOnIliPresto =
-      normalized.contains('trouve quelqu') &&
-      normalized.contains('ilipresto');
+      normalized.contains('trouve quelqu') && normalized.contains('ilipresto');
   final foundProvider =
-      normalized.contains('deja trouve') &&
-      normalized.contains('prestataire');
+      normalized.contains('deja trouve') && normalized.contains('prestataire');
   return foundOnIliPresto || foundProvider;
 }
 
@@ -2566,306 +2564,305 @@ class _HomePageState extends State<HomePage>
           ),
         ),
         child: SingleChildScrollView(
-            controller: _scrollController,
-            physics: const ClampingScrollPhysics(),
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: EdgeInsets.fromLTRB(0, 8, 0, bottomPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Ligne du haut : info + logo
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      onLongPress: _seedSampleOffers,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: 56,
-                            height: 40,
-                            child: Image.asset(
-                              'assets/images/logowebp.webp',
-                              fit: BoxFit.contain,
-                            ),
+          controller: _scrollController,
+          physics: const ClampingScrollPhysics(),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.fromLTRB(0, 8, 0, bottomPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Ligne du haut : info + logo
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onLongPress: _seedSampleOffers,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 56,
+                          height: 40,
+                          child: Image.asset(
+                            'assets/images/logowebp.webp',
+                            fit: BoxFit.contain,
                           ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            "iliprestō",
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w900,
-                              color: kPrestoOrange,
-                              letterSpacing: 0.5,
-                            ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          "iliprestō",
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: kPrestoOrange,
+                            letterSpacing: 0.5,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
 
-                const SizedBox(height: 8),
+              const SizedBox(height: 8),
 
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: _buildSmartSearchBar(),
-                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: _buildSmartSearchBar(),
+              ),
 
-                const SizedBox(height: 14),
+              const SizedBox(height: 14),
 
-                // SLIDER
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: SizedBox(
-                    height: 220,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(22),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.12),
-                            blurRadius: 14,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(22),
-                        child: Stack(
-                          children: [
-                            PageView.builder(
-                              controller: _carouselController,
-                              itemCount: _slides.length,
-                              onPageChanged: (index) {
-                                setState(() {
-                                  _currentSlide = index;
-                                });
-                              },
-                              itemBuilder: (context, index) {
-                                final slideIndex = index;
-                                final slide = _slides[slideIndex];
+              // SLIDER
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: SizedBox(
+                  height: 220,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(22),
+                      child: Stack(
+                        children: [
+                          PageView.builder(
+                            controller: _carouselController,
+                            itemCount: _slides.length,
+                            onPageChanged: (index) {
+                              setState(() {
+                                _currentSlide = index;
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              final slideIndex = index;
+                              final slide = _slides[slideIndex];
 
-                                // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
-                                if (slideIndex == 0) {
-                                  const String bigText =
-                                      "Trouvez immédiatement quelqu'un pour faire le job !";
+                              // 🔥 SLIDE 1 : plein texte, sans image, phrase géante sur toute la largeur
+                              if (slideIndex == 0) {
+                                const String bigText =
+                                    "Trouvez immédiatement quelqu'un pour faire le job !";
 
-                                  return Container(
-                                    height: double.infinity,
-                                    decoration: const BoxDecoration(
-                                      color: kPrestoOrange,
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 18,
-                                        vertical: 18,
-                                      ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: const [
-                                          // ✅ Phrase principale en très gros sur toute la largeur
-                                          Text(
-                                            bigText,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 26,
-                                              fontWeight: FontWeight.w900,
-                                              height: 1.18,
-                                              shadows: [
-                                                Shadow(
-                                                  color: Color(0x4D000000),
-                                                  blurRadius: 6,
-                                                  offset: Offset(0, 1.5),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          SizedBox(height: 12),
-                                          Text(
-                                            "Une personne près de chez vous, en quelques minutes.",
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w500,
-                                              height: 1.3,
-                                              shadows: [
-                                                Shadow(
-                                                  color: Color(0x40000000),
-                                                  blurRadius: 4,
-                                                  offset: Offset(0, 1),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }
-
-                                // ✅ SLIDE 2 : Boîte à outils de l'entrepreneur (icône bleue animée + badge)
-                                if (slideIndex == 1) {
-                                  return const EntrepreneurToolboxSlide();
-                                }
-
-                                // 🔁 Slides texte restants : layout texte + icône / image
-                                final VoidCallback? onSlideTap =
-                                    slideIndex == (_slides.length - 1)
-                                        ? () {
-                                            Navigator.of(context).push(
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    const LegalInfoPage(),
-                                              ),
-                                            );
-                                          }
-                                        : null;
-
-                                final slideBody = Container(
+                                return Container(
                                   height: double.infinity,
                                   decoration: const BoxDecoration(
                                     color: kPrestoOrange,
                                   ),
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 12,
+                                      horizontal: 18,
+                                      vertical: 18,
                                     ),
-                                    child: Row(
-                                      children: [
-                                        // Texte
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                                slide.badge.toUpperCase(),
-                                                style: const TextStyle(
-                                                  color: Colors.white70,
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                slide.title,
-                                                maxLines: 3,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize:
-                                                      _homeSlideTitleFontSize,
-                                                  fontWeight: FontWeight.w900,
-                                                  height: 1.25,
-                                                  shadows: [
-                                                    Shadow(
-                                                      color: Color(0x4D000000),
-                                                      blurRadius: 6,
-                                                      offset: Offset(0, 1.5),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                slide.subtitle,
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  color: Colors.white70,
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w500,
-                                                  shadows: [
-                                                    Shadow(
-                                                      color: Color(0x40000000),
-                                                      blurRadius: 4,
-                                                      offset: Offset(0, 1),
-                                                    ),
-                                                  ],
-                                                ),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: const [
+                                        // ✅ Phrase principale en très gros sur toute la largeur
+                                        Text(
+                                          bigText,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 26,
+                                            fontWeight: FontWeight.w900,
+                                            height: 1.18,
+                                            shadows: [
+                                              Shadow(
+                                                color: Color(0x4D000000),
+                                                blurRadius: 6,
+                                                offset: Offset(0, 1.5),
                                               ),
                                             ],
                                           ),
                                         ),
-
-                                        // 👉 Illustration (icône) sur les slides texte
-                                        if (slideIndex != 0) ...[
-                                          const SizedBox(width: 8),
-                                          _buildSlideIllustration(
-                                            slide,
-                                            index,
-                                            onTap: onSlideTap,
+                                        SizedBox(height: 12),
+                                        Text(
+                                          "Une personne près de chez vous, en quelques minutes.",
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w500,
+                                            height: 1.3,
+                                            shadows: [
+                                              Shadow(
+                                                color: Color(0x40000000),
+                                                blurRadius: 4,
+                                                offset: Offset(0, 1),
+                                              ),
+                                            ],
                                           ),
-                                        ],
+                                        ),
                                       ],
                                     ),
                                   ),
                                 );
+                              }
 
-                                if (onSlideTap == null) return slideBody;
-                                return GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  onTap: onSlideTap,
-                                  child: slideBody,
-                                );
-                              },
-                            ),
-                            // Indicateurs
-                            Positioned(
-                              bottom: 8,
-                              left: 0,
-                              right: 0,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: List.generate(
-                                  _slides.length,
-                                  (index) => AnimatedContainer(
-                                    duration: const Duration(milliseconds: 250),
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 3),
-                                    width: _currentSlide == index ? 16 : 8,
-                                    height: 7,
-                                    decoration: BoxDecoration(
-                                      color: _currentSlide == index
-                                          ? Colors.white
-                                          : Colors.white.withOpacity(0.4),
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
+                              // ✅ SLIDE 2 : Boîte à outils de l'entrepreneur (icône bleue animée + badge)
+                              if (slideIndex == 1) {
+                                return const EntrepreneurToolboxSlide();
+                              }
+
+                              // 🔁 Slides texte restants : layout texte + icône / image
+                              final VoidCallback? onSlideTap = slideIndex ==
+                                      (_slides.length - 1)
+                                  ? () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => const LegalInfoPage(),
+                                        ),
+                                      );
+                                    }
+                                  : null;
+
+                              final slideBody = Container(
+                                height: double.infinity,
+                                decoration: const BoxDecoration(
+                                  color: kPrestoOrange,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      // Texte
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              slide.badge.toUpperCase(),
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              slide.title,
+                                              maxLines: 3,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize:
+                                                    _homeSlideTitleFontSize,
+                                                fontWeight: FontWeight.w900,
+                                                height: 1.25,
+                                                shadows: [
+                                                  Shadow(
+                                                    color: Color(0x4D000000),
+                                                    blurRadius: 6,
+                                                    offset: Offset(0, 1.5),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              slide.subtitle,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                shadows: [
+                                                  Shadow(
+                                                    color: Color(0x40000000),
+                                                    blurRadius: 4,
+                                                    offset: Offset(0, 1),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      // 👉 Illustration (icône) sur les slides texte
+                                      if (slideIndex != 0) ...[
+                                        const SizedBox(width: 8),
+                                        _buildSlideIllustration(
+                                          slide,
+                                          index,
+                                          onTap: onSlideTap,
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              );
+
+                              if (onSlideTap == null) return slideBody;
+                              return GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: onSlideTap,
+                                child: slideBody,
+                              );
+                            },
+                          ),
+                          // Indicateurs
+                          Positioned(
+                            bottom: 8,
+                            left: 0,
+                            right: 0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                _slides.length,
+                                (index) => AnimatedContainer(
+                                  duration: const Duration(milliseconds: 250),
+                                  margin:
+                                      const EdgeInsets.symmetric(horizontal: 3),
+                                  width: _currentSlide == index ? 16 : 8,
+                                  height: 7,
+                                  decoration: BoxDecoration(
+                                    color: _currentSlide == index
+                                        ? Colors.white
+                                        : Colors.white.withOpacity(0.4),
+                                    borderRadius: BorderRadius.circular(999),
                                   ),
                                 ),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+              ),
+              const SizedBox(height: 12),
 
-                _buildHomeCategoriesSection(),
+              _buildHomeCategoriesSection(),
 
-                const SizedBox(height: 18),
+              const SizedBox(height: 18),
 
-                _buildLatestOffersSection(),
+              _buildLatestOffersSection(),
 
-                const SizedBox(height: 20),
-              ],
-            ),
+              const SizedBox(height: 20),
+            ],
           ),
         ),
+      ),
     );
   }
 }
@@ -3706,6 +3703,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   bool _showFilters = false; // Panneau de filtres rétracté au départ
   int _lastResultCount = 0;
+  int? _resolvedVisibleOffersCount;
+  int _visibleOffersCountRequestId = 0;
   String _headerTitle = 'Je consulte les offres';
 
   late final Map<String, String> _deptToRegion = _buildDeptToRegion();
@@ -3916,6 +3915,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     // Synchroniser la ville sélectionnée (si déjà connue) dans le champ visible
     _filterCityController.addListener(_syncLocationFieldFromFilter);
     _syncLocationFieldFromFilter();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshVisibleOffersCount();
+    });
 
     // ✅ Écouter les changements de connectivité
     _monitorConnectivity();
@@ -4161,6 +4164,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         setState(() {
           _nextJobDoneOverlayRefreshAt = null;
         });
+        _refreshVisibleOffersCount();
       },
     );
   }
@@ -4277,6 +4281,42 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return true;
   }
 
+  Future<void> _refreshVisibleOffersCount() async {
+    final int requestId = ++_visibleOffersCountRequestId;
+
+    if (mounted) {
+      setState(() {
+        _resolvedVisibleOffersCount = null;
+      });
+    }
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('offers')
+          .where(_publicOffersFilter())
+          .get();
+
+      final int visibleCount =
+          snapshot.docs.where((doc) => _matchesOfferFilters(doc.data())).length;
+
+      if (!mounted || requestId != _visibleOffersCountRequestId) {
+        return;
+      }
+
+      setState(() {
+        _resolvedVisibleOffersCount = visibleCount;
+      });
+    } catch (e) {
+      if (!mounted || requestId != _visibleOffersCountRequestId) {
+        return;
+      }
+      setState(() {
+        _resolvedVisibleOffersCount = _lastResultCount;
+      });
+      debugPrint('[ConsultOffers] Erreur calcul compteur total: $e');
+    }
+  }
+
   Future<void> _fetchOffers({bool resetPaging = false}) async {
     if (_isLoading) return;
 
@@ -4388,6 +4428,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _showFilters = false;
       _headerTitle = _resolveConsultOffersTitle();
     });
+
+    _refreshVisibleOffersCount();
   }
 
   void _onAnyFilterChanged() {
@@ -4442,6 +4484,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     // 3) ferme le clavier si besoin
     FocusScope.of(context).unfocus();
+
+    _refreshVisibleOffersCount();
 
     // 4) ✅ Pas de scroll forcé: on conserve la position courante
   }
@@ -4506,8 +4550,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     if (_activeSearchQuery != null && _activeSearchQuery!.isNotEmpty)
       activeFiltersCount++;
 
-    final offersLabel =
-        '$_lastResultCount annonce${_lastResultCount > 1 ? 's' : ''}';
+    final int displayedResultCount =
+        _resolvedVisibleOffersCount ?? _lastResultCount;
+    final String offersLabel = _resolvedVisibleOffersCount == null
+        ? 'Chargement du total...'
+        : '$displayedResultCount annonce${displayedResultCount > 1 ? 's' : ''}';
 
     return Container(
       color: const Color(0xFFF6F0F2),
@@ -4632,295 +4679,290 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         body: SafeArea(
           child: Column(
             children: [
-                Container(
-                  width: double.infinity,
-                  height: kToolbarHeight,
-                  color: kPrestoOrange,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Center(
-                    child: Text(
-                      baseTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: kPrestoAppBarTitleStyle.copyWith(
-                        color: Colors.white,
-                      ),
+              Container(
+                width: double.infinity,
+                height: kToolbarHeight,
+                color: kPrestoOrange,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Center(
+                  child: Text(
+                    baseTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: kPrestoAppBarTitleStyle.copyWith(
+                      color: Colors.white,
                     ),
                   ),
                 ),
-                // ✅ Tuiles cliquables pour filtres actifs
-                _buildActiveFilterChips(),
-                _buildFilterPanel(),
-                Expanded(
-                  child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                    stream: _buildOffersQuery().snapshots().map((snap) {
-                      PrestoMonitoring.I.trackOffersSnapshot(snap.docs.length);
-                      return snap;
-                    }),
-                    builder: (context, snapshot) {
-                      // ✅ Ne plus afficher le loader si on a déjà des données
-                      if (snapshot.connectionState == ConnectionState.waiting &&
-                          !snapshot.hasData) {
-                        return const Center(
-                          child: CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                          ),
-                        );
+              ),
+              // ✅ Tuiles cliquables pour filtres actifs
+              _buildActiveFilterChips(),
+              _buildFilterPanel(),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: _buildOffersQuery().snapshots().map((snap) {
+                    PrestoMonitoring.I.trackOffersSnapshot(snap.docs.length);
+                    return snap;
+                  }),
+                  builder: (context, snapshot) {
+                    // ✅ Ne plus afficher le loader si on a déjà des données
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        !snapshot.hasData) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                        ),
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      debugPrint('❌ [OFFERS] Error: ${snapshot.error}');
+                      debugPrint('❌ [OFFERS] Stack: ${snapshot.stackTrace}');
+
+                      final err = snapshot.error;
+                      if (err != null) {
+                        PrestoMonitoring.I.trackError('offers.snapshots', err);
                       }
 
-                      if (snapshot.hasError) {
-                        debugPrint('❌ [OFFERS] Error: ${snapshot.error}');
-                        debugPrint('❌ [OFFERS] Stack: ${snapshot.stackTrace}');
+                      final friendly = err == null
+                          ? "Une erreur s'est produite, réessaie"
+                          : _friendlyFirestoreErrorMessage(err);
 
-                        final err = snapshot.error;
-                        if (err != null) {
-                          PrestoMonitoring.I
-                              .trackError('offers.snapshots', err);
-                        }
-
-                        final friendly = err == null
-                            ? "Une erreur s'est produite, réessaie"
-                            : _friendlyFirestoreErrorMessage(err);
-
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  size: 64,
-                                  color: Colors.red.shade300,
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: Colors.red.shade300,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                "Erreur lors du chargement des offres",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.red.shade700,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                const SizedBox(height: 16),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                friendly,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  setState(() {});
+                                },
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Réessayer'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: kPrestoOrange,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    final rawDocs = snapshot.data?.docs ?? const [];
+                    _lastSnapshotRawCount = rawDocs.length;
+
+                    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
+                        rawDocs
+                            .where((d) => _matchesOfferFilters(d.data()))
+                            .toList();
+
+                    _scheduleJobDoneOverlayRefresh(rawDocs);
+
+                    docs.sort((a, b) {
+                      final aTs = a.data()['createdAt'];
+                      final bTs = b.data()['createdAt'];
+                      final aMs =
+                          aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
+                      final bMs =
+                          bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
+                      return bMs.compareTo(aMs);
+                    });
+
+                    // Nombre après filtrage
+                    final int resultCount = docs.length;
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted && _lastResultCount != resultCount) {
+                        setState(() => _lastResultCount = resultCount);
+                      }
+                    });
+
+                    if (docs.isEmpty) {
+                      return Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 18, 24, 12),
+                            child: Row(
+                              children: const [
+                                Icon(
+                                  Icons.grid_view_rounded,
+                                  size: 20,
+                                  color: _offersOrange,
+                                ),
+                                SizedBox(width: 10),
                                 Text(
-                                  "Erreur lors du chargement des offres",
-                                  textAlign: TextAlign.center,
+                                  '0 annonce',
                                   style: TextStyle(
                                     fontSize: 18,
-                                    color: Colors.red.shade700,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  friendly,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton.icon(
-                                  onPressed: () {
-                                    setState(() {});
-                                  },
-                                  icon: const Icon(Icons.refresh),
-                                  label: const Text('Réessayer'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: kPrestoOrange,
-                                    foregroundColor: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    color: _offersNavy,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        );
-                      }
-
-                      final rawDocs = snapshot.data?.docs ?? const [];
-                      _lastSnapshotRawCount = rawDocs.length;
-
-                      List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
-                          rawDocs
-                              .where((d) => _matchesOfferFilters(d.data()))
-                              .toList();
-
-                      _scheduleJobDoneOverlayRefresh(rawDocs);
-
-                      docs.sort((a, b) {
-                        final aTs = a.data()['createdAt'];
-                        final bTs = b.data()['createdAt'];
-                        final aMs =
-                            aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
-                        final bMs =
-                            bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
-                        return bMs.compareTo(aMs);
-                      });
-
-                      // Nombre après filtrage
-                      final int resultCount = docs.length;
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted && _lastResultCount != resultCount) {
-                          setState(() => _lastResultCount = resultCount);
-                        }
-                      });
-
-                      if (docs.isEmpty) {
-                        return Column(
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.fromLTRB(24, 18, 24, 12),
-                              child: Row(
-                                children: const [
-                                  Icon(
-                                    Icons.grid_view_rounded,
-                                    size: 20,
-                                    color: _offersOrange,
-                                  ),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    '0 annonce',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w800,
-                                      color: _offersNavy,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Expanded(child: _EmptyOffers()),
-                          ],
-                        );
-                      }
-
-                      const int _adsEvery =
-                          8; // Bandeau pub après chaque 8 annonces
-                      final int _adSlots = docs.length ~/ _adsEvery;
-                      final int _totalItems = docs.length + _adSlots;
-
-                      return Column(
-                        children: [
-                          Expanded(
-                            child: ListView.builder(
-                              key: const PageStorageKey<String>(
-                                'consult-offers-list',
-                              ),
-                              controller: _scrollController,
-                              physics: const ClampingScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(6, 0, 6, 132),
-                              addAutomaticKeepAlives: true,
-                              addRepaintBoundaries: true,
-                              itemCount: _totalItems,
-                              itemBuilder: (context, index) {
-                                final bool isAd =
-                                    (index + 1) % (_adsEvery + 1) == 0;
-                                if (isAd) {
-                                  return AdBanner(
-                                    margin: EdgeInsets.zero,
-                                    placeholderHeight: kIsWeb ? 180.0 : 100.0,
-                                    placeholderFolderPrefix:
-                                        'assets/carousel_home/',
-                                    flat: true,
-                                    animatePlaceholder: false,
-                                  );
-                                }
-
-                                final int docIndex =
-                                    index - (index ~/ (_adsEvery + 1));
-                                final doc = docs[docIndex];
-                                final offerId = doc.id;
-                                final data = doc.data();
-
-                                final title =
-                                    (data['title'] ?? 'Sans titre') as String;
-
-                                final city =
-                                    ((data['city'] ?? data['location']) ??
-                                            'Lieu non précisé')
-                                        .toString();
-                                final postalCode =
-                                    ((data['postalCode'] ?? data['cp']) ?? '')
-                                        .toString()
-                                        .trim();
-                                final category = (data['category'] ??
-                                        'Catégorie non précisée')
-                                    .toString();
-                                final budgetRaw =
-                                    data['budget'] ?? data['price'];
-                                final int budget = budgetRaw is num
-                                    ? budgetRaw.round()
-                                    : int.tryParse(
-                                            budgetRaw?.toString() ?? '') ??
-                                        0;
-                                final publishedAge =
-                                    _ageLabelFromCreatedAt(data['createdAt']);
-                                final publishedText = publishedAge.isEmpty
-                                    ? 'Publication récente'
-                                    : 'Publié il y a $publishedAge';
-                                final isUrgent = data['urgent'] == true;
-                                final showJobDoneOverlay =
-                                    _isOfferJobDoneOverlayVisible(data);
-                                final missionDelayLabel =
-                                    _extractMissionDelayLabel(data);
-                                final cleanTitle = _sanitizeOfferTitle(
-                                  rawTitle: title,
-                                  city: city,
-                                  postalCode: postalCode,
-                                );
-
-                                return RepaintBoundary(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(bottom: 6),
-                                    child: _OfferBrowseTile(
-                                      onTap: showJobDoneOverlay
-                                          ? null
-                                          : () {
-                                              _logOfferClicked(offerId, title);
-                                              Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      OfferDetailsPage(
-                                                    offer:
-                                                        _buildOfferDetailsOffer(
-                                                      offerId: offerId,
-                                                      data: data,
-                                                    ),
-                                                    currentUserId: FirebaseAuth
-                                                            .instance
-                                                            .currentUser
-                                                            ?.uid ??
-                                                        '',
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                      data: _OfferBrowseTileData(
-                                        title: cleanTitle,
-                                        subtitle: [
-                                          city,
-                                          if (postalCode.isNotEmpty) postalCode,
-                                          category,
-                                        ].join(' / '),
-                                        publishedText: publishedText,
-                                        price: budget,
-                                        missionDelayLabel: missionDelayLabel,
-                                        isUrgent:
-                                            isUrgent && !showJobDoneOverlay,
-                                        icon: _categoryIcon(category),
-                                        showJobDoneOverlay: showJobDoneOverlay,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
+                          const Expanded(child: _EmptyOffers()),
                         ],
                       );
-                    },
-                  ),
+                    }
+
+                    const int _adsEvery =
+                        8; // Bandeau pub après chaque 8 annonces
+                    final int _adSlots = docs.length ~/ _adsEvery;
+                    final int _totalItems = docs.length + _adSlots;
+
+                    return Column(
+                      children: [
+                        Expanded(
+                          child: ListView.builder(
+                            key: const PageStorageKey<String>(
+                              'consult-offers-list',
+                            ),
+                            controller: _scrollController,
+                            physics: const ClampingScrollPhysics(),
+                            padding: const EdgeInsets.fromLTRB(6, 0, 6, 132),
+                            addAutomaticKeepAlives: true,
+                            addRepaintBoundaries: true,
+                            itemCount: _totalItems,
+                            itemBuilder: (context, index) {
+                              final bool isAd =
+                                  (index + 1) % (_adsEvery + 1) == 0;
+                              if (isAd) {
+                                return AdBanner(
+                                  margin: EdgeInsets.zero,
+                                  placeholderHeight: kIsWeb ? 180.0 : 100.0,
+                                  placeholderFolderPrefix:
+                                      'assets/carousel_home/',
+                                  flat: true,
+                                  animatePlaceholder: false,
+                                );
+                              }
+
+                              final int docIndex =
+                                  index - (index ~/ (_adsEvery + 1));
+                              final doc = docs[docIndex];
+                              final offerId = doc.id;
+                              final data = doc.data();
+
+                              final title =
+                                  (data['title'] ?? 'Sans titre') as String;
+
+                              final city =
+                                  ((data['city'] ?? data['location']) ??
+                                          'Lieu non précisé')
+                                      .toString();
+                              final postalCode =
+                                  ((data['postalCode'] ?? data['cp']) ?? '')
+                                      .toString()
+                                      .trim();
+                              final category =
+                                  (data['category'] ?? 'Catégorie non précisée')
+                                      .toString();
+                              final budgetRaw = data['budget'] ?? data['price'];
+                              final int budget = budgetRaw is num
+                                  ? budgetRaw.round()
+                                  : int.tryParse(budgetRaw?.toString() ?? '') ??
+                                      0;
+                              final publishedAge =
+                                  _ageLabelFromCreatedAt(data['createdAt']);
+                              final publishedText = publishedAge.isEmpty
+                                  ? 'Publication récente'
+                                  : 'Publié il y a $publishedAge';
+                              final isUrgent = data['urgent'] == true;
+                              final showJobDoneOverlay =
+                                  _isOfferJobDoneOverlayVisible(data);
+                              final missionDelayLabel =
+                                  _extractMissionDelayLabel(data);
+                              final cleanTitle = _sanitizeOfferTitle(
+                                rawTitle: title,
+                                city: city,
+                                postalCode: postalCode,
+                              );
+
+                              return RepaintBoundary(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: _OfferBrowseTile(
+                                    onTap: showJobDoneOverlay
+                                        ? null
+                                        : () {
+                                            _logOfferClicked(offerId, title);
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    OfferDetailsPage(
+                                                  offer:
+                                                      _buildOfferDetailsOffer(
+                                                    offerId: offerId,
+                                                    data: data,
+                                                  ),
+                                                  currentUserId: FirebaseAuth
+                                                          .instance
+                                                          .currentUser
+                                                          ?.uid ??
+                                                      '',
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                    data: _OfferBrowseTileData(
+                                      title: cleanTitle,
+                                      subtitle: [
+                                        city,
+                                        if (postalCode.isNotEmpty) postalCode,
+                                        category,
+                                      ].join(' / '),
+                                      publishedText: publishedText,
+                                      price: budget,
+                                      missionDelayLabel: missionDelayLabel,
+                                      isUrgent: isUrgent && !showJobDoneOverlay,
+                                      icon: _categoryIcon(category),
+                                      showJobDoneOverlay: showJobDoneOverlay,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
+      ),
     );
   }
 
@@ -7080,7 +7122,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   bool _requiredOk() {
     final titleOk = _validatePublishTitle(_titleController.text) == null;
-    final descOk = _validatePublishDescription(_descriptionController.text) == null;
+    final descOk =
+        _validatePublishDescription(_descriptionController.text) == null;
     final cityOk = _locationController.text.trim().isNotEmpty;
     final catOk = (_category ?? '').trim().isNotEmpty;
     final subOk = (_selectedSubCategory ?? '').trim().isNotEmpty;
@@ -8229,105 +8272,62 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 ? AutovalidateMode.always
                 : AutovalidateMode.disabled,
             child: ListView(
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 150),
-                children: [
-                  // Bouton Premium AI avec enregistrement audio
-                  Center(
-                    child: _isListening
-                        ? _buildMicRecordingButton()
-                        : PremiumAiButton(
-                            onPressed: _isAnalyzing ? null : _startStreamingMic,
-                            label: 'Décrire mon besoin (IA)',
-                            isLoading: _isAnalyzing,
-                          ),
-                  ),
-                  if (_isListening) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _PulsingDot(delay: 0),
-                        const SizedBox(width: 8),
-                        _PulsingDot(delay: 200),
-                        const SizedBox(width: 8),
-                        _PulsingDot(delay: 400),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Enregistrement en cours...',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.black87,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (_useCloudStt && !kIsWeb)
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: kPrestoBlue.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                                color: kPrestoBlue.withOpacity(0.25)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Icon(Icons.cloud_done,
-                                  size: 16, color: kPrestoBlue),
-                              SizedBox(width: 6),
-                              Text(
-                                'Qualité audio améliorée (Cloud)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: kPrestoBlue,
-                                ),
-                              ),
-                            ],
-                          ),
+              controller: _scrollController,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 150),
+              children: [
+                // Bouton Premium AI avec enregistrement audio
+                Center(
+                  child: _isListening
+                      ? _buildMicRecordingButton()
+                      : PremiumAiButton(
+                          onPressed: _isAnalyzing ? null : _startStreamingMic,
+                          label: 'Décrire mon besoin (IA)',
+                          isLoading: _isAnalyzing,
                         ),
-                      ),
-                  ],
-                  if (_isAnalyzing) ...[
-                    const SizedBox(height: 8),
+                ),
+                if (_isListening) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _PulsingDot(delay: 0),
+                      const SizedBox(width: 8),
+                      _PulsingDot(delay: 200),
+                      const SizedBox(width: 8),
+                      _PulsingDot(delay: 400),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Enregistrement en cours...',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_useCloudStt && !kIsWeb)
                     Center(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                            horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: kPrestoBlue.withOpacity(0.06),
+                          color: kPrestoBlue.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(999),
                           border:
-                              Border.all(color: kPrestoBlue.withOpacity(0.2)),
+                              Border.all(color: kPrestoBlue.withOpacity(0.25)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _useCloudStt && !kIsWeb
-                                ? const Icon(Icons.cloud_sync,
-                                    size: 16, color: kPrestoBlue)
-                                : SizedBox(
-                                    width: 14,
-                                    height: 14,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                          kPrestoBlue),
-                                    ),
-                                  ),
-                            const SizedBox(width: 8),
+                          children: const [
+                            Icon(Icons.cloud_done,
+                                size: 16, color: kPrestoBlue),
+                            SizedBox(width: 6),
                             Text(
-                              _useCloudStt && !kIsWeb
-                                  ? 'Transcription et analyse (Cloud)…'
-                                  : 'Analyse en cours…',
-                              style: const TextStyle(
+                              'Qualité audio améliorée (Cloud)',
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: kPrestoBlue,
@@ -8337,409 +8337,450 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         ),
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 16),
-
-                  // TITRE
-                  TextFormField(
-                    controller: _titleController,
-                    decoration: InputDecoration(
-                      label: _requiredLabel('Titre de l’offre'),
-                      border: const OutlineInputBorder(),
-                      hintText: 'Ex : Monter un meuble IKEA',
-                    ),
-                    validator: _validatePublishTitle,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // CATÉGORIE
-                  DropdownButtonFormField<String>(
-                    value: _category,
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    decoration: InputDecoration(
-                      label: _requiredLabel('Catégorie'),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
-                    ),
-                    items: _categories
-                        .map(
-                          (cat) => DropdownMenuItem(
-                            value: cat,
-                            child: Text(cat),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _category = value;
-                        _selectedSubCategory = null;
-                      });
-                      _recompute();
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Merci de choisir une catégorie';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // SOUS-CATÉGORIE (dropdown dynamique)
-                  if (_category != null)
-                    DropdownButtonFormField<String>(
-                      value: _selectedSubCategory,
-                      dropdownColor: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      decoration: InputDecoration(
-                        label: _requiredLabel('Sous-catégorie'),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
-                      ),
-                      items: (kCategorySubcategories[_category] ?? [])
-                          .map(
-                            (sub) => DropdownMenuItem(
-                              value: sub,
-                              child: Text(sub),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedSubCategory = value;
-                        });
-                        _recompute();
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Merci de choisir une sous-catégorie';
-                        }
-                        return null;
-                      },
-                    ),
-                  if (_category != null) const SizedBox(height: 16),
-
-                  // DESCRIPTION
-                  TextFormField(
-                    controller: _descriptionController,
-                    decoration: InputDecoration(
-                      label: _requiredLabel('Description détaillée'),
-                      alignLabelWithHint: true,
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
-                    ),
-                    minLines: 4,
-                    maxLines: 8,
-                    validator: _validatePublishDescription,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // PHOTOS (max 2)
-                  Row(
-                    children: const [
-                      Text(
-                        'Photos de l\'offre',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        '(optionnel)',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: PhotoSelectorTile(
-                          label: 'Photo 1',
-                          file: _selectedPhotos.isNotEmpty
-                              ? _selectedPhotos[0]
-                              : null,
-                          bytes: _selectedPhotoBytes.isNotEmpty
-                              ? _selectedPhotoBytes[0]
-                              : null,
-                          onTap: () => _onPhotoTileTap(0),
-                          onLongPress: () => _pickImage(0),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: PhotoSelectorTile(
-                          label: 'Photo 2',
-                          file: _selectedPhotos.length > 1
-                              ? _selectedPhotos[1]
-                              : null,
-                          bytes: _selectedPhotoBytes.length > 1
-                              ? _selectedPhotoBytes[1]
-                              : null,
-                          onTap: () => _onPhotoTileTap(1),
-                          onLongPress: () => _pickImage(1),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // VILLE + CP + AUTOCOMPLÉTION
-                  const Text(
-                    'Localisation',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
+                ],
+                if (_isAnalyzing) ...[
                   const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _locationController,
-                    decoration: InputDecoration(
-                      label: _requiredLabel('Ville'),
-                      hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: kPrestoBlue.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: kPrestoBlue.withOpacity(0.2)),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
-                    ),
-                    onChanged: _onCityChanged,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Merci de saisir une ville';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _postalCodeController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Code postal',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
-                    ),
-                    onChanged: _onPostalCodeChanged,
-                  ),
-                  _buildCitySuggestionsOverlay(),
-                  const SizedBox(height: 16),
-
-                  // TÉLÉPHONE avec sélection indicatif
-                  PhoneInputFieldCompact(
-                    controller: _phoneController,
-                    label: _requiredLabel('Téléphone (pour être rappelé)'),
-                    hintText: '612345678',
-                    initialCountryCode: _selectedPhoneCountryCode,
-                    onCountryCodeChanged: (code) {
-                      setState(() {
-                        _selectedPhoneCountryCode = code;
-                      });
-                    },
-                    onPhoneChanged: (_) => _recompute(),
-                    validator: (value) {
-                      return _isValidPhoneFR(value ?? '')
-                          ? null
-                          : 'Téléphone invalide';
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // DÉLAI POUR EFFECTUER LA MISSION
-                  DropdownButtonFormField<String>(
-                    value: _missionDelay,
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    decoration: InputDecoration(
-                      label: _requiredLabel('Délai pour effectuer la mission'),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
-                    ),
-                    items: _missionDelayOptions
-                        .map(
-                          (delay) => DropdownMenuItem(
-                            value: delay,
-                            child: Text(delay),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() => _missionDelay = value);
-                      _recompute();
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Merci de choisir un délai';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // URGENT
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.black12),
-                    ),
-                    child: SwitchListTile.adaptive(
-                      value: _isUrgent,
-                      onChanged: (v) {
-                        setState(() => _isUrgent = v);
-                      },
-                      title: const Text(
-                        'Urgent',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      activeColor: kPrestoOrange,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 2,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // BUDGET
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: DropdownButtonFormField<String>(
-                          value: _budgetType,
-                          dropdownColor: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          items: _budgetTypes
-                              .map((t) =>
-                                  DropdownMenuItem(value: t, child: Text(t)))
-                              .toList(),
-                          onChanged: (v) {
-                            if (v == null) return;
-                            setState(() {
-                              _budgetType = v;
-                              if (_budgetType == 'À négocier') {
-                                _budgetController.clear();
-                              }
-                            });
-                            _recompute();
-                          },
-                          decoration: InputDecoration(
-                            labelText: 'Budget',
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _useCloudStt && !kIsWeb
+                              ? const Icon(Icons.cloud_sync,
+                                  size: 16, color: kPrestoBlue)
+                              : SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        kPrestoBlue),
+                                  ),
+                                ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _useCloudStt && !kIsWeb
+                                ? 'Transcription et analyse (Cloud)…'
+                                : 'Analyse en cours…',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: kPrestoBlue,
                             ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 14),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        flex: 3,
-                        child: TextFormField(
-                          controller: _budgetController,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'[0-9., ]'))
-                          ],
-                          decoration: InputDecoration(
-                            label: _budgetType == 'Fixe'
-                                ? _requiredLabel('Montant (€)')
-                                : null,
-                            labelText:
-                                _budgetType == 'Fixe' ? null : 'Montant (€)',
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 14),
-                          ),
-                          enabled: _budgetType == 'Fixe',
-                          validator: (value) {
-                            if (_budgetType == 'À négocier') return null;
-                            final b = _parseBudget(value ?? '');
-                            if (b == null) return 'Montant invalide';
-                            if (b <= 0) return 'Le montant doit être > 0';
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  const Text(
-                    '* Champs obligatoires',
-                    style: TextStyle(color: Colors.black54),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // BOUTON PUBLIER
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _isSubmitting ? null : _onPublishPressed,
-                      icon: _isSubmitting
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.send),
-                      label: Text(
-                        _isSubmitting
-                            ? 'Publication en cours...'
-                            : 'Publier mon offre',
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: publishVisuallyDisabled
-                            ? Colors.grey.shade400
-                            : kPrestoOrange,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        ],
                       ),
                     ),
                   ),
                 ],
-              ),
+                const SizedBox(height: 16),
+
+                // TITRE
+                TextFormField(
+                  controller: _titleController,
+                  decoration: InputDecoration(
+                    label: _requiredLabel('Titre de l’offre'),
+                    border: const OutlineInputBorder(),
+                    hintText: 'Ex : Monter un meuble IKEA',
+                  ),
+                  validator: _validatePublishTitle,
+                ),
+                const SizedBox(height: 16),
+
+                // CATÉGORIE
+                DropdownButtonFormField<String>(
+                  value: _category,
+                  dropdownColor: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  decoration: InputDecoration(
+                    label: _requiredLabel('Catégorie'),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 14),
+                  ),
+                  items: _categories
+                      .map(
+                        (cat) => DropdownMenuItem(
+                          value: cat,
+                          child: Text(cat),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _category = value;
+                      _selectedSubCategory = null;
+                    });
+                    _recompute();
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Merci de choisir une catégorie';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // SOUS-CATÉGORIE (dropdown dynamique)
+                if (_category != null)
+                  DropdownButtonFormField<String>(
+                    value: _selectedSubCategory,
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    decoration: InputDecoration(
+                      label: _requiredLabel('Sous-catégorie'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
+                    ),
+                    items: (kCategorySubcategories[_category] ?? [])
+                        .map(
+                          (sub) => DropdownMenuItem(
+                            value: sub,
+                            child: Text(sub),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedSubCategory = value;
+                      });
+                      _recompute();
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Merci de choisir une sous-catégorie';
+                      }
+                      return null;
+                    },
+                  ),
+                if (_category != null) const SizedBox(height: 16),
+
+                // DESCRIPTION
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: InputDecoration(
+                    label: _requiredLabel('Description détaillée'),
+                    alignLabelWithHint: true,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 14),
+                  ),
+                  minLines: 4,
+                  maxLines: 8,
+                  validator: _validatePublishDescription,
+                ),
+                const SizedBox(height: 16),
+
+                // PHOTOS (max 2)
+                Row(
+                  children: const [
+                    Text(
+                      'Photos de l\'offre',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      '(optionnel)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: PhotoSelectorTile(
+                        label: 'Photo 1',
+                        file: _selectedPhotos.isNotEmpty
+                            ? _selectedPhotos[0]
+                            : null,
+                        bytes: _selectedPhotoBytes.isNotEmpty
+                            ? _selectedPhotoBytes[0]
+                            : null,
+                        onTap: () => _onPhotoTileTap(0),
+                        onLongPress: () => _pickImage(0),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: PhotoSelectorTile(
+                        label: 'Photo 2',
+                        file: _selectedPhotos.length > 1
+                            ? _selectedPhotos[1]
+                            : null,
+                        bytes: _selectedPhotoBytes.length > 1
+                            ? _selectedPhotoBytes[1]
+                            : null,
+                        onTap: () => _onPhotoTileTap(1),
+                        onLongPress: () => _pickImage(1),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // VILLE + CP + AUTOCOMPLÉTION
+                const Text(
+                  'Localisation',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _locationController,
+                  decoration: InputDecoration(
+                    label: _requiredLabel('Ville'),
+                    hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 14),
+                  ),
+                  onChanged: _onCityChanged,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Merci de saisir une ville';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _postalCodeController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Code postal',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 14),
+                  ),
+                  onChanged: _onPostalCodeChanged,
+                ),
+                _buildCitySuggestionsOverlay(),
+                const SizedBox(height: 16),
+
+                // TÉLÉPHONE avec sélection indicatif
+                PhoneInputFieldCompact(
+                  controller: _phoneController,
+                  label: _requiredLabel('Téléphone (pour être rappelé)'),
+                  hintText: '612345678',
+                  initialCountryCode: _selectedPhoneCountryCode,
+                  onCountryCodeChanged: (code) {
+                    setState(() {
+                      _selectedPhoneCountryCode = code;
+                    });
+                  },
+                  onPhoneChanged: (_) => _recompute(),
+                  validator: (value) {
+                    return _isValidPhoneFR(value ?? '')
+                        ? null
+                        : 'Téléphone invalide';
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // DÉLAI POUR EFFECTUER LA MISSION
+                DropdownButtonFormField<String>(
+                  value: _missionDelay,
+                  dropdownColor: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  decoration: InputDecoration(
+                    label: _requiredLabel('Délai pour effectuer la mission'),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 14),
+                  ),
+                  items: _missionDelayOptions
+                      .map(
+                        (delay) => DropdownMenuItem(
+                          value: delay,
+                          child: Text(delay),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() => _missionDelay = value);
+                    _recompute();
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Merci de choisir un délai';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // URGENT
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.black12),
+                  ),
+                  child: SwitchListTile.adaptive(
+                    value: _isUrgent,
+                    onChanged: (v) {
+                      setState(() => _isUrgent = v);
+                    },
+                    title: const Text(
+                      'Urgent',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    activeColor: kPrestoOrange,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 2,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // BUDGET
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: DropdownButtonFormField<String>(
+                        value: _budgetType,
+                        dropdownColor: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        items: _budgetTypes
+                            .map((t) =>
+                                DropdownMenuItem(value: t, child: Text(t)))
+                            .toList(),
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setState(() {
+                            _budgetType = v;
+                            if (_budgetType == 'À négocier') {
+                              _budgetController.clear();
+                            }
+                          });
+                          _recompute();
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Budget',
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 14),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      flex: 3,
+                      child: TextFormField(
+                        controller: _budgetController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9., ]'))
+                        ],
+                        decoration: InputDecoration(
+                          label: _budgetType == 'Fixe'
+                              ? _requiredLabel('Montant (€)')
+                              : null,
+                          labelText:
+                              _budgetType == 'Fixe' ? null : 'Montant (€)',
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 14),
+                        ),
+                        enabled: _budgetType == 'Fixe',
+                        validator: (value) {
+                          if (_budgetType == 'À négocier') return null;
+                          final b = _parseBudget(value ?? '');
+                          if (b == null) return 'Montant invalide';
+                          if (b <= 0) return 'Le montant doit être > 0';
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                const Text(
+                  '* Champs obligatoires',
+                  style: TextStyle(color: Colors.black54),
+                ),
+                const SizedBox(height: 10),
+
+                // BOUTON PUBLIER
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _isSubmitting ? null : _onPublishPressed,
+                    icon: _isSubmitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send),
+                    label: Text(
+                      _isSubmitting
+                          ? 'Publication en cours...'
+                          : 'Publier mon offre',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: publishVisuallyDisabled
+                          ? Colors.grey.shade400
+                          : kPrestoOrange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+              ],
             ),
+          ),
         ),
       ),
     );
@@ -10029,284 +10070,281 @@ class _AccountPageState extends State<AccountPage> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 500),
               child: SingleChildScrollView(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.only(bottom: 150),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Center(
-                        child: Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 42,
-                              backgroundColor: Colors.white,
-                              backgroundImage: user.photoURL != null &&
-                                      user.photoURL!.trim().isNotEmpty
-                                  ? NetworkImage(user.photoURL!.trim())
-                                  : const AssetImage(
-                                      'assets/images/logowebp.webp',
-                                    ),
+                controller: _scrollController,
+                padding: const EdgeInsets.only(bottom: 150),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 42,
+                            backgroundColor: Colors.white,
+                            backgroundImage: user.photoURL != null &&
+                                    user.photoURL!.trim().isNotEmpty
+                                ? NetworkImage(user.photoURL!.trim())
+                                : const AssetImage(
+                                    'assets/images/logowebp.webp',
+                                  ),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Bon retour sur iliprestō',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w600,
                             ),
-                            const SizedBox(height: 10),
-                            const Text(
-                              'Bon retour sur iliprestō',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.black54,
-                                fontWeight: FontWeight.w600,
-                              ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            displayName,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              displayName,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                              ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            user.email ?? "",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              user.email ?? "",
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            // ✅ Indicateur de complétude du profil
-                            if (_profileLoaded)
-                              Builder(
-                                builder: (context) {
-                                  final completeness =
-                                      _calculateProfileCompleteness();
-                                  final missingFields =
-                                      _missingRequiredProfileFields();
-                                  final isComplete = missingFields.isEmpty;
+                          ),
+                          const SizedBox(height: 12),
+                          // ✅ Indicateur de complétude du profil
+                          if (_profileLoaded)
+                            Builder(
+                              builder: (context) {
+                                final completeness =
+                                    _calculateProfileCompleteness();
+                                final missingFields =
+                                    _missingRequiredProfileFields();
+                                final isComplete = missingFields.isEmpty;
 
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 8, horizontal: 12),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF5F5F5),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          "Complétude du profil",
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                          child: LinearProgressIndicator(
-                                            value: completeness,
-                                            minHeight: 6,
-                                            backgroundColor:
-                                                Colors.grey.shade300,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                              completeness >= 1.0
-                                                  ? Colors.green
-                                                  : completeness >= 0.75
-                                                      ? Colors.orange
-                                                      : Colors.red,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '${(completeness * 100).toStringAsFixed(0)}% complet',
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Champs requis : ${_requiredProfileFieldLabels.join(', ')}.',
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          isComplete
-                                              ? 'Tous les champs requis sont renseignés.'
-                                              : 'Champ${missingFields.length > 1 ? 's' : ''} requis manquant${missingFields.length > 1 ? 's' : ''} : ${missingFields.join(', ')}.',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: isComplete
-                                                ? Colors.green.shade700
-                                                : Colors.red.shade700,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            if (_profileLoadError)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 8, horizontal: 12),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.shade50,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.warning_amber,
-                                        size: 14, color: Colors.red.shade700),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Erreur chargement profil',
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 8, horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF5F5F5),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        "Complétude du profil",
                                         style: TextStyle(
                                           fontSize: 11,
-                                          color: Colors.red.shade700,
-                                          fontWeight: FontWeight.w500,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black54,
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              "Tu restes connecté automatiquement.\nTu ne seras déconnecté que si tu appuies sur « Se déconnecter ».",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.black54,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      AccountProfileFormSection(
-                        pseudoController: _profilePseudoController,
-                        cityController: _profileCityController,
-                        phoneController: _profilePhoneController,
-                        phoneCountryCode: _profilePhoneCountryCode,
-                        isEditing: _isEditingProfile,
-                        isSaving: _isSavingProfile,
-                        onStartEditing: () {
-                          setState(() => _isEditingProfile = true);
-                        },
-                        onPhoneCountryCodeChanged: (code) {
-                          if (!mounted || _profilePhoneCountryCode == code)
-                            return;
-                          setState(() => _profilePhoneCountryCode = code);
-                        },
-                        onSave: () {
-                          _saveProfile(user);
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      _buildAccountSectionCard(
-                        icon: Icons.campaign_outlined,
-                        title: 'Gérer mes annonces',
-                        description:
-                            'Retrouve tes annonces par statut, modifie-les ou supprime-les avec confirmation.',
-                        isExpanded: _isPublishedOffersExpanded,
-                        onToggle: () {
-                          setState(() {
-                            _isPublishedOffersExpanded =
-                                !_isPublishedOffersExpanded;
-                          });
-                        },
-                        child: RepaintBoundary(
-                          child: UserOffersSection(
-                            userId: user.uid,
-                            showTitle: false,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      _buildAccountSectionCard(
-                        icon: Icons.favorite_border_rounded,
-                        title: 'Mes annonces favorites',
-                        description:
-                            'Retrouve les annonces enregistrées pour plus tard.',
-                        isExpanded: _isFavoriteOffersExpanded,
-                        onToggle: () {
-                          setState(() {
-                            _isFavoriteOffersExpanded =
-                                !_isFavoriteOffersExpanded;
-                          });
-                        },
-                        child: RepaintBoundary(
-                          child: FavoriteOffersSection(
-                            userId: user.uid,
-                            showTitle: false,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      _buildAccountSectionCard(
-                        icon: Icons.tune_rounded,
-                        title: 'Mes alertes catégories d\'annonces',
-                        description:
-                            'Organise les alertes qui correspondent à tes préférences.',
-                        child: RepaintBoundary(
-                          child: AccountFavoriteCategoriesSection(
-                            categoriesCount: _draftFavoriteSelections
-                                .where((e) => !e.contains('—'))
-                                .length,
-                            subcategoriesCount: _draftFavoriteSelections
-                                .where((e) => e.contains('—'))
-                                .length,
-                            isSaving: _isSavingProfile,
-                            showTitle: false,
-                            onOpenCategoryPicker: _openCategoryPickerSheet,
-                            onOpenSubcategoryPicker:
-                                _openSubcategoryPickerSheet,
-                            onApply: () => _applyDraftFavorites(user),
-                          ),
-                        ),
-                      ),
-                      RepaintBoundary(
-                        child: const SizedBox.shrink(),
-                      ),
-                      const SizedBox(height: 28),
-                      _buildAdminSpaceEntry(user),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _isSigningOut ? null : _signOut,
-                          icon: _isSigningOut
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                                      const SizedBox(height: 6),
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: LinearProgressIndicator(
+                                          value: completeness,
+                                          minHeight: 6,
+                                          backgroundColor: Colors.grey.shade300,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                            completeness >= 1.0
+                                                ? Colors.green
+                                                : completeness >= 0.75
+                                                    ? Colors.orange
+                                                    : Colors.red,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${(completeness * 100).toStringAsFixed(0)}% complet',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Champs requis : ${_requiredProfileFieldLabels.join(', ')}.',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        isComplete
+                                            ? 'Tous les champs requis sont renseignés.'
+                                            : 'Champ${missingFields.length > 1 ? 's' : ''} requis manquant${missingFields.length > 1 ? 's' : ''} : ${missingFields.join(', ')}.',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: isComplete
+                                              ? Colors.green.shade700
+                                              : Colors.red.shade700,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                )
-                              : const Icon(Icons.logout),
-                          label: Text(
-                            _isSigningOut ? 'Déconnexion...' : 'Se déconnecter',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
+                                );
+                              },
                             ),
+                          if (_profileLoadError)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.warning_amber,
+                                      size: 14, color: Colors.red.shade700),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Erreur chargement profil',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.red.shade700,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            "Tu restes connecté automatiquement.\nTu ne seras déconnecté que si tu appuies sur « Se déconnecter ».",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    AccountProfileFormSection(
+                      pseudoController: _profilePseudoController,
+                      cityController: _profileCityController,
+                      phoneController: _profilePhoneController,
+                      phoneCountryCode: _profilePhoneCountryCode,
+                      isEditing: _isEditingProfile,
+                      isSaving: _isSavingProfile,
+                      onStartEditing: () {
+                        setState(() => _isEditingProfile = true);
+                      },
+                      onPhoneCountryCodeChanged: (code) {
+                        if (!mounted || _profilePhoneCountryCode == code)
+                          return;
+                        setState(() => _profilePhoneCountryCode = code);
+                      },
+                      onSave: () {
+                        _saveProfile(user);
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    _buildAccountSectionCard(
+                      icon: Icons.campaign_outlined,
+                      title: 'Gérer mes annonces',
+                      description:
+                          'Retrouve tes annonces par statut, modifie-les ou supprime-les avec confirmation.',
+                      isExpanded: _isPublishedOffersExpanded,
+                      onToggle: () {
+                        setState(() {
+                          _isPublishedOffersExpanded =
+                              !_isPublishedOffersExpanded;
+                        });
+                      },
+                      child: RepaintBoundary(
+                        child: UserOffersSection(
+                          userId: user.uid,
+                          showTitle: false,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildAccountSectionCard(
+                      icon: Icons.favorite_border_rounded,
+                      title: 'Mes annonces favorites',
+                      description:
+                          'Retrouve les annonces enregistrées pour plus tard.',
+                      isExpanded: _isFavoriteOffersExpanded,
+                      onToggle: () {
+                        setState(() {
+                          _isFavoriteOffersExpanded =
+                              !_isFavoriteOffersExpanded;
+                        });
+                      },
+                      child: RepaintBoundary(
+                        child: FavoriteOffersSection(
+                          userId: user.uid,
+                          showTitle: false,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildAccountSectionCard(
+                      icon: Icons.tune_rounded,
+                      title: 'Mes alertes catégories d\'annonces',
+                      description:
+                          'Organise les alertes qui correspondent à tes préférences.',
+                      child: RepaintBoundary(
+                        child: AccountFavoriteCategoriesSection(
+                          categoriesCount: _draftFavoriteSelections
+                              .where((e) => !e.contains('—'))
+                              .length,
+                          subcategoriesCount: _draftFavoriteSelections
+                              .where((e) => e.contains('—'))
+                              .length,
+                          isSaving: _isSavingProfile,
+                          showTitle: false,
+                          onOpenCategoryPicker: _openCategoryPickerSheet,
+                          onOpenSubcategoryPicker: _openSubcategoryPickerSheet,
+                          onApply: () => _applyDraftFavorites(user),
+                        ),
+                      ),
+                    ),
+                    RepaintBoundary(
+                      child: const SizedBox.shrink(),
+                    ),
+                    const SizedBox(height: 28),
+                    _buildAdminSpaceEntry(user),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _isSigningOut ? null : _signOut,
+                        icon: _isSigningOut
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.logout),
+                        label: Text(
+                          _isSigningOut ? 'Déconnexion...' : 'Se déconnecter',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
             ),
           ),
         ),
