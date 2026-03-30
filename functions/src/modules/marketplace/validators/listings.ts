@@ -16,6 +16,25 @@ export interface ValidatedListingDraftPayload {
   searchKeywords: string[];
 }
 
+function inferImageMimeTypeFromPath(storagePath: string): string {
+  const normalizedStoragePath = storagePath.toLowerCase();
+  if (normalizedStoragePath.endsWith(".webp")) return "image/webp";
+  if (normalizedStoragePath.endsWith(".png")) return "image/png";
+  if (normalizedStoragePath.endsWith(".heic") || normalizedStoragePath.endsWith(".heif")) {
+    return "image/heic";
+  }
+  if (normalizedStoragePath.endsWith(".gif")) return "image/gif";
+  if (normalizedStoragePath.endsWith(".bmp")) return "image/bmp";
+  if (normalizedStoragePath.endsWith(".tif") || normalizedStoragePath.endsWith(".tiff")) {
+    return "image/tiff";
+  }
+  if (normalizedStoragePath.endsWith(".avif")) return "image/avif";
+  if (normalizedStoragePath.endsWith(".jpeg") || normalizedStoragePath.endsWith(".jpg")) {
+    return "image/jpeg";
+  }
+  return "";
+}
+
 function normalizeString(value: unknown): string {
   return String(value ?? "").trim();
 }
@@ -49,14 +68,13 @@ export function validateListingMedia(rawMedia: unknown, maxMediaCount: number): 
     const downloadUrl = normalizeString(media.downloadUrl);
     const thumbnailUrl = normalizeString(media.thumbnailUrl) || downloadUrl;
     const normalizedStoragePath = storagePath.toLowerCase();
-    const resolvedMimeType = (normalizeString(media.mimeType) ||
-            (normalizedStoragePath.endsWith(".webp") ? "image/webp" : ""))
+    const resolvedMimeType = (normalizeString(media.mimeType) || inferImageMimeTypeFromPath(storagePath))
         .toLowerCase();
     if (!storagePath || !downloadUrl) {
       throw new ValidationError(`Photo #${index + 1} is missing storagePath or downloadUrl`);
     }
-    if (!normalizedStoragePath.endsWith(".webp") || resolvedMimeType !== "image/webp") {
-      throw new ValidationError(`Photo #${index + 1} must be processed as WebP before submission`);
+    if (!resolvedMimeType.startsWith("image/")) {
+      throw new ValidationError(`Photo #${index + 1} must be an image file`);
     }
 
     return {

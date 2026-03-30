@@ -4,7 +4,7 @@ import { PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
 import { canProceedRateLimited } from "../../core/rate_limit";
 import { COLLECTIONS } from "../../shared/constants";
-import { refreshUnreadMessageCount } from "../notifications/counters";
+import { refreshUnreadMessageCount, refreshUnreadNotificationCount } from "../notifications/counters";
 import {
   computeConversationStatus,
   isConversationBlocked,
@@ -66,6 +66,51 @@ function requireAuthUid(request: { auth?: { uid?: string; token?: Record<string,
 
 function sanitizeConversationPart(value: string): string {
   return value.replaceAll("/", "_").trim();
+}
+
+async function deleteNotificationsForConversation(conversationId: string): Promise<Set<string>> {
+  const routeName = `/messages/${encodeURIComponent(conversationId)}`;
+  const [conversationIdSnap, routeNameSnap] = await Promise.all([
+    db.collection(COLLECTIONS.notifications).where("conversationId", "==", conversationId).get(),
+    db.collection(COLLECTIONS.notifications).where("routeName", "==", routeName).get(),
+  ]);
+
+  const notificationDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+  for (const snapshot of [conversationIdSnap, routeNameSnap]) {
+    for (const doc of snapshot.docs) {
+      notificationDocs.set(doc.id, doc);
+    }
+  }
+
+  if (notificationDocs.size == 0) {
+    return new Set<string>();
+  }
+
+  let batch = db.batch();
+  let batchCount = 0;
+  const affectedUserIds = new Set<string>();
+
+  for (const doc of notificationDocs.values()) {
+    batch.delete(doc.ref);
+    batchCount += 1;
+
+    const userId = String(doc.data().userId || "").trim();
+    if (userId) {
+      affectedUserIds.add(userId);
+    }
+
+    if (batchCount >= 400) {
+      await batch.commit();
+      batch = db.batch();
+      batchCount = 0;
+    }
+  }
+
+  if (batchCount > 0) {
+    await batch.commit();
+  }
+
+  return affectedUserIds;
 }
 
 function canonicalConversationId({
@@ -693,6 +738,7 @@ export const deleteConversation = onCall({ region: PROJECT_REGION }, async (requ
   }
 
   const { convRef, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+  const notificationUserIds = await deleteNotificationsForConversation(conversationId);
 
   // Delete messages subcollection in batches
   const messagesRef = convRef.collection("messages");
@@ -735,6 +781,7 @@ export const deleteConversation = onCall({ region: PROJECT_REGION }, async (requ
 
   // Refresh unread counts for all participants
   await Promise.all(participants.map((pid) => refreshUnreadMessageCount(pid)));
+  await Promise.all(Array.from(notificationUserIds, (userId) => refreshUnreadNotificationCount(userId)));
 
   return { ok: true };
 });

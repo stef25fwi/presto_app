@@ -13,6 +13,7 @@ const logger_1 = require("../../../core/logger");
 const constants_1 = require("../../../shared/constants");
 const push_1 = require("../../notifications/push");
 const analytics_1 = require("../services/analytics");
+const media_1 = require("./media");
 const moderation_1 = require("../services/moderation");
 const recaptcha_1 = require("../services/recaptcha");
 const errors_1 = require("../services/errors");
@@ -26,6 +27,32 @@ function requireAuthUid(request) {
 }
 function normalizeString(value) {
     return String(value ?? "").trim();
+}
+async function normalizeListingMediaForSubmission({ ownerId, media, }) {
+    return Promise.all(media.map(async (entry) => {
+        const storagePath = normalizeString(entry.storagePath);
+        const mimeType = normalizeString(entry.mimeType).toLowerCase();
+        if (!storagePath) {
+            throw new https_1.HttpsError("invalid-argument", "Media storagePath is required");
+        }
+        if (storagePath.toLowerCase().endsWith(".webp") && mimeType === "image/webp") {
+            return entry;
+        }
+        const processed = await (0, media_1.processOfferPhotoStoragePath)({
+            uid: ownerId,
+            storagePath,
+        });
+        return {
+            storagePath: processed.storagePath,
+            downloadUrl: processed.downloadUrl,
+            thumbnailUrl: processed.thumbnailUrl,
+            mimeType: processed.mimeType,
+            width: processed.width,
+            height: processed.height,
+            sizeBytes: processed.sizeBytes,
+            safeSearchStatus: "pending",
+        };
+    }));
 }
 async function loadDraftSnapshot(draftId) {
     const primaryRef = firestore_1.db.collection(constants_1.COLLECTIONS.listingDraftsV2).doc(draftId);
@@ -115,16 +142,6 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
         const validated = (0, listings_1.validateListingDraftPayload)(draftData, config.maxMediaCount || env_1.MARKETPLACE_MAX_MEDIA_COUNT);
         const refsData = await ensureCategoryAndCityAreActive(validated.categoryId, validated.cityId);
         const ownerSignals = await readOwnerSignals(ownerId, validated.title.toLowerCase());
-        const evaluation = await (0, moderation_1.evaluateListingRisk)({
-            ownerId,
-            title: validated.title,
-            description: validated.description,
-            media: validated.media,
-            ownerSignals: {
-                ...ownerSignals,
-                lastRecaptchaScore: recaptcha.score,
-            },
-        });
         const listingId = draftId;
         const listingRef = firestore_1.db.collection(constants_1.COLLECTIONS.listings).doc(listingId);
         const now = firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
@@ -143,6 +160,7 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
             status: "pending",
             moderationStatus: "pending",
             visibility: "private",
+            mediaProcessingStatus: validated.media.length > 0 ? "processing" : "completed",
             reportCount: 0,
             favoriteCount: 0,
             viewCount: 0,
@@ -158,8 +176,31 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
                 ? cityData.geo
                 : null,
             sourceDraftId: draftId,
-            riskScore: evaluation.riskScore,
+            riskScore: 0,
         }, { merge: true });
+        const normalizedMedia = await normalizeListingMediaForSubmission({
+            ownerId,
+            media: validated.media,
+        });
+        const thumbnailUrl = normalizedMedia[0]?.thumbnailUrl || normalizedMedia[0]?.downloadUrl || "";
+        if (normalizedMedia.length > 0) {
+            await listingRef.set({
+                media: normalizedMedia,
+                thumbnailUrl,
+                mediaProcessingStatus: "completed",
+                updatedAt: now,
+            }, { merge: true });
+        }
+        const evaluation = await (0, moderation_1.evaluateListingRisk)({
+            ownerId,
+            title: validated.title,
+            description: validated.description,
+            media: normalizedMedia,
+            ownerSignals: {
+                ...ownerSignals,
+                lastRecaptchaScore: recaptcha.score,
+            },
+        });
         const publication = await (0, moderation_1.persistModerationResult)({
             listingId,
             ownerId,
@@ -248,6 +289,8 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
             moderationStatus: publication.moderationStatus,
             visibility: publication.visibility,
             riskScore: evaluation.riskScore,
+            media: normalizedMedia,
+            thumbnailUrl,
         };
     }
     catch (error) {

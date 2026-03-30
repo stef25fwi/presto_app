@@ -66,6 +66,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   bool _isBlocked = false;
   bool _isBlockedForCurrentUser = false;
   bool _isArchivedForCurrentUser = false;
+  bool _hasHandledConversationRemoval = false;
 
   Object? _conversationValue(Map<String, dynamic> data, List<String> keys) {
     for (final key in keys) {
@@ -278,6 +279,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         .doc(widget.conversationId)
         .snapshots()
         .listen((snapshot) {
+      if (!snapshot.exists) {
+        _handleConversationRemoved(showMessage: true);
+        return;
+      }
+
       final data = snapshot.data();
       if (data == null) return;
 
@@ -317,6 +323,15 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         _markAsRead();
       }
     });
+  }
+
+  void _handleConversationRemoved({required bool showMessage}) {
+    if (_hasHandledConversationRemoval || !mounted) return;
+    _hasHandledConversationRemoval = true;
+    if (showMessage) {
+      showSuccessSnackBar(context, 'Conversation supprimee.');
+    }
+    Navigator.of(context).maybePop();
   }
 
   String? _readReceiptLabel(DateTime? sentAt) {
@@ -534,6 +549,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           await ConversationService.deleteConversation(
               conversationId: widget.conversationId);
           if (!mounted) return;
+            _hasHandledConversationRemoval = true;
           showSuccessSnackBar(context, 'Conversation supprimee.');
           Navigator.of(context).pop();
           return;
