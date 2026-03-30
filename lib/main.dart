@@ -2496,7 +2496,14 @@ class _HomePageState extends State<HomePage>
                 // Ligne du haut : info + logo
                 Row(
                   children: [
-                    _buildInfoIcon(),
+                    SizedBox(
+                      width: 56,
+                      height: 40,
+                      child: Image.asset(
+                        'assets/images/logowebp.webp',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: GestureDetector(
@@ -2514,7 +2521,7 @@ class _HomePageState extends State<HomePage>
                         ),
                       ),
                     ),
-                    const SizedBox(width: 36),
+                    const SizedBox(width: 56),
                   ],
                 ),
 
@@ -2583,10 +2590,11 @@ class _HomePageState extends State<HomePage>
                                           // ✅ Phrase principale en très gros sur toute la largeur
                                           Text(
                                             bigText,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
                                               color: Colors.white,
-                                              fontSize:
-                                                  _homeSlideTitleFontSize, // taille bien grosse
+                                              fontSize: 26,
                                               fontWeight: FontWeight.w900,
                                               height: 1.18,
                                               shadows: [
@@ -5905,11 +5913,13 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
                         children: [
                           CircleAvatar(
                             radius: 18,
-                            backgroundColor: const Color(0xFFFFF3E8),
-                            child: Icon(
-                              Icons.person_outline,
-                              size: 20,
-                              color: Colors.orange.shade800,
+                            backgroundColor: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.all(3),
+                              child: Image.asset(
+                                'assets/images/logowebp.webp',
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -9773,17 +9783,13 @@ class _AccountPageState extends State<AccountPage> {
                           children: [
                             CircleAvatar(
                               radius: 42,
-                              backgroundColor: kPrestoOrange.withOpacity(0.1),
-                              backgroundImage: user.photoURL != null
-                                  ? NetworkImage(user.photoURL!)
-                                  : null,
-                              child: user.photoURL == null
-                                  ? const Icon(
-                                      Icons.person,
-                                      size: 42,
-                                      color: kPrestoOrange,
-                                    )
-                                  : null,
+                              backgroundColor: Colors.white,
+                              backgroundImage: user.photoURL != null &&
+                                      user.photoURL!.trim().isNotEmpty
+                                  ? NetworkImage(user.photoURL!.trim())
+                                  : const AssetImage(
+                                      'assets/images/logowebp.webp',
+                                    ),
                             ),
                             const SizedBox(height: 10),
                             const Text(

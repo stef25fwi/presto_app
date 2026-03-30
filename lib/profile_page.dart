@@ -163,49 +163,52 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _loadNotificationPreferences(String userId) async {
     try {
       final results = await Future.wait([
-      FirebaseFirestore.instance
-        .collection('notification_preferences')
-        .doc(userId)
-        .get(),
-      FirebaseFirestore.instance.collection('users').doc(userId).get(),
+        FirebaseFirestore.instance
+            .collection('notification_preferences')
+            .doc(userId)
+            .get(),
+        FirebaseFirestore.instance.collection('users').doc(userId).get(),
       ]);
       final prefsData = results[0].data();
       final userData = results[1].data();
       if (!mounted) return;
 
-      final emailPrefs =
-        (prefsData?['email'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-      final pushPrefs =
-        (prefsData?['push'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+      final emailPrefs = (prefsData?['email'] as Map<String, dynamic>?) ??
+          const <String, dynamic>{};
+      final pushPrefs = (prefsData?['push'] as Map<String, dynamic>?) ??
+          const <String, dynamic>{};
       final savedSearches =
-          (emailPrefs['saved_searches'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-      final messaging =
-          (emailPrefs['messaging'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-      final listings =
-          (emailPrefs['listings'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-      final favorites =
-          (emailPrefs['favorites'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-      final support =
-          (emailPrefs['support'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-      final marketing =
-          (emailPrefs['marketing'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-      final quietHours =
-        (prefsData?['quiet_hours'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-      final pushMessaging =
-        (pushPrefs['messaging'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-      final pushFavorites =
-        (pushPrefs['favorites'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
-      final pushSupport =
-        (pushPrefs['support'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+          (emailPrefs['saved_searches'] as Map<String, dynamic>?) ??
+              const <String, dynamic>{};
+      final messaging = (emailPrefs['messaging'] as Map<String, dynamic>?) ??
+          const <String, dynamic>{};
+      final listings = (emailPrefs['listings'] as Map<String, dynamic>?) ??
+          const <String, dynamic>{};
+      final favorites = (emailPrefs['favorites'] as Map<String, dynamic>?) ??
+          const <String, dynamic>{};
+      final support = (emailPrefs['support'] as Map<String, dynamic>?) ??
+          const <String, dynamic>{};
+      final marketing = (emailPrefs['marketing'] as Map<String, dynamic>?) ??
+          const <String, dynamic>{};
+      final quietHours = (prefsData?['quiet_hours'] as Map<String, dynamic>?) ??
+          const <String, dynamic>{};
+      final pushMessaging = (pushPrefs['messaging'] as Map<String, dynamic>?) ??
+          const <String, dynamic>{};
+      final pushFavorites = (pushPrefs['favorites'] as Map<String, dynamic>?) ??
+          const <String, dynamic>{};
+      final pushSupport = (pushPrefs['support'] as Map<String, dynamic>?) ??
+          const <String, dynamic>{};
       final favoriteCategoryMap =
-        (userData?['favoriteCategoryMap'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+          (userData?['favoriteCategoryMap'] as Map<String, dynamic>?) ??
+              const <String, dynamic>{};
 
       setState(() {
         final savedSearchMode = (savedSearches['mode'] ?? 'daily').toString();
         final messagingMode = (messaging['mode'] ?? 'immediate').toString();
         final listingMode = (listings['mode'] ?? 'immediate').toString();
 
-        _savedSearchEmailMode = savedSearchMode == 'instant' ? 'daily' : savedSearchMode;
+        _savedSearchEmailMode =
+            savedSearchMode == 'instant' ? 'daily' : savedSearchMode;
         _messagingEmailMode = messagingMode;
         _listingEmailMode = listingMode;
 
@@ -214,7 +217,8 @@ class _ProfilePageState extends State<ProfilePage> {
             _messagingEmailMode != 'off' && pushMessaging['enabled'] != false;
         _notifFavorites =
             favorites['enabled'] != false && pushFavorites['enabled'] != false;
-        _notifSystem = support['enabled'] != false && pushSupport['enabled'] != false;
+        _notifSystem =
+            support['enabled'] != false && pushSupport['enabled'] != false;
         _marketingEmailsEnabled = marketing['enabled'] == true;
         _quietHoursEnabled = quietHours['enabled'] != false;
         _timezone = (prefsData?['timezone'] ?? 'America/Guadeloupe').toString();
@@ -503,9 +507,7 @@ class _ProfilePageState extends State<ProfilePage> {
       'requester_email': user.email,
     };
 
-    await FirebaseFirestore.instance
-        .collection('support_tickets')
-        .add(payload);
+    await FirebaseFirestore.instance.collection('support_tickets').add(payload);
 
     return ticketNumber;
   }
@@ -602,9 +604,9 @@ class _ProfilePageState extends State<ProfilePage> {
       return;
     }
 
-    final hasPasswordProvider =
-        user?.providerData.any((provider) => provider.providerId == 'password') ??
-            false;
+    final hasPasswordProvider = user?.providerData
+            .any((provider) => provider.providerId == 'password') ??
+        false;
 
     if (user == null || !hasPasswordProvider) {
       try {
@@ -641,7 +643,8 @@ class _ProfilePageState extends State<ProfilePage> {
               TextFormField(
                 controller: currentPasswordCtrl,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Mot de passe actuel'),
+                decoration:
+                    const InputDecoration(labelText: 'Mot de passe actuel'),
                 validator: (value) {
                   if ((value ?? '').trim().isEmpty) {
                     return 'Saisis ton mot de passe actuel';
@@ -653,7 +656,8 @@ class _ProfilePageState extends State<ProfilePage> {
               TextFormField(
                 controller: newPasswordCtrl,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Nouveau mot de passe'),
+                decoration:
+                    const InputDecoration(labelText: 'Nouveau mot de passe'),
                 validator: (value) {
                   final password = (value ?? '').trim();
                   if (password.length < 6) {
@@ -669,7 +673,8 @@ class _ProfilePageState extends State<ProfilePage> {
               TextFormField(
                 controller: confirmPasswordCtrl,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Confirmer le mot de passe'),
+                decoration: const InputDecoration(
+                    labelText: 'Confirmer le mot de passe'),
                 validator: (value) {
                   if ((value ?? '').trim() != newPasswordCtrl.text.trim()) {
                     return 'Les mots de passe ne correspondent pas';
@@ -718,7 +723,8 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, e.message ?? 'Erreur de changement de mot de passe.');
+      showErrorSnackBar(
+          context, e.message ?? 'Erreur de changement de mot de passe.');
     } finally {
       currentPasswordCtrl.dispose();
       newPasswordCtrl.dispose();
@@ -731,12 +737,14 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final ticketNumber = await _createSupportTicket(
         subject: 'Demande d’export de données',
-        description: 'Je souhaite recevoir un export de mes données personnelles et de mon historique d’activité lié à mon compte PRESTO.',
+        description:
+            'Je souhaite recevoir un export de mes données personnelles et de mon historique d’activité lié à mon compte PRESTO.',
         category: 'data_export',
         priority: 'high',
       );
       if (!mounted) return;
-      showSuccessSnackBar(context, 'Demande d’export enregistrée. Référence: $ticketNumber');
+      showSuccessSnackBar(
+          context, 'Demande d’export enregistrée. Référence: $ticketNumber');
     } catch (e) {
       if (!mounted) return;
       showErrorSnackBar(context, 'Impossible de créer la demande d’export: $e');
@@ -788,15 +796,18 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final ticketNumber = await _createSupportTicket(
         subject: 'Demande de suppression de compte',
-        description: 'Je confirme demander la suppression de mon compte PRESTO et l’effacement associé de mes données, sous réserve des obligations légales de conservation.',
+        description:
+            'Je confirme demander la suppression de mon compte PRESTO et l’effacement associé de mes données, sous réserve des obligations légales de conservation.',
         category: 'account_deletion',
         priority: 'high',
       );
       if (!mounted) return;
-      showSuccessSnackBar(context, 'Demande de suppression enregistrée. Référence: $ticketNumber');
+      showSuccessSnackBar(context,
+          'Demande de suppression enregistrée. Référence: $ticketNumber');
     } catch (e) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Impossible de créer la demande de suppression: $e');
+      showErrorSnackBar(
+          context, 'Impossible de créer la demande de suppression: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -935,7 +946,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 SafeArea(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(16, 16, 16, isLoggedIn ? 28 : 72),
+                    padding:
+                        EdgeInsets.fromLTRB(16, 16, 16, isLoggedIn ? 28 : 72),
                     child: isLoggedIn
                         ? _buildProfileContent(colorScheme, isDark, user)
                         : _buildAuthContent(colorScheme, isDark),
@@ -1106,9 +1118,7 @@ class _ProfilePageState extends State<ProfilePage> {
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(
-                child:
-                    Divider(color: kIliPrestoBlue.withOpacity(0.28))),
+            Expanded(child: Divider(color: kIliPrestoBlue.withOpacity(0.28))),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 8.0),
               child: Text(
@@ -1119,9 +1129,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
             ),
-            Expanded(
-                child:
-                    Divider(color: kIliPrestoBlue.withOpacity(0.28))),
+            Expanded(child: Divider(color: kIliPrestoBlue.withOpacity(0.28))),
           ],
         ),
         const SizedBox(height: 8),
@@ -1141,7 +1149,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: kIliPrestoCream,
                       borderRadius: BorderRadius.circular(999),
@@ -1308,10 +1317,13 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         style: OutlinedButton.styleFrom(
-          backgroundColor: forceWhiteBackground ? Colors.white : const Color(0xFFF9FBFF),
+          backgroundColor:
+              forceWhiteBackground ? Colors.white : const Color(0xFFF9FBFF),
           foregroundColor: const Color(0xFF111827),
           side: BorderSide(
-            color: forceWhiteBackground ? kIliPrestoBorder : kIliPrestoBlue.withOpacity(0.24),
+            color: forceWhiteBackground
+                ? kIliPrestoBorder
+                : kIliPrestoBlue.withOpacity(0.24),
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -1520,7 +1532,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     color: Colors.white.withOpacity(0.24),
                   ),
                 ),
-                child: const Icon(Icons.person, size: 34, color: Colors.white),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Image.asset(
+                    'assets/images/logowebp.webp',
+                    fit: BoxFit.contain,
+                  ),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -1528,7 +1546,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _nameCtrl.text.isEmpty ? 'Mon profil iLiPresto' : _nameCtrl.text,
+                      _nameCtrl.text.isEmpty
+                          ? 'Mon profil iLiPresto'
+                          : _nameCtrl.text,
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -1537,7 +1557,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.18),
                         borderRadius: BorderRadius.circular(999),
@@ -1691,7 +1712,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   prefixIcon: Icons.search_outlined,
                   items: const [
                     DropdownMenuItem(value: 'daily', child: Text('Quotidien')),
-                    DropdownMenuItem(value: 'weekly', child: Text('Hebdomadaire')),
+                    DropdownMenuItem(
+                        value: 'weekly', child: Text('Hebdomadaire')),
                     DropdownMenuItem(value: 'off', child: Text('Désactivé')),
                   ],
                   onChanged: (value) {
@@ -1708,9 +1730,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   labelText: 'Messages et leads',
                   prefixIcon: Icons.forum_outlined,
                   items: const [
-                    DropdownMenuItem(value: 'immediate', child: Text('Immédiat')),
-                    DropdownMenuItem(value: 'digest_daily', child: Text('Digest quotidien')),
-                    DropdownMenuItem(value: 'digest_weekly', child: Text('Digest hebdomadaire')),
+                    DropdownMenuItem(
+                        value: 'immediate', child: Text('Immédiat')),
+                    DropdownMenuItem(
+                        value: 'digest_daily', child: Text('Digest quotidien')),
+                    DropdownMenuItem(
+                        value: 'digest_weekly',
+                        child: Text('Digest hebdomadaire')),
                     DropdownMenuItem(value: 'off', child: Text('Désactivé')),
                   ],
                   onChanged: (value) {
@@ -1727,9 +1753,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   labelText: 'Suivi de mes annonces',
                   prefixIcon: Icons.campaign_outlined,
                   items: const [
-                    DropdownMenuItem(value: 'immediate', child: Text('Immédiat')),
-                    DropdownMenuItem(value: 'digest_daily', child: Text('Digest quotidien')),
-                    DropdownMenuItem(value: 'digest_weekly', child: Text('Digest hebdomadaire')),
+                    DropdownMenuItem(
+                        value: 'immediate', child: Text('Immédiat')),
+                    DropdownMenuItem(
+                        value: 'digest_daily', child: Text('Digest quotidien')),
+                    DropdownMenuItem(
+                        value: 'digest_weekly',
+                        child: Text('Digest hebdomadaire')),
                     DropdownMenuItem(value: 'off', child: Text('Désactivé')),
                   ],
                   onChanged: (value) {
@@ -1755,7 +1785,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 const Divider(),
                 _buildSwitchRow(
                   title: 'Emails marketing',
-                  subtitle: 'Recevoir conseils, nouveautés et sélection PRESTO.',
+                  subtitle:
+                      'Recevoir conseils, nouveautés et sélection PRESTO.',
                   value: _marketingEmailsEnabled,
                   onChanged: (v) => setState(() => _marketingEmailsEnabled = v),
                 ),
@@ -1806,10 +1837,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         labelText: 'Quiet hours début',
                         prefixIcon: Icons.bedtime_outlined,
                         items: const [
-                          DropdownMenuItem(value: '20:00', child: Text('20:00')),
-                          DropdownMenuItem(value: '21:00', child: Text('21:00')),
-                          DropdownMenuItem(value: '22:00', child: Text('22:00')),
-                          DropdownMenuItem(value: '23:00', child: Text('23:00')),
+                          DropdownMenuItem(
+                              value: '20:00', child: Text('20:00')),
+                          DropdownMenuItem(
+                              value: '21:00', child: Text('21:00')),
+                          DropdownMenuItem(
+                              value: '22:00', child: Text('22:00')),
+                          DropdownMenuItem(
+                              value: '23:00', child: Text('23:00')),
                         ],
                         onChanged: (value) {
                           if (value != null) {
@@ -1825,10 +1860,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         labelText: 'Quiet hours fin',
                         prefixIcon: Icons.wb_sunny_outlined,
                         items: const [
-                          DropdownMenuItem(value: '06:00', child: Text('06:00')),
-                          DropdownMenuItem(value: '07:00', child: Text('07:00')),
-                          DropdownMenuItem(value: '08:00', child: Text('08:00')),
-                          DropdownMenuItem(value: '09:00', child: Text('09:00')),
+                          DropdownMenuItem(
+                              value: '06:00', child: Text('06:00')),
+                          DropdownMenuItem(
+                              value: '07:00', child: Text('07:00')),
+                          DropdownMenuItem(
+                              value: '08:00', child: Text('08:00')),
+                          DropdownMenuItem(
+                              value: '09:00', child: Text('09:00')),
                         ],
                         onChanged: (value) {
                           if (value != null) {
@@ -1965,7 +2004,8 @@ class _ProfilePageState extends State<ProfilePage> {
                                     });
                                   },
                                   backgroundColor: const Color(0xFFEAF2FF),
-                                  side: const BorderSide(color: kIliPrestoBorder),
+                                  side:
+                                      const BorderSide(color: kIliPrestoBorder),
                                 ),
                               ),
                             ],
@@ -2097,7 +2137,8 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               Text(
                 title,
-                style: kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w600),
+                style:
+                    kPrestoBodyTextStyle.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 2),
               Text(
@@ -2137,7 +2178,8 @@ class _ProfilePageState extends State<ProfilePage> {
           color: kIliPrestoTextMuted,
           fontWeight: FontWeight.w600,
         ),
-        prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: kIliPrestoBlue) : null,
+        prefixIcon:
+            prefixIcon != null ? Icon(prefixIcon, color: kIliPrestoBlue) : null,
         filled: true,
         fillColor: const Color(0xFFFBFDFF),
         border: OutlineInputBorder(
@@ -2234,7 +2276,8 @@ class _ProfilePageState extends State<ProfilePage> {
           fontWeight: FontWeight.w700,
         ),
       ),
-      trailing: const Icon(Icons.chevron_right_rounded, color: kIliPrestoTextMuted),
+      trailing:
+          const Icon(Icons.chevron_right_rounded, color: kIliPrestoTextMuted),
       onTap: onTap,
     );
   }
@@ -2273,7 +2316,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       return CheckboxListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
-                        title: Text(sub, style: kPrestoMetaTextStyle.copyWith(fontSize: 13)),
+                        title: Text(sub,
+                            style: kPrestoMetaTextStyle.copyWith(fontSize: 13)),
                         value: isFavored,
                         onChanged: (val) {
                           setState(() {
