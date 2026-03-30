@@ -143,6 +143,19 @@ bool _isOfferJobDoneOverlayVisible(Map<String, dynamic> data) {
   return visibleFlag == true || _isOfferJobDoneDeletionReason(reason);
 }
 
+/// Collection principale des annonces marketplace (nouvelle architecture).
+const String _kListingsCollection = 'listings';
+
+/// Collection legacy des annonces (ancienne architecture, en lecture seule).
+const String _kOffersCollection = 'offers';
+
+Filter _publicListingsFilter() {
+  return Filter.and(
+    Filter('status', isEqualTo: 'active'),
+    Filter('visibility', isEqualTo: 'public'),
+  );
+}
+
 Filter _publicOffersFilter() {
   return Filter.or(
     Filter('visibility.isPublic', isEqualTo: true),
@@ -156,13 +169,20 @@ Filter _publicOffersFilter() {
 bool _isPublishedOfferData(Map<String, dynamic> data) {
   if (_isOfferArchivedLike(data)) return false;
 
+  final status = (data['status'] ?? '').toString().trim().toLowerCase();
+  final visibility = data['visibility'];
+
+  // Format listings (marketplace) : status='active' + visibility='public'
+  if (status == 'active' && visibility is String && visibility == 'public') {
+    return true;
+  }
+
+  // Format legacy offers
   final isPublished = data['isPublished'];
   if (isPublished is bool && isPublished) return true;
 
-  final status = (data['status'] ?? '').toString().trim().toLowerCase();
   if (status == 'published' || status == 'active') return true;
 
-  final visibility = data['visibility'];
   if (visibility is Map) {
     final isPublic = visibility['isPublic'];
     if (isPublic is bool && isPublic) return true;
@@ -1713,7 +1733,7 @@ class _HomePageState extends State<HomePage>
 
   Query<Map<String, dynamic>> _recentOffersQuery({int limit = 200}) {
     return FirebaseFirestore.instance
-        .collection('offers')
+        .collection(_kListingsCollection)
         .orderBy('createdAt', descending: true)
         .limit(limit);
   }
@@ -1725,18 +1745,18 @@ class _HomePageState extends State<HomePage>
     // Firestore rules qui autorisent la lecture de toute offre publique.
     try {
       final snapshot = await FirebaseFirestore.instance
-          .collection('offers')
-          .where('status', isEqualTo: 'published')
+          .collection(_kListingsCollection)
+          .where(_publicListingsFilter())
           .orderBy('createdAt', descending: true)
           .limit(8)
           .get();
 
       if (snapshot.docs.length >= 8) return snapshot.docs;
 
-      // Compléter avec les offres isPublished=true (ancien format)
+      // Compléter avec les annonces legacy (collection offers)
       final fallback = await FirebaseFirestore.instance
-          .collection('offers')
-          .where('isPublished', isEqualTo: true)
+          .collection(_kOffersCollection)
+          .where(_publicOffersFilter())
           .orderBy('createdAt', descending: true)
           .limit(16)
           .get();
@@ -3730,7 +3750,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   String? _makeCategoryId(String? categoryLabel) {
     final s = (categoryLabel ?? '').trim();
     if (s.isEmpty || s == 'Toutes catégories') return null;
-    return _slugId(s);
+    return resolveOfferCategoryId(s) ?? _slugId(s);
   }
 
   String? _makeCityId({
@@ -4177,8 +4197,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   Query<Map<String, dynamic>> _buildOffersQuery() {
     Query<Map<String, dynamic>> query =
-        FirebaseFirestore.instance.collection('offers').where(
-              _publicOffersFilter(),
+        FirebaseFirestore.instance.collection(_kListingsCollection).where(
+              _publicListingsFilter(),
             );
 
     final loc = _locationController.text.trim();
@@ -4444,8 +4464,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     try {
       final baseQuery = FirebaseFirestore.instance
-          .collection('offers')
-          .where(_publicOffersFilter());
+          .collection(_kListingsCollection)
+          .where(_publicListingsFilter());
 
       int visibleCount;
 
@@ -5680,10 +5700,17 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     if (ok != true) return;
 
     try {
-      await FirebaseFirestore.instance
-          .collection('offers')
-          .doc(offerId)
-          .update({
+      // Essayer d'abord dans listings (marketplace), puis fallback offers (legacy)
+      final listingsRef = FirebaseFirestore.instance
+          .collection(_kListingsCollection)
+          .doc(offerId);
+      final listingsSnap = await listingsRef.get();
+      final targetRef = listingsSnap.exists
+          ? listingsRef
+          : FirebaseFirestore.instance
+              .collection(_kOffersCollection)
+              .doc(offerId);
+      await targetRef.update({
         'title': titleCtrl.text.trim(),
         'city': cityCtrl.text.trim(),
         'description': descCtrl.text.trim(),
@@ -5728,10 +5755,18 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     if (yes != true) return;
 
     try {
-      await FirebaseFirestore.instance
-          .collection('offers')
-          .doc(offerId)
-          .delete();
+      final listingsRef = FirebaseFirestore.instance
+          .collection(_kListingsCollection)
+          .doc(offerId);
+      final listingsSnap = await listingsRef.get();
+      if (listingsSnap.exists) {
+        await listingsRef.delete();
+      } else {
+        await FirebaseFirestore.instance
+            .collection(_kOffersCollection)
+            .doc(offerId)
+            .delete();
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -6166,23 +6201,30 @@ class UserPublicProfilePage extends StatefulWidget {
 class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _loadActiveOffers() async {
-    final col = FirebaseFirestore.instance.collection('offers');
+    // Charger depuis la collection listings (marketplace) et offers (legacy)
+    final listingsCol = FirebaseFirestore.instance.collection(_kListingsCollection);
+    final offersCol = FirebaseFirestore.instance.collection(_kOffersCollection);
 
-    final resUid = await col
-        .where('uid', isEqualTo: widget.userId)
-        .where(_publicOffersFilter())
-        .get();
-    final resUserId = await col
-        .where('userId', isEqualTo: widget.userId)
-        .where(_publicOffersFilter())
-        .get();
+    final results = await Future.wait([
+      listingsCol
+          .where('ownerId', isEqualTo: widget.userId)
+          .where(_publicListingsFilter())
+          .get(),
+      offersCol
+          .where('uid', isEqualTo: widget.userId)
+          .where(_publicOffersFilter())
+          .get(),
+      offersCol
+          .where('userId', isEqualTo: widget.userId)
+          .where(_publicOffersFilter())
+          .get(),
+    ]);
 
     final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
-    for (final d in resUid.docs) {
-      byId[d.id] = d;
-    }
-    for (final d in resUserId.docs) {
-      byId[d.id] = d;
+    for (final snap in results) {
+      for (final d in snap.docs) {
+        byId[d.id] = d;
+      }
     }
 
     final docs = byId.values.toList(growable: false);
@@ -7520,8 +7562,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (trimmed == 'categoryId is required') {
       return 'Choisissez une catégorie valide.';
     }
+    if (trimmed == 'Category is invalid or inactive' ||
+        trimmed == 'category is invalid or inactive') {
+      return 'La catégorie sélectionnée n’est plus disponible. Choisissez une autre catégorie.';
+    }
     if (trimmed == 'cityId is required') {
       return 'Choisissez une ville valide.';
+    }
+    if (trimmed == 'City is invalid or inactive' ||
+        trimmed == 'city is invalid or inactive') {
+      return 'La ville sélectionnée n’est plus disponible. Choisissez une ville valide dans la liste.';
     }
     if (trimmed.startsWith('Photo #') &&
         trimmed.endsWith('must be processed as WebP before submission')) {
@@ -11237,10 +11287,18 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
 
       final docs = await Future.wait(
         favoriteIds.map(
-          (offerId) => FirebaseFirestore.instance
-              .collection('offers')
-              .doc(offerId)
-              .get(),
+          (offerId) async {
+            // Chercher d'abord dans listings (marketplace), puis offers (legacy)
+            final listingSnap = await FirebaseFirestore.instance
+                .collection(_kListingsCollection)
+                .doc(offerId)
+                .get();
+            if (listingSnap.exists) return listingSnap;
+            return FirebaseFirestore.instance
+                .collection(_kOffersCollection)
+                .doc(offerId)
+                .get();
+          },
         ),
       );
 
@@ -11912,12 +11970,26 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     String field,
   ) async {
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('offers')
-          .where(field, isEqualTo: widget.userId)
-          .limit(120)
-          .get();
-      return snapshot.docs;
+      // Charger depuis les deux collections et fusionner
+      final results = await Future.wait([
+        FirebaseFirestore.instance
+            .collection(_kListingsCollection)
+            .where(field, isEqualTo: widget.userId)
+            .limit(120)
+            .get(),
+        FirebaseFirestore.instance
+            .collection(_kOffersCollection)
+            .where(field, isEqualTo: widget.userId)
+            .limit(120)
+            .get(),
+      ]);
+      final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+      for (final snap in results) {
+        for (final doc in snap.docs) {
+          byId.putIfAbsent(doc.id, () => doc);
+        }
+      }
+      return byId.values.toList(growable: false);
     } on FirebaseException catch (e) {
       if (_isPermissionDeniedError(e)) {
         return const [];
@@ -12490,9 +12562,17 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                 }
 
                 try {
-                  await FirebaseFirestore.instance
-                      .collection('offers')
-                      .doc(offerId)
+                  // Déterminer la collection correcte
+                  final listingsRef = FirebaseFirestore.instance
+                      .collection(_kListingsCollection)
+                      .doc(offerId);
+                  final listingsSnap = await listingsRef.get();
+                  final targetRef = listingsSnap.exists
+                      ? listingsRef
+                      : FirebaseFirestore.instance
+                          .collection(_kOffersCollection)
+                          .doc(offerId);
+                  await targetRef
                       .update({
                     'title': newTitle.isEmpty ? data['title'] : newTitle,
                     'description':
@@ -12528,10 +12608,20 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     setState(() => _busyOfferId = item.offerId);
 
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('offers')
-          .doc(item.offerId)
-          .get();
+      // Déterminer la collection correcte (listings ou offers legacy)
+      final listingsRef = FirebaseFirestore.instance
+          .collection(_kListingsCollection)
+          .doc(item.offerId);
+      final listingsSnap = await listingsRef.get();
+      final isListing = listingsSnap.exists;
+      final collectionName = isListing ? _kListingsCollection : _kOffersCollection;
+
+      final doc = isListing
+          ? listingsSnap
+          : await FirebaseFirestore.instance
+              .collection(_kOffersCollection)
+              .doc(item.offerId)
+              .get();
 
       final latestData = doc.data() ?? item.data;
       final shouldKeepVisibleWithJobDone =
@@ -12560,7 +12650,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         );
 
         await FirebaseFirestore.instance
-            .collection('offers')
+            .collection(collectionName)
             .doc(item.offerId)
             .update({
           'status': 'sold',
@@ -12576,7 +12666,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
         });
       } else {
         await FirebaseFirestore.instance
-            .collection('offers')
+            .collection(collectionName)
             .doc(item.offerId)
             .delete();
       }

@@ -42,6 +42,11 @@ class MarketplaceListingDraft {
   final String cityId;
   final List<ListingMediaInput> media;
   final ListingStatus status;
+  final String? phone;
+  final String? budgetType;
+  final String? missionDelay;
+  final bool isUrgent;
+  final String? subCategory;
 
   const MarketplaceListingDraft({
     this.id,
@@ -53,6 +58,11 @@ class MarketplaceListingDraft {
     required this.cityId,
     required this.media,
     this.status = ListingStatus.draft,
+    this.phone,
+    this.budgetType,
+    this.missionDelay,
+    this.isUrgent = false,
+    this.subCategory,
   });
 
   Map<String, dynamic> toFirestore() {
@@ -65,6 +75,11 @@ class MarketplaceListingDraft {
       'cityId': cityId.trim(),
       'media': media.map((entry) => entry.toMap()).toList(growable: false),
       'status': status.value,
+      if (phone != null && phone!.trim().isNotEmpty) 'phone': phone!.trim(),
+      if (budgetType != null && budgetType!.trim().isNotEmpty) 'budgetType': budgetType!.trim(),
+      if (missionDelay != null && missionDelay!.trim().isNotEmpty) 'missionDelay': missionDelay!.trim(),
+      'isUrgent': isUrgent,
+      if (subCategory != null && subCategory!.trim().isNotEmpty) 'subCategory': subCategory!.trim(),
     };
   }
 }

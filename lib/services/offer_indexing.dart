@@ -1,5 +1,18 @@
 import '../constants.dart';
 
+const Map<String, String> _offerCategoryIdsByLabel = <String, String>{
+  'Restauration / Extra': 'restauration-extra',
+  'Bricolage / Travaux': 'bricolage-travaux',
+  'Aide à domicile': 'aide-a-domicile',
+  'Garde d\'enfants': 'garde-d-enfants',
+  'Événementiel / DJ': 'evenementiel-dj',
+  'Cours & soutien': 'cours-soutien',
+  'Jardinage': 'jardinage',
+  'Peinture': 'peinture',
+  'Main-d\'œuvre': 'main-d-oeuvre',
+  'Autre': 'autre',
+};
+
 String offerSlugify(String input) {
   return input
       .trim()
@@ -94,6 +107,27 @@ String? canonicalizeOfferCategory(String? input) {
   return bestScore > 0 ? best : raw;
 }
 
+String? resolveOfferCategoryId(String? input) {
+  final canonical = canonicalizeOfferCategory(input);
+  if (canonical == null || canonical.trim().isEmpty) {
+    return null;
+  }
+
+  final directMatch = _offerCategoryIdsByLabel[canonical];
+  if (directMatch != null && directMatch.isNotEmpty) {
+    return directMatch;
+  }
+
+  final normalizedCanonical = normalizeOfferText(canonical);
+  for (final entry in _offerCategoryIdsByLabel.entries) {
+    if (normalizeOfferText(entry.key) == normalizedCanonical) {
+      return entry.value;
+    }
+  }
+
+  return offerSlugify(canonical);
+}
+
 String? departmentFromPostalCode(String? postalCode) {
   final cp = (postalCode ?? '').trim();
   if (cp.length < 2) return null;
@@ -128,7 +162,7 @@ Map<String, dynamic> buildOfferIndexFields({
   final canonicalCategory = canonicalizeOfferCategory(category) ?? 'Autre';
   final safeCity = (city ?? '').trim();
   final safePostalCode = (postalCode ?? '').trim();
-  final categoryId = offerSlugify(canonicalCategory);
+  final categoryId = resolveOfferCategoryId(canonicalCategory) ?? offerSlugify(canonicalCategory);
   final cityId =
       safeCity.isNotEmpty && safePostalCode.length >= 3
           ? '${safePostalCode}_${offerSlugify(safeCity)}'
