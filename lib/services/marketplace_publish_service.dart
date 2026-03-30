@@ -196,6 +196,11 @@ class MarketplacePublishService {
         categoryId: categoryId,
         cityId: cityId,
         media: media,
+        phone: phone,
+        budgetType: budgetType,
+        missionDelay: missionDelay,
+        isUrgent: isUrgent,
+        subCategory: subCategory,
       ),
       ),
     );

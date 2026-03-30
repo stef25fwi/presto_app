@@ -14,6 +14,11 @@ export interface ValidatedListingDraftPayload {
   media: ListingMedia[];
   thumbnailUrl: string;
   searchKeywords: string[];
+  phone: string;
+  budgetType: string;
+  missionDelay: string;
+  isUrgent: boolean;
+  subCategory: string;
 }
 
 function inferImageMimeTypeFromPath(storagePath: string): string {
@@ -129,6 +134,11 @@ export function validateListingDraftPayload(rawDraft: UnknownRecord, maxMediaCou
     media,
     thumbnailUrl: media[0]?.thumbnailUrl || media[0]?.downloadUrl || "",
     searchKeywords: buildSearchKeywords(title, description, categoryId, cityId),
+    phone: normalizeString(rawDraft.phone),
+    budgetType: normalizeString(rawDraft.budgetType),
+    missionDelay: normalizeString(rawDraft.missionDelay),
+    isUrgent: rawDraft.isUrgent === true,
+    subCategory: normalizeString(rawDraft.subCategory),
   };
 }
 

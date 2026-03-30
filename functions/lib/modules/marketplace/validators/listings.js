@@ -116,6 +116,11 @@ function validateListingDraftPayload(rawDraft, maxMediaCount) {
         media,
         thumbnailUrl: media[0]?.thumbnailUrl || media[0]?.downloadUrl || "",
         searchKeywords: buildSearchKeywords(title, description, categoryId, cityId),
+        phone: normalizeString(rawDraft.phone),
+        budgetType: normalizeString(rawDraft.budgetType),
+        missionDelay: normalizeString(rawDraft.missionDelay),
+        isUrgent: rawDraft.isUrgent === true,
+        subCategory: normalizeString(rawDraft.subCategory),
     };
 }
 function validateListingReportPayload(rawData) {
