@@ -42,9 +42,20 @@ const listings_1 = require("./listings");
         strict_1.default.ok(error.issues.includes("Title must contain at least 10 characters"));
         strict_1.default.ok(error.issues.includes("Description must contain at least 30 characters"));
         strict_1.default.ok(error.issues.includes("Price must be a positive number"));
-        strict_1.default.ok(error.issues.includes("At least one photo is required"));
         return true;
     });
+});
+(0, node_test_1.default)("validateListingDraftPayload allows publishing without photos", () => {
+    const payload = (0, listings_1.validateListingDraftPayload)({
+        title: "Montage meuble cuisine complet",
+        description: "Montage d'un meuble de cuisine avec fixation murale et finitions propres.",
+        price: "95",
+        categoryId: "bricolage-travaux",
+        cityId: "97139_les-abymes",
+        media: [],
+    }, 10);
+    strict_1.default.equal(payload.media.length, 0);
+    strict_1.default.equal(payload.thumbnailUrl, "");
 });
 (0, node_test_1.default)("validateListingDraftPayload rejects non-webp media", () => {
     strict_1.default.throws(() => (0, listings_1.validateListingDraftPayload)({
