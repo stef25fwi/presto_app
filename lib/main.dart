@@ -2570,21 +2570,23 @@ class _HomePageState extends State<HomePage>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         SizedBox(
-                          width: 56,
+                          width: 46,
                           height: 40,
                           child: Image.asset(
                             'assets/images/logowebp.webp',
                             fit: BoxFit.contain,
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          "iliprestō",
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            color: kPrestoOrange,
-                            letterSpacing: 0.5,
+                        Transform.translate(
+                          offset: const Offset(-8, 0),
+                          child: const Text(
+                            "iliprestō",
+                            style: TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w900,
+                              color: kPrestoOrange,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
                       ],
@@ -3018,6 +3020,159 @@ class _PulsingDotState extends State<_PulsingDot>
         height: 10,
         decoration: const BoxDecoration(
           color: Colors.red,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}
+
+class _PulseWaveLayer extends StatefulWidget {
+  final double width;
+  final int delay;
+
+  const _PulseWaveLayer({
+    required this.width,
+    required this.delay,
+  });
+
+  @override
+  State<_PulseWaveLayer> createState() => _PulseWaveLayerState();
+}
+
+class _PulseWaveLayerState extends State<_PulseWaveLayer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1600),
+      vsync: this,
+    );
+    _scale = Tween<double>(begin: 0.92, end: 1.12).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+    _opacity = Tween<double>(begin: 0.22, end: 0.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+
+    Future<void>.delayed(Duration(milliseconds: widget.delay), () {
+      if (mounted) {
+        _controller.repeat();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return Opacity(
+            opacity: _opacity.value,
+            child: Transform.scale(
+              scale: _scale.value,
+              child: Container(
+                width: widget.width,
+                height: 64,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  color: const Color(0xFFE53935),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _FieldPendingDots extends StatelessWidget {
+  const _FieldPendingDots();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.92),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _FieldPendingDot(delay: 0),
+            SizedBox(width: 4),
+            _FieldPendingDot(delay: 180),
+            SizedBox(width: 4),
+            _FieldPendingDot(delay: 360),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FieldPendingDot extends StatefulWidget {
+  final int delay;
+
+  const _FieldPendingDot({required this.delay});
+
+  @override
+  State<_FieldPendingDot> createState() => _FieldPendingDotState();
+}
+
+class _FieldPendingDotState extends State<_FieldPendingDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    );
+    _opacity = Tween<double>(begin: 0.25, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    Future<void>.delayed(Duration(milliseconds: widget.delay), () {
+      if (mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: Container(
+        width: 6,
+        height: 6,
+        decoration: const BoxDecoration(
+          color: kPrestoBlue,
           shape: BoxShape.circle,
         ),
       ),
@@ -6759,8 +6914,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
   }
 
-  /// ✅ MODIFIÉ: Utiliser _startStreamingMic() au lieu de _startMic()
-  /// ✅ MODIFIÉ: Bouton micro avec feedback streaming amélioré
+  /// Bouton micro: utiliser le flux audio classique, qui traite l'audio au stop
+  /// et remplit les champs via le pipeline STT + draft.
 
   final _formKey = GlobalKey<FormState>();
   final ScrollController _scrollController = ScrollController();
@@ -7067,6 +7222,40 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ),
         ],
       ),
+    );
+  }
+
+  bool _showAiPendingForController(TextEditingController controller) {
+    return _isAnalyzing && controller.text.trim().isEmpty;
+  }
+
+  bool get _showAiPendingForCategory {
+    return _isAnalyzing && (_category == null || _category!.trim().isEmpty);
+  }
+
+  Widget _withAiPendingOverlay({
+    required Widget child,
+    required bool showPending,
+    Alignment alignment = Alignment.centerRight,
+    EdgeInsets padding = const EdgeInsets.only(right: 12),
+  }) {
+    if (!showPending) return child;
+
+    return Stack(
+      children: [
+        child,
+        Positioned.fill(
+          child: IgnorePointer(
+            child: Align(
+              alignment: alignment,
+              child: Padding(
+                padding: padding,
+                child: const _FieldPendingDots(),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -7497,50 +7686,65 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   /// Construire le bouton d'enregistrement au micro avec indicateur visuel
   Widget _buildMicRecordingButton() {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.92,
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFE53935), // Rouge plus clair en haut
-            Color(0xFFC62828), // Rouge plus profond en bas
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFC62828).withOpacity(0.18),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
+    final buttonWidth = MediaQuery.of(context).size.width * 0.92;
+
+    return SizedBox(
+      width: buttonWidth,
+      height: 88,
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          _PulseWaveLayer(width: buttonWidth, delay: 0),
+          _PulseWaveLayer(width: buttonWidth, delay: 220),
+          _PulseWaveLayer(width: buttonWidth, delay: 440),
+          Container(
+            width: buttonWidth,
+            height: 56,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFFE53935),
+                  Color(0xFFC62828),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFC62828).withOpacity(0.24),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _isStreaming ? _stopStreamingMic : _stopMic,
+                borderRadius: BorderRadius.circular(20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.stop_circle, color: Colors.white, size: 20),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Appuyer pour arrêter',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 17,
+                            letterSpacing: 0.3,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _isStreaming ? _stopStreamingMic : _stopMic,
-          borderRadius: BorderRadius.circular(20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.stop_circle, color: Colors.white, size: 20),
-              const SizedBox(width: 10),
-              Text(
-                'Appuyer pour arrêter',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 17,
-                      letterSpacing: 0.3,
-                    ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -8305,9 +8509,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 // Bouton Premium AI avec enregistrement audio
                 Center(
                   child: _isListening
-                      ? _buildMicRecordingButton()
-                      : PremiumAiButton(
-                          onPressed: _isAnalyzing ? null : _startStreamingMic,
+                        ? _buildMicRecordingButton()
+                        : PremiumAiButton(
+                          onPressed: _isAnalyzing ? null : _startMic,
                           label: 'Décrire mon besoin (IA)',
                           isLoading: _isAnalyzing,
                         ),
@@ -8410,53 +8614,60 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 const SizedBox(height: 16),
 
                 // TITRE
-                TextFormField(
-                  controller: _titleController,
-                  decoration: InputDecoration(
-                    label: _requiredLabel('Titre de l’offre'),
-                    border: const OutlineInputBorder(),
-                    hintText: 'Ex : Monter un meuble IKEA',
+                _withAiPendingOverlay(
+                  showPending: _showAiPendingForController(_titleController),
+                  child: TextFormField(
+                    controller: _titleController,
+                    decoration: InputDecoration(
+                      label: _requiredLabel('Titre de l’offre'),
+                      border: const OutlineInputBorder(),
+                      hintText: 'Ex : Monter un meuble IKEA',
+                    ),
+                    validator: _validatePublishTitle,
                   ),
-                  validator: _validatePublishTitle,
                 ),
                 const SizedBox(height: 16),
 
                 // CATÉGORIE
-                DropdownButtonFormField<String>(
-                  value: _category,
-                  dropdownColor: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  decoration: InputDecoration(
-                    label: _requiredLabel('Catégorie'),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                _withAiPendingOverlay(
+                  showPending: _showAiPendingForCategory,
+                  padding: const EdgeInsets.only(right: 42),
+                  child: DropdownButtonFormField<String>(
+                    value: _category,
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    decoration: InputDecoration(
+                      label: _requiredLabel('Catégorie'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
+                    items: _categories
+                        .map(
+                          (cat) => DropdownMenuItem(
+                            value: cat,
+                            child: Text(cat),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _category = value;
+                        _selectedSubCategory = null;
+                      });
+                      _recompute();
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Merci de choisir une catégorie';
+                      }
+                      return null;
+                    },
                   ),
-                  items: _categories
-                      .map(
-                        (cat) => DropdownMenuItem(
-                          value: cat,
-                          child: Text(cat),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _category = value;
-                      _selectedSubCategory = null;
-                    });
-                    _recompute();
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Merci de choisir une catégorie';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: 16),
 
@@ -8500,22 +8711,28 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 if (_category != null) const SizedBox(height: 16),
 
                 // DESCRIPTION
-                TextFormField(
-                  controller: _descriptionController,
-                  decoration: InputDecoration(
-                    label: _requiredLabel('Description détaillée'),
-                    alignLabelWithHint: true,
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                _withAiPendingOverlay(
+                  showPending:
+                      _showAiPendingForController(_descriptionController),
+                  alignment: Alignment.topRight,
+                  padding: const EdgeInsets.only(top: 14, right: 12),
+                  child: TextFormField(
+                    controller: _descriptionController,
+                    decoration: InputDecoration(
+                      label: _requiredLabel('Description détaillée'),
+                      alignLabelWithHint: true,
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
+                    minLines: 4,
+                    maxLines: 8,
+                    validator: _validatePublishDescription,
                   ),
-                  minLines: 4,
-                  maxLines: 8,
-                  validator: _validatePublishDescription,
                 ),
                 const SizedBox(height: 16),
 
@@ -8580,42 +8797,49 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
-                  controller: _locationController,
-                  decoration: InputDecoration(
-                    label: _requiredLabel('Ville'),
-                    hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                _withAiPendingOverlay(
+                  showPending: _showAiPendingForController(_locationController),
+                  child: TextFormField(
+                    controller: _locationController,
+                    decoration: InputDecoration(
+                      label: _requiredLabel('Ville'),
+                      hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
+                    onChanged: _onCityChanged,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Merci de saisir une ville';
+                      }
+                      return null;
+                    },
                   ),
-                  onChanged: _onCityChanged,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Merci de saisir une ville';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
-                  controller: _postalCodeController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Code postal',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                _withAiPendingOverlay(
+                  showPending:
+                      _showAiPendingForController(_postalCodeController),
+                  child: TextFormField(
+                    controller: _postalCodeController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Code postal',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
+                    onChanged: _onPostalCodeChanged,
                   ),
-                  onChanged: _onPostalCodeChanged,
                 ),
                 _buildCitySuggestionsOverlay(),
                 const SizedBox(height: 16),
