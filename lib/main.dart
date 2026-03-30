@@ -1135,6 +1135,18 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                   */
+                  const SizedBox(
+                    width: 156,
+                    height: 96,
+                    child: Center(
+                      child: Image(
+                        image: AssetImage('assets/images/logowebp.webp'),
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.high,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   ScaleTransition(
                     scale: _scaleAnimation,
                     child: const Text(
