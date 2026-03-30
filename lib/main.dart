@@ -2578,7 +2578,7 @@ class _HomePageState extends State<HomePage>
                           ),
                         ),
                         Transform.translate(
-                          offset: const Offset(-8, 0),
+                          offset: const Offset(-4, 0),
                           child: const Text(
                             "iliprestō",
                             style: TextStyle(
