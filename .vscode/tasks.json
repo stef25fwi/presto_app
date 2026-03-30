@@ -71,7 +71,7 @@
     {
       "label": "Git: Commit All",
       "type": "shell",
-      "command": "git commit -m \"fix(offers): decouple consult count from scroll pagination\"",
+      "command": "git commit -m \"security+perf: harden rules, atomic rate-limit, HTTP headers, image cache, theme memo, count aggregation\"",
       "problemMatcher": []
     },
     {
