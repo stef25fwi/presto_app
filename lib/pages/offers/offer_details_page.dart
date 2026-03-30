@@ -975,6 +975,7 @@ class _OfferUiData {
   final String moderationStatus;
   final String mediaProcessingStatus;
   final int mediaCount;
+  final DateTime? publishedAt;
   final String title;
   final String detail;
   final String city;
@@ -1012,6 +1013,7 @@ class _OfferUiData {
     required this.moderationStatus,
     required this.mediaProcessingStatus,
     required this.mediaCount,
+    required this.publishedAt,
     required this.title,
     required this.detail,
     required this.city,
@@ -1079,6 +1081,17 @@ class _OfferUiData {
     return mediaProcessingStatus.trim().toLowerCase() == 'processing';
   }
 
+  String get publishedAtExactLabel {
+    final value = publishedAt;
+    if (value == null) return publishedAtLabel;
+    final day = value.day.toString().padLeft(2, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final year = value.year.toString();
+    final hour = value.hour.toString().padLeft(2, '0');
+    final minute = value.minute.toString().padLeft(2, '0');
+    return '$day/$month/$year à $hour:$minute';
+  }
+
   factory _OfferUiData.fromOffer(Object? offer) {
     final dynamic o = offer;
     dynamic readValue(String key, [dynamic Function()? getter]) {
@@ -1139,6 +1152,11 @@ class _OfferUiData {
     );
     final title = _asString(readValue('title', () => o.title),
         fallback: 'Montage meuble');
+    final publishedAt = _asDateTime(
+      readValue('publishedAt', () => o.publishedAt) ??
+        readValue('createdAt', () => o.createdAt) ??
+        readValue('updatedAt', () => o.updatedAt),
+    );
     final detail = _asString(
       readValue('shortDescription', () => o.shortDescription) ??
           readValue('detail'),
@@ -1271,6 +1289,7 @@ class _OfferUiData {
       moderationStatus: moderationStatus,
       mediaProcessingStatus: mediaProcessingStatus,
       mediaCount: mediaCount,
+      publishedAt: publishedAt,
       title: title,
       detail: detail,
       city: city,
@@ -1337,6 +1356,19 @@ class _OfferUiData {
   static bool _asBool(dynamic value, {required bool fallback}) {
     if (value is bool) return value;
     return fallback;
+  }
+
+  static DateTime? _asDateTime(dynamic value) {
+    if (value is Timestamp) return value.toDate().toLocal();
+    if (value is DateTime) return value.toLocal();
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value).toLocal();
+    }
+    if (value is String) {
+      final parsed = DateTime.tryParse(value);
+      if (parsed != null) return parsed.toLocal();
+    }
+    return null;
   }
 
   static List<String> _asStringList(dynamic value) {
@@ -1518,6 +1550,19 @@ class _HeroCard extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: textMuted,
                 letterSpacing: -0.1,
+              ),
+            ),
+            SizedBox(height: compact ? 4 : 5),
+            Text(
+              data.publishedAtExactLabel,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: compact ? 12 : 12.5,
+                height: 1.15,
+                fontWeight: FontWeight.w500,
+                color: textMuted,
+                letterSpacing: -0.05,
               ),
             ),
             SizedBox(height: compact ? 10 : 12),
@@ -1946,17 +1991,6 @@ class _AdvertiserHeaderLine extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Annonceur',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: muted,
-                        fontSize: compact ? 14 : 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: compact ? 2 : 3),
                     Row(
                       children: [
                         Flexible(

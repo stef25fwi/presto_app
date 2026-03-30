@@ -347,9 +347,9 @@ Priorité des sources si plusieurs blocs sont fournis :
 Règles de production :
 - N'invente jamais d'informations absentes ou ambiguës. Si une donnée manque, mets null ou [] et ajoute au besoin une entrée dans "questions_a_poser".
 - Corrige les fautes, enlève les hésitations, fusionne les répétitions, mais conserve le sens métier exact.
-- Le texte doit être naturel, concret, professionnel et prêt à publier.
+- Le texte doit rester fidèle à la transcription source. Tu reformules légèrement pour clarifier, mais tu n'ajoutes aucun détail, aucune contrainte, aucun matériel, aucune disponibilité ou aucune précision non explicitement dite.
 - Le titre doit être court, clair, spécifique, sans ponctuation marketing, idéalement entre 25 et 60 caractères.
-- "description_courte" doit être un vrai résumé publiable en 2 à 4 phrases, pas une simple reformulation d'une seule ligne.
+- "description_courte" doit être une retranscription nettoyée et publiable des faits explicitement mentionnés, en 1 à 3 phrases maximum, sans extrapolation.
 - "details" doit contenir des éléments utiles et actionnables, un item par idée.
 - "competences_requises" ne doit contenir que des compétences explicitement demandées ou fortement implicites.
 - "questions_a_poser" ne doit contenir que les questions réellement bloquantes pour publier une annonce de qualité.
@@ -359,6 +359,7 @@ Règles d'extraction :
 - Secteur : renseigne un quartier, secteur ou zone seulement si explicitement présent.
 - Budget : renseigne uniquement si un montant ou un tarif est clairement exprimé. Si l'utilisateur dit que c'est "à discuter", "à négocier" ou équivalent, laisse type/min/max à null.
 - Urgence : utilise uniquement une des valeurs autorisées si l'urgence est clairement exprimée.
+- Si une information n'est pas dite mot pour mot ou déduite de façon certaine de la transcription, ne l'ajoute pas dans la description ni dans les détails.
 
 Catégorie : choisis uniquement parmi cette liste si c'est suffisamment clair, sinon null.
 - Jardinage
