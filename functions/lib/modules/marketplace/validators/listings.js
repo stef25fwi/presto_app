@@ -38,8 +38,15 @@ function validateListingMedia(rawMedia, maxMediaCount) {
         const storagePath = normalizeString(media.storagePath);
         const downloadUrl = normalizeString(media.downloadUrl);
         const thumbnailUrl = normalizeString(media.thumbnailUrl) || downloadUrl;
+        const normalizedStoragePath = storagePath.toLowerCase();
+        const resolvedMimeType = (normalizeString(media.mimeType) ||
+            (normalizedStoragePath.endsWith(".webp") ? "image/webp" : ""))
+            .toLowerCase();
         if (!storagePath || !downloadUrl) {
             throw new errors_1.ValidationError(`Photo #${index + 1} is missing storagePath or downloadUrl`);
+        }
+        if (!normalizedStoragePath.endsWith(".webp") || resolvedMimeType !== "image/webp") {
+            throw new errors_1.ValidationError(`Photo #${index + 1} must be processed as WebP before submission`);
         }
         return {
             storagePath,
@@ -47,7 +54,7 @@ function validateListingMedia(rawMedia, maxMediaCount) {
             thumbnailUrl,
             width: typeof media.width === "number" ? media.width : undefined,
             height: typeof media.height === "number" ? media.height : undefined,
-            mimeType: normalizeString(media.mimeType) || undefined,
+            mimeType: resolvedMimeType || undefined,
             sizeBytes: typeof media.sizeBytes === "number" ? media.sizeBytes : undefined,
         };
     });

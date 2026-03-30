@@ -321,8 +321,7 @@ service cloud.firestore {
       allow update: if isSignedIn()
         && isOwnerByField(resource.data)
         // Interdit d'éditer des champs réservés aux Functions
-        && !( 'moderation' in request.resource.data )
-        && !( 'visibility' in request.resource.data );
+        && !changedKeys().hasAny(['moderation', 'visibility']);
 
       // Delete uniquement propriétaire
       allow delete: if isSignedIn()
