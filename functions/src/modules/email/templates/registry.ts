@@ -250,7 +250,9 @@ function wrapDefaultHtml(subject: string, preheader: string, body: string): stri
     `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${subject}</title></head>` +
     `<body style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px;color:#111827">` +
     `<div style="padding:24px;border:1px solid #E5E7EB;border-radius:16px">` +
-    `<div style="font-size:28px;font-weight:700;color:#F97316;margin-bottom:8px">PRESTO</div>` +
+    `<div style="margin-bottom:8px">` +
+    `<img src="{{brandLogoUrl}}" alt="{{brandLogoAlt}}" width="124" style="display:block;max-width:124px;height:auto;border:0;outline:none;text-decoration:none">` +
+    `</div>` +
     `<div style="font-size:14px;color:#6B7280;margin-bottom:20px">${preheader}</div>` +
     `${body}` +
     `<hr style="margin:24px 0;border:none;border-top:1px solid #E5E7EB">` +

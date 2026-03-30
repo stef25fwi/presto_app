@@ -8,28 +8,54 @@ const provider_factory_1 = require("../providers/provider_factory");
 const dead_letter_1 = require("./dead_letter");
 const retry_1 = require("./retry");
 const env_1 = require("../../../config/env");
+const env_2 = require("../../../config/env");
 const loader_1 = require("../templates/loader");
+const branding_1 = require("../templates/branding");
 const registry_1 = require("../templates/registry");
 const render_html_1 = require("../renderer/render_html");
 const render_text_1 = require("../renderer/render_text");
+function buildTemplateBrandPayload() {
+    const appBaseUrl = env_2.APP_BASE_URL.replace(/\/+$/, "");
+    return {
+        appBaseUrl,
+        brandLogoUrl: `${appBaseUrl}/assets/images/logowebp.webp`,
+        brandLogoAlt: "iliprestō",
+        brandName: "PRESTO",
+        brandSignature: "iliprestō",
+    };
+}
+function shouldApplyFirestoreBranding(category) {
+    return category === "account_auth"
+        || category === "messaging"
+        || category === "support"
+        || category === "billing";
+}
 async function resolveTemplate(templateCode, locale, payload) {
+    const meta = (0, registry_1.getTemplateMeta)(templateCode);
+    const templatePayload = {
+        ...payload,
+        ...buildTemplateBrandPayload(),
+    };
     // 1. Essai depuis Firestore (versions dynamiques)
     const loaded = (await (0, loader_1.loadActiveTemplateVersion)(templateCode, locale))
         || (locale === "en" ? await (0, loader_1.loadActiveTemplateVersion)(templateCode, "fr") : null);
     if (loaded) {
+        const renderedPreheader = (0, render_text_1.renderText)(loaded.preheader, templatePayload);
+        const htmlTemplate = shouldApplyFirestoreBranding(meta?.category)
+            ? (0, branding_1.applyFirestoreEmailBranding)(loaded.html, renderedPreheader)
+            : loaded.html;
         return {
-            subject: (0, render_text_1.renderText)(loaded.subject, payload),
-            html: (0, render_html_1.renderHtml)(loaded.html, payload),
-            text: (0, render_text_1.renderText)(loaded.text, payload),
+            subject: (0, render_text_1.renderText)(loaded.subject, templatePayload),
+            html: (0, render_html_1.renderHtml)(htmlTemplate, templatePayload),
+            text: (0, render_text_1.renderText)(loaded.text, templatePayload),
         };
     }
     // 2. Fallback sur le registre statique
-    const meta = (0, registry_1.getTemplateMeta)(templateCode);
     const subject = meta?.default_subject_fr ?? `PRESTO — ${templateCode}`;
     const preheader = meta?.default_preheader_fr ?? "";
     const content = (0, registry_1.getDefaultTemplateContent)(templateCode, locale);
-    const htmlBody = (0, render_html_1.renderHtml)(content.html, { ...payload, subject, preheader });
-    const textBody = (0, render_text_1.renderText)(content.text, { ...payload, subject, preheader });
+    const htmlBody = (0, render_html_1.renderHtml)(content.html, { ...templatePayload, subject, preheader });
+    const textBody = (0, render_text_1.renderText)(content.text, { ...templatePayload, subject, preheader });
     return { subject, html: htmlBody, text: textBody };
 }
 async function processEmailJob(jobId) {

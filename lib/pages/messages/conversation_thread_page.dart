@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../constants.dart';
 import '../../services/conversation_service.dart';
@@ -12,10 +13,16 @@ import '../../services/firestore_date_parser.dart';
 import '../../utils/friendly_snackbar.dart';
 
 const kPrestoOrange = Color(0xFFFF6600);
+const kPrestoBlue = Color(0xFF1A73E8);
 const kThreadMineColor = Color(0xFFD9FDD3);
 const kThreadOtherColor = Colors.white;
 const kThreadBackground = Color(0xFFFFFEFE);
 const kWhatsappGreen = Color(0xFF25D366);
+const kConversationThreadStatusBarStyle = SystemUiOverlayStyle(
+  statusBarColor: kPrestoBlue,
+  statusBarIconBrightness: Brightness.light,
+  statusBarBrightness: Brightness.dark,
+);
 
 class ConversationThreadPage extends StatefulWidget {
   final String conversationId;
@@ -112,7 +119,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         child: Transform.rotate(
           angle: -0.16,
           child: Text(
-            'ilipresto',
+            'iliprestō',
             style: TextStyle(
               fontSize: 70,
               fontWeight: FontWeight.w800,
@@ -163,6 +170,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     return raw.characters.first.toUpperCase();
   }
 
+  String get _headerOfferTitle {
+    final normalized = widget.offerTitle.trim();
+    return normalized.isEmpty ? 'Annonce' : normalized;
+  }
+
   Widget _buildThreadAppBarTitle() {
     return Row(
       children: [
@@ -180,27 +192,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                widget.offerTitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: kPrestoAppBarTitleStyle,
-              ),
-              const Text(
-                'Conversation privee',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Color(0xFFFFF4EC),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          child: Text(
+            _headerOfferTitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: kPrestoAppBarTitleStyle,
           ),
         ),
       ],
@@ -712,6 +708,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     return Scaffold(
       backgroundColor: kThreadBackground,
       appBar: AppBar(
+        systemOverlayStyle: kConversationThreadStatusBarStyle,
         backgroundColor: kPrestoOrange,
         foregroundColor: Colors.white,
         elevation: 0,
