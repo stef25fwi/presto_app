@@ -1390,8 +1390,9 @@ class _HomePageState extends State<HomePage>
   bool _showSearchSuggestions = true;
 
   /// Chargement figé à l'ouverture de la home pour stabiliser la section.
-  late final Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
-      _latestOffersFuture;
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _latestOffers = const [];
+  bool _isLatestOffersLoading = true;
+  Object? _latestOffersError;
 
   /// Slogans animés (fade + slide) pour le 1er slide
   final List<String> _firstSlideSlogans = const [
@@ -1558,7 +1559,7 @@ class _HomePageState extends State<HomePage>
 
     _listenDynamicKeywords();
 
-    _latestOffersFuture = _loadLatestOffers();
+    _loadLatestOffersOnOpen();
 
     // Listener pour hide/show bottom bar au scroll
     _scrollController.addListener(() {
@@ -1727,17 +1728,17 @@ class _HomePageState extends State<HomePage>
           .collection('offers')
           .where('status', isEqualTo: 'published')
           .orderBy('createdAt', descending: true)
-          .limit(12)
+          .limit(8)
           .get();
 
-      if (snapshot.docs.length >= 12) return snapshot.docs;
+      if (snapshot.docs.length >= 8) return snapshot.docs;
 
       // Compléter avec les offres isPublished=true (ancien format)
       final fallback = await FirebaseFirestore.instance
           .collection('offers')
           .where('isPublished', isEqualTo: true)
           .orderBy('createdAt', descending: true)
-          .limit(24)
+          .limit(16)
           .get();
 
       final seen = snapshot.docs.map((d) => d.id).toSet();
@@ -1745,7 +1746,7 @@ class _HomePageState extends State<HomePage>
       for (final doc in fallback.docs) {
         if (seen.contains(doc.id)) continue;
         merged.add(doc);
-        if (merged.length >= 12) break;
+        if (merged.length >= 8) break;
       }
       return merged;
     } catch (error) {
@@ -1755,8 +1756,27 @@ class _HomePageState extends State<HomePage>
       final fallback = await _recentOffersQuery().get();
       return fallback.docs
           .where((doc) => _isPublishedOfferData(doc.data()))
-          .take(12)
+          .take(8)
           .toList(growable: false);
+    }
+  }
+
+  Future<void> _loadLatestOffersOnOpen() async {
+    try {
+      final docs = await _loadLatestOffers();
+      if (!mounted) return;
+      setState(() {
+        _latestOffers = docs;
+        _isLatestOffersLoading = false;
+        _latestOffersError = null;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _latestOffers = const [];
+        _isLatestOffersLoading = false;
+        _latestOffersError = error;
+      });
     }
   }
 
@@ -1852,86 +1872,74 @@ class _HomePageState extends State<HomePage>
             ],
           ),
           const SizedBox(height: 4),
-          FutureBuilder<List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
-            future: _latestOffersFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting &&
-                  !snapshot.hasData) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                    ),
-                  ),
-                );
-              }
-
-              if (snapshot.hasError) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text(
-                    _friendlyFirestoreErrorMessage(snapshot.error!),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                );
-              }
-
-              final docs = snapshot.data ??
-                  const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
-
-              if (docs.isNotEmpty) {
+          if (_isLatestOffersLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 10),
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                ),
+              ),
+            )
+          else if (_latestOffersError != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                _friendlyFirestoreErrorMessage(_latestOffersError!),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            )
+          else if (_latestOffers.isEmpty)
+            const Text(
+              'Aucune offre publiée pour le moment.',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
+              ),
+            )
+          else
+            Builder(
+              builder: (context) {
                 PrestoMonitoring.I.trackOtherStream(
                   key: 'home.latestOffers',
-                  docsCount: docs.length,
+                  docsCount: _latestOffers.length,
                 );
-              }
-              if (docs.isEmpty) {
-                return const Text(
-                  'Aucune offre publiée pour le moment.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black54,
-                    fontWeight: FontWeight.w500,
+                return RepaintBoundary(
+                  child: _AutoScrollingOffersCarousel(
+                    offers: _latestOffers,
+                    onOfferTap: (doc) {
+                      final data = doc.data();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => OfferDetailsPage(
+                            offer: _buildOfferDetailsOffer(
+                              offerId: doc.id,
+                              data: data,
+                            ),
+                            currentUserId:
+                                FirebaseAuth.instance.currentUser?.uid ?? '',
+                            onBackToConsult: () {
+                              if (!mounted) return;
+                              setState(() {
+                                _consultCategoryFilter = null;
+                                _consultSearchQuery = null;
+                                _selectedIndex = 1;
+                              });
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
-              }
-
-              return RepaintBoundary(
-                child: _AutoScrollingOffersCarousel(
-                  offers: docs,
-                  onOfferTap: (doc) {
-                    final data = doc.data();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => OfferDetailsPage(
-                          offer: _buildOfferDetailsOffer(
-                            offerId: doc.id,
-                            data: data,
-                          ),
-                          currentUserId:
-                              FirebaseAuth.instance.currentUser?.uid ?? '',
-                          onBackToConsult: () {
-                            if (!mounted) return;
-                            setState(() {
-                              _consultCategoryFilter = null;
-                              _consultSearchQuery = null;
-                              _selectedIndex = 1;
-                            });
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
-          ),
+              },
+            ),
         ],
       ),
     );
@@ -6998,7 +7006,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final List<String> _missionDelayOptions = const [
     'Immédiat',
     'Dans la journée',
-    'Sous 24h',
+    'Demain',
     'Sous 48h',
     'Cette semaine',
     'À convenir',
@@ -7028,6 +7036,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _attemptedSubmit = false; // affiche erreurs après tentative
   bool _publishLocked = false; // lock après tentative invalide
   bool _canPublish = false;
+  String _latestRecognizedTranscript = '';
+  String? _shakingPublishFieldId;
+  int _publishShakeTick = 0;
+
+  final GlobalKey _titleFieldKey = GlobalKey();
+  final GlobalKey _categoryFieldKey = GlobalKey();
+  final GlobalKey _descriptionFieldKey = GlobalKey();
+  final GlobalKey _cityFieldKey = GlobalKey();
+  final GlobalKey _phoneFieldKey = GlobalKey();
+  final GlobalKey _delayFieldKey = GlobalKey();
+  final GlobalKey _budgetFieldKey = GlobalKey();
 
   // Service IA pour analyser la description
   final AiDraftService _aiService = AiDraftService();
@@ -7078,6 +7097,59 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return null;
   }
 
+  CityRecord? _resolveCanonicalCityRecord({
+    String? city,
+    String? postalCode,
+  }) {
+    final rawCity = (city ?? '').trim();
+    final rawPostalCode = (postalCode ?? '').trim();
+
+    if (rawPostalCode.isNotEmpty) {
+      final exactPostal = CitySearch.instance.pickBestForPostalCode(rawPostalCode);
+      if (exactPostal != null) {
+        if (rawCity.isEmpty ||
+            normalizeOfferText(exactPostal.name) == normalizeOfferText(rawCity)) {
+          return exactPostal;
+        }
+
+        final cityMatches = CitySearch.instance.search(rawCity, limit: 10);
+        for (final candidate in cityMatches) {
+          if (candidate.cp == rawPostalCode) {
+            return candidate;
+          }
+        }
+      }
+    }
+
+    if (rawCity.isEmpty) return null;
+    final candidates = CitySearch.instance.search(rawCity, limit: 10);
+    if (candidates.isEmpty) return null;
+
+    if (rawPostalCode.isNotEmpty) {
+      for (final candidate in candidates) {
+        if (candidate.cp == rawPostalCode) {
+          return candidate;
+        }
+      }
+    }
+
+    return candidates.first;
+  }
+
+  void _canonicalizeLocationInputs() {
+    final best = _resolveCanonicalCityRecord(
+      city: _locationController.text,
+      postalCode: _postalCodeController.text,
+    );
+    if (best == null) return;
+
+    final sameCity = _locationController.text.trim() == best.name;
+    final samePostalCode = _postalCodeController.text.trim() == best.cp;
+    if (sameCity && samePostalCode) return;
+
+    _applyCity(best);
+  }
+
   void _applyDetectedCityData({
     String? city,
     String? postalCode,
@@ -7085,23 +7157,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final rawCity = (city ?? '').trim();
     final rawPostalCode = (postalCode ?? '').trim();
 
-    CityRecord? best;
-    if (rawPostalCode.isNotEmpty) {
-      best = CitySearch.instance.pickBestForPostalCode(rawPostalCode);
-    }
-
-    if (best == null && rawCity.isNotEmpty) {
-      final candidates = CitySearch.instance.search(rawCity, limit: 10);
-      if (rawPostalCode.isNotEmpty) {
-        for (final candidate in candidates) {
-          if (candidate.cp == rawPostalCode) {
-            best = candidate;
-            break;
-          }
-        }
-      }
-      best ??= candidates.isNotEmpty ? candidates.first : null;
-    }
+    final best = _resolveCanonicalCityRecord(
+      city: rawCity,
+      postalCode: rawPostalCode,
+    );
 
     if (best != null) {
       _applyCity(best);
@@ -7226,13 +7285,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   void _applyServerDraftToForm(Map<String, dynamic> draft) {
     final title = (draft['title'] ?? '').toString().trim();
     final description = (draft['description'] ?? '').toString().trim();
+    final shouldReplaceDescription =
+        _latestRecognizedTranscript.trim().isEmpty &&
+            _descriptionController.text.trim().isEmpty;
 
     setState(() {
       final category =
           _resolvePublishCategoryLabel((draft['category'] ?? '').toString());
 
       if (title.isNotEmpty) _titleController.text = title;
-      if (description.isNotEmpty) _descriptionController.text = description;
+      if (shouldReplaceDescription && description.isNotEmpty) {
+        _descriptionController.text = description;
+      }
       if (category != null && category.isNotEmpty) {
         _category = category;
         _selectedSubCategory = null;
@@ -7250,13 +7314,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   void _applyLegacyDraftToForm(Map<String, dynamic> draft) {
     final title = (draft['title'] as String? ?? '').trim();
     final description = (draft['description'] as String? ?? '').trim();
+    final shouldReplaceDescription =
+        _latestRecognizedTranscript.trim().isEmpty &&
+            _descriptionController.text.trim().isEmpty;
 
     setState(() {
       final category =
           _resolvePublishCategoryLabel(draft['category'] as String? ?? '');
 
       if (title.isNotEmpty) _titleController.text = title;
-      if (description.isNotEmpty) _descriptionController.text = description;
+      if (shouldReplaceDescription && description.isNotEmpty) {
+        _descriptionController.text = description;
+      }
       if (category != null && category.isNotEmpty) {
         _category = category;
         _selectedSubCategory = null;
@@ -7396,6 +7465,41 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return null;
   }
 
+  String? _validateCanonicalCity(String? value) {
+    final trimmed = (value ?? '').trim();
+    if (trimmed.isEmpty) {
+      return 'Merci de saisir une ville';
+    }
+
+    final best = _resolveCanonicalCityRecord(
+      city: trimmed,
+      postalCode: _postalCodeController.text,
+    );
+    if (best == null) {
+      return 'Choisissez une ville valide dans la liste';
+    }
+    return null;
+  }
+
+  String? _validatePostalCode(String? value) {
+    final trimmed = (value ?? '').trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    if (!RegExp(r'^(97\d{3}|98\d{3}|\d{5})$').hasMatch(trimmed)) {
+      return 'Code postal invalide';
+    }
+
+    final best = _resolveCanonicalCityRecord(
+      city: _locationController.text,
+      postalCode: trimmed,
+    );
+    if (best == null) {
+      return 'Le code postal ne correspond pas à la ville';
+    }
+    return null;
+  }
+
   String _translatePublishIssue(String issue) {
     final trimmed = issue.trim();
     if (trimmed == 'Title must contain at least 10 characters') {
@@ -7483,6 +7587,208 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         delayOk &&
         phoneOk &&
         budgetOk;
+  }
+
+  Iterable<String> get _requiredPublishFieldOrder => const <String>[
+        'title',
+        'category',
+        'description',
+        'city',
+        'phone',
+        'delay',
+        'budget',
+      ];
+
+  GlobalKey _publishFieldKeyFor(String fieldId) {
+    switch (fieldId) {
+      case 'title':
+        return _titleFieldKey;
+      case 'category':
+        return _categoryFieldKey;
+      case 'description':
+        return _descriptionFieldKey;
+      case 'city':
+        return _cityFieldKey;
+      case 'phone':
+        return _phoneFieldKey;
+      case 'delay':
+        return _delayFieldKey;
+      case 'budget':
+        return _budgetFieldKey;
+      default:
+        return GlobalKey();
+    }
+  }
+
+  String _publishFieldLabel(String fieldId) {
+    switch (fieldId) {
+      case 'title':
+        return 'titre';
+      case 'category':
+        return 'catégorie';
+      case 'description':
+        return 'description';
+      case 'city':
+        return 'ville';
+      case 'phone':
+        return 'téléphone';
+      case 'delay':
+        return 'délai';
+      case 'budget':
+        return 'budget';
+      default:
+        return fieldId;
+    }
+  }
+
+  bool _isPublishFieldInvalid(String fieldId) {
+    switch (fieldId) {
+      case 'title':
+        return _validatePublishTitle(_titleController.text) != null;
+      case 'category':
+        return (_category ?? '').trim().isEmpty;
+      case 'description':
+        return _validatePublishDescription(_descriptionController.text) != null;
+      case 'city':
+        return _validateCanonicalCity(_locationController.text) != null;
+      case 'phone':
+        return !_isValidPhoneFR(_phoneController.text);
+      case 'delay':
+        return (_missionDelay ?? '').trim().isEmpty;
+      case 'budget':
+        if (_budgetType == 'À négocier') return false;
+        final budget = _parseBudget(_budgetController.text);
+        return budget == null || budget <= 0;
+      default:
+        return false;
+    }
+  }
+
+  List<String> _missingPublishFieldLabels() {
+    return _requiredPublishFieldOrder
+        .where(_isPublishFieldInvalid)
+        .map(_publishFieldLabel)
+        .toList(growable: false);
+  }
+
+  Future<void> _scrollToFirstInvalidPublishField() async {
+    for (final fieldId in _requiredPublishFieldOrder) {
+      if (!_isPublishFieldInvalid(fieldId)) continue;
+      _triggerPublishFieldShake(fieldId);
+      final targetContext = _publishFieldKeyFor(fieldId).currentContext;
+      if (targetContext != null) {
+        await Scrollable.ensureVisible(
+          targetContext,
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+          alignment: 0.18,
+        );
+      }
+      break;
+    }
+  }
+
+  void _triggerPublishFieldShake(String fieldId) {
+    final tick = _publishShakeTick + 1;
+    if (mounted) {
+      setState(() {
+        _publishShakeTick = tick;
+        _shakingPublishFieldId = fieldId;
+      });
+    }
+
+    Future<void>.delayed(const Duration(milliseconds: 520), () {
+      if (!mounted) return;
+      if (_publishShakeTick != tick) return;
+      setState(() {
+        _shakingPublishFieldId = null;
+      });
+    });
+  }
+
+  Widget _withPublishFieldHighlight({
+    required String fieldId,
+    required Widget child,
+  }) {
+    final invalid = _attemptedSubmit && _isPublishFieldInvalid(fieldId);
+    final isShaking = _shakingPublishFieldId == fieldId;
+
+    return TweenAnimationBuilder<double>(
+      key: ValueKey<String>('publish-field-$fieldId-$_publishShakeTick'),
+      tween: Tween<double>(begin: 0, end: isShaking ? 1 : 0),
+      duration: const Duration(milliseconds: 420),
+      builder: (context, value, animatedChild) {
+        final dx = isShaking
+            ? math.sin(value * math.pi * 6) * (1 - value) * 12
+            : 0.0;
+        return Transform.translate(
+          offset: Offset(dx, 0),
+          child: animatedChild,
+        );
+      },
+      child: AnimatedContainer(
+        key: _publishFieldKeyFor(fieldId),
+        duration: const Duration(milliseconds: 180),
+        padding: invalid ? const EdgeInsets.all(6) : EdgeInsets.zero,
+        decoration: invalid
+            ? BoxDecoration(
+                color: const Color(0xFFFFF1F2),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFDC2626), width: 1.4),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x1FDC2626),
+                    blurRadius: 12,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              )
+            : null,
+        child: child,
+      ),
+    );
+  }
+
+  Widget _buildPublishValidationBanner() {
+    final missing = _missingPublishFieldLabels();
+    if (!_attemptedSubmit || missing.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E6),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFFFC78F)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(
+              Icons.error_outline_rounded,
+              color: Color(0xFFB45309),
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Complète les champs mis en évidence : ${missing.join(', ')}.',
+              style: const TextStyle(
+                fontSize: 12,
+                height: 1.35,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF92400E),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _recompute() {
@@ -7585,14 +7891,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final loggedIn = await _ensureLoggedInForPublish();
     if (!loggedIn) return;
 
+    _canonicalizeLocationInputs();
+
     setState(() {
       _attemptedSubmit = true;
-      _publishLocked = false;
+      _publishLocked = true;
     });
 
     final valid = _formKey.currentState?.validate() ?? false;
     if (!valid || !_requiredOk()) {
-      // Les champs invalides (ou manquants) seront affichés en rouge via la validation.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToFirstInvalidPublishField();
+      });
       return;
     }
 
@@ -7709,6 +8019,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         final transcript = (out['text'] ?? '').toString().trim();
         if (transcript.isEmpty) throw Exception('Aucun texte reconnu');
+
+        _latestRecognizedTranscript = transcript;
 
         // Remplissage immédiat (titre/desc/ville/cp) avant l'IA.
         _applyFastDraftFromTranscript(transcript);
@@ -7893,6 +8205,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       throw Exception('Aucun texte reconnu');
     }
 
+    _latestRecognizedTranscript = transcript;
+
     // Remplissage immédiat (titre/desc/ville/cp) avant l'IA.
     _applyFastDraftFromTranscript(transcript);
 
@@ -7986,6 +8300,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _selectedPhotos.clear();
       _selectedPhotoBytes.clear();
       _uploadedPhotoUrls.clear();
+      _latestRecognizedTranscript = '';
       _citySuggestions.clear();
       _highlightedIndex = -1;
       _selectedRegionCode = null;
@@ -8698,59 +9013,65 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 const SizedBox(height: 16),
 
                 // TITRE
-                _withAiPendingOverlay(
-                  showPending: _showAiPendingForController(_titleController),
-                  child: TextFormField(
-                    controller: _titleController,
-                    decoration: InputDecoration(
-                      label: _requiredLabel('Titre de l’offre'),
-                      border: const OutlineInputBorder(),
-                      hintText: 'Ex : Monter un meuble IKEA',
+                _withPublishFieldHighlight(
+                  fieldId: 'title',
+                  child: _withAiPendingOverlay(
+                    showPending: _showAiPendingForController(_titleController),
+                    child: TextFormField(
+                      controller: _titleController,
+                      decoration: InputDecoration(
+                        label: _requiredLabel('Titre de l’offre'),
+                        border: const OutlineInputBorder(),
+                        hintText: 'Ex : Monter un meuble IKEA',
+                      ),
+                      validator: _validatePublishTitle,
                     ),
-                    validator: _validatePublishTitle,
                   ),
                 ),
                 const SizedBox(height: 16),
 
                 // CATÉGORIE
-                _withAiPendingOverlay(
-                  showPending: _showAiPendingForCategory,
-                  padding: const EdgeInsets.only(right: 42),
-                  child: DropdownButtonFormField<String>(
-                    value: _category,
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    decoration: InputDecoration(
-                      label: _requiredLabel('Catégorie'),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                _withPublishFieldHighlight(
+                  fieldId: 'category',
+                  child: _withAiPendingOverlay(
+                    showPending: _showAiPendingForCategory,
+                    padding: const EdgeInsets.only(right: 42),
+                    child: DropdownButtonFormField<String>(
+                      value: _category,
+                      dropdownColor: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      decoration: InputDecoration(
+                        label: _requiredLabel('Catégorie'),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
+                      items: _categories
+                          .map(
+                            (cat) => DropdownMenuItem(
+                              value: cat,
+                              child: Text(cat),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _category = value;
+                          _selectedSubCategory = null;
+                        });
+                        _recompute();
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Merci de choisir une catégorie';
+                        }
+                        return null;
+                      },
                     ),
-                    items: _categories
-                        .map(
-                          (cat) => DropdownMenuItem(
-                            value: cat,
-                            child: Text(cat),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _category = value;
-                        _selectedSubCategory = null;
-                      });
-                      _recompute();
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Merci de choisir une catégorie';
-                      }
-                      return null;
-                    },
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -8790,27 +9111,30 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 if (_category != null) const SizedBox(height: 16),
 
                 // DESCRIPTION
-                _withAiPendingOverlay(
-                  showPending:
-                      _showAiPendingForController(_descriptionController),
-                  alignment: Alignment.topRight,
-                  padding: const EdgeInsets.only(top: 14, right: 12),
-                  child: TextFormField(
-                    controller: _descriptionController,
-                    decoration: InputDecoration(
-                      label: _requiredLabel('Description détaillée'),
-                      alignLabelWithHint: true,
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                _withPublishFieldHighlight(
+                  fieldId: 'description',
+                  child: _withAiPendingOverlay(
+                    showPending:
+                        _showAiPendingForController(_descriptionController),
+                    alignment: Alignment.topRight,
+                    padding: const EdgeInsets.only(top: 14, right: 12),
+                    child: TextFormField(
+                      controller: _descriptionController,
+                      decoration: InputDecoration(
+                        label: _requiredLabel('Description détaillée'),
+                        alignLabelWithHint: true,
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
+                      minLines: 4,
+                      maxLines: 8,
+                      validator: _validatePublishDescription,
                     ),
-                    minLines: 4,
-                    maxLines: 8,
-                    validator: _validatePublishDescription,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -8876,28 +9200,27 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
-                _withAiPendingOverlay(
-                  showPending: _showAiPendingForController(_locationController),
-                  child: TextFormField(
-                    controller: _locationController,
-                    decoration: InputDecoration(
-                      label: _requiredLabel('Ville'),
-                      hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                _withPublishFieldHighlight(
+                  fieldId: 'city',
+                  child: _withAiPendingOverlay(
+                    showPending:
+                        _showAiPendingForController(_locationController),
+                    child: TextFormField(
+                      controller: _locationController,
+                      decoration: InputDecoration(
+                        label: _requiredLabel('Ville'),
+                        hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
+                      onChanged: _onCityChanged,
+                      validator: _validateCanonicalCity,
                     ),
-                    onChanged: _onCityChanged,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Merci de saisir une ville';
-                      }
-                      return null;
-                    },
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -8918,161 +9241,140 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           horizontal: 12, vertical: 14),
                     ),
                     onChanged: _onPostalCodeChanged,
+                    validator: _validatePostalCode,
                   ),
                 ),
                 _buildCitySuggestionsOverlay(),
                 const SizedBox(height: 16),
 
                 // TÉLÉPHONE avec sélection indicatif
-                PhoneInputFieldCompact(
-                  controller: _phoneController,
-                  label: _requiredLabel('Téléphone (pour être rappelé)'),
-                  hintText: '612345678',
-                  initialCountryCode: _selectedPhoneCountryCode,
-                  onCountryCodeChanged: (code) {
-                    setState(() {
-                      _selectedPhoneCountryCode = code;
-                    });
-                  },
-                  onPhoneChanged: (_) => _recompute(),
-                  validator: (value) {
-                    return _isValidPhoneFR(value ?? '')
-                        ? null
-                        : 'Téléphone invalide';
-                  },
+                _withPublishFieldHighlight(
+                  fieldId: 'phone',
+                  child: PhoneInputFieldCompact(
+                    controller: _phoneController,
+                    label: _requiredLabel('Téléphone (pour être rappelé)'),
+                    hintText: '612345678',
+                    initialCountryCode: _selectedPhoneCountryCode,
+                    onCountryCodeChanged: (code) {
+                      setState(() {
+                        _selectedPhoneCountryCode = code;
+                      });
+                    },
+                    onPhoneChanged: (_) => _recompute(),
+                    validator: (value) {
+                      return _isValidPhoneFR(value ?? '')
+                          ? null
+                          : 'Téléphone invalide';
+                    },
+                  ),
                 ),
                 const SizedBox(height: 16),
 
                 // DÉLAI POUR EFFECTUER LA MISSION
-                DropdownButtonFormField<String>(
-                  value: _missionDelay,
-                  dropdownColor: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  decoration: InputDecoration(
-                    label: _requiredLabel('Délai pour effectuer la mission'),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                _withPublishFieldHighlight(
+                  fieldId: 'delay',
+                  child: DropdownButtonFormField<String>(
+                    value: _missionDelay,
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    decoration: InputDecoration(
+                      label: _requiredLabel('Délai pour effectuer la mission'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 14),
-                  ),
-                  items: _missionDelayOptions
-                      .map(
-                        (delay) => DropdownMenuItem(
-                          value: delay,
-                          child: Text(delay),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() => _missionDelay = value);
-                    _recompute();
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Merci de choisir un délai';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // URGENT
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black12),
-                  ),
-                  child: SwitchListTile.adaptive(
-                    value: _isUrgent,
-                    onChanged: (v) {
-                      setState(() => _isUrgent = v);
+                    items: _missionDelayOptions
+                        .map(
+                          (delay) => DropdownMenuItem(
+                            value: delay,
+                            child: Text(delay),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() => _missionDelay = value);
+                      _recompute();
                     },
-                    title: const Text(
-                      'Urgent',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    activeColor: kPrestoOrange,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 2,
-                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Merci de choisir un délai';
+                      }
+                      return null;
+                    },
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // BUDGET
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: DropdownButtonFormField<String>(
-                        value: _budgetType,
-                        dropdownColor: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        items: _budgetTypes
-                            .map((t) =>
-                                DropdownMenuItem(value: t, child: Text(t)))
-                            .toList(),
-                        onChanged: (v) {
-                          if (v == null) return;
-                          setState(() {
-                            _budgetType = v;
-                            if (_budgetType == 'À négocier') {
-                              _budgetController.clear();
-                            }
-                          });
-                          _recompute();
-                        },
-                        decoration: InputDecoration(
-                          labelText: 'Budget',
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                _withPublishFieldHighlight(
+                  fieldId: 'budget',
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: DropdownButtonFormField<String>(
+                          value: _budgetType,
+                          dropdownColor: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          decoration: InputDecoration(
+                            labelText: 'Type de budget',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 14),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 14),
+                          items: _budgetTypes
+                              .map(
+                                (type) => DropdownMenuItem(
+                                  value: type,
+                                  child: Text(type),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() => _budgetType = value);
+                            _recompute();
+                          },
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 3,
-                      child: TextFormField(
-                        controller: _budgetController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9., ]'))
-                        ],
-                        decoration: InputDecoration(
-                          label: _budgetType == 'Fixe'
-                              ? _requiredLabel('Montant (€)')
-                              : null,
-                          labelText:
-                              _budgetType == 'Fixe' ? null : 'Montant (€)',
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 3,
+                        child: TextFormField(
+                          controller: _budgetController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 14),
+                          decoration: InputDecoration(
+                            label: _budgetType == 'À négocier'
+                                ? const Text('Budget')
+                                : _requiredLabel('Budget (€)'),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 14),
+                          ),
+                          enabled: _budgetType == 'Fixe',
+                          validator: (value) {
+                            if (_budgetType == 'À négocier') return null;
+                            final b = _parseBudget(value ?? '');
+                            if (b == null) return 'Montant invalide';
+                            if (b <= 0) return 'Le montant doit être > 0';
+                            return null;
+                          },
                         ),
-                        enabled: _budgetType == 'Fixe',
-                        validator: (value) {
-                          if (_budgetType == 'À négocier') return null;
-                          final b = _parseBudget(value ?? '');
-                          if (b == null) return 'Montant invalide';
-                          if (b <= 0) return 'Le montant doit être > 0';
-                          return null;
-                        },
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 24),
 
@@ -9081,6 +9383,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   style: TextStyle(color: Colors.black54),
                 ),
                 const SizedBox(height: 10),
+                _buildPublishValidationBanner(),
+                if (_attemptedSubmit && _missingPublishFieldLabels().isNotEmpty)
+                  const SizedBox(height: 10),
 
                 // BOUTON PUBLIER
                 SizedBox(
