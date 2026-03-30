@@ -1811,7 +1811,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildLatestOffersSection() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(10, 12, 10, 0),
+      padding: const EdgeInsets.fromLTRB(10, 4, 10, 0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),

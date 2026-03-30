@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:cloud_functions/cloud_functions.dart';
+
+import '../../utils/retry.dart';
 
 double? _doubleOrNull(Object? value) {
   if (value == null) return null;
@@ -194,7 +198,7 @@ class OfferDraft {
 }
 
 class AiOfferService {
-  /// Génère un brouillon à partir d'un texte (sans audio)
+  /// Génère un brouillon à partir d'un texte (sans audio), avec retry.
   static Future<OfferDraft> generateDraft({
     required String hint,
     required String currentCity,
@@ -205,45 +209,29 @@ class AiOfferService {
         (functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'))
             .httpsCallable(
       'generateOfferDraft',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
     );
-    final res = await callable.call({
-      'hint': hint,
-      'city': currentCity,
-      'category': currentCategory,
-      'lang': 'fr',
-    });
+    final res = await retry(
+      () => callable.call({
+        'hint': hint,
+        'city': currentCity,
+        'category': currentCategory,
+        'lang': 'fr',
+      }),
+      maxAttempts: 2,
+      retryIf: (e) {
+        if (e is TimeoutException) return true;
+        if (e is FirebaseFunctionsException) {
+          return e.code == 'unavailable' ||
+              e.code == 'deadline-exceeded' ||
+              e.code == 'internal' ||
+              e.code == 'resource-exhausted';
+        }
+        return false;
+      },
+    );
 
     final data = _mapStringDynamic(res.data);
     return OfferDraft.fromMap(data);
-  }
-
-  /// Transcription Premium (Chirp 3) + Rédaction IA
-  static Future<({String transcript, OfferDraft draft})> transcribeAndDraft({
-    required String gcsUri,
-    required String languageCode,
-    required String category,
-    required String city,
-    FirebaseFunctions? functions,
-  }) async {
-    final callable =
-        (functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'))
-            .httpsCallable(
-      'transcribeAndDraftOffer',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 90)),
-    );
-    final res = await callable.call({
-      'gcsUri': gcsUri,
-      'languageCode': languageCode,
-      'category': category,
-      'city': city,
-    });
-
-    final data = _mapStringDynamic(res.data);
-    final transcript = (data['transcript'] ?? '').toString();
-    final draftMap = _mapStringDynamic(data['draft']);
-    final draft = OfferDraft.fromMap(draftMap);
-
-    return (transcript: transcript, draft: draft);
   }
 }

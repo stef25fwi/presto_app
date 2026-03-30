@@ -11,9 +11,15 @@ class MicroIaService {
   static final _functions =
       FirebaseFunctions.instanceFor(region: 'europe-west1');
 
+  /// Process audio and optionally generate a draft in a single round-trip.
+  /// When [generateDraft] is true, the CF merges STT + OpenAI draft
+  /// to eliminate one network round-trip (~1-2s saved).
   static Future<Map<String, dynamic>> processAudio({
     required String storagePath,
     String? languageCode,
+    bool generateDraft = false,
+    String? draftCity,
+    String? draftCategory,
   }) async {
     final callable = _functions.httpsCallable(
       'microIaProcessAudio',
@@ -25,6 +31,10 @@ class MicroIaService {
         () => callable.call(<String, dynamic>{
           'storagePath': storagePath,
           if (languageCode != null) 'languageCode': languageCode,
+          if (generateDraft) 'generateDraft': true,
+          if (generateDraft && draftCity != null) 'draftCity': draftCity,
+          if (generateDraft && draftCategory != null)
+            'draftCategory': draftCategory,
         }),
         maxAttempts: 3,
         retryIf: (e) {
@@ -51,6 +61,7 @@ class MicroIaService {
           'function': 'microIaProcessAudio',
           'storagePath': storagePath,
           'languageCode': languageCode ?? '',
+          'generateDraft': generateDraft.toString(),
         },
       );
       rethrow;
