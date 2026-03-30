@@ -1,5 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../data/marketplace/listing_repository.dart';
@@ -36,6 +37,43 @@ class MarketplacePublishService {
   final FirebaseFunctions _functions;
   final MarketplaceHumanVerification _verification;
 
+  bool _isChannelConnectionError(Object error) {
+    if (error is! PlatformException) {
+      return false;
+    }
+
+    final message = (error.message ?? '').toLowerCase().trim();
+    return error.code == 'channel-error' ||
+        message.contains('unable to establish connection');
+  }
+
+  Future<T> _runWithChannelRetry<T>({
+    required String stepLabel,
+    required Future<T> Function() action,
+    T? fallbackValue,
+  }) async {
+    try {
+      return await action();
+    } catch (error) {
+      if (!_isChannelConnectionError(error)) rethrow;
+    }
+
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+
+    try {
+      return await action();
+    } catch (error) {
+      if (!_isChannelConnectionError(error)) rethrow;
+      if (fallbackValue != null) {
+        return fallbackValue;
+      }
+
+      throw StateError(
+        'Connexion au service "$stepLabel" impossible. Fermez puis relancez l\'application et réessayez.',
+      );
+    }
+  }
+
   Future<List<ListingMediaInput>> _uploadPhotos({
     required String uid,
     required List<XFile> photos,
@@ -55,14 +93,20 @@ class MarketplacePublishService {
 
       final ref = _storage.ref().child(rawPath);
       final bytes = await photo.readAsBytes();
-      await ref.putData(
-        bytes,
-        SettableMetadata(contentType: contentType),
+      await _runWithChannelRetry<void>(
+        stepLabel: 'stockage photo',
+        action: () => ref.putData(
+          bytes,
+          SettableMetadata(contentType: contentType),
+        ),
       );
 
-      final response = await callable.call<dynamic>(<String, dynamic>{
-        'storagePath': rawPath,
-      });
+      final response = await _runWithChannelRetry<HttpsCallableResult<dynamic>>(
+        stepLabel: 'traitement photo',
+        action: () => callable.call<dynamic>(<String, dynamic>{
+          'storagePath': rawPath,
+        }),
+      );
       final data = response.data is Map
           ? Map<String, dynamic>.from(response.data as Map)
           : const <String, dynamic>{};
@@ -146,7 +190,9 @@ class MarketplacePublishService {
     }
 
     final media = await _uploadPhotos(uid: ownerId, photos: photos);
-    final draftId = await _listingRepository.createDraft(
+    final draftId = await _runWithChannelRetry<String>(
+      stepLabel: 'brouillon Firestore',
+      action: () => _listingRepository.createDraft(
       MarketplaceListingDraft(
         ownerId: ownerId,
         title: title,
@@ -156,63 +202,75 @@ class MarketplacePublishService {
         cityId: cityId,
         media: media,
       ),
+      ),
     );
 
-    final recaptchaToken = await _verification.obtainToken(
-      MarketplaceHumanVerificationAction.listingSubmit,
+    final recaptchaToken = await _runWithChannelRetry<String>(
+      stepLabel: 'vérification humaine',
+      fallbackValue: '',
+      action: () => _verification.obtainToken(
+        MarketplaceHumanVerificationAction.listingSubmit,
+      ),
     );
-    final submission = await _listingRepository.submitDraft(
-      draftId: draftId,
-      recaptchaToken: recaptchaToken,
-    );
+    final submission = await _runWithChannelRetry<MarketplacePublishResult?>(
+      stepLabel: 'publication finale',
+      action: () async {
+        final result = await _listingRepository.submitDraft(
+          draftId: draftId,
+          recaptchaToken: recaptchaToken,
+        );
 
-    final statusBadges = <String>[
-      if (isUrgent) 'Urgent',
-      if (submission.status.value == 'active') 'En ligne' else 'En revue',
-    ];
+        final statusBadges = <String>[
+          if (isUrgent) 'Urgent',
+          if (result.status.value == 'active') 'En ligne' else 'En revue',
+        ];
 
-    return MarketplacePublishResult(
-      listingId: submission.listingId,
-      detailData: <String, dynamic>{
-        'id': submission.listingId,
-        'offerId': submission.listingId,
-        'title': title.trim(),
-        'shortDescription': (subCategory ?? '').trim(),
-        'detail': (subCategory ?? '').trim(),
-        'city': trimmedCity,
-        'location': trimmedCity,
-        'postalCode': resolvedPostalCode,
-        'cp': resolvedPostalCode,
-        'category': resolvedCategory,
-        'categoryId': categoryId,
-        'cityId': cityId,
-        'description': description.trim(),
-        'phone': phone.trim(),
-        'price': price,
-        'budget': price,
-        'budgetType': budgetType,
-        'isUrgent': isUrgent,
-        'publishedAtLabel': submission.status.value == 'active'
-            ? 'Annonce publiée'
-            : 'Annonce en revue',
-        'availability': (missionDelay ?? '').trim().isEmpty
-            ? 'Disponibilité à confirmer'
-            : missionDelay!.trim(),
-        'missionDelay': (missionDelay ?? '').trim(),
-        'averageDelay': (missionDelay ?? '').trim(),
-        'statusBadges': statusBadges,
-        'imageUrls': media
-            .map((entry) => entry.downloadUrl)
-            .toList(growable: false),
-        'media': media.map((entry) => entry.toMap()).toList(growable: false),
-        'ownerId': ownerId,
-        'userId': ownerId,
-        'status': submission.status.value,
-        'moderationStatus': submission.moderationStatus.value,
-        'visibility': submission.visibility.value,
-        'isMarketplace': true,
+        return MarketplacePublishResult(
+          listingId: result.listingId,
+          detailData: <String, dynamic>{
+            'id': result.listingId,
+            'offerId': result.listingId,
+            'title': title.trim(),
+            'shortDescription': (subCategory ?? '').trim(),
+            'detail': (subCategory ?? '').trim(),
+            'city': trimmedCity,
+            'location': trimmedCity,
+            'postalCode': resolvedPostalCode,
+            'cp': resolvedPostalCode,
+            'category': resolvedCategory,
+            'categoryId': categoryId,
+            'cityId': cityId,
+            'description': description.trim(),
+            'phone': phone.trim(),
+            'price': price,
+            'budget': price,
+            'budgetType': budgetType,
+            'isUrgent': isUrgent,
+            'publishedAtLabel': result.status.value == 'active'
+                ? 'Annonce publiée'
+                : 'Annonce en revue',
+            'availability': (missionDelay ?? '').trim().isEmpty
+                ? 'Disponibilité à confirmer'
+                : missionDelay!.trim(),
+            'missionDelay': (missionDelay ?? '').trim(),
+            'averageDelay': (missionDelay ?? '').trim(),
+            'statusBadges': statusBadges,
+            'imageUrls': media
+                .map((entry) => entry.downloadUrl)
+                .toList(growable: false),
+            'media': media.map((entry) => entry.toMap()).toList(growable: false),
+            'ownerId': ownerId,
+            'userId': ownerId,
+            'status': result.status.value,
+            'moderationStatus': result.moderationStatus.value,
+            'visibility': result.visibility.value,
+            'isMarketplace': true,
+          },
+        );
       },
     );
+
+    return submission!;
   }
 
   String _storageExtension(XFile photo) {
