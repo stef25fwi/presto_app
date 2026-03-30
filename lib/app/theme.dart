@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../constants.dart';
 
-ThemeData buildPrestoTheme() {
+/// Theme singleton — built once, reused across rebuilds.
+final ThemeData _prestoThemeSingleton = _buildPrestoThemeData();
+
+ThemeData buildPrestoTheme() => _prestoThemeSingleton;
+
+ThemeData _buildPrestoThemeData() {
   const prestoOrange = Color(0xFFFF6600);
   const prestoBlue = Color(0xFF1A73E8);
 

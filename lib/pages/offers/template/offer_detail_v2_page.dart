@@ -636,6 +636,8 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
                                 child: Image.network(
                                   images[i],
                                   fit: BoxFit.cover,
+                                  cacheWidth: 400,
+                                  cacheHeight: 400,
                                   errorBuilder: (_, __, ___) => _MockPhotoTile(
                                     icon: Icons.broken_image_outlined,
                                     label: "Image",
