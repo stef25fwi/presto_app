@@ -6965,6 +6965,47 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
+  /// Apply server-side draft (from microIaProcessAudio combined mode).
+  /// The draft uses the rich JSON format from _internalGenerateDraft.
+  void _applyServerDraftToForm(Map<String, dynamic> draft) {
+    setState(() {
+      final title = (draft['title'] ?? '').toString().trim();
+      final category = (draft['category'] ?? '').toString().trim();
+      final description = (draft['description'] ?? '').toString().trim();
+      final city = (draft['city'] ?? '').toString().trim();
+      final postalCode = (draft['postalCode'] ?? '').toString().trim();
+
+      if (title.isNotEmpty) _titleController.text = title;
+      if (description.isNotEmpty) _descriptionController.text = description;
+      if (category.isNotEmpty) {
+        _category = category;
+        _selectedSubCategory = null;
+      }
+      if (city.isNotEmpty) _locationController.text = city;
+      if (postalCode.isNotEmpty) _postalCodeController.text = postalCode;
+    });
+  }
+
+  /// Apply legacy draft from AiDraftService (fallback path).
+  void _applyLegacyDraftToForm(Map<String, dynamic> draft) {
+    setState(() {
+      final title = (draft['title'] as String? ?? '').trim();
+      final category = (draft['category'] as String? ?? '').trim();
+      final description = (draft['description'] as String? ?? '').trim();
+      final location = (draft['location'] as String? ?? '').trim();
+      final postalCode = (draft['postalCode'] as String? ?? '').trim();
+
+      if (title.isNotEmpty) _titleController.text = title;
+      if (description.isNotEmpty) _descriptionController.text = description;
+      if (category.isNotEmpty) {
+        _category = category;
+        _selectedSubCategory = null;
+      }
+      if (location.isNotEmpty) _locationController.text = location;
+      if (postalCode.isNotEmpty) _postalCodeController.text = postalCode;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -7359,10 +7400,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         await ref.putData(
             webmBytes, SettableMetadata(contentType: 'audio/webm'));
 
+        // ⚡ Single round-trip: STT + Draft combined in one CF call
         final out = await MicroIaService.processAudio(
           storagePath: destPath,
           languageCode: 'fr-FR',
-        );
+          generateDraft: true,
+          draftCity: _locationController.text.trim(),
+          draftCategory: (_category ?? '').trim(),
+        ).timeout(const Duration(seconds: 90));
 
         final transcript = (out['text'] ?? '').toString().trim();
         if (transcript.isEmpty) throw Exception('Aucun texte reconnu');
@@ -7370,38 +7415,27 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         // Remplissage immédiat (titre/desc/ville/cp) avant l'IA.
         _applyFastDraftFromTranscript(transcript);
 
-        final draft = await _aiService.generateOfferDraft(text: transcript);
         if (!mounted) return;
 
-        if (draft['success'] == true) {
-          setState(() {
-            final title = (draft['title'] as String? ?? '').trim();
-            final category = (draft['category'] as String? ?? '').trim();
-            final description = (draft['description'] as String? ?? '').trim();
-            final location = (draft['location'] as String? ?? '').trim();
-            final postalCode = (draft['postalCode'] as String? ?? '').trim();
-
-            if (title.isNotEmpty) _titleController.text = title;
-            if (description.isNotEmpty)
-              _descriptionController.text = description;
-            if (category.isNotEmpty) {
-              _category = category;
-              _selectedSubCategory = null;
-            }
-            if (location.isNotEmpty) _locationController.text = location;
-            if (postalCode.isNotEmpty) _postalCodeController.text = postalCode;
-          });
-
+        // Use server-side draft if available (combined mode)
+        final serverDraft = out['draft'];
+        if (serverDraft is Map) {
+          _applyServerDraftToForm(Map<String, dynamic>.from(serverDraft));
           showSuccessSnackBar(
               context, 'Transcription réussie et champs remplis');
         } else {
-          final code = (draft['code'] ?? '').toString();
-          showSuccessSnackBar(
-            context,
-            code == 'deadline-exceeded'
-                ? 'Connexion lente, réessaie.'
-                : 'Erreur IA: ${draft['error'] ?? 'inconnue'}',
-          );
+          // Fallback: server draft failed, try client-side call
+          try {
+            final draft = await _aiService.generateOfferDraft(text: transcript);
+            if (!mounted) return;
+            if (draft['success'] == true) {
+              _applyLegacyDraftToForm(draft);
+              showSuccessSnackBar(
+                  context, 'Transcription réussie et champs remplis');
+            }
+          } catch (_) {
+            // Draft is best-effort; transcript already applied above
+          }
         }
       } catch (e, st) {
         await CrashlyticsContext.recordError(
@@ -7532,10 +7566,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final ref = storage.ref(destPath);
     await ref.putData(audioBytes, SettableMetadata(contentType: contentType));
 
+    // ⚡ Single round-trip: STT + Draft combined in one CF call
     final out = await MicroIaService.processAudio(
       storagePath: destPath,
       languageCode: 'fr-FR',
-    );
+      generateDraft: true,
+      draftCity: _locationController.text.trim(),
+      draftCategory: (_category ?? '').trim(),
+    ).timeout(const Duration(seconds: 90));
 
     final transcript = (out['text'] ?? '').toString().trim();
     if (transcript.isEmpty) {
@@ -7545,36 +7583,25 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // Remplissage immédiat (titre/desc/ville/cp) avant l'IA.
     _applyFastDraftFromTranscript(transcript);
 
-    final draft = await _aiService.generateOfferDraft(text: transcript);
     if (!mounted) return;
 
-    if (draft['success'] == true) {
-      setState(() {
-        final title = (draft['title'] as String? ?? '').trim();
-        final category = (draft['category'] as String? ?? '').trim();
-        final description = (draft['description'] as String? ?? '').trim();
-        final location = (draft['location'] as String? ?? '').trim();
-        final postalCode = (draft['postalCode'] as String? ?? '').trim();
-
-        if (title.isNotEmpty) _titleController.text = title;
-        if (description.isNotEmpty) _descriptionController.text = description;
-        if (category.isNotEmpty) {
-          _category = category;
-          _selectedSubCategory = null;
-        }
-        if (location.isNotEmpty) _locationController.text = location;
-        if (postalCode.isNotEmpty) _postalCodeController.text = postalCode;
-      });
-
+    // Use server-side draft if available (combined mode)
+    final serverDraft = out['draft'];
+    if (serverDraft is Map) {
+      _applyServerDraftToForm(Map<String, dynamic>.from(serverDraft));
       showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
     } else {
-      final code = (draft['code'] ?? '').toString();
-      showSuccessSnackBar(
-        context,
-        code == 'deadline-exceeded'
-            ? 'Connexion lente, réessaie.'
-            : 'Erreur IA: ${draft['error'] ?? 'inconnue'}',
-      );
+      // Fallback: server draft failed, try client-side call
+      try {
+        final draft = await _aiService.generateOfferDraft(text: transcript);
+        if (!mounted) return;
+        if (draft['success'] == true) {
+          _applyLegacyDraftToForm(draft);
+          showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
+        }
+      } catch (_) {
+        // Draft is best-effort; transcript already applied above
+      }
     }
   }
 
