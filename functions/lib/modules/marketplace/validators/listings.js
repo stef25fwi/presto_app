@@ -27,9 +27,6 @@ function validateListingMedia(rawMedia, maxMediaCount) {
     if (!Array.isArray(rawMedia)) {
         throw new errors_1.ValidationError("Listing media must be an array");
     }
-    if (rawMedia.length === 0) {
-        throw new errors_1.ValidationError("At least one photo is required");
-    }
     if (rawMedia.length > maxMediaCount) {
         throw new errors_1.ValidationError(`Too many photos, maximum is ${maxMediaCount}`);
     }

@@ -37,6 +37,27 @@ class MarketplacePublishService {
   final FirebaseFunctions _functions;
   final MarketplaceHumanVerification _verification;
 
+  void _validateDraftInputs({
+    required String title,
+    required String description,
+  }) {
+    final trimmedTitle = title.trim();
+    final trimmedDescription = description.trim();
+
+    if (trimmedTitle.length < 10) {
+      throw StateError('Le titre doit contenir au moins 10 caractères.');
+    }
+    if (trimmedTitle.length > 120) {
+      throw StateError('Le titre doit contenir au maximum 120 caractères.');
+    }
+    if (trimmedDescription.length < 30) {
+      throw StateError('La description doit contenir au moins 30 caractères.');
+    }
+    if (trimmedDescription.length > 4000) {
+      throw StateError('La description doit contenir au maximum 4000 caractères.');
+    }
+  }
+
   bool _isChannelConnectionError(Object error) {
     if (error is! PlatformException) {
       return false;
@@ -158,9 +179,10 @@ class MarketplacePublishService {
     required String budgetType,
     required List<XFile> photos,
   }) async {
-    if (photos.isEmpty) {
-      throw StateError('Ajoutez au moins une photo avant de publier cette annonce marketplace.');
-    }
+    _validateDraftInputs(
+      title: title,
+      description: description,
+    );
 
     final resolvedCategory = canonicalizeOfferCategory(category) ?? 'Autre';
     final trimmedCity = city.trim();
@@ -189,7 +211,9 @@ class MarketplacePublishService {
       throw StateError('Impossible de résoudre la catégorie ou la ville pour Marketplace.');
     }
 
-    final media = await _uploadPhotos(uid: ownerId, photos: photos);
+    final media = photos.isEmpty
+      ? const <ListingMediaInput>[]
+      : await _uploadPhotos(uid: ownerId, photos: photos);
     final draftId = await _runWithChannelRetry<String>(
       stepLabel: 'brouillon Firestore',
       action: () => _listingRepository.createDraft(

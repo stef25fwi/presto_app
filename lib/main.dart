@@ -1828,13 +1828,6 @@ class _HomePageState extends State<HomePage>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2563,18 +2556,16 @@ class _HomePageState extends State<HomePage>
   Widget _buildHomeContent() {
     const double bottomPadding = 150;
 
-    return Container(
-      color: Colors.white,
-      child: SafeArea(
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.white, Colors.white],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+    return SafeArea(
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.white, Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-          child: SingleChildScrollView(
+        ),
+        child: SingleChildScrollView(
             controller: _scrollController,
             physics: const ClampingScrollPhysics(),
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -2584,21 +2575,23 @@ class _HomePageState extends State<HomePage>
               children: [
                 // Ligne du haut : info + logo
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(
-                      width: 56,
-                      height: 40,
-                      child: Image.asset(
-                        'assets/images/logowebp.webp',
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: GestureDetector(
-                        onLongPress: _seedSampleOffers,
-                        child: const Center(
-                          child: Text(
+                    GestureDetector(
+                      onLongPress: _seedSampleOffers,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 56,
+                            height: 40,
+                            child: Image.asset(
+                              'assets/images/logowebp.webp',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Text(
                             "iliprestō",
                             style: TextStyle(
                               fontSize: 26,
@@ -2607,10 +2600,9 @@ class _HomePageState extends State<HomePage>
                               letterSpacing: 0.5,
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 56),
                   ],
                 ),
 
@@ -2874,7 +2866,6 @@ class _HomePageState extends State<HomePage>
             ),
           ),
         ),
-      ),
     );
   }
 }
@@ -4638,15 +4629,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         backgroundColor: _offersBg,
-        body: AnimatedPadding(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: SafeArea(
-            child: Column(
-              children: [
+        body: SafeArea(
+          child: Column(
+            children: [
                 Container(
                   width: double.infinity,
                   height: kToolbarHeight,
@@ -4936,7 +4921,6 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
             ),
           ),
         ),
-      ),
     );
   }
 
@@ -7003,15 +6987,105 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
   }
 
+  String? _validatePublishTitle(String? value) {
+    final trimmed = (value ?? '').trim();
+    if (trimmed.isEmpty) {
+      return 'Merci de saisir un titre';
+    }
+    if (trimmed.length < 10) {
+      return 'Le titre doit contenir au moins 10 caractères';
+    }
+    if (trimmed.length > 120) {
+      return 'Le titre doit contenir au maximum 120 caractères';
+    }
+    return null;
+  }
+
+  String? _validatePublishDescription(String? value) {
+    final trimmed = (value ?? '').trim();
+    if (trimmed.isEmpty) {
+      return 'Merci de décrire votre besoin';
+    }
+    if (trimmed.length < 30) {
+      return 'La description doit contenir au moins 30 caractères';
+    }
+    if (trimmed.length > 4000) {
+      return 'La description doit contenir au maximum 4000 caractères';
+    }
+    return null;
+  }
+
+  String _translatePublishIssue(String issue) {
+    final trimmed = issue.trim();
+    if (trimmed == 'Title must contain at least 10 characters') {
+      return 'Le titre doit contenir au moins 10 caractères.';
+    }
+    if (trimmed == 'Title must contain at most 120 characters') {
+      return 'Le titre doit contenir au maximum 120 caractères.';
+    }
+    if (trimmed == 'Description must contain at least 30 characters') {
+      return 'La description doit contenir au moins 30 caractères.';
+    }
+    if (trimmed == 'Description must contain at most 4000 characters') {
+      return 'La description doit contenir au maximum 4000 caractères.';
+    }
+    if (trimmed == 'Price must be a positive number') {
+      return 'Le budget doit être supérieur ou égal à 0.';
+    }
+    if (trimmed == 'categoryId is required') {
+      return 'Choisissez une catégorie valide.';
+    }
+    if (trimmed == 'cityId is required') {
+      return 'Choisissez une ville valide.';
+    }
+    if (trimmed.startsWith('Photo #') &&
+        trimmed.endsWith('must be processed as WebP before submission')) {
+      final number = RegExp(r'Photo #(\d+)').firstMatch(trimmed)?.group(1);
+      return number == null
+          ? 'Une photo doit être retraitée avant publication. Réessayez.'
+          : 'La photo $number doit être retraitée avant publication. Réessayez.';
+    }
+    if (trimmed == 'Draft payload is invalid') {
+      return 'Le formulaire de publication est invalide.';
+    }
+    return trimmed;
+  }
+
+  String _formatPublishError(Object error) {
+    if (error is FirebaseFunctionsException) {
+      final details = error.details;
+      if (details is Map) {
+        final rawIssues = details['issues'];
+        if (rawIssues is List) {
+          final issues = rawIssues
+              .map((entry) => entry.toString().trim())
+              .where((entry) => entry.isNotEmpty)
+              .map(_translatePublishIssue)
+              .toList(growable: false);
+          if (issues.isNotEmpty) {
+            return issues.join(' ');
+          }
+        }
+      }
+
+      final message = (error.message ?? error.code).trim();
+      return _translatePublishIssue(message);
+    }
+
+    return error
+        .toString()
+        .replaceFirst('Exception: ', '')
+        .replaceFirst('StateError: ', '');
+  }
+
   bool _requiredOk() {
-    final titleOk = _titleController.text.trim().isNotEmpty;
-    final descOk = _descriptionController.text.trim().isNotEmpty;
+    final titleOk = _validatePublishTitle(_titleController.text) == null;
+    final descOk = _validatePublishDescription(_descriptionController.text) == null;
     final cityOk = _locationController.text.trim().isNotEmpty;
     final catOk = (_category ?? '').trim().isNotEmpty;
     final subOk = (_selectedSubCategory ?? '').trim().isNotEmpty;
     final delayOk = (_missionDelay ?? '').trim().isNotEmpty;
     final phoneOk = _isValidPhoneFR(_phoneController.text);
-
     final budgetOk = _budgetType == 'À négocier'
         ? true
         : () {
@@ -8072,9 +8146,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      final message = e is FirebaseFunctionsException
-          ? 'Publication refusée : ${e.message ?? e.code}'
-          : e.toString().replaceFirst('Exception: ', '').replaceFirst('StateError: ', '');
+      final message = _formatPublishError(e);
       showErrorSnackBar(context, 'Erreur lors de la publication : $message');
     } finally {
       if (mounted) {
@@ -8150,19 +8222,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             ),
           ],
         ),
-        body: AnimatedPadding(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: SafeArea(
-            child: Form(
-              key: _formKey,
-              autovalidateMode: _attemptedSubmit
-                  ? AutovalidateMode.always
-                  : AutovalidateMode.disabled,
-              child: ListView(
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            autovalidateMode: _attemptedSubmit
+                ? AutovalidateMode.always
+                : AutovalidateMode.disabled,
+            child: ListView(
                 controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 150),
                 children: [
@@ -8282,12 +8348,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       border: const OutlineInputBorder(),
                       hintText: 'Ex : Monter un meuble IKEA',
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Merci de saisir un titre';
-                      }
-                      return null;
-                    },
+                    validator: _validatePublishTitle,
                   ),
                   const SizedBox(height: 16),
 
@@ -8385,12 +8446,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     ),
                     minLines: 4,
                     maxLines: 8,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Merci de décrire votre besoin';
-                      }
-                      return null;
-                    },
+                    validator: _validatePublishDescription,
                   ),
                   const SizedBox(height: 16),
 
@@ -8684,7 +8740,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 ],
               ),
             ),
-          ),
         ),
       ),
     );
@@ -9918,10 +9973,6 @@ class _AccountPageState extends State<AccountPage> {
         ? pseudo
         : (user.displayName ?? "Utilisateur iliprestō");
 
-    final profileViewInsetsBottom = MediaQuery.of(context).viewInsets.bottom;
-    final profileBottomInset =
-        profileViewInsetsBottom > 10 ? profileViewInsetsBottom : 0.0;
-
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -9936,18 +9987,12 @@ class _AccountPageState extends State<AccountPage> {
           foregroundColor: Colors.white,
         ),
         backgroundColor: Colors.white,
-        body: AnimatedPadding(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOut,
-          padding: EdgeInsets.only(
-            bottom: profileBottomInset,
-          ),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 500),
-                child: SingleChildScrollView(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: SingleChildScrollView(
                   controller: _scrollController,
                   padding: const EdgeInsets.only(bottom: 150),
                   child: Column(
@@ -10226,7 +10271,6 @@ class _AccountPageState extends State<AccountPage> {
                     ],
                   ),
                 ),
-              ),
             ),
           ),
         ),
