@@ -971,6 +971,10 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 class _OfferUiData {
   final String offerId;
   final bool isMarketplace;
+  final String listingStatus;
+  final String moderationStatus;
+  final String mediaProcessingStatus;
+  final int mediaCount;
   final String title;
   final String detail;
   final String city;
@@ -1004,6 +1008,10 @@ class _OfferUiData {
   const _OfferUiData({
     required this.offerId,
     required this.isMarketplace,
+    required this.listingStatus,
+    required this.moderationStatus,
+    required this.mediaProcessingStatus,
+    required this.mediaCount,
     required this.title,
     required this.detail,
     required this.city,
@@ -1056,6 +1064,21 @@ class _OfferUiData {
     return out.isEmpty ? title.trim() : out;
   }
 
+  bool get hasPhotos => mediaCount > 0;
+
+  bool get isListingActive {
+    final status = listingStatus.trim().toLowerCase();
+    return status == 'active' || status == 'published';
+  }
+
+  bool get showPendingPhotoNotice {
+    return isMarketplace && hasPhotos && !isListingActive;
+  }
+
+  bool get isMediaStillProcessing {
+    return mediaProcessingStatus.trim().toLowerCase() == 'processing';
+  }
+
   factory _OfferUiData.fromOffer(Object? offer) {
     final dynamic o = offer;
     dynamic readValue(String key, [dynamic Function()? getter]) {
@@ -1091,6 +1114,29 @@ class _OfferUiData {
                 .isNotEmpty ||
             _asString(readValue('visibility', () => o.visibility), fallback: '')
                 .isNotEmpty;
+    final listingStatus = _asString(
+      readValue('status', () => o.status),
+      fallback: '',
+    );
+    final moderationStatus = _asString(
+      readValue('moderationStatus', () => o.moderationStatus),
+      fallback: '',
+    );
+    final rawMedia = readValue('media', () => o.media);
+    final rawImageUrls = readValue('imageUrls', () => o.imageUrls);
+    final mediaCount = rawMedia is List
+        ? rawMedia.length
+        : rawImageUrls is List
+            ? rawImageUrls.length
+            : 0;
+    final mediaProcessingStatus = _asString(
+      readValue('mediaProcessingStatus'),
+      fallback: (!listingStatus.trim().toLowerCase().contains('active') &&
+              !listingStatus.trim().toLowerCase().contains('published') &&
+              mediaCount > 0)
+          ? 'processing'
+          : 'completed',
+    );
     final title = _asString(readValue('title', () => o.title),
         fallback: 'Montage meuble');
     final detail = _asString(
@@ -1221,6 +1267,10 @@ class _OfferUiData {
     return _OfferUiData(
       offerId: offerId,
       isMarketplace: isMarketplace,
+      listingStatus: listingStatus,
+      moderationStatus: moderationStatus,
+      mediaProcessingStatus: mediaProcessingStatus,
+      mediaCount: mediaCount,
       title: title,
       detail: detail,
       city: city,
@@ -1481,6 +1531,14 @@ class _HeroCard extends StatelessWidget {
                 color: textPrimary.withOpacity(0.9),
               ),
             ),
+            if (data.showPendingPhotoNotice) ...[
+              SizedBox(height: compact ? 10 : 12),
+              _PendingPhotoNotice(
+                compact: compact,
+                isProcessing: data.isMediaStillProcessing,
+                moderationStatus: data.moderationStatus,
+              ),
+            ],
             SizedBox(height: compact ? 10 : 12),
             Container(
               height: 1,
@@ -1521,6 +1579,93 @@ class _HeroCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PendingPhotoNotice extends StatelessWidget {
+  final bool compact;
+  final bool isProcessing;
+  final String moderationStatus;
+
+  const _PendingPhotoNotice({
+    required this.compact,
+    required this.isProcessing,
+    required this.moderationStatus,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const border = Color(0xFFFFC78F);
+    const background = Color(0xFFFFF3E6);
+    const accent = Color(0xFFFF7A00);
+    const titleColor = Color(0xFF8A3B00);
+    const bodyColor = Color(0xFF7A4A21);
+
+    final normalizedModeration = moderationStatus.trim().toLowerCase();
+    final message = isProcessing
+        ? 'Les photos sont en cours de préparation pour la mise en ligne. L\'annonce reste en attente avant publication.'
+        : normalizedModeration == 'manual_review' || normalizedModeration == 'pending'
+            ? 'Les photos sont prêtes. L\'annonce reste en attente de validation avant publication.'
+            : 'Cette annonce reste temporairement hors ligne avant publication.';
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(
+        compact ? 12 : 14,
+        compact ? 10 : 12,
+        compact ? 12 : 14,
+        compact ? 10 : 12,
+      ),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(compact ? 14 : 16),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: compact ? 28 : 32,
+            height: compact ? 28 : 32,
+            decoration: const BoxDecoration(
+              color: accent,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isProcessing ? Icons.sync_rounded : Icons.hourglass_top_rounded,
+              size: compact ? 16 : 18,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(width: compact ? 10 : 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isProcessing ? 'Photos en traitement' : 'Annonce en attente de validation',
+                  style: TextStyle(
+                    fontSize: compact ? 12.5 : 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: titleColor,
+                  ),
+                ),
+                SizedBox(height: compact ? 4 : 5),
+                Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: compact ? 11.5 : 12.5,
+                    height: 1.3,
+                    fontWeight: FontWeight.w600,
+                    color: bodyColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

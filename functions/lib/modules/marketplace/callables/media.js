@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.processOfferPhoto = void 0;
+exports.processOfferPhotoStoragePath = processOfferPhotoStoragePath;
 const node_crypto_1 = require("node:crypto");
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
@@ -19,16 +20,7 @@ function requireAuthUid(request) {
 function normalizeStoragePath(value) {
     return String(value ?? "").trim();
 }
-exports.processOfferPhoto = (0, https_1.onCall)({
-    region: env_1.PROJECT_REGION,
-    timeoutSeconds: 60,
-    enforceAppCheck: env_1.ENFORCE_APP_CHECK,
-}, async (request) => {
-    const uid = requireAuthUid(request);
-    const storagePath = normalizeStoragePath(request.data?.storagePath);
-    if (!storagePath) {
-        throw new https_1.HttpsError("invalid-argument", "storagePath is required");
-    }
+async function processOfferPhotoStoragePath({ uid, storagePath, }) {
     const expectedPrefix = `offers_raw/${uid}/`;
     if (!storagePath.startsWith(expectedPrefix)) {
         throw new https_1.HttpsError("permission-denied", "Unauthorized storage path");
@@ -68,13 +60,13 @@ exports.processOfferPhoto = (0, https_1.onCall)({
         const safeUid = uid.replace(/[<>&"']/g, "");
         const watermarkText = `UID ${safeUid}`;
         const svg = Buffer.from(`<svg width="${width}" height="${overlayHeight}" xmlns="http://www.w3.org/2000/svg">
-          <style>
-            .t { font-family: Arial, sans-serif; font-size: ${fontSize}px; font-weight: 700; }
-          </style>
-          <rect x="0" y="0" width="${width}" height="${overlayHeight}" fill="transparent"/>
-          <text x="${padX}" y="${Math.max(32, fontSize + 12)}" class="t" fill="#000000" fill-opacity="0.55">${watermarkText}</text>
-          <text x="${padX}" y="${Math.max(31, fontSize + 11)}" class="t" fill="#FFFFFF" fill-opacity="0.70">${watermarkText}</text>
-        </svg>`);
+        <style>
+          .t { font-family: Arial, sans-serif; font-size: ${fontSize}px; font-weight: 700; }
+        </style>
+        <rect x="0" y="0" width="${width}" height="${overlayHeight}" fill="transparent"/>
+        <text x="${padX}" y="${Math.max(32, fontSize + 12)}" class="t" fill="#000000" fill-opacity="0.55">${watermarkText}</text>
+        <text x="${padX}" y="${Math.max(31, fontSize + 11)}" class="t" fill="#FFFFFF" fill-opacity="0.70">${watermarkText}</text>
+      </svg>`);
         const finalImage = await (0, sharp_1.default)(resized.data)
             .composite([
             {
@@ -128,5 +120,17 @@ exports.processOfferPhoto = (0, https_1.onCall)({
         height,
         sizeBytes: outputBuffer.length,
     };
+}
+exports.processOfferPhoto = (0, https_1.onCall)({
+    region: env_1.PROJECT_REGION,
+    timeoutSeconds: 60,
+    enforceAppCheck: env_1.ENFORCE_APP_CHECK,
+}, async (request) => {
+    const uid = requireAuthUid(request);
+    const storagePath = normalizeStoragePath(request.data?.storagePath);
+    if (!storagePath) {
+        throw new https_1.HttpsError("invalid-argument", "storagePath is required");
+    }
+    return processOfferPhotoStoragePath({ uid, storagePath });
 });
 //# sourceMappingURL=media.js.map

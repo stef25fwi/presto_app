@@ -43,6 +43,7 @@ class ConversationsListPage extends StatefulWidget {
 
 class _ConversationsListPageState extends State<ConversationsListPage> {
   final TextEditingController _searchController = TextEditingController();
+  final Set<String> _hiddenConversationIds = <String>{};
   bool _didHandleInitialConversation = false;
   bool _isResolvingInitialConversation = false;
   int _initialConversationResolveAttempts = 0;
@@ -470,6 +471,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           if (confirmed != true || !mounted) return;
           await ConversationService.deleteConversation(conversationId: conversationId);
           if (!mounted) return;
+          setState(() {
+            _hiddenConversationIds.add(conversationId);
+          });
           showSuccessSnackBar(context, 'Conversation supprimee.');
           return;
       }
@@ -918,6 +922,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                         final conversations = docs;
 
                         final visibleConversations = conversations.where((conversation) {
+                          if (_hiddenConversationIds.contains(conversation.id)) {
+                            return false;
+                          }
+
                           if (!conversation.includesUser(userId)) {
                             orphanCount += 1;
                             if (kDebugMode) {

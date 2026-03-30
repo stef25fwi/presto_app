@@ -7065,6 +7065,105 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return candidates.isNotEmpty ? candidates.first : null;
   }
 
+  String? _resolvePublishCategoryLabel(String? rawCategory) {
+    final canonical = canonicalizeOfferCategory(rawCategory);
+    if (canonical == null || canonical.trim().isEmpty) return null;
+
+    final normalizedCanonical = normalizeOfferText(canonical);
+    for (final category in _categories) {
+      if (normalizeOfferText(category) == normalizedCanonical) {
+        return category;
+      }
+    }
+    return null;
+  }
+
+  void _applyDetectedCityData({
+    String? city,
+    String? postalCode,
+  }) {
+    final rawCity = (city ?? '').trim();
+    final rawPostalCode = (postalCode ?? '').trim();
+
+    CityRecord? best;
+    if (rawPostalCode.isNotEmpty) {
+      best = CitySearch.instance.pickBestForPostalCode(rawPostalCode);
+    }
+
+    if (best == null && rawCity.isNotEmpty) {
+      final candidates = CitySearch.instance.search(rawCity, limit: 10);
+      if (rawPostalCode.isNotEmpty) {
+        for (final candidate in candidates) {
+          if (candidate.cp == rawPostalCode) {
+            best = candidate;
+            break;
+          }
+        }
+      }
+      best ??= candidates.isNotEmpty ? candidates.first : null;
+    }
+
+    if (best != null) {
+      _applyCity(best);
+      return;
+    }
+
+    setState(() {
+      if (rawCity.isNotEmpty) {
+        _locationController.text = rawCity;
+      }
+      if (rawPostalCode.isNotEmpty) {
+        _postalCodeController.text = rawPostalCode;
+        final dept = departmentFromPostalCode(rawPostalCode);
+        if (dept != null && dept.isNotEmpty) {
+          _selectedDeptCode = dept;
+          _selectedPhoneCountryCode = _countryCodeForDept(dept);
+        }
+      }
+    });
+  }
+
+  void _applyKeywordCategoryPairFromText(String text) {
+    final match = resolvePublishCategoryPairFromText(text);
+    if (match == null) return;
+
+    final currentCategory = (_category ?? '').trim();
+    final currentSubCategory = (_selectedSubCategory ?? '').trim();
+    final sameCategory = currentCategory.isNotEmpty &&
+        normalizeOfferText(currentCategory) ==
+            normalizeOfferText(match.category);
+    final canSetCategory = currentCategory.isEmpty;
+    final canSetSubCategory =
+        currentSubCategory.isEmpty && (canSetCategory || sameCategory);
+    final canSetTitle = _titleController.text.trim().isEmpty &&
+        (match.suggestedTitle ?? '').trim().isNotEmpty;
+
+    if (!canSetCategory && !canSetSubCategory && !canSetTitle) {
+      return;
+    }
+
+    setState(() {
+      if (canSetTitle) {
+        _titleController.text = match.suggestedTitle!.trim();
+      }
+
+      if (canSetCategory) {
+        _category = match.category;
+        _selectedSubCategory = null;
+      }
+
+      final effectiveCategory = (_category ?? '').trim();
+      final availableSubcategories =
+          kCategorySubcategories[match.category] ?? const <String>[];
+      if (currentSubCategory.isEmpty &&
+          normalizeOfferText(effectiveCategory) ==
+              normalizeOfferText(match.category) &&
+          availableSubcategories.contains(match.subCategory)) {
+        _selectedSubCategory = match.subCategory;
+      }
+    });
+  }
+
   /// Remplissage immédiat (latence perçue ↓) dès que la transcription est prête.
   /// L'IA pourra ensuite affiner et remplacer.
   void _applyFastDraftFromTranscript(String transcript) {
@@ -7118,47 +7217,57 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         });
       }
     }
+
+    _applyKeywordCategoryPairFromText(t);
   }
 
   /// Apply server-side draft (from microIaProcessAudio combined mode).
   /// The draft uses the rich JSON format from _internalGenerateDraft.
   void _applyServerDraftToForm(Map<String, dynamic> draft) {
+    final title = (draft['title'] ?? '').toString().trim();
+    final description = (draft['description'] ?? '').toString().trim();
+
     setState(() {
-      final title = (draft['title'] ?? '').toString().trim();
-      final category = (draft['category'] ?? '').toString().trim();
-      final description = (draft['description'] ?? '').toString().trim();
-      final city = (draft['city'] ?? '').toString().trim();
-      final postalCode = (draft['postalCode'] ?? '').toString().trim();
+      final category =
+          _resolvePublishCategoryLabel((draft['category'] ?? '').toString());
 
       if (title.isNotEmpty) _titleController.text = title;
       if (description.isNotEmpty) _descriptionController.text = description;
-      if (category.isNotEmpty) {
+      if (category != null && category.isNotEmpty) {
         _category = category;
         _selectedSubCategory = null;
       }
-      if (city.isNotEmpty) _locationController.text = city;
-      if (postalCode.isNotEmpty) _postalCodeController.text = postalCode;
     });
+
+    _applyDetectedCityData(
+      city: (draft['city'] ?? '').toString(),
+      postalCode: (draft['postalCode'] ?? '').toString(),
+    );
+    _applyKeywordCategoryPairFromText('$title\n$description');
   }
 
   /// Apply legacy draft from AiDraftService (fallback path).
   void _applyLegacyDraftToForm(Map<String, dynamic> draft) {
+    final title = (draft['title'] as String? ?? '').trim();
+    final description = (draft['description'] as String? ?? '').trim();
+
     setState(() {
-      final title = (draft['title'] as String? ?? '').trim();
-      final category = (draft['category'] as String? ?? '').trim();
-      final description = (draft['description'] as String? ?? '').trim();
-      final location = (draft['location'] as String? ?? '').trim();
-      final postalCode = (draft['postalCode'] as String? ?? '').trim();
+      final category =
+          _resolvePublishCategoryLabel(draft['category'] as String? ?? '');
 
       if (title.isNotEmpty) _titleController.text = title;
       if (description.isNotEmpty) _descriptionController.text = description;
-      if (category.isNotEmpty) {
+      if (category != null && category.isNotEmpty) {
         _category = category;
         _selectedSubCategory = null;
       }
-      if (location.isNotEmpty) _locationController.text = location;
-      if (postalCode.isNotEmpty) _postalCodeController.text = postalCode;
     });
+
+    _applyDetectedCityData(
+      city: draft['location'] as String? ?? '',
+      postalCode: draft['postalCode'] as String? ?? '',
+    );
+    _applyKeywordCategoryPairFromText('$title\n$description');
   }
 
   @override
@@ -7356,7 +7465,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _validatePublishDescription(_descriptionController.text) == null;
     final cityOk = _locationController.text.trim().isNotEmpty;
     final catOk = (_category ?? '').trim().isNotEmpty;
-    final subOk = (_selectedSubCategory ?? '').trim().isNotEmpty;
+    const subOk = true;
     final delayOk = (_missionDelay ?? '').trim().isNotEmpty;
     final phoneOk = _isValidPhoneFR(_phoneController.text);
     final budgetOk = _budgetType == 'À négocier'
@@ -7825,28 +7934,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (!mounted) return;
 
       if (draft['success'] == true) {
-        setState(() {
-          if ((draft['title'] as String).isNotEmpty) {
-            _titleController.text = draft['title'] as String;
-          }
-          if ((draft['category'] as String).isNotEmpty) {
-            _category = draft['category'] as String;
-            _selectedSubCategory = null;
-          }
-          if ((draft['description'] as String).isNotEmpty) {
-            _descriptionController.text = draft['description'] as String;
-          }
-          // Remplir la ville si disponible
-          final location = (draft['location'] as String? ?? '').trim();
-          if (location.isNotEmpty) {
-            _locationController.text = location;
-          }
-          // Remplir le code postal si disponible
-          final postalCode = (draft['postalCode'] as String? ?? '').trim();
-          if (postalCode.isNotEmpty) {
-            _postalCodeController.text = postalCode;
-          }
-        });
+        _applyLegacyDraftToForm(draft);
+        _applyKeywordCategoryPairFromText(input);
 
         showSuccessSnackBar(
           context,
@@ -8201,12 +8290,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (source == null) return;
 
       final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-        source: source,
-        imageQuality: 85,
-        maxWidth: 2000,
-        maxHeight: 2000,
-      );
+      final XFile? image = await picker.pickImage(source: source);
 
       if (image == null) return;
 
@@ -8350,7 +8434,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         ownerId: user.uid,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
-        category: (_category ?? '').trim(),
+        category: _resolvePublishCategoryLabel(_category) ?? (_category ?? '').trim(),
         city: _locationController.text.trim(),
         postalCode: _postalCodeController.text.trim(),
         phone: _phoneController.text.trim(),
@@ -8678,7 +8762,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     dropdownColor: Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     decoration: InputDecoration(
-                      label: _requiredLabel('Sous-catégorie'),
+                      labelText: 'Sous-catégorie',
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -8701,12 +8785,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       });
                       _recompute();
                     },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Merci de choisir une sous-catégorie';
-                      }
-                      return null;
-                    },
+                    validator: (_) => null,
                   ),
                 if (_category != null) const SizedBox(height: 16),
 
@@ -11423,6 +11502,45 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     return null;
   }
 
+  bool _offerHasPhotos(Map<String, dynamic> data) {
+    final media = data['media'];
+    if (media is List && media.isNotEmpty) {
+      return true;
+    }
+
+    final imageUrls = data['imageUrls'];
+    if (imageUrls is List && imageUrls.isNotEmpty) {
+      return true;
+    }
+
+    final imageUrl = (data['imageUrl'] ?? '').toString().trim();
+    return imageUrl.isNotEmpty;
+  }
+
+  bool _offerMediaStillProcessing(Map<String, dynamic> data) {
+    final raw = (data['mediaProcessingStatus'] ?? '').toString().trim().toLowerCase();
+    if (raw == 'processing') {
+      return true;
+    }
+    if (raw == 'completed' || raw == 'done') {
+      return false;
+    }
+
+    return _isOfferPending(data) && _offerHasPhotos(data);
+  }
+
+  String? _offerPendingPhotoNotice(Map<String, dynamic> data) {
+    if (!_isOfferPending(data) || !_offerHasPhotos(data)) {
+      return null;
+    }
+
+    if (_offerMediaStillProcessing(data)) {
+      return 'Photos en traitement. L’annonce reste temporairement en attente avant publication.';
+    }
+
+    return 'Photos prêtes. L’annonce reste en attente de validation avant publication.';
+  }
+
   String _sectionTitle(_OfferManagementSection section) {
     switch (section) {
       case _OfferManagementSection.pending:
@@ -11792,6 +11910,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     final canEdit = _canEditOffer(item.section) && !isBusy;
     final canDelete = _canDeleteOffer(item.section) && !isBusy;
     final details = _offerStatusDetails(data);
+    final pendingPhotoNotice = _offerPendingPhotoNotice(data);
+    final mediaIsProcessing = _offerMediaStillProcessing(data);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -11844,6 +11964,50 @@ class _UserOffersSectionState extends State<UserOffersSection> {
               _buildMetaChip(Icons.place_outlined, _offerLocation(data)),
             ],
           ),
+          if (pendingPhotoNotice != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3E6),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFFC78F)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFF7A00),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      mediaIsProcessing
+                          ? Icons.sync_rounded
+                          : Icons.hourglass_top_rounded,
+                      size: 15,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      pendingPhotoNotice,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        height: 1.35,
+                        color: Color(0xFF8A3B00),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           if (details != null) ...[
             const SizedBox(height: 10),
             Container(

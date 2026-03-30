@@ -1,4 +1,3 @@
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -24,17 +23,13 @@ class MarketplacePublishService {
   MarketplacePublishService({
     ListingRepository? listingRepository,
     FirebaseStorage? storage,
-    FirebaseFunctions? functions,
     MarketplaceHumanVerification? verification,
   })  : _listingRepository = listingRepository ?? ListingRepository(),
         _storage = storage ?? FirebaseStorage.instance,
-        _functions = functions ??
-            FirebaseFunctions.instanceFor(region: 'europe-west1'),
         _verification = verification ?? const MarketplaceHumanVerification();
 
   final ListingRepository _listingRepository;
   final FirebaseStorage _storage;
-  final FirebaseFunctions _functions;
   final MarketplaceHumanVerification _verification;
 
   void _validateDraftInputs({
@@ -99,11 +94,6 @@ class MarketplacePublishService {
     required String uid,
     required List<XFile> photos,
   }) async {
-    final callable = _functions.httpsCallable(
-      'processOfferPhoto',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 60)),
-    );
-
     final media = <ListingMediaInput>[];
     for (var index = 0; index < photos.length; index += 1) {
       final photo = photos[index];
@@ -122,41 +112,22 @@ class MarketplacePublishService {
         ),
       );
 
-      final response = await _runWithChannelRetry<HttpsCallableResult<dynamic>>(
-        stepLabel: 'traitement photo',
-        action: () => callable.call<dynamic>(<String, dynamic>{
-          'storagePath': rawPath,
-        }),
+      final downloadUrl = await _runWithChannelRetry<String>(
+        stepLabel: 'url photo',
+        action: () => ref.getDownloadURL(),
       );
-      final data = response.data is Map
-          ? Map<String, dynamic>.from(response.data as Map)
-          : const <String, dynamic>{};
-      final storagePath = (data['storagePath'] ?? '').toString().trim();
-      final downloadUrl = (data['downloadUrl'] ?? '').toString().trim();
-      final thumbnailUrl =
-          (data['thumbnailUrl'] ?? downloadUrl).toString().trim();
-      final mimeType = (data['mimeType'] ?? 'image/webp').toString().trim();
-      final width = data['width'] is num ? (data['width'] as num).toInt() : null;
-      final height =
-          data['height'] is num ? (data['height'] as num).toInt() : null;
-      final sizeBytes =
-          data['sizeBytes'] is num ? (data['sizeBytes'] as num).toInt() : null;
-      if (storagePath.isEmpty ||
-          downloadUrl.isEmpty ||
-          !storagePath.toLowerCase().endsWith('.webp') ||
-          mimeType.toLowerCase() != 'image/webp') {
-        throw StateError('Le traitement d\'image marketplace a renvoyé un payload incomplet.');
+
+      if (downloadUrl.trim().isEmpty) {
+        throw StateError('Le stockage photo n\'a pas renvoyé d\'URL exploitable.');
       }
 
       media.add(
         ListingMediaInput(
-          storagePath: storagePath,
+          storagePath: rawPath,
           downloadUrl: downloadUrl,
-          thumbnailUrl: thumbnailUrl.isEmpty ? downloadUrl : thumbnailUrl,
-          width: width,
-          height: height,
-          mimeType: mimeType,
-          sizeBytes: sizeBytes ?? bytes.length,
+          thumbnailUrl: downloadUrl,
+          mimeType: contentType,
+          sizeBytes: bytes.length,
         ),
       );
     }
@@ -243,6 +214,29 @@ class MarketplacePublishService {
           draftId: draftId,
           recaptchaToken: recaptchaToken,
         );
+        final displayMedia = result.media.isNotEmpty
+            ? result.media
+                .map(
+                  (entry) => ListingMediaInput(
+                    storagePath: (entry['storagePath'] ?? '').toString().trim(),
+                    downloadUrl: (entry['downloadUrl'] ?? '').toString().trim(),
+                    thumbnailUrl: ((entry['thumbnailUrl'] ?? entry['downloadUrl']) ?? '')
+                        .toString()
+                        .trim(),
+                    width: entry['width'] is num ? (entry['width'] as num).toInt() : null,
+                    height: entry['height'] is num ? (entry['height'] as num).toInt() : null,
+                    mimeType: (entry['mimeType'] ?? '').toString().trim().isEmpty
+                        ? null
+                        : (entry['mimeType'] ?? '').toString().trim(),
+                    sizeBytes: entry['sizeBytes'] is num
+                        ? (entry['sizeBytes'] as num).toInt()
+                        : null,
+                  ),
+                )
+                .where((entry) =>
+                    entry.storagePath.isNotEmpty && entry.downloadUrl.isNotEmpty)
+                .toList(growable: false)
+            : media;
 
         final statusBadges = <String>[
           if (isUrgent) 'Urgent',
@@ -279,10 +273,12 @@ class MarketplacePublishService {
             'missionDelay': (missionDelay ?? '').trim(),
             'averageDelay': (missionDelay ?? '').trim(),
             'statusBadges': statusBadges,
-            'imageUrls': media
+            'imageUrls': displayMedia
                 .map((entry) => entry.downloadUrl)
                 .toList(growable: false),
-            'media': media.map((entry) => entry.toMap()).toList(growable: false),
+            'media': displayMedia
+              .map((entry) => entry.toMap())
+              .toList(growable: false),
             'ownerId': ownerId,
             'userId': ownerId,
             'status': result.status.value,
@@ -300,15 +296,23 @@ class MarketplacePublishService {
   String _storageExtension(XFile photo) {
     final mime = (photo.mimeType ?? '').toLowerCase().trim();
     if (mime == 'image/webp') return 'webp';
+    if (mime == 'image/avif') return 'avif';
     if (mime == 'image/png') return 'png';
     if (mime == 'image/heic' || mime == 'image/heif') return 'heic';
     if (mime == 'image/gif') return 'gif';
+    if (mime == 'image/bmp') return 'bmp';
+    if (mime == 'image/tiff') return 'tiff';
+    if (mime == 'image/jpeg' || mime == 'image/jpg') return 'jpg';
 
     final path = photo.path.toLowerCase();
     if (path.endsWith('.webp')) return 'webp';
+    if (path.endsWith('.avif')) return 'avif';
     if (path.endsWith('.png')) return 'png';
     if (path.endsWith('.heic') || path.endsWith('.heif')) return 'heic';
     if (path.endsWith('.gif')) return 'gif';
+    if (path.endsWith('.bmp')) return 'bmp';
+    if (path.endsWith('.tif') || path.endsWith('.tiff')) return 'tiff';
+    if (path.endsWith('.jpeg') || path.endsWith('.jpg')) return 'jpg';
     return 'jpg';
   }
 
@@ -320,9 +324,12 @@ class MarketplacePublishService {
 
     return switch (_storageExtension(photo)) {
       'webp' => 'image/webp',
+      'avif' => 'image/avif',
       'png' => 'image/png',
       'heic' => 'image/heic',
       'gif' => 'image/gif',
+      'bmp' => 'image/bmp',
+      'tiff' => 'image/tiff',
       _ => 'image/jpeg',
     };
   }
