@@ -41,6 +41,7 @@ import 'services/email_action_service.dart';
 import 'services/inbox_counts.dart';
 import 'services/app_route_parser.dart';
 import 'services/marketplace_publish_service.dart';
+import 'services/marketplace_remote_config_service.dart';
 import 'services/notification_service.dart';
 import 'services/offer_indexing.dart';
 import 'utils/crashlytics_context.dart';
@@ -6914,6 +6915,8 @@ class PublishOfferPage extends StatefulWidget {
 class _PublishOfferPageState extends State<PublishOfferPage> {
   static final MarketplacePublishService _marketplacePublishService =
       MarketplacePublishService();
+  static const int _defaultMaxListingPhotos = 10;
+  static const int _minimumMaxListingPhotos = 1;
 
   // ✅ NOUVEAU: Variables pour le streaming
   final StreamController<String> _transcriptionStream =
@@ -6921,6 +6924,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   String _partialTranscript = '';
   Timer? _streamingTimer;
   bool _isStreaming = false;
+    final MarketplaceRemoteConfigService _marketplaceRemoteConfigService =
+      MarketplaceRemoteConfigService();
+    int _maxListingPhotos = _defaultMaxListingPhotos;
 
   // ✅ AJOUT: Subscription pour le stream audio
   StreamSubscription<Uint8List>? _streamMicSub;
@@ -7266,7 +7272,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   ];
   String? _missionDelay;
 
-  // Photos (max 2)
+  // Photos marketplace
   final List<XFile> _selectedPhotos = [];
   final List<Uint8List?> _selectedPhotoBytes = [];
   final List<String> _uploadedPhotoUrls = [];
@@ -7597,6 +7603,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   void initState() {
     super.initState();
+    unawaited(_loadMarketplacePhotoLimit());
 
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
@@ -7619,6 +7626,31 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _applyFastDraftFromTranscript(text);
       });
     });
+  }
+
+  Future<void> _loadMarketplacePhotoLimit() async {
+    try {
+      await _marketplaceRemoteConfigService.initialize();
+      final configuredLimit = _marketplaceRemoteConfigService.listingMaxPhotos;
+      final normalizedLimit = configuredLimit < _minimumMaxListingPhotos
+          ? _minimumMaxListingPhotos
+          : configuredLimit;
+      if (!mounted || normalizedLimit == _maxListingPhotos) {
+        return;
+      }
+      setState(() {
+        _maxListingPhotos = normalizedLimit;
+      });
+    } catch (_) {
+      // Garde la valeur par défaut si la remote config n'est pas disponible.
+    }
+  }
+
+  int get _visiblePhotoTileCount {
+    if (_selectedPhotos.length >= _maxListingPhotos) {
+      return _maxListingPhotos;
+    }
+    return _selectedPhotos.length + 1;
   }
 
   bool _isValidPhoneFR(String raw) {
@@ -8871,8 +8903,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _pickImage(int photoIndex) async {
-    if (_selectedPhotos.length >= 2 && photoIndex >= _selectedPhotos.length) {
-      showSuccessSnackBar(context, 'Maximum 2 photos autorisées');
+    if (_selectedPhotos.length >= _maxListingPhotos &&
+        photoIndex >= _selectedPhotos.length) {
+      final photoLabel = _maxListingPhotos > 1 ? 'photos' : 'photo';
+      showSuccessSnackBar(
+        context,
+        'Maximum $_maxListingPhotos $photoLabel autorisées',
+      );
       return;
     }
 
@@ -9434,9 +9471,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // PHOTOS (max 2)
+                // PHOTOS
                 Row(
-                  children: const [
+                  children: [
                     Text(
                       'Photos de l\'offre',
                       style: TextStyle(
@@ -9446,8 +9483,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     ),
                     SizedBox(width: 8),
                     Text(
-                      '(optionnel)',
-                      style: TextStyle(
+                      '(optionnel, jusqu\'à $_maxListingPhotos)',
+                      style: const TextStyle(
                         fontSize: 13,
                         color: Colors.black54,
                         fontWeight: FontWeight.w600,
@@ -9456,42 +9493,30 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: PhotoSelectorTile(
-                        label: 'Photo 1',
-                        file: _selectedPhotos.isNotEmpty
-                            ? _selectedPhotos[0]
-                            : null,
-                        bytes: _selectedPhotoBytes.isNotEmpty
-                            ? _selectedPhotoBytes[0]
-                            : null,
-                        onTap: () => _onPhotoTileTap(0),
-                        onLongPress: () => _pickImage(0),
-                        onRemove: _selectedPhotos.isNotEmpty
-                            ? () => _removePhotoAt(0)
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: PhotoSelectorTile(
-                        label: 'Photo 2',
-                        file: _selectedPhotos.length > 1
-                            ? _selectedPhotos[1]
-                            : null,
-                        bytes: _selectedPhotoBytes.length > 1
-                            ? _selectedPhotoBytes[1]
-                            : null,
-                        onTap: () => _onPhotoTileTap(1),
-                        onLongPress: () => _pickImage(1),
-                        onRemove: _selectedPhotos.length > 1
-                            ? () => _removePhotoAt(1)
-                            : null,
-                      ),
-                    ),
-                  ],
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _visiblePhotoTileCount,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.55,
+                  ),
+                  itemBuilder: (context, index) {
+                    final hasPhoto = index < _selectedPhotos.length;
+                    return PhotoSelectorTile(
+                      label: 'Photo ${index + 1}',
+                      file: hasPhoto ? _selectedPhotos[index] : null,
+                      bytes: hasPhoto && index < _selectedPhotoBytes.length
+                          ? _selectedPhotoBytes[index]
+                          : null,
+                      onTap: () => _onPhotoTileTap(index),
+                      onLongPress: () => _pickImage(index),
+                      onRemove:
+                          hasPhoto ? () => _removePhotoAt(index) : null,
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
 
