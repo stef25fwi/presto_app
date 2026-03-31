@@ -430,6 +430,20 @@ export function finalizeListingPublication({
     };
   }
 
+  // manual_review listings (riskScore >= 55, often caused by duplicate titles
+  // or high submission volume) can also be auto-published when auto-approval
+  // is enabled to avoid permanent pending state.
+  if (evaluation.moderationDecision === "manual_review" && allowAutoApproval) {
+    return {
+      status: "active",
+      moderationStatus: "manual_review",
+      visibility: "public",
+      publishedAt: now,
+      autoPublishAfter: null,
+      riskScore: evaluation.riskScore,
+    };
+  }
+
   const moderationStatus: ModerationStatus = evaluation.moderationDecision === "auto_flagged"
     ? "auto_flagged"
     : "manual_review";
