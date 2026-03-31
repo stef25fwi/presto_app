@@ -30,6 +30,28 @@ test("computeModerationDecision sends duplicates to manual review", () => {
   });
 });
 
+test("finalizeListingPublication publishes approved listings when auto-approval is enabled", () => {
+  const now = Symbol("serverTimestamp") as unknown as FirebaseFirestore.FieldValue;
+  const publication = finalizeListingPublication({
+    evaluation: {
+      safeSearchResult: {},
+      autoFlags: [],
+      riskScore: 12,
+      imageScanStatus: "completed",
+      textScanStatus: "completed",
+      moderationDecision: "approved",
+      moderationReason: "approved_automatically",
+    },
+    now,
+    autoApproveEnabled: true,
+  });
+
+  assert.equal(publication.status, "active");
+  assert.equal(publication.moderationStatus, "approved");
+  assert.equal(publication.visibility, "public");
+  assert.equal(publication.publishedAt, now);
+});
+
 test("finalizeListingPublication keeps approved listings private when auto-approval is disabled", () => {
   const now = Symbol("serverTimestamp") as unknown as FirebaseFirestore.FieldValue;
   const publication = finalizeListingPublication({

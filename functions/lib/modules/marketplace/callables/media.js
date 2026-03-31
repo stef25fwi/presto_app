@@ -10,6 +10,9 @@ const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const sharp_1 = __importDefault(require("sharp"));
 const env_1 = require("../../../config/env");
+const WATERMARK_LOGO_URL = `${env_1.APP_BASE_URL.replace(/\/+$/, "")}/assets/images/logowebp.webp`;
+let cachedWatermarkLogoBuffer = null;
+let cachedWatermarkLogoPromise = null;
 function requireAuthUid(request) {
     const uid = String(request.auth?.uid || "").trim();
     if (!uid) {
@@ -19,6 +22,76 @@ function requireAuthUid(request) {
 }
 function normalizeStoragePath(value) {
     return String(value ?? "").trim();
+}
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+async function loadWatermarkLogoBuffer() {
+    if (cachedWatermarkLogoBuffer) {
+        return cachedWatermarkLogoBuffer;
+    }
+    if (cachedWatermarkLogoPromise) {
+        return cachedWatermarkLogoPromise;
+    }
+    cachedWatermarkLogoPromise = (async () => {
+        try {
+            const response = await fetch(WATERMARK_LOGO_URL);
+            if (!response.ok) {
+                return null;
+            }
+            const buffer = Buffer.from(await response.arrayBuffer());
+            if (!buffer.length) {
+                return null;
+            }
+            cachedWatermarkLogoBuffer = buffer;
+            return buffer;
+        }
+        catch {
+            return null;
+        }
+        finally {
+            cachedWatermarkLogoPromise = null;
+        }
+    })();
+    return cachedWatermarkLogoPromise;
+}
+function buildUidWatermarkSvg({ uid, width, }) {
+    const fontSize = Math.max(14, Math.min(28, Math.round(width * 0.022)));
+    const padX = Math.max(10, Math.round(width * 0.02));
+    const overlayHeight = Math.max(44, fontSize + 16);
+    const safeUid = uid.replace(/[<>&"']/g, "");
+    const watermarkText = `UID ${safeUid}`;
+    return Buffer.from(`<svg width="${width}" height="${overlayHeight}" xmlns="http://www.w3.org/2000/svg">
+      <style>
+        .t { font-family: Arial, sans-serif; font-size: ${fontSize}px; font-weight: 700; }
+      </style>
+      <rect x="0" y="0" width="${width}" height="${overlayHeight}" fill="transparent"/>
+      <text x="${padX}" y="${Math.max(32, fontSize + 12)}" class="t" fill="#000000" fill-opacity="0.55">${watermarkText}</text>
+      <text x="${padX}" y="${Math.max(31, fontSize + 11)}" class="t" fill="#FFFFFF" fill-opacity="0.70">${watermarkText}</text>
+    </svg>`);
+}
+async function buildLogoWatermarkBuffer({ width, height, }) {
+    const logoBuffer = await loadWatermarkLogoBuffer();
+    if (!logoBuffer) {
+        return null;
+    }
+    const logoWidth = clamp(Math.round(width * 0.2), 120, 320);
+    const logoHeight = clamp(Math.round(height * 0.14), 60, 180);
+    try {
+        return await (0, sharp_1.default)(logoBuffer)
+            .resize({
+            width: logoWidth,
+            height: logoHeight,
+            fit: "inside",
+            withoutEnlargement: true,
+        })
+            .ensureAlpha(0.72)
+            .png()
+            .toBuffer();
+    }
+    catch {
+        return null;
+    }
 }
 async function processOfferPhotoStoragePath({ uid, storagePath, }) {
     const expectedPrefix = `offers_raw/${uid}/`;
@@ -54,24 +127,17 @@ async function processOfferPhotoStoragePath({ uid, storagePath, }) {
             .toBuffer({ resolveWithObject: true });
         width = resized.info.width ?? 1600;
         height = resized.info.height ?? 1200;
-        const fontSize = Math.max(14, Math.min(28, Math.round(width * 0.022)));
-        const padX = Math.max(10, Math.round(width * 0.02));
-        const overlayHeight = Math.max(44, fontSize + 16);
-        const safeUid = uid.replace(/[<>&"']/g, "");
-        const watermarkText = `UID ${safeUid}`;
-        const svg = Buffer.from(`<svg width="${width}" height="${overlayHeight}" xmlns="http://www.w3.org/2000/svg">
-        <style>
-          .t { font-family: Arial, sans-serif; font-size: ${fontSize}px; font-weight: 700; }
-        </style>
-        <rect x="0" y="0" width="${width}" height="${overlayHeight}" fill="transparent"/>
-        <text x="${padX}" y="${Math.max(32, fontSize + 12)}" class="t" fill="#000000" fill-opacity="0.55">${watermarkText}</text>
-        <text x="${padX}" y="${Math.max(31, fontSize + 11)}" class="t" fill="#FFFFFF" fill-opacity="0.70">${watermarkText}</text>
-      </svg>`);
+        const logoWatermark = await buildLogoWatermarkBuffer({ width, height });
+        const textWatermark = !logoWatermark ? buildUidWatermarkSvg({ uid, width }) : null;
+        const watermarkInput = logoWatermark ?? textWatermark;
+        if (!watermarkInput) {
+            throw new Error("No watermark overlay available");
+        }
         const finalImage = await (0, sharp_1.default)(resized.data)
             .composite([
             {
-                input: svg,
-                gravity: "southwest",
+                input: watermarkInput,
+                gravity: logoWatermark ? "southeast" : "southwest",
             },
         ])
             .webp({ quality: 82, effort: 5 })
