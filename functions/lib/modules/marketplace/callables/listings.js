@@ -178,7 +178,7 @@ async function ensureCategoryAndCityAreResolvable(validated) {
         city: fallbackCityData,
     };
 }
-async function readOwnerSignals(ownerId, normalizedTitle) {
+async function readOwnerSignals(ownerId, normalizedTitle, excludeListingId) {
     const [userSnap, listingSnap] = await Promise.all([
         firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(ownerId).get(),
         firestore_1.db.collection(constants_1.COLLECTIONS.listings).where("ownerId", "==", ownerId).limit(20).get(),
@@ -193,6 +193,8 @@ async function readOwnerSignals(ownerId, normalizedTitle) {
         return false;
     }).length;
     const hasSimilarActiveListing = listingSnap.docs.some((doc) => {
+        if (excludeListingId && doc.id === excludeListingId)
+            return false;
         const data = doc.data();
         const status = normalizeString(data.status).toLowerCase();
         const sameTitle = normalizeString(data.title).toLowerCase() === normalizedTitle;
@@ -253,9 +255,9 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
         }
         const validated = (0, listings_1.validateListingDraftPayload)(draftData, config.maxMediaCount || env_1.MARKETPLACE_MAX_MEDIA_COUNT);
         const refsData = await ensureCategoryAndCityAreResolvable(validated);
-        const ownerSignals = await readOwnerSignals(ownerId, validated.title.toLowerCase());
-        const ownerIdentity = await loadOwnerPublicIdentity(ownerId);
         const listingId = draftId;
+        const ownerSignals = await readOwnerSignals(ownerId, validated.title.toLowerCase(), listingId);
+        const ownerIdentity = await loadOwnerPublicIdentity(ownerId);
         const listingRef = firestore_1.db.collection(constants_1.COLLECTIONS.listings).doc(listingId);
         const now = firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
         const expiresAt = firebase_admin_1.default.firestore.Timestamp.fromDate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
@@ -340,11 +342,9 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
                 lastRecaptchaScore: recaptcha.score,
             },
         });
-        const autoPublishAfter = config.autoApproveEnabled &&
-            evaluation.moderationDecision === "approved" &&
-            normalizedMedia.length > 0
-            ? firebase_admin_1.default.firestore.Timestamp.fromDate(new Date(Date.now() + 60 * 1000))
-            : null;
+        // Photos are processed synchronously above, so no need for deferred
+        // autoPublishAfter — publish immediately when approved.
+        const autoPublishAfter = null;
         const publication = await (0, moderation_1.persistModerationResult)({
             listingId,
             ownerId,
