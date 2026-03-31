@@ -71,7 +71,7 @@
     {
       "label": "Git: Commit All",
       "type": "shell",
-      "command": "git commit -m \"fix(publish): unblock marketplace listing finalization\"",
+      "command": "git commit -m \"fix(publish): restore missing category fallback on submit\"",
       "problemMatcher": []
     },
     {
