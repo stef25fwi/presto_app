@@ -28,6 +28,15 @@ function requireAuthUid(request) {
 function normalizeString(value) {
     return String(value ?? "").trim();
 }
+function departmentFromPostalCode(postalCode) {
+    const cp = postalCode.trim();
+    if (cp.length < 2)
+        return "";
+    if (cp.startsWith("97") || cp.startsWith("98")) {
+        return cp.length >= 3 ? cp.slice(0, 3) : cp;
+    }
+    return cp.slice(0, 2);
+}
 async function normalizeListingMediaForSubmission({ ownerId, media, }) {
     return Promise.all(media.map(async (entry) => {
         const storagePath = normalizeString(entry.storagePath);
@@ -81,6 +90,45 @@ async function ensureCategoryAndCityAreActive(categoryId, cityId) {
     return {
         category: categorySnap.data() ?? {},
         city: citySnap.data() ?? {},
+    };
+}
+async function ensureCategoryAndCityAreResolvable(validated) {
+    const [categorySnap, citySnap] = await Promise.all([
+        firestore_1.db.collection(constants_1.COLLECTIONS.categories).doc(validated.categoryId).get(),
+        firestore_1.db.collection(constants_1.COLLECTIONS.cities).doc(validated.cityId).get(),
+    ]);
+    if (!categorySnap.exists || categorySnap.data()?.isActive === false) {
+        throw new https_1.HttpsError("failed-precondition", "Category is invalid or inactive");
+    }
+    if (citySnap.exists && citySnap.data()?.isActive !== false) {
+        return {
+            category: categorySnap.data() ?? {},
+            city: citySnap.data() ?? {},
+        };
+    }
+    const fallbackCityLabel = normalizeString(validated.city || validated.location);
+    const fallbackPostalCode = normalizeString(validated.postalCode || validated.cp);
+    if (!fallbackCityLabel || !fallbackPostalCode) {
+        throw new https_1.HttpsError("failed-precondition", "City is invalid or inactive");
+    }
+    const slug = validated.cityId.includes("_")
+        ? validated.cityId.slice(validated.cityId.indexOf("_") + 1)
+        : validated.cityId;
+    const departmentCode = normalizeString(validated.dept) || departmentFromPostalCode(fallbackPostalCode);
+    const fallbackCityData = {
+        id: validated.cityId,
+        slug,
+        label: fallbackCityLabel,
+        postalCodes: [fallbackPostalCode],
+        primaryPostalCode: fallbackPostalCode,
+        departmentCode: departmentCode || null,
+        regionCode: normalizeString(validated.region) || null,
+        isActive: true,
+    };
+    await firestore_1.db.collection(constants_1.COLLECTIONS.cities).doc(validated.cityId).set(fallbackCityData, { merge: true });
+    return {
+        category: categorySnap.data() ?? {},
+        city: fallbackCityData,
     };
 }
 async function readOwnerSignals(ownerId, normalizedTitle) {
@@ -140,7 +188,7 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
             throw new https_1.HttpsError("permission-denied", "You do not own this draft");
         }
         const validated = (0, listings_1.validateListingDraftPayload)(draftData, config.maxMediaCount || env_1.MARKETPLACE_MAX_MEDIA_COUNT);
-        const refsData = await ensureCategoryAndCityAreActive(validated.categoryId, validated.cityId);
+        const refsData = await ensureCategoryAndCityAreResolvable(validated);
         const ownerSignals = await readOwnerSignals(ownerId, validated.title.toLowerCase());
         const listingId = draftId;
         const listingRef = firestore_1.db.collection(constants_1.COLLECTIONS.listings).doc(listingId);
@@ -153,8 +201,17 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
             title: validated.title,
             description: validated.description,
             price: validated.price,
+            budgetValue: validated.budgetValue ?? validated.price,
             categoryId: validated.categoryId,
+            category: validated.category || null,
             cityId: validated.cityId,
+            city: validated.city || validated.location || null,
+            location: validated.location || validated.city || null,
+            postalCode: validated.postalCode || validated.cp || null,
+            cp: validated.cp || validated.postalCode || null,
+            dept: validated.dept || normalizeString(cityData.departmentCode) || null,
+            region: validated.region || normalizeString(cityData.regionCode) || null,
+            cityCategoryKey: validated.cityCategoryKey || null,
             media: validated.media,
             thumbnailUrl: validated.thumbnailUrl,
             phone: validated.phone || null,

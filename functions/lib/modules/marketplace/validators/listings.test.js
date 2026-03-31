@@ -14,6 +14,15 @@ const listings_1 = require("./listings");
         price: "95",
         categoryId: "bricolage-travaux",
         cityId: "97139_les-abymes",
+        category: "Bricolage / Travaux",
+        city: "Les Abymes",
+        location: "Les Abymes",
+        postalCode: "97139",
+        cp: "97139",
+        dept: "971",
+        region: "01",
+        cityCategoryKey: "97139_les-abymes_bricolage-travaux",
+        budgetValue: 95,
         media: [
             {
                 storagePath: "listings/u1/photo.webp",
@@ -25,6 +34,8 @@ const listings_1 = require("./listings");
     strict_1.default.equal(payload.price, 95);
     strict_1.default.equal(payload.thumbnailUrl, "https://cdn.example/photo.webp");
     strict_1.default.equal(payload.media.length, 1);
+    strict_1.default.equal(payload.city, "Les Abymes");
+    strict_1.default.equal(payload.postalCode, "97139");
     strict_1.default.ok(payload.searchKeywords.includes("montage"));
     strict_1.default.ok(payload.searchKeywords.includes("bricolage"));
     strict_1.default.ok(payload.searchKeywords.includes("97139"));
