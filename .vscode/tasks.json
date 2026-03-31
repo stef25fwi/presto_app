@@ -204,6 +204,18 @@
       "problemMatcher": []
     },
     {
+      "label": "Add Commit Push Build Deploy",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: Add All",
+        "Functions: Build",
+        "Git: Commit Listings imageUrls",
+        "Git: Push Main",
+        "Firebase: Deploy"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Firebase: List Firestore Indexes",
       "type": "shell",
       "command": "gcloud firestore indexes composite list --project=presto-app-74abe",
