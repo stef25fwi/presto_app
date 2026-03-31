@@ -37,6 +37,14 @@ function departmentFromPostalCode(postalCode) {
     }
     return cp.slice(0, 2);
 }
+function buildCategoryKeywords(label, categoryId) {
+    const tokens = `${label} ${categoryId}`
+        .toLowerCase()
+        .split(/[^a-z0-9]+/i)
+        .map((value) => value.trim())
+        .filter((value) => value.length >= 2);
+    return Array.from(new Set(tokens)).slice(0, 20);
+}
 async function normalizeListingMediaForSubmission({ ownerId, media, }) {
     return Promise.all(media.map(async (entry) => {
         const storagePath = normalizeString(entry.storagePath);
@@ -97,12 +105,27 @@ async function ensureCategoryAndCityAreResolvable(validated) {
         firestore_1.db.collection(constants_1.COLLECTIONS.categories).doc(validated.categoryId).get(),
         firestore_1.db.collection(constants_1.COLLECTIONS.cities).doc(validated.cityId).get(),
     ]);
-    if (!categorySnap.exists || categorySnap.data()?.isActive === false) {
+    if (categorySnap.exists && categorySnap.data()?.isActive === false) {
         throw new https_1.HttpsError("failed-precondition", "Category is invalid or inactive");
+    }
+    let categoryData = (categorySnap.data() ?? {});
+    if (!categorySnap.exists) {
+        const fallbackCategoryLabel = normalizeString(validated.category);
+        if (!fallbackCategoryLabel) {
+            throw new https_1.HttpsError("failed-precondition", "Category is invalid or inactive");
+        }
+        categoryData = {
+            id: validated.categoryId,
+            slug: validated.categoryId,
+            label: fallbackCategoryLabel,
+            isActive: true,
+            searchableKeywords: buildCategoryKeywords(fallbackCategoryLabel, validated.categoryId),
+        };
+        await firestore_1.db.collection(constants_1.COLLECTIONS.categories).doc(validated.categoryId).set(categoryData, { merge: true });
     }
     if (citySnap.exists && citySnap.data()?.isActive !== false) {
         return {
-            category: categorySnap.data() ?? {},
+            category: categoryData,
             city: citySnap.data() ?? {},
         };
     }
@@ -127,7 +150,7 @@ async function ensureCategoryAndCityAreResolvable(validated) {
     };
     await firestore_1.db.collection(constants_1.COLLECTIONS.cities).doc(validated.cityId).set(fallbackCityData, { merge: true });
     return {
-        category: categorySnap.data() ?? {},
+        category: categoryData,
         city: fallbackCityData,
     };
 }
