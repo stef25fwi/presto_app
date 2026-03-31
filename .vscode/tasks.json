@@ -93,6 +93,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Commit Listings imageUrls",
+      "type": "shell",
+      "command": "git commit -m \"fix(listings): persist imageUrls for marketplace media\"",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Push Main",
       "type": "shell",
       "command": "git push origin main",
@@ -180,6 +186,18 @@
         "Flutter: Analyze",
         "Flutter: Build Web Release",
         "Git: Commit Messaging + Home Fixes",
+        "Git: Push Main",
+        "Firebase: Deploy"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Release: Listings imageUrls",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: Add All",
+        "Functions: Build",
+        "Git: Commit Listings imageUrls",
         "Git: Push Main",
         "Firebase: Deploy"
       ],

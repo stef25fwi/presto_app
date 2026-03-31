@@ -59,6 +59,14 @@ function collectListingMediaStoragePaths(data: Record<string, unknown>): string[
   ));
 }
 
+function collectListingImageUrls(media: ListingMedia[]): string[] {
+  return Array.from(new Set(
+    media
+      .map((entry) => normalizeString(entry.downloadUrl || entry.thumbnailUrl))
+      .filter((url) => url.length > 0),
+  ));
+}
+
 function departmentFromPostalCode(postalCode: string): string {
   const cp = postalCode.trim();
   if (cp.length < 2) return "";
@@ -354,6 +362,7 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
       region: validated.region || normalizeString(cityData.regionCode) || null,
       cityCategoryKey: validated.cityCategoryKey || null,
       media: validated.media,
+      imageUrls: collectListingImageUrls(validated.media),
       thumbnailUrl: validated.thumbnailUrl,
       ownerName: ownerIdentity.displayName,
       displayName: ownerIdentity.displayName,
@@ -401,8 +410,10 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
     const thumbnailUrl = normalizedMedia[0]?.thumbnailUrl || normalizedMedia[0]?.downloadUrl || "";
 
     if (normalizedMedia.length > 0) {
+      const imageUrls = collectListingImageUrls(normalizedMedia);
       await listingRef.set({
         media: normalizedMedia,
+        imageUrls,
         thumbnailUrl,
         mediaProcessingStatus: "completed",
         updatedAt: now,

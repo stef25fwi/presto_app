@@ -280,6 +280,9 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
             region: validated.region || normalizeString(cityData.regionCode) || null,
             cityCategoryKey: validated.cityCategoryKey || null,
             media: validated.media,
+            imageUrls: validated.media
+                .map((m) => (m.downloadUrl || m.thumbnailUrl || ""))
+                .filter((u) => u.length > 0),
             thumbnailUrl: validated.thumbnailUrl,
             ownerName: ownerIdentity.displayName,
             displayName: ownerIdentity.displayName,
@@ -325,8 +328,12 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
         });
         const thumbnailUrl = normalizedMedia[0]?.thumbnailUrl || normalizedMedia[0]?.downloadUrl || "";
         if (normalizedMedia.length > 0) {
+            const imageUrls = normalizedMedia
+                .map((m) => (m.downloadUrl || m.thumbnailUrl || ""))
+                .filter((u) => u.length > 0);
             await listingRef.set({
                 media: normalizedMedia,
+                imageUrls,
                 thumbnailUrl,
                 mediaProcessingStatus: "completed",
                 updatedAt: now,
