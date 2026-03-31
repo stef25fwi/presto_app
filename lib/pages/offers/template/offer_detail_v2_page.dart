@@ -256,6 +256,15 @@ class _OfferDetailV2PageState extends State<OfferDetailV2Page> {
       return;
     }
 
+    if (annonceurId.trim() == me.trim()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Vous ne pouvez pas vous envoyer un message."),
+        ),
+      );
+      return;
+    }
+
     final currentUserName = user?.displayName?.trim().isNotEmpty == true
         ? user!.displayName!.trim()
         : (user?.email ?? 'Utilisateur');

@@ -13,6 +13,7 @@ export { enqueueExpiringListingEmails } from "./modules/listings/scheduled";
 export {
   submitListingDraft,
   incrementListingView,
+  deleteListing,
 } from "./modules/marketplace/callables/listings";
 export { processOfferPhoto } from "./modules/marketplace/callables/media";
 export { reportListing } from "./modules/marketplace/callables/reports";

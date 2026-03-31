@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.incrementListingView = exports.submitListingDraft = void 0;
+exports.deleteListing = exports.incrementListingView = exports.submitListingDraft = void 0;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const https_1 = require("firebase-functions/v2/https");
 const env_1 = require("../../../config/env");
@@ -415,5 +415,41 @@ exports.incrementListingView = (0, https_1.onCall)({ region: env_1.PROJECT_REGIO
         },
     });
     return { ok: true, deduplicated: false };
+});
+exports.deleteListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+    const ownerId = requireAuthUid(request);
+    const listingId = normalizeString(request.data?.listingId);
+    if (!listingId) {
+        throw new https_1.HttpsError("invalid-argument", "listingId is required");
+    }
+    try {
+        const listingRef = firestore_1.db.collection(constants_1.COLLECTIONS.listings).doc(listingId);
+        const listingSnap = await listingRef.get();
+        if (!listingSnap.exists) {
+            throw new https_1.HttpsError("not-found", "Listing not found");
+        }
+        const listingData = (listingSnap.data() ?? {});
+        if (normalizeString(listingData.ownerId) !== ownerId) {
+            throw new https_1.HttpsError("permission-denied", "You do not own this listing");
+        }
+        const batch = firestore_1.db.batch();
+        batch.delete(listingRef);
+        batch.delete(firestore_1.db.collection(constants_1.COLLECTIONS.listingModeration).doc(listingId));
+        batch.delete(firestore_1.db.collection(constants_1.COLLECTIONS.listingDraftsV2).doc(listingId));
+        batch.delete(firestore_1.db.collection(constants_1.COLLECTIONS.listingDrafts).doc(listingId));
+        await batch.commit();
+        logger_1.logger.info("marketplace_listing_deleted", {
+            listingId,
+            ownerId,
+            previousStatus: normalizeString(listingData.status) || "unknown",
+        });
+        return {
+            ok: true,
+            listingId,
+        };
+    }
+    catch (error) {
+        throw (0, errors_1.toHttpsError)(error, "Unable to delete listing");
+    }
 });
 //# sourceMappingURL=listings.js.map
