@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,6 +17,63 @@ import 'package:presto_app/services/marketplace_human_verification.dart';
 // ─── Data models ─────────────────────────────────────────────────────────────
 
 enum OfferActionType { booking, contact }
+
+String _extractOfferDetailImageUrl(dynamic entry) {
+  if (entry == null) return '';
+  if (entry is Map) {
+    for (final key in const [
+      'downloadUrl',
+      'thumbnailUrl',
+      'imageUrl',
+      'photoUrl',
+      'url',
+      'secureUrl',
+      'src',
+    ]) {
+      final value = (entry[key] ?? '').toString().trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+    return '';
+  }
+
+  return entry.toString().trim();
+}
+
+List<String> _collectOfferDetailImageUrls({
+  dynamic imageUrls,
+  dynamic media,
+  dynamic imageUrl,
+  dynamic thumbnailUrl,
+}) {
+  final orderedUrls = <String>[];
+
+  void addUrl(dynamic value) {
+    final url = _extractOfferDetailImageUrl(value);
+    if (url.isEmpty || orderedUrls.contains(url)) {
+      return;
+    }
+    orderedUrls.add(url);
+  }
+
+  if (imageUrls is List) {
+    for (final entry in imageUrls) {
+      addUrl(entry);
+    }
+  }
+
+  if (media is List) {
+    for (final entry in media) {
+      addUrl(entry);
+    }
+  }
+
+  addUrl(imageUrl);
+  addUrl(thumbnailUrl);
+
+  return orderedUrls;
+}
 
 class PracticalInfo {
   final String category;
@@ -201,6 +259,24 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     return rawId;
   }
 
+  String _extractImageUrl(dynamic entry) {
+    return _extractOfferDetailImageUrl(entry);
+  }
+
+  List<String> _collectImageUrls({
+    dynamic imageUrls,
+    dynamic media,
+    dynamic imageUrl,
+    dynamic thumbnailUrl,
+  }) {
+    return _collectOfferDetailImageUrls(
+      imageUrls: imageUrls,
+      media: media,
+      imageUrl: imageUrl,
+      thumbnailUrl: thumbnailUrl,
+    );
+  }
+
   Object? _mergeMarketplaceOffer(
     Object? source,
     Map<String, dynamic>? liveData,
@@ -220,22 +296,14 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       'isMarketplace': true,
     };
 
-    final currentImageUrls =
-        (merged['imageUrls'] as List?) ?? const <dynamic>[];
-    if (currentImageUrls.isEmpty) {
-      final media = (merged['media'] as List?) ?? const <dynamic>[];
-      final imageUrls = media
-          .whereType<Map>()
-          .map(
-            (entry) => ((entry['downloadUrl'] ?? entry['thumbnailUrl']) ?? '')
-                .toString()
-                .trim(),
-          )
-          .where((url) => url.isNotEmpty)
-          .toList(growable: false);
-      if (imageUrls.isNotEmpty) {
-        merged['imageUrls'] = imageUrls;
-      }
+    final imageUrls = _collectImageUrls(
+      imageUrls: merged['imageUrls'],
+      media: merged['media'],
+      imageUrl: merged['imageUrl'],
+      thumbnailUrl: merged['thumbnailUrl'],
+    );
+    if (imageUrls.isNotEmpty) {
+      merged['imageUrls'] = imageUrls;
     }
 
     return merged;
@@ -1400,22 +1468,12 @@ class _OfferUiData {
       fallback: 'Prestation ponctuelle',
     );
 
-    final rawImageUrlsList = rawImageUrls is List
-        ? rawImageUrls
-            .map((e) => e.toString().trim())
-            .where((e) => e.isNotEmpty)
-            .toList(growable: false)
-        : rawMedia is List
-            ? rawMedia
-                .map((entry) {
-                  if (entry is Map) {
-                    return ((entry['downloadUrl'] ?? entry['thumbnailUrl']) ?? '').toString().trim();
-                  }
-                  return entry.toString().trim();
-                })
-                .where((e) => e.isNotEmpty)
-                .toList(growable: false)
-            : const <String>[];
+    final rawImageUrlsList = _collectOfferDetailImageUrls(
+      imageUrls: rawImageUrls,
+      media: rawMedia,
+      imageUrl: readValue('imageUrl'),
+      thumbnailUrl: readValue('thumbnailUrl', () => o.thumbnailUrl),
+    );
 
     return _OfferUiData(
       offerId: offerId,
@@ -1681,32 +1739,29 @@ class _HeroCard extends StatelessWidget {
                 child: SizedBox(
                   width: double.infinity,
                   height: compact ? 180 : 220,
-                  child: Image.network(
-                    mainPhotoUrl,
+                  child: _OfferImage(
+                    rawUrl: mainPhotoUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    loadingChild: Container(
+                      color: const Color(0xFFF3F4F6),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Color(0xFFFF6A00),
+                          ),
+                        ),
+                      ),
+                    ),
+                    errorChild: Container(
                       color: const Color(0xFFF3F4F6),
                       child: const Center(
                         child: Icon(Icons.image_outlined,
                             size: 48, color: Color(0xFF9CA3AF)),
                       ),
                     ),
-                    loadingBuilder: (_, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        color: const Color(0xFFF3F4F6),
-                        child: const Center(
-                          child: SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Color(0xFFFF6A00),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
                   ),
                 ),
               ),
@@ -1743,10 +1798,10 @@ class _HeroCard extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(
                               (compact ? 10 : 12) - 1),
-                          child: Image.network(
-                            data.imageUrls[index],
+                          child: _OfferImage(
+                            rawUrl: data.imageUrls[index],
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
+                            errorChild: Container(
                               color: const Color(0xFFF3F4F6),
                               child: const Icon(
                                 Icons.broken_image_outlined,
@@ -2059,10 +2114,10 @@ class _PhotoThumbnailStrip extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(borderRadius - 1),
-                child: Image.network(
-                  imageUrls[index],
+                child: _OfferImage(
+                  rawUrl: imageUrls[index],
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorChild: Container(
                     color: const Color(0xFFF3F4F6),
                     child: const Icon(
                       Icons.broken_image_outlined,
@@ -2070,22 +2125,19 @@ class _PhotoThumbnailStrip extends StatelessWidget {
                       size: 28,
                     ),
                   ),
-                  loadingBuilder: (_, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: const Color(0xFFF3F4F6),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Color(0xFFFF6A00),
-                          ),
+                  loadingChild: Container(
+                    color: const Color(0xFFF3F4F6),
+                    child: const Center(
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFFFF6A00),
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -2160,19 +2212,100 @@ class _FullScreenGalleryPageState extends State<_FullScreenGalleryPage> {
             minScale: 0.5,
             maxScale: 4.0,
             child: Center(
-              child: Image.network(
-                widget.imageUrls[index],
+              child: _OfferImage(
+                rawUrl: widget.imageUrls[index],
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
+                errorChild: const Icon(
                   Icons.broken_image_outlined,
                   color: Colors.white54,
                   size: 64,
+                ),
+                loadingChild: const SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Colors.white70,
+                  ),
                 ),
               ),
             ),
           );
         },
       ),
+    );
+  }
+}
+
+final Map<String, Future<String?>> _offerImageUrlCache = <String, Future<String?>>{};
+
+Future<String?> _resolveOfferImageUrl(String rawUrl) {
+  final trimmed = rawUrl.trim();
+  if (trimmed.isEmpty) {
+    return Future<String?>.value(null);
+  }
+  if (trimmed.startsWith('http://') ||
+      trimmed.startsWith('https://') ||
+      trimmed.startsWith('data:image/')) {
+    return Future<String?>.value(trimmed);
+  }
+  if (trimmed.startsWith('//')) {
+    return Future<String?>.value('https:$trimmed');
+  }
+
+  return _offerImageUrlCache.putIfAbsent(trimmed, () async {
+    try {
+      if (trimmed.startsWith('gs://')) {
+        return await FirebaseStorage.instance
+            .refFromURL(trimmed)
+            .getDownloadURL();
+      }
+      return await FirebaseStorage.instance.ref().child(trimmed).getDownloadURL();
+    } catch (_) {
+      return trimmed;
+    }
+  });
+}
+
+class _OfferImage extends StatelessWidget {
+  final String rawUrl;
+  final BoxFit fit;
+  final Widget errorChild;
+  final Widget? loadingChild;
+
+  const _OfferImage({
+    required this.rawUrl,
+    required this.fit,
+    required this.errorChild,
+    this.loadingChild,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String?>(
+      future: _resolveOfferImageUrl(rawUrl),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return loadingChild ?? errorChild;
+        }
+
+        final resolvedUrl = (snapshot.data ?? '').trim();
+        if (resolvedUrl.isEmpty) {
+          return errorChild;
+        }
+
+        return Image.network(
+          resolvedUrl,
+          fit: fit,
+          errorBuilder: (_, __, ___) => errorChild,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) {
+              return child;
+            }
+            return loadingChild ?? errorChild;
+          },
+        );
+      },
     );
   }
 }
