@@ -4626,8 +4626,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
               .count()
               .get(),
         ]);
-        visibleCount =
-            (countSnaps[0].count ?? 0) + (countSnaps[1].count ?? 0);
+        visibleCount = (countSnaps[0].count ?? 0) + (countSnaps[1].count ?? 0);
       } else {
         // Filtres actifs → on doit charger les docs pour filtrer côté client
         // Limiter à 500 docs maximum pour protéger le quota
@@ -4636,10 +4635,9 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           _buildLegacyOffersQuery().limit(500).get(),
         ]);
         final merged =
-          _mergeOfferDocsById(snapshots[0].docs, snapshots[1].docs);
-        visibleCount = merged
-            .where((doc) => _matchesOfferFilters(doc.data()))
-            .length;
+            _mergeOfferDocsById(snapshots[0].docs, snapshots[1].docs);
+        visibleCount =
+            merged.where((doc) => _matchesOfferFilters(doc.data())).length;
       }
 
       if (!mounted || requestId != _visibleOffersCountRequestId) {
@@ -5921,8 +5919,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           .doc(offerId);
       final listingsSnap = await listingsRef.get();
       if (listingsSnap.exists) {
-        final callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
-            .httpsCallable(
+        final callable =
+            FirebaseFunctions.instanceFor(region: 'europe-west1').httpsCallable(
           'deleteListing',
           options: HttpsCallableOptions(
             timeout: const Duration(seconds: 30),
@@ -6370,7 +6368,8 @@ class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _loadActiveOffers() async {
     // Charger depuis la collection listings (marketplace) et offers (legacy)
-    final listingsCol = FirebaseFirestore.instance.collection(_kListingsCollection);
+    final listingsCol =
+        FirebaseFirestore.instance.collection(_kListingsCollection);
     final offersCol = FirebaseFirestore.instance.collection(_kOffersCollection);
 
     final results = await Future.wait([
@@ -7315,10 +7314,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final rawPostalCode = (postalCode ?? '').trim();
 
     if (rawPostalCode.isNotEmpty) {
-      final exactPostal = CitySearch.instance.pickBestForPostalCode(rawPostalCode);
+      final exactPostal =
+          CitySearch.instance.pickBestForPostalCode(rawPostalCode);
       if (exactPostal != null) {
         if (rawCity.isEmpty ||
-            normalizeOfferText(exactPostal.name) == normalizeOfferText(rawCity)) {
+            normalizeOfferText(exactPostal.name) ==
+                normalizeOfferText(rawCity)) {
           return exactPostal;
         }
 
@@ -7948,9 +7949,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       tween: Tween<double>(begin: 0, end: isShaking ? 1 : 0),
       duration: const Duration(milliseconds: 420),
       builder: (context, value, animatedChild) {
-        final dx = isShaking
-            ? math.sin(value * math.pi * 6) * (1 - value) * 12
-            : 0.0;
+        final dx =
+            isShaking ? math.sin(value * math.pi * 6) * (1 - value) * 12 : 0.0;
         return Transform.translate(
           offset: Offset(dx, 0),
           child: animatedChild,
@@ -8379,7 +8379,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.stop_circle, color: Colors.white, size: 20),
+                    const Icon(Icons.stop_circle,
+                        color: Colors.white, size: 20),
                     const SizedBox(width: 10),
                     Text(
                       'Appuyer pour arrêter',
@@ -8454,7 +8455,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (!mounted) return;
         if (draft['success'] == true) {
           _applyLegacyDraftToForm(draft);
-          showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
+          showSuccessSnackBar(
+              context, 'Transcription réussie et champs remplis');
         }
       } catch (_) {
         // Draft is best-effort; transcript already applied above
@@ -8995,10 +8997,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         ownerId: user.uid,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
-        category: _resolvePublishCategoryLabel(_category) ?? (_category ?? '').trim(),
+        category:
+            _resolvePublishCategoryLabel(_category) ?? (_category ?? '').trim(),
         city: _locationController.text.trim(),
         postalCode: _postalCodeController.text.trim(),
-        phone: '${_selectedPhoneCountryCode.trim()} ${_phoneController.text.trim()}'.trim(),
+        phone:
+            '${_selectedPhoneCountryCode.trim()} ${_phoneController.text.trim()}'
+                .trim(),
         subCategory: _selectedSubCategory,
         missionDelay: _missionDelay,
         isUrgent: _isUrgent,
@@ -9154,8 +9159,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 // Bouton Premium AI avec enregistrement audio
                 Center(
                   child: _isListening
-                        ? _buildMicRecordingButton()
-                        : PremiumAiButton(
+                      ? _buildMicRecordingButton()
+                      : PremiumAiButton(
                           onPressed: _isAnalyzing ? null : _startMic,
                           label: 'Décrire mon besoin (IA)',
                           isLoading: _isAnalyzing,
@@ -12083,7 +12088,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   }
 
   bool _offerMediaStillProcessing(Map<String, dynamic> data) {
-    final raw = (data['mediaProcessingStatus'] ?? '').toString().trim().toLowerCase();
+    final raw =
+        (data['mediaProcessingStatus'] ?? '').toString().trim().toLowerCase();
     if (raw == 'processing') {
       return true;
     }
@@ -12098,12 +12104,10 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     if (!_isOfferPending(data) || !_offerHasPhotos(data)) {
       return null;
     }
-
     if (_offerMediaStillProcessing(data)) {
-      return 'Photos en traitement. L’annonce reste temporairement en attente avant publication.';
+      return 'Photos en traitement. Publication automatique une fois les photos prêtes.';
     }
-
-    return 'Photos prêtes. L’annonce reste en attente de validation avant publication.';
+    return 'Annonce en cours de verification avant publication.';
   }
 
   String _sectionTitle(_OfferManagementSection section) {
@@ -12470,16 +12474,167 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                 fontWeight: FontWeight.w500,
               ),
             )
-          else
+          else ...[
+            if (section == _OfferManagementSection.pending) ...[
+              _buildPendingQuickList(items),
+              const SizedBox(height: 12),
+            ],
             ...items.map(
               (item) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: _buildOfferTile(item),
               ),
             ),
+          ],
         ],
       ),
     );
+  }
+
+  Widget _buildPendingQuickList(List<_ManagedOfferItem> items) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF8F1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFFFD4A6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: Text(
+              'Accès rapide aux annonces en attente',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF8A3B00),
+              ),
+            ),
+          ),
+          ...List.generate(items.length, (index) {
+            final item = items[index];
+            final isLast = index == items.length - 1;
+            return Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => _openOfferDetails(item),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _offerTitle(item.data),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            _formatOfferDate(item.data),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            size: 18,
+                            color: Color(0xFF8A3B00),
+                          ),
+                        ],
+                      ),
+                      if (!isLast) ...[
+                        const SizedBox(height: 10),
+                        const Divider(height: 1),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  void _openOfferDetails(_ManagedOfferItem item) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => OfferDetailsPage(
+          offer: _buildOfferDetailsOffer(
+            offerId: item.offerId,
+            data: item.data,
+          ),
+          currentUserId: FirebaseAuth.instance.currentUser?.uid ?? '',
+        ),
+      ),
+    );
+  }
+
+  num? _numericFromDynamic(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value;
+
+    final normalized = value
+        .toString()
+        .trim()
+        .replaceAll('€', '')
+        .replaceAll(' ', '')
+        .replaceAll(',', '.');
+    if (normalized.isEmpty) return null;
+
+    return num.tryParse(normalized);
+  }
+
+  String _offerSubCategory(Map<String, dynamic> data) {
+    return ((data['subCategory'] ?? data['subcategory']) ?? '')
+        .toString()
+        .trim();
+  }
+
+  String _offerBudgetType(Map<String, dynamic> data) {
+    final raw = (data['budgetType'] ?? '').toString().trim();
+    return raw == 'À négocier' ? raw : 'Fixe';
+  }
+
+  String _offerPhoneCountryCode(Map<String, dynamic> data) {
+    final rawPhone = (data['phone'] ?? '').toString().trim();
+    if (rawPhone.isEmpty) return '+33';
+
+    const countryCodes = ['+590', '+596', '+594', '+262', '+689', '+33'];
+    for (final code in countryCodes) {
+      if (rawPhone.startsWith(code)) {
+        return code;
+      }
+    }
+
+    return '+33';
+  }
+
+  String _offerPhoneLocalNumber(Map<String, dynamic> data) {
+    final rawPhone = (data['phone'] ?? '').toString().trim();
+    if (rawPhone.isEmpty) return '';
+
+    final countryCode = _offerPhoneCountryCode(data);
+    final phoneWithoutCode = rawPhone.startsWith(countryCode)
+        ? rawPhone.substring(countryCode.length)
+        : rawPhone;
+
+    return phoneWithoutCode.replaceAll(RegExp(r'\s+'), ' ').trim();
   }
 
   Widget _buildOfferTile(_ManagedOfferItem item) {
@@ -12620,7 +12775,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                     textStyle: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                   onPressed: canEdit
-                      ? () => _showEditOfferDialog(context, item.offerId, data)
+                      ? () => _showEditOfferDialog(context, item)
                       : null,
                   icon: const Icon(Icons.edit_outlined, size: 18),
                   label: const Text('Modifier'),
@@ -12701,102 +12856,789 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
   Future<void> _showEditOfferDialog(
     BuildContext context,
-    String offerId,
-    Map<String, dynamic> data,
+    _ManagedOfferItem item,
   ) async {
-    final titleController =
-        TextEditingController(text: (data['title'] ?? '') as String);
-    final descController =
-        TextEditingController(text: (data['description'] ?? '') as String);
-    final budgetController = TextEditingController(
-      text: data['budget']?.toString() ?? '',
+    final data = item.data;
+    final formKey = GlobalKey<FormState>();
+    final titleController = TextEditingController(text: _offerTitle(data));
+    final descController = TextEditingController(
+      text: (data['description'] ?? '').toString().trim(),
     );
+    final locationController = TextEditingController(
+      text: ((data['location'] ?? data['city']) ?? '').toString().trim(),
+    );
+    final postalCodeController = TextEditingController(
+      text: ((data['postalCode'] ?? data['cp']) ?? '').toString().trim(),
+    );
+    final phoneController = TextEditingController(
+      text: _offerPhoneLocalNumber(data),
+    );
+    final budgetValue = _numericFromDynamic(
+        data['budget'] ?? data['price'] ?? data['budgetValue']);
+    final budgetController = TextEditingController(
+      text: budgetValue == null
+          ? ''
+          : (budgetValue == budgetValue.roundToDouble()
+              ? budgetValue.toInt().toString()
+              : budgetValue.toString()),
+    );
+    final availabilityController = TextEditingController(
+      text: (data['availability'] ?? '').toString().trim(),
+    );
+    final averageDelayController = TextEditingController(
+      text: (data['averageDelay'] ?? '').toString().trim(),
+    );
+    final serviceAreaController = TextEditingController(
+      text: (data['serviceArea'] ?? '').toString().trim(),
+    );
+    final scheduleController = TextEditingController(
+      text: (data['schedule'] ?? '').toString().trim(),
+    );
+    final paymentMethodController = TextEditingController(
+      text: (data['paymentMethod'] ?? '').toString().trim(),
+    );
+    final serviceTypeController = TextEditingController(
+      text: (data['serviceType'] ?? '').toString().trim(),
+    );
+
+    final rawCategory = (data['category'] ?? '').toString().trim();
+    final canonicalCategory = canonicalizeOfferCategory(rawCategory);
+    var selectedCategory =
+        canonicalCategory ?? (rawCategory.isEmpty ? null : rawCategory);
+    var selectedSubCategory = _offerSubCategory(data);
+    var selectedBudgetType = _offerBudgetType(data);
+    var selectedMissionDelay =
+        ((data['missionDelay'] ?? data['averageDelay']) ?? '')
+            .toString()
+            .trim();
+    if (selectedMissionDelay == 'Délai non précisé') {
+      selectedMissionDelay = '';
+    }
+    var selectedPhoneCountryCode = _offerPhoneCountryCode(data);
+    var canTravel = (data['canTravel'] as bool?) ?? true;
+    var isUrgent =
+        ((data['isUrgent'] as bool?) ?? (data['urgent'] as bool?)) ?? false;
+    var isSaving = false;
+
+    InputDecoration buildDecoration(String label) {
+      return InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      );
+    }
+
+    const missionDelayOptions = <String>[
+      'Immédiat',
+      'Dans la journée',
+      'Demain',
+      'Sous 48h',
+      'Cette semaine',
+      'À convenir',
+    ];
+
+    final budgetTypes = const <String>['Fixe', 'À négocier'];
 
     await showDialog(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text("Modifier l’annonce"),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: "Titre",
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final categoryOptions = [
+              ...kCategorySubcategories.keys,
+              if (selectedCategory != null &&
+                  !kCategorySubcategories.keys.contains(selectedCategory))
+                selectedCategory!,
+            ];
+            final availableSubCategories = [
+              if (selectedSubCategory.isNotEmpty &&
+                  !(kCategorySubcategories[selectedCategory] ??
+                          const <String>[])
+                      .contains(selectedSubCategory))
+                selectedSubCategory,
+              ...(kCategorySubcategories[selectedCategory] ?? const <String>[]),
+            ];
+            final missionOptions = [
+              ...missionDelayOptions,
+              if (selectedMissionDelay.isNotEmpty &&
+                  !missionDelayOptions.contains(selectedMissionDelay))
+                selectedMissionDelay,
+            ];
+            final pendingPhotoNotice = _offerPendingPhotoNotice(data);
+
+            return Dialog(
+              insetPadding: const EdgeInsets.all(16),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: SingleChildScrollView(
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Modifier l’annonce',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${_sectionTitle(item.section)} · créée le ${_formatOfferDate(data)}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.black54,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: isSaving
+                                    ? null
+                                    : () => Navigator.of(dialogContext).pop(),
+                                icon: const Icon(Icons.close_rounded),
+                              ),
+                            ],
+                          ),
+                          if (pendingPhotoNotice != null) ...[
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF3E6),
+                                borderRadius: BorderRadius.circular(12),
+                                border:
+                                    Border.all(color: const Color(0xFFFFC78F)),
+                              ),
+                              child: Text(
+                                pendingPhotoNotice,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 1.35,
+                                  color: Color(0xFF8A3B00),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 18),
+                          TextFormField(
+                            controller: titleController,
+                            decoration: buildDecoration('Titre *'),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Titre obligatoire';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: selectedCategory,
+                                  decoration: buildDecoration('Catégorie *'),
+                                  items: categoryOptions
+                                      .map(
+                                        (category) => DropdownMenuItem<String>(
+                                          value: category,
+                                          child: Text(category),
+                                        ),
+                                      )
+                                      .toList(growable: false),
+                                  onChanged: isSaving
+                                      ? null
+                                      : (value) {
+                                          setDialogState(() {
+                                            selectedCategory = value;
+                                            final validSubCategories =
+                                                kCategorySubcategories[value] ??
+                                                    const <String>[];
+                                            if (!validSubCategories.contains(
+                                                selectedSubCategory)) {
+                                              selectedSubCategory = '';
+                                            }
+                                          });
+                                        },
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Catégorie obligatoire';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: selectedSubCategory.isEmpty
+                                      ? ''
+                                      : selectedSubCategory,
+                                  decoration: buildDecoration('Sous-catégorie'),
+                                  items: [
+                                    const DropdownMenuItem<String>(
+                                      value: '',
+                                      child: Text('Aucune'),
+                                    ),
+                                    ...availableSubCategories.map(
+                                      (subCategory) => DropdownMenuItem<String>(
+                                        value: subCategory,
+                                        child: Text(subCategory),
+                                      ),
+                                    ),
+                                  ],
+                                  onChanged: isSaving
+                                      ? null
+                                      : (value) {
+                                          setDialogState(() {
+                                            selectedSubCategory =
+                                                (value ?? '').trim();
+                                          });
+                                        },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: descController,
+                            decoration:
+                                buildDecoration('Description détaillée *'),
+                            minLines: 5,
+                            maxLines: 8,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Description obligatoire';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: TextFormField(
+                                  controller: locationController,
+                                  decoration: buildDecoration('Ville / lieu *'),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Ville obligatoire';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: postalCodeController,
+                                  decoration: buildDecoration('Code postal'),
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          PhoneInputFieldCompact(
+                            controller: phoneController,
+                            labelText: 'Téléphone',
+                            hintText: '612345678',
+                            initialCountryCode: selectedPhoneCountryCode,
+                            onCountryCodeChanged: (code) {
+                              selectedPhoneCountryCode = code;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: DropdownButtonFormField<String>(
+                                  value: selectedBudgetType,
+                                  decoration:
+                                      buildDecoration('Budget / tarification'),
+                                  items: budgetTypes
+                                      .map(
+                                        (budgetType) =>
+                                            DropdownMenuItem<String>(
+                                          value: budgetType,
+                                          child: Text(budgetType),
+                                        ),
+                                      )
+                                      .toList(growable: false),
+                                  onChanged: isSaving
+                                      ? null
+                                      : (value) {
+                                          if (value == null) return;
+                                          setDialogState(() {
+                                            selectedBudgetType = value;
+                                            if (selectedBudgetType ==
+                                                'À négocier') {
+                                              budgetController.clear();
+                                            }
+                                          });
+                                        },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 3,
+                                child: TextFormField(
+                                  controller: budgetController,
+                                  decoration: buildDecoration('Montant (€)'),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                                  enabled: selectedBudgetType == 'Fixe',
+                                  validator: (value) {
+                                    if (selectedBudgetType != 'Fixe') {
+                                      return null;
+                                    }
+                                    final normalized = (value ?? '')
+                                        .trim()
+                                        .replaceAll(' ', '')
+                                        .replaceAll(',', '.');
+                                    if (normalized.isEmpty) {
+                                      return 'Montant obligatoire';
+                                    }
+                                    if (num.tryParse(normalized) == null) {
+                                      return 'Montant invalide';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: selectedMissionDelay.isEmpty
+                                      ? null
+                                      : selectedMissionDelay,
+                                  decoration: buildDecoration(
+                                    'Délai pour effectuer la mission',
+                                  ),
+                                  items: missionOptions
+                                      .map(
+                                        (delay) => DropdownMenuItem<String>(
+                                          value: delay,
+                                          child: Text(delay),
+                                        ),
+                                      )
+                                      .toList(growable: false),
+                                  onChanged: isSaving
+                                      ? null
+                                      : (value) {
+                                          setDialogState(() {
+                                            selectedMissionDelay =
+                                                (value ?? '').trim();
+                                          });
+                                        },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: const Color(0xFFD1D5DB),
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: SwitchListTile.adaptive(
+                                    value: isUrgent,
+                                    onChanged: isSaving
+                                        ? null
+                                        : (value) {
+                                            setDialogState(() {
+                                              isUrgent = value;
+                                            });
+                                          },
+                                    contentPadding: EdgeInsets.zero,
+                                    title: const Text(
+                                      'Annonce urgente',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: availabilityController,
+                            decoration: buildDecoration('Disponibilité'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: averageDelayController,
+                            decoration: buildDecoration('Délai affiché'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: serviceAreaController,
+                            decoration: buildDecoration('Zone d’intervention'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: scheduleController,
+                            decoration: buildDecoration('Horaires'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: paymentMethodController,
+                            decoration: buildDecoration('Mode de paiement'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: serviceTypeController,
+                            decoration: buildDecoration('Type de service'),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: const Color(0xFFD1D5DB),
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: SwitchListTile.adaptive(
+                              value: canTravel,
+                              onChanged: isSaving
+                                  ? null
+                                  : (value) {
+                                      setDialogState(() {
+                                        canTravel = value;
+                                      });
+                                    },
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text(
+                                'Peut se déplacer',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: isSaving
+                                      ? null
+                                      : () => Navigator.of(dialogContext).pop(),
+                                  child: const Text('Annuler'),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                  ),
+                                  onPressed: isSaving
+                                      ? null
+                                      : () async {
+                                          Navigator.of(dialogContext).pop();
+                                          await _deleteOffer(item);
+                                        },
+                                  icon: const Icon(Icons.delete_outline),
+                                  label: const Text('Supprimer'),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                flex: 2,
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: kPrestoOrange,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  onPressed: isSaving
+                                      ? null
+                                      : () async {
+                                          if (!(formKey.currentState
+                                                  ?.validate() ??
+                                              false)) {
+                                            return;
+                                          }
+
+                                          final newBudgetText =
+                                              budgetController.text.trim();
+                                          final parsedBudget =
+                                              newBudgetText.isEmpty
+                                                  ? null
+                                                  : num.tryParse(
+                                                      newBudgetText.replaceAll(
+                                                          ',', '.'),
+                                                    );
+                                          final existingBudget =
+                                              _numericFromDynamic(
+                                            data['budget'] ??
+                                                data['price'] ??
+                                                data['budgetValue'],
+                                          );
+                                          final effectiveBudget =
+                                              selectedBudgetType == 'À négocier'
+                                                  ? 0.0
+                                                  : (parsedBudget ??
+                                                      existingBudget);
+                                          final trimmedCategory =
+                                              (selectedCategory ?? '').trim();
+                                          final trimmedLocation =
+                                              locationController.text.trim();
+                                          final trimmedPostalCode =
+                                              postalCodeController.text.trim();
+                                          final trimmedMissionDelay =
+                                              selectedMissionDelay.trim();
+                                          final trimmedAverageDelay =
+                                              averageDelayController.text
+                                                  .trim();
+                                          final trimmedSubCategory =
+                                              selectedSubCategory.trim();
+                                          final trimmedAvailability =
+                                              availabilityController.text
+                                                  .trim();
+                                          final trimmedServiceArea =
+                                              serviceAreaController.text.trim();
+                                          final trimmedSchedule =
+                                              scheduleController.text.trim();
+                                          final trimmedPaymentMethod =
+                                              paymentMethodController.text
+                                                  .trim();
+                                          final trimmedServiceType =
+                                              serviceTypeController.text.trim();
+                                          final trimmedPhoneNumber =
+                                              phoneController.text.trim();
+                                          final fullPhone = trimmedPhoneNumber
+                                                  .isEmpty
+                                              ? ''
+                                              : '${selectedPhoneCountryCode.trim()} $trimmedPhoneNumber'
+                                                  .trim();
+
+                                          final indexed = buildOfferIndexFields(
+                                            category: trimmedCategory,
+                                            city: trimmedLocation,
+                                            postalCode: trimmedPostalCode,
+                                            budget: effectiveBudget,
+                                          );
+
+                                          setDialogState(() => isSaving = true);
+
+                                          try {
+                                            final listingsRef =
+                                                FirebaseFirestore.instance
+                                                    .collection(
+                                                        _kListingsCollection)
+                                                    .doc(item.offerId);
+                                            final offersRef = FirebaseFirestore
+                                                .instance
+                                                .collection(_kOffersCollection)
+                                                .doc(item.offerId);
+                                            final listingsSnap =
+                                                await listingsRef.get();
+                                            final offersSnap =
+                                                listingsSnap.exists
+                                                    ? null
+                                                    : await offersRef.get();
+                                            if (!listingsSnap.exists &&
+                                                !(offersSnap?.exists ??
+                                                    false)) {
+                                              throw StateError(
+                                                'Annonce introuvable',
+                                              );
+                                            }
+
+                                            final targetRef =
+                                                listingsSnap.exists
+                                                    ? listingsRef
+                                                    : offersRef;
+                                            final update = <String, dynamic>{
+                                              'title':
+                                                  titleController.text.trim(),
+                                              'description':
+                                                  descController.text.trim(),
+                                              'category': indexed['category'] ??
+                                                  trimmedCategory,
+                                              'location': indexed['location'] ??
+                                                  trimmedLocation,
+                                              'city': indexed['city'] ??
+                                                  trimmedLocation,
+                                              'budgetType': selectedBudgetType,
+                                              'canTravel': canTravel,
+                                              'urgent': isUrgent,
+                                              'isUrgent': isUrgent,
+                                              'updatedAt':
+                                                  FieldValue.serverTimestamp(),
+                                              'postalCode':
+                                                  trimmedPostalCode.isEmpty
+                                                      ? FieldValue.delete()
+                                                      : trimmedPostalCode,
+                                              'cp': trimmedPostalCode.isEmpty
+                                                  ? FieldValue.delete()
+                                                  : trimmedPostalCode,
+                                              'phone': fullPhone.isEmpty
+                                                  ? FieldValue.delete()
+                                                  : fullPhone,
+                                              'missionDelay':
+                                                  trimmedMissionDelay.isEmpty
+                                                      ? FieldValue.delete()
+                                                      : trimmedMissionDelay,
+                                              'averageDelay': trimmedAverageDelay
+                                                      .isNotEmpty
+                                                  ? trimmedAverageDelay
+                                                  : (trimmedMissionDelay.isEmpty
+                                                      ? FieldValue.delete()
+                                                      : trimmedMissionDelay),
+                                              'availability':
+                                                  trimmedAvailability.isEmpty
+                                                      ? FieldValue.delete()
+                                                      : trimmedAvailability,
+                                              'serviceArea':
+                                                  trimmedServiceArea.isEmpty
+                                                      ? (trimmedLocation.isEmpty
+                                                          ? FieldValue.delete()
+                                                          : trimmedLocation)
+                                                      : trimmedServiceArea,
+                                              'schedule':
+                                                  trimmedSchedule.isEmpty
+                                                      ? FieldValue.delete()
+                                                      : trimmedSchedule,
+                                              'paymentMethod':
+                                                  trimmedPaymentMethod.isEmpty
+                                                      ? FieldValue.delete()
+                                                      : trimmedPaymentMethod,
+                                              'serviceType':
+                                                  trimmedServiceType.isEmpty
+                                                      ? FieldValue.delete()
+                                                      : trimmedServiceType,
+                                              'subCategory':
+                                                  trimmedSubCategory.isEmpty
+                                                      ? FieldValue.delete()
+                                                      : trimmedSubCategory,
+                                              'subcategory':
+                                                  trimmedSubCategory.isEmpty
+                                                      ? FieldValue.delete()
+                                                      : trimmedSubCategory,
+                                              'categoryId':
+                                                  indexed['categoryId'] ??
+                                                      FieldValue.delete(),
+                                              'cityId': indexed['cityId'] ??
+                                                  FieldValue.delete(),
+                                              'cityCategoryKey':
+                                                  indexed['cityCategoryKey'] ??
+                                                      FieldValue.delete(),
+                                              'dept': indexed['dept'] ??
+                                                  FieldValue.delete(),
+                                            };
+
+                                            if (effectiveBudget != null) {
+                                              update['budget'] =
+                                                  effectiveBudget;
+                                              update['price'] =
+                                                  effectiveBudget.toDouble();
+                                              update['budgetValue'] =
+                                                  (indexed['budgetValue'] ??
+                                                          effectiveBudget)
+                                                      .toDouble();
+                                            }
+
+                                            await targetRef.update(update);
+
+                                            if (dialogContext.mounted) {
+                                              Navigator.of(dialogContext).pop();
+                                            }
+                                            await _loadOffers();
+                                            if (!mounted || !context.mounted) {
+                                              return;
+                                            }
+                                            showSuccessSnackBar(
+                                              context,
+                                              'Annonce mise à jour ✅',
+                                            );
+                                          } catch (e) {
+                                            if (dialogContext.mounted) {
+                                              setDialogState(
+                                                () => isSaving = false,
+                                              );
+                                            }
+                                            if (!mounted || !context.mounted) {
+                                              return;
+                                            }
+                                            showErrorSnackBar(
+                                              context,
+                                              'Erreur lors de la mise à jour',
+                                            );
+                                          }
+                                        },
+                                  icon: isSaving
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                          ),
+                                        )
+                                      : const Icon(Icons.save_outlined),
+                                  label: Text(
+                                    isSaving
+                                        ? 'Enregistrement...'
+                                        : 'Modifier l’annonce',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: descController,
-                  decoration: const InputDecoration(
-                    labelText: "Description",
-                  ),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: budgetController,
-                  decoration: const InputDecoration(
-                    labelText: "Budget (€)",
-                  ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text("Annuler"),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final newTitle = titleController.text.trim();
-                final newDesc = descController.text.trim();
-                final budgetText = budgetController.text.trim();
-
-                num? newBudget;
-                if (budgetText.isNotEmpty) {
-                  newBudget = num.tryParse(budgetText.replaceAll(',', '.'));
-                }
-
-                try {
-                  // Déterminer la collection correcte
-                  final listingsRef = FirebaseFirestore.instance
-                      .collection(_kListingsCollection)
-                      .doc(offerId);
-                  final listingsSnap = await listingsRef.get();
-                  final targetRef = listingsSnap.exists
-                      ? listingsRef
-                      : FirebaseFirestore.instance
-                          .collection(_kOffersCollection)
-                          .doc(offerId);
-                  await targetRef
-                      .update({
-                    'title': newTitle.isEmpty ? data['title'] : newTitle,
-                    'description':
-                        newDesc.isEmpty ? data['description'] : newDesc,
-                    'budget': newBudget ?? data['budget'],
-                  });
-
-                  if (!mounted || !context.mounted) return;
-                  if (ctx.mounted) {
-                    Navigator.of(ctx).pop();
-                  }
-                  await _loadOffers();
-                  if (!mounted || !context.mounted) return;
-                  showSuccessSnackBar(context, "Annonce mise à jour ✅");
-                } catch (e) {
-                  if (!mounted || !context.mounted) return;
-                  showErrorSnackBar(context, "Erreur lors de la mise à jour");
-                }
-              },
-              child: const Text("Enregistrer"),
-            ),
-          ],
+              ),
+            );
+          },
         );
       },
     );
@@ -12831,8 +13673,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       debugPrint('Suppression offre ${item.offerId} avec motif: $reason');
 
       if (isListing) {
-        final callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
-            .httpsCallable(
+        final callable =
+            FirebaseFunctions.instanceFor(region: 'europe-west1').httpsCallable(
           'deleteListing',
           options: HttpsCallableOptions(
             timeout: const Duration(seconds: 30),
@@ -12843,10 +13685,11 @@ class _UserOffersSectionState extends State<UserOffersSection> {
           'reason': reason,
         });
       } else {
-        final imageUrls = (latestData['imageUrls'] as List<dynamic>? ?? const [])
-            .map((e) => e.toString())
-            .where((e) => e.isNotEmpty)
-            .toList();
+        final imageUrls =
+            (latestData['imageUrls'] as List<dynamic>? ?? const [])
+                .map((e) => e.toString())
+                .where((e) => e.isNotEmpty)
+                .toList();
 
         if (!shouldKeepVisibleWithJobDone) {
           for (final url in imageUrls) {
@@ -12901,7 +13744,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       }
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
-      debugPrint('Erreur callable suppression offre ${item.offerId}: ${e.code} ${e.message}');
+      debugPrint(
+          'Erreur callable suppression offre ${item.offerId}: ${e.code} ${e.message}');
       final message = e.code == 'permission-denied'
           ? 'Suppression refusée. Cette annonce n’est pas reconnue comme vous appartenant.'
           : e.code == 'not-found'

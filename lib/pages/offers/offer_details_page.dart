@@ -1762,10 +1762,10 @@ class _PendingPhotoNotice extends StatelessWidget {
 
     final normalizedModeration = moderationStatus.trim().toLowerCase();
     final message = isProcessing
-        ? 'Les photos sont en cours de préparation pour la mise en ligne. L\'annonce reste en attente avant publication.'
+        ? 'Photos en traitement. Publication automatique une fois les photos prêtes.'
         : normalizedModeration == 'manual_review' ||
                 normalizedModeration == 'pending'
-            ? 'Les photos sont prêtes. L\'annonce reste en attente de validation avant publication.'
+            ? 'Annonce en cours de vérification avant publication.'
             : 'Cette annonce reste temporairement hors ligne avant publication.';
 
     return Container(
