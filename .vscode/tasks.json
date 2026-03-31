@@ -153,6 +153,24 @@
       "problemMatcher": []
     },
     {
+      "label": "Listings: Publish Pending Dry Run",
+      "type": "shell",
+      "command": "node tools/publish_approved_pending_listings.cjs --limit=50",
+      "problemMatcher": []
+    },
+    {
+      "label": "Listings: Publish Pending Apply",
+      "type": "shell",
+      "command": "node tools/publish_approved_pending_listings.cjs --limit=50 --apply",
+      "problemMatcher": []
+    },
+    {
+      "label": "Listings: Audit Status",
+      "type": "shell",
+      "command": "node tools/audit_listings_status.cjs",
+      "problemMatcher": []
+    },
+    {
       "label": "Release: Messaging + Home Fixes",
       "dependsOrder": "sequence",
       "dependsOn": [

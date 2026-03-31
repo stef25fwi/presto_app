@@ -22,15 +22,21 @@ function normalizeString(value) {
 }
 
 function isReadyToPublish(data) {
-  return normalizeString(data.status) === 'pending' &&
-    normalizeString(data.moderationStatus) === 'approved' &&
-    normalizeString(data.mediaProcessingStatus) === 'completed';
+  const status = normalizeString(data.status);
+  const modStatus = normalizeString(data.moderationStatus);
+  const mediaStatus = normalizeString(data.mediaProcessingStatus);
+  if (status !== 'pending') return false;
+  // Accept approved, auto_flagged, manual_review, or missing moderation status
+  const acceptableMod = ['approved', 'auto_flagged', 'manual_review', ''];
+  if (!acceptableMod.includes(modStatus)) return false;
+  // Accept completed or missing media status
+  if (mediaStatus !== '' && mediaStatus !== 'completed') return false;
+  return true;
 }
 
 async function main() {
   let query = db.collection('listings')
     .where('status', '==', 'pending')
-    .where('moderationStatus', '==', 'approved')
     .limit(LIMIT);
 
   if (OWNER_ID) {
@@ -69,6 +75,7 @@ async function main() {
     batch.set(doc.ref, {
       status: 'active',
       visibility: 'public',
+      moderationStatus: 'approved',
       publishedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       autoPublishAfter: null,
