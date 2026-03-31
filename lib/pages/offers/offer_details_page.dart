@@ -71,19 +71,31 @@ class Advertiser {
 
 class Offer {
   final String id;
+  final String listingId;
   final String title;
   final double price;
   final String category;
+  final String categoryId;
   final String city;
+  final String cityId;
   final String postalCode;
   final bool isUrgent;
   final String publishedAtLabel;
+  final DateTime? publishedAt;
+  final DateTime? createdAt;
   final String availability;
   final String shortDescription;
   final String description;
   final String phone;
   final List<String> imageUrls;
+  final List<Map<String, dynamic>> media;
+  final String thumbnailUrl;
   final List<String> statusBadges;
+  final String status;
+  final String moderationStatus;
+  final String visibility;
+  final String mediaProcessingStatus;
+  final bool isMarketplace;
   final PracticalInfo practicalInfo;
   final Advertiser advertiser;
   final OfferActionType actionType;
@@ -91,24 +103,36 @@ class Offer {
 
   const Offer({
     required this.id,
+    String? listingId,
     required this.title,
     required this.price,
     required this.category,
+    this.categoryId = '',
     required this.city,
+    this.cityId = '',
     this.postalCode = '',
     this.isUrgent = false,
     required this.publishedAtLabel,
+    this.publishedAt,
+    this.createdAt,
     required this.availability,
     required this.shortDescription,
     required this.description,
     required this.phone,
     required this.imageUrls,
+    this.media = const <Map<String, dynamic>>[],
+    this.thumbnailUrl = '',
     required this.statusBadges,
+    this.status = '',
+    this.moderationStatus = '',
+    this.visibility = '',
+    this.mediaProcessingStatus = '',
+    this.isMarketplace = false,
     required this.practicalInfo,
     required this.advertiser,
     required this.actionType,
     required this.similarOffers,
-  });
+  }) : listingId = listingId ?? id;
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────

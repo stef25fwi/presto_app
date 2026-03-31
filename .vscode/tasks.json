@@ -71,7 +71,7 @@
     {
       "label": "Git: Commit All",
       "type": "shell",
-      "command": "git commit -m \"fix(marketplace): publish pending listings, manual_review auto-approve and white popup\"",
+      "command": "git commit -m \"fix(detail): unify offer detail page, marketplace metadata and photo thumbnails\"",
       "problemMatcher": []
     },
     {
