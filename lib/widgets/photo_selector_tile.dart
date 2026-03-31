@@ -11,6 +11,7 @@ class PhotoSelectorTile extends StatelessWidget {
   final Uint8List? bytes;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final VoidCallback? onRemove;
 
   const PhotoSelectorTile({
     super.key,
@@ -19,6 +20,7 @@ class PhotoSelectorTile extends StatelessWidget {
     required this.bytes,
     required this.onTap,
     this.onLongPress,
+    this.onRemove,
   });
 
   @override
@@ -90,19 +92,46 @@ class PhotoSelectorTile extends StatelessWidget {
       );
     }
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Container(
-        height: 90,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        InkWell(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.black12),
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: Container(
+            height: 90,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.black12),
+            ),
+            child: content,
+          ),
         ),
-        child: content,
-      ),
+        if (localFile != null && onRemove != null)
+          Positioned(
+            top: 6,
+            right: 6,
+            child: Material(
+              color: Colors.white,
+              elevation: 1,
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onRemove,
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

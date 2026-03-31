@@ -73,7 +73,7 @@ const String kOfferDeleteReasonFoundProvider =
     'J ai deja trouve un prestataire';
 const String kOfferDeleteReasonFoundOnIliPresto =
     'J’ai trouvé quelqu’un sur iliprestō';
-const Duration kOfferJobDoneOverlayDuration = Duration(hours: 1);
+const Duration kOfferJobDoneOverlayDuration = Duration(hours: 10);
 
 String _normalizeOfferDeletionReason(String input) {
   return input
@@ -5921,7 +5921,14 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           .doc(offerId);
       final listingsSnap = await listingsRef.get();
       if (listingsSnap.exists) {
-        await listingsRef.delete();
+        final callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
+            .httpsCallable(
+          'deleteListing',
+          options: HttpsCallableOptions(
+            timeout: const Duration(seconds: 30),
+          ),
+        );
+        await callable.call<dynamic>({'listingId': offerId});
       } else {
         await FirebaseFirestore.instance
             .collection(_kOffersCollection)
@@ -8859,6 +8866,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
+  void _removePhotoAt(int photoIndex) {
+    if (photoIndex < 0 || photoIndex >= _selectedPhotos.length) {
+      return;
+    }
+
+    setState(() {
+      _selectedPhotos.removeAt(photoIndex);
+      if (photoIndex < _selectedPhotoBytes.length) {
+        _selectedPhotoBytes.removeAt(photoIndex);
+      }
+      if (photoIndex < _uploadedPhotoUrls.length) {
+        _uploadedPhotoUrls.removeAt(photoIndex);
+      }
+    });
+  }
+
   String _storageExtFromPhoto(XFile photo) {
     final mime = (photo.mimeType ?? '').toLowerCase().trim();
     if (mime == 'image/webp') return 'webp';
@@ -9397,6 +9420,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             : null,
                         onTap: () => _onPhotoTileTap(0),
                         onLongPress: () => _pickImage(0),
+                        onRemove: _selectedPhotos.isNotEmpty
+                            ? () => _removePhotoAt(0)
+                            : null,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -9411,6 +9437,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             : null,
                         onTap: () => _onPhotoTileTap(1),
                         onLongPress: () => _pickImage(1),
+                        onRemove: _selectedPhotos.length > 1
+                            ? () => _removePhotoAt(1)
+                            : null,
                       ),
                     ),
                   ],
@@ -12851,7 +12880,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       if (shouldKeepVisibleWithJobDone) {
         showSuccessSnackBar(
           context,
-          'Annonce "$title" marquée comme réalisée. Elle restera visible 1 h avec jobfait.',
+          'Annonce "$title" marquée comme réalisée. Elle restera visible 10 h avec jobfait.',
         );
       } else {
         showSuccessSnackBar(context, 'Annonce "$title" supprimée');
