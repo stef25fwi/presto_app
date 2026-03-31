@@ -39,6 +39,16 @@ function departmentFromPostalCode(postalCode: string): string {
   return cp.slice(0, 2);
 }
 
+function buildCategoryKeywords(label: string, categoryId: string): string[] {
+  const tokens = `${label} ${categoryId}`
+    .toLowerCase()
+    .split(/[^a-z0-9]+/i)
+    .map((value) => value.trim())
+    .filter((value) => value.length >= 2);
+
+  return Array.from(new Set(tokens)).slice(0, 20);
+}
+
 async function normalizeListingMediaForSubmission({
   ownerId,
   media,
@@ -119,13 +129,34 @@ async function ensureCategoryAndCityAreResolvable(
     db.collection(COLLECTIONS.cities).doc(validated.cityId).get(),
   ]);
 
-  if (!categorySnap.exists || categorySnap.data()?.isActive === false) {
+  if (categorySnap.exists && categorySnap.data()?.isActive === false) {
     throw new HttpsError("failed-precondition", "Category is invalid or inactive");
+  }
+
+  let categoryData = (categorySnap.data() ?? {}) as Record<string, unknown>;
+  if (!categorySnap.exists) {
+    const fallbackCategoryLabel = normalizeString(validated.category);
+    if (!fallbackCategoryLabel) {
+      throw new HttpsError("failed-precondition", "Category is invalid or inactive");
+    }
+
+    categoryData = {
+      id: validated.categoryId,
+      slug: validated.categoryId,
+      label: fallbackCategoryLabel,
+      isActive: true,
+      searchableKeywords: buildCategoryKeywords(
+        fallbackCategoryLabel,
+        validated.categoryId,
+      ),
+    };
+
+    await db.collection(COLLECTIONS.categories).doc(validated.categoryId).set(categoryData, { merge: true });
   }
 
   if (citySnap.exists && citySnap.data()?.isActive !== false) {
     return {
-      category: categorySnap.data() ?? {},
+      category: categoryData,
       city: citySnap.data() ?? {},
     };
   }
@@ -154,7 +185,7 @@ async function ensureCategoryAndCityAreResolvable(
   await db.collection(COLLECTIONS.cities).doc(validated.cityId).set(fallbackCityData, { merge: true });
 
   return {
-    category: categorySnap.data() ?? {},
+    category: categoryData,
     city: fallbackCityData,
   };
 }
