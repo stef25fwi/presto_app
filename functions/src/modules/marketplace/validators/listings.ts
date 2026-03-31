@@ -19,6 +19,15 @@ export interface ValidatedListingDraftPayload {
   missionDelay: string;
   isUrgent: boolean;
   subCategory: string;
+  category: string;
+  city: string;
+  location: string;
+  postalCode: string;
+  cp: string;
+  dept: string;
+  region: string;
+  cityCategoryKey: string;
+  budgetValue?: number;
 }
 
 function inferImageMimeTypeFromPath(storagePath: string): string {
@@ -139,6 +148,17 @@ export function validateListingDraftPayload(rawDraft: UnknownRecord, maxMediaCou
     missionDelay: normalizeString(rawDraft.missionDelay),
     isUrgent: rawDraft.isUrgent === true,
     subCategory: normalizeString(rawDraft.subCategory),
+    category: normalizeString(rawDraft.category),
+    city: normalizeString(rawDraft.city),
+    location: normalizeString(rawDraft.location),
+    postalCode: normalizeString(rawDraft.postalCode),
+    cp: normalizeString(rawDraft.cp),
+    dept: normalizeString(rawDraft.dept),
+    region: normalizeString(rawDraft.region),
+    cityCategoryKey: normalizeString(rawDraft.cityCategoryKey),
+    budgetValue: Number.isFinite(Number(rawDraft.budgetValue))
+      ? Number(rawDraft.budgetValue)
+      : undefined,
   };
 }
 

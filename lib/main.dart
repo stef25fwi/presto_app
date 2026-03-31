@@ -166,6 +166,22 @@ Filter _publicOffersFilter() {
   );
 }
 
+List<QueryDocumentSnapshot<Map<String, dynamic>>> _mergeOfferDocsById(
+  Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> primaryDocs,
+  Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> secondaryDocs,
+) {
+  final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+
+  for (final doc in primaryDocs) {
+    byId[doc.id] = doc;
+  }
+  for (final doc in secondaryDocs) {
+    byId.putIfAbsent(doc.id, () => doc);
+  }
+
+  return byId.values.toList(growable: false);
+}
+
 bool _isPublishedOfferData(Map<String, dynamic> data) {
   if (_isOfferArchivedLike(data)) return false;
 
@@ -1738,6 +1754,13 @@ class _HomePageState extends State<HomePage>
         .limit(limit);
   }
 
+  Query<Map<String, dynamic>> _legacyRecentOffersQuery({int limit = 200}) {
+    return FirebaseFirestore.instance
+        .collection(_kOffersCollection)
+        .orderBy('createdAt', descending: true)
+        .limit(limit);
+  }
+
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
       _loadLatestOffers() async {
     // Query primaire : offres avec status='published', triées par date.
@@ -1773,8 +1796,19 @@ class _HomePageState extends State<HomePage>
       // Si l'index n'est pas encore prêt, fallback sur la query générique
       // avec filtre côté client.
       debugPrint('[LatestOffers] Primary query failed, falling back: $error');
-      final fallback = await _recentOffersQuery().get();
-      return fallback.docs
+      final results = await Future.wait([
+        _recentOffersQuery().get(),
+        _legacyRecentOffersQuery().get(),
+      ]);
+      final merged = _mergeOfferDocsById(results[0].docs, results[1].docs);
+      merged.sort((a, b) {
+        final aTs = a.data()['createdAt'];
+        final bTs = b.data()['createdAt'];
+        final aMs = aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
+        final bMs = bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
+        return bMs.compareTo(aMs);
+      });
+      return merged
           .where((doc) => _isPublishedOfferData(doc.data()))
           .take(8)
           .toList(growable: false);
@@ -4291,6 +4325,119 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return query;
   }
 
+  Query<Map<String, dynamic>> _buildLegacyOffersQuery() {
+    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+        .collection(_kOffersCollection)
+        .where(_publicOffersFilter());
+
+    final loc = _locationController.text.trim();
+    final cp = _postalCodeController.text.trim();
+    final cat = _selectedCategory;
+    final regionCode = _selectedRegionCode;
+    final subcat = _selectedSubCategory;
+
+    final filterCat = _filterCategory;
+    final filterRegCode = _filterRegionCode;
+    final filterDeptCode = _filterDepartmentCode;
+    final filterCity = _filterCityName?.trim();
+
+    final String? categoryLabel =
+        (filterCat != null && filterCat.isNotEmpty) ? filterCat : cat;
+    final String? categoryId = _makeCategoryId(categoryLabel);
+
+    final String cityName =
+        (filterCity != null && filterCity.isNotEmpty) ? filterCity : loc;
+
+    final String cpForCity = (filterCity != null &&
+            filterCity.isNotEmpty &&
+            _filterPostalCodeController.text.trim().isNotEmpty)
+        ? _filterPostalCodeController.text.trim()
+        : cp;
+
+    final String? cityId =
+        _makeCityId(cityName: cityName, postalCode: cpForCity);
+
+    final String? cityCategoryKey =
+        _makeCityCategoryKey(cityId: cityId, categoryId: categoryId);
+
+    final bool hasSubcategory = (subcat != null && subcat.isNotEmpty);
+    final bool hasDept =
+        (filterDeptCode != null && filterDeptCode.isNotEmpty) ||
+            (filterRegCode != null && filterRegCode.isNotEmpty) ||
+            (regionCode != null && regionCode.isNotEmpty);
+
+    final min = _parseBudgetBound(_budgetMinCtrl.text);
+    final max = _parseBudgetBound(_budgetMaxCtrl.text);
+    final bool wantsBudgetRange = _advancedFilters &&
+        (min != null || max != null) &&
+        _budgetRangeWarning == null;
+
+    final hasClientFilters = categoryId != null ||
+        cityId != null ||
+        cityCategoryKey != null ||
+        hasSubcategory ||
+        hasDept ||
+        wantsBudgetRange ||
+        (_activeSearchQuery?.trim().isNotEmpty ?? false);
+
+    query = query.limit(hasClientFilters ? _maxLimit : _pageLimit);
+    return query;
+  }
+
+  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _watchCombinedOffers() {
+    return Stream.multi((controller) {
+      QuerySnapshot<Map<String, dynamic>>? listingsSnapshot;
+      QuerySnapshot<Map<String, dynamic>>? legacyOffersSnapshot;
+
+      void emitMerged() {
+        controller.add(
+          _mergeOfferDocsById(
+            listingsSnapshot?.docs ??
+                <QueryDocumentSnapshot<Map<String, dynamic>>>[],
+            legacyOffersSnapshot?.docs ??
+                <QueryDocumentSnapshot<Map<String, dynamic>>>[],
+          ),
+        );
+      }
+
+      final listingsSub = _buildOffersQuery().snapshots().listen(
+        (snapshot) {
+          listingsSnapshot = snapshot;
+          emitMerged();
+        },
+        onError: (error, stackTrace) {
+          debugPrint('[OFFERS][LISTINGS] snapshot error: $error');
+          if (legacyOffersSnapshot == null) {
+            controller.addError(error, stackTrace);
+            return;
+          }
+          emitMerged();
+        },
+      );
+
+      final offersSub = _buildLegacyOffersQuery().snapshots().listen(
+        (snapshot) {
+          legacyOffersSnapshot = snapshot;
+          emitMerged();
+        },
+        onError: (error, stackTrace) {
+          debugPrint('[OFFERS][LEGACY] snapshot error: $error');
+          if (listingsSnapshot == null) {
+            controller.addError(error, stackTrace);
+            return;
+          }
+          emitMerged();
+        },
+      );
+
+      controller.onCancel = () async {
+        await listingsSub.cancel();
+        await offersSub.cancel();
+      };
+    });
+  }
+
   bool _offerIsActive(Map<String, dynamic> data) {
     return _isOfferJobDoneOverlayVisible(data) || _isPublishedOfferData(data);
   }
@@ -4463,21 +4610,34 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     }
 
     try {
-      final baseQuery = FirebaseFirestore.instance
-          .collection(_kListingsCollection)
-          .where(_publicListingsFilter());
-
       int visibleCount;
 
       if (!_hasActiveClientFilters) {
         // ⚡ Aucun filtre client actif → count aggregation (0 lecture doc)
-        final countSnap = await baseQuery.count().get();
-        visibleCount = countSnap.count ?? 0;
+        final countSnaps = await Future.wait([
+          FirebaseFirestore.instance
+              .collection(_kListingsCollection)
+              .where(_publicListingsFilter())
+              .count()
+              .get(),
+          FirebaseFirestore.instance
+              .collection(_kOffersCollection)
+              .where(_publicOffersFilter())
+              .count()
+              .get(),
+        ]);
+        visibleCount =
+            (countSnaps[0].count ?? 0) + (countSnaps[1].count ?? 0);
       } else {
         // Filtres actifs → on doit charger les docs pour filtrer côté client
         // Limiter à 500 docs maximum pour protéger le quota
-        final snapshot = await baseQuery.limit(500).get();
-        visibleCount = snapshot.docs
+        final snapshots = await Future.wait([
+          _buildOffersQuery().limit(500).get(),
+          _buildLegacyOffersQuery().limit(500).get(),
+        ]);
+        final merged =
+          _mergeOfferDocsById(snapshots[0].docs, snapshots[1].docs);
+        visibleCount = merged
             .where((doc) => _matchesOfferFilters(doc.data()))
             .length;
       }
@@ -4883,10 +5043,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
               _buildActiveFilterChips(),
               _buildFilterPanel(),
               Expanded(
-                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: _buildOffersQuery().snapshots().map((snap) {
-                    PrestoMonitoring.I.trackOffersSnapshot(snap.docs.length);
-                    return snap;
+                child: StreamBuilder<
+                    List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+                  stream: _watchCombinedOffers().map((docs) {
+                    PrestoMonitoring.I.trackOffersSnapshot(docs.length);
+                    return docs;
                   }),
                   builder: (context, snapshot) {
                     // ✅ Ne plus afficher le loader si on a déjà des données
@@ -4961,7 +5122,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       );
                     }
 
-                    final rawDocs = snapshot.data?.docs ?? const [];
+                    final rawDocs = snapshot.data ?? const [];
                     _lastSnapshotRawCount = rawDocs.length;
 
                     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
@@ -7573,6 +7734,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         trimmed == 'city is invalid or inactive') {
       return 'La ville sélectionnée n’est plus disponible. Choisissez une ville valide dans la liste.';
     }
+    if (trimmed == 'reCAPTCHA assessment rejected the listing submission') {
+      return 'La vérification anti-abus a échoué. Réessaie dans quelques secondes.';
+    }
+    if (trimmed == 'Too many listing submissions, please retry later') {
+      return 'Trop de tentatives de publication en peu de temps. Réessaie plus tard.';
+    }
+    if (trimmed == 'Draft not found') {
+      return 'Le brouillon de publication est introuvable. Relance la publication.';
+    }
+    if (trimmed == 'You do not own this draft') {
+      return 'Ce brouillon ne correspond pas à ton compte connecté.';
+    }
     if (trimmed.startsWith('Photo #') &&
         trimmed.endsWith('must be processed as WebP before submission')) {
       final number = RegExp(r'Photo #(\d+)').firstMatch(trimmed)?.group(1);
@@ -8802,7 +8975,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         category: _resolvePublishCategoryLabel(_category) ?? (_category ?? '').trim(),
         city: _locationController.text.trim(),
         postalCode: _postalCodeController.text.trim(),
-        phone: _phoneController.text.trim(),
+        phone: '${_selectedPhoneCountryCode.trim()} ${_phoneController.text.trim()}'.trim(),
         subCategory: _selectedSubCategory,
         missionDelay: _missionDelay,
         isUrgent: _isUrgent,

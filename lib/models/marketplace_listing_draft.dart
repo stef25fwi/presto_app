@@ -47,6 +47,15 @@ class MarketplaceListingDraft {
   final String? missionDelay;
   final bool isUrgent;
   final String? subCategory;
+  final String? category;
+  final String? city;
+  final String? location;
+  final String? postalCode;
+  final String? cp;
+  final String? dept;
+  final String? region;
+  final String? cityCategoryKey;
+  final double? budgetValue;
 
   const MarketplaceListingDraft({
     this.id,
@@ -63,6 +72,15 @@ class MarketplaceListingDraft {
     this.missionDelay,
     this.isUrgent = false,
     this.subCategory,
+    this.category,
+    this.city,
+    this.location,
+    this.postalCode,
+    this.cp,
+    this.dept,
+    this.region,
+    this.cityCategoryKey,
+    this.budgetValue,
   });
 
   Map<String, dynamic> toFirestore() {
@@ -80,6 +98,16 @@ class MarketplaceListingDraft {
       if (missionDelay != null && missionDelay!.trim().isNotEmpty) 'missionDelay': missionDelay!.trim(),
       'isUrgent': isUrgent,
       if (subCategory != null && subCategory!.trim().isNotEmpty) 'subCategory': subCategory!.trim(),
+      if (category != null && category!.trim().isNotEmpty) 'category': category!.trim(),
+      if (city != null && city!.trim().isNotEmpty) 'city': city!.trim(),
+      if (location != null && location!.trim().isNotEmpty) 'location': location!.trim(),
+      if (postalCode != null && postalCode!.trim().isNotEmpty) 'postalCode': postalCode!.trim(),
+      if (cp != null && cp!.trim().isNotEmpty) 'cp': cp!.trim(),
+      if (dept != null && dept!.trim().isNotEmpty) 'dept': dept!.trim(),
+      if (region != null && region!.trim().isNotEmpty) 'region': region!.trim(),
+      if (cityCategoryKey != null && cityCategoryKey!.trim().isNotEmpty)
+        'cityCategoryKey': cityCategoryKey!.trim(),
+      if (budgetValue != null) 'budgetValue': budgetValue,
     };
   }
 }
