@@ -24,10 +24,10 @@ class ListingMediaInput {
       'storagePath': storagePath,
       'downloadUrl': downloadUrl,
       'thumbnailUrl': thumbnailUrl,
-      'width': width,
-      'height': height,
-      'mimeType': mimeType,
-      'sizeBytes': sizeBytes,
+      if (width != null) 'width': width,
+      if (height != null) 'height': height,
+      if (mimeType != null && mimeType!.trim().isNotEmpty) 'mimeType': mimeType,
+      if (sizeBytes != null) 'sizeBytes': sizeBytes,
     };
   }
 }

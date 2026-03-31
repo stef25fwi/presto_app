@@ -91,15 +91,26 @@ export function validateListingMedia(rawMedia: unknown, maxMediaCount: number): 
       throw new ValidationError(`Photo #${index + 1} must be an image file`);
     }
 
-    return {
+    const normalizedMedia: ListingMedia = {
       storagePath,
       downloadUrl,
       thumbnailUrl,
-      width: typeof media.width === "number" ? media.width : undefined,
-      height: typeof media.height === "number" ? media.height : undefined,
-      mimeType: resolvedMimeType || undefined,
-      sizeBytes: typeof media.sizeBytes === "number" ? media.sizeBytes : undefined,
     };
+
+    if (typeof media.width === "number") {
+      normalizedMedia.width = media.width;
+    }
+    if (typeof media.height === "number") {
+      normalizedMedia.height = media.height;
+    }
+    if (resolvedMimeType) {
+      normalizedMedia.mimeType = resolvedMimeType;
+    }
+    if (typeof media.sizeBytes === "number") {
+      normalizedMedia.sizeBytes = media.sizeBytes;
+    }
+
+    return normalizedMedia;
   });
 }
 

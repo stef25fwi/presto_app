@@ -35,6 +35,9 @@ test("validateListingDraftPayload normalizes a valid listing draft", () => {
   assert.equal(payload.price, 95);
   assert.equal(payload.thumbnailUrl, "https://cdn.example/photo.webp");
   assert.equal(payload.media.length, 1);
+  assert.equal("width" in payload.media[0]!, false);
+  assert.equal("height" in payload.media[0]!, false);
+  assert.equal("sizeBytes" in payload.media[0]!, false);
   assert.equal(payload.city, "Les Abymes");
   assert.equal(payload.postalCode, "97139");
   assert.ok(payload.searchKeywords.includes("montage"));
