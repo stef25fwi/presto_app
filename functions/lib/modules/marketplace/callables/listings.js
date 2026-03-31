@@ -290,6 +290,7 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
             listingId,
             ownerId,
             evaluation,
+            autoApproveEnabled: config.autoApproveEnabled,
         });
         await draftSnap.ref.set({
             status: "submitted",
