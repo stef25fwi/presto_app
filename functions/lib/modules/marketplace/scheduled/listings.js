@@ -3,7 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.expireOldListings = void 0;
+exports.publishApprovedListings = exports.expireOldListings = void 0;
+exports.isListingReadyForScheduledPublication = isListingReadyForScheduledPublication;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const env_1 = require("../../../config/env");
@@ -11,6 +12,19 @@ const firestore_1 = require("../../../core/firestore");
 const logger_1 = require("../../../core/logger");
 const constants_1 = require("../../../shared/constants");
 const push_1 = require("../../notifications/push");
+function normalizeString(value) {
+    return String(value ?? "").trim();
+}
+function isListingReadyForScheduledPublication(data, now) {
+    const autoPublishAfter = data.autoPublishAfter;
+    const isDue = autoPublishAfter == null ||
+        !(autoPublishAfter instanceof firebase_admin_1.default.firestore.Timestamp) ||
+        autoPublishAfter.toMillis() <= now.toMillis();
+    return normalizeString(data.status) === "pending" &&
+        normalizeString(data.moderationStatus) === "approved" &&
+        normalizeString(data.mediaProcessingStatus) === "completed" &&
+        isDue;
+}
 exports.expireOldListings = (0, scheduler_1.onSchedule)({
     region: env_1.PROJECT_REGION,
     schedule: "every day 03:10",
@@ -50,5 +64,34 @@ exports.expireOldListings = (0, scheduler_1.onSchedule)({
     }
     await batch.commit();
     logger_1.logger.info("marketplace_expire_old_listings_done", { count: snapshot.size });
+});
+exports.publishApprovedListings = (0, scheduler_1.onSchedule)({
+    region: env_1.PROJECT_REGION,
+    schedule: "every 1 minutes",
+    timeZone: "Europe/Paris",
+}, async () => {
+    const now = firebase_admin_1.default.firestore.Timestamp.now();
+    const snapshot = await firestore_1.db.collection(constants_1.COLLECTIONS.listings)
+        .where("status", "==", "pending")
+        .where("moderationStatus", "==", "approved")
+        .limit(250)
+        .get();
+    const readyDocs = snapshot.docs.filter((doc) => isListingReadyForScheduledPublication(doc.data(), now));
+    if (readyDocs.length === 0) {
+        logger_1.logger.info("marketplace_publish_approved_listings_noop");
+        return;
+    }
+    const batch = firestore_1.db.batch();
+    for (const doc of readyDocs) {
+        batch.set(doc.ref, {
+            status: "active",
+            visibility: "public",
+            publishedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+            autoPublishAfter: null,
+        }, { merge: true });
+    }
+    await batch.commit();
+    logger_1.logger.info("marketplace_publish_approved_listings_done", { count: readyDocs.length });
 });
 //# sourceMappingURL=listings.js.map

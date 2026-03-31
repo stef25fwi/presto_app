@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -32,6 +33,23 @@ class MarketplacePublishService {
   final FirebaseStorage _storage;
   final MarketplaceHumanVerification _verification;
 
+  String _resolveOwnerDisplayName(String ownerId) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user?.uid.trim() == ownerId.trim()) {
+      final displayName = user?.displayName?.trim() ?? '';
+      if (displayName.isNotEmpty) {
+        return displayName;
+      }
+
+      final emailPrefix = (user?.email ?? '').trim().split('@').first.trim();
+      if (emailPrefix.isNotEmpty) {
+        return emailPrefix;
+      }
+    }
+
+    return 'Annonceur iliprestō';
+  }
+
   void _validateDraftInputs({
     required String title,
     required String description,
@@ -49,7 +67,8 @@ class MarketplacePublishService {
       throw StateError('La description doit contenir au moins 30 caractères.');
     }
     if (trimmedDescription.length > 4000) {
-      throw StateError('La description doit contenir au maximum 4000 caractères.');
+      throw StateError(
+          'La description doit contenir au maximum 4000 caractères.');
     }
   }
 
@@ -118,7 +137,8 @@ class MarketplacePublishService {
       );
 
       if (downloadUrl.trim().isEmpty) {
-        throw StateError('Le stockage photo n\'a pas renvoyé d\'URL exploitable.');
+        throw StateError(
+            'Le stockage photo n\'a pas renvoyé d\'URL exploitable.');
       }
 
       media.add(
@@ -143,10 +163,12 @@ class MarketplacePublishService {
     final rawPostalCode = postalCode.trim();
 
     if (rawPostalCode.isNotEmpty) {
-      final exactPostal = CitySearch.instance.pickBestForPostalCode(rawPostalCode);
+      final exactPostal =
+          CitySearch.instance.pickBestForPostalCode(rawPostalCode);
       if (exactPostal != null) {
         if (rawCity.isEmpty ||
-            normalizeOfferText(exactPostal.name) == normalizeOfferText(rawCity)) {
+            normalizeOfferText(exactPostal.name) ==
+                normalizeOfferText(rawCity)) {
           return exactPostal;
         }
 
@@ -198,7 +220,8 @@ class MarketplacePublishService {
     final inputCity = city.trim();
     var resolvedPostalCode = postalCode.trim();
     if (inputCity.isEmpty) {
-      throw StateError('La ville est obligatoire pour publier une annonce marketplace.');
+      throw StateError(
+          'La ville est obligatoire pour publier une annonce marketplace.');
     }
 
     final canonicalCity = _resolveCanonicalCity(
@@ -223,38 +246,39 @@ class MarketplacePublishService {
     final categoryId = (indexed['categoryId'] ?? '').toString().trim();
     final cityId = (indexed['cityId'] ?? '').toString().trim();
     if (categoryId.isEmpty || cityId.isEmpty) {
-      throw StateError('Impossible de résoudre la catégorie ou la ville pour Marketplace.');
+      throw StateError(
+          'Impossible de résoudre la catégorie ou la ville pour Marketplace.');
     }
 
     final media = photos.isEmpty
-      ? const <ListingMediaInput>[]
-      : await _uploadPhotos(uid: ownerId, photos: photos);
+        ? const <ListingMediaInput>[]
+        : await _uploadPhotos(uid: ownerId, photos: photos);
     final draftId = await _runWithChannelRetry<String>(
       stepLabel: 'brouillon Firestore',
       action: () => _listingRepository.createDraft(
-      MarketplaceListingDraft(
-        ownerId: ownerId,
-        title: title,
-        description: description,
-        price: price,
-        categoryId: categoryId,
-        cityId: cityId,
-        media: media,
-        phone: phone,
-        budgetType: budgetType,
-        missionDelay: missionDelay,
-        isUrgent: isUrgent,
-        subCategory: subCategory,
-        category: resolvedCategory,
-        city: resolvedCity,
-        location: resolvedCity,
-        postalCode: resolvedPostalCode,
-        cp: resolvedPostalCode,
-        dept: canonicalCity.dept,
-        region: canonicalCity.region,
-        cityCategoryKey: (indexed['cityCategoryKey'] ?? '').toString().trim(),
-        budgetValue: price,
-      ),
+        MarketplaceListingDraft(
+          ownerId: ownerId,
+          title: title,
+          description: description,
+          price: price,
+          categoryId: categoryId,
+          cityId: cityId,
+          media: media,
+          phone: phone,
+          budgetType: budgetType,
+          missionDelay: missionDelay,
+          isUrgent: isUrgent,
+          subCategory: subCategory,
+          category: resolvedCategory,
+          city: resolvedCity,
+          location: resolvedCity,
+          postalCode: resolvedPostalCode,
+          cp: resolvedPostalCode,
+          dept: canonicalCity.dept,
+          region: canonicalCity.region,
+          cityCategoryKey: (indexed['cityCategoryKey'] ?? '').toString().trim(),
+          budgetValue: price,
+        ),
       ),
     );
 
@@ -272,33 +296,48 @@ class MarketplacePublishService {
           draftId: draftId,
           recaptchaToken: recaptchaToken,
         );
+        final isPublishingSoon = result.status.value != 'active' &&
+            result.moderationStatus.value == 'approved';
+        final ownerDisplayName = _resolveOwnerDisplayName(ownerId);
         final displayMedia = result.media.isNotEmpty
             ? result.media
                 .map(
                   (entry) => ListingMediaInput(
                     storagePath: (entry['storagePath'] ?? '').toString().trim(),
                     downloadUrl: (entry['downloadUrl'] ?? '').toString().trim(),
-                    thumbnailUrl: ((entry['thumbnailUrl'] ?? entry['downloadUrl']) ?? '')
-                        .toString()
-                        .trim(),
-                    width: entry['width'] is num ? (entry['width'] as num).toInt() : null,
-                    height: entry['height'] is num ? (entry['height'] as num).toInt() : null,
-                    mimeType: (entry['mimeType'] ?? '').toString().trim().isEmpty
-                        ? null
-                        : (entry['mimeType'] ?? '').toString().trim(),
+                    thumbnailUrl:
+                        ((entry['thumbnailUrl'] ?? entry['downloadUrl']) ?? '')
+                            .toString()
+                            .trim(),
+                    width: entry['width'] is num
+                        ? (entry['width'] as num).toInt()
+                        : null,
+                    height: entry['height'] is num
+                        ? (entry['height'] as num).toInt()
+                        : null,
+                    mimeType:
+                        (entry['mimeType'] ?? '').toString().trim().isEmpty
+                            ? null
+                            : (entry['mimeType'] ?? '').toString().trim(),
                     sizeBytes: entry['sizeBytes'] is num
                         ? (entry['sizeBytes'] as num).toInt()
                         : null,
                   ),
                 )
                 .where((entry) =>
-                    entry.storagePath.isNotEmpty && entry.downloadUrl.isNotEmpty)
+                    entry.storagePath.isNotEmpty &&
+                    entry.downloadUrl.isNotEmpty)
                 .toList(growable: false)
             : media;
 
         final statusBadges = <String>[
           if (isUrgent) 'Urgent',
-          if (result.status.value == 'active') 'En ligne' else 'En revue',
+          if (result.status.value == 'active')
+            'En ligne'
+          else if (isPublishingSoon)
+            'Publication imminente'
+          else
+            'En revue',
         ];
 
         return MarketplacePublishResult(
@@ -318,7 +357,8 @@ class MarketplacePublishService {
             'category': resolvedCategory,
             'categoryId': categoryId,
             'cityId': cityId,
-            'cityCategoryKey': (indexed['cityCategoryKey'] ?? '').toString().trim(),
+            'cityCategoryKey':
+                (indexed['cityCategoryKey'] ?? '').toString().trim(),
             'description': description.trim(),
             'phone': phone.trim(),
             'price': price,
@@ -328,7 +368,9 @@ class MarketplacePublishService {
             'isUrgent': isUrgent,
             'publishedAtLabel': result.status.value == 'active'
                 ? 'Annonce publiée'
-                : 'Annonce en revue',
+                : (isPublishingSoon
+                    ? 'Publication automatique en cours'
+                    : 'Annonce en revue'),
             'availability': (missionDelay ?? '').trim().isEmpty
                 ? 'Disponibilité à confirmer'
                 : missionDelay!.trim(),
@@ -339,14 +381,24 @@ class MarketplacePublishService {
                 .map((entry) => entry.downloadUrl)
                 .toList(growable: false),
             'media': displayMedia
-              .map((entry) => entry.toMap())
-              .toList(growable: false),
+                .map((entry) => entry.toMap())
+                .toList(growable: false),
+            'pseudo': ownerDisplayName,
+            'displayName': ownerDisplayName,
+            'userName': ownerDisplayName,
+            'ownerName': ownerDisplayName,
             'ownerId': ownerId,
             'userId': ownerId,
             'status': result.status.value,
             'moderationStatus': result.moderationStatus.value,
             'visibility': result.visibility.value,
             'isMarketplace': true,
+            'advertiser': <String, dynamic>{
+              'id': ownerId,
+              'name': ownerDisplayName,
+              'verified': false,
+              'avatarUrl': '',
+            },
           },
         );
       },

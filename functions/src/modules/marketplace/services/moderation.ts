@@ -213,7 +213,7 @@ export async function moderateListingMedia(media: ListingMedia[]): Promise<{
       },
       autoFlags: [],
       imageScanStatus: "failed",
-      riskScore: 45,
+      riskScore: 10,
     };
   }
 }
@@ -364,12 +364,25 @@ export function finalizeListingPublication({
   evaluation,
   now,
   autoApproveEnabled,
+  autoPublishAfter,
 }: {
   evaluation: ListingRiskEvaluation;
   now: FirebaseFirestore.FieldValue;
   autoApproveEnabled?: boolean;
-}): Pick<ListingDoc, "status" | "moderationStatus" | "visibility" | "publishedAt" | "riskScore"> {
+  autoPublishAfter?: FirebaseFirestore.Timestamp | null;
+}): Pick<ListingDoc, "status" | "moderationStatus" | "visibility" | "publishedAt" | "riskScore" | "autoPublishAfter"> {
   const allowAutoApproval = autoApproveEnabled ?? MARKETPLACE_AUTO_APPROVE_ENABLED;
+
+  if (evaluation.moderationDecision === "approved" && allowAutoApproval && autoPublishAfter) {
+    return {
+      status: "pending",
+      moderationStatus: "approved",
+      visibility: "private",
+      publishedAt: null,
+      autoPublishAfter,
+      riskScore: evaluation.riskScore,
+    };
+  }
 
   if (evaluation.moderationDecision === "approved" && allowAutoApproval) {
     return {
@@ -377,6 +390,7 @@ export function finalizeListingPublication({
       moderationStatus: "approved",
       visibility: "public",
       publishedAt: now,
+      autoPublishAfter: null,
       riskScore: evaluation.riskScore,
     };
   }
@@ -387,6 +401,7 @@ export function finalizeListingPublication({
       moderationStatus: "pending",
       visibility: "private",
       publishedAt: null,
+      autoPublishAfter: null,
       riskScore: evaluation.riskScore,
     };
   }
@@ -397,6 +412,7 @@ export function finalizeListingPublication({
       moderationStatus: "blocked",
       visibility: "hidden",
       publishedAt: null,
+      autoPublishAfter: null,
       riskScore: evaluation.riskScore,
     };
   }
@@ -412,6 +428,7 @@ export function finalizeListingPublication({
     moderationStatus,
     visibility,
     publishedAt: null,
+    autoPublishAfter: null,
     riskScore: evaluation.riskScore,
   };
 }
@@ -421,17 +438,20 @@ export async function persistModerationResult({
   ownerId,
   evaluation,
   autoApproveEnabled,
+  autoPublishAfter,
 }: {
   listingId: string;
   ownerId: string;
   evaluation: ListingRiskEvaluation;
   autoApproveEnabled?: boolean;
-}): Promise<Pick<ListingDoc, "status" | "moderationStatus" | "visibility" | "publishedAt" | "riskScore">> {
+  autoPublishAfter?: FirebaseFirestore.Timestamp | null;
+}): Promise<Pick<ListingDoc, "status" | "moderationStatus" | "visibility" | "publishedAt" | "riskScore" | "autoPublishAfter">> {
   const now = admin.firestore.FieldValue.serverTimestamp();
   const listingPatch = finalizeListingPublication({
     evaluation,
     now,
     autoApproveEnabled,
+    autoPublishAfter,
   });
 
   await Promise.all([
@@ -455,6 +475,7 @@ export async function persistModerationResult({
       status: listingPatch.status,
       visibility: listingPatch.visibility,
       publishedAt: listingPatch.publishedAt,
+      autoPublishAfter: listingPatch.autoPublishAfter ?? null,
       riskScore: listingPatch.riskScore,
       updatedAt: now,
     }, { merge: true }),

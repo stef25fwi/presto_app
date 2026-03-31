@@ -45,6 +45,53 @@ const moderation_1 = require("./moderation");
     strict_1.default.equal(publication.moderationStatus, "approved");
     strict_1.default.equal(publication.visibility, "public");
     strict_1.default.equal(publication.publishedAt, now);
+    strict_1.default.equal(publication.autoPublishAfter, null);
+});
+(0, node_test_1.default)("finalizeListingPublication delays approved photo listings before publication", () => {
+    const now = Symbol("serverTimestamp");
+    const autoPublishAfter = Symbol("autoPublishAfter");
+    const publication = (0, moderation_1.finalizeListingPublication)({
+        evaluation: {
+            safeSearchResult: {},
+            autoFlags: [],
+            riskScore: 12,
+            imageScanStatus: "completed",
+            textScanStatus: "completed",
+            moderationDecision: "approved",
+            moderationReason: "approved_automatically",
+        },
+        now,
+        autoApproveEnabled: true,
+        autoPublishAfter,
+    });
+    strict_1.default.equal(publication.status, "pending");
+    strict_1.default.equal(publication.moderationStatus, "approved");
+    strict_1.default.equal(publication.visibility, "private");
+    strict_1.default.equal(publication.publishedAt, null);
+    strict_1.default.equal(publication.autoPublishAfter, autoPublishAfter);
+});
+(0, node_test_1.default)("finalizeListingPublication does not delay publication when auto-approval is disabled", () => {
+    const now = Symbol("serverTimestamp");
+    const autoPublishAfter = Symbol("autoPublishAfter");
+    const publication = (0, moderation_1.finalizeListingPublication)({
+        evaluation: {
+            safeSearchResult: {},
+            autoFlags: [],
+            riskScore: 12,
+            imageScanStatus: "completed",
+            textScanStatus: "completed",
+            moderationDecision: "approved",
+            moderationReason: "approved_automatically",
+        },
+        now,
+        autoApproveEnabled: false,
+        autoPublishAfter,
+    });
+    strict_1.default.equal(publication.status, "pending");
+    strict_1.default.equal(publication.moderationStatus, "pending");
+    strict_1.default.equal(publication.visibility, "private");
+    strict_1.default.equal(publication.publishedAt, null);
+    strict_1.default.equal(publication.autoPublishAfter, null);
 });
 (0, node_test_1.default)("finalizeListingPublication keeps approved listings private when auto-approval is disabled", () => {
     const now = Symbol("serverTimestamp");
@@ -65,6 +112,7 @@ const moderation_1 = require("./moderation");
     strict_1.default.equal(publication.moderationStatus, "pending");
     strict_1.default.equal(publication.visibility, "private");
     strict_1.default.equal(publication.publishedAt, null);
+    strict_1.default.equal(publication.autoPublishAfter, null);
 });
 (0, node_test_1.default)("finalizeListingPublication rejects blocked listings", () => {
     const now = Symbol("serverTimestamp");
@@ -84,5 +132,6 @@ const moderation_1 = require("./moderation");
     strict_1.default.equal(publication.moderationStatus, "blocked");
     strict_1.default.equal(publication.visibility, "hidden");
     strict_1.default.equal(publication.publishedAt, null);
+    strict_1.default.equal(publication.autoPublishAfter, null);
 });
 //# sourceMappingURL=moderation.test.js.map

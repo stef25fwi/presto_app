@@ -50,6 +50,57 @@ test("finalizeListingPublication publishes approved listings when auto-approval 
   assert.equal(publication.moderationStatus, "approved");
   assert.equal(publication.visibility, "public");
   assert.equal(publication.publishedAt, now);
+  assert.equal(publication.autoPublishAfter, null);
+});
+
+test("finalizeListingPublication delays approved photo listings before publication", () => {
+  const now = Symbol("serverTimestamp") as unknown as FirebaseFirestore.FieldValue;
+  const autoPublishAfter = Symbol("autoPublishAfter") as unknown as FirebaseFirestore.Timestamp;
+  const publication = finalizeListingPublication({
+    evaluation: {
+      safeSearchResult: {},
+      autoFlags: [],
+      riskScore: 12,
+      imageScanStatus: "completed",
+      textScanStatus: "completed",
+      moderationDecision: "approved",
+      moderationReason: "approved_automatically",
+    },
+    now,
+    autoApproveEnabled: true,
+    autoPublishAfter,
+  });
+
+  assert.equal(publication.status, "pending");
+  assert.equal(publication.moderationStatus, "approved");
+  assert.equal(publication.visibility, "private");
+  assert.equal(publication.publishedAt, null);
+  assert.equal(publication.autoPublishAfter, autoPublishAfter);
+});
+
+test("finalizeListingPublication does not delay publication when auto-approval is disabled", () => {
+  const now = Symbol("serverTimestamp") as unknown as FirebaseFirestore.FieldValue;
+  const autoPublishAfter = Symbol("autoPublishAfter") as unknown as FirebaseFirestore.Timestamp;
+  const publication = finalizeListingPublication({
+    evaluation: {
+      safeSearchResult: {},
+      autoFlags: [],
+      riskScore: 12,
+      imageScanStatus: "completed",
+      textScanStatus: "completed",
+      moderationDecision: "approved",
+      moderationReason: "approved_automatically",
+    },
+    now,
+    autoApproveEnabled: false,
+    autoPublishAfter,
+  });
+
+  assert.equal(publication.status, "pending");
+  assert.equal(publication.moderationStatus, "pending");
+  assert.equal(publication.visibility, "private");
+  assert.equal(publication.publishedAt, null);
+  assert.equal(publication.autoPublishAfter, null);
 });
 
 test("finalizeListingPublication keeps approved listings private when auto-approval is disabled", () => {
@@ -72,6 +123,7 @@ test("finalizeListingPublication keeps approved listings private when auto-appro
   assert.equal(publication.moderationStatus, "pending");
   assert.equal(publication.visibility, "private");
   assert.equal(publication.publishedAt, null);
+  assert.equal(publication.autoPublishAfter, null);
 });
 
 test("finalizeListingPublication rejects blocked listings", () => {
@@ -93,4 +145,5 @@ test("finalizeListingPublication rejects blocked listings", () => {
   assert.equal(publication.moderationStatus, "blocked");
   assert.equal(publication.visibility, "hidden");
   assert.equal(publication.publishedAt, null);
+  assert.equal(publication.autoPublishAfter, null);
 });
