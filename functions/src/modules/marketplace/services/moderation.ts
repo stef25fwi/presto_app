@@ -420,15 +420,18 @@ export async function persistModerationResult({
   listingId,
   ownerId,
   evaluation,
+  autoApproveEnabled,
 }: {
   listingId: string;
   ownerId: string;
   evaluation: ListingRiskEvaluation;
+  autoApproveEnabled?: boolean;
 }): Promise<Pick<ListingDoc, "status" | "moderationStatus" | "visibility" | "publishedAt" | "riskScore">> {
   const now = admin.firestore.FieldValue.serverTimestamp();
   const listingPatch = finalizeListingPublication({
     evaluation,
     now,
+    autoApproveEnabled,
   });
 
   await Promise.all([

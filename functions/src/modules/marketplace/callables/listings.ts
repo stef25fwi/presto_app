@@ -347,6 +347,7 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
       listingId,
       ownerId,
       evaluation,
+      autoApproveEnabled: config.autoApproveEnabled,
     });
 
     await draftSnap.ref.set({

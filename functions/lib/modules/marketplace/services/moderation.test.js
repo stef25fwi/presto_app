@@ -26,6 +26,26 @@ const moderation_1 = require("./moderation");
         moderationReason: "manual_review_required",
     });
 });
+(0, node_test_1.default)("finalizeListingPublication publishes approved listings when auto-approval is enabled", () => {
+    const now = Symbol("serverTimestamp");
+    const publication = (0, moderation_1.finalizeListingPublication)({
+        evaluation: {
+            safeSearchResult: {},
+            autoFlags: [],
+            riskScore: 12,
+            imageScanStatus: "completed",
+            textScanStatus: "completed",
+            moderationDecision: "approved",
+            moderationReason: "approved_automatically",
+        },
+        now,
+        autoApproveEnabled: true,
+    });
+    strict_1.default.equal(publication.status, "active");
+    strict_1.default.equal(publication.moderationStatus, "approved");
+    strict_1.default.equal(publication.visibility, "public");
+    strict_1.default.equal(publication.publishedAt, now);
+});
 (0, node_test_1.default)("finalizeListingPublication keeps approved listings private when auto-approval is disabled", () => {
     const now = Symbol("serverTimestamp");
     const publication = (0, moderation_1.finalizeListingPublication)({

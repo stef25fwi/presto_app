@@ -291,11 +291,12 @@ function finalizeListingPublication({ evaluation, now, autoApproveEnabled, }) {
         riskScore: evaluation.riskScore,
     };
 }
-async function persistModerationResult({ listingId, ownerId, evaluation, }) {
+async function persistModerationResult({ listingId, ownerId, evaluation, autoApproveEnabled, }) {
     const now = firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
     const listingPatch = finalizeListingPublication({
         evaluation,
         now,
+        autoApproveEnabled,
     });
     await Promise.all([
         firestore_1.db.collection(constants_1.COLLECTIONS.listingModeration).doc(listingId).set({
