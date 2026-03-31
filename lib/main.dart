@@ -12816,7 +12816,6 @@ class _UserOffersSectionState extends State<UserOffersSection> {
           .doc(item.offerId);
       final listingsSnap = await listingsRef.get();
       final isListing = listingsSnap.exists;
-      final collectionName = isListing ? _kListingsCollection : _kOffersCollection;
 
       final doc = isListing
           ? listingsSnap
@@ -12828,49 +12827,64 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       final latestData = doc.data() ?? item.data;
       final shouldKeepVisibleWithJobDone =
           _isOfferJobDoneDeletionReason(reason);
-      final imageUrls = (latestData['imageUrls'] as List<dynamic>? ?? const [])
-          .map((e) => e.toString())
-          .where((e) => e.isNotEmpty)
-          .toList();
-
-      if (!shouldKeepVisibleWithJobDone) {
-        for (final url in imageUrls) {
-          try {
-            final ref = FirebaseStorage.instance.refFromURL(url);
-            await ref.delete();
-          } catch (_) {
-            // Best-effort: une image manquante ne doit pas bloquer la suppression.
-          }
-        }
-      }
 
       debugPrint('Suppression offre ${item.offerId} avec motif: $reason');
 
-      if (shouldKeepVisibleWithJobDone) {
-        final visibleUntil = Timestamp.fromDate(
-          DateTime.now().add(kOfferJobDoneOverlayDuration),
+      if (isListing) {
+        final callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
+            .httpsCallable(
+          'deleteListing',
+          options: HttpsCallableOptions(
+            timeout: const Duration(seconds: 30),
+          ),
         );
-
-        await FirebaseFirestore.instance
-            .collection(collectionName)
-            .doc(item.offerId)
-            .update({
-          'status': 'sold',
-          'isActive': true,
-          'isPublished': false,
-          'deletedAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-          'deletedReason': reason,
-          'archiveReason': reason,
-          'jobDoneOverlayVisible': true,
-          'jobDoneOverlayVisibleUntil': visibleUntil,
-          'removeFromBrowseAt': visibleUntil,
+        await callable.call<dynamic>({
+          'listingId': item.offerId,
+          'reason': reason,
         });
       } else {
-        await FirebaseFirestore.instance
-            .collection(collectionName)
-            .doc(item.offerId)
-            .delete();
+        final imageUrls = (latestData['imageUrls'] as List<dynamic>? ?? const [])
+            .map((e) => e.toString())
+            .where((e) => e.isNotEmpty)
+            .toList();
+
+        if (!shouldKeepVisibleWithJobDone) {
+          for (final url in imageUrls) {
+            try {
+              final ref = FirebaseStorage.instance.refFromURL(url);
+              await ref.delete();
+            } catch (_) {
+              // Best-effort: une image manquante ne doit pas bloquer la suppression.
+            }
+          }
+        }
+
+        if (shouldKeepVisibleWithJobDone) {
+          final visibleUntil = Timestamp.fromDate(
+            DateTime.now().add(kOfferJobDoneOverlayDuration),
+          );
+
+          await FirebaseFirestore.instance
+              .collection(_kOffersCollection)
+              .doc(item.offerId)
+              .update({
+            'status': 'sold',
+            'isActive': true,
+            'isPublished': false,
+            'deletedAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'deletedReason': reason,
+            'archiveReason': reason,
+            'jobDoneOverlayVisible': true,
+            'jobDoneOverlayVisibleUntil': visibleUntil,
+            'removeFromBrowseAt': visibleUntil,
+          });
+        } else {
+          await FirebaseFirestore.instance
+              .collection(_kOffersCollection)
+              .doc(item.offerId)
+              .delete();
+        }
       }
 
       if (!mounted) return;

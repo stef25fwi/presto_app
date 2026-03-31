@@ -28,6 +28,12 @@ function requireAuthUid(request) {
 function normalizeString(value) {
     return String(value ?? "").trim();
 }
+function collectListingMediaStoragePaths(data) {
+    const media = Array.isArray(data.media) ? data.media : [];
+    return Array.from(new Set(media
+        .map((entry) => normalizeString(entry.storagePath))
+        .filter((storagePath) => storagePath.length > 0)));
+}
 function departmentFromPostalCode(postalCode) {
     const cp = postalCode.trim();
     if (cp.length < 2)
@@ -417,9 +423,31 @@ exports.incrementListingView = (0, https_1.onCall)({ region: env_1.PROJECT_REGIO
     });
     return { ok: true, deduplicated: false };
 });
+/**
+ * Checks if the deletion reason corresponds to a "job done" scenario
+ * where the listing should be kept visible with an overlay instead of hard-deleted.
+ */
+function isJobDoneReason(reason) {
+    if (!reason)
+        return false;
+    const normalized = reason
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/['']/g, "'")
+        .replace(/\s+/g, " ");
+    const foundOnIliPresto = normalized.includes("trouve quelqu") && normalized.includes("ilipresto");
+    const foundProvider = normalized.includes("deja trouve") && normalized.includes("prestataire");
+    return foundOnIliPresto || foundProvider;
+}
+const JOB_DONE_OVERLAY_HOURS = 10;
 exports.deleteListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
     const ownerId = requireAuthUid(request);
     const listingId = normalizeString(request.data?.listingId);
+    const reason = typeof request.data?.reason === "string"
+        ? request.data.reason.trim().slice(0, 500)
+        : undefined;
     if (!listingId) {
         throw new https_1.HttpsError("invalid-argument", "listingId is required");
     }
@@ -433,6 +461,41 @@ exports.deleteListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, as
         if (normalizeString(listingData.ownerId) !== ownerId) {
             throw new https_1.HttpsError("permission-denied", "You do not own this listing");
         }
+        const previousStatus = normalizeString(listingData.status) || "unknown";
+        const mediaStoragePaths = collectListingMediaStoragePaths(listingData);
+        if (isJobDoneReason(reason)) {
+            // Mark as sold with a visible overlay instead of hard-deleting.
+            const visibleUntil = firebase_admin_1.default.firestore.Timestamp.fromDate(new Date(Date.now() + JOB_DONE_OVERLAY_HOURS * 60 * 60 * 1000));
+            await listingRef.update({
+                status: "sold",
+                isActive: true,
+                isPublished: false,
+                deletedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
+                deletedReason: reason,
+                archiveReason: reason,
+                jobDoneOverlayVisible: true,
+                jobDoneOverlayVisibleUntil: visibleUntil,
+                removeFromBrowseAt: visibleUntil,
+            });
+            logger_1.logger.info("marketplace_listing_marked_job_done", {
+                listingId,
+                ownerId,
+                previousStatus,
+                reason,
+            });
+            return { ok: true, listingId, jobDone: true };
+        }
+        const bucket = firebase_admin_1.default.storage().bucket();
+        await Promise.all(mediaStoragePaths.map(async (storagePath) => {
+            try {
+                await bucket.file(storagePath).delete();
+            }
+            catch {
+                // Best effort: media cleanup must not block listing deletion.
+            }
+        }));
+        // Hard-delete the listing and related documents.
         const batch = firestore_1.db.batch();
         batch.delete(listingRef);
         batch.delete(firestore_1.db.collection(constants_1.COLLECTIONS.listingModeration).doc(listingId));
@@ -442,7 +505,8 @@ exports.deleteListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, as
         logger_1.logger.info("marketplace_listing_deleted", {
             listingId,
             ownerId,
-            previousStatus: normalizeString(listingData.status) || "unknown",
+            previousStatus,
+            reason: reason || "none",
         });
         return {
             ok: true,
