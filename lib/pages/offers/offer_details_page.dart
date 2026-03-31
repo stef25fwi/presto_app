@@ -153,6 +153,70 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     this.onBackToConsult,
   });
 
+  String _extractMarketplaceListingId(Object? source) {
+    final dynamic dynamicSource = source;
+    final rawId = ((source is Map
+                ? source['listingId'] ?? source['offerId'] ?? source['id']
+                : _OfferUiData._read(() => dynamicSource?.listingId) ??
+                    _OfferUiData._read(() => dynamicSource?.offerId) ??
+                    _OfferUiData._read(() => dynamicSource?.id)) ??
+            '')
+        .toString()
+        .trim();
+    final isMarketplaceRaw = (source is Map
+            ? source['isMarketplace']
+            : _OfferUiData._read(() => dynamicSource?.isMarketplace))
+        .toString()
+        .trim()
+        .toLowerCase();
+
+    if (rawId.isEmpty || isMarketplaceRaw != 'true') {
+      return '';
+    }
+
+    return rawId;
+  }
+
+  Object? _mergeMarketplaceOffer(
+    Object? source,
+    Map<String, dynamic>? liveData,
+    String listingId,
+  ) {
+    if (liveData == null || liveData.isEmpty) {
+      return source;
+    }
+
+    final merged = <String, dynamic>{
+      if (source is Map)
+        ...Map<String, dynamic>.from(source.cast<dynamic, dynamic>()),
+      ...liveData,
+      'id': listingId,
+      'offerId': listingId,
+      'listingId': listingId,
+      'isMarketplace': true,
+    };
+
+    final currentImageUrls =
+        (merged['imageUrls'] as List?) ?? const <dynamic>[];
+    if (currentImageUrls.isEmpty) {
+      final media = (merged['media'] as List?) ?? const <dynamic>[];
+      final imageUrls = media
+          .whereType<Map>()
+          .map(
+            (entry) => ((entry['downloadUrl'] ?? entry['thumbnailUrl']) ?? '')
+                .toString()
+                .trim(),
+          )
+          .where((url) => url.isNotEmpty)
+          .toList(growable: false);
+      if (imageUrls.isNotEmpty) {
+        merged['imageUrls'] = imageUrls;
+      }
+    }
+
+    return merged;
+  }
+
   String _toE164Like(String raw) {
     final trimmed = raw.trim();
     if (trimmed.isEmpty) return '';
@@ -877,93 +941,117 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const bg = Color(0xFFF6EFEC);
-    final data = _OfferUiData.fromOffer(offer);
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final isCompactMobile = screenWidth <= 360;
-    final sectionGap = isCompactMobile ? 12.0 : 14.0;
+    Widget buildPage(Object? resolvedOffer) {
+      const bg = Color(0xFFF6EFEC);
+      final data = _OfferUiData.fromOffer(resolvedOffer);
+      final screenWidth = MediaQuery.sizeOf(context).width;
+      final isCompactMobile = screenWidth <= 360;
+      final sectionGap = isCompactMobile ? 12.0 : 14.0;
 
-    return Scaffold(
-      backgroundColor: bg,
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: 'Retour',
-          onPressed: () {
-            if (onBackToConsult != null) {
-              onBackToConsult!();
-              return;
-            }
-            Navigator.of(context).maybePop();
-          },
-          icon: const Icon(Icons.arrow_back),
-        ),
-        backgroundColor: _headerOrange,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        titleSpacing: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Détail annonce',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: kPrestoAppBarTitleStyle,
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Partager',
-            onPressed: () => _showShareOptionsSheet(context, data),
-            icon: const Icon(Icons.share_outlined),
-            color: Colors.white,
-            splashRadius: 20,
+      return Scaffold(
+        backgroundColor: bg,
+        appBar: AppBar(
+          leading: IconButton(
+            tooltip: 'Retour',
+            onPressed: () {
+              if (onBackToConsult != null) {
+                onBackToConsult!();
+                return;
+              }
+              Navigator.of(context).maybePop();
+            },
+            icon: const Icon(Icons.arrow_back),
           ),
-          if (data.isMarketplace)
+          backgroundColor: _headerOrange,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+          titleSpacing: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
+          title: const Text(
+            'Détail annonce',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: kPrestoAppBarTitleStyle,
+          ),
+          actions: [
             IconButton(
-              tooltip: 'Signaler',
-              onPressed: () => _showReportSheet(context, data),
-              icon: const Icon(Icons.flag_outlined),
+              tooltip: 'Partager',
+              onPressed: () => _showShareOptionsSheet(context, data),
+              icon: const Icon(Icons.share_outlined),
               color: Colors.white,
               splashRadius: 20,
             ),
-          _buildFavoriteAction(context, data),
-          const SizedBox(width: 6),
-        ],
-      ),
-      body: Stack(
-        children: [
-          const _BackgroundDecor(),
-          SafeArea(
-            top: false,
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(
-                isCompactMobile ? 14 : 16,
-                isCompactMobile ? 10 : 12,
-                isCompactMobile ? 14 : 16,
-                isCompactMobile ? 14 : 16,
+            if (data.isMarketplace)
+              IconButton(
+                tooltip: 'Signaler',
+                onPressed: () => _showReportSheet(context, data),
+                icon: const Icon(Icons.flag_outlined),
+                color: Colors.white,
+                splashRadius: 20,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _HeroCard(data: data, compact: isCompactMobile),
-                  SizedBox(height: sectionGap),
-                  _PracticalInfoCard(
-                    data: data,
-                    compact: isCompactMobile,
-                    onContactTap: () => _showContactOptionsSheet(context, data),
-                  ),
-                  SizedBox(height: sectionGap),
-                  _AdvertiserContactCard(
-                    data: data,
-                    compact: isCompactMobile,
-                    onContactTap: () => _showContactOptionsSheet(context, data),
-                  ),
-                ],
+            _buildFavoriteAction(context, data),
+            const SizedBox(width: 6),
+          ],
+        ),
+        body: Stack(
+          children: [
+            const _BackgroundDecor(),
+            SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  isCompactMobile ? 14 : 16,
+                  isCompactMobile ? 10 : 12,
+                  isCompactMobile ? 14 : 16,
+                  isCompactMobile ? 14 : 16,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _HeroCard(data: data, compact: isCompactMobile),
+                    SizedBox(height: sectionGap),
+                    _PracticalInfoCard(
+                      data: data,
+                      compact: isCompactMobile,
+                      onContactTap: () =>
+                          _showContactOptionsSheet(context, data),
+                    ),
+                    SizedBox(height: sectionGap),
+                    _AdvertiserContactCard(
+                      data: data,
+                      compact: isCompactMobile,
+                      onContactTap: () =>
+                          _showContactOptionsSheet(context, data),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      );
+    }
+
+    final listingId = _extractMarketplaceListingId(offer);
+    if (listingId.isEmpty) {
+      return buildPage(offer);
+    }
+
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('listings')
+          .doc(listingId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        final mergedOffer = _mergeMarketplaceOffer(
+          offer,
+          snapshot.data?.data(),
+          listingId,
+        );
+        return buildPage(mergedOffer);
+      },
     );
   }
 }
@@ -1005,6 +1093,7 @@ class _OfferUiData {
   final String averageDelay;
   final String paymentMethod;
   final String serviceType;
+  final List<String> imageUrls;
 
   const _OfferUiData({
     required this.offerId,
@@ -1041,6 +1130,7 @@ class _OfferUiData {
     required this.averageDelay,
     required this.paymentMethod,
     required this.serviceType,
+    this.imageUrls = const [],
   });
 
   String get sanitizedTitle {
@@ -1154,8 +1244,8 @@ class _OfferUiData {
         fallback: 'Montage meuble');
     final publishedAt = _asDateTime(
       readValue('publishedAt', () => o.publishedAt) ??
-        readValue('createdAt', () => o.createdAt) ??
-        readValue('updatedAt', () => o.updatedAt),
+          readValue('createdAt', () => o.createdAt) ??
+          readValue('updatedAt', () => o.updatedAt),
     );
     final detail = _asString(
       readValue('shortDescription', () => o.shortDescription) ??
@@ -1215,8 +1305,12 @@ class _OfferUiData {
     );
     final advertiserName = _asString(
       readNestedValue(advertiser, 'name', () => advertiser.name) ??
+          readValue('pseudo') ??
+          readValue('displayName') ??
+          readValue('ownerName') ??
+          readValue('name') ??
           readValue('userName'),
-      fallback: 'Bastien',
+      fallback: 'Annonceur iliprestō',
     );
     final advertiserRole = _asString(
       readNestedValue(advertiser, 'bio', () => advertiser.bio) ??
@@ -1282,6 +1376,23 @@ class _OfferUiData {
       fallback: 'Prestation ponctuelle',
     );
 
+    final rawImageUrlsList = rawImageUrls is List
+        ? rawImageUrls
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList(growable: false)
+        : rawMedia is List
+            ? rawMedia
+                .map((entry) {
+                  if (entry is Map) {
+                    return ((entry['downloadUrl'] ?? entry['thumbnailUrl']) ?? '').toString().trim();
+                  }
+                  return entry.toString().trim();
+                })
+                .where((e) => e.isNotEmpty)
+                .toList(growable: false)
+            : const <String>[];
+
     return _OfferUiData(
       offerId: offerId,
       isMarketplace: isMarketplace,
@@ -1317,6 +1428,7 @@ class _OfferUiData {
       averageDelay: averageDelay,
       paymentMethod: paymentMethod,
       serviceType: serviceType,
+      imageUrls: rawImageUrlsList.cast<String>(),
     );
   }
 
@@ -1651,7 +1763,8 @@ class _PendingPhotoNotice extends StatelessWidget {
     final normalizedModeration = moderationStatus.trim().toLowerCase();
     final message = isProcessing
         ? 'Les photos sont en cours de préparation pour la mise en ligne. L\'annonce reste en attente avant publication.'
-        : normalizedModeration == 'manual_review' || normalizedModeration == 'pending'
+        : normalizedModeration == 'manual_review' ||
+                normalizedModeration == 'pending'
             ? 'Les photos sont prêtes. L\'annonce reste en attente de validation avant publication.'
             : 'Cette annonce reste temporairement hors ligne avant publication.';
 
@@ -1690,7 +1803,9 @@ class _PendingPhotoNotice extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isProcessing ? 'Photos en traitement' : 'Annonce en attente de validation',
+                  isProcessing
+                      ? 'Photos en traitement'
+                      : 'Annonce en attente de validation',
                   style: TextStyle(
                     fontSize: compact ? 12.5 : 13.5,
                     fontWeight: FontWeight.w800,
@@ -1763,6 +1878,171 @@ class _HeroInfoChip extends StatelessWidget {
   }
 }
 
+// ─── Photo gallery ───────────────────────────────────────────────────────────
+
+class _PhotoThumbnailStrip extends StatelessWidget {
+  final List<String> imageUrls;
+  final bool compact;
+
+  const _PhotoThumbnailStrip({
+    required this.imageUrls,
+    this.compact = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrls.isEmpty) return const SizedBox.shrink();
+
+    final double thumbSize = compact ? 64 : 76;
+    final double borderRadius = compact ? 12 : 14;
+
+    return SizedBox(
+      height: thumbSize,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
+        itemCount: imageUrls.length,
+        separatorBuilder: (_, __) => SizedBox(width: compact ? 8 : 10),
+        itemBuilder: (context, index) {
+          return GestureDetector(
+            onTap: () => _openFullScreenGallery(context, index),
+            child: Container(
+              width: thumbSize,
+              height: thumbSize,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(borderRadius),
+                border: Border.all(
+                  color: const Color(0xFFE5E7EB),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(borderRadius - 1),
+                child: Image.network(
+                  imageUrls[index],
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: const Color(0xFFF3F4F6),
+                    child: const Icon(
+                      Icons.broken_image_outlined,
+                      color: Color(0xFF9CA3AF),
+                      size: 28,
+                    ),
+                  ),
+                  loadingBuilder: (_, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: const Color(0xFFF3F4F6),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFFFF6A00),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _openFullScreenGallery(BuildContext context, int initialIndex) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _FullScreenGalleryPage(
+          imageUrls: imageUrls,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
+  }
+}
+
+class _FullScreenGalleryPage extends StatefulWidget {
+  final List<String> imageUrls;
+  final int initialIndex;
+
+  const _FullScreenGalleryPage({
+    required this.imageUrls,
+    required this.initialIndex,
+  });
+
+  @override
+  State<_FullScreenGalleryPage> createState() => _FullScreenGalleryPageState();
+}
+
+class _FullScreenGalleryPageState extends State<_FullScreenGalleryPage> {
+  late final PageController _pageController;
+  late int _currentPage;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPage = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        title: Text(
+          '${_currentPage + 1} / ${widget.imageUrls.length}',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+        centerTitle: true,
+      ),
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: widget.imageUrls.length,
+        onPageChanged: (index) => setState(() => _currentPage = index),
+        itemBuilder: (context, index) {
+          return InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 4.0,
+            child: Center(
+              child: Image.network(
+                widget.imageUrls[index],
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.broken_image_outlined,
+                  color: Colors.white54,
+                  size: 64,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _PracticalInfoCard extends StatelessWidget {
   final _OfferUiData data;
   final bool compact;
@@ -1803,6 +2083,18 @@ class _PracticalInfoCard extends StatelessWidget {
       ),
       child: Column(
         children: [
+          if (data.imageUrls.isNotEmpty) ...[
+            Padding(
+              padding: EdgeInsets.only(
+                top: compact ? 12 : 16,
+                bottom: compact ? 4 : 8,
+              ),
+              child: _PhotoThumbnailStrip(
+                imageUrls: data.imageUrls,
+                compact: compact,
+              ),
+            ),
+          ],
           Container(
             decoration: BoxDecoration(
               color: const Color(0xFFFBFAFA),

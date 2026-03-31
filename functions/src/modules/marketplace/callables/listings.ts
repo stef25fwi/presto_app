@@ -30,6 +30,26 @@ function normalizeString(value: unknown): string {
   return String(value ?? "").trim();
 }
 
+function normalizeDisplayName(...values: unknown[]): string {
+  for (const value of values) {
+    const normalized = normalizeString(value);
+    if (normalized) {
+      return normalized;
+    }
+  }
+  return "Annonceur iliprestō";
+}
+
+function readListingOwnerId(data: Record<string, unknown>): string {
+  for (const field of ["ownerId", "userId", "uid"] as const) {
+    const value = normalizeString(data[field]);
+    if (value) {
+      return value;
+    }
+  }
+  return "";
+}
+
 function collectListingMediaStoragePaths(data: Record<string, unknown>): string[] {
   const media = Array.isArray(data.media) ? data.media as ListingMedia[] : [];
   return Array.from(new Set(
@@ -239,6 +259,40 @@ async function readOwnerSignals(ownerId: string, normalizedTitle: string): Promi
   };
 }
 
+async function loadOwnerPublicIdentity(ownerId: string): Promise<{
+  displayName: string;
+  avatarUrl: string;
+  verified: boolean;
+}> {
+  const [userSnap, authRecord] = await Promise.all([
+    db.collection(COLLECTIONS.users).doc(ownerId).get(),
+    admin.auth().getUser(ownerId).catch(() => null),
+  ]);
+
+  const userData = (userSnap.data() ?? {}) as Record<string, unknown>;
+  const emailPrefix = normalizeString(authRecord?.email).split("@").shift() ?? "";
+
+  return {
+    displayName: normalizeDisplayName(
+      userData.pseudo,
+      userData.displayName,
+      userData.userName,
+      userData.user_name,
+      userData.name,
+      authRecord?.displayName,
+      emailPrefix,
+    ),
+    avatarUrl: normalizeString(
+      userData.avatarUrl ||
+      userData.photoURL ||
+      authRecord?.photoURL,
+    ),
+    verified: userData.isProfileVerified === true ||
+      userData.isVerified === true ||
+      userData.verified === true,
+  };
+}
+
 export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (request) => {
   const ownerId = requireAuthUid(request);
   const draftId = normalizeString(request.data?.draftId);
@@ -273,6 +327,7 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
     const validated = validateListingDraftPayload(draftData, config.maxMediaCount || MARKETPLACE_MAX_MEDIA_COUNT);
     const refsData = await ensureCategoryAndCityAreResolvable(validated);
     const ownerSignals = await readOwnerSignals(ownerId, validated.title.toLowerCase());
+    const ownerIdentity = await loadOwnerPublicIdentity(ownerId);
 
     const listingId = draftId;
     const listingRef = db.collection(COLLECTIONS.listings).doc(listingId);
@@ -299,6 +354,18 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
       cityCategoryKey: validated.cityCategoryKey || null,
       media: validated.media,
       thumbnailUrl: validated.thumbnailUrl,
+      ownerName: ownerIdentity.displayName,
+      displayName: ownerIdentity.displayName,
+      userName: ownerIdentity.displayName,
+      pseudo: ownerIdentity.displayName,
+      avatarUrl: ownerIdentity.avatarUrl || null,
+      verified: ownerIdentity.verified,
+      advertiser: {
+        id: ownerId,
+        name: ownerIdentity.displayName,
+        avatarUrl: ownerIdentity.avatarUrl || null,
+        verified: ownerIdentity.verified,
+      },
       phone: validated.phone || null,
       budgetType: validated.budgetType || null,
       missionDelay: validated.missionDelay || null,
@@ -351,12 +418,19 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
         lastRecaptchaScore: recaptcha.score,
       },
     });
+    const autoPublishAfter =
+      config.autoApproveEnabled &&
+      evaluation.moderationDecision === "approved" &&
+      normalizedMedia.length > 0
+        ? admin.firestore.Timestamp.fromDate(new Date(Date.now() + 60 * 1000))
+        : null;
 
     const publication = await persistModerationResult({
       listingId,
       ownerId,
       evaluation,
       autoApproveEnabled: config.autoApproveEnabled,
+      autoPublishAfter,
     });
 
     await draftSnap.ref.set({
@@ -405,7 +479,7 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
           risk_score: evaluation.riskScore,
         },
       });
-    } else {
+    } else if (publication.moderationStatus !== "approved") {
       await createInAppNotification({
         notificationId: `listing_manual_review_${listingId}`,
         userId: ownerId,
@@ -541,22 +615,25 @@ export const deleteListing = onCall({ region: PROJECT_REGION }, async (request) 
     }
 
     const listingData = (listingSnap.data() ?? {}) as Record<string, unknown>;
-    if (normalizeString(listingData.ownerId) !== ownerId) {
+    const listingOwnerId = readListingOwnerId(listingData);
+    if (listingOwnerId !== ownerId) {
       throw new HttpsError("permission-denied", "You do not own this listing");
     }
 
     const previousStatus = normalizeString(listingData.status) || "unknown";
-  const mediaStoragePaths = collectListingMediaStoragePaths(listingData);
+    const mediaStoragePaths = collectListingMediaStoragePaths(listingData);
 
     if (isJobDoneReason(reason)) {
-      // Mark as sold with a visible overlay instead of hard-deleting.
+      // Keep the listing public for 10h so browse queries can still fetch it
+      // and render the job-done overlay before it disappears client-side.
       const visibleUntil = admin.firestore.Timestamp.fromDate(
         new Date(Date.now() + JOB_DONE_OVERLAY_HOURS * 60 * 60 * 1000),
       );
       await listingRef.update({
-        status: "sold",
+        status: "active",
+        visibility: "public",
         isActive: true,
-        isPublished: false,
+        isPublished: true,
         deletedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         deletedReason: reason,

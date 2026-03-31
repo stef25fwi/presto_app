@@ -143,7 +143,7 @@ async function moderateListingMedia(media) {
             },
             autoFlags: [],
             imageScanStatus: "failed",
-            riskScore: 45,
+            riskScore: 10,
         };
     }
 }
@@ -249,14 +249,25 @@ async function evaluateListingRisk(input) {
         moderationReason: decision.moderationReason,
     };
 }
-function finalizeListingPublication({ evaluation, now, autoApproveEnabled, }) {
+function finalizeListingPublication({ evaluation, now, autoApproveEnabled, autoPublishAfter, }) {
     const allowAutoApproval = autoApproveEnabled ?? env_1.MARKETPLACE_AUTO_APPROVE_ENABLED;
+    if (evaluation.moderationDecision === "approved" && allowAutoApproval && autoPublishAfter) {
+        return {
+            status: "pending",
+            moderationStatus: "approved",
+            visibility: "private",
+            publishedAt: null,
+            autoPublishAfter,
+            riskScore: evaluation.riskScore,
+        };
+    }
     if (evaluation.moderationDecision === "approved" && allowAutoApproval) {
         return {
             status: "active",
             moderationStatus: "approved",
             visibility: "public",
             publishedAt: now,
+            autoPublishAfter: null,
             riskScore: evaluation.riskScore,
         };
     }
@@ -266,6 +277,7 @@ function finalizeListingPublication({ evaluation, now, autoApproveEnabled, }) {
             moderationStatus: "pending",
             visibility: "private",
             publishedAt: null,
+            autoPublishAfter: null,
             riskScore: evaluation.riskScore,
         };
     }
@@ -275,6 +287,7 @@ function finalizeListingPublication({ evaluation, now, autoApproveEnabled, }) {
             moderationStatus: "blocked",
             visibility: "hidden",
             publishedAt: null,
+            autoPublishAfter: null,
             riskScore: evaluation.riskScore,
         };
     }
@@ -288,15 +301,17 @@ function finalizeListingPublication({ evaluation, now, autoApproveEnabled, }) {
         moderationStatus,
         visibility,
         publishedAt: null,
+        autoPublishAfter: null,
         riskScore: evaluation.riskScore,
     };
 }
-async function persistModerationResult({ listingId, ownerId, evaluation, autoApproveEnabled, }) {
+async function persistModerationResult({ listingId, ownerId, evaluation, autoApproveEnabled, autoPublishAfter, }) {
     const now = firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
     const listingPatch = finalizeListingPublication({
         evaluation,
         now,
         autoApproveEnabled,
+        autoPublishAfter,
     });
     await Promise.all([
         firestore_1.db.collection(constants_1.COLLECTIONS.listingModeration).doc(listingId).set({
@@ -319,6 +334,7 @@ async function persistModerationResult({ listingId, ownerId, evaluation, autoApp
             status: listingPatch.status,
             visibility: listingPatch.visibility,
             publishedAt: listingPatch.publishedAt,
+            autoPublishAfter: listingPatch.autoPublishAfter ?? null,
             riskScore: listingPatch.riskScore,
             updatedAt: now,
         }, { merge: true }),
