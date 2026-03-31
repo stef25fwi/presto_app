@@ -567,6 +567,62 @@ String _offerDetailsPublishedLabel(dynamic raw) {
   return 'Publication recente';
 }
 
+String _extractOfferImageUrl(dynamic entry) {
+  if (entry == null) return '';
+  if (entry is Map) {
+    for (final key in const [
+      'downloadUrl',
+      'thumbnailUrl',
+      'imageUrl',
+      'photoUrl',
+      'url',
+      'secureUrl',
+      'src',
+    ]) {
+      final value = (entry[key] ?? '').toString().trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+    return '';
+  }
+  return entry.toString().trim();
+}
+
+List<String> _collectOfferImageUrls({
+  dynamic rawImageUrls,
+  dynamic rawMedia,
+  dynamic rawImageUrl,
+  dynamic rawThumbnailUrl,
+}) {
+  final orderedUrls = <String>[];
+
+  void addUrl(dynamic value) {
+    final url = _extractOfferImageUrl(value);
+    if (url.isEmpty || orderedUrls.contains(url)) {
+      return;
+    }
+    orderedUrls.add(url);
+  }
+
+  if (rawImageUrls is List) {
+    for (final entry in rawImageUrls) {
+      addUrl(entry);
+    }
+  }
+
+  if (rawMedia is List) {
+    for (final entry in rawMedia) {
+      addUrl(entry);
+    }
+  }
+
+  addUrl(rawImageUrl);
+  addUrl(rawThumbnailUrl);
+
+  return orderedUrls;
+}
+
 Offer _buildOfferDetailsOffer({
   required String offerId,
   required Map<String, dynamic> data,
@@ -587,17 +643,12 @@ Offer _buildOfferDetailsOffer({
       )
       .toList(growable: false);
   final thumbnailUrl = (data['thumbnailUrl'] ?? '').toString().trim();
-  final imageUrls = <String>{
-    ...(data['imageUrls'] as List<dynamic>? ?? const <dynamic>[]).map(
-      (e) => e.toString().trim(),
-    ),
-    ...rawMedia.map(
-      (entry) => ((entry['downloadUrl'] ?? entry['thumbnailUrl']) ?? '')
-          .toString()
-          .trim(),
-    ),
-    if (thumbnailUrl.isNotEmpty) thumbnailUrl,
-  }.where((e) => e.isNotEmpty).toList(growable: false);
+  final imageUrls = _collectOfferImageUrls(
+    rawImageUrls: data['imageUrls'],
+    rawMedia: rawMedia,
+    rawImageUrl: data['imageUrl'],
+    rawThumbnailUrl: thumbnailUrl,
+  );
   final advertiserName =
       ((data['userName'] ?? data['pseudo']) ?? '').toString().trim();
   final serviceArea =
