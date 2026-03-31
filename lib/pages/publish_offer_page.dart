@@ -30,19 +30,20 @@ const kPrestoBeige = Colors.white;
 const kFieldFill = Colors.white;
 const kBorder = Color(0xFFE5E7EB);
 
-class PublishOfferPage extends StatefulWidget {
+@Deprecated('Prototype legacy non utilisé. Utiliser PublishOfferPage dans lib/main.dart.')
+class LegacyPublishOfferPage extends StatefulWidget {
   final CityRepoCompact? repo;
 
-  const PublishOfferPage({
+  const LegacyPublishOfferPage({
     super.key,
     this.repo,
   });
 
   @override
-  State<PublishOfferPage> createState() => _PublishOfferPageState();
+  State<LegacyPublishOfferPage> createState() => _LegacyPublishOfferPageState();
 }
 
-class _PublishOfferPageState extends State<PublishOfferPage>
+class _LegacyPublishOfferPageState extends State<LegacyPublishOfferPage>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late final CityRepoCompact _repo;
