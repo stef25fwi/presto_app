@@ -12968,7 +12968,11 @@ class _UserOffersSectionState extends State<UserOffersSection> {
             final pendingPhotoNotice = _offerPendingPhotoNotice(data);
 
             return Dialog(
+              backgroundColor: Colors.white,
               insetPadding: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 760),
                 child: Padding(
