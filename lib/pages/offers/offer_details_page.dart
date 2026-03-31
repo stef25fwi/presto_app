@@ -1623,6 +1623,18 @@ class _HeroCard extends StatelessWidget {
 
   const _HeroCard({required this.data, this.compact = false});
 
+  void _openGallery(BuildContext context, int initialIndex) {
+    if (data.imageUrls.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => _FullScreenGalleryPage(
+          imageUrls: data.imageUrls,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const card = Colors.white;
@@ -1636,6 +1648,8 @@ class _HeroCard extends StatelessWidget {
     final detailsLine = data.detail.trim().isNotEmpty
         ? data.detail.trim()
         : data.description.trim();
+    final hasPhotos = data.imageUrls.isNotEmpty;
+    final mainPhotoUrl = hasPhotos ? data.imageUrls.first : '';
 
     return Container(
       decoration: BoxDecoration(
@@ -1653,16 +1667,112 @@ class _HeroCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          compact ? 15 : 18,
-          compact ? 15 : 18,
-          compact ? 15 : 18,
-          compact ? 15 : 18,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Photo principale ──
+          if (hasPhotos)
+            GestureDetector(
+              onTap: () => _openGallery(context, 0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(compact ? 20 : 24),
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: compact ? 180 : 220,
+                  child: Image.network(
+                    mainPhotoUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: const Color(0xFFF3F4F6),
+                      child: const Center(
+                        child: Icon(Icons.image_outlined,
+                            size: 48, color: Color(0xFF9CA3AF)),
+                      ),
+                    ),
+                    loadingBuilder: (_, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        color: const Color(0xFFF3F4F6),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Color(0xFFFF6A00),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          // ── Miniatures additionnelles ──
+          if (data.imageUrls.length > 1)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                compact ? 12 : 16, compact ? 8 : 10, compact ? 12 : 16, 0),
+              child: SizedBox(
+                height: compact ? 56 : 64,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: data.imageUrls.length,
+                  separatorBuilder: (_, __) =>
+                      SizedBox(width: compact ? 6 : 8),
+                  itemBuilder: (context, index) {
+                    final isSelected = index == 0;
+                    return GestureDetector(
+                      onTap: () => _openGallery(context, index),
+                      child: Container(
+                        width: compact ? 56 : 64,
+                        height: compact ? 56 : 64,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(
+                              compact ? 10 : 12),
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color(0xFFFF6A00)
+                                : const Color(0xFFE5E7EB),
+                            width: isSelected ? 2.5 : 1.5,
+                          ),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                              (compact ? 10 : 12) - 1),
+                          child: Image.network(
+                            data.imageUrls[index],
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: const Color(0xFFF3F4F6),
+                              child: const Icon(
+                                Icons.broken_image_outlined,
+                                color: Color(0xFF9CA3AF),
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          // ── Contenu texte ──
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              compact ? 15 : 18,
+              hasPhotos ? (compact ? 10 : 12) : (compact ? 15 : 18),
+              compact ? 15 : 18,
+              compact ? 15 : 18,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             Text(
               data.sanitizedTitle.toUpperCase(),
               maxLines: 3,
@@ -1759,7 +1869,9 @@ class _HeroCard extends StatelessWidget {
               ],
             ),
           ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1906,27 +2018,25 @@ class _HeroInfoChip extends StatelessWidget {
 
 class _PhotoThumbnailStrip extends StatelessWidget {
   final List<String> imageUrls;
-  final bool compact;
 
   const _PhotoThumbnailStrip({
     required this.imageUrls,
-    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
     if (imageUrls.isEmpty) return const SizedBox.shrink();
 
-    final double thumbSize = compact ? 64 : 76;
-    final double borderRadius = compact ? 12 : 14;
+    const double thumbSize = 76;
+    const double borderRadius = 14;
 
     return SizedBox(
       height: thumbSize,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
         itemCount: imageUrls.length,
-        separatorBuilder: (_, __) => SizedBox(width: compact ? 8 : 10),
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           return GestureDetector(
             onTap: () => _openFullScreenGallery(context, index),
@@ -2107,18 +2217,6 @@ class _PracticalInfoCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          if (data.imageUrls.isNotEmpty) ...[
-            Padding(
-              padding: EdgeInsets.only(
-                top: compact ? 12 : 16,
-                bottom: compact ? 4 : 8,
-              ),
-              child: _PhotoThumbnailStrip(
-                imageUrls: data.imageUrls,
-                compact: compact,
-              ),
-            ),
-          ],
           Container(
             decoration: BoxDecoration(
               color: const Color(0xFFFBFAFA),
