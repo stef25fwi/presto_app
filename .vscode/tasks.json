@@ -71,7 +71,7 @@
     {
       "label": "Git: Commit All",
       "type": "shell",
-      "command": "git commit -m \"fix(publish): restore missing category fallback on submit\"",
+      "command": "git commit -m \"fix(marketplace): auto-publish approved listings and pending tile UX\"",
       "problemMatcher": []
     },
     {

@@ -219,7 +219,7 @@ async function ensureCategoryAndCityAreResolvable(
   };
 }
 
-async function readOwnerSignals(ownerId: string, normalizedTitle: string): Promise<{
+async function readOwnerSignals(ownerId: string, normalizedTitle: string, excludeListingId?: string): Promise<{
   moderationStrikeCount: number;
   spamScore: number;
   lastRecaptchaScore?: number;
@@ -242,6 +242,7 @@ async function readOwnerSignals(ownerId: string, normalizedTitle: string): Promi
   }).length;
 
   const hasSimilarActiveListing = listingSnap.docs.some((doc) => {
+    if (excludeListingId && doc.id === excludeListingId) return false;
     const data = doc.data();
     const status = normalizeString(data.status).toLowerCase();
     const sameTitle = normalizeString(data.title).toLowerCase() === normalizedTitle;
@@ -326,10 +327,10 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
 
     const validated = validateListingDraftPayload(draftData, config.maxMediaCount || MARKETPLACE_MAX_MEDIA_COUNT);
     const refsData = await ensureCategoryAndCityAreResolvable(validated);
-    const ownerSignals = await readOwnerSignals(ownerId, validated.title.toLowerCase());
+    const listingId = draftId;
+    const ownerSignals = await readOwnerSignals(ownerId, validated.title.toLowerCase(), listingId);
     const ownerIdentity = await loadOwnerPublicIdentity(ownerId);
 
-    const listingId = draftId;
     const listingRef = db.collection(COLLECTIONS.listings).doc(listingId);
     const now = admin.firestore.FieldValue.serverTimestamp();
     const expiresAt = admin.firestore.Timestamp.fromDate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
@@ -418,12 +419,9 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
         lastRecaptchaScore: recaptcha.score,
       },
     });
-    const autoPublishAfter =
-      config.autoApproveEnabled &&
-      evaluation.moderationDecision === "approved" &&
-      normalizedMedia.length > 0
-        ? admin.firestore.Timestamp.fromDate(new Date(Date.now() + 60 * 1000))
-        : null;
+    // Photos are processed synchronously above, so no need for deferred
+    // autoPublishAfter — publish immediately when approved.
+    const autoPublishAfter = null;
 
     const publication = await persistModerationResult({
       listingId,
