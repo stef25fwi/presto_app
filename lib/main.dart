@@ -579,10 +579,24 @@ Offer _buildOfferDetailsOffer({
   final isUrgent = (data['urgent'] as bool?) ?? false;
   final budget = data['budget'];
   final price = budget is num ? budget.toDouble() : 0.0;
-  final imageUrls = (data['imageUrls'] as List<dynamic>? ?? const [])
-      .map((e) => e.toString().trim())
-      .where((e) => e.isNotEmpty)
-      .toList();
+  final rawMedia = (data['media'] as List<dynamic>? ?? const <dynamic>[])
+      .whereType<Map>()
+      .map(
+        (entry) => Map<String, dynamic>.from(entry.cast<dynamic, dynamic>()),
+      )
+      .toList(growable: false);
+  final thumbnailUrl = (data['thumbnailUrl'] ?? '').toString().trim();
+  final imageUrls = <String>{
+    ...(data['imageUrls'] as List<dynamic>? ?? const <dynamic>[]).map(
+      (e) => e.toString().trim(),
+    ),
+    ...rawMedia.map(
+      (entry) => ((entry['downloadUrl'] ?? entry['thumbnailUrl']) ?? '')
+          .toString()
+          .trim(),
+    ),
+    if (thumbnailUrl.isNotEmpty) thumbnailUrl,
+  }.where((e) => e.isNotEmpty).toList(growable: false);
   final advertiserName =
       ((data['userName'] ?? data['pseudo']) ?? '').toString().trim();
   final serviceArea =
@@ -591,16 +605,39 @@ Offer _buildOfferDetailsOffer({
   final missionDelay =
       ((data['missionDelay'] ?? data['averageDelay']) ?? 'Délai non précisé')
           .toString();
+  final createdAt = data['createdAt'];
+  final publishedAt = data['publishedAt'];
+  final listingStatus = (data['status'] ?? '').toString().trim();
+  final moderationStatus =
+      (data['moderationStatus'] ?? '').toString().trim();
+  final visibility = (data['visibility'] ?? '').toString().trim();
+  final mediaProcessingStatus =
+      (data['mediaProcessingStatus'] ?? '').toString().trim();
+  final categoryId = (data['categoryId'] ?? '').toString().trim();
+  final cityId = (data['cityId'] ?? '').toString().trim();
+  final isMarketplaceValue = data['isMarketplace'];
+  final isMarketplace = isMarketplaceValue is bool
+      ? isMarketplaceValue
+      : isMarketplaceValue.toString().trim().toLowerCase() == 'true' ||
+          categoryId.isNotEmpty ||
+          cityId.isNotEmpty ||
+          listingStatus.isNotEmpty ||
+          visibility.isNotEmpty;
 
   return Offer(
     id: offerId,
+    listingId: offerId,
     title: title.isEmpty ? 'Annonce' : title,
     price: price,
     category: category.isEmpty ? 'Categorie non precisee' : category,
+    categoryId: categoryId,
     city: location.isEmpty ? 'Lieu non precise' : location,
+    cityId: cityId,
     postalCode: postalCode,
     isUrgent: isUrgent,
     publishedAtLabel: _offerDetailsPublishedLabel(data['createdAt']),
+    publishedAt: publishedAt is Timestamp ? publishedAt.toDate() : null,
+    createdAt: createdAt is Timestamp ? createdAt.toDate() : null,
     availability:
         (data['availability'] ?? 'Disponibilite a confirmer').toString(),
     shortDescription: description.isEmpty
@@ -609,12 +646,19 @@ Offer _buildOfferDetailsOffer({
     description: description,
     phone: (data['phone'] ?? '').toString(),
     imageUrls: imageUrls,
+    media: rawMedia,
+    thumbnailUrl: thumbnailUrl,
     statusBadges: <String>[
       'Disponible',
       if ((data['urgent'] as bool?) ?? false) 'Urgent',
       if ((data['verified'] as bool?) ?? false) 'Verifie',
       'Nouveau',
     ],
+    status: listingStatus,
+    moderationStatus: moderationStatus,
+    visibility: visibility,
+    mediaProcessingStatus: mediaProcessingStatus,
+    isMarketplace: isMarketplace,
     practicalInfo: PracticalInfo(
       category: category.isEmpty ? 'Service' : category,
       serviceArea: serviceArea,
