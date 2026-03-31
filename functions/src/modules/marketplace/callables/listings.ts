@@ -488,3 +488,46 @@ export const incrementListingView = onCall({ region: PROJECT_REGION }, async (re
 
   return { ok: true, deduplicated: false };
 });
+
+export const deleteListing = onCall({ region: PROJECT_REGION }, async (request) => {
+  const ownerId = requireAuthUid(request);
+  const listingId = normalizeString(request.data?.listingId);
+
+  if (!listingId) {
+    throw new HttpsError("invalid-argument", "listingId is required");
+  }
+
+  try {
+    const listingRef = db.collection(COLLECTIONS.listings).doc(listingId);
+    const listingSnap = await listingRef.get();
+
+    if (!listingSnap.exists) {
+      throw new HttpsError("not-found", "Listing not found");
+    }
+
+    const listingData = (listingSnap.data() ?? {}) as Record<string, unknown>;
+    if (normalizeString(listingData.ownerId) !== ownerId) {
+      throw new HttpsError("permission-denied", "You do not own this listing");
+    }
+
+    const batch = db.batch();
+    batch.delete(listingRef);
+    batch.delete(db.collection(COLLECTIONS.listingModeration).doc(listingId));
+    batch.delete(db.collection(COLLECTIONS.listingDraftsV2).doc(listingId));
+    batch.delete(db.collection(COLLECTIONS.listingDrafts).doc(listingId));
+    await batch.commit();
+
+    logger.info("marketplace_listing_deleted", {
+      listingId,
+      ownerId,
+      previousStatus: normalizeString(listingData.status) || "unknown",
+    });
+
+    return {
+      ok: true,
+      listingId,
+    };
+  } catch (error) {
+    throw toHttpsError(error, "Unable to delete listing");
+  }
+});
