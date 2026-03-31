@@ -14,6 +14,15 @@ test("validateListingDraftPayload normalizes a valid listing draft", () => {
     price: "95",
     categoryId: "bricolage-travaux",
     cityId: "97139_les-abymes",
+    category: "Bricolage / Travaux",
+    city: "Les Abymes",
+    location: "Les Abymes",
+    postalCode: "97139",
+    cp: "97139",
+    dept: "971",
+    region: "01",
+    cityCategoryKey: "97139_les-abymes_bricolage-travaux",
+    budgetValue: 95,
     media: [
       {
         storagePath: "listings/u1/photo.webp",
@@ -26,6 +35,8 @@ test("validateListingDraftPayload normalizes a valid listing draft", () => {
   assert.equal(payload.price, 95);
   assert.equal(payload.thumbnailUrl, "https://cdn.example/photo.webp");
   assert.equal(payload.media.length, 1);
+  assert.equal(payload.city, "Les Abymes");
+  assert.equal(payload.postalCode, "97139");
   assert.ok(payload.searchKeywords.includes("montage"));
   assert.ok(payload.searchKeywords.includes("bricolage"));
   assert.ok(payload.searchKeywords.includes("97139"));

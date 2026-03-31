@@ -135,6 +135,45 @@ class MarketplacePublishService {
     return media;
   }
 
+  CityRecord? _resolveCanonicalCity({
+    required String city,
+    required String postalCode,
+  }) {
+    final rawCity = city.trim();
+    final rawPostalCode = postalCode.trim();
+
+    if (rawPostalCode.isNotEmpty) {
+      final exactPostal = CitySearch.instance.pickBestForPostalCode(rawPostalCode);
+      if (exactPostal != null) {
+        if (rawCity.isEmpty ||
+            normalizeOfferText(exactPostal.name) == normalizeOfferText(rawCity)) {
+          return exactPostal;
+        }
+
+        final cityMatches = CitySearch.instance.search(rawCity, limit: 10);
+        for (final candidate in cityMatches) {
+          if (candidate.cp == rawPostalCode) {
+            return candidate;
+          }
+        }
+      }
+    }
+
+    if (rawCity.isEmpty) return null;
+    final candidates = CitySearch.instance.search(rawCity, limit: 10);
+    if (candidates.isEmpty) return null;
+
+    if (rawPostalCode.isNotEmpty) {
+      for (final candidate in candidates) {
+        if (candidate.cp == rawPostalCode) {
+          return candidate;
+        }
+      }
+    }
+
+    return candidates.first;
+  }
+
   Future<MarketplacePublishResult> publish({
     required String ownerId,
     required String title,
@@ -156,21 +195,26 @@ class MarketplacePublishService {
     );
 
     final resolvedCategory = canonicalizeOfferCategory(category) ?? 'Autre';
-    final trimmedCity = city.trim();
+    final inputCity = city.trim();
     var resolvedPostalCode = postalCode.trim();
-    if (trimmedCity.isEmpty) {
+    if (inputCity.isEmpty) {
       throw StateError('La ville est obligatoire pour publier une annonce marketplace.');
     }
-    if (resolvedPostalCode.isEmpty) {
-      final cityMatch = CitySearch.instance.search(trimmedCity, limit: 1);
-      if (cityMatch.isNotEmpty) {
-        resolvedPostalCode = cityMatch.first.cp.trim();
-      }
+
+    final canonicalCity = _resolveCanonicalCity(
+      city: inputCity,
+      postalCode: resolvedPostalCode,
+    );
+    if (canonicalCity == null) {
+      throw StateError('Choisissez une ville valide dans la liste proposée.');
     }
+
+    final resolvedCity = canonicalCity.name.trim();
+    resolvedPostalCode = canonicalCity.cp.trim();
 
     final indexed = buildOfferIndexFields(
       category: resolvedCategory,
-      city: trimmedCity,
+      city: resolvedCity,
       postalCode: resolvedPostalCode,
       budget: price,
       status: 'active',
@@ -201,6 +245,15 @@ class MarketplacePublishService {
         missionDelay: missionDelay,
         isUrgent: isUrgent,
         subCategory: subCategory,
+        category: resolvedCategory,
+        city: resolvedCity,
+        location: resolvedCity,
+        postalCode: resolvedPostalCode,
+        cp: resolvedPostalCode,
+        dept: canonicalCity.dept,
+        region: canonicalCity.region,
+        cityCategoryKey: (indexed['cityCategoryKey'] ?? '').toString().trim(),
+        budgetValue: price,
       ),
       ),
     );
@@ -256,17 +309,21 @@ class MarketplacePublishService {
             'title': title.trim(),
             'shortDescription': (subCategory ?? '').trim(),
             'detail': (subCategory ?? '').trim(),
-            'city': trimmedCity,
-            'location': trimmedCity,
+            'city': resolvedCity,
+            'location': resolvedCity,
             'postalCode': resolvedPostalCode,
             'cp': resolvedPostalCode,
+            'dept': canonicalCity.dept,
+            'region': canonicalCity.region,
             'category': resolvedCategory,
             'categoryId': categoryId,
             'cityId': cityId,
+            'cityCategoryKey': (indexed['cityCategoryKey'] ?? '').toString().trim(),
             'description': description.trim(),
             'phone': phone.trim(),
             'price': price,
             'budget': price,
+            'budgetValue': price,
             'budgetType': budgetType,
             'isUrgent': isUrgent,
             'publishedAtLabel': result.status.value == 'active'
