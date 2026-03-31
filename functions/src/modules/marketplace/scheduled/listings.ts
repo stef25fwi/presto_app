@@ -6,6 +6,26 @@ import { logger } from "../../../core/logger";
 import { COLLECTIONS } from "../../../shared/constants";
 import { createInAppNotification } from "../../notifications/push";
 
+function normalizeString(value: unknown): string {
+  return String(value ?? "").trim();
+}
+
+export function isListingReadyForScheduledPublication(
+  data: Record<string, unknown>,
+  now: FirebaseFirestore.Timestamp,
+): boolean {
+  const autoPublishAfter = data.autoPublishAfter;
+  const isDue =
+    autoPublishAfter == null ||
+    !(autoPublishAfter instanceof admin.firestore.Timestamp) ||
+    autoPublishAfter.toMillis() <= now.toMillis();
+
+  return normalizeString(data.status) === "pending" &&
+    normalizeString(data.moderationStatus) === "approved" &&
+    normalizeString(data.mediaProcessingStatus) === "completed" &&
+    isDue;
+}
+
 export const expireOldListings = onSchedule({
   region: PROJECT_REGION,
   schedule: "every day 03:10",
@@ -49,4 +69,40 @@ export const expireOldListings = onSchedule({
 
   await batch.commit();
   logger.info("marketplace_expire_old_listings_done", { count: snapshot.size });
+});
+
+export const publishApprovedListings = onSchedule({
+  region: PROJECT_REGION,
+  schedule: "every 1 minutes",
+  timeZone: "Europe/Paris",
+}, async () => {
+  const now = admin.firestore.Timestamp.now();
+  const snapshot = await db.collection(COLLECTIONS.listings)
+    .where("status", "==", "pending")
+    .where("moderationStatus", "==", "approved")
+    .limit(250)
+    .get();
+
+  const readyDocs = snapshot.docs.filter((doc) =>
+    isListingReadyForScheduledPublication(doc.data(), now),
+  );
+
+  if (readyDocs.length === 0) {
+    logger.info("marketplace_publish_approved_listings_noop");
+    return;
+  }
+
+  const batch = db.batch();
+  for (const doc of readyDocs) {
+    batch.set(doc.ref, {
+      status: "active",
+      visibility: "public",
+      publishedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      autoPublishAfter: null,
+    }, { merge: true });
+  }
+
+  await batch.commit();
+  logger.info("marketplace_publish_approved_listings_done", { count: readyDocs.length });
 });

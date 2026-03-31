@@ -76,6 +76,7 @@ export interface ListingDoc {
   createdAt: FirestoreTimestamp;
   updatedAt: FirestoreTimestamp;
   publishedAt?: FirestoreTimestamp;
+  autoPublishAfter?: FirestoreTimestamp;
   expiresAt?: FirestoreTimestamp;
   reportCount: number;
   favoriteCount: number;
@@ -83,6 +84,7 @@ export interface ListingDoc {
   contactCount: number;
   isBoosted: boolean;
   boostExpiresAt?: FirestoreTimestamp;
+  mediaProcessingStatus?: "processing" | "completed" | "failed";
   searchKeywords: string[];
   locationApprox?: {
     lat: number;

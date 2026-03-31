@@ -12899,6 +12899,15 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       } else {
         showSuccessSnackBar(context, 'Annonce "$title" supprimée');
       }
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      debugPrint('Erreur callable suppression offre ${item.offerId}: ${e.code} ${e.message}');
+      final message = e.code == 'permission-denied'
+          ? 'Suppression refusée. Cette annonce n’est pas reconnue comme vous appartenant.'
+          : e.code == 'not-found'
+              ? 'Annonce introuvable.'
+              : 'Erreur lors de la suppression';
+      showErrorSnackBar(context, message);
     } catch (e) {
       if (!mounted) return;
       debugPrint('Erreur suppression offre ${item.offerId}: $e');

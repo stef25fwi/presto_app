@@ -30,7 +30,10 @@ export {
   notifyListingApproved,
   notifyListingRejected,
 } from "./modules/marketplace/triggers/notifications";
-export { expireOldListings } from "./modules/marketplace/scheduled/listings";
+export {
+  expireOldListings,
+  publishApprovedListings,
+} from "./modules/marketplace/scheduled/listings";
 export { onLegalTermsSettingsUpdated, onLegalPrivacySettingsUpdated } from "./modules/legal/triggers";
 export { enqueueMarketingOnboardingEmails } from "./modules/marketing/scheduled";
 export { onNewsletterCampaignCreated, onNewsletterCampaignUpdated } from "./modules/marketing/triggers";

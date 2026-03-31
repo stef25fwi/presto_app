@@ -28,6 +28,24 @@ function requireAuthUid(request) {
 function normalizeString(value) {
     return String(value ?? "").trim();
 }
+function normalizeDisplayName(...values) {
+    for (const value of values) {
+        const normalized = normalizeString(value);
+        if (normalized) {
+            return normalized;
+        }
+    }
+    return "Annonceur iliprestō";
+}
+function readListingOwnerId(data) {
+    for (const field of ["ownerId", "userId", "uid"]) {
+        const value = normalizeString(data[field]);
+        if (value) {
+            return value;
+        }
+    }
+    return "";
+}
 function collectListingMediaStoragePaths(data) {
     const media = Array.isArray(data.media) ? data.media : [];
     return Array.from(new Set(media
@@ -190,6 +208,23 @@ async function readOwnerSignals(ownerId, normalizedTitle) {
         hasSimilarActiveListing,
     };
 }
+async function loadOwnerPublicIdentity(ownerId) {
+    const [userSnap, authRecord] = await Promise.all([
+        firestore_1.db.collection(constants_1.COLLECTIONS.users).doc(ownerId).get(),
+        firebase_admin_1.default.auth().getUser(ownerId).catch(() => null),
+    ]);
+    const userData = (userSnap.data() ?? {});
+    const emailPrefix = normalizeString(authRecord?.email).split("@").shift() ?? "";
+    return {
+        displayName: normalizeDisplayName(userData.pseudo, userData.displayName, userData.userName, userData.user_name, userData.name, authRecord?.displayName, emailPrefix),
+        avatarUrl: normalizeString(userData.avatarUrl ||
+            userData.photoURL ||
+            authRecord?.photoURL),
+        verified: userData.isProfileVerified === true ||
+            userData.isVerified === true ||
+            userData.verified === true,
+    };
+}
 exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
     const ownerId = requireAuthUid(request);
     const draftId = normalizeString(request.data?.draftId);
@@ -219,6 +254,7 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
         const validated = (0, listings_1.validateListingDraftPayload)(draftData, config.maxMediaCount || env_1.MARKETPLACE_MAX_MEDIA_COUNT);
         const refsData = await ensureCategoryAndCityAreResolvable(validated);
         const ownerSignals = await readOwnerSignals(ownerId, validated.title.toLowerCase());
+        const ownerIdentity = await loadOwnerPublicIdentity(ownerId);
         const listingId = draftId;
         const listingRef = firestore_1.db.collection(constants_1.COLLECTIONS.listings).doc(listingId);
         const now = firebase_admin_1.default.firestore.FieldValue.serverTimestamp();
@@ -243,6 +279,18 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
             cityCategoryKey: validated.cityCategoryKey || null,
             media: validated.media,
             thumbnailUrl: validated.thumbnailUrl,
+            ownerName: ownerIdentity.displayName,
+            displayName: ownerIdentity.displayName,
+            userName: ownerIdentity.displayName,
+            pseudo: ownerIdentity.displayName,
+            avatarUrl: ownerIdentity.avatarUrl || null,
+            verified: ownerIdentity.verified,
+            advertiser: {
+                id: ownerId,
+                name: ownerIdentity.displayName,
+                avatarUrl: ownerIdentity.avatarUrl || null,
+                verified: ownerIdentity.verified,
+            },
             phone: validated.phone || null,
             budgetType: validated.budgetType || null,
             missionDelay: validated.missionDelay || null,
@@ -292,11 +340,17 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
                 lastRecaptchaScore: recaptcha.score,
             },
         });
+        const autoPublishAfter = config.autoApproveEnabled &&
+            evaluation.moderationDecision === "approved" &&
+            normalizedMedia.length > 0
+            ? firebase_admin_1.default.firestore.Timestamp.fromDate(new Date(Date.now() + 60 * 1000))
+            : null;
         const publication = await (0, moderation_1.persistModerationResult)({
             listingId,
             ownerId,
             evaluation,
             autoApproveEnabled: config.autoApproveEnabled,
+            autoPublishAfter,
         });
         await draftSnap.ref.set({
             status: "submitted",
@@ -345,7 +399,7 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
                 },
             });
         }
-        else {
+        else if (publication.moderationStatus !== "approved") {
             await (0, push_1.createInAppNotification)({
                 notificationId: `listing_manual_review_${listingId}`,
                 userId: ownerId,
@@ -458,18 +512,21 @@ exports.deleteListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, as
             throw new https_1.HttpsError("not-found", "Listing not found");
         }
         const listingData = (listingSnap.data() ?? {});
-        if (normalizeString(listingData.ownerId) !== ownerId) {
+        const listingOwnerId = readListingOwnerId(listingData);
+        if (listingOwnerId !== ownerId) {
             throw new https_1.HttpsError("permission-denied", "You do not own this listing");
         }
         const previousStatus = normalizeString(listingData.status) || "unknown";
         const mediaStoragePaths = collectListingMediaStoragePaths(listingData);
         if (isJobDoneReason(reason)) {
-            // Mark as sold with a visible overlay instead of hard-deleting.
+            // Keep the listing public for 10h so browse queries can still fetch it
+            // and render the job-done overlay before it disappears client-side.
             const visibleUntil = firebase_admin_1.default.firestore.Timestamp.fromDate(new Date(Date.now() + JOB_DONE_OVERLAY_HOURS * 60 * 60 * 1000));
             await listingRef.update({
-                status: "sold",
+                status: "active",
+                visibility: "public",
                 isActive: true,
-                isPublished: false,
+                isPublished: true,
                 deletedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase_admin_1.default.firestore.FieldValue.serverTimestamp(),
                 deletedReason: reason,
