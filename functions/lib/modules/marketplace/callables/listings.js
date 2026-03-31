@@ -52,6 +52,11 @@ function collectListingMediaStoragePaths(data) {
         .map((entry) => normalizeString(entry.storagePath))
         .filter((storagePath) => storagePath.length > 0)));
 }
+function collectListingImageUrls(media) {
+    return Array.from(new Set(media
+        .map((entry) => normalizeString(entry.downloadUrl || entry.thumbnailUrl))
+        .filter((url) => url.length > 0)));
+}
 function departmentFromPostalCode(postalCode) {
     const cp = postalCode.trim();
     if (cp.length < 2)
@@ -280,9 +285,7 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
             region: validated.region || normalizeString(cityData.regionCode) || null,
             cityCategoryKey: validated.cityCategoryKey || null,
             media: validated.media,
-            imageUrls: validated.media
-                .map((m) => (m.downloadUrl || m.thumbnailUrl || ""))
-                .filter((u) => u.length > 0),
+            imageUrls: collectListingImageUrls(validated.media),
             thumbnailUrl: validated.thumbnailUrl,
             ownerName: ownerIdentity.displayName,
             displayName: ownerIdentity.displayName,
@@ -328,9 +331,7 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
         });
         const thumbnailUrl = normalizedMedia[0]?.thumbnailUrl || normalizedMedia[0]?.downloadUrl || "";
         if (normalizedMedia.length > 0) {
-            const imageUrls = normalizedMedia
-                .map((m) => (m.downloadUrl || m.thumbnailUrl || ""))
-                .filter((u) => u.length > 0);
+            const imageUrls = collectListingImageUrls(normalizedMedia);
             await listingRef.set({
                 media: normalizedMedia,
                 imageUrls,
