@@ -71,7 +71,7 @@
     {
       "label": "Git: Commit All",
       "type": "shell",
-      "command": "git commit -m \"fix(offers): resolve detail image from storagePath fallback\"",
+      "command": "git commit -m \"fix(offers): always hydrate detail from listings by id\"",
       "problemMatcher": []
     },
     {

@@ -249,14 +249,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
             '')
         .toString()
         .trim();
-    final isMarketplaceRaw = (source is Map
-            ? source['isMarketplace']
-            : _OfferUiData._read(() => dynamicSource?.isMarketplace))
-        .toString()
-        .trim()
-        .toLowerCase();
-
-    if (rawId.isEmpty || isMarketplaceRaw != 'true') {
+    if (rawId.isEmpty) {
       return '';
     }
 
