@@ -19,6 +19,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'app/presto_overlay_theme.dart';
 import 'app/theme.dart';
 import 'app_core.dart';
 import 'constants.dart';
@@ -663,8 +664,7 @@ Offer _buildOfferDetailsOffer({
   final createdAt = data['createdAt'];
   final publishedAt = data['publishedAt'];
   final listingStatus = (data['status'] ?? '').toString().trim();
-  final moderationStatus =
-      (data['moderationStatus'] ?? '').toString().trim();
+  final moderationStatus = (data['moderationStatus'] ?? '').toString().trim();
   final visibility = (data['visibility'] ?? '').toString().trim();
   final mediaProcessingStatus =
       (data['mediaProcessingStatus'] ?? '').toString().trim();
@@ -1109,10 +1109,14 @@ void _showSignupDialog(BuildContext context) {
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
   final confirmPassCtrl = TextEditingController();
+  final overlayTheme = context.prestoOverlayTheme;
 
   showDialog(
     context: context,
     builder: (ctx) => AlertDialog(
+      backgroundColor: overlayTheme.surfaceColor,
+      surfaceTintColor: overlayTheme.surfaceTintColor,
+      shape: overlayTheme.dialogShape,
       title: const Text(
         'Créer un compte',
         style: kPrestoSectionTitleStyle,
@@ -2342,10 +2346,13 @@ class _HomePageState extends State<HomePage>
 
   /// Affiche un dialogue avec les notifications récentes
   void _showNotificationsDialog(BuildContext context, String userId) {
+    final overlayTheme = context.prestoOverlayTheme;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: overlayTheme.surfaceColor,
+        surfaceTintColor: overlayTheme.surfaceTintColor,
+        shape: overlayTheme.dialogShape,
         title: const Text(
           'Notifications',
           textAlign: TextAlign.center,
@@ -4930,6 +4937,177 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     // 4) ✅ Pas de scroll forcé: on conserve la position courante
   }
 
+  void _mutateActiveFilters(VoidCallback mutation) {
+    setState(() {
+      mutation();
+      _budgetRangeWarning = null;
+      _lastDoc = null;
+      _pageLimit = _initialLimit;
+      _lastPaginationRequestAt = null;
+      _headerTitle = _resolveConsultOffersTitle();
+    });
+
+    _refreshVisibleOffersCount();
+  }
+
+  Widget _buildRemovableFilterChip({
+    required String label,
+    required VoidCallback onDeleted,
+  }) {
+    return InputChip(
+      label: Text(label),
+      onDeleted: onDeleted,
+      deleteIcon: const Icon(
+        Icons.close_rounded,
+        size: 18,
+      ),
+      labelStyle: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF474D70),
+      ),
+      backgroundColor: Colors.white,
+      side: const BorderSide(color: Color(0xFFE4D8DA)),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+
+  List<Widget> _buildActiveFilterChipItems() {
+    final chips = <Widget>[];
+
+    final effectiveCategory = (_filterCategory?.trim().isNotEmpty ?? false)
+        ? _filterCategory!.trim()
+        : (((_selectedCategory?.trim().isNotEmpty ?? false) &&
+                _selectedCategory != 'Toutes catégories')
+            ? _selectedCategory!.trim()
+            : null);
+    if (effectiveCategory != null) {
+      chips.add(
+        _buildRemovableFilterChip(
+          label: 'Catégorie: $effectiveCategory',
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _filterCategory = null;
+              _selectedCategory = 'Toutes catégories';
+            });
+          },
+        ),
+      );
+    }
+
+    final effectiveRegionCode = (_filterRegionCode?.trim().isNotEmpty ?? false)
+        ? _filterRegionCode!.trim()
+        : ((_selectedRegionCode?.trim().isNotEmpty ?? false)
+            ? _selectedRegionCode!.trim()
+            : null);
+    if (effectiveRegionCode != null) {
+      final regionLabel = kRegions[effectiveRegionCode] ?? effectiveRegionCode;
+      chips.add(
+        _buildRemovableFilterChip(
+          label: 'Région: $regionLabel',
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _filterRegionCode = null;
+              _selectedRegionCode = null;
+            });
+          },
+        ),
+      );
+    }
+
+    if (_filterDepartmentCode?.trim().isNotEmpty ?? false) {
+      final departmentCode = _filterDepartmentCode!.trim();
+      final departmentLabel = kDepartments[departmentCode] ?? departmentCode;
+      chips.add(
+        _buildRemovableFilterChip(
+          label: 'Département: $departmentLabel',
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _filterDepartmentCode = null;
+            });
+          },
+        ),
+      );
+    }
+
+    if (_filterCityName?.trim().isNotEmpty ?? false) {
+      final cityName = _filterCityName!.trim();
+      chips.add(
+        _buildRemovableFilterChip(
+          label: 'Ville: $cityName',
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _filterCityController.clear();
+              _filterPostalCodeController.clear();
+              _locationController.clear();
+              _postalCodeController.clear();
+              _filterCityName = null;
+              _filterCitySuggestions = [];
+              _filterCityHighlightedIndex = -1;
+            });
+          },
+        ),
+      );
+    }
+
+    if (_selectedSubCategory?.trim().isNotEmpty ?? false) {
+      final subCategory = _selectedSubCategory!.trim();
+      chips.add(
+        _buildRemovableFilterChip(
+          label: 'Sous-catégorie: $subCategory',
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _selectedSubCategory = null;
+            });
+          },
+        ),
+      );
+    }
+
+    if (_activeSearchQuery?.trim().isNotEmpty ?? false) {
+      final searchQuery = _activeSearchQuery!.trim();
+      chips.add(
+        _buildRemovableFilterChip(
+          label: 'Recherche: $searchQuery',
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _activeSearchQuery = null;
+              _keywordCtrl.clear();
+            });
+          },
+        ),
+      );
+    }
+
+    final minBudget = _parseBudgetBound(_budgetMinCtrl.text);
+    final maxBudget = _parseBudgetBound(_budgetMaxCtrl.text);
+    if (_advancedFilters &&
+        _budgetRangeWarning == null &&
+        (minBudget != null || maxBudget != null)) {
+      final minLabel = _budgetMinCtrl.text.trim();
+      final maxLabel = _budgetMaxCtrl.text.trim();
+      final budgetLabel = minBudget != null && maxBudget != null
+          ? 'Budget: $minLabel - $maxLabel €'
+          : minBudget != null
+              ? 'Budget: dès $minLabel €'
+              : 'Budget: jusqu’à $maxLabel €';
+      chips.add(
+        _buildRemovableFilterChip(
+          label: budgetLabel,
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _budgetMinCtrl.clear();
+              _budgetMaxCtrl.clear();
+            });
+          },
+        ),
+      );
+    }
+
+    return chips;
+  }
+
   String _resolveConsultOffersTitle() {
     final activeCategory = (_filterCategory?.trim().isNotEmpty ?? false)
         ? _filterCategory!.trim()
@@ -4977,18 +5155,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   /// ✅ Tuile unique cliquable pour afficher/masquer les filtres
   Widget _buildActiveFilterChips() {
-    // Compter les filtres actifs
-    int activeFiltersCount = 0;
-    if (_filterCategory != null && _filterCategory!.isNotEmpty)
-      activeFiltersCount++;
-    if (_filterRegionCode != null && _filterRegionCode!.isNotEmpty)
-      activeFiltersCount++;
-    if (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty)
-      activeFiltersCount++;
-    if (_filterCityName != null && _filterCityName!.isNotEmpty)
-      activeFiltersCount++;
-    if (_activeSearchQuery != null && _activeSearchQuery!.isNotEmpty)
-      activeFiltersCount++;
+    final activeFilterChips = _buildActiveFilterChipItems();
+    final activeFiltersCount = activeFilterChips.length;
 
     final int displayedResultCount =
         _resolvedVisibleOffersCount ?? _lastResultCount;
@@ -4999,110 +5167,127 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     return Container(
       color: const Color(0xFFF6F0F2),
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isNarrow = constraints.maxWidth < 360;
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 360;
 
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(999),
-                  onTap: () => setState(() => _showFilters = !_showFilters),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isNarrow ? 10 : 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: const Color(0xFFE4D8DA),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _showFilters ? Icons.tune : Icons.tune_rounded,
-                          size: 18,
-                          color: const Color(0xFF585D7C),
+                      onTap: () => setState(() => _showFilters = !_showFilters),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isNarrow ? 10 : 12,
+                          vertical: 8,
                         ),
-                        const SizedBox(width: 7),
-                        const Text(
-                          'Filtres',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF474D70),
-                            letterSpacing: -0.1,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: const Color(0xFFE4D8DA),
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          _showFilters
-                              ? Icons.keyboard_arrow_up_rounded
-                              : Icons.keyboard_arrow_down_rounded,
-                          size: 18,
-                          color: const Color(0xFF777B97),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _showFilters ? Icons.tune : Icons.tune_rounded,
+                              size: 18,
+                              color: const Color(0xFF585D7C),
+                            ),
+                            const SizedBox(width: 7),
+                            const Text(
+                              'Filtres',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF474D70),
+                                letterSpacing: -0.1,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              _showFilters
+                                  ? Icons.keyboard_arrow_up_rounded
+                                  : Icons.keyboard_arrow_down_rounded,
+                              size: 18,
+                              color: const Color(0xFF777B97),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: isNarrow ? 10 : 14),
+                  Expanded(
+                    child: Text(
+                      offersLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: isNarrow ? 14 : 15,
+                        fontWeight: FontWeight.w700,
+                        color: _offersNavy,
+                        letterSpacing: -0.15,
+                      ),
+                    ),
+                  ),
+                  if (activeFiltersCount > 0)
+                    Container(
+                      height: 28,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: _offersOrange,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '$activeFiltersCount',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+          if (activeFiltersCount > 0) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                ...activeFilterChips,
+                OutlinedButton.icon(
+                  onPressed: _resetFilters,
+                  icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                  label: const Text('Réinitialiser'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _offersOrange,
+                    side: const BorderSide(color: Color(0xFFD9C5C8)),
+                    backgroundColor: Colors.white,
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
                     ),
                   ),
                 ),
-              ),
-              SizedBox(width: isNarrow ? 10 : 14),
-              Expanded(
-                child: Text(
-                  offersLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: isNarrow ? 14 : 15,
-                    fontWeight: FontWeight.w700,
-                    color: _offersNavy,
-                    letterSpacing: -0.15,
-                  ),
-                ),
-              ),
-              if (activeFiltersCount > 0)
-                Container(
-                  height: 28,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: _offersOrange,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    '$activeFiltersCount',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              if (activeFiltersCount > 0) const SizedBox(width: 8),
-              if (activeFiltersCount > 0)
-                InkWell(
-                  borderRadius: BorderRadius.circular(999),
-                  onTap: _resetFilters,
-                  child: const Padding(
-                    padding: EdgeInsets.all(2),
-                    child: Icon(
-                      Icons.close_rounded,
-                      size: 19,
-                      color: _offersOrange,
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -6978,9 +7163,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   String _partialTranscript = '';
   Timer? _streamingTimer;
   bool _isStreaming = false;
-    final MarketplaceRemoteConfigService _marketplaceRemoteConfigService =
+  final MarketplaceRemoteConfigService _marketplaceRemoteConfigService =
       MarketplaceRemoteConfigService();
-    int _maxListingPhotos = _defaultMaxListingPhotos;
+  int _maxListingPhotos = _defaultMaxListingPhotos;
 
   // ✅ AJOUT: Subscription pour le stream audio
   StreamSubscription<Uint8List>? _streamMicSub;
@@ -7658,6 +7843,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   void initState() {
     super.initState();
     unawaited(_loadMarketplacePhotoLimit());
+    unawaited(_prefillPublishPhoneFromProfileIfNeeded());
 
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
@@ -7708,14 +7894,130 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   bool _isValidPhoneFR(String raw) {
-    final s = raw.replaceAll(RegExp(r'\s+'), '');
-    if (s.isEmpty) return false;
+    final sanitized = raw.replaceAll(RegExp(r'\s+'), '');
+    if (sanitized.isEmpty) return false;
 
-    // Accepte : 612345678, 06XXXXXXXX, 07XXXXXXXX, +336XXXXXXXX, +337XXXXXXXX
-    final fr9 = RegExp(r'^[67]\d{8}$');
-    final fr10 = RegExp(r'^0[67]\d{8}$');
-    final intl = RegExp(r'^\+33[67]\d{8}$');
-    return fr9.hasMatch(s) || fr10.hasMatch(s) || intl.hasMatch(s);
+    if (sanitized.startsWith('+')) {
+      return RegExp(r'^\+[0-9]{8,15}$').hasMatch(sanitized);
+    }
+
+    return RegExp(r'^[0-9]{6,15}$').hasMatch(sanitized);
+  }
+
+  String _firstNonEmptyPublishPhone(
+    Map<String, dynamic>? data,
+    List<String> keys, {
+    List<String> fallbackValues = const <String>[],
+  }) {
+    if (data != null) {
+      for (final key in keys) {
+        final raw = data[key];
+        final value = raw?.toString().trim() ?? '';
+        if (value.isNotEmpty) {
+          return value;
+        }
+      }
+    }
+
+    for (final fallback in fallbackValues) {
+      final value = fallback.trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+
+    return '';
+  }
+
+  void _applyPublishPhoneFromProfile(
+    String rawPhone, {
+    String? explicitCountryCode,
+  }) {
+    final trimmed = rawPhone.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+
+    final compact = trimmed.replaceAll(RegExp(r'\s+'), '');
+    final allDigits = compact.replaceAll(RegExp(r'\D'), '');
+
+    final normalizedExplicitCode = (explicitCountryCode ?? '').trim();
+    final knownCodes =
+        kPhoneCountryCodes.map((country) => country.code).toList();
+
+    String selectedCode = normalizedExplicitCode;
+    if (selectedCode.isEmpty || !knownCodes.contains(selectedCode)) {
+      for (final code in knownCodes) {
+        if (compact.startsWith(code)) {
+          selectedCode = code;
+          break;
+        }
+      }
+    }
+
+    if (selectedCode.isEmpty) {
+      selectedCode = _selectedPhoneCountryCode;
+    }
+    if (!knownCodes.contains(selectedCode)) {
+      selectedCode = '+33';
+    }
+
+    final codeDigits = selectedCode.replaceAll(RegExp(r'\D'), '');
+    var localDigits = allDigits;
+    if (codeDigits.isNotEmpty && allDigits.startsWith(codeDigits)) {
+      localDigits = allDigits.substring(codeDigits.length);
+    }
+
+    _selectedPhoneCountryCode = selectedCode;
+    _phoneController.text = localDigits.isNotEmpty ? localDigits : trimmed;
+  }
+
+  Future<void> _prefillPublishPhoneFromProfileIfNeeded() async {
+    if (_phoneController.text.trim().isNotEmpty) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final userRef =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+    try {
+      DocumentSnapshot<Map<String, dynamic>> doc;
+      try {
+        doc = await userRef
+            .get(const GetOptions(source: Source.server))
+            .timeout(const Duration(seconds: 5));
+      } catch (_) {
+        doc = await userRef
+            .get(const GetOptions(source: Source.cache))
+            .timeout(const Duration(seconds: 3));
+      }
+
+      final data = doc.data();
+      final rawPhone = _firstNonEmptyPublishPhone(
+        data,
+        const ['phone', 'phoneNumber', 'phone_number'],
+        fallbackValues: <String>[user.phoneNumber ?? ''],
+      );
+      final phoneCountryCode =
+          data == null ? null : data['phoneCountryCode']?.toString().trim();
+
+      if (rawPhone.isEmpty ||
+          !mounted ||
+          _phoneController.text.trim().isNotEmpty) {
+        return;
+      }
+
+      setState(() {
+        _applyPublishPhoneFromProfile(
+          rawPhone,
+          explicitCountryCode: phoneCountryCode,
+        );
+      });
+      _recompute();
+    } catch (error) {
+      debugPrint('[Publish] Préremplissage téléphone impossible: $error');
+    }
   }
 
   double? _parseBudget(String raw) {
@@ -8164,14 +8466,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<bool> _ensureLoggedInForPublish() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) return true;
+    final overlayTheme = context.prestoOverlayTheme;
 
     final startInSignup = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
       builder: (ctx) {
         final bottom = MediaQuery.of(ctx).viewInsets.bottom;
         return Padding(
@@ -8250,6 +8551,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _onPublishPressed() async {
     final loggedIn = await _ensureLoggedInForPublish();
     if (!loggedIn) return;
+
+    await _prefillPublishPhoneFromProfileIfNeeded();
 
     _canonicalizeLocationInputs();
 
@@ -8676,6 +8979,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _canPublish = false;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
+    unawaited(_prefillPublishPhoneFromProfileIfNeeded());
     showSuccessSnackBar(context, 'Tous les champs ont été réinitialisés');
   }
 
@@ -8816,24 +9120,23 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       {required XFile file, required String label}) async {
     final bytes = await file.readAsBytes();
     if (!mounted) return;
+    final overlayTheme = context.prestoOverlayTheme;
 
     await showDialog<void>(
       context: context,
       barrierDismissible: true,
       builder: (ctx) {
         return Dialog(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          backgroundColor: overlayTheme.surfaceColor,
+          surfaceTintColor: overlayTheme.surfaceTintColor,
+          shape: overlayTheme.dialogShape,
           insetPadding: const EdgeInsets.all(16),
           child: Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: overlayTheme.dialogRadius,
                 child: Container(
-                  color: Colors.white,
+                  color: overlayTheme.surfaceColor,
                   child: InteractiveViewer(
                     minScale: 1.0,
                     maxScale: 4.0,
@@ -8907,13 +9210,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<ImageSource?> _selectPhotoSource() async {
     if (!mounted) return null;
+    final overlayTheme = context.prestoOverlayTheme;
 
     return showModalBottomSheet<ImageSource>(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
       builder: (ctx) {
         return SafeArea(
           top: false,
@@ -9243,10 +9545,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               icon: const Icon(Icons.refresh_outlined),
               tooltip: 'Réinitialiser tous les champs',
               onPressed: () {
+                final overlayTheme = context.prestoOverlayTheme;
                 showDialog(
                   context: context,
                   builder: (_) => AlertDialog(
-                    backgroundColor: Colors.white,
+                    backgroundColor: overlayTheme.surfaceColor,
+                    surfaceTintColor: overlayTheme.surfaceTintColor,
+                    shape: overlayTheme.dialogShape,
                     title: const Text(
                       'Réinitialiser ?',
                       style: kPrestoSectionTitleStyle,
@@ -9567,8 +9872,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           : null,
                       onTap: () => _onPhotoTileTap(index),
                       onLongPress: () => _pickImage(index),
-                      onRemove:
-                          hasPhoto ? () => _removePhotoAt(index) : null,
+                      onRemove: hasPhoto ? () => _removePhotoAt(index) : null,
                     );
                   },
                 ),
@@ -10235,6 +10539,23 @@ class _AccountPageState extends State<AccountPage> {
         _profilePhoneController.text.trim().isNotEmpty;
   }
 
+  Future<DocumentSnapshot<Map<String, dynamic>>> _fetchUserProfileDocument(
+    String uid,
+  ) async {
+    final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+
+    try {
+      return await userRef
+          .get(const GetOptions(source: Source.server))
+          .timeout(const Duration(seconds: 5));
+    } catch (error) {
+      debugPrint('[Profile] Fallback cache pour le profil: $error');
+      return userRef
+          .get(const GetOptions(source: Source.cache))
+          .timeout(const Duration(seconds: 3));
+    }
+  }
+
   String _firstNonEmptyProfileValue(
     Map<String, dynamic>? data,
     List<String> keys, {
@@ -10368,11 +10689,7 @@ class _AccountPageState extends State<AccountPage> {
     final previousDraftFavoriteSelections = _draftFavoriteSelections.toSet();
 
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get(const GetOptions(source: Source.serverAndCache))
-          .timeout(const Duration(seconds: 8));
+      final doc = await _fetchUserProfileDocument(user.uid);
 
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
@@ -10429,6 +10746,19 @@ class _AccountPageState extends State<AccountPage> {
         _selectedFavoriteSubcategories = hasSelectedFavoriteSubcategoriesKey
             ? selectedSubcats.toSet()
             : previousSelectedFavoriteSubcategories;
+
+        final hasStoredFavorites = hasFavoriteCategoriesKey ||
+            hasSelectedFavoriteCategoriesKey ||
+            hasSelectedFavoriteSubcategoriesKey;
+        final mergedFavoriteSelections = <String>{
+          ...favs,
+          ...selectedCats,
+          ...selectedSubcats,
+        };
+        if (hasStoredFavorites) {
+          _favoriteCategories = mergedFavoriteSelections;
+          _draftFavoriteSelections = mergedFavoriteSelections.toSet();
+        }
 
         // ✅ Si les champs sont remplis, ne pas être en mode édition par défaut
         final hasProfile = _hasProfileValuesInMemory();
@@ -10683,25 +11013,32 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  void _mutateDraftCategory(String category) {
-    if (_draftFavoriteSelections.contains(category)) {
-      _draftFavoriteSelections.remove(category);
-      _draftFavoriteSelections.removeWhere((e) => e.startsWith('$category — '));
+  void _mutateDraftCategory(
+    String category, {
+    Set<String>? selections,
+  }) {
+    final targetSelections = selections ?? _draftFavoriteSelections;
+
+    if (targetSelections.contains(category)) {
+      targetSelections.remove(category);
+      targetSelections.removeWhere((e) => e.startsWith('$category — '));
     } else {
-      _draftFavoriteSelections.add(category);
+      targetSelections.add(category);
     }
   }
 
   void _mutateDraftSubcategory({
     required String category,
     required String subcategory,
+    Set<String>? selections,
   }) {
+    final targetSelections = selections ?? _draftFavoriteSelections;
     final label = '$category — $subcategory';
-    if (_draftFavoriteSelections.contains(label)) {
-      _draftFavoriteSelections.remove(label);
+    if (targetSelections.contains(label)) {
+      targetSelections.remove(label);
     } else {
-      _draftFavoriteSelections.add(category);
-      _draftFavoriteSelections.add(label);
+      targetSelections.add(category);
+      targetSelections.add(label);
     }
   }
 
@@ -10725,60 +11062,98 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _openCategoryPickerSheet() async {
-    var changed = false;
+    var workingSelections = _draftFavoriteSelections.toSet();
+    final overlayTheme = context.prestoOverlayTheme;
 
-    await showModalBottomSheet<void>(
+    final validatedSelections = await showModalBottomSheet<Set<String>>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, sheetSetState) {
             return SafeArea(
               child: SizedBox(
                 height: MediaQuery.of(ctx).size.height * 0.65,
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-                  itemCount: _allFavoriteCategories.length + 1,
-                  separatorBuilder: (_, __) => const Divider(height: 0),
-                  itemBuilder: (_, index) {
-                    if (index == 0) {
-                      return const Padding(
-                        padding: EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          'Choisir des catégories',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      );
-                    }
-
-                    final cat = _allFavoriteCategories[index - 1];
-                    final selected = _draftFavoriteSelections.contains(cat);
-
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-                      title: Text(
-                        cat,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(12, 8, 12, 8),
+                      child: Text(
+                        'Choisir des catégories',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                      trailing: selected
-                          ? const Icon(Icons.check, color: kPrestoBlue)
-                          : null,
-                      onTap: () {
-                        sheetSetState(() {
-                          _mutateDraftCategory(cat);
-                          changed = true;
-                        });
-                      },
-                    );
-                  },
+                    ),
+                    Expanded(
+                      child: ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        itemCount: _allFavoriteCategories.length,
+                        separatorBuilder: (_, __) => const Divider(height: 0),
+                        itemBuilder: (_, index) {
+                          final cat = _allFavoriteCategories[index];
+                          final selected = workingSelections.contains(cat);
+
+                          return ListTile(
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 4),
+                            selected: selected,
+                            selectedTileColor: overlayTheme.selectionFillColor,
+                            iconColor: overlayTheme.selectionAccentColor,
+                            title: Text(
+                              cat,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            trailing: selected
+                                ? Icon(
+                                    Icons.check,
+                                    color: overlayTheme.selectionAccentColor,
+                                  )
+                                : null,
+                            onTap: () {
+                              sheetSetState(() {
+                                workingSelections = workingSelections.toSet();
+                                _mutateDraftCategory(
+                                  cat,
+                                  selections: workingSelections,
+                                );
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () =>
+                              Navigator.of(ctx).pop(workingSelections.toSet()),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrestoBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text(
+                            'Valider',
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -10787,21 +11162,26 @@ class _AccountPageState extends State<AccountPage> {
       },
     );
 
-    if (changed && mounted) setState(() {});
+    if (validatedSelections != null && mounted) {
+      setState(() {
+        _draftFavoriteSelections = validatedSelections.toSet();
+      });
+    }
   }
 
   Future<void> _openSubcategoryPickerSheet() async {
-    final selectedCategories =
-        _draftFavoriteSelections.where((e) => !e.contains('—')).toList();
+    var workingSelections = _draftFavoriteSelections.toSet();
+    final overlayTheme = context.prestoOverlayTheme;
 
-    var changed = false;
-
-    await showModalBottomSheet<void>(
+    final validatedSelections = await showModalBottomSheet<Set<String>>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
       builder: (ctx) {
+        final selectedCategories =
+            workingSelections.where((e) => !e.contains('—')).toList();
         if (selectedCategories.isEmpty) {
           return SafeArea(
             child: SizedBox(
@@ -10832,69 +11212,119 @@ class _AccountPageState extends State<AccountPage> {
 
         return StatefulBuilder(
           builder: (context, sheetSetState) {
+            final visibleCategories =
+                workingSelections.where((e) => !e.contains('—')).toList();
+            final items =
+                <({String category, String? subcategory, bool isHeader})>[];
+            for (final category in visibleCategories) {
+              items
+                  .add((category: category, subcategory: null, isHeader: true));
+              final subs =
+                  _subCategoriesByCategory[category] ?? const <String>[];
+              for (final sub in subs) {
+                items.add(
+                    (category: category, subcategory: sub, isHeader: false));
+              }
+            }
+
             return SafeArea(
               child: SizedBox(
                 height: MediaQuery.of(ctx).size.height * 0.65,
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-                  itemCount: items.length + 1,
-                  separatorBuilder: (_, __) => const Divider(height: 0),
-                  itemBuilder: (_, index) {
-                    if (index == 0) {
-                      return const Padding(
-                        padding: EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          'Choisir des sous-catégories',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      );
-                    }
-
-                    final item = items[index - 1];
-                    if (item.isHeader) {
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 10, bottom: 6),
-                        child: Text(
-                          item.category,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w900,
-                            color: kPrestoBlue,
-                          ),
-                        ),
-                      );
-                    }
-
-                    final sub = item.subcategory!;
-                    final label = '${item.category} — $sub';
-                    final selected = _draftFavoriteSelections.contains(label);
-
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-                      title: Text(
-                        sub,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(12, 8, 12, 8),
+                      child: Text(
+                        'Choisir des sous-catégories',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                      trailing: selected
-                          ? const Icon(Icons.check, color: kPrestoBlue)
-                          : null,
-                      onTap: () {
-                        sheetSetState(() {
-                          _mutateDraftSubcategory(
-                            category: item.category,
-                            subcategory: sub,
+                    ),
+                    Expanded(
+                      child: ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        itemCount: items.length,
+                        separatorBuilder: (_, __) => const Divider(height: 0),
+                        itemBuilder: (_, index) {
+                          final item = items[index];
+                          if (item.isHeader) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.only(top: 10, bottom: 6),
+                              child: Text(
+                                item.category,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w900,
+                                  color: kPrestoBlue,
+                                ),
+                              ),
+                            );
+                          }
+
+                          final sub = item.subcategory!;
+                          final label = '${item.category} — $sub';
+                          final selected = workingSelections.contains(label);
+
+                          return ListTile(
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 4),
+                            selected: selected,
+                            selectedTileColor: overlayTheme.selectionFillColor,
+                            iconColor: overlayTheme.selectionAccentColor,
+                            title: Text(
+                              sub,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            trailing: selected
+                                ? Icon(
+                                    Icons.check,
+                                    color: overlayTheme.selectionAccentColor,
+                                  )
+                                : null,
+                            onTap: () {
+                              sheetSetState(() {
+                                workingSelections = workingSelections.toSet();
+                                _mutateDraftSubcategory(
+                                  category: item.category,
+                                  subcategory: sub,
+                                  selections: workingSelections,
+                                );
+                              });
+                            },
                           );
-                          changed = true;
-                        });
-                      },
-                    );
-                  },
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () =>
+                              Navigator.of(ctx).pop(workingSelections.toSet()),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrestoBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text(
+                            'Valider',
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -10903,7 +11333,11 @@ class _AccountPageState extends State<AccountPage> {
       },
     );
 
-    if (changed && mounted) setState(() {});
+    if (validatedSelections != null && mounted) {
+      setState(() {
+        _draftFavoriteSelections = validatedSelections.toSet();
+      });
+    }
   }
 
   Future<void> _toggleFavoriteSubcategory(User user, String subcategory) async {
@@ -11064,6 +11498,14 @@ class _AccountPageState extends State<AccountPage> {
     final displayName = pseudo.isNotEmpty
         ? pseudo
         : (user.displayName ?? "Utilisateur iliprestō");
+    final draftCategoryLabels = _draftFavoriteSelections
+        .where((entry) => !entry.contains('—'))
+        .toList()
+      ..sort();
+    final draftSubcategoryLabels = _draftFavoriteSelections
+        .where((entry) => entry.contains('—'))
+        .toList()
+      ..sort();
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -11312,17 +11754,15 @@ class _AccountPageState extends State<AccountPage> {
                     const SizedBox(height: 24),
                     _buildAccountSectionCard(
                       icon: Icons.tune_rounded,
-                      title: 'Mes alertes catégories d\'annonces',
+                      title: 'Mes alertes "Nouvelle annonce"',
                       description:
                           'Organise les alertes qui correspondent à tes préférences.',
                       child: RepaintBoundary(
                         child: AccountFavoriteCategoriesSection(
-                          categoriesCount: _draftFavoriteSelections
-                              .where((e) => !e.contains('—'))
-                              .length,
-                          subcategoriesCount: _draftFavoriteSelections
-                              .where((e) => e.contains('—'))
-                              .length,
+                          categoriesCount: draftCategoryLabels.length,
+                          subcategoriesCount: draftSubcategoryLabels.length,
+                          selectedCategories: draftCategoryLabels,
+                          selectedSubcategories: draftSubcategoryLabels,
                           isSaving: _isSavingProfile,
                           showTitle: false,
                           onOpenCategoryPicker: _openCategoryPickerSheet,
@@ -13089,13 +13529,13 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                 selectedMissionDelay,
             ];
             final pendingPhotoNotice = _offerPendingPhotoNotice(data);
+            final overlayTheme = dialogContext.prestoOverlayTheme;
 
             return Dialog(
-              backgroundColor: Colors.white,
+              backgroundColor: overlayTheme.surfaceColor,
+              surfaceTintColor: overlayTheme.surfaceTintColor,
               insetPadding: const EdgeInsets.all(16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+              shape: overlayTheme.dialogShape,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 760),
                 child: Padding(
@@ -13900,6 +14340,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       kOfferDeleteReasonFoundProvider,
       kOfferDeleteReasonFoundOnIliPresto,
     ];
+    final overlayTheme = context.prestoOverlayTheme;
 
     return showDialog<String>(
       context: context,
@@ -13910,6 +14351,9 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                 selectedReason != null && selectedReason!.trim().isNotEmpty;
 
             return AlertDialog(
+              backgroundColor: overlayTheme.surfaceColor,
+              surfaceTintColor: overlayTheme.surfaceTintColor,
+              shape: overlayTheme.dialogShape,
               title: const Text('Supprimer cette annonce ?'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -13924,9 +14368,11 @@ class _UserOffersSectionState extends State<UserOffersSection> {
                     decoration: InputDecoration(
                       labelText: 'Motif principal',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: overlayTheme.popupRadius,
                       ),
                     ),
+                    dropdownColor: overlayTheme.surfaceColor,
+                    borderRadius: overlayTheme.popupRadius,
                     items: reasons
                         .map(
                           (reason) => DropdownMenuItem<String>(

@@ -229,6 +229,8 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
 class AccountFavoriteCategoriesSection extends StatelessWidget {
   final int categoriesCount;
   final int subcategoriesCount;
+  final List<String> selectedCategories;
+  final List<String> selectedSubcategories;
   final bool isSaving;
   final bool showTitle;
   final VoidCallback onOpenCategoryPicker;
@@ -239,6 +241,8 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
     super.key,
     required this.categoriesCount,
     required this.subcategoriesCount,
+    required this.selectedCategories,
+    required this.selectedSubcategories,
     required this.isSaving,
     this.showTitle = true,
     required this.onOpenCategoryPicker,
@@ -248,12 +252,15 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasSelections =
+        selectedCategories.isNotEmpty || selectedSubcategories.isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (showTitle)
           const Text(
-            'Mes alertes catégories d\'annonces',
+            'Mes alertes "Nouvelle annonce"',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
@@ -287,6 +294,48 @@ class AccountFavoriteCategoriesSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
+              if (hasSelections) ...[
+                const Text(
+                  'Alertes paramétrées',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ...selectedCategories.map(
+                      (category) => Chip(
+                        label: Text(category),
+                        backgroundColor: const Color(0xFFFFF3E8),
+                        side: const BorderSide(color: Color(0xFFFFD3B0)),
+                        labelStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFB85C00),
+                        ),
+                      ),
+                    ),
+                    ...selectedSubcategories.map(
+                      (subcategory) => Chip(
+                        label: Text(subcategory),
+                        backgroundColor: const Color(0xFFEFF5FF),
+                        side: const BorderSide(color: Color(0xFFCFE0FF)),
+                        labelStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1A4EA1),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
               InkWell(
                 onTap: onOpenCategoryPicker,
                 borderRadius: BorderRadius.circular(12),
