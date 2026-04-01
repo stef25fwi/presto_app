@@ -578,6 +578,9 @@ String _extractOfferImageUrl(dynamic entry) {
       'url',
       'secureUrl',
       'src',
+      'storagePath',
+      'filePath',
+      'path',
     ]) {
       final value = (entry[key] ?? '').toString().trim();
       if (value.isNotEmpty) {
