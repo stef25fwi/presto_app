@@ -14,6 +14,136 @@ class CountryCode {
   });
 }
 
+const List<CountryCode> kPhoneCountryCodes = [
+  CountryCode(
+    label: 'France métropole',
+    code: '+33',
+    flag: '🇫🇷',
+  ),
+  CountryCode(
+    label: 'Guadeloupe (971)',
+    code: '+590',
+    flag: '🇬🇵',
+  ),
+  CountryCode(
+    label: 'Martinique (972)',
+    code: '+596',
+    flag: '🇲🇶',
+  ),
+  CountryCode(
+    label: 'Guyane (973)',
+    code: '+594',
+    flag: '🇬🇫',
+  ),
+  CountryCode(
+    label: 'La Réunion (974)',
+    code: '+262',
+    flag: '🇷🇪',
+  ),
+  CountryCode(
+    label: 'Mayotte (976)',
+    code: '+262',
+    flag: '🇾🇹',
+  ),
+  CountryCode(
+    label: 'Polynésie française',
+    code: '+689',
+    flag: '🇵🇫',
+  ),
+];
+
+CountryCode phoneCountryFromCode(String? code) {
+  if (code == null) return kPhoneCountryCodes.first;
+  return kPhoneCountryCodes.firstWhere(
+    (country) => country.code == code,
+    orElse: () => kPhoneCountryCodes.first,
+  );
+}
+
+class _PhoneFieldPrefix extends StatelessWidget {
+  final CountryCode selectedCountry;
+  final ValueChanged<CountryCode?> onCountryChanged;
+
+  const _PhoneFieldPrefix({
+    required this.selectedCountry,
+    required this.onCountryChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          DropdownButtonHideUnderline(
+            child: DropdownButton<CountryCode>(
+              value: selectedCountry,
+              isDense: true,
+              borderRadius: BorderRadius.circular(14),
+              icon: const Icon(Icons.arrow_drop_down_rounded, size: 18),
+              items: kPhoneCountryCodes
+                  .map(
+                    (country) => DropdownMenuItem<CountryCode>(
+                      value: country,
+                      child: Text(
+                        '${country.flag} ${country.code}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: onCountryChanged,
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 24,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            color: Colors.grey.shade300,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+InputDecoration _buildPhoneDecoration({
+  required BuildContext context,
+  required InputDecoration? baseDecoration,
+  required Widget? label,
+  required String? labelText,
+  required String? hintText,
+  required CountryCode selectedCountry,
+  required ValueChanged<CountryCode?> onCountryChanged,
+}) {
+  final decoration = (baseDecoration ?? const InputDecoration()).copyWith(
+    label: label,
+    labelText: label == null ? (labelText ?? 'Téléphone') : null,
+    hintText: hintText ?? '612345678',
+    prefixIcon: _PhoneFieldPrefix(
+      selectedCountry: selectedCountry,
+      onCountryChanged: onCountryChanged,
+    ),
+    prefixIconConstraints: const BoxConstraints(
+      minWidth: 124,
+      minHeight: 0,
+    ),
+    border: (baseDecoration ?? const InputDecoration()).border ??
+        const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+    contentPadding:
+        (baseDecoration ?? const InputDecoration()).contentPadding ??
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+  );
+
+  return decoration;
+}
+
 /// Widget pour saisir un numéro de téléphone avec sélection d'indicatif
 /// France métropolitaine + DROM
 class PhoneInputField extends StatefulWidget {
@@ -47,63 +177,19 @@ class PhoneInputField extends StatefulWidget {
 }
 
 class _PhoneInputFieldState extends State<PhoneInputField> {
-  // Les indicatifs France + DROM + COM
-  static const List<CountryCode> countryCodes = [
-    CountryCode(
-      label: 'France métropole',
-      code: '+33',
-      flag: '🇫🇷',
-    ),
-    CountryCode(
-      label: 'Guadeloupe (971)',
-      code: '+590',
-      flag: '🇬🇵',
-    ),
-    CountryCode(
-      label: 'Martinique (972)',
-      code: '+596',
-      flag: '🇲🇶',
-    ),
-    CountryCode(
-      label: 'Guyane (973)',
-      code: '+594',
-      flag: '🇬🇫',
-    ),
-    CountryCode(
-      label: 'La Réunion (974)',
-      code: '+262',
-      flag: '🇷🇪',
-    ),
-    CountryCode(
-      label: 'Mayotte (976)',
-      code: '+262',
-      flag: '🇾🇹',
-    ),
-    CountryCode(
-      label: 'Polynésie française',
-      code: '+689',
-      flag: '🇵🇫',
-    ),
-  ];
-
   late CountryCode _selectedCountry;
 
   @override
   void initState() {
     super.initState();
-    _selectedCountry = _fromCode(widget.initialCountryCode) ??
-        countryCodes.first; // France par défaut
+    _selectedCountry = phoneCountryFromCode(widget.initialCountryCode);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.onCountryCodeChanged?.call(_selectedCountry.code);
     });
   }
 
   CountryCode? _fromCode(String? code) {
-    if (code == null) return null;
-    return countryCodes.firstWhere(
-      (c) => c.code == code,
-      orElse: () => countryCodes.first,
-    );
+    return phoneCountryFromCode(code);
   }
 
   @override
@@ -134,51 +220,24 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Sélection de l'indicatif
-        DropdownButton<CountryCode>(
-          value: _selectedCountry,
-          isExpanded: true,
-          items: countryCodes
-              .map(
-                (country) => DropdownMenuItem<CountryCode>(
-                  value: country,
-                  child: Text(
-                    '${country.flag} ${country.label} (${country.code})',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ),
-              )
-              .toList(),
-          onChanged: _onCountryChanged,
-        ),
-        const SizedBox(height: 12),
-
-        // Champ téléphone avec préfixe indicatif
-        TextFormField(
-          controller: widget.controller,
-          focusNode: widget.focusNode,
-          decoration: (widget.decoration ?? InputDecoration()).copyWith(
-            label: widget.label,
-            labelText:
-                widget.label == null ? (widget.labelText ?? 'Téléphone') : null,
-            hintText: widget.hintText ?? 'Ex: 612345678',
-            prefixText: '${_selectedCountry.code} ',
-            prefixIcon: const Icon(Icons.phone_outlined),
-            border: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-            ),
-          ),
-          keyboardType: TextInputType.phone,
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]')),
-          ],
-          validator: widget.validator,
-          onChanged: widget.onPhoneChanged,
-        ),
+    return TextFormField(
+      controller: widget.controller,
+      focusNode: widget.focusNode,
+      decoration: _buildPhoneDecoration(
+        context: context,
+        baseDecoration: widget.decoration,
+        label: widget.label,
+        labelText: widget.labelText,
+        hintText: widget.hintText,
+        selectedCountry: _selectedCountry,
+        onCountryChanged: _onCountryChanged,
+      ),
+      keyboardType: TextInputType.phone,
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]')),
       ],
+      validator: widget.validator,
+      onChanged: widget.onPhoneChanged,
     );
   }
 }
@@ -213,34 +272,27 @@ class PhoneInputFieldCompact extends StatefulWidget {
 }
 
 class _PhoneInputFieldCompactState extends State<PhoneInputFieldCompact> {
-  static const List<CountryCode> countryCodes = [
-    CountryCode(label: 'France', code: '+33', flag: '🇫🇷'),
-    CountryCode(label: 'Guadeloupe', code: '+590', flag: '🇬🇵'),
-    CountryCode(label: 'Martinique', code: '+596', flag: '🇲🇶'),
-    CountryCode(label: 'Guyane', code: '+594', flag: '🇬🇫'),
-    CountryCode(label: 'La Réunion', code: '+262', flag: '🇷🇪'),
-    CountryCode(label: 'Mayotte', code: '+262', flag: '🇾🇹'),
-    CountryCode(label: 'Polynésie', code: '+689', flag: '🇵🇫'),
-  ];
-
   late CountryCode _selectedCountry;
 
   @override
   void initState() {
     super.initState();
-    _selectedCountry =
-        _fromCode(widget.initialCountryCode) ?? countryCodes.first;
+    _selectedCountry = phoneCountryFromCode(widget.initialCountryCode);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.onCountryCodeChanged?.call(_selectedCountry.code);
     });
   }
 
   CountryCode? _fromCode(String? code) {
-    if (code == null) return null;
-    return countryCodes.firstWhere(
-      (c) => c.code == code,
-      orElse: () => countryCodes.first,
-    );
+    return phoneCountryFromCode(code);
+  }
+
+  void _onCountryChanged(CountryCode? newCountry) {
+    if (newCountry == null) return;
+    setState(() {
+      _selectedCountry = newCountry;
+    });
+    widget.onCountryCodeChanged?.call(newCountry.code);
   }
 
   @override
@@ -262,68 +314,24 @@ class _PhoneInputFieldCompactState extends State<PhoneInputFieldCompact> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Sélecteur compact
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade400),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: DropdownButton<CountryCode>(
-            value: _selectedCountry,
-            underline: const SizedBox.shrink(),
-            items: countryCodes
-                .map(
-                  (country) => DropdownMenuItem<CountryCode>(
-                    value: country,
-                    child: Text(
-                      '${country.flag} ${country.code}',
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                )
-                .toList(),
-            onChanged: (newCountry) {
-              if (newCountry != null) {
-                setState(() {
-                  _selectedCountry = newCountry;
-                });
-                widget.onCountryCodeChanged?.call(newCountry.code);
-              }
-            },
-          ),
-        ),
-        const SizedBox(width: 8),
-
-        // Champ téléphone flexible
-        Expanded(
-          child: TextFormField(
-            controller: widget.controller,
-            focusNode: widget.focusNode,
-            decoration: InputDecoration(
-              label: widget.label,
-              labelText: widget.label == null
-                  ? (widget.labelText ?? 'Téléphone')
-                  : null,
-              hintText: widget.hintText ?? '612345678',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            ),
-            keyboardType: TextInputType.phone,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]')),
-            ],
-            validator: widget.validator,
-            onChanged: widget.onPhoneChanged,
-          ),
-        ),
+    return TextFormField(
+      controller: widget.controller,
+      focusNode: widget.focusNode,
+      decoration: _buildPhoneDecoration(
+        context: context,
+        baseDecoration: const InputDecoration(),
+        label: widget.label,
+        labelText: widget.labelText,
+        hintText: widget.hintText,
+        selectedCountry: _selectedCountry,
+        onCountryChanged: _onCountryChanged,
+      ),
+      keyboardType: TextInputType.phone,
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]')),
       ],
+      validator: widget.validator,
+      onChanged: widget.onPhoneChanged,
     );
   }
 }

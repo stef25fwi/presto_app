@@ -9,7 +9,7 @@
     },
     {
       "label": "Docs: Déplacer les .md racine -> docs_md",
-      "command": "git commit -m \"fix(tasks): restore docs task command\"",
+      "type": "shell",
       "command": "python3 tools/move_root_md_to_docs_md.py",
       "problemMatcher": []
     },
@@ -96,6 +96,18 @@
       "label": "Git: Commit Listings imageUrls",
       "type": "shell",
       "command": "git commit -m \"fix(listings): persist imageUrls for marketplace media\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: Commit Prompt",
+      "type": "shell",
+      "command": "git commit -m \"${input:gitCommitMessage}\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: Commit UI Improvements",
+      "type": "shell",
+      "command": "git commit -m \"feat(ui): improve filters, profile, phone input and overlay theming\"",
       "problemMatcher": []
     },
     {
@@ -221,7 +233,23 @@
       "dependsOn": [
         "Git: Add All",
         "Functions: Build",
-        "Git: Commit Listings imageUrls",
+        "Flutter: Analyze",
+        "Flutter: Build Web Release",
+        "Git: Commit Prompt",
+        "Git: Push Main",
+        "Firebase: Deploy"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Release: Build Commit Push Deploy",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: Add All",
+        "Functions: Build",
+        "Flutter: Analyze",
+        "Flutter: Build Web Release",
+        "Git: Commit UI Improvements",
         "Git: Push Main",
         "Firebase: Deploy"
       ],
@@ -286,6 +314,14 @@
       "type": "shell",
       "command": "node tools/send_real_conversation_message.cjs",
       "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "gitCommitMessage",
+      "type": "promptString",
+      "description": "Message du commit",
+      "default": "feat(ui): improve filters account phone and overlay theming"
     }
   ]
 }

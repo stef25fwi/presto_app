@@ -4,6 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:presto_app/app/presto_overlay_theme.dart';
 import 'package:presto_app/constants.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:presto_app/data/marketplace/favorite_repository.dart';
@@ -420,6 +421,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
   Future<void> _showShareOptionsSheet(
       BuildContext context, _OfferUiData data) async {
+    final overlayTheme = context.prestoOverlayTheme;
     final detailPath = data.isMarketplace ? 'listings' : 'offers';
     final offerUrl =
         'https://presto-app-74abe.web.app/#/$detailPath/${data.offerId}';
@@ -427,10 +429,8 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
       builder: (sheetContext) {
         Future<void> copyLink() async {
           await Clipboard.setData(ClipboardData(text: offerUrl));
@@ -461,7 +461,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         return SafeArea(
           top: false,
           child: Container(
-            color: Colors.white,
+            color: overlayTheme.surfaceColor,
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -477,9 +477,9 @@ class PrestoOfferDetailsPage extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    color: overlayTheme.selectionFillColor,
+                    borderRadius: overlayTheme.popupRadius,
+                    border: Border.all(color: overlayTheme.borderColor),
                   ),
                   child: Row(
                     children: [
@@ -604,18 +604,17 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
   Future<void> _showContactOptionsSheet(
       BuildContext context, _OfferUiData data) async {
+    final overlayTheme = context.prestoOverlayTheme;
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: false,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
       builder: (sheetContext) {
         return SafeArea(
           top: false,
           child: Container(
-            color: Colors.white,
+            color: overlayTheme.surfaceColor,
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -790,12 +789,11 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       return;
     }
 
+    final overlayTheme = context.prestoOverlayTheme;
     final reason = await showModalBottomSheet<ListingReportReasonCode>(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
       builder: (sheetContext) {
         return SafeArea(
           top: false,
@@ -813,6 +811,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
               ),
               ...ListingReportReasonCode.values.map(
                 (entry) => ListTile(
+                  tileColor: overlayTheme.surfaceColor,
                   leading: const Icon(Icons.flag_outlined),
                   title: Text(_reportReasonLabel(entry)),
                   onTap: () => Navigator.of(sheetContext).pop(entry),
@@ -840,7 +839,11 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         reasonText = await showDialog<String>(
           context: context,
           builder: (dialogContext) {
+            final overlayTheme = dialogContext.prestoOverlayTheme;
             return AlertDialog(
+              backgroundColor: overlayTheme.surfaceColor,
+              surfaceTintColor: overlayTheme.surfaceTintColor,
+              shape: overlayTheme.dialogShape,
               title: const Text('Précisez le motif'),
               content: TextField(
                 controller: controller,
@@ -2260,9 +2263,8 @@ Future<String?> _resolveOfferImageUrl(String rawUrl) {
   final future = () async {
     try {
       if (trimmed.startsWith('gs://')) {
-        final resolved = await FirebaseStorage.instance
-            .refFromURL(trimmed)
-            .getDownloadURL();
+        final resolved =
+            await FirebaseStorage.instance.refFromURL(trimmed).getDownloadURL();
         if (resolved.trim().isEmpty) {
           _offerImageUrlCache.remove(trimmed);
           return null;
