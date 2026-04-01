@@ -71,7 +71,7 @@
     {
       "label": "Git: Commit All",
       "type": "shell",
-      "command": "git commit -m \"fix(offers): avoid caching failed detail image resolutions\"",
+      "command": "git commit -m \"fix(offers): use web html image fallback on detail page\"",
       "problemMatcher": []
     },
     {
