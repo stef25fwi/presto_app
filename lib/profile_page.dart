@@ -2356,7 +2356,7 @@ class _ProfilePageState extends State<ProfilePage> {
               const Divider(height: 0),
               _buildProfileActionTile(
                 icon: Icons.forum_outlined,
-                title: 'Ouvrir mes messages 2',
+                title: 'Ouvrir mes messages',
                 onTap: _onOpenMessagesV2Tapped,
               ),
             ],

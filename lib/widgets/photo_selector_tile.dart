@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 class PhotoSelectorTile extends StatelessWidget {
   static const Color _kPrestoOrange = Color(0xFFFF6600);
+  static const Color _kAddPhotoBlue = Color(0xFF8DC4FF);
 
   final String label;
   final XFile? file;
@@ -39,13 +40,13 @@ class PhotoSelectorTile extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: _kPrestoOrange.withOpacity(0.25),
+                color: _kAddPhotoBlue.withOpacity(0.45),
               ),
             ),
             child: const Icon(
               Icons.add_a_photo_outlined,
               size: 26,
-              color: _kPrestoOrange,
+              color: _kAddPhotoBlue,
             ),
           ),
           const SizedBox(height: 10),
@@ -115,12 +116,12 @@ class PhotoSelectorTile extends StatelessWidget {
             height: double.infinity,
             decoration: BoxDecoration(
               color: localFile == null
-                  ? const Color(0xFFFFF6EF)
+                  ? const Color(0xFFF5FAFF)
                   : Colors.grey.shade200,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: localFile == null
-                    ? _kPrestoOrange.withOpacity(0.28)
+                    ? _kAddPhotoBlue.withOpacity(0.4)
                     : Colors.black12,
               ),
             ),
