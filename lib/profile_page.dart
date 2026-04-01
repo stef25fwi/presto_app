@@ -53,6 +53,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _cityCtrl = TextEditingController();
   final TextEditingController _cpCtrl = TextEditingController();
   final TextEditingController _phoneCtrl = TextEditingController();
+  String _phoneCountryCode = '+33';
   final Set<String> _dirtyProfileFields = <String>{};
 
   bool get _isAppleSignInSupported =>
@@ -231,6 +232,7 @@ class _ProfilePageState extends State<ProfilePage> {
       _cityCtrl.clear();
       _cpCtrl.clear();
       _phoneCtrl.clear();
+      _phoneCountryCode = '+33';
       _emailCtrl.clear();
       _accountType = 'Particulier';
       _favoriteCategories
@@ -292,13 +294,18 @@ class _ProfilePageState extends State<ProfilePage> {
         );
     final profileAccountType =
         (profileData['accountType'] ?? '').toString().trim();
+    final profilePhoneCountryCode =
+        (profileData['phoneCountryCode'] ?? '').toString().trim();
 
     _isApplyingProfileData = true;
     try {
       _setControllerText(_nameCtrl, 'name', profileName);
       _setControllerText(_cityCtrl, 'city', profileCity);
       _setControllerText(_cpCtrl, 'postalCode', profilePostalCode);
-      _setControllerText(_phoneCtrl, 'phone', profilePhone);
+      _applyProfilePhone(
+        profilePhone,
+        explicitCountryCode: profilePhoneCountryCode,
+      );
       _setControllerText(_emailCtrl, 'email', profileEmail);
 
       if (!_dirtyProfileFields.contains('accountType') &&
@@ -308,6 +315,81 @@ class _ProfilePageState extends State<ProfilePage> {
     } finally {
       _isApplyingProfileData = false;
     }
+  }
+
+  void _applyProfilePhone(
+    String rawPhone, {
+    String? explicitCountryCode,
+  }) {
+    if (_dirtyProfileFields.contains('phone') &&
+        _phoneCtrl.text.trim().isNotEmpty) {
+      return;
+    }
+
+    final normalizedExplicitCode = (explicitCountryCode ?? '').trim();
+    final knownCodes = kPhoneCountryCodes.map((country) => country.code).toList();
+    final trimmed = rawPhone.trim();
+
+    if (trimmed.isEmpty) {
+      _phoneCountryCode = knownCodes.contains(normalizedExplicitCode)
+          ? normalizedExplicitCode
+          : '+33';
+      _setControllerText(_phoneCtrl, 'phone', '');
+      return;
+    }
+
+    final compact = trimmed.replaceAll(RegExp(r'\s+'), '');
+    final allDigits = compact.replaceAll(RegExp(r'\D'), '');
+
+    var resolvedCode = normalizedExplicitCode;
+    if (resolvedCode.isEmpty || !knownCodes.contains(resolvedCode)) {
+      for (final code in knownCodes) {
+        if (compact.startsWith(code)) {
+          resolvedCode = code;
+          break;
+        }
+      }
+    }
+
+    if (resolvedCode.isEmpty || !knownCodes.contains(resolvedCode)) {
+      resolvedCode = '+33';
+    }
+
+    final codeDigits = resolvedCode.replaceAll(RegExp(r'\D'), '');
+    var localDigits = allDigits;
+    if (codeDigits.isNotEmpty && allDigits.startsWith(codeDigits)) {
+      localDigits = allDigits.substring(codeDigits.length);
+    }
+
+    _phoneCountryCode = resolvedCode;
+    _setControllerText(
+      _phoneCtrl,
+      'phone',
+      localDigits.isNotEmpty ? localDigits : trimmed,
+    );
+  }
+
+  String _normalizePhoneForSave(String countryCode, String rawPhone) {
+    final codeDigits = countryCode.replaceAll(RegExp(r'\D'), '');
+    var phoneDigits = rawPhone.replaceAll(RegExp(r'\D'), '');
+
+    if (phoneDigits.isEmpty) {
+      return '';
+    }
+
+    if (phoneDigits.startsWith('00')) {
+      phoneDigits = phoneDigits.substring(2);
+    }
+
+    if (codeDigits.isNotEmpty && phoneDigits.startsWith(codeDigits)) {
+      return '+$phoneDigits';
+    }
+
+    if (phoneDigits.startsWith('0')) {
+      phoneDigits = phoneDigits.substring(1);
+    }
+
+    return codeDigits.isEmpty ? phoneDigits : '+$codeDigits$phoneDigits';
   }
 
   void _setControllerText(
@@ -555,6 +637,8 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() => _isLoading = true);
     try {
       final displayName = _nameCtrl.text.trim();
+      final normalizedPhone =
+          _normalizePhoneForSave(_phoneCountryCode, _phoneCtrl.text.trim());
       final favoriteCategoryKeys =
           _favoriteCategories.keys.toSet().toList(growable: false);
       final favoriteSubcategories = _favoriteCategories.values
@@ -572,7 +656,10 @@ class _ProfilePageState extends State<ProfilePage> {
         'displayName': displayName,
         'city': _cityCtrl.text.trim(),
         'postalCode': _cpCtrl.text.trim(),
-        'phone': _phoneCtrl.text.trim(),
+        'phone': normalizedPhone,
+        'phoneNumber': normalizedPhone,
+        'phone_number': normalizedPhone,
+        'phoneCountryCode': _phoneCountryCode,
         'email': _emailCtrl.text.trim(),
         'accountType': _accountType,
         'favoriteCategories': favoriteCategoryKeys,
@@ -1840,13 +1927,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 12),
                   PhoneInputFieldCompact(
                     controller: _phoneCtrl,
+                    initialCountryCode: _phoneCountryCode,
                     labelText: 'Téléphone',
                     hintText: '612345678',
                     onCountryCodeChanged: (code) {
-                      debugPrint('Code choisi: $code');
-                    },
-                    onPhoneChanged: (phone) {
-                      debugPrint('Téléphone saisi: $phone');
+                      if (_phoneCountryCode == code) return;
+                      setState(() {
+                        _phoneCountryCode = code;
+                      });
+                      _dirtyProfileFields.add('phone');
                     },
                   ),
                   const SizedBox(height: 12),
