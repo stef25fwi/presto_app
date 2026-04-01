@@ -3766,7 +3766,7 @@ String _friendlyFirestoreErrorMessage(Object error) {
 }
 
 class _ConsultOffersPageState extends State<ConsultOffersPage> {
-  static const Color _offersBg = Color(0xFFF6F1F1);
+  static const Color _offersBg = Colors.white;
   static const Color _offersNavy = Color(0xFF1E2554);
   static const Color _offersOrange = Color(0xFFFF7A00);
   static const Color _offersSoftText = Color(0xFF626584);
@@ -4007,6 +4007,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   final FocusNode _regionFocus = FocusNode();
   final FocusNode _deptFocus = FocusNode();
   final FocusNode _filterCityFocusNode = FocusNode();
+  final Set<String> _manualAutoApplyCriteria = <String>{};
   List<CityRecord> _filterCitySuggestions = [];
   int _filterCityHighlightedIndex = -1;
   Timer? _filterCityDebounce;
@@ -4018,6 +4019,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   int? _resolvedVisibleOffersCount;
   int _visibleOffersCountRequestId = 0;
   String _headerTitle = 'Je consulte les offres';
+  static const int _autoApplyFiltersThreshold = 3;
 
   late final Map<String, String> _deptToRegion = _buildDeptToRegion();
 
@@ -4879,8 +4881,38 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
     _refreshVisibleOffersCount();
   }
 
+  void _trackManualFilterCriterion(
+    String key, {
+    required bool isActive,
+  }) {
+    if (isActive) {
+      _manualAutoApplyCriteria.add(key);
+    } else {
+      _manualAutoApplyCriteria.remove(key);
+    }
+  }
+
+  void _pruneManualAutoApplyCriteria() {
+    if ((_filterCategory ?? '').trim().isEmpty) {
+      _manualAutoApplyCriteria.remove('category');
+    }
+    if ((_filterRegionCode ?? '').trim().isEmpty) {
+      _manualAutoApplyCriteria.remove('region');
+    }
+    if ((_filterDepartmentCode ?? '').trim().isEmpty) {
+      _manualAutoApplyCriteria.remove('department');
+    }
+    if ((_filterCityName ?? '').trim().isEmpty) {
+      _manualAutoApplyCriteria.remove('city');
+    }
+  }
+
   void _onAnyFilterChanged() {
-    // ✅ Auto-apply avec debounce
+    if (_manualAutoApplyCriteria.length < _autoApplyFiltersThreshold) {
+      return;
+    }
+
+    // ✅ Auto-apply avec debounce à partir de 3 critères sélectionnés
     _filterDebounce.run(() {
       _applyFiltersOrSearch();
     });
@@ -4911,6 +4943,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _filterCityHighlightedIndex = -1;
       _activeSearchQuery = null;
       _budgetRangeWarning = null;
+      _manualAutoApplyCriteria.clear();
       _filterPanelKey++; // Force la reconstruction du panneau
       _pageLimit = _initialLimit;
       _lastPaginationRequestAt = null;
@@ -4940,6 +4973,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   void _mutateActiveFilters(VoidCallback mutation) {
     setState(() {
       mutation();
+      _pruneManualAutoApplyCriteria();
       _budgetRangeWarning = null;
       _lastDoc = null;
       _pageLimit = _initialLimit;
@@ -5672,6 +5706,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         onChanged: (code) {
           setState(() {
             _filterRegionCode = code;
+            _trackManualFilterCriterion(
+              'region',
+              isActive: (code ?? '').trim().isNotEmpty,
+            );
+            _trackManualFilterCriterion('department', isActive: false);
+            _trackManualFilterCriterion('city', isActive: false);
 
             // ✅ Région change => on reset le dept + ville + CP
             _filterDepartmentCode = null;
@@ -5757,6 +5797,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         onChanged: (code) {
           setState(() {
             _filterDepartmentCode = code;
+            _trackManualFilterCriterion(
+              'department',
+              isActive: (code ?? '').trim().isNotEmpty,
+            );
+            _trackManualFilterCriterion('city', isActive: false);
 
             // ✅ Si on choisit un dept, on synchronise la région automatiquement
             if (code != null) {
@@ -5861,6 +5906,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           // ✅ Ville
           _filterCityController.text = c.name;
           _filterCityName = c.name;
+          _trackManualFilterCriterion('city', isActive: true);
 
           // ✅ CP
           _filterPostalCodeController.text = c.postalCode;
@@ -5911,6 +5957,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                         _filterCityName = null;
                         _filterCitySuggestions = [];
                         _filterCityHighlightedIndex = -1;
+                        _trackManualFilterCriterion('city', isActive: false);
                       });
                       textCtrl.clear();
                       _onAnyFilterChanged();
@@ -5950,6 +5997,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       onChanged: (value) {
         setState(() {
           _filterCategory = value;
+          _trackManualFilterCriterion(
+            'category',
+            isActive: (value ?? '').trim().isNotEmpty,
+          );
           _headerTitle = _resolveConsultOffersTitle();
         });
         _onAnyFilterChanged();
@@ -7503,7 +7554,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // Délai pour effectuer la mission
   final List<String> _missionDelayOptions = const [
-    'Immédiat',
+    'Urgent',
     'Dans la journée',
     'Demain',
     'Sous 48h',
@@ -9529,7 +9580,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: Colors.grey.shade100,
+        backgroundColor: Colors.white,
         appBar: AppBar(
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
           backgroundColor: kPrestoOrange,
