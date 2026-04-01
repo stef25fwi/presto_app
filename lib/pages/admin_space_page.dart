@@ -14,6 +14,107 @@ class AdminSpacePage extends StatefulWidget {
   State<AdminSpacePage> createState() => _AdminSpacePageState();
 }
 
+class _AdminMetricDomain {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final List<String> metrics;
+
+  const _AdminMetricDomain({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.metrics,
+  });
+}
+
+const List<_AdminMetricDomain> _kAdminDashboardMetricDomains = [
+  _AdminMetricDomain(
+    title: 'Acquisition & trafic',
+    icon: Icons.trending_up_rounded,
+    color: Color(0xFF1A73E8),
+    metrics: [
+      'Visiteurs uniques (DAU / MAU)',
+      'Sources de trafic (organique, direct, referral, paid)',
+      'Taux d\'installation (si mobile)',
+      'Coût par acquisition (CPA)',
+    ],
+  ),
+  _AdminMetricDomain(
+    title: 'Annonces & contenu',
+    icon: Icons.campaign_rounded,
+    color: Color(0xFFFF6600),
+    metrics: [
+      'Nombre d\'annonces publiées (total / par période)',
+      'Annonces actives vs expirées vs supprimées',
+      'Taux de publication (utilisateurs qui créent une annonce)',
+      'Durée moyenne de vie d\'une annonce',
+      'Catégories les plus populaires',
+      'Annonces signalées / modérées',
+    ],
+  ),
+  _AdminMetricDomain(
+    title: 'Utilisateurs',
+    icon: Icons.groups_rounded,
+    color: Color(0xFF0F9D58),
+    metrics: [
+      'Nouveaux inscrits (par jour/semaine/mois)',
+      'Taux de rétention (J1, J7, J30)',
+      'Taux de churn',
+      'Utilisateurs actifs vs dormants',
+      'Ratio annonceurs / chercheurs',
+      'Profils complétés vs incomplets',
+    ],
+  ),
+  _AdminMetricDomain(
+    title: 'Engagement',
+    icon: Icons.insights_rounded,
+    color: Color(0xFF8E24AA),
+    metrics: [
+      'Vues par annonce (moyenne)',
+      'Taux de clics (CTR) sur les annonces',
+      'Nombre de contacts / messages envoyés',
+      'Taux de conversion (vue → contact)',
+      'Temps passé sur l\'app',
+      'Recherches effectuées (top queries)',
+    ],
+  ),
+  _AdminMetricDomain(
+    title: 'Transactions & revenus',
+    icon: Icons.payments_rounded,
+    color: Color(0xFF00897B),
+    metrics: [
+      'GMV (valeur brute des transactions)',
+      'Revenus publicitaires / abonnements premium',
+      'ARPU (revenu moyen par utilisateur)',
+      'Taux de conversion vers offres payantes',
+      'Remboursements / litiges',
+    ],
+  ),
+  _AdminMetricDomain(
+    title: 'Qualité & modération',
+    icon: Icons.verified_user_rounded,
+    color: Color(0xFFD81B60),
+    metrics: [
+      'Taux d\'annonces frauduleuses détectées',
+      'Temps moyen de modération',
+      'Nombre de signalements utilisateurs',
+      'Taux de faux profils',
+    ],
+  ),
+  _AdminMetricDomain(
+    title: 'Technique & performance',
+    icon: Icons.speed_rounded,
+    color: Color(0xFF3949AB),
+    metrics: [
+      'Temps de chargement moyen',
+      'Taux de crash / erreurs',
+      'Disponibilité (uptime)',
+      'Latence API',
+    ],
+  ),
+];
+
 enum MicroIaMode { google, whisper, hybride }
 
 enum MicroIaAudioQuality { low, medium, high }
@@ -315,6 +416,180 @@ int _toInt(dynamic value) {
   return int.tryParse(value?.toString() ?? '') ?? 0;
 }
 
+double _toDouble(dynamic value) {
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+DateTime? _asDateTime(dynamic value) {
+  if (value == null) return null;
+  if (value is DateTime) return value;
+  if (value is Timestamp) return value.toDate();
+  if (value is int) {
+    return DateTime.fromMillisecondsSinceEpoch(value);
+  }
+  if (value is String) {
+    return DateTime.tryParse(value);
+  }
+  try {
+    final converted = (value as dynamic).toDate();
+    if (converted is DateTime) {
+      return converted;
+    }
+  } catch (_) {
+    // no-op
+  }
+  return null;
+}
+
+DateTime _startOfDay(DateTime value) =>
+    DateTime(value.year, value.month, value.day);
+
+String _dateKey(DateTime value) {
+  String two(int part) => part.toString().padLeft(2, '0');
+  return '${value.year}-${two(value.month)}-${two(value.day)}';
+}
+
+int? _bucketIndexFor(DateTime? value, DateTime start, int bucketCount) {
+  if (value == null) return null;
+  final normalized = _startOfDay(value);
+  final diff = normalized.difference(start).inDays;
+  if (diff < 0 || diff >= bucketCount) return null;
+  return diff;
+}
+
+String _formatCompactNumber(num value) {
+  final absValue = value.abs();
+  if (absValue >= 1000000) {
+    return '${(value / 1000000).toStringAsFixed(1)}M';
+  }
+  if (absValue >= 1000) {
+    return '${(value / 1000).toStringAsFixed(1)}k';
+  }
+  if (value is int || value == value.roundToDouble()) {
+    return value.toInt().toString();
+  }
+  return value.toStringAsFixed(1);
+}
+
+String _formatPercent(double ratio) {
+  if (!ratio.isFinite) return '—';
+  final percent = ratio * 100;
+  final decimals = percent >= 10 ? 0 : 1;
+  return '${percent.toStringAsFixed(decimals)} %';
+}
+
+bool _isCompleteAdminUser(Map<String, dynamic> data) {
+  final hasIdentity = [
+    data['displayName'],
+    data['pseudo'],
+    data['userName'],
+    data['name'],
+  ].any((value) => value != null && value.toString().trim().isNotEmpty);
+  final hasPhone = [
+    data['phone'],
+    data['phoneNumber'],
+    data['phone_number'],
+  ].any((value) => value != null && value.toString().trim().isNotEmpty);
+  final hasLocation = [
+    data['city'],
+    data['cityId'],
+    data['postalCode'],
+    data['cp'],
+    data['companyName'],
+  ].any((value) => value != null && value.toString().trim().isNotEmpty);
+  final hasAvatar = data['avatarUrl'] != null &&
+      data['avatarUrl'].toString().trim().isNotEmpty;
+  final score = [hasIdentity, hasPhone, hasLocation, hasAvatar]
+      .where((value) => value)
+      .length;
+  return score >= 3;
+}
+
+String _topEntryLabel(Map<String, int> counts, {String fallback = '—'}) {
+  String label = fallback;
+  var best = -1;
+  counts.forEach((key, value) {
+    if (value > best && key.trim().isNotEmpty) {
+      best = value;
+      label = key;
+    }
+  });
+  return label;
+}
+
+String _topSourceLabel(dynamic rawMap, {String fallback = 'à connecter'}) {
+  final map = _stringKeyMap(rawMap);
+  if (map.isEmpty) return fallback;
+  String topLabel = fallback;
+  var topValue = -1;
+  map.forEach((key, value) {
+    final current = _toInt(value);
+    if (current > topValue && key.trim().isNotEmpty) {
+      topValue = current;
+      topLabel = key;
+    }
+  });
+  return topLabel;
+}
+
+String _escapeCsv(String value) {
+  final needsQuotes =
+      value.contains(',') || value.contains('\n') || value.contains('"');
+  final escaped = value.replaceAll('"', '""');
+  return needsQuotes ? '"$escaped"' : escaped;
+}
+
+String _buildAdminDomainCsv({
+  required _AdminDomainLiveData data,
+  required _AdminDashboardWindow window,
+}) {
+  final rows = <String>[
+    'domaine,periode,type,label,valeur',
+  ];
+
+  for (final stat in data.highlights) {
+    rows.add([
+      data.domain.title,
+      window.label,
+      'highlight',
+      stat.label,
+      stat.value,
+    ].map(_escapeCsv).join(','));
+  }
+
+  for (var index = 0; index < data.series.length; index += 1) {
+    rows.add([
+      data.domain.title,
+      window.label,
+      'trend_point',
+      'jour_${index + 1}',
+      data.series[index].toStringAsFixed(2),
+    ].map(_escapeCsv).join(','));
+  }
+
+  for (final metric in data.domain.metrics) {
+    rows.add([
+      data.domain.title,
+      window.label,
+      'catalog_metric',
+      metric,
+      '',
+    ].map(_escapeCsv).join(','));
+  }
+
+  rows.add([
+    data.domain.title,
+    window.label,
+    'note',
+    'note',
+    data.note,
+  ].map(_escapeCsv).join(','));
+
+  return rows.join('\n');
+}
+
 String _formatAdminTimestamp(int? millis) {
   if (millis == null || millis <= 0) return 'inconnue';
   final dt = DateTime.fromMillisecondsSinceEpoch(millis).toLocal();
@@ -323,6 +598,560 @@ String _formatAdminTimestamp(int? millis) {
 }
 
 enum _EmailDashboardWindow { hour1, day1, day7 }
+
+enum _AdminDashboardWindow { day7, day30, day90 }
+
+extension _AdminDashboardWindowX on _AdminDashboardWindow {
+  String get label {
+    switch (this) {
+      case _AdminDashboardWindow.day7:
+        return '7 jours';
+      case _AdminDashboardWindow.day30:
+        return '30 jours';
+      case _AdminDashboardWindow.day90:
+        return '90 jours';
+    }
+  }
+
+  String get shortLabel {
+    switch (this) {
+      case _AdminDashboardWindow.day7:
+        return '7j';
+      case _AdminDashboardWindow.day30:
+        return '30j';
+      case _AdminDashboardWindow.day90:
+        return '90j';
+    }
+  }
+
+  int get dayCount {
+    switch (this) {
+      case _AdminDashboardWindow.day7:
+        return 7;
+      case _AdminDashboardWindow.day30:
+        return 30;
+      case _AdminDashboardWindow.day90:
+        return 90;
+    }
+  }
+}
+
+class _AdminDashboardStat {
+  final String label;
+  final String value;
+
+  const _AdminDashboardStat({
+    required this.label,
+    required this.value,
+  });
+}
+
+class _AdminDomainLiveData {
+  final _AdminMetricDomain domain;
+  final List<_AdminDashboardStat> highlights;
+  final List<double> series;
+  final String trendLabel;
+  final String note;
+
+  const _AdminDomainLiveData({
+    required this.domain,
+    required this.highlights,
+    required this.series,
+    required this.trendLabel,
+    required this.note,
+  });
+}
+
+class _AdminDashboardComputed {
+  final int newUsers;
+  final int activeUsers;
+  final int publishedListings;
+  final int listingViews;
+  final int messagesStarted;
+  final int premiumUpgrades;
+  final int paidInvoices;
+  final int failedInvoices;
+  final double revenueAmount;
+  final List<_AdminDomainLiveData> domains;
+
+  const _AdminDashboardComputed({
+    required this.newUsers,
+    required this.activeUsers,
+    required this.publishedListings,
+    required this.listingViews,
+    required this.messagesStarted,
+    required this.premiumUpgrades,
+    required this.paidInvoices,
+    required this.failedInvoices,
+    required this.revenueAmount,
+    required this.domains,
+  });
+
+  factory _AdminDashboardComputed.fromSources({
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> userDocs,
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> activeUserDocs,
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> listingDocs,
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> analyticsDocs,
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> subscriptionDocs,
+    required List<QueryDocumentSnapshot<Map<String, dynamic>>> billingDocs,
+    required Map<String, dynamic>? userStats,
+    required _AdminDashboardWindow window,
+    required List<_AdminMetricDomain> domains,
+  }) {
+    final totalAccounts = _toInt(userStats?['totalAccounts']);
+    final onlineUsers = _toInt(userStats?['onlineUsers']);
+    final proLogins = _toInt(userStats?['proLogins']);
+    final start = _startOfDay(DateTime.now())
+        .subtract(Duration(days: window.dayCount - 1));
+    final bucketCount = window.dayCount;
+
+    final userSeries = List<double>.filled(bucketCount, 0);
+    final listingSeries = List<double>.filled(bucketCount, 0);
+    final viewSeries = List<double>.filled(bucketCount, 0);
+    final premiumSeries = List<double>.filled(bucketCount, 0);
+    final billingSeries = List<double>.filled(bucketCount, 0);
+    final moderationSeries = List<double>.filled(bucketCount, 0);
+    final instrumentationSeries = List<double>.filled(bucketCount, 0);
+
+    var completedProfiles = 0;
+    for (final doc in userDocs) {
+      final data = doc.data();
+      if (_isCompleteAdminUser(data)) {
+        completedProfiles += 1;
+      }
+      final index =
+          _bucketIndexFor(_asDateTime(data['createdAt']), start, bucketCount);
+      if (index != null) {
+        userSeries[index] += 1;
+      }
+    }
+
+    final activeUsers = activeUserDocs.length;
+    final dormantUsers =
+        totalAccounts > activeUsers ? totalAccounts - activeUsers : 0;
+
+    var activeListings = 0;
+    var expiredListings = 0;
+    var removedListings = 0;
+    var reportedListings = 0;
+    var blockedListings = 0;
+    var manualReviewListings = 0;
+    var totalRisk = 0.0;
+    var lifespanDaysSum = 0.0;
+    var lifespanCount = 0;
+    var totalViews = 0;
+    var totalContacts = 0;
+    final owners = <String>{};
+    final categoryCounts = <String, int>{};
+
+    for (final doc in listingDocs) {
+      final data = doc.data();
+      final status = (data['status'] ?? '').toString().trim().toLowerCase();
+      final moderation =
+          (data['moderationStatus'] ?? '').toString().trim().toLowerCase();
+      final expiresAt = _asDateTime(data['expiresAt']);
+      final createdAt = _asDateTime(data['createdAt']);
+      final publishedAt = _asDateTime(data['publishedAt']) ?? createdAt;
+      final ownerId =
+          (data['ownerId'] ?? data['userId'] ?? '').toString().trim();
+      final categoryLabel =
+          (data['category'] ?? data['categoryId'] ?? 'Sans catégorie')
+              .toString()
+              .trim();
+
+      if (ownerId.isNotEmpty) {
+        owners.add(ownerId);
+      }
+      if (categoryLabel.isNotEmpty) {
+        categoryCounts.update(categoryLabel, (value) => value + 1,
+            ifAbsent: () => 1);
+      }
+
+      if (status == 'active') {
+        activeListings += 1;
+      }
+      if (expiresAt != null && expiresAt.isBefore(DateTime.now())) {
+        expiredListings += 1;
+      }
+      if (status == 'deleted' || status == 'archived' || status == 'sold') {
+        removedListings += 1;
+      }
+
+      final reportCount = _toInt(data['reportCount']);
+      final viewCount = _toInt(data['viewCount']);
+      final contactCount = _toInt(data['contactCount']);
+      final riskScore = _toDouble(data['riskScore']);
+      totalViews += viewCount;
+      totalContacts += contactCount;
+      totalRisk += riskScore;
+
+      if (reportCount > 0) {
+        reportedListings += 1;
+      }
+      if (moderation == 'blocked' || moderation == 'auto_flagged') {
+        blockedListings += 1;
+      }
+      if (moderation == 'manual_review') {
+        manualReviewListings += 1;
+      }
+      if (publishedAt != null && expiresAt != null) {
+        lifespanDaysSum += expiresAt.difference(publishedAt).inHours / 24;
+        lifespanCount += 1;
+      }
+
+      final index = _bucketIndexFor(createdAt, start, bucketCount);
+      if (index != null) {
+        listingSeries[index] += 1;
+      }
+    }
+
+    final avgLifespanDays =
+        lifespanCount == 0 ? 0.0 : lifespanDaysSum / lifespanCount;
+    final avgRisk = listingDocs.isEmpty ? 0.0 : totalRisk / listingDocs.length;
+    final conversionRatio = totalViews == 0 ? 0.0 : totalContacts / totalViews;
+    final topCategory = _topEntryLabel(categoryCounts, fallback: '—');
+    final advertiserRatio =
+        activeUsers == 0 ? 0.0 : owners.length / activeUsers;
+
+    final analyticsTotals = <String, int>{};
+    var analyticsCoverageDays = 0;
+    DateTime? latestAnalyticsDay;
+    for (final doc in analyticsDocs) {
+      final data = doc.data();
+      if ((data['metricGroup'] ?? '').toString() != 'marketplace') {
+        continue;
+      }
+
+      analyticsCoverageDays += 1;
+      final date = DateTime.tryParse((data['dateKey'] ?? '').toString());
+      if (date != null &&
+          (latestAnalyticsDay == null || date.isAfter(latestAnalyticsDay))) {
+        latestAnalyticsDay = date;
+      }
+      final index = _bucketIndexFor(date, start, bucketCount);
+      final metrics = _stringKeyMap(data['metrics']);
+      var totalDayEvents = 0;
+
+      metrics.forEach((key, value) {
+        final current = _toInt(value);
+        analyticsTotals.update(key, (existing) => existing + current,
+            ifAbsent: () => current);
+        totalDayEvents += current;
+      });
+
+      if (index != null) {
+        viewSeries[index] += _toInt(metrics['listing_view']);
+        premiumSeries[index] += _toInt(metrics['premium_upgrade_completed']);
+        moderationSeries[index] += _toInt(metrics['listing_reported']);
+        instrumentationSeries[index] += totalDayEvents;
+      }
+    }
+
+    final searches = analyticsTotals['search_performed'] ?? 0;
+    final messagesStarted = analyticsTotals['listing_message_started'] ?? 0;
+    final premiumUpgrades = analyticsTotals['premium_upgrade_completed'] ?? 0;
+    final reportEvents = analyticsTotals['listing_reported'] ?? 0;
+    final totalTrackedEvents =
+        analyticsTotals.values.fold<int>(0, (sum, value) => sum + value);
+
+    int _sumByKeyPattern(RegExp pattern) {
+      var sum = 0;
+      analyticsTotals.forEach((key, value) {
+        if (pattern.hasMatch(key)) {
+          sum += value;
+        }
+      });
+      return sum;
+    }
+
+    final errorEvents =
+        _sumByKeyPattern(RegExp(r'error|failed', caseSensitive: false));
+    final crashEvents =
+        _sumByKeyPattern(RegExp(r'crash', caseSensitive: false));
+
+    double? _metricFromMap(Map<String, dynamic> metrics, List<String> keys) {
+      for (final key in keys) {
+        if (metrics.containsKey(key)) {
+          final value = _toDouble(metrics[key]);
+          if (value > 0) return value;
+        }
+      }
+      return null;
+    }
+
+    var latencySum = 0.0;
+    var latencyCount = 0;
+    var loadSum = 0.0;
+    var loadCount = 0;
+    for (final doc in analyticsDocs) {
+      final data = doc.data();
+      if ((data['metricGroup'] ?? '').toString() != 'marketplace') continue;
+      final metrics = _stringKeyMap(data['metrics']);
+      final latency = _metricFromMap(
+        metrics,
+        const [
+          'api_latency_ms_avg',
+          'api_latency_ms',
+          'latency_ms',
+          'api_avg_ms',
+        ],
+      );
+      if (latency != null) {
+        latencySum += latency;
+        latencyCount += 1;
+      }
+      final load = _metricFromMap(
+        metrics,
+        const [
+          'app_load_ms_avg',
+          'app_load_ms',
+          'app_start_ms',
+          'page_load_ms',
+        ],
+      );
+      if (load != null) {
+        loadSum += load;
+        loadCount += 1;
+      }
+    }
+
+    final avgApiLatencyMs = latencyCount == 0 ? 0.0 : latencySum / latencyCount;
+    final avgLoadMs = loadCount == 0 ? 0.0 : loadSum / loadCount;
+    final errorCrashRate = totalTrackedEvents == 0
+        ? 0.0
+        : (errorEvents + crashEvents) / totalTrackedEvents;
+    final uptimeRatio = (1.0 - errorCrashRate).clamp(0.0, 1.0);
+
+    var activeSubscriptions = 0;
+    for (final doc in subscriptionDocs) {
+      final status =
+          (doc.data()['status'] ?? '').toString().trim().toLowerCase();
+      if (status == 'active' || status == 'trialing' || status == 'paid') {
+        activeSubscriptions += 1;
+      }
+    }
+
+    var paidInvoices = 0;
+    var failedInvoices = 0;
+    var refundOrDisputeCount = 0;
+    var totalRevenue = 0.0;
+    for (final doc in billingDocs) {
+      final data = doc.data();
+      final status = (data['status'] ?? '').toString().trim().toLowerCase();
+      final amount = _toDouble(
+        data['amount_paid'] ?? data['amount_due'] ?? data['amount'] ?? 0,
+      );
+      final issuedAt = _asDateTime(
+          data['createdAt'] ?? data['issued_at'] ?? data['updatedAt']);
+      final index = _bucketIndexFor(issuedAt, start, bucketCount);
+      if (status == 'paid' ||
+          status == 'succeeded' ||
+          status == 'payment_succeeded') {
+        paidInvoices += 1;
+        totalRevenue += amount;
+        if (index != null) {
+          billingSeries[index] += amount;
+        }
+      } else if (status == 'failed' || status == 'payment_failed') {
+        failedInvoices += 1;
+      } else if (status.contains('refund') ||
+          status.contains('dispute') ||
+          status.contains('chargeback')) {
+        refundOrDisputeCount += 1;
+      }
+    }
+
+    final arpu = activeUsers == 0 ? 0.0 : totalRevenue / activeUsers;
+    final paidConversion =
+        activeUsers == 0 ? 0.0 : activeSubscriptions / activeUsers;
+
+    final topPlatform = _topSourceLabel(userStats?['loginsByPlatform']);
+    final topMethod = _topSourceLabel(userStats?['loginsByMethod']);
+
+    final domainByTitle = {
+      for (final domain in domains) domain.title: domain,
+    };
+
+    _AdminMetricDomain domain(String title) =>
+        domainByTitle[title] ??
+        _AdminMetricDomain(
+            title: title,
+            icon: Icons.dashboard,
+            color: const Color(0xFF1A73E8),
+            metrics: const []);
+
+    final liveDomains = [
+      _AdminDomainLiveData(
+        domain: domain('Acquisition & trafic'),
+        highlights: [
+          _AdminDashboardStat(
+              label: 'Nouveaux', value: _formatCompactNumber(userDocs.length)),
+          _AdminDashboardStat(
+              label: 'Actifs', value: _formatCompactNumber(activeUsers)),
+          _AdminDashboardStat(
+              label: 'En ligne', value: _formatCompactNumber(onlineUsers)),
+          _AdminDashboardStat(label: 'Top accès', value: topPlatform),
+        ],
+        series: userSeries,
+        trendLabel: 'Inscriptions / jour',
+        note:
+            'Méthode dominante: $topMethod • CPA et sources d’acquisition à connecter.',
+      ),
+      _AdminDomainLiveData(
+        domain: domain('Annonces & contenu'),
+        highlights: [
+          _AdminDashboardStat(
+              label: 'Publiées',
+              value: _formatCompactNumber(listingDocs.length)),
+          _AdminDashboardStat(
+              label: 'Actives', value: _formatCompactNumber(activeListings)),
+          _AdminDashboardStat(
+              label: 'Expirées', value: _formatCompactNumber(expiredListings)),
+          _AdminDashboardStat(
+              label: 'Vie moy.',
+              value: avgLifespanDays <= 0
+                  ? '—'
+                  : '${avgLifespanDays.toStringAsFixed(1)} j'),
+        ],
+        series: listingSeries,
+        trendLabel: 'Annonces créées / jour',
+        note:
+            'Top catégorie: $topCategory • Supprimées/retirées: ${_formatCompactNumber(removedListings)} • Signalées: ${_formatCompactNumber(reportedListings)}.',
+      ),
+      _AdminDomainLiveData(
+        domain: domain('Utilisateurs'),
+        highlights: [
+          _AdminDashboardStat(
+              label: 'Total comptes',
+              value: _formatCompactNumber(totalAccounts)),
+          _AdminDashboardStat(
+              label: 'Dormants', value: _formatCompactNumber(dormantUsers)),
+          _AdminDashboardStat(
+              label: 'Annonceurs', value: _formatCompactNumber(owners.length)),
+          _AdminDashboardStat(
+              label: 'Profils complets',
+              value:
+                  '${_formatCompactNumber(completedProfiles)}/${_formatCompactNumber(userDocs.length)}'),
+        ],
+        series: userSeries,
+        trendLabel: 'Nouveaux inscrits / jour',
+        note:
+            'Ratio annonceurs / actifs: ${_formatPercent(advertiserRatio)} • Rétention et churn à connecter.',
+      ),
+      _AdminDomainLiveData(
+        domain: domain('Engagement'),
+        highlights: [
+          _AdminDashboardStat(
+              label: 'Vues', value: _formatCompactNumber(totalViews)),
+          _AdminDashboardStat(
+              label: 'Contacts', value: _formatCompactNumber(totalContacts)),
+          _AdminDashboardStat(
+              label: 'Conv. vue→contact',
+              value: _formatPercent(conversionRatio)),
+          _AdminDashboardStat(
+              label: 'Recherches', value: _formatCompactNumber(searches)),
+        ],
+        series: viewSeries,
+        trendLabel: 'Vues annonces / jour',
+        note:
+            'Messages démarrés: ${_formatCompactNumber(messagesStarted)} • Temps passé et top queries détaillées à connecter.',
+      ),
+      _AdminDomainLiveData(
+        domain: domain('Transactions & revenus'),
+        highlights: [
+          _AdminDashboardStat(
+              label: 'Upgrades premium',
+              value: _formatCompactNumber(premiumUpgrades)),
+          _AdminDashboardStat(
+              label: 'Abonnements actifs',
+              value: _formatCompactNumber(activeSubscriptions)),
+          _AdminDashboardStat(
+              label: 'ARPU',
+              value: arpu <= 0 ? '0 EUR' : '${arpu.toStringAsFixed(2)} EUR'),
+          _AdminDashboardStat(
+              label: 'GMV',
+              value: totalRevenue <= 0
+                  ? '0 EUR'
+                  : '${_formatCompactNumber(totalRevenue)} EUR'),
+        ],
+        series: billingSeries,
+        trendLabel: 'Revenus facturés / jour',
+        note:
+            'Factures payées: ${_formatCompactNumber(paidInvoices)} • Échecs: ${_formatCompactNumber(failedInvoices)} • Litiges/remboursements: ${_formatCompactNumber(refundOrDisputeCount)} • Conversion payante: ${_formatPercent(paidConversion)}.',
+      ),
+      _AdminDomainLiveData(
+        domain: domain('Qualité & modération'),
+        highlights: [
+          _AdminDashboardStat(
+              label: 'Signalements',
+              value: _formatCompactNumber(reportEvents > reportedListings
+                  ? reportEvents
+                  : reportedListings)),
+          _AdminDashboardStat(
+              label: 'Fraude détectée',
+              value: _formatCompactNumber(blockedListings)),
+          _AdminDashboardStat(
+              label: 'En revue',
+              value: _formatCompactNumber(manualReviewListings)),
+          _AdminDashboardStat(
+              label: 'Risque moyen',
+              value: avgRisk <= 0 ? '0' : avgRisk.toStringAsFixed(1)),
+        ],
+        series: moderationSeries,
+        trendLabel: 'Signalements / jour',
+        note:
+            'Temps moyen de modération et faux profils restent à instrumenter côté backend.',
+      ),
+      _AdminDomainLiveData(
+        domain: domain('Technique & performance'),
+        highlights: [
+          _AdminDashboardStat(
+              label: 'Événements suivis',
+              value: _formatCompactNumber(totalTrackedEvents)),
+          _AdminDashboardStat(
+              label: 'Jours couverts',
+              value: _formatCompactNumber(analyticsCoverageDays)),
+          _AdminDashboardStat(
+              label: 'Dernière maj',
+              value: latestAnalyticsDay == null
+                  ? '—'
+                  : _dateKey(latestAnalyticsDay)),
+          _AdminDashboardStat(
+              label: 'Crash+erreurs', value: _formatPercent(errorCrashRate)),
+          _AdminDashboardStat(
+              label: 'Uptime estimée', value: _formatPercent(uptimeRatio)),
+          _AdminDashboardStat(
+              label: 'Latence API',
+              value: avgApiLatencyMs <= 0
+                  ? 'n/d'
+                  : '${avgApiLatencyMs.toStringAsFixed(0)} ms'),
+          _AdminDashboardStat(
+              label: 'Chargement moyen',
+              value: avgLoadMs <= 0
+                  ? 'n/d'
+                  : '${avgLoadMs.toStringAsFixed(0)} ms'),
+        ],
+        series: instrumentationSeries,
+        trendLabel: 'Événements instrumentés / jour',
+        note:
+            'Ces indicateurs techniques sont calculés automatiquement à partir des métriques présentes dans analyticsSnapshots.',
+      ),
+    ];
+
+    return _AdminDashboardComputed(
+      newUsers: userDocs.length,
+      activeUsers: activeUsers,
+      publishedListings: listingDocs.length,
+      listingViews: totalViews,
+      messagesStarted: messagesStarted,
+      premiumUpgrades: premiumUpgrades,
+      paidInvoices: paidInvoices,
+      failedInvoices: failedInvoices,
+      revenueAmount: totalRevenue,
+      domains: liveDomains,
+    );
+  }
+}
 
 extension _EmailDashboardWindowX on _EmailDashboardWindow {
   String get label {
@@ -423,8 +1252,10 @@ class _EmailDashboardStats {
           continue;
       }
 
-      incrementBucket(byProvider, provider.isEmpty ? 'unknown' : provider, status);
-      incrementBucket(byTemplate, template.isEmpty ? 'unknown' : template, status);
+      incrementBucket(
+          byProvider, provider.isEmpty ? 'unknown' : provider, status);
+      incrementBucket(
+          byTemplate, template.isEmpty ? 'unknown' : template, status);
     }
 
     return _EmailDashboardStats(
@@ -503,9 +1334,8 @@ class _EmailDashboardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final threshold = DateTime.now()
-        .subtract(window.duration)
-        .millisecondsSinceEpoch;
+    final threshold =
+        DateTime.now().subtract(window.duration).millisecondsSinceEpoch;
     final logsStream = FirebaseFirestore.instance
         .collection('email_logs')
         .where('created_at', isGreaterThanOrEqualTo: threshold)
@@ -542,7 +1372,8 @@ class _EmailDashboardContent extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final stats = _EmailDashboardStats.fromLogs(logsSnapshot.data?.docs ?? []);
+        final stats =
+            _EmailDashboardStats.fromLogs(logsSnapshot.data?.docs ?? []);
 
         return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: jobsStream,
@@ -558,7 +1389,8 @@ class _EmailDashboardContent extends StatelessWidget {
             }
 
             final deadLetters = (snapshot.data?.docs ?? [])
-              .where((doc) => (doc.data()['status'] ?? '').toString() == 'dead_letter')
+                .where((doc) =>
+                    (doc.data()['status'] ?? '').toString() == 'dead_letter')
                 .toList();
 
             return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -575,10 +1407,12 @@ class _EmailDashboardContent extends StatelessWidget {
                 }
 
                 final tickets = (ticketsSnapshot.data?.docs ?? [])
-                    .where((doc) => _toInt(doc.data()['updated_at']) >= threshold)
+                    .where(
+                        (doc) => _toInt(doc.data()['updated_at']) >= threshold)
                     .toList();
                 final openTickets = tickets
-                  .where((doc) => (doc.data()['status'] ?? 'open').toString() == 'open')
+                    .where((doc) =>
+                        (doc.data()['status'] ?? 'open').toString() == 'open')
                     .length;
                 final hasAlert = deadLetters.isNotEmpty ||
                     stats.failed > 0 ||
@@ -586,13 +1420,15 @@ class _EmailDashboardContent extends StatelessWidget {
                     stats.complaintRate >= 0.01;
 
                 final providerEntries = stats.byProvider.entries.toList()
-              ..sort((a, b) {
-                return (b.value['sent'] ?? 0).compareTo(a.value['sent'] ?? 0);
-              });
+                  ..sort((a, b) {
+                    return (b.value['sent'] ?? 0)
+                        .compareTo(a.value['sent'] ?? 0);
+                  });
                 final templateEntries = stats.byTemplate.entries.toList()
-              ..sort((a, b) {
-                return (b.value['sent'] ?? 0).compareTo(a.value['sent'] ?? 0);
-              });
+                  ..sort((a, b) {
+                    return (b.value['sent'] ?? 0)
+                        .compareTo(a.value['sent'] ?? 0);
+                  });
 
                 return SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
@@ -610,8 +1446,9 @@ class _EmailDashboardContent extends StatelessWidget {
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: (hasAlert ? Colors.red : prestoBlue)
-                                          .withOpacity(0.10),
+                                      color:
+                                          (hasAlert ? Colors.red : prestoBlue)
+                                              .withOpacity(0.10),
                                       borderRadius: BorderRadius.circular(14),
                                     ),
                                     child: Icon(
@@ -813,15 +1650,15 @@ class _EmailDashboardContent extends StatelessWidget {
                         )
                       else
                         ...templateEntries.take(8).map(
-                          (entry) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _BreakdownCard(
-                              title: entry.key,
-                              data: entry.value,
-                              accent: prestoOrange,
+                              (entry) => Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: _BreakdownCard(
+                                  title: entry.key,
+                                  data: entry.value,
+                                  accent: prestoOrange,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
                     ],
                   ),
                 );
@@ -854,7 +1691,8 @@ void _showDeadLettersSheet(
                     (doc) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: _AdminListTile(
-                        title: (doc.data()['template_code'] ?? doc.id).toString(),
+                        title:
+                            (doc.data()['template_code'] ?? doc.id).toString(),
                         subtitle:
                             'Raison: ${(doc.data()['dead_letter_reason'] ?? 'indisponible').toString()}\nMaj: ${_formatAdminTimestamp(_toInt(doc.data()['updated_at']))}',
                         trailing: _StatusBadge(
@@ -899,7 +1737,8 @@ void _showSupportTicketsSheet(
                             '${(doc.data()['subject'] ?? 'Sans sujet').toString()}\n${(doc.data()['category'] ?? 'general_support').toString()} • ${_formatAdminTimestamp(_toInt(doc.data()['updated_at']))}',
                         trailing: _StatusBadge(
                           label: (doc.data()['status'] ?? 'open').toString(),
-                          color: (doc.data()['status'] ?? 'open').toString() == 'open'
+                          color: (doc.data()['status'] ?? 'open').toString() ==
+                                  'open'
                               ? const Color(0xFFFF6600)
                               : const Color(0xFF1A73E8),
                         ),
@@ -1094,6 +1933,12 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   ),
                 ],
               ),
+              const SizedBox(height: 18),
+              _AdminDashboardSection(
+                userStats: _userStats,
+                userStatsLoading: _userStatsLoading,
+                domains: _kAdminDashboardMetricDomains,
+              ),
             ],
           ),
         ),
@@ -1137,6 +1982,631 @@ class _AdminChip extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminDashboardSection extends StatefulWidget {
+  final Map<String, dynamic>? userStats;
+  final bool userStatsLoading;
+  final List<_AdminMetricDomain> domains;
+
+  const _AdminDashboardSection({
+    required this.userStats,
+    required this.userStatsLoading,
+    required this.domains,
+  });
+
+  @override
+  State<_AdminDashboardSection> createState() => _AdminDashboardSectionState();
+}
+
+class _AdminDashboardSectionState extends State<_AdminDashboardSection> {
+  _AdminDashboardWindow _window = _AdminDashboardWindow.day30;
+
+  Future<void> _openDomainDetails(_AdminDomainLiveData data) async {
+    final csv = _buildAdminDomainCsv(data: data, window: _window);
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return _BottomSheetScaffold(
+          title: 'Détails — ${data.domain.title}',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final stat in data.highlights)
+                    _DashboardPill(
+                      label: stat.label,
+                      value: stat.value,
+                      color: data.domain.color,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _AdminMiniChart(
+                color: data.domain.color,
+                label: data.trendLabel,
+                points: data.series,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                data.note,
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Catalogue métriques',
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...data.domain.metrics.map(
+                (metric) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(
+                    '• $metric',
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await Clipboard.setData(ClipboardData(text: csv));
+                        if (!sheetContext.mounted) return;
+                        showSuccessSnackBar(sheetContext, 'CSV copié');
+                      },
+                      icon: const Icon(Icons.download_rounded),
+                      label: const Text('Exporter CSV'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final start = _startOfDay(DateTime.now())
+        .subtract(Duration(days: _window.dayCount - 1));
+    final startTimestamp = Timestamp.fromDate(start);
+    final usersStream = FirebaseFirestore.instance
+        .collection('users')
+        .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
+        .snapshots();
+    final activeUsersStream = FirebaseFirestore.instance
+        .collection('users')
+        .where('lastSeenAt', isGreaterThanOrEqualTo: startTimestamp)
+        .snapshots();
+    final listingsStream = FirebaseFirestore.instance
+        .collection('listings')
+        .where('createdAt', isGreaterThanOrEqualTo: startTimestamp)
+        .snapshots();
+    final subscriptionsStream = FirebaseFirestore.instance
+        .collection('subscriptions')
+        .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
+        .snapshots();
+    final billingInvoicesStream = FirebaseFirestore.instance
+        .collection('billing_invoices')
+        .where('updatedAt', isGreaterThanOrEqualTo: startTimestamp)
+        .snapshots();
+    final analyticsStream = FirebaseFirestore.instance
+        .collection('analyticsSnapshots')
+        .where('dateKey', isGreaterThanOrEqualTo: _dateKey(start))
+        .snapshots();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Dashboard admin: métriques clés',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
+                    ),
+              ),
+            ),
+            _StatusBadge(
+                label: _window.shortLabel, color: const Color(0xFF1A73E8)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Première vague branchée sur Firestore, Functions et analyticsSnapshots, avec filtre période et tendances miniatures.',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final window in _AdminDashboardWindow.values)
+              _WindowChip(
+                label: window.label,
+                selected: window == _window,
+                onTap: () => setState(() => _window = window),
+              ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: usersStream,
+          builder: (context, usersSnapshot) {
+            return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: activeUsersStream,
+              builder: (context, activeUsersSnapshot) {
+                return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: listingsStream,
+                  builder: (context, listingsSnapshot) {
+                    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                      stream: subscriptionsStream,
+                      builder: (context, subscriptionsSnapshot) {
+                        return StreamBuilder<
+                            QuerySnapshot<Map<String, dynamic>>>(
+                          stream: billingInvoicesStream,
+                          builder: (context, billingInvoicesSnapshot) {
+                            return StreamBuilder<
+                                QuerySnapshot<Map<String, dynamic>>>(
+                              stream: analyticsStream,
+                              builder: (context, analyticsSnapshot) {
+                                final hasError = usersSnapshot.hasError ||
+                                    activeUsersSnapshot.hasError ||
+                                    listingsSnapshot.hasError ||
+                                    subscriptionsSnapshot.hasError ||
+                                    billingInvoicesSnapshot.hasError ||
+                                    analyticsSnapshot.hasError;
+                                if (hasError) {
+                                  return const _SimpleAdminEmpty(
+                                    message:
+                                        'Impossible de charger une partie des métriques admin. Vérifie les droits et les index Firestore.',
+                                  );
+                                }
+
+                                final waiting = usersSnapshot.connectionState ==
+                                        ConnectionState.waiting ||
+                                    activeUsersSnapshot.connectionState ==
+                                        ConnectionState.waiting ||
+                                    listingsSnapshot.connectionState ==
+                                        ConnectionState.waiting ||
+                                    subscriptionsSnapshot.connectionState ==
+                                        ConnectionState.waiting ||
+                                    billingInvoicesSnapshot.connectionState ==
+                                        ConnectionState.waiting ||
+                                    analyticsSnapshot.connectionState ==
+                                        ConnectionState.waiting;
+
+                                final userDocs =
+                                    usersSnapshot.data?.docs ?? const [];
+                                final activeUserDocs =
+                                    activeUsersSnapshot.data?.docs ?? const [];
+                                final listingDocs =
+                                    listingsSnapshot.data?.docs ?? const [];
+                                final subscriptionDocs =
+                                    subscriptionsSnapshot.data?.docs ??
+                                        const [];
+                                final billingDocs =
+                                    billingInvoicesSnapshot.data?.docs ??
+                                        const [];
+                                final analyticsDocs =
+                                    analyticsSnapshot.data?.docs ?? const [];
+
+                                if (waiting &&
+                                    userDocs.isEmpty &&
+                                    activeUserDocs.isEmpty &&
+                                    listingDocs.isEmpty &&
+                                    analyticsDocs.isEmpty &&
+                                    widget.userStatsLoading) {
+                                  return const Center(
+                                    child: Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 24),
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+                                }
+
+                                final computed =
+                                    _AdminDashboardComputed.fromSources(
+                                  userDocs: userDocs,
+                                  activeUserDocs: activeUserDocs,
+                                  listingDocs: listingDocs,
+                                  analyticsDocs: analyticsDocs,
+                                  subscriptionDocs: subscriptionDocs,
+                                  billingDocs: billingDocs,
+                                  userStats: widget.userStats,
+                                  window: _window,
+                                  domains: widget.domains,
+                                );
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    GridView.count(
+                                      crossAxisCount: 2,
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      mainAxisSpacing: 12,
+                                      crossAxisSpacing: 12,
+                                      childAspectRatio: 1.35,
+                                      children: [
+                                        _MetricCard(
+                                          label: 'Nouveaux inscrits',
+                                          value: _formatCompactNumber(
+                                              computed.newUsers),
+                                          icon: Icons.person_add_alt_1_rounded,
+                                          color: const Color(0xFF1A73E8),
+                                        ),
+                                        _MetricCard(
+                                          label: 'Utilisateurs actifs',
+                                          value: _formatCompactNumber(
+                                              computed.activeUsers),
+                                          icon: Icons.groups_rounded,
+                                          color: const Color(0xFF0F9D58),
+                                        ),
+                                        _MetricCard(
+                                          label: 'Annonces publiées',
+                                          value: _formatCompactNumber(
+                                              computed.publishedListings),
+                                          icon: Icons.campaign_rounded,
+                                          color: const Color(0xFFFF6600),
+                                        ),
+                                        _MetricCard(
+                                          label: 'Vues annonces',
+                                          value: _formatCompactNumber(
+                                              computed.listingViews),
+                                          icon: Icons.visibility_rounded,
+                                          color: const Color(0xFF8E24AA),
+                                        ),
+                                        _MetricCard(
+                                          label: 'Factures payées',
+                                          value: _formatCompactNumber(
+                                              computed.paidInvoices),
+                                          icon: Icons.receipt_long_rounded,
+                                          color: const Color(0xFF00897B),
+                                        ),
+                                        _MetricCard(
+                                          label: 'Revenu estimé',
+                                          value: computed.revenueAmount <= 0
+                                              ? '0 EUR'
+                                              : '${_formatCompactNumber(computed.revenueAmount)} EUR',
+                                          icon: Icons
+                                              .account_balance_wallet_rounded,
+                                          color: const Color(0xFF00897B),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 14),
+                                    Column(
+                                      children: [
+                                        for (final domain
+                                            in computed.domains) ...[
+                                          _AdminMetricDomainCard(
+                                            domain: domain.domain,
+                                            highlights: domain.highlights,
+                                            series: domain.series,
+                                            trendLabel: domain.trendLabel,
+                                            note: domain.note,
+                                            onTap: () =>
+                                                _openDomainDetails(domain),
+                                          ),
+                                          if (domain != computed.domains.last)
+                                            const SizedBox(height: 12),
+                                        ],
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _AdminMetricDomainCard extends StatelessWidget {
+  final _AdminMetricDomain domain;
+  final List<_AdminDashboardStat> highlights;
+  final List<double> series;
+  final String trendLabel;
+  final String note;
+  final VoidCallback? onTap;
+
+  const _AdminMetricDomainCard({
+    required this.domain,
+    required this.highlights,
+    required this.series,
+    required this.trendLabel,
+    required this.note,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardShell(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: domain.color.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: domain.color.withOpacity(0.20)),
+                    ),
+                    child: Icon(domain.icon, color: domain.color, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      domain.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final stat in highlights)
+                    _DashboardPill(
+                      label: stat.label,
+                      value: stat.value,
+                      color: domain.color,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _AdminMiniChart(
+                color: domain.color,
+                label: trendLabel,
+                points: series,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                note,
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w600,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final metric in domain.metrics)
+                    _AdminMetricPill(
+                      label: metric,
+                      color: domain.color,
+                    ),
+                ],
+              ),
+              if (onTap != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'Appuyer pour le détail + export CSV',
+                  style: TextStyle(
+                    color: domain.color,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AdminMiniChart extends StatelessWidget {
+  final Color color;
+  final String label;
+  final List<double> points;
+
+  const _AdminMiniChart({
+    required this.color,
+    required this.label,
+    required this.points,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 56,
+            child: CustomPaint(
+              painter: _AdminSparklinePainter(
+                color: color,
+                points: points,
+              ),
+              child: const SizedBox.expand(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AdminSparklinePainter extends CustomPainter {
+  final Color color;
+  final List<double> points;
+
+  const _AdminSparklinePainter({
+    required this.color,
+    required this.points,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final axisPaint = Paint()
+      ..color = color.withOpacity(0.18)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    canvas.drawLine(
+      Offset(0, size.height - 1),
+      Offset(size.width, size.height - 1),
+      axisPaint,
+    );
+
+    if (points.isEmpty) {
+      return;
+    }
+
+    var minValue = points.first;
+    var maxValue = points.first;
+    for (final point in points) {
+      if (point < minValue) minValue = point;
+      if (point > maxValue) maxValue = point;
+    }
+
+    final span = (maxValue - minValue).abs();
+    final effectiveSpan = span <= 0 ? 1.0 : span;
+    final xStep =
+        points.length <= 1 ? size.width : size.width / (points.length - 1);
+
+    final path = Path();
+    final fillPath = Path();
+    for (var index = 0; index < points.length; index += 1) {
+      final x = xStep * index;
+      final normalized = (points[index] - minValue) / effectiveSpan;
+      final y = size.height - 8 - (normalized * (size.height - 16));
+      if (index == 0) {
+        path.moveTo(x, y);
+        fillPath.moveTo(x, size.height);
+        fillPath.lineTo(x, y);
+      } else {
+        path.lineTo(x, y);
+        fillPath.lineTo(x, y);
+      }
+    }
+    fillPath.lineTo(size.width, size.height);
+    fillPath.close();
+
+    final fillPaint = Paint()
+      ..color = color.withOpacity(0.12)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(fillPath, fillPaint);
+
+    final linePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path, linePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _AdminSparklinePainter oldDelegate) {
+    if (oldDelegate.color != color) return true;
+    if (oldDelegate.points.length != points.length) return true;
+    for (var index = 0; index < points.length; index += 1) {
+      if (oldDelegate.points[index] != points[index]) return true;
+    }
+    return false;
+  }
+}
+
+class _AdminMetricPill extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _AdminMetricPill({
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.18)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.black87,
+          fontWeight: FontWeight.w700,
+          height: 1.25,
         ),
       ),
     );

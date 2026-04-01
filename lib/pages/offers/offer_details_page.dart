@@ -3048,26 +3048,17 @@ class _InlineCta extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: compact ? 17 : 19,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
+            child: Center(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
                   color: Colors.white,
-                  size: compact ? 14 : 16,
+                  fontSize: compact ? 17 : 19,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
                 ),
-              ],
+              ),
             ),
           ),
         ),
