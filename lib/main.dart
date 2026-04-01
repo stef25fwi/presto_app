@@ -56,6 +56,7 @@ import 'widgets/account_build_version_panel.dart';
 import 'widgets/account_profile_sections.dart';
 import 'widgets/entrepreneur_toolbox_slide.dart';
 import 'widgets/home_bottom_nav_item.dart';
+import 'widgets/ilipresto_splash_screen_classic.dart';
 import 'widgets/presto_info_icon_animated.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/phone_input_field.dart';
@@ -1227,10 +1228,7 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scaleAnimation;
+class _SplashScreenState extends State<SplashScreen> {
   Timer? _navTimer;
 
   @override
@@ -1240,23 +1238,19 @@ class _SplashScreenState extends State<SplashScreen>
     // Splash : status bar + barre de navigation système en orange.
     SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoOrange));
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    )..repeat(reverse: true);
-
-    _scaleAnimation = Tween<double>(begin: 0.94, end: 1.06).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-
     // Sur Web, vérifier d'abord le redirect Google Sign-In
     if (kIsWeb) {
       _checkGoogleRedirectAndNavigate();
     } else {
-      _navTimer = Timer(const Duration(milliseconds: 3500), () {
-        _navigateTo(const HomePage());
-      });
+      _scheduleNavigation(const Duration(milliseconds: 2200));
     }
+  }
+
+  void _scheduleNavigation(Duration duration) {
+    _navTimer?.cancel();
+    _navTimer = Timer(duration, () {
+      _navigateTo(const HomePage());
+    });
   }
 
   /// Vérifie si l'utilisateur revient d'un redirect Google Sign-In (Web uniquement)
@@ -1269,30 +1263,22 @@ class _SplashScreenState extends State<SplashScreen>
         debugPrint('✅ [SPLASH] Email: ${result.user?.email}');
         debugPrint('✅ [SPLASH] UID: ${result.user?.uid}');
         // Attendre un peu pour montrer le splash, puis naviguer vers HomePage
-        _navTimer = Timer(const Duration(milliseconds: 1500), () {
-          _navigateTo(const HomePage());
-        });
+        _scheduleNavigation(const Duration(milliseconds: 1500));
       } else {
         debugPrint('ℹ️ [SPLASH] No redirect result, normal app start');
         // Pas de redirect, navigation normale après splash
-        _navTimer = Timer(const Duration(milliseconds: 3500), () {
-          _navigateTo(const HomePage());
-        });
+        _scheduleNavigation(const Duration(milliseconds: 2200));
       }
     } on FirebaseAuthException catch (e) {
       debugPrint('❌ [SPLASH] FirebaseAuthException during redirect check');
       debugPrint('❌ [SPLASH] Code: ${e.code}');
       debugPrint('❌ [SPLASH] Message: ${e.message}');
       // Erreur d'auth, mais on continue quand même vers HomePage
-      _navTimer = Timer(const Duration(milliseconds: 3500), () {
-        _navigateTo(const HomePage());
-      });
+      _scheduleNavigation(const Duration(milliseconds: 2200));
     } catch (e) {
       debugPrint('❌ [SPLASH] Unexpected error: $e');
       // Erreur inattendue, navigation normale
-      _navTimer = Timer(const Duration(milliseconds: 3500), () {
-        _navigateTo(const HomePage());
-      });
+      _scheduleNavigation(const Duration(milliseconds: 2200));
     }
   }
 
@@ -1306,7 +1292,6 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _controller.dispose();
     _navTimer?.cancel();
     // Sécurité: si le widget est détruit autrement, on remet le style global.
     SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
@@ -1317,112 +1302,9 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoOrange),
-      child: Scaffold(
-        backgroundColor: kPrestoOrange,
-        body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  /*
-                  GestureDetector(
-                    onLongPress: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HomePageV2Option2(),
-                        ),
-                      );
-                    },
-                    child: ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: const Text(
-                        'iliprestō',
-                        style: TextStyle(
-                          fontSize: 54,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 1.3,
-                        ),
-                      ),
-                    ),
-                  ),
-                  */
-                  ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: const Text(
-                      'iliprestō',
-                      style: TextStyle(
-                        fontSize: 54,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 1.3,
-                      ),
-                    ),
-                  ),
-                  // */
-                  const SizedBox(height: 28),
-                  const Text(
-                    'Trouvez un prestataire\nillico presto!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      height: 1.25,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 46),
-                  SizedBox(
-                    width: 260,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white, width: 2),
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 14, horizontal: 8),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                      onPressed: () =>
-                          _navigateTo(const HomePage(initialIndex: 2)),
-                      child: const Text(
-                        "J’offre un job",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: 260,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 14, horizontal: 8),
-                        backgroundColor: kPrestoBlue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                      onPressed: () =>
-                          _navigateTo(const HomePage(initialIndex: 1)),
-                      child: const Text(
-                        "Je consulte les offres",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+      child: const IliprestoSplashScreenClassic(
+        nextPage: HomePage(),
+        autoNavigate: false,
       ),
     );
   }
@@ -9991,7 +9873,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   child: PhoneInputFieldCompact(
                     controller: _phoneController,
                     label: _requiredLabel('Téléphone (pour être rappelé)'),
-                    hintText: '612345678',
+                    hintText:
+                        phoneHintForCountryCode(_selectedPhoneCountryCode),
                     initialCountryCode: _selectedPhoneCountryCode,
                     onCountryCodeChanged: (code) {
                       setState(() {

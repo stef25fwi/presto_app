@@ -60,6 +60,24 @@ CountryCode phoneCountryFromCode(String? code) {
   );
 }
 
+String phoneHintForCountryCode(String? code) {
+  switch ((code ?? '').trim()) {
+    case '+590':
+      return '690123456';
+    case '+596':
+      return '696123456';
+    case '+594':
+      return '694123456';
+    case '+262':
+      return '692123456';
+    case '+689':
+      return '87123456';
+    case '+33':
+    default:
+      return '612345678';
+  }
+}
+
 class _PhoneFieldPrefix extends StatelessWidget {
   final CountryCode selectedCountry;
   final ValueChanged<CountryCode?> onCountryChanged;
@@ -120,10 +138,11 @@ InputDecoration _buildPhoneDecoration({
   required CountryCode selectedCountry,
   required ValueChanged<CountryCode?> onCountryChanged,
 }) {
+  final effectiveHintText = hintText ?? phoneHintForCountryCode(selectedCountry.code);
   final decoration = (baseDecoration ?? const InputDecoration()).copyWith(
     label: label,
     labelText: label == null ? (labelText ?? 'Téléphone') : null,
-    hintText: hintText ?? '612345678',
+    hintText: effectiveHintText,
     hintStyle: ((baseDecoration ?? const InputDecoration()).hintStyle ??
             const TextStyle())
         .copyWith(
