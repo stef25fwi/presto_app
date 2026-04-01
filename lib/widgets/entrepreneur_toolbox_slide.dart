@@ -75,6 +75,19 @@ class EntrepreneurToolboxSlide extends StatelessWidget {
               size: 130,
               badgeText: 'Clique ici!',
               showBadge: true,
+              centerChild: Transform.translate(
+                offset: const Offset(0, -1.5),
+                child: Text(
+                  'I',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: kPrestoBlue,
+                    fontSize: 68,
+                    fontWeight: FontWeight.w800,
+                    height: 1,
+                  ),
+                ),
+              ),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(

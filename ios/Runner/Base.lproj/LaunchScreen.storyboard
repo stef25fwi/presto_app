@@ -1,37 +1,109 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
-        <!--View Controller-->
         <scene sceneID="EHf-IW-A2E">
             <objects>
                 <viewController id="01J-lp-oVM" sceneMemberID="viewController">
-                    <layoutGuides>
-                        <viewControllerLayoutGuide type="top" id="Ydg-fD-yQy"/>
-                        <viewControllerLayoutGuide type="bottom" id="xbc-2k-c8Z"/>
-                    </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="LaunchImage" translatesAutoresizingMaskIntoConstraints="NO" id="YRO-k0-Ey4">
-                            </imageView>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bg-left-view">
+                                <color key="backgroundColor" red="0.1333333333" green="0.3137254902" blue="0.9568627451" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            </view>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="bg-right-view">
+                                <color key="backgroundColor" red="1" green="0.5411764706" blue="0.1137254902" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                            </view>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="iliprestō" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="brand-title-label">
+                                <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="42"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="logo-box-view">
+                                <subviews>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="logo-left-half">
+                                        <color key="backgroundColor" red="0.1333333333" green="0.3137254902" blue="0.9568627451" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                    </view>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="logo-right-half">
+                                        <color key="backgroundColor" red="1" green="0.5411764706" blue="0.1137254902" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                    </view>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="logo-divider-view">
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    </view>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="i" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="logo-left-i">
+                                        <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="96"/>
+                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="i" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="logo-right-i">
+                                        <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="96"/>
+                                        <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                </subviews>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <constraints>
+                                    <constraint firstItem="logo-left-half" firstAttribute="leading" secondItem="logo-box-view" secondAttribute="leading" id="logo-left-leading"/>
+                                    <constraint firstItem="logo-left-half" firstAttribute="top" secondItem="logo-box-view" secondAttribute="top" id="logo-left-top"/>
+                                    <constraint firstAttribute="bottom" secondItem="logo-left-half" secondAttribute="bottom" id="logo-left-bottom"/>
+                                    <constraint firstItem="logo-right-half" firstAttribute="top" secondItem="logo-box-view" secondAttribute="top" id="logo-right-top"/>
+                                    <constraint firstAttribute="bottom" secondItem="logo-right-half" secondAttribute="bottom" id="logo-right-bottom"/>
+                                    <constraint firstAttribute="trailing" secondItem="logo-right-half" secondAttribute="trailing" id="logo-right-trailing"/>
+                                    <constraint firstItem="logo-left-half" firstAttribute="width" secondItem="logo-right-half" secondAttribute="width" id="logo-half-equal"/>
+                                    <constraint firstItem="logo-right-half" firstAttribute="leading" secondItem="logo-left-half" secondAttribute="trailing" id="logo-halves-join"/>
+                                    <constraint firstItem="logo-divider-view" firstAttribute="centerX" secondItem="logo-box-view" secondAttribute="centerX" id="logo-divider-center-x"/>
+                                    <constraint firstItem="logo-divider-view" firstAttribute="top" secondItem="logo-box-view" secondAttribute="top" constant="10" id="logo-divider-top"/>
+                                    <constraint firstAttribute="bottom" secondItem="logo-divider-view" secondAttribute="bottom" constant="10" id="logo-divider-bottom"/>
+                                    <constraint firstItem="logo-divider-view" firstAttribute="width" constant="6" id="logo-divider-width"/>
+                                    <constraint firstItem="logo-left-i" firstAttribute="centerX" secondItem="logo-left-half" secondAttribute="centerX" id="logo-left-i-center-x"/>
+                                    <constraint firstItem="logo-left-i" firstAttribute="centerY" secondItem="logo-left-half" secondAttribute="centerY" id="logo-left-i-center-y"/>
+                                    <constraint firstItem="logo-right-i" firstAttribute="centerX" secondItem="logo-right-half" secondAttribute="centerX" id="logo-right-i-center-x"/>
+                                    <constraint firstItem="logo-right-i" firstAttribute="centerY" secondItem="logo-right-half" secondAttribute="centerY" id="logo-right-i-center-y"/>
+                                </constraints>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                        <real key="value" value="28"/>
+                                    </userDefinedRuntimeAttribute>
+                                    <userDefinedRuntimeAttribute type="boolean" keyPath="layer.masksToBounds" value="YES"/>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.borderWidth">
+                                        <real key="value" value="3"/>
+                                    </userDefinedRuntimeAttribute>
+                                    <userDefinedRuntimeAttribute type="color" keyPath="layer.borderColor">
+                                        <color key="value" white="1" alpha="0.95" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    </userDefinedRuntimeAttribute>
+                                </userDefinedRuntimeAttributes>
+                            </view>
                         </subviews>
-                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
+                        <color key="backgroundColor" red="0.1333333333" green="0.3137254902" blue="0.9568627451" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="YRO-k0-Ey4" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="1a2-6s-vTC"/>
-                            <constraint firstItem="YRO-k0-Ey4" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="4X2-HB-R7a"/>
+                            <constraint firstItem="bg-left-view" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leading" id="bg-left-leading"/>
+                            <constraint firstItem="bg-left-view" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="bg-left-top"/>
+                            <constraint firstAttribute="bottom" secondItem="bg-left-view" secondAttribute="bottom" id="bg-left-bottom"/>
+                            <constraint firstItem="bg-right-view" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="bg-right-top"/>
+                            <constraint firstAttribute="bottom" secondItem="bg-right-view" secondAttribute="bottom" id="bg-right-bottom"/>
+                            <constraint firstAttribute="trailing" secondItem="bg-right-view" secondAttribute="trailing" id="bg-right-trailing"/>
+                            <constraint firstItem="bg-left-view" firstAttribute="width" secondItem="bg-right-view" secondAttribute="width" id="bg-halves-equal"/>
+                            <constraint firstItem="bg-right-view" firstAttribute="leading" secondItem="bg-left-view" secondAttribute="trailing" id="bg-halves-join"/>
+                            <constraint firstItem="brand-title-label" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="brand-center-x"/>
+                            <constraint firstItem="brand-title-label" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="92" id="brand-top"/>
+                            <constraint firstItem="logo-box-view" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="logo-center-x"/>
+                            <constraint firstItem="logo-box-view" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="18" id="logo-center-y"/>
+                            <constraint firstItem="logo-box-view" firstAttribute="width" constant="176" id="logo-width"/>
+                            <constraint firstItem="logo-box-view" firstAttribute="height" constant="176" id="logo-height"/>
                         </constraints>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="53" y="375"/>
+            <point key="canvasLocation" x="52.671755725190835" y="374.64788732394368"/>
         </scene>
     </scenes>
-    <resources>
-        <image name="LaunchImage" width="168" height="185"/>
-    </resources>
 </document>

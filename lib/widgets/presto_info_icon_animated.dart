@@ -5,6 +5,7 @@ class PrestoInfoIconAnimated extends StatefulWidget {
   final bool showBadge;
   final String badgeText;
   final double size;
+  final Widget? centerChild;
 
   const PrestoInfoIconAnimated({
     super.key,
@@ -12,6 +13,7 @@ class PrestoInfoIconAnimated extends StatefulWidget {
     this.showBadge = true,
     this.badgeText = "Nouveau",
     this.size = 56,
+    this.centerChild,
   });
 
   @override
@@ -93,11 +95,13 @@ class _PrestoInfoIconAnimatedState extends State<PrestoInfoIconAnimated>
                         color: Colors.white,
                       ),
                       child: Center(
-                        child: Icon(
-                          Icons.info_rounded,
-                          color: kBlue,
-                          size: widget.size * 0.68,
-                        ),
+                        child:
+                            widget.centerChild ??
+                            Icon(
+                              Icons.info_rounded,
+                              color: kBlue,
+                              size: widget.size * 0.68,
+                            ),
                       ),
                     ),
                   ),
