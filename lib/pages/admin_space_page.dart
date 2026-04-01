@@ -851,8 +851,8 @@ class _AdminDashboardComputed {
     final messagesStarted = analyticsTotals['listing_message_started'] ?? 0;
     final premiumUpgrades = analyticsTotals['premium_upgrade_completed'] ?? 0;
     final reportEvents = analyticsTotals['listing_reported'] ?? 0;
-    final totalTrackedEvents =
-        analyticsTotals.values.fold<int>(0, (sum, value) => sum + value);
+    final totalTrackedEvents = analyticsTotals.values
+        .fold<int>(0, (runningTotal, value) => runningTotal + value);
 
     int _sumByKeyPattern(RegExp pattern) {
       var sum = 0;

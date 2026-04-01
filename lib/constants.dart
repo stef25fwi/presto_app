@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'app/presto_overlay_theme.dart';
+
 /// Charte typo centralisée Presto.
 /// Les écrans peuvent encore surcharger localement certains textes,
 /// mais les niveaux de base sont définis ici.
@@ -96,66 +98,73 @@ List<RegionItem> getRegionsSorted() {
 }
 
 /// Dropdown avec séparateur + "fond DROM" en bas
-DropdownButtonFormField<RegionItem> buildRegionDropdown({
+Widget buildRegionDropdown({
   required RegionItem? value,
   required void Function(RegionItem?) onChanged,
 }) {
-  final regions = getRegionsSorted();
+  return Builder(
+    builder: (context) {
+      final overlayTheme = context.prestoOverlayTheme;
+      final regions = getRegionsSorted();
 
-  // On construit la liste avec:
-  // - une section "Métropole"
-  // - une section "DROM" tout en bas, avec fond léger
-  final metro = regions.where((r) => !r.isDrom).toList();
-  final drom = regions.where((r) => r.isDrom).toList();
+      // On construit la liste avec:
+      // - une section "Métropole"
+      // - une section "DROM" tout en bas, avec fond léger
+      final metro = regions.where((r) => !r.isDrom).toList();
+      final drom = regions.where((r) => r.isDrom).toList();
 
-  List<DropdownMenuItem<RegionItem>> header(String text) => [
-        DropdownMenuItem<RegionItem>(
-          enabled: false,
-          value: null,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Text(
-              text,
-              style: const TextStyle(fontWeight: FontWeight.w700),
+      List<DropdownMenuItem<RegionItem>> header(String text) => [
+            DropdownMenuItem<RegionItem>(
+              enabled: false,
+              value: null,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text(
+                  text,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
             ),
-          ),
-        ),
-      ];
+          ];
 
-  List<DropdownMenuItem<RegionItem>> itemsFor(List<RegionItem> list,
-      {bool tinted = false}) {
-    return list.map((r) {
-      return DropdownMenuItem<RegionItem>(
-        value: r,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-          decoration: tinted
-              ? BoxDecoration(
-                  color: const Color(0xFFF4F4F4), // fond léger DROM
-                  borderRadius: BorderRadius.circular(10),
-                )
-              : null,
-          child: Text(r.label),
+      List<DropdownMenuItem<RegionItem>> itemsFor(List<RegionItem> list,
+          {bool tinted = false}) {
+        return list.map((r) {
+          return DropdownMenuItem<RegionItem>(
+            value: r,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+              decoration: tinted
+                  ? BoxDecoration(
+                      color: overlayTheme.selectionFillColor,
+                      borderRadius: BorderRadius.circular(10),
+                    )
+                  : null,
+              child: Text(r.label),
+            ),
+          );
+        }).toList();
+      }
+
+      return DropdownButtonFormField<RegionItem>(
+        value: value,
+        isExpanded: true,
+        dropdownColor: overlayTheme.surfaceColor,
+        borderRadius: overlayTheme.popupRadius,
+        decoration: const InputDecoration(
+          labelText: "Région",
+          border: OutlineInputBorder(),
         ),
+        items: [
+          ...header("France métropolitaine"),
+          ...itemsFor(metro),
+          ...header("DROM"),
+          ...itemsFor(drom, tinted: true),
+        ],
+        onChanged: onChanged,
       );
-    }).toList();
-  }
-
-  return DropdownButtonFormField<RegionItem>(
-    value: value,
-    isExpanded: true,
-    decoration: const InputDecoration(
-      labelText: "Région",
-      border: OutlineInputBorder(),
-    ),
-    items: [
-      ...header("France métropolitaine"),
-      ...itemsFor(metro),
-      ...header("DROM"),
-      ...itemsFor(drom, tinted: true), // ✅ DROM "en fond de liste" + fond
-    ],
-    onChanged: onChanged,
+    },
   );
 }
 

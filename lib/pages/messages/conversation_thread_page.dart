@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
 import '../../services/conversation_service.dart';
 import '../../services/conversation_state.dart';
@@ -527,29 +528,35 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         case _ConversationThreadAction.delete:
           final confirmed = await showDialog<bool>(
             context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Supprimer la conversation'),
-              content: const Text(
-                'Cette action est irreversible. Tous les messages seront supprimes.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('Annuler'),
+            builder: (ctx) {
+              final overlayTheme = ctx.prestoOverlayTheme;
+              return AlertDialog(
+                backgroundColor: overlayTheme.surfaceColor,
+                surfaceTintColor: overlayTheme.surfaceTintColor,
+                shape: overlayTheme.dialogShape,
+                title: const Text('Supprimer la conversation'),
+                content: const Text(
+                  'Cette action est irreversible. Tous les messages seront supprimes.',
                 ),
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  child: const Text('Supprimer'),
-                ),
-              ],
-            ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    child: const Text('Annuler'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    child: const Text('Supprimer'),
+                  ),
+                ],
+              );
+            },
           );
           if (confirmed != true || !mounted) return;
           await ConversationService.deleteConversation(
               conversationId: widget.conversationId);
           if (!mounted) return;
-            _hasHandledConversationRemoval = true;
+          _hasHandledConversationRemoval = true;
           showSuccessSnackBar(context, 'Conversation supprimee.');
           Navigator.of(context).pop();
           return;
@@ -619,6 +626,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       await showDialog<void>(
         context: context,
         builder: (dialogContext) {
+          final overlayTheme = dialogContext.prestoOverlayTheme;
           return Dialog(
             backgroundColor: Colors.transparent,
             insetPadding: const EdgeInsets.symmetric(
@@ -627,11 +635,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             ),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
+                color: overlayTheme.surfaceColor,
+                borderRadius: overlayTheme.dialogRadius,
+                border: Border.all(color: overlayTheme.borderColor),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
+                    color: overlayTheme.shadowColor,
                     blurRadius: 24,
                     offset: const Offset(0, 10),
                   ),
@@ -900,27 +909,37 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                       ScaffoldMessenger.of(context);
                                   final confirmed = await showDialog<bool>(
                                     context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: const Text('Supprimer ce message'),
-                                      content: const Text(
-                                        'Ce message sera definitivement supprime.',
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(ctx).pop(false),
-                                          child: const Text('Annuler'),
+                                    builder: (ctx) {
+                                      final overlayTheme =
+                                          ctx.prestoOverlayTheme;
+                                      return AlertDialog(
+                                        backgroundColor:
+                                            overlayTheme.surfaceColor,
+                                        surfaceTintColor:
+                                            overlayTheme.surfaceTintColor,
+                                        shape: overlayTheme.dialogShape,
+                                        title:
+                                            const Text('Supprimer ce message'),
+                                        content: const Text(
+                                          'Ce message sera definitivement supprime.',
                                         ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(ctx).pop(true),
-                                          style: TextButton.styleFrom(
-                                            foregroundColor: Colors.red,
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.of(ctx).pop(false),
+                                            child: const Text('Annuler'),
                                           ),
-                                          child: const Text('Supprimer'),
-                                        ),
-                                      ],
-                                    ),
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.of(ctx).pop(true),
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: Colors.red,
+                                            ),
+                                            child: const Text('Supprimer'),
+                                          ),
+                                        ],
+                                      );
+                                    },
                                   );
                                   if (confirmed != true || !mounted) return;
                                   try {

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter/services.dart';
 
+import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
 import '../../models/conversation_summary.dart';
 import '../../services/conversation_participants.dart';
@@ -70,7 +71,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
   bool _isPermissionDenied(Object? error) {
     final text = (error ?? '').toString().toLowerCase();
-    return text.contains('permission-denied') || text.contains('permission denied');
+    return text.contains('permission-denied') ||
+        text.contains('permission denied');
   }
 
   String _conversationTitle(Map<String, dynamic> data, String userId) {
@@ -104,23 +106,17 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
   String _conversationPreview(Map<String, dynamic> data, String userId) {
     final lastMessage = _conversationValue(
-          data,
-          const ['lastMessage', 'last_message'],
-        )
-            .toString()
-            .trim();
+      data,
+      const ['lastMessage', 'last_message'],
+    ).toString().trim();
     final lastSenderId = _conversationValue(
-          data,
-          const ['lastSenderId', 'last_sender_id'],
-        )
-            .toString()
-            .trim();
+      data,
+      const ['lastSenderId', 'last_sender_id'],
+    ).toString().trim();
     final offerTitle = _conversationValue(
-          data,
-          const ['offerTitle', 'offer_title'],
-        )
-            .toString()
-            .trim();
+      data,
+      const ['offerTitle', 'offer_title'],
+    ).toString().trim();
 
     if (lastMessage.isNotEmpty) {
       if (lastSenderId == userId) {
@@ -141,7 +137,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       _conversationTitle(data, userId),
       _conversationPreview(data, userId),
       _conversationValue(data, const ['offerTitle', 'offer_title']).toString(),
-      _conversationValue(data, const ['lastMessage', 'last_message']).toString(),
+      _conversationValue(data, const ['lastMessage', 'last_message'])
+          .toString(),
       _conversationValue(data, const ['lastSenderName', 'last_sender_name'])
           .toString(),
     ].join(' ').toLowerCase();
@@ -169,9 +166,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       return normalizedDirectValue;
     }
 
-    final routeName = (data['routeName'] ?? data['route_name'] ?? '')
-        .toString()
-        .trim();
+    final routeName =
+        (data['routeName'] ?? data['route_name'] ?? '').toString().trim();
     if (routeName.isEmpty) return null;
     if (!routeName.startsWith('/messages/')) return null;
 
@@ -260,15 +256,18 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         final conversationIds = <String>[];
         final seenConversationIds = <String>{};
         for (final notificationDoc in notificationDocs) {
-          final conversationId = _notificationConversationId(notificationDoc.data());
-          if (conversationId == null || !seenConversationIds.add(conversationId)) {
+          final conversationId =
+              _notificationConversationId(notificationDoc.data());
+          if (conversationId == null ||
+              !seenConversationIds.add(conversationId)) {
             continue;
           }
           conversationIds.add(conversationId);
         }
 
         if (conversationIds.isEmpty) {
-          docsByField[notificationsFallbackSource] = const <ConversationSummary>[];
+          docsByField[notificationsFallbackSource] =
+              const <ConversationSummary>[];
           errorsByField.remove(notificationsFallbackSource);
           retryCountsByField[notificationsFallbackSource] = 0;
           emit();
@@ -406,7 +405,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   Stream<_ConversationQueryState> _conversationStateForUser(String userId) {
-    if (_conversationStateUserId == userId && _conversationStateStream != null) {
+    if (_conversationStateUserId == userId &&
+        _conversationStateStream != null) {
       return _conversationStateStream!;
     }
 
@@ -415,7 +415,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     return _conversationStateStream!;
   }
 
-  Future<void> _markConversationRead(String conversationId, String currentUserId) async {
+  Future<void> _markConversationRead(
+      String conversationId, String currentUserId) async {
     try {
       await ConversationService.markAsRead(conversationId: conversationId);
     } catch (_) {}
@@ -428,48 +429,59 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     try {
       switch (action) {
         case _ConversationMenuAction.archive:
-          await ConversationService.archiveConversation(conversationId: conversationId);
+          await ConversationService.archiveConversation(
+              conversationId: conversationId);
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation archivee.');
           return;
         case _ConversationMenuAction.unarchive:
-          await ConversationService.unarchiveConversation(conversationId: conversationId);
+          await ConversationService.unarchiveConversation(
+              conversationId: conversationId);
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation restauree.');
           return;
         case _ConversationMenuAction.block:
-          await ConversationService.blockConversation(conversationId: conversationId);
+          await ConversationService.blockConversation(
+              conversationId: conversationId);
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation bloquee.');
           return;
         case _ConversationMenuAction.unblock:
-          await ConversationService.unblockConversation(conversationId: conversationId);
+          await ConversationService.unblockConversation(
+              conversationId: conversationId);
           if (!mounted) return;
           showSuccessSnackBar(context, 'Conversation debloquee.');
           return;
         case _ConversationMenuAction.delete:
           final confirmed = await showDialog<bool>(
             context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Supprimer la conversation'),
-              content: const Text(
-                'Cette action est irreversible. Tous les messages seront supprimes.',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('Annuler'),
+            builder: (ctx) {
+              final overlayTheme = ctx.prestoOverlayTheme;
+              return AlertDialog(
+                backgroundColor: overlayTheme.surfaceColor,
+                surfaceTintColor: overlayTheme.surfaceTintColor,
+                shape: overlayTheme.dialogShape,
+                title: const Text('Supprimer la conversation'),
+                content: const Text(
+                  'Cette action est irreversible. Tous les messages seront supprimes.',
                 ),
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  child: const Text('Supprimer'),
-                ),
-              ],
-            ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    child: const Text('Annuler'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    child: const Text('Supprimer'),
+                  ),
+                ],
+              );
+            },
           );
           if (confirmed != true || !mounted) return;
-          await ConversationService.deleteConversation(conversationId: conversationId);
+          await ConversationService.deleteConversation(
+              conversationId: conversationId);
           if (!mounted) return;
           setState(() {
             _hiddenConversationIds.add(conversationId);
@@ -479,7 +491,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       }
     } catch (error) {
       if (!mounted) return;
-      showErrorSnackBar(context, 'Action impossible sur cette conversation : $error');
+      showErrorSnackBar(
+          context, 'Action impossible sur cette conversation : $error');
     }
   }
 
@@ -614,19 +627,22 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           _ConversationFilterChip(
             label: 'Tous',
             selected: _activeFilter == _ConversationListFilter.all,
-            onTap: () => setState(() => _activeFilter = _ConversationListFilter.all),
+            onTap: () =>
+                setState(() => _activeFilter = _ConversationListFilter.all),
           ),
           const SizedBox(width: 8),
           _ConversationFilterChip(
             label: 'Non lus',
             selected: _activeFilter == _ConversationListFilter.unread,
-            onTap: () => setState(() => _activeFilter = _ConversationListFilter.unread),
+            onTap: () =>
+                setState(() => _activeFilter = _ConversationListFilter.unread),
           ),
           const SizedBox(width: 8),
           _ConversationFilterChip(
             label: 'Archives',
             selected: _activeFilter == _ConversationListFilter.archived,
-            onTap: () => setState(() => _activeFilter = _ConversationListFilter.archived),
+            onTap: () => setState(
+                () => _activeFilter = _ConversationListFilter.archived),
           ),
         ],
       ),
@@ -645,7 +661,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           prefixIcon: const Icon(Icons.search_rounded, color: kPrestoBlue),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20),
             borderSide: BorderSide.none,
@@ -729,9 +746,11 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
     if (errorsByField.isNotEmpty && shouldExposeErrors) {
       if (errorsByField.containsKey(conversationPrimaryParticipantField)) {
-        lines.add('La source principale participants a echoue temporairement ; un affichage de secours tente de recuperer les conversations via les alias legacy pendant la relance automatique.');
+        lines.add(
+            'La source principale participants a echoue temporairement ; un affichage de secours tente de recuperer les conversations via les alias legacy pendant la relance automatique.');
       } else {
-        lines.add('Certaines sources Firestore ont echoue ; la liste affiche seulement les conversations recuperables.');
+        lines.add(
+            'Certaines sources Firestore ont echoue ; la liste affiche seulement les conversations recuperables.');
       }
       if (kDebugMode) {
         for (final entry in errorsByField.entries) {
@@ -873,7 +892,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             body: Stack(
               children: [
                 _buildWatermark(),
-                _buildEmptyState('Connexion / inscription pour accéder à la messagerie.'),
+                _buildEmptyState(
+                    'Connexion / inscription pour accéder à la messagerie.'),
               ],
             ),
           );
@@ -894,7 +914,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               _buildWatermark(),
               Column(
                 children: [
-                  if (currentUser != null) _buildCurrentAccountBanner(currentUser),
+                  if (currentUser != null)
+                    _buildCurrentAccountBanner(currentUser),
                   _buildSearchField(),
                   _buildFilterTabs(),
                   Expanded(
@@ -903,26 +924,34 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                       builder: (context, snapshot) {
                         final state = snapshot.data;
 
-                        if ((snapshot.connectionState == ConnectionState.waiting && state == null) ||
+                        if ((snapshot.connectionState ==
+                                    ConnectionState.waiting &&
+                                state == null) ||
                             (state?.isLoading ?? false)) {
                           return const Center(
                             child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(kPrestoOrange),
                             ),
                           );
                         }
 
-                        final docs = state?.docs ?? const <ConversationSummary>[];
-                        final errorsByField = state?.errorsByField ?? const <String, Object>{};
+                        final docs =
+                            state?.docs ?? const <ConversationSummary>[];
+                        final errorsByField =
+                            state?.errorsByField ?? const <String, Object>{};
                         _maybeOpenInitialConversation(context, docs, userId);
 
-                        final query = _searchController.text.trim().toLowerCase();
+                        final query =
+                            _searchController.text.trim().toLowerCase();
                         var orphanCount = 0;
                         var hiddenWithoutPreviewCount = 0;
                         final conversations = docs;
 
-                        final visibleConversations = conversations.where((conversation) {
-                          if (_hiddenConversationIds.contains(conversation.id)) {
+                        final visibleConversations =
+                            conversations.where((conversation) {
+                          if (_hiddenConversationIds
+                              .contains(conversation.id)) {
                             return false;
                           }
 
@@ -953,23 +982,26 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                         }).toList(growable: false);
 
                         final filteredConversations = visibleConversations
-                            .where((conversation) => conversation.matchesQuery(userId, query))
+                            .where((conversation) =>
+                                conversation.matchesQuery(userId, query))
                             .toList(growable: false);
 
                         if (filteredConversations.isEmpty) {
-                          final message = errorsByField.isNotEmpty && docs.isEmpty
+                          final message = errorsByField.isNotEmpty &&
+                                  docs.isEmpty
                               ? (_isPermissionDenied(errorsByField.values.first)
                                   ? 'Acces refuse aux conversations. Verifiez les regles Firestore et les participants enregistres.'
                                   : 'Erreur de chargement des conversations. Consultez les logs de debug.')
                               : query.isNotEmpty
                                   ? 'Aucune conversation ne correspond a votre recherche.'
-                                  : _activeFilter == _ConversationListFilter.archived
+                                  : _activeFilter ==
+                                          _ConversationListFilter.archived
                                       ? 'Aucune conversation archivee.'
                                       : orphanCount > 0
                                           ? 'Des messages existent, mais certaines conversations sont orphelines ou mal normalisees. Consultez le bandeau de diagnostic.'
                                           : hiddenWithoutPreviewCount > 0
                                               ? 'Certaines conversations existent mais n ont pas encore de metadonnees exploitables.'
-                                          : 'Aucune conversation pour le moment.';
+                                              : 'Aucune conversation pour le moment.';
 
                           return Column(
                             children: [
@@ -988,307 +1020,424 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                             _buildDiagnosticsBanner(
                               errorsByField: errorsByField,
                               orphanCount: orphanCount,
-                              hasVisibleConversations: filteredConversations.isNotEmpty,
+                              hasVisibleConversations:
+                                  filteredConversations.isNotEmpty,
                             ),
                             Expanded(
                               child: ListView.builder(
-                              padding: const EdgeInsets.fromLTRB(10, 6, 10, 18),
-                              itemCount: filteredConversations.length,
-                              itemBuilder: (context, index) {
-                                final conversation = filteredConversations[index];
-                                final offerTitle = conversation.offerTitle;
-                                final title = conversation.titleFor(userId);
-                                final preview = conversation.previewFor(userId);
-                                final unreadCount = conversation.unreadForUser(userId);
-                                final archived = conversation.isArchivedForUser(userId);
-                                final blocked = conversation.isBlocked;
-                                final blockedForUser = conversation.isBlockedForUser(userId);
-                                final lastDate = conversation.sortDate;
+                                padding:
+                                    const EdgeInsets.fromLTRB(10, 6, 10, 18),
+                                itemCount: filteredConversations.length,
+                                itemBuilder: (context, index) {
+                                  final conversation =
+                                      filteredConversations[index];
+                                  final offerTitle = conversation.offerTitle;
+                                  final title = conversation.titleFor(userId);
+                                  final preview =
+                                      conversation.previewFor(userId);
+                                  final unreadCount =
+                                      conversation.unreadForUser(userId);
+                                  final archived =
+                                      conversation.isArchivedForUser(userId);
+                                  final blocked = conversation.isBlocked;
+                                  final blockedForUser =
+                                      conversation.isBlockedForUser(userId);
+                                  final lastDate = conversation.sortDate;
 
-                                Future<void> openConversation() {
-                                  return _openConversation(
-                                    context,
-                                    conversation,
-                                    userId,
-                                    null,
-                                  );
-                                }
+                                  Future<void> openConversation() {
+                                    return _openConversation(
+                                      context,
+                                      conversation,
+                                      userId,
+                                      null,
+                                    );
+                                  }
 
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                                  child: Slidable(
-                                    key: ValueKey<String>('conversation-${conversation.id}'),
-                                    startActionPane: ActionPane(
-                                      motion: const DrawerMotion(),
-                                      children: [
-                                        SlidableAction(
-                                          onPressed: (_) => _handleConversationAction(
-                                            conversationId: conversation.id,
-                                            action: archived
-                                                ? _ConversationMenuAction.unarchive
-                                                : _ConversationMenuAction.archive,
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6),
+                                    child: Slidable(
+                                      key: ValueKey<String>(
+                                          'conversation-${conversation.id}'),
+                                      startActionPane: ActionPane(
+                                        motion: const DrawerMotion(),
+                                        children: [
+                                          SlidableAction(
+                                            onPressed: (_) =>
+                                                _handleConversationAction(
+                                              conversationId: conversation.id,
+                                              action: archived
+                                                  ? _ConversationMenuAction
+                                                      .unarchive
+                                                  : _ConversationMenuAction
+                                                      .archive,
+                                            ),
+                                            backgroundColor:
+                                                const Color(0xFF6B7280),
+                                            foregroundColor: Colors.white,
+                                            icon: archived
+                                                ? Icons.unarchive_outlined
+                                                : Icons.archive_outlined,
+                                            label: archived
+                                                ? 'Restaurer'
+                                                : 'Archiver',
                                           ),
-                                          backgroundColor: const Color(0xFF6B7280),
-                                          foregroundColor: Colors.white,
-                                          icon: archived
-                                              ? Icons.unarchive_outlined
-                                              : Icons.archive_outlined,
-                                          label: archived ? 'Restaurer' : 'Archiver',
-                                        ),
-                                        SlidableAction(
-                                          onPressed: (_) => _handleConversationAction(
-                                            conversationId: conversation.id,
-                                            action: blockedForUser
-                                                ? _ConversationMenuAction.unblock
-                                                : _ConversationMenuAction.block,
+                                          SlidableAction(
+                                            onPressed: (_) =>
+                                                _handleConversationAction(
+                                              conversationId: conversation.id,
+                                              action: blockedForUser
+                                                  ? _ConversationMenuAction
+                                                      .unblock
+                                                  : _ConversationMenuAction
+                                                      .block,
+                                            ),
+                                            backgroundColor:
+                                                const Color(0xFFB91C1C),
+                                            foregroundColor: Colors.white,
+                                            icon: blockedForUser
+                                                ? Icons.lock_open_rounded
+                                                : Icons.block_rounded,
+                                            label: blockedForUser
+                                                ? 'Debloquer'
+                                                : 'Bloquer',
                                           ),
-                                          backgroundColor: const Color(0xFFB91C1C),
-                                          foregroundColor: Colors.white,
-                                          icon: blockedForUser
-                                              ? Icons.lock_open_rounded
-                                              : Icons.block_rounded,
-                                          label: blockedForUser ? 'Debloquer' : 'Bloquer',
-                                        ),
-                                      ],
-                                    ),
-                                    endActionPane: ActionPane(
-                                      motion: const DrawerMotion(),
-                                      children: [
-                                        SlidableAction(
-                                          onPressed: (_) => _handleConversationAction(
-                                            conversationId: conversation.id,
-                                            action: _ConversationMenuAction.delete,
+                                        ],
+                                      ),
+                                      endActionPane: ActionPane(
+                                        motion: const DrawerMotion(),
+                                        children: [
+                                          SlidableAction(
+                                            onPressed: (_) =>
+                                                _handleConversationAction(
+                                              conversationId: conversation.id,
+                                              action: _ConversationMenuAction
+                                                  .delete,
+                                            ),
+                                            backgroundColor: Colors.red,
+                                            foregroundColor: Colors.white,
+                                            icon: Icons.delete_outline_rounded,
+                                            label: 'Supprimer',
                                           ),
-                                          backgroundColor: Colors.red,
-                                          foregroundColor: Colors.white,
-                                          icon: Icons.delete_outline_rounded,
-                                          label: 'Supprimer',
-                                        ),
-                                      ],
-                                    ),
-                                    child: Material(
-                                      color: Colors.white.withOpacity(0.98),
-                                      borderRadius: BorderRadius.circular(16),
-                                      child: InkWell(
+                                        ],
+                                      ),
+                                      child: Material(
+                                        color: Colors.white.withOpacity(0.98),
                                         borderRadius: BorderRadius.circular(16),
-                                        onTap: openConversation,
-                                        child: Container(
-                                          margin: const EdgeInsets.symmetric(vertical: 2),
-                                          padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(16),
-                                            border: Border(
-                                              bottom: BorderSide(
-                                                color: Colors.black.withOpacity(0.06),
+                                        child: InkWell(
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          onTap: openConversation,
+                                          child: Container(
+                                            margin: const EdgeInsets.symmetric(
+                                                vertical: 2),
+                                            padding: const EdgeInsets.fromLTRB(
+                                                8, 12, 8, 12),
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              border: Border(
+                                                bottom: BorderSide(
+                                                  color: Colors.black
+                                                      .withOpacity(0.06),
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                          child: Row(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              GestureDetector(
-                                                onTap: openConversation,
-                                                child: Stack(
-                                                  children: [
-                                                    CircleAvatar(
-                                                      radius: 27,
-                                                      backgroundColor: const Color(0xFFEAF2FF),
-                                                      foregroundColor: kPrestoBlue,
-                                                      child: Text(
-                                                        title.isNotEmpty
-                                                            ? title[0].toUpperCase()
-                                                            : '?',
-                                                        style: const TextStyle(
-                                                          fontWeight: FontWeight.w800,
-                                                          fontSize: 18,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    Positioned(
-                                                      right: 1,
-                                                      bottom: 1,
-                                                      child: Container(
-                                                        width: 12,
-                                                        height: 12,
-                                                        decoration: BoxDecoration(
-                                                          color: unreadCount > 0
-                                                              ? kWhatsappGreen
-                                                              : const Color(0xFFD1D5DB),
-                                                          shape: BoxShape.circle,
-                                                          border: Border.all(
-                                                            color: Colors.white,
-                                                            width: 2,
+                                            child: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                GestureDetector(
+                                                  onTap: openConversation,
+                                                  child: Stack(
+                                                    children: [
+                                                      CircleAvatar(
+                                                        radius: 27,
+                                                        backgroundColor:
+                                                            const Color(
+                                                                0xFFEAF2FF),
+                                                        foregroundColor:
+                                                            kPrestoBlue,
+                                                        child: Text(
+                                                          title.isNotEmpty
+                                                              ? title[0]
+                                                                  .toUpperCase()
+                                                              : '?',
+                                                          style:
+                                                              const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.w800,
+                                                            fontSize: 18,
                                                           ),
                                                         ),
                                                       ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Row(
-                                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                                      children: [
-                                                        Expanded(
-                                                          child: Text(
-                                                            title,
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: kPrestoCardTitleStyle.copyWith(
-                                                              fontWeight: unreadCount > 0
-                                                                  ? FontWeight.w800
-                                                                  : FontWeight.w700,
-                                                              color: const Color(0xFF111827),
+                                                      Positioned(
+                                                        right: 1,
+                                                        bottom: 1,
+                                                        child: Container(
+                                                          width: 12,
+                                                          height: 12,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: unreadCount >
+                                                                    0
+                                                                ? kWhatsappGreen
+                                                                : const Color(
+                                                                    0xFFD1D5DB),
+                                                            shape:
+                                                                BoxShape.circle,
+                                                            border: Border.all(
+                                                              color:
+                                                                  Colors.white,
+                                                              width: 2,
                                                             ),
                                                           ),
                                                         ),
-                                                        const SizedBox(width: 8),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Row(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Expanded(
+                                                            child: Text(
+                                                              title,
+                                                              maxLines: 1,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style:
+                                                                  kPrestoCardTitleStyle
+                                                                      .copyWith(
+                                                                fontWeight: unreadCount >
+                                                                        0
+                                                                    ? FontWeight
+                                                                        .w800
+                                                                    : FontWeight
+                                                                        .w700,
+                                                                color: const Color(
+                                                                    0xFF111827),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 8),
+                                                          Text(
+                                                            _formatTimestamp(
+                                                                lastDate),
+                                                            style:
+                                                                kPrestoMetaTextStyle
+                                                                    .copyWith(
+                                                              color: unreadCount >
+                                                                      0
+                                                                  ? kWhatsappGreen
+                                                                  : const Color(
+                                                                      0xFF9CA3AF),
+                                                              fontWeight:
+                                                                  unreadCount >
+                                                                          0
+                                                                      ? FontWeight
+                                                                          .w700
+                                                                      : FontWeight
+                                                                          .w500,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      if (offerTitle
+                                                              .isNotEmpty &&
+                                                          offerTitle !=
+                                                              title) ...[
+                                                        const SizedBox(
+                                                            height: 2),
                                                         Text(
-                                                          _formatTimestamp(lastDate),
-                                                          style: kPrestoMetaTextStyle.copyWith(
-                                                            color: unreadCount > 0
-                                                                ? kWhatsappGreen
-                                                                : const Color(0xFF9CA3AF),
-                                                            fontWeight: unreadCount > 0
-                                                                ? FontWeight.w700
-                                                                : FontWeight.w500,
+                                                          offerTitle,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style:
+                                                              kPrestoMetaTextStyle
+                                                                  .copyWith(
+                                                            color: const Color(
+                                                                0xFF6B7280),
+                                                            fontWeight:
+                                                                FontWeight.w600,
                                                           ),
                                                         ),
                                                       ],
-                                                    ),
-                                                    if (offerTitle.isNotEmpty && offerTitle != title) ...[
-                                                      const SizedBox(height: 2),
+                                                      const SizedBox(height: 5),
                                                       Text(
-                                                        offerTitle,
+                                                        preview,
                                                         maxLines: 1,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        style: kPrestoMetaTextStyle.copyWith(
-                                                          color: const Color(0xFF6B7280),
-                                                          fontWeight: FontWeight.w600,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style:
+                                                            kPrestoBodyTextStyle
+                                                                .copyWith(
+                                                          color: unreadCount > 0
+                                                              ? const Color(
+                                                                  0xFF111827)
+                                                              : const Color(
+                                                                  0xFF6B7280),
+                                                          fontWeight:
+                                                              unreadCount > 0
+                                                                  ? FontWeight
+                                                                      .w600
+                                                                  : FontWeight
+                                                                      .w500,
+                                                          fontSize: 14,
                                                         ),
                                                       ),
+                                                      if (archived ||
+                                                          blocked) ...[
+                                                        const SizedBox(
+                                                            height: 6),
+                                                        Wrap(
+                                                          spacing: 6,
+                                                          runSpacing: 6,
+                                                          children: [
+                                                            if (archived)
+                                                              _ConversationStateChip(
+                                                                label:
+                                                                    'Archivee',
+                                                                color: const Color(
+                                                                    0xFF6B7280),
+                                                              ),
+                                                            if (blocked)
+                                                              _ConversationStateChip(
+                                                                label: blockedForUser
+                                                                    ? 'Bloquee par vous'
+                                                                    : 'Bloquee',
+                                                                color: const Color(
+                                                                    0xFFB91C1C),
+                                                              ),
+                                                          ],
+                                                        ),
+                                                      ],
                                                     ],
-                                                    const SizedBox(height: 5),
-                                                    Text(
-                                                      preview,
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
-                                                      style: kPrestoBodyTextStyle.copyWith(
-                                                        color: unreadCount > 0
-                                                            ? const Color(0xFF111827)
-                                                            : const Color(0xFF6B7280),
-                                                        fontWeight: unreadCount > 0
-                                                            ? FontWeight.w600
-                                                            : FontWeight.w500,
-                                                        fontSize: 14,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.end,
+                                                  children: [
+                                                    PopupMenuButton<
+                                                        _ConversationMenuAction>(
+                                                      tooltip:
+                                                          'Actions conversation',
+                                                      onSelected: (action) =>
+                                                          _handleConversationAction(
+                                                        conversationId:
+                                                            conversation.id,
+                                                        action: action,
+                                                      ),
+                                                      itemBuilder: (context) =>
+                                                          [
+                                                        PopupMenuItem<
+                                                            _ConversationMenuAction>(
+                                                          value: archived
+                                                              ? _ConversationMenuAction
+                                                                  .unarchive
+                                                              : _ConversationMenuAction
+                                                                  .archive,
+                                                          child: Text(
+                                                            archived
+                                                                ? 'Restaurer'
+                                                                : 'Archiver',
+                                                          ),
+                                                        ),
+                                                        PopupMenuItem<
+                                                            _ConversationMenuAction>(
+                                                          value: blockedForUser
+                                                              ? _ConversationMenuAction
+                                                                  .unblock
+                                                              : _ConversationMenuAction
+                                                                  .block,
+                                                          child: Text(
+                                                            blockedForUser
+                                                                ? 'Debloquer'
+                                                                : 'Bloquer',
+                                                          ),
+                                                        ),
+                                                        const PopupMenuItem<
+                                                            _ConversationMenuAction>(
+                                                          value:
+                                                              _ConversationMenuAction
+                                                                  .delete,
+                                                          child: Text(
+                                                            'Supprimer',
+                                                            style: TextStyle(
+                                                                color:
+                                                                    Colors.red),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                      child: const Padding(
+                                                        padding:
+                                                            EdgeInsets.all(4),
+                                                        child: Icon(
+                                                          Icons
+                                                              .more_horiz_rounded,
+                                                          color:
+                                                              Color(0xFF9CA3AF),
+                                                        ),
                                                       ),
                                                     ),
-                                                    if (archived || blocked) ...[
-                                                      const SizedBox(height: 6),
-                                                      Wrap(
-                                                        spacing: 6,
-                                                        runSpacing: 6,
-                                                        children: [
-                                                          if (archived)
-                                                            _ConversationStateChip(
-                                                              label: 'Archivee',
-                                                              color: const Color(0xFF6B7280),
-                                                            ),
-                                                          if (blocked)
-                                                            _ConversationStateChip(
-                                                              label: blockedForUser
-                                                                  ? 'Bloquee par vous'
-                                                                  : 'Bloquee',
-                                                              color: const Color(0xFFB91C1C),
-                                                            ),
-                                                        ],
+                                                    if (unreadCount > 0) ...[
+                                                      const SizedBox(
+                                                          height: 10),
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 3,
+                                                        ),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: kWhatsappGreen,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      999),
+                                                        ),
+                                                        child: Text(
+                                                          '$unreadCount',
+                                                          style:
+                                                              const TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
                                                       ),
                                                     ],
                                                   ],
                                                 ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Column(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                crossAxisAlignment: CrossAxisAlignment.end,
-                                                children: [
-                                                  PopupMenuButton<_ConversationMenuAction>(
-                                                    tooltip: 'Actions conversation',
-                                                    onSelected: (action) => _handleConversationAction(
-                                                      conversationId: conversation.id,
-                                                      action: action,
-                                                    ),
-                                                    itemBuilder: (context) => [
-                                                      PopupMenuItem<_ConversationMenuAction>(
-                                                        value: archived
-                                                            ? _ConversationMenuAction.unarchive
-                                                            : _ConversationMenuAction.archive,
-                                                        child: Text(
-                                                          archived ? 'Restaurer' : 'Archiver',
-                                                        ),
-                                                      ),
-                                                      PopupMenuItem<_ConversationMenuAction>(
-                                                        value: blockedForUser
-                                                            ? _ConversationMenuAction.unblock
-                                                            : _ConversationMenuAction.block,
-                                                        child: Text(
-                                                          blockedForUser
-                                                              ? 'Debloquer'
-                                                              : 'Bloquer',
-                                                        ),
-                                                      ),
-                                                      const PopupMenuItem<_ConversationMenuAction>(
-                                                        value: _ConversationMenuAction.delete,
-                                                        child: Text(
-                                                          'Supprimer',
-                                                          style: TextStyle(color: Colors.red),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                    child: const Padding(
-                                                      padding: EdgeInsets.all(4),
-                                                      child: Icon(
-                                                        Icons.more_horiz_rounded,
-                                                        color: Color(0xFF9CA3AF),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  if (unreadCount > 0) ...[
-                                                    const SizedBox(height: 10),
-                                                    Container(
-                                                      padding: const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 3,
-                                                      ),
-                                                      decoration: BoxDecoration(
-                                                        color: kWhatsappGreen,
-                                                        borderRadius: BorderRadius.circular(999),
-                                                      ),
-                                                      child: Text(
-                                                        '$unreadCount',
-                                                        style: const TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 12,
-                                                          fontWeight: FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ],
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              },
+                                  );
+                                },
                               ),
                             ),
                           ],

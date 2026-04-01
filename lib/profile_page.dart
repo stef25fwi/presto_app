@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'app/presto_overlay_theme.dart';
 import 'pages/pro_profile_page.dart';
 import 'services/email_action_service.dart';
 import 'services/notification_service.dart';
@@ -34,7 +35,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   StreamSubscription<User?>? _authSub;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileSub;
   bool _isLoading = false;
+  bool _isProfileHydrating = false;
+  bool _isApplyingProfileData = false;
+  String? _activeProfileUid;
 
   // Controllers pour les formulaires
   final _formKeyAuth = GlobalKey<FormState>();
@@ -48,6 +53,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _cityCtrl = TextEditingController();
   final TextEditingController _cpCtrl = TextEditingController();
   final TextEditingController _phoneCtrl = TextEditingController();
+  final Set<String> _dirtyProfileFields = <String>{};
 
   bool get _isAppleSignInSupported =>
       !kIsWeb &&
@@ -106,13 +112,17 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
+    _registerProfileFieldListeners();
     _authSub = _auth.authStateChanges().listen((user) {
       final email = user?.email;
       if (email != null && email.isNotEmpty && _emailCtrl.text != email) {
         _emailCtrl.text = email;
       }
       if (user != null) {
+        _bindProfile(user);
         _loadNotificationPreferences(user.uid);
+      } else {
+        _unbindProfile();
       }
     });
 
@@ -150,6 +160,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void dispose() {
     _authSub?.cancel();
+    _profileSub?.cancel();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _passwordConfirmCtrl.dispose();
@@ -158,6 +169,165 @@ class _ProfilePageState extends State<ProfilePage> {
     _cpCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
+  }
+
+  void _registerProfileFieldListeners() {
+    _nameCtrl.addListener(() => _markProfileFieldDirty('name'));
+    _cityCtrl.addListener(() => _markProfileFieldDirty('city'));
+    _cpCtrl.addListener(() => _markProfileFieldDirty('postalCode'));
+    _phoneCtrl.addListener(() => _markProfileFieldDirty('phone'));
+    _emailCtrl.addListener(() => _markProfileFieldDirty('email'));
+  }
+
+  void _markProfileFieldDirty(String field) {
+    if (_isApplyingProfileData) {
+      return;
+    }
+    _dirtyProfileFields.add(field);
+  }
+
+  void _bindProfile(User user) {
+    if (_activeProfileUid == user.uid && _profileSub != null) {
+      return;
+    }
+
+    _profileSub?.cancel();
+    _activeProfileUid = user.uid;
+    _dirtyProfileFields.clear();
+    setState(() {
+      _isProfileHydrating = true;
+    });
+
+    _profileSub = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .snapshots()
+        .listen(
+      (snapshot) {
+        if (!mounted) return;
+        setState(() {
+          _applyProfileData(user, snapshot.data());
+          _isProfileHydrating = false;
+        });
+      },
+      onError: (_) {
+        if (!mounted) return;
+        setState(() {
+          _applyProfileData(user, null);
+          _isProfileHydrating = false;
+        });
+      },
+    );
+  }
+
+  void _unbindProfile() {
+    _profileSub?.cancel();
+    _profileSub = null;
+    _activeProfileUid = null;
+    _dirtyProfileFields.clear();
+    _isApplyingProfileData = true;
+    try {
+      _nameCtrl.clear();
+      _cityCtrl.clear();
+      _cpCtrl.clear();
+      _phoneCtrl.clear();
+      _emailCtrl.clear();
+      _accountType = 'Particulier';
+      _favoriteCategories
+        ..clear()
+        ..addAll({
+          'Jardinage': ['Tondeuse', 'Élagage'],
+          'Peinture': ['Intérieur'],
+        });
+    } finally {
+      _isApplyingProfileData = false;
+    }
+    if (mounted) {
+      setState(() {
+        _isProfileHydrating = false;
+      });
+    }
+  }
+
+  void _applyProfileData(User user, Map<String, dynamic>? data) {
+    final profileData = data ?? const <String, dynamic>{};
+    final profileName = [
+      profileData['pseudo'],
+      profileData['displayName'],
+      profileData['display_name'],
+      profileData['name'],
+      user.displayName,
+    ].map((value) => value?.toString().trim() ?? '').firstWhere(
+          (value) => value.isNotEmpty,
+          orElse: () => '',
+        );
+    final profileCity = [
+      profileData['city'],
+      profileData['location'],
+    ].map((value) => value?.toString().trim() ?? '').firstWhere(
+          (value) => value.isNotEmpty,
+          orElse: () => '',
+        );
+    final profilePostalCode = [
+      profileData['postalCode'],
+      profileData['cp'],
+    ].map((value) => value?.toString().trim() ?? '').firstWhere(
+          (value) => value.isNotEmpty,
+          orElse: () => '',
+        );
+    final profilePhone = [
+      profileData['phone'],
+      profileData['phoneNumber'],
+      profileData['phone_number'],
+    ].map((value) => value?.toString().trim() ?? '').firstWhere(
+          (value) => value.isNotEmpty,
+          orElse: () => '',
+        );
+    final profileEmail = [
+      user.email,
+      profileData['email'],
+    ].map((value) => value?.toString().trim() ?? '').firstWhere(
+          (value) => value.isNotEmpty,
+          orElse: () => '',
+        );
+    final profileAccountType =
+        (profileData['accountType'] ?? '').toString().trim();
+
+    _isApplyingProfileData = true;
+    try {
+      _setControllerText(_nameCtrl, 'name', profileName);
+      _setControllerText(_cityCtrl, 'city', profileCity);
+      _setControllerText(_cpCtrl, 'postalCode', profilePostalCode);
+      _setControllerText(_phoneCtrl, 'phone', profilePhone);
+      _setControllerText(_emailCtrl, 'email', profileEmail);
+
+      if (!_dirtyProfileFields.contains('accountType') &&
+          profileAccountType.isNotEmpty) {
+        _accountType = profileAccountType;
+      }
+    } finally {
+      _isApplyingProfileData = false;
+    }
+  }
+
+  void _setControllerText(
+    TextEditingController controller,
+    String field,
+    String value,
+  ) {
+    final normalized = value.trim();
+    if (_dirtyProfileFields.contains(field) &&
+        controller.text.trim().isNotEmpty) {
+      return;
+    }
+    if (controller.text == normalized) {
+      return;
+    }
+    controller.value = controller.value.copyWith(
+      text: normalized,
+      selection: TextSelection.collapsed(offset: normalized.length),
+      composing: TextRange.empty,
+    );
   }
 
   Future<void> _loadNotificationPreferences(String userId) async {
@@ -399,6 +569,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'pseudo': displayName,
+        'displayName': displayName,
         'city': _cityCtrl.text.trim(),
         'postalCode': _cpCtrl.text.trim(),
         'phone': _phoneCtrl.text.trim(),
@@ -429,6 +600,8 @@ class _ProfilePageState extends State<ProfilePage> {
         },
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+
+      _dirtyProfileFields.clear();
 
       await FirebaseFirestore.instance
           .collection('notification_preferences')
@@ -516,10 +689,14 @@ class _ProfilePageState extends State<ProfilePage> {
     final subjectCtrl = TextEditingController();
     final messageCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    final overlayTheme = context.prestoOverlayTheme;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: overlayTheme.surfaceColor,
+        surfaceTintColor: overlayTheme.surfaceTintColor,
+        shape: overlayTheme.dialogShape,
         title: const Text(
           'Contacter le support',
           style: kPrestoSectionTitleStyle,
@@ -627,10 +804,14 @@ class _ProfilePageState extends State<ProfilePage> {
     final newPasswordCtrl = TextEditingController();
     final confirmPasswordCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    final overlayTheme = context.prestoOverlayTheme;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: overlayTheme.surfaceColor,
+        surfaceTintColor: overlayTheme.surfaceTintColor,
+        shape: overlayTheme.dialogShape,
         title: const Text(
           'Changer mon mot de passe',
           style: kPrestoSectionTitleStyle,
@@ -766,9 +947,13 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _onDeleteAccountTapped() async {
+    final overlayTheme = context.prestoOverlayTheme;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: overlayTheme.surfaceColor,
+        surfaceTintColor: overlayTheme.surfaceTintColor,
+        shape: overlayTheme.dialogShape,
         title: const Text(
           'Supprimer mon compte',
           style: kPrestoSectionTitleStyle,
@@ -949,7 +1134,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     padding:
                         EdgeInsets.fromLTRB(16, 16, 16, isLoggedIn ? 28 : 72),
                     child: isLoggedIn
-                        ? _buildProfileContent(colorScheme, isDark, user)
+                        ? (_isProfileHydrating
+                            ? _buildProfileLoadingContent(colorScheme)
+                            : _buildProfileContent(colorScheme, isDark, user))
                         : _buildAuthContent(colorScheme, isDark),
                   ),
                 ),
@@ -1294,6 +1481,35 @@ class _ProfilePageState extends State<ProfilePage> {
         const SizedBox(height: 24),
         _buildPrestoPromoCard(colorScheme),
       ],
+    );
+  }
+
+  Widget _buildProfileLoadingContent(ColorScheme colorScheme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.8,
+                color: kIliPrestoOrange,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Chargement du profil…',
+              style: kPrestoBodyTextStyle.copyWith(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1667,6 +1883,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           onChanged: (value) {
                             if (value != null) {
                               setState(() {
+                                _dirtyProfileFields.add('accountType');
                                 _accountType = value;
                               });
                             }
@@ -2170,8 +2387,11 @@ class _ProfilePageState extends State<ProfilePage> {
     String? labelText,
     IconData? prefixIcon,
   }) {
+    final overlayTheme = context.prestoOverlayTheme;
     return DropdownButtonFormField<T>(
       initialValue: value,
+      dropdownColor: overlayTheme.surfaceColor,
+      borderRadius: overlayTheme.popupRadius,
       decoration: InputDecoration(
         labelText: labelText,
         labelStyle: const TextStyle(
@@ -2283,9 +2503,13 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showAddCategoryDialog() {
+    final overlayTheme = context.prestoOverlayTheme;
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        backgroundColor: overlayTheme.surfaceColor,
+        surfaceTintColor: overlayTheme.surfaceTintColor,
+        shape: overlayTheme.dialogShape,
         title: const Text(
           'Ajouter une catégorie',
           style: kPrestoSectionTitleStyle,
@@ -2316,6 +2540,11 @@ class _ProfilePageState extends State<ProfilePage> {
                       return CheckboxListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
+                        activeColor: overlayTheme.selectionAccentColor,
+                        checkColor: Colors.white,
+                        tileColor: isFavored
+                            ? overlayTheme.selectionFillColor
+                            : Colors.transparent,
                         title: Text(sub,
                             style: kPrestoMetaTextStyle.copyWith(fontSize: 13)),
                         value: isFavored,

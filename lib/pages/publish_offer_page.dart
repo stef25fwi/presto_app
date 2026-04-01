@@ -1,5 +1,4 @@
-import 'package:flutter/foundation.dart'
-    show kIsWeb, debugPrint;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:typed_data';
@@ -30,7 +29,8 @@ const kPrestoBeige = Colors.white;
 const kFieldFill = Colors.white;
 const kBorder = Color(0xFFE5E7EB);
 
-@Deprecated('Prototype legacy non utilisé. Utiliser PublishOfferPage dans lib/main.dart.')
+@Deprecated(
+    'Prototype legacy non utilisé. Utiliser PublishOfferPage dans lib/main.dart.')
 class LegacyPublishOfferPage extends StatefulWidget {
   final CityRepoCompact? repo;
 
@@ -206,7 +206,8 @@ class _LegacyPublishOfferPageState extends State<LegacyPublishOfferPage>
 
     if (includeExistingDescription) {
       final currentDescription = _descCtrl.text.trim();
-      if (currentDescription != transcriptText && currentDescription != typedHint) {
+      if (currentDescription != transcriptText &&
+          currentDescription != typedHint) {
         addBlock('Description actuelle', currentDescription);
       }
     }
@@ -243,7 +244,7 @@ class _LegacyPublishOfferPageState extends State<LegacyPublishOfferPage>
     final currentDesc = _descCtrl.text.trim();
     final transcriptTrim = (transcript ?? '').trim();
     final canReplaceDesc = replaceExistingTitleDescription ||
-      currentDesc.isEmpty ||
+        currentDesc.isEmpty ||
         (transcriptTrim.isNotEmpty && currentDesc == transcriptTrim);
     if (nextDesc.isNotEmpty && canReplaceDesc) {
       _descCtrl.text = nextDesc;
@@ -776,9 +777,8 @@ class _LegacyPublishOfferPageState extends State<LegacyPublishOfferPage>
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
-                          onPressed: (_aiLoading || _recording)
-                              ? null
-                              : _onFillWithAI,
+                          onPressed:
+                              (_aiLoading || _recording) ? null : _onFillWithAI,
                           icon: const Icon(Icons.auto_awesome_rounded),
                           label: const Text('Remplir à partir du texte'),
                         ),
@@ -850,7 +850,7 @@ class _LegacyPublishOfferPageState extends State<LegacyPublishOfferPage>
                 const SizedBox(height: 12),
                 PhoneInputFieldCompact(
                   controller: _phoneCtrl,
-                  labelText: 'Téléphone (optionnel)',
+                  labelText: 'Téléphone de contact (optionnel)',
                   hintText: '612345678',
                   focusNode: _phoneFocus,
                   onCountryCodeChanged: (code) => _phoneCountryCode = code,
