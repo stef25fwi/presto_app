@@ -35,6 +35,47 @@ class AccountProfileFormSection extends StatefulWidget {
 }
 
 class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
+  String _countryCodeForDept(String dept) {
+    if (dept.startsWith('971')) return '+590';
+    if (dept.startsWith('972')) return '+596';
+    if (dept.startsWith('973')) return '+594';
+    if (dept.startsWith('974')) return '+262';
+    if (dept.startsWith('976')) return '+262';
+    if (dept.startsWith('987')) return '+689';
+    return '+33';
+  }
+
+  String? _extractPostalCodeFromCityValue(String value) {
+    final match =
+        RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(value);
+    return match?.group(1);
+  }
+
+  void _syncPhoneCountryCodeFromCityValue(String value) {
+    final trimmed = value.trim();
+    String? dept;
+
+    final postalCode = _extractPostalCodeFromCityValue(trimmed);
+    if (postalCode != null && postalCode.isNotEmpty) {
+      dept = (postalCode.startsWith('97') || postalCode.startsWith('98'))
+          ? postalCode.substring(0, 3)
+          : postalCode.substring(0, 2);
+    } else if (trimmed.length >= 2) {
+      final sanitizedCity = trimmed.replaceAll(RegExp(r'\(.*?\)'), '').trim();
+      if (sanitizedCity.length >= 2) {
+        final matches = CitySearch.instance.search(sanitizedCity, limit: 1);
+        if (matches.isNotEmpty) {
+          dept = matches.first.dept;
+        }
+      }
+    }
+
+    final nextCode = _countryCodeForDept(dept ?? '');
+    if (nextCode != widget.phoneCountryCode) {
+      widget.onPhoneCountryCodeChanged(nextCode);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -92,7 +133,9 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                       return CitySearch.instance.search(query, limit: 10);
                     },
                     onSelected: (CityRecord city) {
-                      widget.cityController.text = '${city.name} (${city.cp})';
+                      final nextValue = '${city.name} (${city.cp})';
+                      widget.cityController.text = nextValue;
+                      _syncPhoneCountryCodeFromCityValue(nextValue);
                     },
                     fieldViewBuilder: (
                       context,
@@ -124,6 +167,7 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                         ),
                         onChanged: (value) {
                           widget.cityController.text = value;
+                          _syncPhoneCountryCodeFromCityValue(value);
                         },
                       );
                     },
@@ -164,7 +208,7 @@ class _AccountProfileFormSectionState extends State<AccountProfileFormSection> {
                   child: PhoneInputFieldCompact(
                     controller: widget.phoneController,
                     labelText: 'Téléphone',
-                    hintText: '690123456',
+                    hintText: phoneHintForCountryCode(widget.phoneCountryCode),
                     initialCountryCode: widget.phoneCountryCode,
                     onCountryCodeChanged: widget.onPhoneCountryCodeChanged,
                   ),

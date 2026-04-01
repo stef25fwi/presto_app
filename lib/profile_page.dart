@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'app/presto_overlay_theme.dart';
 import 'pages/pro_profile_page.dart';
+import 'services/city_search.dart';
 import 'services/email_action_service.dart';
 import 'services/notification_service.dart';
 import 'services/app_route_parser.dart';
@@ -174,8 +175,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _registerProfileFieldListeners() {
     _nameCtrl.addListener(() => _markProfileFieldDirty('name'));
-    _cityCtrl.addListener(() => _markProfileFieldDirty('city'));
-    _cpCtrl.addListener(() => _markProfileFieldDirty('postalCode'));
+    _cityCtrl.addListener(() {
+      _markProfileFieldDirty('city');
+      _syncPhoneCountryCodeFromLocationFields();
+    });
+    _cpCtrl.addListener(() {
+      _markProfileFieldDirty('postalCode');
+      _syncPhoneCountryCodeFromLocationFields();
+    });
     _phoneCtrl.addListener(() => _markProfileFieldDirty('phone'));
     _emailCtrl.addListener(() => _markProfileFieldDirty('email'));
   }
@@ -185,6 +192,55 @@ class _ProfilePageState extends State<ProfilePage> {
       return;
     }
     _dirtyProfileFields.add(field);
+  }
+
+  String _countryCodeForDept(String dept) {
+    if (dept.startsWith('971')) return '+590';
+    if (dept.startsWith('972')) return '+596';
+    if (dept.startsWith('973')) return '+594';
+    if (dept.startsWith('974')) return '+262';
+    if (dept.startsWith('976')) return '+262';
+    if (dept.startsWith('987')) return '+689';
+    return '+33';
+  }
+
+  String? _extractPostalCodeFromLocationValue(String value) {
+    final match =
+        RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(value);
+    return match?.group(1);
+  }
+
+  void _syncPhoneCountryCodeFromLocationFields() {
+    if (_isApplyingProfileData) {
+      return;
+    }
+
+    String? dept;
+    final postalCode = _cpCtrl.text.trim().isNotEmpty
+        ? _cpCtrl.text.trim()
+        : (_extractPostalCodeFromLocationValue(_cityCtrl.text) ?? '');
+
+    if (postalCode.isNotEmpty) {
+      dept = (postalCode.startsWith('97') || postalCode.startsWith('98'))
+          ? postalCode.substring(0, 3)
+          : postalCode.substring(0, 2);
+    } else {
+      final sanitizedCity =
+          _cityCtrl.text.replaceAll(RegExp(r'\(.*?\)'), '').trim();
+      if (sanitizedCity.length >= 2) {
+        final matches = CitySearch.instance.search(sanitizedCity, limit: 1);
+        if (matches.isNotEmpty) {
+          dept = matches.first.dept;
+        }
+      }
+    }
+
+    final nextCode = _countryCodeForDept(dept ?? '');
+    if (nextCode != _phoneCountryCode && mounted) {
+      setState(() {
+        _phoneCountryCode = nextCode;
+      });
+    }
   }
 
   void _bindProfile(User user) {
@@ -1929,7 +1985,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     controller: _phoneCtrl,
                     initialCountryCode: _phoneCountryCode,
                     labelText: 'Téléphone',
-                    hintText: '612345678',
+                    hintText: phoneHintForCountryCode(_phoneCountryCode),
                     onCountryCodeChanged: (code) {
                       if (_phoneCountryCode == code) return;
                       setState(() {
