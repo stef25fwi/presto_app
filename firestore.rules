@@ -236,6 +236,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /subscriptions/{subscriptionId} {
+      allow read: if isMarketplaceAdmin();
+      allow write: if false;
+    }
+
+    match /billing_invoices/{invoiceId} {
+      allow read: if isMarketplaceAdmin();
+      allow write: if false;
+    }
+
     match /notification_preferences/{userId} {
       allow read: if isSignedIn() && userId == uid();
       allow create: if isSignedIn()
