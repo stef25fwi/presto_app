@@ -56,7 +56,6 @@ import 'widgets/account_build_version_panel.dart';
 import 'widgets/account_profile_sections.dart';
 import 'widgets/entrepreneur_toolbox_slide.dart';
 import 'widgets/home_bottom_nav_item.dart';
-import 'widgets/ilipresto_splash_screen_classic.dart';
 import 'widgets/presto_info_icon_animated.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/phone_input_field.dart';
@@ -1228,7 +1227,10 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
   Timer? _navTimer;
 
   @override
@@ -1238,11 +1240,20 @@ class _SplashScreenState extends State<SplashScreen> {
     // Splash : status bar + barre de navigation système en orange.
     SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoOrange));
 
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    )..repeat(reverse: true);
+
+    _scaleAnimation = Tween<double>(begin: 0.94, end: 1.06).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
     // Sur Web, vérifier d'abord le redirect Google Sign-In
     if (kIsWeb) {
       _checkGoogleRedirectAndNavigate();
     } else {
-      _scheduleNavigation(const Duration(milliseconds: 2200));
+      _scheduleNavigation(const Duration(milliseconds: 3500));
     }
   }
 
@@ -1267,18 +1278,18 @@ class _SplashScreenState extends State<SplashScreen> {
       } else {
         debugPrint('ℹ️ [SPLASH] No redirect result, normal app start');
         // Pas de redirect, navigation normale après splash
-        _scheduleNavigation(const Duration(milliseconds: 2200));
+        _scheduleNavigation(const Duration(milliseconds: 3500));
       }
     } on FirebaseAuthException catch (e) {
       debugPrint('❌ [SPLASH] FirebaseAuthException during redirect check');
       debugPrint('❌ [SPLASH] Code: ${e.code}');
       debugPrint('❌ [SPLASH] Message: ${e.message}');
       // Erreur d'auth, mais on continue quand même vers HomePage
-      _scheduleNavigation(const Duration(milliseconds: 2200));
+      _scheduleNavigation(const Duration(milliseconds: 3500));
     } catch (e) {
       debugPrint('❌ [SPLASH] Unexpected error: $e');
       // Erreur inattendue, navigation normale
-      _scheduleNavigation(const Duration(milliseconds: 2200));
+      _scheduleNavigation(const Duration(milliseconds: 3500));
     }
   }
 
@@ -1292,6 +1303,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   void dispose() {
+    _controller.dispose();
     _navTimer?.cancel();
     // Sécurité: si le widget est détruit autrement, on remet le style global.
     SystemChrome.setSystemUIOverlayStyle(prestoOverlayStyleFor(kPrestoBlue));
@@ -1302,9 +1314,95 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: prestoOverlayStyleFor(kPrestoOrange),
-      child: const IliprestoSplashScreenClassic(
-        nextPage: HomePage(),
-        autoNavigate: false,
+      child: Scaffold(
+        backgroundColor: kPrestoOrange,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: const Text(
+                      'iliprestō',
+                      style: TextStyle(
+                        fontSize: 54,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 1.3,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  const Text(
+                    'Trouvez un prestataire\nillico presto!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      height: 1.25,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 46),
+                  SizedBox(
+                    width: 260,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white, width: 2),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                          horizontal: 8,
+                        ),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      onPressed: () =>
+                          _navigateTo(const HomePage(initialIndex: 2)),
+                      child: const Text(
+                        "J’offre un job",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: 260,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                          horizontal: 8,
+                        ),
+                        backgroundColor: kPrestoBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      onPressed: () =>
+                          _navigateTo(const HomePage(initialIndex: 1)),
+                      child: const Text(
+                        'Je consulte les offres',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -2458,8 +2556,7 @@ class _HomePageState extends State<HomePage>
           resizeToAvoidBottomInset: false,
           extendBody:
               true, // Permettre au contenu de s'étendre sous la bottom bar
-          backgroundColor:
-              Colors.white, // Fond blanc pour éviter le bandeau beige
+          backgroundColor: Colors.white,
           body: SafeArea(
             bottom: false,
             child: Column(
@@ -2610,46 +2707,65 @@ class _HomePageState extends State<HomePage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Ligne du haut : info + logo
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onLongPress: _seedSampleOffers,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 46,
-                          height: 40,
-                          child: Image.asset(
-                            'assets/images/logowebp.webp',
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                        Transform.translate(
-                          offset: const Offset(-4, 0),
-                          child: const Text(
-                            "iliprestō",
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.w900,
-                              color: kPrestoOrange,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 2, 10, 0),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 14),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0x331A73E8),
+                        Color(0x141A73E8),
+                        Color(0x0DFFFFFF),
                       ],
                     ),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: const Color(0x331A73E8),
+                    ),
                   ),
-                ],
-              ),
-
-              const SizedBox(height: 8),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: _buildSmartSearchBar(),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onLongPress: _seedSampleOffers,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 46,
+                                  height: 40,
+                                  child: Image.asset(
+                                    'assets/images/logowebp.webp',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                Transform.translate(
+                                  offset: const Offset(-4, 0),
+                                  child: const Text(
+                                    "iliprestō",
+                                    style: TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w900,
+                                      color: kPrestoOrange,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _buildSmartSearchBar(),
+                    ],
+                  ),
+                ),
               ),
 
               const SizedBox(height: 14),
@@ -2662,11 +2778,21 @@ class _HomePageState extends State<HomePage>
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color: const Color(0x331A73E8),
+                        width: 1.2,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.12),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
+                          color: Colors.black.withOpacity(0.16),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                        BoxShadow(
+                          color: const Color(0x331A73E8),
+                          blurRadius: 26,
+                          spreadRadius: 1,
+                          offset: const Offset(0, 10),
                         ),
                       ],
                     ),
@@ -2895,7 +3021,7 @@ class _HomePageState extends State<HomePage>
 
               _buildHomeCategoriesSection(),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 10),
 
               _buildLatestOffersSection(),
 
@@ -2985,9 +3111,15 @@ class _CategoryChip extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.18),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 14,
+                  offset: const Offset(0, 5),
+                ),
+                BoxShadow(
+                  color: const Color(0x2B1A73E8),
+                  blurRadius: 18,
+                  spreadRadius: 0.5,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
@@ -3010,7 +3142,7 @@ class _CategoryChip extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 12,
-                color: Colors.black87,
+                color: Color(0xFF6B7280),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -5081,7 +5213,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         : '$displayedResultCount annonce${displayedResultCount > 1 ? 's' : ''}';
 
     return Container(
-      color: const Color(0xFFF6F0F2),
+      color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -5212,42 +5344,44 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   Widget build(BuildContext context) {
     final baseTitle = _headerTitle;
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        backgroundColor: _offersBg,
-        body: SafeArea(
-          child: Column(
-            children: [
-              Container(
-                width: double.infinity,
-                height: kToolbarHeight,
-                color: kPrestoOrange,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Center(
-                  child: Text(
-                    baseTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: kPrestoAppBarTitleStyle.copyWith(
-                      color: Colors.white,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: prestoOverlayStyleFor(kPrestoBlue),
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          backgroundColor: _offersBg,
+          body: SafeArea(
+            child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: kToolbarHeight,
+                  color: kPrestoOrange,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(
+                    child: Text(
+                      baseTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: kPrestoAppBarTitleStyle.copyWith(
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              // ✅ Tuiles cliquables pour filtres actifs
-              _buildActiveFilterChips(),
-              _buildFilterPanel(),
-              Expanded(
-                child: StreamBuilder<
-                    List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
-                  stream: _watchCombinedOffers().map((docs) {
-                    PrestoMonitoring.I.trackOffersSnapshot(docs.length);
-                    return docs;
-                  }),
-                  builder: (context, snapshot) {
+                // ✅ Tuiles cliquables pour filtres actifs
+                _buildActiveFilterChips(),
+                _buildFilterPanel(),
+                Expanded(
+                  child: StreamBuilder<
+                      List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+                    stream: _watchCombinedOffers().map((docs) {
+                      PrestoMonitoring.I.trackOffersSnapshot(docs.length);
+                      return docs;
+                    }),
+                    builder: (context, snapshot) {
                     // ✅ Ne plus afficher le loader si on a déjà des données
                     if (snapshot.connectionState == ConnectionState.waiting &&
                         !snapshot.hasData) {
@@ -5498,10 +5632,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                         ),
                       ],
                     );
-                  },
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -10129,6 +10264,8 @@ class _AccountPageState extends State<AccountPage> {
   final TextEditingController _profileCityController = TextEditingController();
   final TextEditingController _profilePhoneController = TextEditingController();
   String _profilePhoneCountryCode = '+33';
+  StreamSubscription<User?>? _profileAuthSub;
+  String? _activeProfileUid;
 
   Set<String> _favoriteCategories = <String>{};
   Set<String> _selectedFavoriteCategories = <String>{};
@@ -10458,6 +10595,9 @@ class _AccountPageState extends State<AccountPage> {
     _profilePseudoController.addListener(_handleProfileCompletenessChanged);
     _profileCityController.addListener(_handleProfileCompletenessChanged);
     _profilePhoneController.addListener(_handleProfileCompletenessChanged);
+    _profileAuthSub = _auth.authStateChanges().listen((user) {
+      unawaited(_handleProfileAuthStateChanged(user));
+    });
 
     // Sur Web, vérifie si l'utilisateur revient d'un redirect Google Sign-In
     if (kIsWeb) {
@@ -10468,6 +10608,54 @@ class _AccountPageState extends State<AccountPage> {
   void _handleProfileCompletenessChanged() {
     if (!mounted) return;
     setState(() {});
+  }
+
+  void _resetProfileState({
+    bool clearControllers = true,
+  }) {
+    _activeProfileUid = null;
+    _profileLoaded = false;
+    _profileLoadRequested = false;
+    _profileLoadError = false;
+    _profileLoadRetries = 0;
+    _isEditingProfile = false;
+    _profilePhoneCountryCode = '+33';
+    _favoriteCategories = <String>{};
+    _selectedFavoriteCategories = <String>{};
+    _selectedFavoriteSubcategories = <String>{};
+    _draftFavoriteSelections = <String>{};
+
+    if (clearControllers) {
+      _profilePseudoController.clear();
+      _profileCityController.clear();
+      _profilePhoneController.clear();
+    }
+  }
+
+  Future<void> _handleProfileAuthStateChanged(User? user) async {
+    if (!mounted) return;
+
+    if (user == null) {
+      setState(() {
+        _resetProfileState();
+      });
+      return;
+    }
+
+    if (_activeProfileUid == user.uid &&
+        (_profileLoaded || _profileLoadRequested)) {
+      return;
+    }
+
+    setState(() {
+      _resetProfileState(clearControllers: false);
+      _activeProfileUid = user.uid;
+      final displayName = user.displayName?.trim() ?? '';
+      _profilePseudoController.text = displayName;
+      _profileLoadRequested = true;
+    });
+
+    await _loadUserProfile(user);
   }
 
   bool _hasProfileValuesInMemory() {
@@ -10600,6 +10788,7 @@ class _AccountPageState extends State<AccountPage> {
     // _emailController.dispose(); // Maintenant géré par PrestoPremiumAuthPage
     // _passwordController.dispose();
     // _passwordConfirmController.dispose();
+    _profileAuthSub?.cancel();
     _profilePseudoController.removeListener(_handleProfileCompletenessChanged);
     _profileCityController.removeListener(_handleProfileCompletenessChanged);
     _profilePhoneController.removeListener(_handleProfileCompletenessChanged);
@@ -11423,11 +11612,11 @@ class _AccountPageState extends State<AccountPage> {
     // Lier les crash reports à l'utilisateur connecté
     CrashlyticsContext.setUserId(user.uid);
 
-    if (!_profileLoaded && !_profileLoadRequested) {
-      _profileLoadRequested = true;
+    if (_activeProfileUid != user.uid ||
+        (!_profileLoaded && !_profileLoadRequested)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _loadUserProfile(user);
+        unawaited(_handleProfileAuthStateChanged(user));
       });
     }
 
@@ -14495,13 +14684,10 @@ class _AutoScrollingOffersCarouselState
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(
+            color: const Color(0x551A73E8),
+            width: 1.1,
+          ),
         ),
         padding: const EdgeInsets.symmetric(
           horizontal: 12,

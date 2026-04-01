@@ -242,6 +242,14 @@
       "problemMatcher": []
     },
     {
+      "label": "add colmit psuh build deploy",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Add Commit Push Build Deploy"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Release: Build Commit Push Deploy",
       "dependsOrder": "sequence",
       "dependsOn": [
