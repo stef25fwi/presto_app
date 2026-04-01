@@ -124,6 +124,13 @@ InputDecoration _buildPhoneDecoration({
     label: label,
     labelText: label == null ? (labelText ?? 'Téléphone') : null,
     hintText: hintText ?? '612345678',
+    hintStyle: ((baseDecoration ?? const InputDecoration()).hintStyle ??
+            const TextStyle())
+        .copyWith(
+      color: const Color(0xFF9CA3AF),
+      fontStyle: FontStyle.italic,
+      fontWeight: FontWeight.w400,
+    ),
     prefixIcon: _PhoneFieldPrefix(
       selectedCountry: selectedCountry,
       onCountryChanged: onCountryChanged,

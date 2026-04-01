@@ -17,7 +17,7 @@ class MessagesPageV2 extends StatelessWidget {
     return ConversationsListPage(
       initialConversationId: initialConversationId,
       initialDraftText: initialDraftText,
-      appBarTitle: 'Mes messages 2',
+      appBarTitle: 'Mes messages',
     );
   }
 }
