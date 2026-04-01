@@ -177,6 +177,18 @@
       "problemMatcher": []
     },
     {
+      "label": "Listings: Create Test Listing With Photo",
+      "type": "shell",
+      "command": "node tools/create_test_listing_with_photo.cjs --image=jobfait.webp",
+      "problemMatcher": []
+    },
+    {
+      "label": "Listings: Delete Test Photo Listings",
+      "type": "shell",
+      "command": "node tools/create_test_listing_with_photo.cjs --delete",
+      "problemMatcher": []
+    },
+    {
       "label": "Release: Messaging + Home Fixes",
       "dependsOrder": "sequence",
       "dependsOn": [
