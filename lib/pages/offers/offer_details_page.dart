@@ -13,6 +13,7 @@ import 'package:presto_app/models/marketplace_report.dart';
 import 'package:presto_app/services/app_route_parser.dart';
 import 'package:presto_app/services/conversation_service.dart';
 import 'package:presto_app/services/marketplace_human_verification.dart';
+import 'package:presto_app/widgets/offer_network_image.dart';
 
 // ─── Data models ─────────────────────────────────────────────────────────────
 
@@ -2323,16 +2324,11 @@ class _OfferImage extends StatelessWidget {
           return errorChild;
         }
 
-        return Image.network(
-          resolvedUrl,
+        return OfferNetworkImage(
+          url: resolvedUrl,
           fit: fit,
-          errorBuilder: (_, __, ___) => errorChild,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) {
-              return child;
-            }
-            return loadingChild ?? errorChild;
-          },
+          errorChild: errorChild,
+          loadingChild: loadingChild,
         );
       },
     );
