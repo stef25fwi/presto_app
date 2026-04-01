@@ -57,14 +57,15 @@ List<String> _collectOfferDetailImageUrls({
     orderedUrls.add(url);
   }
 
-  if (imageUrls is List) {
-    for (final entry in imageUrls) {
+  // Prioriser media[] : c'est la source normalisée la plus fiable côté listing.
+  if (media is List) {
+    for (final entry in media) {
       addUrl(entry);
     }
   }
 
-  if (media is List) {
-    for (final entry in media) {
+  if (imageUrls is List) {
+    for (final entry in imageUrls) {
       addUrl(entry);
     }
   }
@@ -1770,14 +1771,13 @@ class _HeroCard extends StatelessWidget {
           if (data.imageUrls.length > 1)
             Padding(
               padding: EdgeInsets.fromLTRB(
-                compact ? 12 : 16, compact ? 8 : 10, compact ? 12 : 16, 0),
+                  compact ? 12 : 16, compact ? 8 : 10, compact ? 12 : 16, 0),
               child: SizedBox(
                 height: compact ? 56 : 64,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: data.imageUrls.length,
-                  separatorBuilder: (_, __) =>
-                      SizedBox(width: compact ? 6 : 8),
+                  separatorBuilder: (_, __) => SizedBox(width: compact ? 6 : 8),
                   itemBuilder: (context, index) {
                     final isSelected = index == 0;
                     return GestureDetector(
@@ -1786,8 +1786,8 @@ class _HeroCard extends StatelessWidget {
                         width: compact ? 56 : 64,
                         height: compact ? 56 : 64,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(
-                              compact ? 10 : 12),
+                          borderRadius:
+                              BorderRadius.circular(compact ? 10 : 12),
                           border: Border.all(
                             color: isSelected
                                 ? const Color(0xFFFF6A00)
@@ -1796,8 +1796,8 @@ class _HeroCard extends StatelessWidget {
                           ),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(
-                              (compact ? 10 : 12) - 1),
+                          borderRadius:
+                              BorderRadius.circular((compact ? 10 : 12) - 1),
                           child: _OfferImage(
                             rawUrl: data.imageUrls[index],
                             fit: BoxFit.cover,
@@ -1828,102 +1828,103 @@ class _HeroCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-            Text(
-              data.sanitizedTitle.toUpperCase(),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: compact ? 17 : 18,
-                height: 1.0,
-                fontWeight: FontWeight.w800,
-                color: textPrimary,
-                letterSpacing: 0.4,
-              ),
-            ),
-            SizedBox(height: compact ? 6 : 7),
-            Text(
-              locationLine,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: compact ? 12.5 : 13,
-                height: 1.15,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-                letterSpacing: -0.1,
-              ),
-            ),
-            SizedBox(height: compact ? 4 : 5),
-            Text(
-              data.publishedAtExactLabel,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: compact ? 12 : 12.5,
-                height: 1.15,
-                fontWeight: FontWeight.w500,
-                color: textMuted,
-                letterSpacing: -0.05,
-              ),
-            ),
-            SizedBox(height: compact ? 10 : 12),
-            Text(
-              detailsLine,
-              softWrap: true,
-              style: TextStyle(
-                fontSize: compact ? 14 : 15,
-                height: 1.28,
-                fontWeight: FontWeight.w500,
-                color: textPrimary.withOpacity(0.9),
-              ),
-            ),
-            if (data.showPendingPhotoNotice) ...[
-              SizedBox(height: compact ? 10 : 12),
-              _PendingPhotoNotice(
-                compact: compact,
-                isProcessing: data.isMediaStillProcessing,
-                moderationStatus: data.moderationStatus,
-              ),
-            ],
-            SizedBox(height: compact ? 10 : 12),
-            Container(
-              height: 1,
-              color: divider,
-            ),
-            SizedBox(height: compact ? 10 : 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Spacer(),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                Text(
+                  data.sanitizedTitle.toUpperCase(),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: compact ? 17 : 18,
+                    height: 1.0,
+                    fontWeight: FontWeight.w800,
+                    color: textPrimary,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                SizedBox(height: compact ? 6 : 7),
+                Text(
+                  locationLine,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: compact ? 12.5 : 13,
+                    height: 1.15,
+                    fontWeight: FontWeight.w600,
+                    color: textMuted,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+                SizedBox(height: compact ? 4 : 5),
+                Text(
+                  data.publishedAtExactLabel,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: compact ? 12 : 12.5,
+                    height: 1.15,
+                    fontWeight: FontWeight.w500,
+                    color: textMuted,
+                    letterSpacing: -0.05,
+                  ),
+                ),
+                SizedBox(height: compact ? 10 : 12),
+                Text(
+                  detailsLine,
+                  softWrap: true,
+                  style: TextStyle(
+                    fontSize: compact ? 14 : 15,
+                    height: 1.28,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary.withOpacity(0.9),
+                  ),
+                ),
+                if (data.showPendingPhotoNotice) ...[
+                  SizedBox(height: compact ? 10 : 12),
+                  _PendingPhotoNotice(
+                    compact: compact,
+                    isProcessing: data.isMediaStillProcessing,
+                    moderationStatus: data.moderationStatus,
+                  ),
+                ],
+                SizedBox(height: compact ? 10 : 12),
+                Container(
+                  height: 1,
+                  color: divider,
+                ),
+                SizedBox(height: compact ? 10 : 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      '${data.price.toStringAsFixed(0)} €',
-                      style: TextStyle(
-                        fontSize: compact ? 28 : 30,
-                        height: 1.0,
-                        fontWeight: FontWeight.w800,
-                        color: orange2,
-                        letterSpacing: -0.6,
-                      ),
-                    ),
-                    SizedBox(height: compact ? 6 : 8),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+                    const Spacer(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        _DelayBadge(text: data.averageDelay, compact: compact),
-                        if (data.isUrgent) ...[
-                          SizedBox(width: compact ? 6 : 8),
-                          _UrgentBadge(compact: compact),
-                        ],
+                        Text(
+                          '${data.price.toStringAsFixed(0)} €',
+                          style: TextStyle(
+                            fontSize: compact ? 28 : 30,
+                            height: 1.0,
+                            fontWeight: FontWeight.w800,
+                            color: orange2,
+                            letterSpacing: -0.6,
+                          ),
+                        ),
+                        SizedBox(height: compact ? 6 : 8),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _DelayBadge(
+                                text: data.averageDelay, compact: compact),
+                            if (data.isUrgent) ...[
+                              SizedBox(width: compact ? 6 : 8),
+                              _UrgentBadge(compact: compact),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
                   ],
                 ),
               ],
-            ),
-          ],
             ),
           ),
         ],
@@ -2237,7 +2238,8 @@ class _FullScreenGalleryPageState extends State<_FullScreenGalleryPage> {
   }
 }
 
-final Map<String, Future<String?>> _offerImageUrlCache = <String, Future<String?>>{};
+final Map<String, Future<String?>> _offerImageUrlCache =
+    <String, Future<String?>>{};
 
 Future<String?> _resolveOfferImageUrl(String rawUrl) {
   final trimmed = rawUrl.trim();
@@ -2260,9 +2262,20 @@ Future<String?> _resolveOfferImageUrl(String rawUrl) {
             .refFromURL(trimmed)
             .getDownloadURL();
       }
-      return await FirebaseStorage.instance.ref().child(trimmed).getDownloadURL();
+
+      final normalizedPath =
+          trimmed.startsWith('/') ? trimmed.substring(1) : trimmed;
+      if (normalizedPath.isEmpty) {
+        return null;
+      }
+
+      return await FirebaseStorage.instance
+          .ref()
+          .child(normalizedPath)
+          .getDownloadURL();
     } catch (_) {
-      return trimmed;
+      // Ne pas retourner un path Storage brut à Image.network.
+      return null;
     }
   });
 }
