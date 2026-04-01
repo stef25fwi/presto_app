@@ -5,7 +5,7 @@ import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/widgets.dart';
 
-final Set<String> _registeredOfferImageViewTypes = <String>{};
+int _offerNetworkImageViewTypeSeed = 0;
 
 Widget buildOfferNetworkImage({
   required String url,
@@ -60,14 +60,9 @@ class _OfferNetworkImageWebState extends State<_OfferNetworkImageWeb> {
   }
 
   void _configureViewType() {
-    _viewType = 'offer-network-image-${widget.url.hashCode}-${widget.fit.name}';
-    if (_registeredOfferImageViewTypes.contains(_viewType)) {
-      return;
-    }
-    _registeredOfferImageViewTypes.add(_viewType);
+    _viewType = 'offer-network-image-${_offerNetworkImageViewTypeSeed++}';
     ui_web.platformViewRegistry.registerViewFactory(_viewType, (int viewId) {
       final image = html.ImageElement()
-        ..src = widget.url
         ..draggable = false
         ..style.width = '100%'
         ..style.height = '100%'
@@ -88,6 +83,18 @@ class _OfferNetworkImageWebState extends State<_OfferNetworkImageWeb> {
           _loaded = false;
         });
       });
+
+      image.src = widget.url;
+
+      if (image.complete == true && image.naturalWidth > 0) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() {
+            _loaded = true;
+            _failed = false;
+          });
+        });
+      }
 
       return image;
     });
