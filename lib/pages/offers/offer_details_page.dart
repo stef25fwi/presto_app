@@ -2251,29 +2251,49 @@ Future<String?> _resolveOfferImageUrl(String rawUrl) {
     return Future<String?>.value('https:$trimmed');
   }
 
-  return _offerImageUrlCache.putIfAbsent(trimmed, () async {
+  final cached = _offerImageUrlCache[trimmed];
+  if (cached != null) {
+    return cached;
+  }
+
+  final future = () async {
     try {
       if (trimmed.startsWith('gs://')) {
-        return await FirebaseStorage.instance
+        final resolved = await FirebaseStorage.instance
             .refFromURL(trimmed)
             .getDownloadURL();
+        if (resolved.trim().isEmpty) {
+          _offerImageUrlCache.remove(trimmed);
+          return null;
+        }
+        return resolved;
       }
 
       final normalizedPath =
           trimmed.startsWith('/') ? trimmed.substring(1) : trimmed;
       if (normalizedPath.isEmpty) {
+        _offerImageUrlCache.remove(trimmed);
         return null;
       }
 
-      return await FirebaseStorage.instance
+      final resolved = await FirebaseStorage.instance
           .ref()
           .child(normalizedPath)
           .getDownloadURL();
+      if (resolved.trim().isEmpty) {
+        _offerImageUrlCache.remove(trimmed);
+        return null;
+      }
+      return resolved;
     } catch (_) {
       // Ne pas retourner un path Storage brut à Image.network.
+      _offerImageUrlCache.remove(trimmed);
       return null;
     }
-  });
+  }();
+
+  _offerImageUrlCache[trimmed] = future;
+  return future;
 }
 
 class _OfferImage extends StatelessWidget {

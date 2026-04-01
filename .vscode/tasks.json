@@ -71,7 +71,7 @@
     {
       "label": "Git: Commit All",
       "type": "shell",
-      "command": "git commit -m \"fix(offers): always hydrate detail from listings by id\"",
+      "command": "git commit -m \"fix(offers): avoid caching failed detail image resolutions\"",
       "problemMatcher": []
     },
     {
