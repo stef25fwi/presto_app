@@ -32,12 +32,23 @@ class PhotoSelectorTile extends StatelessWidget {
       content = Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.add_a_photo_outlined,
-            size: 28,
-            color: Colors.black45,
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _kPrestoOrange.withOpacity(0.25),
+              ),
+            ),
+            child: const Icon(
+              Icons.add_a_photo_outlined,
+              size: 26,
+              color: _kPrestoOrange,
+            ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           Text(
             label,
             style: const TextStyle(
@@ -100,11 +111,18 @@ class PhotoSelectorTile extends StatelessWidget {
           onTap: onTap,
           onLongPress: onLongPress,
           child: Container(
-            height: 90,
+            width: double.infinity,
+            height: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
+              color: localFile == null
+                  ? const Color(0xFFFFF6EF)
+                  : Colors.grey.shade200,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.black12),
+              border: Border.all(
+                color: localFile == null
+                    ? _kPrestoOrange.withOpacity(0.28)
+                    : Colors.black12,
+              ),
             ),
             child: content,
           ),

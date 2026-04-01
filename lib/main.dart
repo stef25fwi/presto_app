@@ -7154,7 +7154,8 @@ class PublishOfferPage extends StatefulWidget {
 class _PublishOfferPageState extends State<PublishOfferPage> {
   static final MarketplacePublishService _marketplacePublishService =
       MarketplacePublishService();
-  static const int _defaultMaxListingPhotos = 10;
+  static const int _publishPhotoHardLimit = 2;
+  static const int _defaultMaxListingPhotos = _publishPhotoHardLimit;
   static const int _minimumMaxListingPhotos = 1;
 
   // ✅ NOUVEAU: Variables pour le streaming
@@ -7874,7 +7875,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final configuredLimit = _marketplaceRemoteConfigService.listingMaxPhotos;
       final normalizedLimit = configuredLimit < _minimumMaxListingPhotos
           ? _minimumMaxListingPhotos
-          : configuredLimit;
+          : configuredLimit > _publishPhotoHardLimit
+              ? _publishPhotoHardLimit
+              : configuredLimit;
       if (!mounted || normalizedLimit == _maxListingPhotos) {
         return;
       }
@@ -9842,7 +9845,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     ),
                     SizedBox(width: 8),
                     Text(
-                      '(optionnel, jusqu\'à $_maxListingPhotos)',
+                      '(optionnel, 2 photos maximum)',
                       style: const TextStyle(
                         fontSize: 13,
                         color: Colors.black54,
@@ -9860,7 +9863,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     crossAxisCount: 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    childAspectRatio: 1.55,
+                    childAspectRatio: 1,
                   ),
                   itemBuilder: (context, index) {
                     final hasPhoto = index < _selectedPhotos.length;
