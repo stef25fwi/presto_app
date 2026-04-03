@@ -1,10 +1,44 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class EmailActionService {
   EmailActionService._();
 
   static final FirebaseFunctions _functions =
       FirebaseFunctions.instanceFor(region: 'europe-west1');
+
+  static Future<bool> syncCurrentUserEmailVerificationState() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      return false;
+    }
+
+    try {
+      await currentUser.reload();
+    } catch (_) {
+      // Best effort: continue with the freshest local state available.
+    }
+
+    final refreshedUser = FirebaseAuth.instance.currentUser ?? currentUser;
+    final email = refreshedUser.email?.trim().toLowerCase() ?? '';
+    if (email.isEmpty || !refreshedUser.emailVerified) {
+      return false;
+    }
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(refreshedUser.uid)
+        .set({
+      'email': email,
+      'emailVerified': true,
+      'email_verified': true,
+      'isEmailVerified': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    return true;
+  }
 
   static Future<void> requestPasswordResetEmail(String email) async {
     final callable = _functions.httpsCallable('requestPasswordResetEmail');
