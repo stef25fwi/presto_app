@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/conversation_summary.dart';
+import 'conversation_discovery.dart';
 import 'conversation_participants.dart';
 
 enum InboxCountType {
@@ -25,11 +26,11 @@ Stream<int> streamInboxCount({
       .doc(normalizedUserId)
       .snapshots()
       .map((snapshot) {
-        final inboxCounts =
-            (snapshot.data()?['inboxCounts'] as Map<String, dynamic>?) ??
-                const <String, dynamic>{};
-        return readInboxCount(inboxCounts, type: type);
-      });
+    final inboxCounts =
+        (snapshot.data()?['inboxCounts'] as Map<String, dynamic>?) ??
+            const <String, dynamic>{};
+    return readInboxCount(inboxCounts, type: type);
+  });
 }
 
 Stream<int> streamVisibleUnreadMessageCount({required String userId}) {
@@ -45,23 +46,18 @@ Stream<int> streamVisibleUnreadMessageCount({required String userId}) {
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
       notificationsSubscription;
   const notificationsFallbackSource = '__notifications__';
+  const startedMessageFallbackSourcePrefix = '__started_messages__:';
+  const sentMessageFieldAliases = <String>['senderId', 'sender_id'];
+  const notificationsFallbackLiveLimit = 60;
+  const notificationsFallbackMaxPages = 4;
+  const startedMessageFallbackLiveLimit = 80;
+  const startedMessageFallbackMaxPages = 4;
 
   void emit() {
-    final mergedConversations = _mergeConversationSummaries(
-      conversationsBySource.values,
+    final unreadMessages = computeVisibleUnreadMessageCount(
+      userId: normalizedUserId,
+      conversationLists: conversationsBySource.values,
     );
-    final unreadMessages = mergedConversations.fold<int>(0, (total, conversation) {
-      if (!conversation.includesUser(normalizedUserId)) {
-        return total;
-      }
-      if (conversation.isArchivedForUser(normalizedUserId)) {
-        return total;
-      }
-      if (!conversation.hasRenderableContent) {
-        return total;
-      }
-      return total + conversation.unreadForUser(normalizedUserId);
-    });
 
     if (!controller.isClosed) {
       controller.add(unreadMessages);
@@ -75,35 +71,69 @@ Stream<int> streamVisibleUnreadMessageCount({required String userId}) {
         .where(participantField, arrayContains: normalizedUserId)
         .snapshots()
         .listen(
-        (snapshot) {
-          conversationsBySource[participantField] = snapshot.docs
-              .map(ConversationSummary.fromFirestore)
-              .toList(growable: false);
-          emit();
-        },
-        onError: (Object error, StackTrace stackTrace) {
-          conversationsBySource[participantField] = const <ConversationSummary>[];
-          emit();
-        },
-      );
+      (snapshot) {
+        conversationsBySource[participantField] = snapshot.docs
+            .map(ConversationSummary.fromFirestore)
+            .toList(growable: false);
+        emit();
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        conversationsBySource[participantField] = const <ConversationSummary>[];
+        emit();
+      },
+    );
   }
 
-  Future<void> refreshNotificationsFallback(
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> notificationDocs,
-  ) async {
-    final conversationIds = <String>[];
-    final seenConversationIds = <String>{};
-    for (final notificationDoc in notificationDocs) {
-      final conversationId = _notificationConversationId(notificationDoc.data());
-      if (conversationId == null || !seenConversationIds.add(conversationId)) {
-        continue;
-      }
-      conversationIds.add(conversationId);
+  Future<List<String>> collectPagedConversationIds({
+    required Iterable<String?> initialConversationIds,
+    required Query<Map<String, dynamic>> baseQuery,
+    required QueryDocumentSnapshot<Map<String, dynamic>>? lastDoc,
+    required int maxPages,
+    required int pageSize,
+    required String? Function(QueryDocumentSnapshot<Map<String, dynamic>> doc)
+        extractConversationId,
+  }) async {
+    var mergedConversationIds = mergeConversationIdPages(
+      initialConversationIds,
+    );
+    if (lastDoc == null || maxPages <= 1) {
+      return mergedConversationIds;
     }
 
+    var cursor = lastDoc;
+    var loadedPages = 1;
+    while (loadedPages < maxPages) {
+      final snapshot =
+          await baseQuery.startAfterDocument(cursor).limit(pageSize).get();
+
+      if (snapshot.docs.isEmpty) {
+        break;
+      }
+
+      mergedConversationIds = mergeConversationIdPages(
+        mergedConversationIds,
+        additionalPages: <Iterable<String?>>[
+          snapshot.docs.map(extractConversationId),
+        ],
+      );
+
+      loadedPages += 1;
+      if (snapshot.docs.length < pageSize) {
+        break;
+      }
+      cursor = snapshot.docs.last;
+    }
+
+    return mergedConversationIds;
+  }
+
+  Future<void> refreshConversationFallback(
+    String source,
+    Iterable<String?> rawConversationIds,
+  ) async {
+    final conversationIds = mergeUniqueConversationIds(rawConversationIds);
     if (conversationIds.isEmpty) {
-      conversationsBySource[notificationsFallbackSource] =
-          const <ConversationSummary>[];
+      conversationsBySource[source] = const <ConversationSummary>[];
       emit();
       return;
     }
@@ -120,7 +150,7 @@ Stream<int> streamVisibleUnreadMessageCount({required String userId}) {
 
       if (controller.isClosed) return;
 
-      conversationsBySource[notificationsFallbackSource] = snapshots
+      conversationsBySource[source] = snapshots
           .where((snapshot) => snapshot.exists)
           .map((snapshot) {
             final data = snapshot.data();
@@ -128,6 +158,7 @@ Stream<int> streamVisibleUnreadMessageCount({required String userId}) {
             return ConversationSummary.fromMap(
               snapshot.id,
               Map<String, dynamic>.from(data),
+              assumedParticipants: <String>[normalizedUserId],
             );
           })
           .whereType<ConversationSummary>()
@@ -135,32 +166,121 @@ Stream<int> streamVisibleUnreadMessageCount({required String userId}) {
           .toList(growable: false);
       emit();
     } catch (_) {
-      conversationsBySource[notificationsFallbackSource] =
-          const <ConversationSummary>[];
+      conversationsBySource[source] = const <ConversationSummary>[];
       emit();
     }
   }
 
+  Future<void> refreshNotificationsFallback(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> notificationDocs,
+  ) async {
+    final conversationIds = notificationDocs.length <
+            notificationsFallbackLiveLimit
+        ? mergeUniqueConversationIds(
+            notificationDocs.map(
+              (notificationDoc) =>
+                  _notificationConversationId(notificationDoc.data()),
+            ),
+          )
+        : await collectPagedConversationIds(
+            initialConversationIds: notificationDocs.map(
+              (notificationDoc) =>
+                  _notificationConversationId(notificationDoc.data()),
+            ),
+            baseQuery: FirebaseFirestore.instance
+                .collection('notifications')
+                .where('userId', isEqualTo: normalizedUserId)
+                .orderBy('createdAt', descending: true),
+            lastDoc: notificationDocs.isEmpty ? null : notificationDocs.last,
+            maxPages: notificationsFallbackMaxPages,
+            pageSize: notificationsFallbackLiveLimit,
+            extractConversationId: (notificationDoc) =>
+                _notificationConversationId(notificationDoc.data()),
+          );
+
+    await refreshConversationFallback(
+      notificationsFallbackSource,
+      conversationIds,
+    );
+  }
+
+  Future<void> refreshStartedMessagesFallback(
+    String senderField,
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> messageDocs,
+  ) async {
+    final source = '$startedMessageFallbackSourcePrefix$senderField';
+    final baseQuery = FirebaseFirestore.instance
+        .collectionGroup('messages')
+        .where(senderField, isEqualTo: normalizedUserId)
+        .orderBy(FieldPath.documentId);
+
+    final conversationIds = messageDocs.length < startedMessageFallbackLiveLimit
+        ? mergeUniqueConversationIds(
+            messageDocs.map(
+              (messageDoc) => conversationIdFromMessageDocumentPath(
+                  messageDoc.reference.path),
+            ),
+          )
+        : await collectPagedConversationIds(
+            initialConversationIds: messageDocs.map(
+              (messageDoc) => conversationIdFromMessageDocumentPath(
+                  messageDoc.reference.path),
+            ),
+            baseQuery: baseQuery,
+            lastDoc: messageDocs.isEmpty ? null : messageDocs.last,
+            maxPages: startedMessageFallbackMaxPages,
+            pageSize: startedMessageFallbackLiveLimit,
+            extractConversationId: (messageDoc) =>
+                conversationIdFromMessageDocumentPath(
+                    messageDoc.reference.path),
+          );
+
+    await refreshConversationFallback(source, conversationIds);
+  }
+
+  void listenStartedMessagesField(String senderField) {
+    final source = '$startedMessageFallbackSourcePrefix$senderField';
+    querySubscriptions.remove(source)?.cancel();
+    querySubscriptions[source] = FirebaseFirestore.instance
+        .collectionGroup('messages')
+        .where(senderField, isEqualTo: normalizedUserId)
+        .orderBy(FieldPath.documentId)
+        .limit(startedMessageFallbackLiveLimit)
+        .snapshots()
+        .listen(
+      (snapshot) {
+        unawaited(refreshStartedMessagesFallback(senderField, snapshot.docs));
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        conversationsBySource[source] = const <ConversationSummary>[];
+        emit();
+      },
+    );
+  }
+
   for (final participantField in conversationParticipantQueryFieldAliases) {
     listenConversationField(participantField);
+  }
+  for (final senderField in sentMessageFieldAliases) {
+    listenStartedMessagesField(senderField);
   }
 
   notificationsSubscription = FirebaseFirestore.instance
       .collection('notifications')
       .where('userId', isEqualTo: normalizedUserId)
       .orderBy('createdAt', descending: true)
-      .limit(60)
+      .limit(notificationsFallbackLiveLimit)
       .snapshots()
       .listen(
-        (snapshot) {
-          unawaited(refreshNotificationsFallback(snapshot.docs));
-        },
-        onError: (Object error, StackTrace stackTrace) {
-          conversationsBySource[notificationsFallbackSource] =
-              const <ConversationSummary>[];
-          emit();
-        },
-      );
+    (snapshot) {
+      unawaited(refreshNotificationsFallback(snapshot.docs));
+    },
+    onError: (Object error, StackTrace stackTrace) {
+      conversationsBySource[notificationsFallbackSource] =
+          const <ConversationSummary>[];
+      emit();
+    },
+  );
 
   controller.onCancel = () async {
     await notificationsSubscription?.cancel();
@@ -180,9 +300,8 @@ String? _notificationConversationId(Map<String, dynamic> data) {
     return directValue;
   }
 
-  final routeName = (data['routeName'] ?? data['route_name'] ?? '')
-      .toString()
-      .trim();
+  final routeName =
+      (data['routeName'] ?? data['route_name'] ?? '').toString().trim();
   if (!routeName.startsWith('/messages/')) {
     return null;
   }
@@ -202,7 +321,9 @@ List<ConversationSummary> _mergeConversationSummaries(
   final byId = <String, ConversationSummary>{};
   for (final conversations in conversationLists) {
     for (final conversation in conversations) {
-      byId.putIfAbsent(conversation.id, () => conversation);
+      final existing = byId[conversation.id];
+      byId[conversation.id] =
+          existing == null ? conversation : existing.mergeWith(conversation);
     }
   }
 
@@ -218,6 +339,28 @@ List<ConversationSummary> _mergeConversationSummaries(
     return rightDate.compareTo(leftDate);
   });
   return merged;
+}
+
+int computeVisibleUnreadMessageCount({
+  required String userId,
+  required Iterable<List<ConversationSummary>> conversationLists,
+}) {
+  final normalizedUserId = userId.trim();
+  if (normalizedUserId.isEmpty) return 0;
+
+  final mergedConversations = _mergeConversationSummaries(conversationLists);
+  return mergedConversations.fold<int>(0, (total, conversation) {
+    if (!conversation.includesUser(normalizedUserId)) {
+      return total;
+    }
+    if (conversation.isArchivedForUser(normalizedUserId)) {
+      return total;
+    }
+    if (!conversation.hasRenderableContent) {
+      return total;
+    }
+    return total + conversation.unreadForUser(normalizedUserId);
+  });
 }
 
 int readInboxCount(
