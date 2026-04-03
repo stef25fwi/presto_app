@@ -363,15 +363,27 @@ service cloud.firestore {
 
     // ✅ Conversations & messages
     match /conversations/{conversationId} {
-      function isParticipant() {
+      function isParticipantInConversationData(data) {
         return isSignedIn()
           && (
-            ((resource.data.participants is list) && resource.data.participants.hasAny([uid()]))
-            || ((resource.data.participant_ids is list) && resource.data.participant_ids.hasAny([uid()]))
-            || ((resource.data.participantIds is list) && resource.data.participantIds.hasAny([uid()]))
-            || ((resource.data.userIds is list) && resource.data.userIds.hasAny([uid()]))
-            || ((resource.data.memberIds is list) && resource.data.memberIds.hasAny([uid()]))
+            ((data.participants is list) && data.participants.hasAny([uid()]))
+            || ((data.participant_ids is list) && data.participant_ids.hasAny([uid()]))
+            || ((data.participantIds is list) && data.participantIds.hasAny([uid()]))
+            || ((data.userIds is list) && data.userIds.hasAny([uid()]))
+            || ((data.memberIds is list) && data.memberIds.hasAny([uid()]))
+            || ((data.participantNames is map) && data.participantNames.keys().hasAny([uid()]))
+            || ((data.participant_names is map) && data.participant_names.keys().hasAny([uid()]))
+            || ((data.unreadCount is map) && data.unreadCount.keys().hasAny([uid()]))
+            || ((data.unread_count is map) && data.unread_count.keys().hasAny([uid()]))
+            || ((data.lastReadAt is map) && data.lastReadAt.keys().hasAny([uid()]))
+            || ((data.last_read_at is map) && data.last_read_at.keys().hasAny([uid()]))
+            || ((data.archivedBy is map) && data.archivedBy.keys().hasAny([uid()]))
+            || ((data.blockedBy is map) && data.blockedBy.keys().hasAny([uid()]))
           );
+      }
+
+      function isParticipant() {
+        return isParticipantInConversationData(resource.data);
       }
 
       function parentConversationExists() {
@@ -380,15 +392,8 @@ service cloud.firestore {
 
       function isParentConversationParticipant() {
         let convData = get(/databases/$(database)/documents/conversations/$(conversationId)).data;
-        return isSignedIn()
-          && parentConversationExists()
-          && (
-            ((convData.participants is list) && convData.participants.hasAny([uid()]))
-            || ((convData.participant_ids is list) && convData.participant_ids.hasAny([uid()]))
-            || ((convData.participantIds is list) && convData.participantIds.hasAny([uid()]))
-            || ((convData.userIds is list) && convData.userIds.hasAny([uid()]))
-            || ((convData.memberIds is list) && convData.memberIds.hasAny([uid()]))
-          );
+        return parentConversationExists()
+          && isParticipantInConversationData(convData);
       }
 
       allow read: if isParticipant();

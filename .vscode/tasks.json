@@ -111,6 +111,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Commit Messaging Recovery",
+      "type": "shell",
+      "command": "git commit -m \"fix(messages): recover started conversations and harden legacy repair tooling\"",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Push Main",
       "type": "shell",
       "command": "git push origin main",
@@ -168,6 +174,12 @@
       "label": "Firebase: Deploy",
       "type": "shell",
       "command": "firebase deploy --project presto-app-74abe",
+      "problemMatcher": []
+    },
+    {
+      "label": "Firebase: Deploy Hosting + Firestore Rules",
+      "type": "shell",
+      "command": "firebase deploy --project presto-app-74abe --only hosting,firestore:rules",
       "problemMatcher": []
     },
     {
@@ -260,6 +272,28 @@
         "Git: Commit UI Improvements",
         "Git: Push Main",
         "Firebase: Deploy"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Release: Messaging Recovery",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: Add All",
+        "Functions: Test",
+        "Flutter: Analyze",
+        "Flutter: Build Web Release",
+        "Git: Commit Messaging Recovery",
+        "Git: Push Main",
+        "Firebase: Deploy Hosting + Firestore Rules"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "add commit puch build dpleoy",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Release: Messaging Recovery"
       ],
       "problemMatcher": []
     },
