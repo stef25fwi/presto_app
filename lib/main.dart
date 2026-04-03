@@ -2554,132 +2554,112 @@ class _HomePageState extends State<HomePage>
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
           resizeToAvoidBottomInset: false,
-          extendBody:
-              true, // Permettre au contenu de s'étendre sous la bottom bar
+          extendBody: false,
           backgroundColor: Colors.white,
           body: SafeArea(
             bottom: false,
-            child: Column(
+            child: IndexedStack(
+              index: _selectedIndex,
               children: [
-                Expanded(
-                  child: Stack(
-                    children: [
-                      IndexedStack(
-                        index: _selectedIndex,
-                        children: [
-                          _buildHomeContent(),
-                          ConsultOffersPage(
-                            key: ValueKey<String>(
-                              'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
-                            ),
-                            onScroll: _onPageScroll,
-                            categoryFilter: _consultCategoryFilter,
-                            searchQuery: _consultSearchQuery,
-                          ),
-                          PublishOfferPage(onScroll: _onPageScroll),
-                          MessagesPageV2(
-                            initialConversationId:
-                                widget.initialMessagesConversationId,
-                            initialDraftText: widget.initialMessagesDraftText,
-                          ),
-                          const AccountPage(),
-                        ],
-                      ),
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: MediaQuery.removeViewInsets(
-                          removeBottom: true,
-                          context: context,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Color(0xFF1A73E8),
-                                  Color(0xFF0D47A1),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(24)),
-                            ),
-                            padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-                            child: SafeArea(
-                              top: false,
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    child: HomeBottomNavItem(
-                                      icon: Icons.home,
-                                      label: "Accueil",
-                                      selected: _selectedIndex == 0,
-                                      onTap: () => _onBottomTap(0),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: HomeBottomNavItem(
-                                      icon: Icons.search,
-                                      label: "Je consulte\nles offres",
-                                      selected: _selectedIndex == 1,
-                                      onTap: () => _onBottomTap(1),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: HomeBottomNavItem(
-                                      icon: Icons.add_circle_outline,
-                                      label: "Publier\nune offre",
-                                      isBig: true,
-                                      selected: _selectedIndex == 2,
-                                      onTap: () => _onBottomTap(2),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: currentUser == null
-                                        ? HomeBottomNavItem(
-                                            icon: Icons.chat_bubble_outline,
-                                            label: "Messages",
-                                            selected: _selectedIndex == 3,
-                                            onTap: () => _onBottomTap(3),
-                                          )
-                                        : _UnreadInboxBell(
-                                            userId: currentUser.uid,
-                                            monitoringKeyPrefix:
-                                                'bottomBar.messages',
-                                            countType:
-                                                InboxCountType.unreadMessages,
-                                            builder: (context, badgeCount) =>
-                                                HomeBottomNavItem(
-                                              icon: Icons.chat_bubble_outline,
-                                              label: "Messages",
-                                              badgeCount: badgeCount,
-                                              selected: _selectedIndex == 3,
-                                              onTap: () => _onBottomTap(3),
-                                            ),
-                                          ),
-                                  ),
-                                  Expanded(
-                                    child: HomeBottomNavItem(
-                                      icon: Icons.person_outline,
-                                      label: "Compte",
-                                      selected: _selectedIndex == 4,
-                                      onTap: () => _onBottomTap(4),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                _buildHomeContent(),
+                ConsultOffersPage(
+                  key: ValueKey<String>(
+                    'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
                   ),
+                  onScroll: _onPageScroll,
+                  categoryFilter: _consultCategoryFilter,
+                  searchQuery: _consultSearchQuery,
                 ),
+                PublishOfferPage(onScroll: _onPageScroll),
+                MessagesPageV2(
+                  initialConversationId:
+                      widget.initialMessagesConversationId,
+                  initialDraftText: widget.initialMessagesDraftText,
+                ),
+                const AccountPage(),
               ],
+            ),
+          ),
+          bottomNavigationBar: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF1A73E8),
+                  Color(0xFF0D47A1),
+                ],
+              ),
+              borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                mainAxisAlignment:
+                    MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: HomeBottomNavItem(
+                      icon: Icons.home,
+                      label: "Accueil",
+                      selected: _selectedIndex == 0,
+                      onTap: () => _onBottomTap(0),
+                    ),
+                  ),
+                  Expanded(
+                    child: HomeBottomNavItem(
+                      icon: Icons.search,
+                      label: "Je consulte\nles offres",
+                      selected: _selectedIndex == 1,
+                      onTap: () => _onBottomTap(1),
+                    ),
+                  ),
+                  Expanded(
+                    child: HomeBottomNavItem(
+                      icon: Icons.add_circle_outline,
+                      label: "Publier\nune offre",
+                      isBig: true,
+                      selected: _selectedIndex == 2,
+                      onTap: () => _onBottomTap(2),
+                    ),
+                  ),
+                  Expanded(
+                    child: currentUser == null
+                        ? HomeBottomNavItem(
+                            icon: Icons.chat_bubble_outline,
+                            label: "Messages",
+                            selected: _selectedIndex == 3,
+                            onTap: () => _onBottomTap(3),
+                          )
+                        : _UnreadInboxBell(
+                            userId: currentUser.uid,
+                            monitoringKeyPrefix:
+                                'bottomBar.messages',
+                            countType:
+                                InboxCountType.unreadMessages,
+                            builder: (context, badgeCount) =>
+                                HomeBottomNavItem(
+                              icon: Icons.chat_bubble_outline,
+                              label: "Messages",
+                              badgeCount: badgeCount,
+                              selected: _selectedIndex == 3,
+                              onTap: () => _onBottomTap(3),
+                            ),
+                          ),
+                  ),
+                  Expanded(
+                    child: HomeBottomNavItem(
+                      icon: Icons.person_outline,
+                      label: "Compte",
+                      selected: _selectedIndex == 4,
+                      onTap: () => _onBottomTap(4),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -2688,7 +2668,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildHomeContent() {
-    const double bottomPadding = 150;
+    const double bottomPadding = 16;
 
     return SafeArea(
       child: Container(
@@ -4189,6 +4169,12 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        precacheImage(const AssetImage('assets/images/jobfait.webp'), context);
+      }
+    });
 
     // ✅ Analytics: page view
     _logPageView();
@@ -6543,11 +6529,13 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                 ),
                 if (widget.data.showJobDoneOverlay)
                   Positioned.fill(
-                    child: IgnorePointer(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(outerRadius),
+                    child: RepaintBoundary(
+                      child: IgnorePointer(
                         child: Container(
-                          color: Colors.white.withValues(alpha: 0.78),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.78),
+                            borderRadius: BorderRadius.circular(outerRadius),
+                          ),
                           alignment: Alignment.center,
                           child: Padding(
                             padding: const EdgeInsets.all(18),
@@ -6555,7 +6543,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                               'assets/images/jobfait.webp',
                               height: 132,
                               fit: BoxFit.contain,
-                              filterQuality: FilterQuality.high,
+                              filterQuality: FilterQuality.none, // Maximum performance sur le web
                             ),
                           ),
                         ),
