@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import '../../app/presto_overlay_theme.dart';
 import '../../constants.dart';
 import '../../models/conversation_summary.dart';
+import '../../services/conversation_discovery.dart';
 import '../../services/conversation_participants.dart';
 import '../../services/conversation_service.dart';
 import '../../services/firestore_date_parser.dart';
@@ -173,7 +174,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
     final segments = routeName.split('/');
     if (segments.length < 3) return null;
-    final conversationId = segments[2].trim();
+    final conversationId = Uri.decodeComponent(segments[2]).trim();
     return conversationId.isEmpty ? null : conversationId;
   }
 
@@ -221,6 +222,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         <String, StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>{};
     final retryTimersByField = <String, Timer>{};
     const notificationsFallbackSource = '__notifications__';
+    const startedMessageFallbackSourcePrefix = '__started_messages__:';
+    const sentMessageFieldAliases = <String>['senderId', 'sender_id'];
 
     void emit() {
       if (controller.isClosed) return;
@@ -248,28 +251,20 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     late void Function(String participantField) scheduleRetry;
     late void Function(String participantField) listenField;
     late void Function() listenNotifications;
+    late void Function(String senderField) listenStartedMessagesField;
 
-    Future<void> refreshNotificationFallback(
-      List<QueryDocumentSnapshot<Map<String, dynamic>>> notificationDocs,
+    Future<void> refreshConversationFallback(
+      String source,
+      Iterable<String?> rawConversationIds,
     ) async {
       try {
-        final conversationIds = <String>[];
-        final seenConversationIds = <String>{};
-        for (final notificationDoc in notificationDocs) {
-          final conversationId =
-              _notificationConversationId(notificationDoc.data());
-          if (conversationId == null ||
-              !seenConversationIds.add(conversationId)) {
-            continue;
-          }
-          conversationIds.add(conversationId);
-        }
+        final conversationIds =
+            mergeUniqueConversationIds(rawConversationIds);
 
         if (conversationIds.isEmpty) {
-          docsByField[notificationsFallbackSource] =
-              const <ConversationSummary>[];
-          errorsByField.remove(notificationsFallbackSource);
-          retryCountsByField[notificationsFallbackSource] = 0;
+          docsByField[source] = const <ConversationSummary>[];
+          errorsByField.remove(source);
+          retryCountsByField[source] = 0;
           emit();
           return;
         }
@@ -285,7 +280,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
         if (controller.isClosed) return;
 
-        docsByField[notificationsFallbackSource] = snapshots
+        docsByField[source] = snapshots
             .where((snapshot) => snapshot.exists)
             .map((snapshot) {
               final data = snapshot.data();
@@ -298,19 +293,30 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             .whereType<ConversationSummary>()
             .where((conversation) => conversation.includesUser(userId))
             .toList(growable: false);
-        errorsByField.remove(notificationsFallbackSource);
-        retryCountsByField[notificationsFallbackSource] = 0;
+        errorsByField.remove(source);
+        retryCountsByField[source] = 0;
         emit();
       } catch (error) {
-        errorsByField[notificationsFallbackSource] = error;
+        errorsByField[source] = error;
         if (kDebugMode) {
           debugPrint(
-            '[MessagesList] notifications fallback error user=$userId error=$error',
+            '[MessagesList] fallback error source=$source user=$userId error=$error',
           );
         }
         emit();
-        scheduleRetry(notificationsFallbackSource);
+        scheduleRetry(source);
       }
+    }
+
+    Future<void> refreshNotificationFallback(
+      List<QueryDocumentSnapshot<Map<String, dynamic>>> notificationDocs,
+    ) async {
+      await refreshConversationFallback(
+        notificationsFallbackSource,
+        notificationDocs.map((notificationDoc) {
+          return _notificationConversationId(notificationDoc.data());
+        }),
+      );
     }
 
     listenField = (String participantField) {
@@ -371,6 +377,42 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       subscriptionsByField[notificationsFallbackSource] = subscription;
     };
 
+    listenStartedMessagesField = (String senderField) {
+      final source = '$startedMessageFallbackSourcePrefix$senderField';
+      subscriptionsByField.remove(source)?.cancel();
+      final subscription = FirebaseFirestore.instance
+          .collectionGroup('messages')
+          .where(senderField, isEqualTo: userId)
+          .limit(80)
+          .snapshots()
+          .listen(
+        (snapshot) {
+          retryTimersByField.remove(source)?.cancel();
+          unawaited(
+            refreshConversationFallback(
+              source,
+              snapshot.docs.map(
+                (messageDoc) => conversationIdFromMessageDocumentPath(
+                  messageDoc.reference.path,
+                ),
+              ),
+            ),
+          );
+        },
+        onError: (error, stackTrace) {
+          errorsByField[source] = error;
+          if (kDebugMode) {
+            debugPrint(
+              '[MessagesList] started messages stream error field=$senderField user=$userId error=$error',
+            );
+          }
+          emit();
+          scheduleRetry(source);
+        },
+      );
+      subscriptionsByField[source] = subscription;
+    };
+
     scheduleRetry = (String participantField) {
       retryTimersByField.remove(participantField)?.cancel();
       final delay = retryDelayForField(participantField);
@@ -381,6 +423,12 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           listenNotifications();
           return;
         }
+        if (participantField.startsWith(startedMessageFallbackSourcePrefix)) {
+          listenStartedMessagesField(
+            participantField.substring(startedMessageFallbackSourcePrefix.length),
+          );
+          return;
+        }
         listenField(participantField);
       });
     };
@@ -389,6 +437,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       listenField(participantField);
     }
     listenNotifications();
+    for (final senderField in sentMessageFieldAliases) {
+      listenStartedMessagesField(senderField);
+    }
 
     controller.onCancel = () async {
       for (final timer in retryTimersByField.values) {
