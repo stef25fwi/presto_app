@@ -3,6 +3,8 @@
 *.log
 *.pyc
 *.swp
+*.orig
+*.rej
 .DS_Store
 .atom/
 .build/
@@ -47,3 +49,6 @@ node_modules/
 
 # Firebase CLI local cache
 .firebase/
+
+# Local diagnostics and accidental merge/export residue
+mic_toggle_audit_*.txt
