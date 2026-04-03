@@ -378,6 +378,10 @@ function getDefaultTemplateContent(templateCode, locale) {
             text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nLe paiement de {{amount}} a échoué.\n{{retryUrl}}`),
         },
     };
-    return frBodies[templateCode];
+    return frBodies[templateCode]
+        ?? {
+            html: wrapDefaultHtml(subject, preheader, `<p>PRESTO - ${templateCode}</p>`),
+            text: wrapDefaultText(subject, preheader, `PRESTO - ${templateCode}`),
+        };
 }
 //# sourceMappingURL=registry.js.map

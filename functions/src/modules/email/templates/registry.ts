@@ -270,7 +270,7 @@ export function getDefaultTemplateContent(templateCode: TemplateCode, locale: "f
   const subject = meta?.default_subject_fr ?? templateCode;
   const preheader = meta?.default_preheader_fr ?? "";
 
-  const frBodies: Record<TemplateCode, DefaultTemplateContent> = {
+  const frBodies: Partial<Record<TemplateCode, DefaultTemplateContent>> = {
     tpl_transactional_account_welcome_v1: {
       html: wrapDefaultHtml(subject, preheader, `<p>Bonjour {{firstName}},</p><p>Bienvenue sur PRESTO.</p><p><a href="{{dashboardUrl}}">Accéder à mon espace</a></p>`),
       text: wrapDefaultText(subject, preheader, `Bonjour {{firstName}},\n\nBienvenue sur PRESTO.\n{{dashboardUrl}}`),
@@ -381,5 +381,9 @@ export function getDefaultTemplateContent(templateCode: TemplateCode, locale: "f
     },
   };
 
-  return frBodies[templateCode];
+  return frBodies[templateCode]
+    ?? {
+      html: wrapDefaultHtml(subject, preheader, `<p>PRESTO - ${templateCode}</p>`),
+      text: wrapDefaultText(subject, preheader, `PRESTO - ${templateCode}`),
+    };
 }

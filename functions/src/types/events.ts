@@ -1,14 +1,20 @@
 export type EventName =
   | "user.created"
   | "user.email_verification.requested"
+  | "user.otp.requested"
   | "user.password_reset.requested"
   | "user.password_changed"
+  | "user.account.deletion.requested"
+  | "user.account.deleted"
   | "user.login.suspicious"
+  | "profile.verified"
+  | "profile.incomplete.reminder"
   | "listing.submitted"
   | "listing.published"
   | "listing.rejected"
   | "listing.expiring_soon"
   | "listing.expired"
+  | "listing.first_not_published.reminder"
   | "message.created.new_thread"
   | "message.created.existing_thread"
   | "conversation.pending_reminder_due"
@@ -28,8 +34,13 @@ export type EventName =
   | "marketing.onboarding.d7_due"
   | "marketing.newsletter.monthly"
   | "subscription.renewal.upcoming"
+  | "billing.subscription.renewed"
+  | "billing.subscription.expired"
   | "billing.payment.succeeded"
-  | "billing.payment.failed";
+  | "billing.payment.failed"
+  | "growth.reactivation.30_days"
+  | "growth.nearby_new_listings"
+  | "growth.referral_invite";
 
 export interface DomainEventPayload {
   event_id: string;

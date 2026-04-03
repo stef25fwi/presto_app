@@ -10,7 +10,7 @@ import { EMAIL_FROM } from "../../../config/env";
 import { APP_BASE_URL } from "../../../config/env";
 import { loadActiveTemplateVersion } from "../templates/loader";
 import { applyFirestoreEmailBranding } from "../templates/branding";
-import { getDefaultTemplateContent, getTemplateMeta } from "../templates/registry";
+import { getCompatDefaultTemplateContent, getCompatTemplateMeta } from "../templates/compat_registry";
 import { renderHtml } from "../renderer/render_html";
 import { renderText } from "../renderer/render_text";
 
@@ -38,7 +38,7 @@ async function resolveTemplate(
   locale: "fr" | "en",
   payload: Record<string, unknown>,
 ): Promise<{ subject: string; html: string; text: string }> {
-  const meta = getTemplateMeta(templateCode);
+  const meta = getCompatTemplateMeta(templateCode);
   const templatePayload = {
     ...payload,
     ...buildTemplateBrandPayload(),
@@ -63,7 +63,7 @@ async function resolveTemplate(
   // 2. Fallback sur le registre statique
   const subject = meta?.default_subject_fr ?? `PRESTO — ${templateCode}`;
   const preheader = meta?.default_preheader_fr ?? "";
-  const content = getDefaultTemplateContent(templateCode as TemplateCode, locale);
+  const content = getCompatDefaultTemplateContent(templateCode as TemplateCode, locale);
   const htmlBody = renderHtml(content.html, { ...templatePayload, subject, preheader });
   const textBody = renderText(content.text, { ...templatePayload, subject, preheader });
 

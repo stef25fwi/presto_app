@@ -1,7 +1,46 @@
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { APP_BASE_URL } from "../../config/env";
 import { db } from "../../core/firestore";
 import { COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
+
+function extractFirstName(userData: Record<string, unknown> | undefined): string {
+  return String(userData?.display_name || userData?.displayName || "").trim().split(" ")[0] || "";
+}
+
+function normalizeStatus(value: unknown): string {
+  return String(value || "").trim().toLowerCase();
+}
+
+async function emitSubscriptionEvent({
+  eventId,
+  eventName,
+  subscriptionId,
+  userId,
+  dedupeSeed,
+  occurredAt,
+  payload,
+}: {
+  eventId: string;
+  eventName: "subscription.renewal.upcoming" | "billing.subscription.renewed" | "billing.subscription.expired";
+  subscriptionId: string;
+  userId: string;
+  dedupeSeed: string;
+  occurredAt: number;
+  payload: Record<string, unknown>;
+}): Promise<void> {
+  await db.collection(COLLECTIONS.emailEvents).doc(eventId).set({
+    event_id: eventId,
+    event_name: eventName,
+    source_collection: COLLECTIONS.subscriptions,
+    source_id: subscriptionId,
+    recipient_user_id: userId,
+    dedupe_key: sha256(dedupeSeed),
+    occurred_at: occurredAt,
+    payload,
+    status: "created",
+  }, { merge: true });
+}
 
 export const onSubscriptionUpdated = onDocumentUpdated(`${COLLECTIONS.subscriptions}/{subscriptionId}`, async (event) => {
   const before = event.data?.before.data();
@@ -25,11 +64,50 @@ export const onSubscriptionUpdated = onDocumentUpdated(`${COLLECTIONS.subscripti
   if (wasUpcoming || !isUpcoming) return;
 
   const userSnap = await db.collection(COLLECTIONS.users).doc(userId).get();
-  const userData = userSnap.data();
+  const userData = (userSnap.data() ?? {}) as Record<string, unknown>;
   const email = String(userData?.email || "").trim();
   if (!email) return;
 
   const subscriptionId = event.params.subscriptionId;
+  const firstName = extractFirstName(userData);
+  const afterStatus = normalizeStatus(after.status || after.subscription_status);
+  const beforeStatus = normalizeStatus(before?.status || before?.subscription_status);
+
+  if (beforeRenewal > 0 && renewalTs > beforeRenewal && afterStatus !== "expired" && afterStatus !== "cancelled") {
+    await emitSubscriptionEvent({
+      eventId: `evt_billing_subscription_renewed_${subscriptionId}_${Math.floor(renewalTs / 1000)}`,
+      eventName: "billing.subscription.renewed",
+      subscriptionId,
+      userId,
+      dedupeSeed: `billing.subscription.renewed:${subscriptionId}:${Math.floor(renewalTs / 1000)}`,
+      occurredAt: now,
+      payload: {
+        recipient_email: email,
+        firstName,
+        renewalDate: new Date(renewalTs).toLocaleDateString("fr-FR"),
+        planName: String(after.plan_name || after.plan || "PRESTO Premium"),
+        manageUrl: `${APP_BASE_URL}/abonnement`,
+      },
+    });
+  }
+
+  if (beforeStatus !== afterStatus && (afterStatus === "expired" || afterStatus === "ended" || afterStatus === "cancelled")) {
+    await emitSubscriptionEvent({
+      eventId: `evt_billing_subscription_expired_${subscriptionId}_${Math.floor(now / 1000)}`,
+      eventName: "billing.subscription.expired",
+      subscriptionId,
+      userId,
+      dedupeSeed: `billing.subscription.expired:${subscriptionId}:${afterStatus}`,
+      occurredAt: now,
+      payload: {
+        recipient_email: email,
+        firstName,
+        planName: String(after.plan_name || after.plan || "PRESTO Premium"),
+        reactivateUrl: `${APP_BASE_URL}/abonnement`,
+      },
+    });
+  }
+
   const eventId = `evt_subscription_renewal_upcoming_${subscriptionId}_${Math.floor(renewalTs / 1000)}`;
   const eventRef = db.collection(COLLECTIONS.emailEvents).doc(eventId);
   if ((await eventRef.get()).exists) return;
@@ -44,12 +122,12 @@ export const onSubscriptionUpdated = onDocumentUpdated(`${COLLECTIONS.subscripti
     occurred_at: now,
     payload: {
       recipient_email: email,
-      firstName: String(userData?.display_name || userData?.displayName || "").split(" ")[0] ?? "",
+      firstName,
       renewalDate: new Date(renewalTs).toLocaleDateString("fr-FR"),
       planName: String(after.plan_name || after.plan || "PRESTO Premium"),
       currency: String(after.currency || "EUR"),
       paymentMethod: String(after.payment_method_label || after.payment_method || after.method || ""),
-      manageUrl: "https://presto.app/abonnement",
+      manageUrl: `${APP_BASE_URL}/abonnement`,
     },
     status: "created",
   });
