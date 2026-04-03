@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { db } from "../../core/firestore";
@@ -89,6 +90,71 @@ export const requestPasswordResetEmail = onCall({ region: PROJECT_REGION }, asyn
       return { ok: true };
     }
     throw new HttpsError("internal", "password reset request failed");
+  }
+
+  return { ok: true };
+});
+
+export const requestLoginOtpEmail = onCall({ region: PROJECT_REGION }, async (request) => {
+  const rawEmail = String(request.data?.email || "").trim().toLowerCase();
+  if (!rawEmail || !rawEmail.includes("@")) {
+    return { ok: true };
+  }
+
+  try {
+    const userRecord = await admin.auth().getUserByEmail(rawEmail);
+    const userSnap = await db.collection(COLLECTIONS.users).doc(userRecord.uid).get();
+    const userData = userSnap.data() ?? {};
+    const now = Date.now();
+    const expiresInMinutes = 10;
+    const otpCode = String(randomInt(100000, 1000000));
+    const otpHash = sha256(`${userRecord.uid}:${otpCode}`);
+    const expiresAt = now + expiresInMinutes * 60 * 1000;
+    const eventId = `evt_user_otp_requested_${userRecord.uid}_${Math.floor(now / (5 * 60 * 1000))}`;
+
+    await db.collection(COLLECTIONS.users).doc(userRecord.uid).set({
+      emailLoginOtp: {
+        code_hash: otpHash,
+        expires_at: expiresAt,
+        requested_at: now,
+      },
+      email_login_otp: {
+        code_hash: otpHash,
+        expires_at: expiresAt,
+        requested_at: now,
+      },
+      updatedAt: now,
+    }, { merge: true });
+
+    await db.collection(COLLECTIONS.emailEvents).doc(eventId).set({
+      event_id: eventId,
+      event_name: "user.otp.requested",
+      source_collection: COLLECTIONS.users,
+      source_id: userRecord.uid,
+      recipient_user_id: userRecord.uid,
+      dedupe_key: sha256(`user.otp.requested:${userRecord.uid}:${Math.floor(now / (5 * 60 * 1000))}`),
+      occurred_at: now,
+      payload: {
+        recipient_email: rawEmail,
+        firstName: extractFirstName(userData.displayName, userData.display_name, userRecord.displayName),
+        otpCode,
+        expiresInMinutes,
+        device: buildDeviceLabel(
+          String(request.data?.platform || "unknown"),
+          String(request.data?.deviceType || request.data?.platform || "unknown"),
+          String(request.data?.authMethod || "email_otp"),
+        ),
+        ip: getRequestIp(request),
+        helpUrl: `${ACCOUNT_CONTINUE_URL}/support`,
+      },
+      status: "created",
+    }, { merge: true });
+  } catch (error) {
+    const code = (error as { code?: string } | undefined)?.code || "";
+    if (code === "auth/user-not-found") {
+      return { ok: true };
+    }
+    throw new HttpsError("internal", "otp email request failed");
   }
 
   return { ok: true };

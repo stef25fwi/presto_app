@@ -11,7 +11,7 @@ const env_1 = require("../../../config/env");
 const env_2 = require("../../../config/env");
 const loader_1 = require("../templates/loader");
 const branding_1 = require("../templates/branding");
-const registry_1 = require("../templates/registry");
+const compat_registry_1 = require("../templates/compat_registry");
 const render_html_1 = require("../renderer/render_html");
 const render_text_1 = require("../renderer/render_text");
 function buildTemplateBrandPayload() {
@@ -31,7 +31,7 @@ function shouldApplyFirestoreBranding(category) {
         || category === "billing";
 }
 async function resolveTemplate(templateCode, locale, payload) {
-    const meta = (0, registry_1.getTemplateMeta)(templateCode);
+    const meta = (0, compat_registry_1.getCompatTemplateMeta)(templateCode);
     const templatePayload = {
         ...payload,
         ...buildTemplateBrandPayload(),
@@ -53,7 +53,7 @@ async function resolveTemplate(templateCode, locale, payload) {
     // 2. Fallback sur le registre statique
     const subject = meta?.default_subject_fr ?? `PRESTO — ${templateCode}`;
     const preheader = meta?.default_preheader_fr ?? "";
-    const content = (0, registry_1.getDefaultTemplateContent)(templateCode, locale);
+    const content = (0, compat_registry_1.getCompatDefaultTemplateContent)(templateCode, locale);
     const htmlBody = (0, render_html_1.renderHtml)(content.html, { ...templatePayload, subject, preheader });
     const textBody = (0, render_text_1.renderText)(content.text, { ...templatePayload, subject, preheader });
     return { subject, html: htmlBody, text: textBody };
