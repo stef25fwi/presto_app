@@ -24,4 +24,35 @@ void main() {
     expect(conversationIncludesUser(data, 'alice'), isTrue);
     expect(conversationIncludesUser(data, 'carol'), isFalse);
   });
+
+  test('recupere aussi les participants depuis l identifiant canonique', () {
+    final data = <String, dynamic>{};
+
+    expect(
+      readConversationParticipants(
+        data,
+        conversationId: 'offer_offer_123__alice__bob',
+      ),
+      <String>['alice', 'bob'],
+    );
+    expect(
+      conversationIncludesUser(
+        data,
+        'alice',
+        conversationId: 'offer_offer_123__alice__bob',
+      ),
+      isTrue,
+    );
+  });
+
+  test('ignore les identifiants non canoniques ou incomplets', () {
+    expect(
+      readConversationParticipantIdsFromCanonicalId('conversation_123'),
+      isEmpty,
+    );
+    expect(
+      readConversationParticipantIdsFromCanonicalId('offer_offer_123__alice'),
+      isEmpty,
+    );
+  });
 }
