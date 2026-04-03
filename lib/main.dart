@@ -2668,8 +2668,7 @@ class _HomePageState extends State<HomePage>
                 ),
                 PublishOfferPage(onScroll: _onPageScroll),
                 MessagesPageV2(
-                  initialConversationId:
-                      widget.initialMessagesConversationId,
+                  initialConversationId: widget.initialMessagesConversationId,
                   initialDraftText: widget.initialMessagesDraftText,
                 ),
                 const AccountPage(),
@@ -2686,15 +2685,13 @@ class _HomePageState extends State<HomePage>
                   Color(0xFF0D47A1),
                 ],
               ),
-              borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(24)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
             padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
             child: SafeArea(
               top: false,
               child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
@@ -2732,12 +2729,9 @@ class _HomePageState extends State<HomePage>
                           )
                         : _UnreadInboxBell(
                             userId: currentUser.uid,
-                            monitoringKeyPrefix:
-                                'bottomBar.messages',
-                            countType:
-                                InboxCountType.unreadMessages,
-                            builder: (context, badgeCount) =>
-                                HomeBottomNavItem(
+                            monitoringKeyPrefix: 'bottomBar.messages',
+                            countType: InboxCountType.unreadMessages,
+                            builder: (context, badgeCount) => HomeBottomNavItem(
                               icon: Icons.chat_bubble_outline,
                               label: "Messages",
                               badgeCount: badgeCount,
@@ -5464,256 +5458,261 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                       return docs;
                     }),
                     builder: (context, snapshot) {
-                    // ✅ Ne plus afficher le loader si on a déjà des données
-                    if (snapshot.connectionState == ConnectionState.waiting &&
-                        !snapshot.hasData) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(kPrestoOrange),
-                        ),
-                      );
-                    }
-
-                    if (snapshot.hasError) {
-                      debugPrint('❌ [OFFERS] Error: ${snapshot.error}');
-                      debugPrint('❌ [OFFERS] Stack: ${snapshot.stackTrace}');
-
-                      final err = snapshot.error;
-                      if (err != null) {
-                        PrestoMonitoring.I.trackError('offers.snapshots', err);
-                      }
-
-                      final friendly = err == null
-                          ? "Une erreur s'est produite, réessaie"
-                          : _friendlyFirestoreErrorMessage(err);
-
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                size: 64,
-                                color: Colors.red.shade300,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                "Erreur lors du chargement des offres",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.red.shade700,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                friendly,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade700,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                onPressed: () {
-                                  setState(() {});
-                                },
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Réessayer'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: kPrestoOrange,
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                            ],
+                      // ✅ Ne plus afficher le loader si on a déjà des données
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot.hasData) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(kPrestoOrange),
                           ),
-                        ),
-                      );
-                    }
-
-                    final rawDocs = snapshot.data ?? const [];
-                    _lastSnapshotRawCount = rawDocs.length;
-
-                    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
-                        rawDocs
-                            .where((d) => _matchesOfferFilters(d.data()))
-                            .toList();
-
-                    _scheduleJobDoneOverlayRefresh(rawDocs);
-
-                    docs.sort((a, b) {
-                      final aTs = a.data()['createdAt'];
-                      final bTs = b.data()['createdAt'];
-                      final aMs =
-                          aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
-                      final bMs =
-                          bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
-                      return bMs.compareTo(aMs);
-                    });
-
-                    // Nombre après filtrage
-                    final int resultCount = docs.length;
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted && _lastResultCount != resultCount) {
-                        setState(() => _lastResultCount = resultCount);
+                        );
                       }
-                    });
 
-                    if (docs.isEmpty) {
-                      return Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(24, 18, 24, 12),
-                            child: Row(
-                              children: const [
+                      if (snapshot.hasError) {
+                        debugPrint('❌ [OFFERS] Error: ${snapshot.error}');
+                        debugPrint('❌ [OFFERS] Stack: ${snapshot.stackTrace}');
+
+                        final err = snapshot.error;
+                        if (err != null) {
+                          PrestoMonitoring.I
+                              .trackError('offers.snapshots', err);
+                        }
+
+                        final friendly = err == null
+                            ? "Une erreur s'est produite, réessaie"
+                            : _friendlyFirestoreErrorMessage(err);
+
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
                                 Icon(
-                                  Icons.grid_view_rounded,
-                                  size: 20,
-                                  color: _offersOrange,
+                                  Icons.error_outline,
+                                  size: 64,
+                                  color: Colors.red.shade300,
                                 ),
-                                SizedBox(width: 10),
+                                const SizedBox(height: 16),
                                 Text(
-                                  '0 annonce',
+                                  "Erreur lors du chargement des offres",
+                                  textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    color: _offersNavy,
+                                    color: Colors.red.shade700,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  friendly,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    setState(() {});
+                                  },
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Réessayer'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: kPrestoOrange,
+                                    foregroundColor: Colors.white,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const Expanded(child: _EmptyOffers()),
-                        ],
-                      );
-                    }
+                        );
+                      }
 
-                    const int _adsEvery =
-                        8; // Bandeau pub après chaque 8 annonces
-                    final int _adSlots = docs.length ~/ _adsEvery;
-                    final int _totalItems = docs.length + _adSlots;
+                      final rawDocs = snapshot.data ?? const [];
+                      _lastSnapshotRawCount = rawDocs.length;
 
-                    return Column(
-                      children: [
-                        Expanded(
-                          child: ListView.builder(
-                            key: const PageStorageKey<String>(
-                              'consult-offers-list',
-                            ),
-                            controller: _scrollController,
-                            physics: const ClampingScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(6, 0, 6, 132),
-                            addAutomaticKeepAlives: true,
-                            addRepaintBoundaries: true,
-                            itemCount: _totalItems,
-                            itemBuilder: (context, index) {
-                              final bool isAd =
-                                  (index + 1) % (_adsEvery + 1) == 0;
-                              if (isAd) {
-                                return AdBanner(
-                                  margin: EdgeInsets.zero,
-                                  placeholderHeight: kIsWeb ? 180.0 : 100.0,
-                                  placeholderFolderPrefix:
-                                      'assets/carousel_home/',
-                                  flat: true,
-                                  animatePlaceholder: false,
-                                );
-                              }
+                      List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
+                          rawDocs
+                              .where((d) => _matchesOfferFilters(d.data()))
+                              .toList();
 
-                              final int docIndex =
-                                  index - (index ~/ (_adsEvery + 1));
-                              final doc = docs[docIndex];
-                              final offerId = doc.id;
-                              final data = doc.data();
+                      _scheduleJobDoneOverlayRefresh(rawDocs);
 
-                              final title =
-                                  (data['title'] ?? 'Sans titre') as String;
+                      docs.sort((a, b) {
+                        final aTs = a.data()['createdAt'];
+                        final bTs = b.data()['createdAt'];
+                        final aMs =
+                            aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
+                        final bMs =
+                            bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
+                        return bMs.compareTo(aMs);
+                      });
 
-                              final city =
-                                  ((data['city'] ?? data['location']) ??
-                                          'Lieu non précisé')
-                                      .toString();
-                              final postalCode =
-                                  ((data['postalCode'] ?? data['cp']) ?? '')
-                                      .toString()
-                                      .trim();
-                              final category =
-                                  (data['category'] ?? 'Catégorie non précisée')
-                                      .toString();
-                              final budgetRaw = data['budget'] ?? data['price'];
-                              final int budget = budgetRaw is num
-                                  ? budgetRaw.round()
-                                  : int.tryParse(budgetRaw?.toString() ?? '') ??
-                                      0;
-                              final publishedAge =
-                                  _ageLabelFromCreatedAt(data['createdAt']);
-                              final publishedText = publishedAge.isEmpty
-                                  ? 'Publication récente'
-                                  : 'Publié il y a $publishedAge';
-                              final isUrgent = data['urgent'] == true;
-                              final showJobDoneOverlay =
-                                  _isOfferJobDoneOverlayVisible(data);
-                              final missionDelayLabel =
-                                  _extractMissionDelayLabel(data);
-                              final cleanTitle = _sanitizeOfferTitle(
-                                rawTitle: title,
-                                city: city,
-                                postalCode: postalCode,
-                              );
+                      // Nombre après filtrage
+                      final int resultCount = docs.length;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted && _lastResultCount != resultCount) {
+                          setState(() => _lastResultCount = resultCount);
+                        }
+                      });
 
-                              return RepaintBoundary(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(bottom: 6),
-                                  child: _OfferBrowseTile(
-                                    onTap: showJobDoneOverlay
-                                        ? null
-                                        : () {
-                                            _logOfferClicked(offerId, title);
-                                            Navigator.of(context).push(
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    OfferDetailsPage(
-                                                  offer:
-                                                      _buildOfferDetailsOffer(
-                                                    offerId: offerId,
-                                                    data: data,
-                                                  ),
-                                                  currentUserId: FirebaseAuth
-                                                          .instance
-                                                          .currentUser
-                                                          ?.uid ??
-                                                      '',
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                    data: _OfferBrowseTileData(
-                                      title: cleanTitle,
-                                      subtitle: [
-                                        city,
-                                        if (postalCode.isNotEmpty) postalCode,
-                                        category,
-                                      ].join(' / '),
-                                      publishedText: publishedText,
-                                      price: budget,
-                                      missionDelayLabel: missionDelayLabel,
-                                      isUrgent: isUrgent && !showJobDoneOverlay,
-                                      icon: _categoryIcon(category),
-                                      showJobDoneOverlay: showJobDoneOverlay,
+                      if (docs.isEmpty) {
+                        return Column(
+                          children: [
+                            Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(24, 18, 24, 12),
+                              child: Row(
+                                children: const [
+                                  Icon(
+                                    Icons.grid_view_rounded,
+                                    size: 20,
+                                    color: _offersOrange,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    '0 annonce',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                      color: _offersNavy,
                                     ),
                                   ),
-                                ),
-                              );
-                            },
+                                ],
+                              ),
+                            ),
+                            const Expanded(child: _EmptyOffers()),
+                          ],
+                        );
+                      }
+
+                      const int _adsEvery =
+                          8; // Bandeau pub après chaque 8 annonces
+                      final int _adSlots = docs.length ~/ _adsEvery;
+                      final int _totalItems = docs.length + _adSlots;
+
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: ListView.builder(
+                              key: const PageStorageKey<String>(
+                                'consult-offers-list',
+                              ),
+                              controller: _scrollController,
+                              physics: const ClampingScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(6, 0, 6, 132),
+                              addAutomaticKeepAlives: true,
+                              addRepaintBoundaries: true,
+                              itemCount: _totalItems,
+                              itemBuilder: (context, index) {
+                                final bool isAd =
+                                    (index + 1) % (_adsEvery + 1) == 0;
+                                if (isAd) {
+                                  return AdBanner(
+                                    margin: EdgeInsets.zero,
+                                    placeholderHeight: kIsWeb ? 180.0 : 100.0,
+                                    placeholderFolderPrefix:
+                                        'assets/carousel_home/',
+                                    flat: true,
+                                    animatePlaceholder: false,
+                                  );
+                                }
+
+                                final int docIndex =
+                                    index - (index ~/ (_adsEvery + 1));
+                                final doc = docs[docIndex];
+                                final offerId = doc.id;
+                                final data = doc.data();
+
+                                final title =
+                                    (data['title'] ?? 'Sans titre') as String;
+
+                                final city =
+                                    ((data['city'] ?? data['location']) ??
+                                            'Lieu non précisé')
+                                        .toString();
+                                final postalCode =
+                                    ((data['postalCode'] ?? data['cp']) ?? '')
+                                        .toString()
+                                        .trim();
+                                final category = (data['category'] ??
+                                        'Catégorie non précisée')
+                                    .toString();
+                                final budgetRaw =
+                                    data['budget'] ?? data['price'];
+                                final int budget = budgetRaw is num
+                                    ? budgetRaw.round()
+                                    : int.tryParse(
+                                            budgetRaw?.toString() ?? '') ??
+                                        0;
+                                final publishedAge =
+                                    _ageLabelFromCreatedAt(data['createdAt']);
+                                final publishedText = publishedAge.isEmpty
+                                    ? 'Publication récente'
+                                    : 'Publié il y a $publishedAge';
+                                final isUrgent = data['urgent'] == true;
+                                final showJobDoneOverlay =
+                                    _isOfferJobDoneOverlayVisible(data);
+                                final missionDelayLabel =
+                                    _extractMissionDelayLabel(data);
+                                final cleanTitle = _sanitizeOfferTitle(
+                                  rawTitle: title,
+                                  city: city,
+                                  postalCode: postalCode,
+                                );
+
+                                return RepaintBoundary(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 6),
+                                    child: _OfferBrowseTile(
+                                      onTap: showJobDoneOverlay
+                                          ? null
+                                          : () {
+                                              _logOfferClicked(offerId, title);
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      OfferDetailsPage(
+                                                    offer:
+                                                        _buildOfferDetailsOffer(
+                                                      offerId: offerId,
+                                                      data: data,
+                                                    ),
+                                                    currentUserId: FirebaseAuth
+                                                            .instance
+                                                            .currentUser
+                                                            ?.uid ??
+                                                        '',
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                      data: _OfferBrowseTileData(
+                                        title: cleanTitle,
+                                        subtitle: [
+                                          city,
+                                          if (postalCode.isNotEmpty) postalCode,
+                                          category,
+                                        ].join(' / '),
+                                        publishedText: publishedText,
+                                        price: budget,
+                                        missionDelayLabel: missionDelayLabel,
+                                        isUrgent:
+                                            isUrgent && !showJobDoneOverlay,
+                                        icon: _categoryIcon(category),
+                                        showJobDoneOverlay: showJobDoneOverlay,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                      ],
-                    );
+                        ],
+                      );
                     },
                   ),
                 ),
@@ -6639,7 +6638,8 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                               'assets/images/jobfait.webp',
                               height: 132,
                               fit: BoxFit.contain,
-                              filterQuality: FilterQuality.none, // Maximum performance sur le web
+                              filterQuality: FilterQuality
+                                  .none, // Maximum performance sur le web
                             ),
                           ),
                         ),
@@ -10909,6 +10909,12 @@ class _AccountPageState extends State<AccountPage> {
     final previousDraftFavoriteSelections = _draftFavoriteSelections.toSet();
 
     try {
+      await EmailActionService.syncCurrentUserEmailVerificationState();
+    } catch (e) {
+      debugPrint('[Profile] Erreur synchro emailVerified: $e');
+    }
+
+    try {
       final doc = await _fetchUserProfileDocument(user.uid);
 
       if (doc.exists) {
@@ -11175,15 +11181,15 @@ class _AccountPageState extends State<AccountPage> {
         }
       }
 
+      final refreshedUser = FirebaseAuth.instance.currentUser ?? user;
       try {
-        final refreshedUser = FirebaseAuth.instance.currentUser ?? user;
         await _loadUserProfile(refreshedUser);
       } catch (e) {
         debugPrint('[Profile] Erreur rechargement profil après sauvegarde: $e');
       }
 
       // ✅ Vérifier l'email si pas encore vérifié
-      if (!user.emailVerified && user.email != null) {
+      if (!refreshedUser.emailVerified && refreshedUser.email != null) {
         try {
           await EmailActionService.requestEmailVerificationEmail();
         } catch (_) {

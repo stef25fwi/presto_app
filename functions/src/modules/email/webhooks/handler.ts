@@ -6,6 +6,21 @@ import { COLLECTIONS } from "../../../shared/constants";
 import { mapProviderStatusToInternal } from "./mapper";
 import { PROJECT_REGION } from "../../../config/env";
 
+function mapWebhookStatusToJobStatus(status: string): "delivered" | "failed" | "cancelled" | null {
+  switch (status) {
+    case "delivered":
+      return "delivered";
+    case "bounced":
+    case "complained":
+    case "dropped":
+      return "failed";
+    case "unsubscribed":
+      return "cancelled";
+    default:
+      return null;
+  }
+}
+
 export const handleEmailProviderWebhook = onRequest({ region: PROJECT_REGION }, async (req, res) => {
   const provider = createEmailProvider();
   const rawBody = typeof req.rawBody === "string" ? req.rawBody : req.rawBody?.toString("utf8") || "";
@@ -29,6 +44,7 @@ export const handleEmailProviderWebhook = onRequest({ region: PROJECT_REGION }, 
   for (const evt of events) {
     const internalStatus = mapProviderStatusToInternal(evt.type);
     let jobMetadata: Record<string, unknown> = {};
+    let eventId: string | null = null;
 
     if (evt.providerMessageId) {
       const jobSnap = await db
@@ -39,14 +55,33 @@ export const handleEmailProviderWebhook = onRequest({ region: PROJECT_REGION }, 
       const jobDoc = jobSnap.docs[0];
       const jobData = jobDoc?.data();
       if (jobDoc && jobData) {
+        eventId = typeof jobData.event_id === "string" && jobData.event_id.trim().length > 0
+          ? jobData.event_id
+          : null;
         jobMetadata = {
-          job_id: jobDoc.id,
-          event_id: jobData.event_id || null,
+          job_id: jobData.job_id || jobDoc.id,
+          event_id: eventId,
           template_code: jobData.template_code || null,
           channel: jobData.channel || null,
           recipient_user_id: jobData.recipient_user_id || null,
           recipient_email: jobData.recipient_email || null,
         };
+
+        const nextJobStatus = mapWebhookStatusToJobStatus(internalStatus);
+        await jobDoc.ref.set({
+          last_provider_event_status: internalStatus,
+          last_provider_event_at: Date.now(),
+          updated_at: Date.now(),
+          ...(nextJobStatus ? { status: nextJobStatus } : {}),
+        }, { merge: true });
+
+        if (eventId) {
+          await db.collection(COLLECTIONS.emailEvents).doc(eventId).set({
+            last_provider_event_status: internalStatus,
+            last_provider_event_at: Date.now(),
+            ...(internalStatus === "delivered" ? { delivery_status: "delivered" } : {}),
+          }, { merge: true });
+        }
       }
     }
 
