@@ -288,7 +288,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       final data = snapshot.data();
       if (data == null) return;
 
-      final participants = readConversationParticipants(data);
+      final participants = readConversationParticipants(
+        data,
+        conversationId: widget.conversationId,
+      );
       final unreadMap = _conversationValue(
         data,
         const ['unreadCount', 'unread_count'],

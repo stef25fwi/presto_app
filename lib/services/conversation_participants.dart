@@ -23,7 +23,10 @@ const conversationParticipantMapAliases = <String>[
   'blockedBy',
 ];
 
-List<String> readConversationParticipants(Map<String, dynamic> data) {
+List<String> readConversationParticipants(
+  Map<String, dynamic> data, {
+  String? conversationId,
+}) {
   final result = <String>[];
   final seen = <String>{};
 
@@ -51,12 +54,45 @@ List<String> readConversationParticipants(Map<String, dynamic> data) {
     }
   }
 
+  for (final participantId in
+      readConversationParticipantIdsFromCanonicalId(conversationId ?? '')) {
+    addParticipant(participantId);
+  }
+
   result.sort();
   return result;
 }
 
-bool conversationIncludesUser(Map<String, dynamic> data, String userId) {
+List<String> readConversationParticipantIdsFromCanonicalId(String conversationId) {
+  final normalizedConversationId = conversationId.trim();
+  if (!normalizedConversationId.startsWith('offer_')) {
+    return const <String>[];
+  }
+
+  final parts = normalizedConversationId
+      .substring('offer_'.length)
+      .split('__')
+      .map((value) => value.trim())
+      .where((value) => value.isNotEmpty)
+      .toList(growable: false);
+
+  if (parts.length < 3) {
+    return const <String>[];
+  }
+
+  final participantIds = parts.sublist(1).toList(growable: false)..sort();
+  return participantIds;
+}
+
+bool conversationIncludesUser(
+  Map<String, dynamic> data,
+  String userId, {
+  String? conversationId,
+}) {
   final normalizedUserId = userId.trim();
   if (normalizedUserId.isEmpty) return false;
-  return readConversationParticipants(data).contains(normalizedUserId);
+  return readConversationParticipants(
+    data,
+    conversationId: conversationId,
+  ).contains(normalizedUserId);
 }

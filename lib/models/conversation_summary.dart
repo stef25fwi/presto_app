@@ -54,7 +54,7 @@ class ConversationSummary {
   ) {
     return ConversationSummary(
       id: id,
-      participants: readConversationParticipants(data),
+      participants: readConversationParticipants(data, conversationId: id),
       participantNames: _readStringMap(
         data,
         const ['participantNames', 'participant_names'],
