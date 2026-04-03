@@ -22,6 +22,7 @@ const PARTICIPANT_MAP_FIELDS = [
   'archivedBy',
   'blockedBy',
 ];
+const SENT_MESSAGE_FIELDS = ['senderId', 'sender_id'];
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -172,6 +173,48 @@ function canonicalConversationId({ offerId, currentUserId, otherUserId }) {
     .join('__')}`;
 }
 
+function conversationIdFromMessagePath(path) {
+  const segments = String(path || '')
+    .split('/')
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  for (let index = 0; index + 3 < segments.length; index += 1) {
+    if (segments[index] !== 'conversations') continue;
+    if (segments[index + 2] !== 'messages') continue;
+
+    const conversationId = segments[index + 1];
+    if (conversationId) return conversationId;
+  }
+
+  return null;
+}
+
+async function collectStartedConversationIds(userId) {
+  const snapshots = await Promise.all(
+    SENT_MESSAGE_FIELDS.map((field) =>
+      db.collectionGroup('messages')
+        .where(field, '==', userId)
+        .limit(80)
+        .get(),
+    ),
+  );
+
+  const conversationIds = [];
+  const seen = new Set();
+
+  for (const snapshot of snapshots) {
+    for (const doc of snapshot.docs) {
+      const conversationId = conversationIdFromMessagePath(doc.ref.path);
+      if (!conversationId || seen.has(conversationId)) continue;
+      seen.add(conversationId);
+      conversationIds.push(conversationId);
+    }
+  }
+
+  return conversationIds;
+}
+
 async function loadSeedScenario({ buyerUid, sellerUid }) {
   const offersSnap = await db.collection('offers').where('seedTag', '==', SEED_TAG).get();
   const offers = offersSnap.docs
@@ -220,6 +263,24 @@ async function collectConversationStateForUser(userId, expectedConversationId) {
       if (!docsById.has(doc.id)) docsById.set(doc.id, doc);
     }
   });
+
+  const startedConversationIds = await collectStartedConversationIds(userId);
+  docsPerField.startedMessages = startedConversationIds;
+
+  if (startedConversationIds.length > 0) {
+    const startedConversationSnaps = await Promise.all(
+      startedConversationIds.map((conversationId) =>
+        db.collection('conversations').doc(conversationId).get(),
+      ),
+    );
+
+    for (const conversationSnap of startedConversationSnaps) {
+      if (!conversationSnap.exists) continue;
+      if (!docsById.has(conversationSnap.id)) {
+        docsById.set(conversationSnap.id, conversationSnap);
+      }
+    }
+  }
 
   const allConversations = [...docsById.values()].map(toConversationSummary);
   const visibleConversations = allConversations.filter((conversation) => {
