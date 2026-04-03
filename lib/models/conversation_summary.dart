@@ -43,18 +43,27 @@ class ConversationSummary {
   });
 
   factory ConversationSummary.fromFirestore(
-    QueryDocumentSnapshot<Map<String, dynamic>> snapshot,
-  ) {
-    return ConversationSummary.fromMap(snapshot.id, snapshot.data());
+    QueryDocumentSnapshot<Map<String, dynamic>> snapshot, {
+    List<String> assumedParticipants = const <String>[],
+  }) {
+    return ConversationSummary.fromMap(
+      snapshot.id,
+      snapshot.data(),
+      assumedParticipants: assumedParticipants,
+    );
   }
 
   factory ConversationSummary.fromMap(
     String id,
-    Map<String, dynamic> data,
-  ) {
+    Map<String, dynamic> data, {
+    List<String> assumedParticipants = const <String>[],
+  }) {
     return ConversationSummary(
       id: id,
-      participants: readConversationParticipants(data, conversationId: id),
+      participants: _mergeParticipants(
+        readConversationParticipants(data, conversationId: id),
+        assumedParticipants,
+      ),
       participantNames: _readStringMap(
         data,
         const ['participantNames', 'participant_names'],
@@ -73,14 +82,51 @@ class ConversationSummary {
       ),
       unreadCount: _readIntMap(data, const ['unreadCount', 'unread_count']),
       messageCount: _readMessageCount(data),
-      createdAt: parseFirestoreDateTime(data['createdAt'] ?? data['created_at']),
-      updatedAt: parseFirestoreDateTime(data['updatedAt'] ?? data['updated_at']),
+      createdAt:
+          parseFirestoreDateTime(data['createdAt'] ?? data['created_at']),
+      updatedAt:
+          parseFirestoreDateTime(data['updatedAt'] ?? data['updated_at']),
       lastMessageAt: parseFirestoreDateTime(
         data['lastMessageAt'] ?? data['last_message_at'],
       ),
       status: _readString(data, const ['status']),
       archivedBy: _readBoolMap(data, const ['archivedBy']),
       blockedBy: _readBoolMap(data, const ['blockedBy']),
+    );
+  }
+
+  ConversationSummary mergeWith(ConversationSummary other) {
+    if (id != other.id) {
+      throw ArgumentError.value(
+          other.id, 'other.id', 'conversation ids must match');
+    }
+
+    final latest = _latestSummary(this, other);
+    final fallback = identical(latest, this) ? other : this;
+
+    return ConversationSummary(
+      id: id,
+      participants: _mergeParticipants(participants, other.participants),
+      participantNames:
+          _mergeStringMaps(participantNames, other.participantNames),
+      otherUserName: _pickPreferredString(other.otherUserName, otherUserName),
+      offerId: _pickPreferredString(other.offerId, offerId),
+      offerTitle: _pickPreferredString(other.offerTitle, offerTitle),
+      lastMessage:
+          _pickPreferredString(latest.lastMessage, fallback.lastMessage),
+      lastSenderId:
+          _pickPreferredString(latest.lastSenderId, fallback.lastSenderId),
+      lastSenderName:
+          _pickPreferredString(latest.lastSenderName, fallback.lastSenderName),
+      unreadCount: _mergeIntMaps(unreadCount, other.unreadCount),
+      messageCount:
+          messageCount > other.messageCount ? messageCount : other.messageCount,
+      createdAt: _earliestDateTime(createdAt, other.createdAt),
+      updatedAt: _latestDateTime(updatedAt, other.updatedAt),
+      lastMessageAt: _latestDateTime(lastMessageAt, other.lastMessageAt),
+      status: _pickPreferredString(other.status, status),
+      archivedBy: _mergeBoolMaps(archivedBy, other.archivedBy),
+      blockedBy: _mergeBoolMaps(blockedBy, other.blockedBy),
     );
   }
 
@@ -240,7 +286,96 @@ class ConversationSummary {
     if (raw is num) return raw.toInt();
     final parsed = int.tryParse('${raw ?? ''}');
     if (parsed != null) return parsed;
-    final lastMessage = _readString(data, const ['lastMessage', 'last_message']);
+    final lastMessage =
+        _readString(data, const ['lastMessage', 'last_message']);
     return lastMessage.isNotEmpty ? 1 : 0;
+  }
+
+  static List<String> _mergeParticipants(
+    Iterable<String> primary,
+    Iterable<String> secondary,
+  ) {
+    final merged = <String>{
+      ...primary
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty),
+      ...secondary
+          .map((value) => value.trim())
+          .where((value) => value.isNotEmpty),
+    }.toList(growable: false)
+      ..sort();
+    return merged;
+  }
+
+  static Map<String, String> _mergeStringMaps(
+    Map<String, String> primary,
+    Map<String, String> secondary,
+  ) {
+    final merged = <String, String>{...primary};
+    for (final entry in secondary.entries) {
+      final key = entry.key.trim();
+      final value = entry.value.trim();
+      if (key.isEmpty || value.isEmpty) continue;
+      merged[key] = value;
+    }
+    return Map<String, String>.unmodifiable(merged);
+  }
+
+  static Map<String, int> _mergeIntMaps(
+    Map<String, int> primary,
+    Map<String, int> secondary,
+  ) {
+    final merged = <String, int>{...primary};
+    for (final entry in secondary.entries) {
+      final key = entry.key.trim();
+      if (key.isEmpty) continue;
+      final currentValue = merged[key] ?? 0;
+      if (entry.value > currentValue) {
+        merged[key] = entry.value;
+      }
+    }
+    return Map<String, int>.unmodifiable(merged);
+  }
+
+  static Map<String, bool> _mergeBoolMaps(
+    Map<String, bool> primary,
+    Map<String, bool> secondary,
+  ) {
+    final merged = <String, bool>{...primary};
+    for (final entry in secondary.entries) {
+      final key = entry.key.trim();
+      if (key.isEmpty) continue;
+      merged[key] = (merged[key] == true) || entry.value;
+    }
+    return Map<String, bool>.unmodifiable(merged);
+  }
+
+  static String _pickPreferredString(String primary, String fallback) {
+    final normalizedPrimary = primary.trim();
+    if (normalizedPrimary.isNotEmpty) return normalizedPrimary;
+    return fallback.trim();
+  }
+
+  static DateTime? _latestDateTime(DateTime? left, DateTime? right) {
+    if (left == null) return right;
+    if (right == null) return left;
+    return left.isAfter(right) ? left : right;
+  }
+
+  static DateTime? _earliestDateTime(DateTime? left, DateTime? right) {
+    if (left == null) return right;
+    if (right == null) return left;
+    return left.isBefore(right) ? left : right;
+  }
+
+  static ConversationSummary _latestSummary(
+    ConversationSummary left,
+    ConversationSummary right,
+  ) {
+    final leftDate = left.sortDate;
+    final rightDate = right.sortDate;
+    if (leftDate == null) return right;
+    if (rightDate == null) return left;
+    return rightDate.isAfter(leftDate) ? right : left;
   }
 }

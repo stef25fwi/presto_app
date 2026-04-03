@@ -30,3 +30,23 @@ List<String> mergeUniqueConversationIds(Iterable<String?> rawIds) {
 
   return result;
 }
+
+List<String> mergeConversationIdPages(
+  Iterable<String?> initialIds, {
+  Iterable<Iterable<String?>> additionalPages = const <Iterable<String?>>[],
+}) {
+  final merged = mergeUniqueConversationIds(initialIds);
+  if (additionalPages.isEmpty) {
+    return merged;
+  }
+
+  final seen = merged.toSet();
+  for (final page in additionalPages) {
+    for (final conversationId in mergeUniqueConversationIds(page)) {
+      if (!seen.add(conversationId)) continue;
+      merged.add(conversationId);
+    }
+  }
+
+  return merged;
+}

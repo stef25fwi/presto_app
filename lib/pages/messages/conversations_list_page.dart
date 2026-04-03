@@ -184,7 +184,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     final byId = <String, ConversationSummary>{};
     for (final docs in docLists) {
       for (final conversation in docs) {
-        byId.putIfAbsent(conversation.id, () => conversation);
+        final existing = byId[conversation.id];
+        byId[conversation.id] =
+            existing == null ? conversation : existing.mergeWith(conversation);
       }
     }
 
@@ -224,6 +226,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     const notificationsFallbackSource = '__notifications__';
     const startedMessageFallbackSourcePrefix = '__started_messages__:';
     const sentMessageFieldAliases = <String>['senderId', 'sender_id'];
+    const notificationsFallbackLiveLimit = 60;
+    const notificationsFallbackMaxPages = 4;
+    const startedMessageFallbackLiveLimit = 80;
+    const startedMessageFallbackMaxPages = 4;
 
     void emit() {
       if (controller.isClosed) return;
@@ -253,13 +259,55 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     late void Function() listenNotifications;
     late void Function(String senderField) listenStartedMessagesField;
 
+    Future<List<String>> collectPagedConversationIds({
+      required Iterable<String?> initialConversationIds,
+      required Query<Map<String, dynamic>> baseQuery,
+      required QueryDocumentSnapshot<Map<String, dynamic>>? lastDoc,
+      required int maxPages,
+      required int pageSize,
+      required String? Function(QueryDocumentSnapshot<Map<String, dynamic>> doc)
+          extractConversationId,
+    }) async {
+      var mergedConversationIds = mergeConversationIdPages(
+        initialConversationIds,
+      );
+      if (lastDoc == null || maxPages <= 1) {
+        return mergedConversationIds;
+      }
+
+      var cursor = lastDoc;
+      var loadedPages = 1;
+      while (loadedPages < maxPages) {
+        final snapshot =
+            await baseQuery.startAfterDocument(cursor).limit(pageSize).get();
+
+        if (snapshot.docs.isEmpty) {
+          break;
+        }
+
+        mergedConversationIds = mergeConversationIdPages(
+          mergedConversationIds,
+          additionalPages: <Iterable<String?>>[
+            snapshot.docs.map(extractConversationId),
+          ],
+        );
+
+        loadedPages += 1;
+        if (snapshot.docs.length < pageSize) {
+          break;
+        }
+        cursor = snapshot.docs.last;
+      }
+
+      return mergedConversationIds;
+    }
+
     Future<void> refreshConversationFallback(
       String source,
       Iterable<String?> rawConversationIds,
     ) async {
       try {
-        final conversationIds =
-            mergeUniqueConversationIds(rawConversationIds);
+        final conversationIds = mergeUniqueConversationIds(rawConversationIds);
 
         if (conversationIds.isEmpty) {
           docsByField[source] = const <ConversationSummary>[];
@@ -288,6 +336,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               return ConversationSummary.fromMap(
                 snapshot.id,
                 Map<String, dynamic>.from(data),
+                assumedParticipants: <String>[userId],
               );
             })
             .whereType<ConversationSummary>()
@@ -311,11 +360,33 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     Future<void> refreshNotificationFallback(
       List<QueryDocumentSnapshot<Map<String, dynamic>>> notificationDocs,
     ) async {
+      final conversationIds = notificationDocs.length <
+              notificationsFallbackLiveLimit
+          ? mergeUniqueConversationIds(
+              notificationDocs.map(
+                (notificationDoc) =>
+                    _notificationConversationId(notificationDoc.data()),
+              ),
+            )
+          : await collectPagedConversationIds(
+              initialConversationIds: notificationDocs.map(
+                (notificationDoc) =>
+                    _notificationConversationId(notificationDoc.data()),
+              ),
+              baseQuery: FirebaseFirestore.instance
+                  .collection('notifications')
+                  .where('userId', isEqualTo: userId)
+                  .orderBy('createdAt', descending: true),
+              lastDoc: notificationDocs.isEmpty ? null : notificationDocs.last,
+              maxPages: notificationsFallbackMaxPages,
+              pageSize: notificationsFallbackLiveLimit,
+              extractConversationId: (notificationDoc) =>
+                  _notificationConversationId(notificationDoc.data()),
+            );
+
       await refreshConversationFallback(
         notificationsFallbackSource,
-        notificationDocs.map((notificationDoc) {
-          return _notificationConversationId(notificationDoc.data());
-        }),
+        conversationIds,
       );
     }
 
@@ -356,7 +427,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           .collection('notifications')
           .where('userId', isEqualTo: userId)
           .orderBy('createdAt', descending: true)
-          .limit(60)
+          .limit(notificationsFallbackLiveLimit)
           .snapshots()
           .listen(
         (snapshot) {
@@ -380,23 +451,52 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     listenStartedMessagesField = (String senderField) {
       final source = '$startedMessageFallbackSourcePrefix$senderField';
       subscriptionsByField.remove(source)?.cancel();
+      final baseQuery = FirebaseFirestore.instance
+          .collectionGroup('messages')
+          .where(senderField, isEqualTo: userId)
+          .orderBy(FieldPath.documentId);
       final subscription = FirebaseFirestore.instance
           .collectionGroup('messages')
           .where(senderField, isEqualTo: userId)
-          .limit(80)
+          .orderBy(FieldPath.documentId)
+          .limit(startedMessageFallbackLiveLimit)
           .snapshots()
           .listen(
         (snapshot) {
           retryTimersByField.remove(source)?.cancel();
           unawaited(
-            refreshConversationFallback(
-              source,
-              snapshot.docs.map(
-                (messageDoc) => conversationIdFromMessageDocumentPath(
-                  messageDoc.reference.path,
-                ),
-              ),
-            ),
+            () async {
+              final conversationIds = snapshot.docs.length <
+                      startedMessageFallbackLiveLimit
+                  ? mergeUniqueConversationIds(
+                      snapshot.docs.map(
+                        (messageDoc) => conversationIdFromMessageDocumentPath(
+                          messageDoc.reference.path,
+                        ),
+                      ),
+                    )
+                  : await collectPagedConversationIds(
+                      initialConversationIds: snapshot.docs.map(
+                        (messageDoc) => conversationIdFromMessageDocumentPath(
+                          messageDoc.reference.path,
+                        ),
+                      ),
+                      baseQuery: baseQuery,
+                      lastDoc:
+                          snapshot.docs.isEmpty ? null : snapshot.docs.last,
+                      maxPages: startedMessageFallbackMaxPages,
+                      pageSize: startedMessageFallbackLiveLimit,
+                      extractConversationId: (messageDoc) =>
+                          conversationIdFromMessageDocumentPath(
+                        messageDoc.reference.path,
+                      ),
+                    );
+
+              await refreshConversationFallback(
+                source,
+                conversationIds,
+              );
+            }(),
           );
         },
         onError: (error, stackTrace) {
@@ -425,7 +525,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         }
         if (participantField.startsWith(startedMessageFallbackSourcePrefix)) {
           listenStartedMessagesField(
-            participantField.substring(startedMessageFallbackSourcePrefix.length),
+            participantField
+                .substring(startedMessageFallbackSourcePrefix.length),
           );
           return;
         }
@@ -629,6 +730,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         final conversation = ConversationSummary.fromMap(
           snapshot.id,
           normalizedData,
+          assumedParticipants: <String>[userId],
         );
 
         if (conversation.includesUser(userId)) {
