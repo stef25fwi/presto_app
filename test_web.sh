@@ -16,7 +16,7 @@ flutter pub get
 
 # Lancer en mode debug sur le web
 echo "🚀 Lancement du serveur web..."
-flutter run -d web-server --dart-define=FLUTTER_WEB_AUTO_OPEN=false
+bash tools/flutter_with_build_stamp.sh run -d web-server --dart-define=FLUTTER_WEB_AUTO_OPEN=false
 
 echo ""
 echo "✅ Serveur web démarré"
