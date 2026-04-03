@@ -24,4 +24,17 @@ void main() {
       <String>['conv_a', 'conv_b', 'conv_c'],
     );
   });
+
+  test('fusionne plusieurs pages de fallback en conservant l ordre utile', () {
+    expect(
+      mergeConversationIdPages(
+        <String?>['conv_recent_a', 'conv_recent_b', 'conv_recent_a'],
+        additionalPages: <Iterable<String?>>[
+          <String?>['conv_recent_b', 'conv_old_c', null],
+          <String?>['', 'conv_old_d', 'conv_old_c'],
+        ],
+      ),
+      <String>['conv_recent_a', 'conv_recent_b', 'conv_old_c', 'conv_old_d'],
+    );
+  });
 }
