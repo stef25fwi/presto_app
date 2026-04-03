@@ -22,7 +22,7 @@
     {
       "label": "Flutter: Web Preview",
       "type": "shell",
-      "command": "flutter run -d web-server --web-port 8080 --web-hostname 0.0.0.0",
+      "command": "bash tools/flutter_with_build_stamp.sh run -d web-server --web-port 8080 --web-hostname 0.0.0.0",
       "isBackground": true,
       "problemMatcher": []
     },
@@ -155,7 +155,7 @@
     {
       "label": "Flutter: Build Web Release",
       "type": "shell",
-      "command": "flutter build web --release",
+      "command": "bash tools/flutter_with_build_stamp.sh build web --release --no-wasm-dry-run",
       "problemMatcher": []
     },
     {
