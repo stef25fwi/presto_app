@@ -115,12 +115,17 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _registerProfileFieldListeners();
-    _authSub = _auth.authStateChanges().listen((user) {
+    _authSub = _auth.authStateChanges().listen((user) async {
       final email = user?.email;
       if (email != null && email.isNotEmpty && _emailCtrl.text != email) {
         _emailCtrl.text = email;
       }
       if (user != null) {
+        try {
+          await EmailActionService.syncCurrentUserEmailVerificationState();
+        } catch (_) {
+          // Best effort
+        }
         _bindProfile(user);
         _loadNotificationPreferences(user.uid);
       } else {
@@ -205,8 +210,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   String? _extractPostalCodeFromLocationValue(String value) {
-    final match =
-        RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(value);
+    final match = RegExp(r'\b(97\d{3}|98\d{3}|\d{5})\b').firstMatch(value);
     return match?.group(1);
   }
 
@@ -383,7 +387,8 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     final normalizedExplicitCode = (explicitCountryCode ?? '').trim();
-    final knownCodes = kPhoneCountryCodes.map((country) => country.code).toList();
+    final knownCodes =
+        kPhoneCountryCodes.map((country) => country.code).toList();
     final trimmed = rawPhone.trim();
 
     if (trimmed.isEmpty) {
