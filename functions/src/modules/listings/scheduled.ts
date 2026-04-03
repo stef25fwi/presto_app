@@ -1,5 +1,6 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { db } from "../../core/firestore";
+import { APP_BASE_URL } from "../../config/env";
 import { COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
 
@@ -17,6 +18,88 @@ function normalizeOwnerId(data: Record<string, unknown>): string {
 function isPublishedStatus(data: Record<string, unknown>): boolean {
   const status = String(data.status || "").trim().toLowerCase();
   return status === "published" || status === "active" || data.isActive === true;
+}
+
+function toMillis(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) return value;
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "object" && value && "toMillis" in value) {
+    const candidate = (value as { toMillis?: () => number }).toMillis?.();
+    if (typeof candidate === "number" && Number.isFinite(candidate) && candidate > 0) return candidate;
+  }
+  return 0;
+}
+
+async function userHasPublishedListing(userId: string): Promise<boolean> {
+  const [listingsByOwnerId, listingsByOwnerUnderscore, offersByOwnerId, offersByOwnerUnderscore] = await Promise.all([
+    db.collection(COLLECTIONS.listings).where("ownerId", "==", userId).limit(20).get(),
+    db.collection(COLLECTIONS.listings).where("owner_id", "==", userId).limit(20).get(),
+    db.collection(COLLECTIONS.offers).where("ownerId", "==", userId).limit(20).get(),
+    db.collection(COLLECTIONS.offers).where("owner_id", "==", userId).limit(20).get(),
+  ]);
+
+  return [...listingsByOwnerId.docs, ...listingsByOwnerUnderscore.docs, ...offersByOwnerId.docs, ...offersByOwnerUnderscore.docs]
+    .some((doc) => isPublishedStatus(doc.data() as Record<string, unknown>));
+}
+
+async function emitFirstListingNotPublishedEvent({
+  userId,
+  draftId,
+  draftTitle,
+}: {
+  userId: string;
+  draftId: string;
+  draftTitle: string;
+}): Promise<void> {
+  const userSnap = await db.collection(COLLECTIONS.users).doc(userId).get();
+  const userData = userSnap.data() ?? {};
+  const email = String(userData.email || "").trim();
+  if (!email) return;
+
+  const now = Date.now();
+  const reminderBucket = Math.floor(now / (7 * 24 * 60 * 60 * 1000));
+  const eventId = `evt_listing_first_not_published_${userId}_${reminderBucket}`;
+
+  await db.collection(COLLECTIONS.emailEvents).doc(eventId).set({
+    event_id: eventId,
+    event_name: "listing.first_not_published.reminder",
+    source_collection: COLLECTIONS.listingDraftsV2,
+    source_id: draftId,
+    recipient_user_id: userId,
+    dedupe_key: sha256(`listing.first_not_published.reminder:${userId}:${reminderBucket}`),
+    occurred_at: now,
+    payload: {
+      recipient_email: email,
+      firstName: String(userData.displayName || userData.display_name || "").trim().split(" ")[0] || "",
+      publishUrl: `${APP_BASE_URL}/publier`,
+      listingDraftTitle: draftTitle,
+    },
+    status: "created",
+  }, { merge: true });
+}
+
+async function processDraftCollection(collectionName: string, emittedUsers: Set<string>, cutoffMs: number): Promise<void> {
+  const draftsQ = await db.collection(collectionName)
+    .where("status", "in", ["draft", "ready"])
+    .limit(200)
+    .get();
+
+  for (const doc of draftsQ.docs) {
+    const data = doc.data() as Record<string, unknown>;
+    const userId = normalizeOwnerId(data);
+    if (!userId || emittedUsers.has(userId)) continue;
+
+    const createdAt = toMillis(data.createdAt ?? data.created_at ?? data.updatedAt ?? data.updated_at);
+    if (!createdAt || createdAt > cutoffMs) continue;
+    if (await userHasPublishedListing(userId)) continue;
+
+    emittedUsers.add(userId);
+    await emitFirstListingNotPublishedEvent({
+      userId,
+      draftId: doc.id,
+      draftTitle: String(data.title || "Votre brouillon"),
+    });
+  }
 }
 
 async function emitListingLifecycleEvent(
@@ -115,4 +198,12 @@ export const enqueueExpiringListingEmails = onSchedule("every 1 hours", async ()
   const in72h = now + 72 * 60 * 60 * 1000;
   await processCollection(COLLECTIONS.listings, (docId) => `https://presto.app/listings/${docId}/renew`, now, in72h);
   await processCollection(COLLECTIONS.offers, (docId) => `https://presto.app/offers/${docId}`, now, in72h);
+});
+
+export const enqueueFirstListingNotPublishedReminders = onSchedule("every day 10:00", async () => {
+  const cutoffMs = Date.now() - 24 * 60 * 60 * 1000;
+  const emittedUsers = new Set<string>();
+
+  await processDraftCollection(COLLECTIONS.listingDraftsV2, emittedUsers, cutoffMs);
+  await processDraftCollection(COLLECTIONS.listingDrafts, emittedUsers, cutoffMs);
 });

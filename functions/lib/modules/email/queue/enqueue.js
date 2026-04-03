@@ -7,7 +7,7 @@ const constants_1 = require("../../../shared/constants");
 const mapper_1 = require("../events/mapper");
 const enrich_1 = require("../events/enrich");
 const resolver_1 = require("../preferences/resolver");
-const registry_1 = require("../templates/registry");
+const compat_registry_1 = require("../templates/compat_registry");
 const hash_1 = require("../../../utils/hash");
 async function enqueueEmailJobsFromEvent(event) {
     const enrichedEvent = await (0, enrich_1.enrichEventPayload)(event);
@@ -16,7 +16,7 @@ async function enqueueEmailJobsFromEvent(event) {
         logger_1.logger.info("email_enqueue_skipped_no_template", { eventId: enrichedEvent.event_id, eventName: enrichedEvent.event_name });
         return;
     }
-    const meta = (0, registry_1.getTemplateMeta)(template);
+    const meta = (0, compat_registry_1.getCompatTemplateMeta)(template);
     if (!meta) {
         logger_1.logger.warn("email_enqueue_skipped_unknown_template_meta", { eventId: enrichedEvent.event_id, template });
         return;
@@ -42,7 +42,7 @@ async function enqueueEmailJobsFromEvent(event) {
         });
         return;
     }
-    const missingVariables = (0, registry_1.listMissingRequiredVariables)(template, enrichedEvent.payload);
+    const missingVariables = (0, compat_registry_1.listCompatMissingRequiredVariables)(template, enrichedEvent.payload);
     if (missingVariables.length > 0) {
         await firestore_1.db.collection(constants_1.COLLECTIONS.emailEvents).doc(enrichedEvent.event_id).set({
             status: "ignored",
@@ -57,13 +57,14 @@ async function enqueueEmailJobsFromEvent(event) {
         });
         return;
     }
-    const topic = meta.category === "messaging"
-        ? "messaging"
-        : meta.category === "listings"
-            ? "listings"
-            : meta.category === "saved_search"
-                ? "saved_search"
-                : "other";
+    const topic = meta.preference_topic
+        ?? (meta.category === "messaging"
+            ? "messaging"
+            : meta.category === "listings"
+                ? "listings"
+                : meta.category === "saved_search"
+                    ? "saved_search"
+                    : "other");
     const channel = meta.channel;
     const decision = await (0, resolver_1.resolvePreferenceDecision)(recipientUserId, channel, topic);
     if (!decision.allowed) {
