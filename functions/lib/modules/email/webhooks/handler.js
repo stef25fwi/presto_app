@@ -8,6 +8,20 @@ const firestore_1 = require("../../../core/firestore");
 const constants_1 = require("../../../shared/constants");
 const mapper_1 = require("./mapper");
 const env_1 = require("../../../config/env");
+function mapWebhookStatusToJobStatus(status) {
+    switch (status) {
+        case "delivered":
+            return "delivered";
+        case "bounced":
+        case "complained":
+        case "dropped":
+            return "failed";
+        case "unsubscribed":
+            return "cancelled";
+        default:
+            return null;
+    }
+}
 exports.handleEmailProviderWebhook = (0, https_1.onRequest)({ region: env_1.PROJECT_REGION }, async (req, res) => {
     const provider = (0, provider_factory_1.createEmailProvider)();
     const rawBody = typeof req.rawBody === "string" ? req.rawBody : req.rawBody?.toString("utf8") || "";
@@ -28,6 +42,7 @@ exports.handleEmailProviderWebhook = (0, https_1.onRequest)({ region: env_1.PROJ
     for (const evt of events) {
         const internalStatus = (0, mapper_1.mapProviderStatusToInternal)(evt.type);
         let jobMetadata = {};
+        let eventId = null;
         if (evt.providerMessageId) {
             const jobSnap = await firestore_1.db
                 .collection(constants_1.COLLECTIONS.emailJobs)
@@ -37,14 +52,31 @@ exports.handleEmailProviderWebhook = (0, https_1.onRequest)({ region: env_1.PROJ
             const jobDoc = jobSnap.docs[0];
             const jobData = jobDoc?.data();
             if (jobDoc && jobData) {
+                eventId = typeof jobData.event_id === "string" && jobData.event_id.trim().length > 0
+                    ? jobData.event_id
+                    : null;
                 jobMetadata = {
-                    job_id: jobDoc.id,
-                    event_id: jobData.event_id || null,
+                    job_id: jobData.job_id || jobDoc.id,
+                    event_id: eventId,
                     template_code: jobData.template_code || null,
                     channel: jobData.channel || null,
                     recipient_user_id: jobData.recipient_user_id || null,
                     recipient_email: jobData.recipient_email || null,
                 };
+                const nextJobStatus = mapWebhookStatusToJobStatus(internalStatus);
+                await jobDoc.ref.set({
+                    last_provider_event_status: internalStatus,
+                    last_provider_event_at: Date.now(),
+                    updated_at: Date.now(),
+                    ...(nextJobStatus ? { status: nextJobStatus } : {}),
+                }, { merge: true });
+                if (eventId) {
+                    await firestore_1.db.collection(constants_1.COLLECTIONS.emailEvents).doc(eventId).set({
+                        last_provider_event_status: internalStatus,
+                        last_provider_event_at: Date.now(),
+                        ...(internalStatus === "delivered" ? { delivery_status: "delivered" } : {}),
+                    }, { merge: true });
+                }
             }
         }
         await firestore_1.db.collection(constants_1.COLLECTIONS.emailLogs).add({
