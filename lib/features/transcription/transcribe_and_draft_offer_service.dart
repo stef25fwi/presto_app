@@ -1,5 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../../services/firebase_functions_region.dart';
+
 Map<String, dynamic> _mapStringDynamic(Object? value) {
   if (value is Map<String, dynamic>) return value;
   if (value is Map) return Map<String, dynamic>.from(value);
@@ -40,7 +42,7 @@ class TranscribeAndDraftOfferService {
 
   TranscribeAndDraftOfferService({FirebaseFunctions? functions})
       : _functions =
-            functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
+        functions ?? prestoFirebaseFunctions;
 
   Future<TranscribeAndDraftOfferResult> transcribeAndDraftOffer({
     required String gcsUri,

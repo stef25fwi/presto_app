@@ -2,13 +2,14 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 import '../../models/marketplace_enums.dart';
 import '../../models/marketplace_report.dart';
+import '../../services/firebase_functions_region.dart';
 import '../../services/product_analytics_service.dart';
 
 class ReportRepository {
   ReportRepository({
     FirebaseFunctions? functions,
     ProductAnalyticsService? analytics,
-  })  : _functions = functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'),
+  })  : _functions = functions ?? prestoFirebaseFunctions,
         _analytics = analytics ?? ProductAnalyticsService();
 
   final FirebaseFunctions _functions;

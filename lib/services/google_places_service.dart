@@ -1,7 +1,9 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/foundation.dart';
+
+import 'firebase_functions_region.dart';
 
 /// Représente une suggestion retournée par l'API Places
 class PlaceSuggestion {
@@ -13,7 +15,7 @@ class PlaceSuggestion {
 
 class GooglePlacesService {
   final FirebaseFunctions _functions =
-      FirebaseFunctions.instanceFor(region: 'europe-west1');
+      prestoFirebaseFunctions;
   // Conserve l'import http si d'autres fichiers l'utilisent; ici on passe par Cloud Functions.
 
   /// Autocomplétion de lieux avec paramètres personnalisables

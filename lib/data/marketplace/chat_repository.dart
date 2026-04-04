@@ -1,8 +1,10 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../../services/firebase_functions_region.dart';
+
 class ChatRepository {
   ChatRepository({FirebaseFunctions? functions})
-      : _functions = functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1');
+      : _functions = functions ?? prestoFirebaseFunctions;
 
   final FirebaseFunctions _functions;
 

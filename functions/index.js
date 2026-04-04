@@ -23,6 +23,7 @@ const USER_STATS_DOC = admin.firestore().collection('_stats').doc('users');
 // Secrets (Firebase Functions v2)
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
 const GOOGLE_PLACES_API_KEY = defineSecret('GOOGLE_PLACES_API_KEY');
+const PROJECT_REGION = process.env.FUNCTION_REGION || 'us-east1';
 
 // Carte des villes et codes postaux (Guadeloupe et Martinique)
 const CITY_POSTAL_MAP = {
@@ -224,7 +225,7 @@ async function rateLimitOrThrow({ uid, action, limit, windowSec }) {
 
 exports.placesAutocomplete = onCall(
   {
-    region: 'europe-west1',
+    region: PROJECT_REGION,
     timeoutSeconds: 15,
     secrets: [GOOGLE_PLACES_API_KEY],
     enforceAppCheck: ENFORCE_APP_CHECK,
@@ -287,7 +288,7 @@ exports.placesAutocomplete = onCall(
 
 exports.placesDetails = onCall(
   {
-    region: 'europe-west1',
+    region: PROJECT_REGION,
     timeoutSeconds: 15,
     secrets: [GOOGLE_PLACES_API_KEY],
     enforceAppCheck: ENFORCE_APP_CHECK,
@@ -492,7 +493,7 @@ Retourne uniquement le JSON demandé.`;
  * Entrée : { hint, city, category, lang }
  * Sortie : { title, description, category, city, postalCode }
  */
-exports.generateOfferDraft = onCall({ region: 'europe-west1', secrets: [OPENAI_API_KEY], enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+exports.generateOfferDraft = onCall({ region: PROJECT_REGION, secrets: [OPENAI_API_KEY], enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   // 🔒 Auth requise (y compris auth anonyme côté app)
   const uid = assertAuthenticated(request);
 
@@ -536,7 +537,7 @@ const { toFile } = require("openai");
 exports.moderateNewOffer = createModerateNewOffer({
   admin,
   onDocumentCreated,
-  region: 'europe-west1',
+  region: PROJECT_REGION,
 });
 
 // Assure-toi que initializeApp est appelé une seule fois dans ton fichier
@@ -695,7 +696,7 @@ function isProUserData(data) {
   return false;
 }
 
-exports.onAuthUserCreated = functionsV1.auth.user().onCreate(async (user) => {
+exports.onAuthUserCreated = functionsV1.region(PROJECT_REGION).auth.user().onCreate(async (user) => {
   const uid = user.uid;
   const db = admin.firestore();
 
@@ -714,7 +715,7 @@ exports.onAuthUserCreated = functionsV1.auth.user().onCreate(async (user) => {
 // ✅ Tracking client (best-effort) : une connexion utilisateur.
 exports.trackUserLogin = onCall(
   {
-    region: 'europe-west1',
+    region: PROJECT_REGION,
     timeoutSeconds: 10,
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
@@ -809,7 +810,7 @@ exports.trackUserLogin = onCall(
 // ✅ Admin: stats utilisateurs pour la tuile "Utilisateurs".
 exports.adminGetUserStats = onCall(
   {
-    region: 'europe-west1',
+    region: PROJECT_REGION,
     timeoutSeconds: 20,
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
@@ -864,7 +865,7 @@ exports.adminGetUserStats = onCall(
 // ✅ Obtenir le statut de présence d'un ou plusieurs utilisateurs
 exports.getUserPresenceStatus = onCall(
   {
-    region: 'europe-west1',
+    region: PROJECT_REGION,
     timeoutSeconds: 10,
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
@@ -1155,7 +1156,7 @@ async function withTimeout(promise, ms, label) {
 // ✅ Callable: microIaProcessAudio (1 seul endpoint pour ta page)
 exports.microIaProcessAudio = onCall(
   {
-    region: "europe-west1",
+    region: PROJECT_REGION,
     timeoutSeconds: 120,
     secrets: [OPENAI_API_KEY], // ⚠️ garde EXACTEMENT ta constante existante
     enforceAppCheck: ENFORCE_APP_CHECK,
@@ -1431,7 +1432,7 @@ exports.microIaProcessAudio = onCall(
 // ✅ Admin: lire la config Micro-IA effective (Remote Config)
 exports.adminGetMicroIaConfig = onCall(
   {
-    region: 'europe-west1',
+    region: PROJECT_REGION,
     timeoutSeconds: 30,
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
@@ -1445,7 +1446,7 @@ exports.adminGetMicroIaConfig = onCall(
 // ✅ Admin: mettre à jour la config Micro-IA via Remote Config
 exports.adminSetMicroIaConfig = onCall(
   {
-    region: 'europe-west1',
+    region: PROJECT_REGION,
     timeoutSeconds: 60,
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
@@ -1530,7 +1531,7 @@ exports.adminSetMicroIaConfig = onCall(
 
 exports.processOfferPhoto = onCall(
   {
-    region: 'europe-west1',
+    region: PROJECT_REGION,
     timeoutSeconds: 60,
     enforceAppCheck: ENFORCE_APP_CHECK,
   },

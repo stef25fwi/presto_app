@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../../services/firebase_functions_region.dart';
 import '../../services/product_analytics_service.dart';
 
 class FavoriteRepository {
@@ -9,7 +10,7 @@ class FavoriteRepository {
     FirebaseFunctions? functions,
     ProductAnalyticsService? analytics,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _functions = functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'),
+      _functions = functions ?? prestoFirebaseFunctions,
         _analytics = analytics ?? ProductAnalyticsService();
 
   final FirebaseFirestore _firestore;

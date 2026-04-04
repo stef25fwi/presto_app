@@ -39,6 +39,7 @@ import 'services/city_search.dart';
 import 'services/account_social_auth_actions.dart';
 import 'services/google_auth_service.dart';
 import 'services/email_action_service.dart';
+import 'services/firebase_functions_region.dart';
 import 'services/inbox_counts.dart';
 import 'services/app_route_parser.dart';
 import 'services/marketplace_publish_service.dart';
@@ -2675,80 +2676,86 @@ class _HomePageState extends State<HomePage>
               ],
             ),
           ),
-          bottomNavigationBar: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF1A73E8),
-                  Color(0xFF0D47A1),
-                ],
+          bottomNavigationBar: MediaQuery.removeViewInsets(
+            removeBottom: true,
+            context: context,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF1A73E8),
+                    Color(0xFF0D47A1),
+                  ],
+                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
-            child: SafeArea(
-              top: false,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: HomeBottomNavItem(
-                      icon: Icons.home,
-                      label: "Accueil",
-                      selected: _selectedIndex == 0,
-                      onTap: () => _onBottomTap(0),
+              padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+              child: SafeArea(
+                top: false,
+                maintainBottomViewPadding: true,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: HomeBottomNavItem(
+                        icon: Icons.home,
+                        label: "Accueil",
+                        selected: _selectedIndex == 0,
+                        onTap: () => _onBottomTap(0),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: HomeBottomNavItem(
-                      icon: Icons.search,
-                      label: "Je consulte\nles offres",
-                      selected: _selectedIndex == 1,
-                      onTap: () => _onBottomTap(1),
+                    Expanded(
+                      child: HomeBottomNavItem(
+                        icon: Icons.search,
+                        label: "Je consulte\nles offres",
+                        selected: _selectedIndex == 1,
+                        onTap: () => _onBottomTap(1),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: HomeBottomNavItem(
-                      icon: Icons.add_circle_outline,
-                      label: "Publier\nune offre",
-                      isBig: true,
-                      selected: _selectedIndex == 2,
-                      onTap: () => _onBottomTap(2),
+                    Expanded(
+                      child: HomeBottomNavItem(
+                        icon: Icons.add_circle_outline,
+                        label: "Publier\nune offre",
+                        isBig: true,
+                        selected: _selectedIndex == 2,
+                        onTap: () => _onBottomTap(2),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: currentUser == null
-                        ? HomeBottomNavItem(
-                            icon: Icons.chat_bubble_outline,
-                            label: "Messages",
-                            selected: _selectedIndex == 3,
-                            onTap: () => _onBottomTap(3),
-                          )
-                        : _UnreadInboxBell(
-                            userId: currentUser.uid,
-                            monitoringKeyPrefix: 'bottomBar.messages',
-                            countType: InboxCountType.unreadMessages,
-                            builder: (context, badgeCount) => HomeBottomNavItem(
+                    Expanded(
+                      child: currentUser == null
+                          ? HomeBottomNavItem(
                               icon: Icons.chat_bubble_outline,
                               label: "Messages",
-                              badgeCount: badgeCount,
                               selected: _selectedIndex == 3,
                               onTap: () => _onBottomTap(3),
+                            )
+                          : _UnreadInboxBell(
+                              userId: currentUser.uid,
+                              monitoringKeyPrefix: 'bottomBar.messages',
+                              countType: InboxCountType.unreadMessages,
+                              useVisibleUnreadMessages: true,
+                              builder: (context, badgeCount) => HomeBottomNavItem(
+                                icon: Icons.chat_bubble_outline,
+                                label: "Messages",
+                                badgeCount: badgeCount,
+                                selected: _selectedIndex == 3,
+                                onTap: () => _onBottomTap(3),
+                              ),
                             ),
-                          ),
-                  ),
-                  Expanded(
-                    child: HomeBottomNavItem(
-                      icon: Icons.person_outline,
-                      label: "Compte",
-                      selected: _selectedIndex == 4,
-                      onTap: () => _onBottomTap(4),
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: HomeBottomNavItem(
+                        icon: Icons.person_outline,
+                        label: "Compte",
+                        selected: _selectedIndex == 4,
+                        onTap: () => _onBottomTap(4),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -3636,6 +3643,7 @@ class _UnreadInboxBell extends StatelessWidget {
   final String userId;
   final String? monitoringKeyPrefix;
   final InboxCountType countType;
+  final bool useVisibleUnreadMessages;
   final Widget Function(BuildContext context, int badgeCount) builder;
 
   const _UnreadInboxBell({
@@ -3643,12 +3651,15 @@ class _UnreadInboxBell extends StatelessWidget {
     required this.builder,
     this.monitoringKeyPrefix,
     this.countType = InboxCountType.totalUnread,
+    this.useVisibleUnreadMessages = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<int>(
-      stream: streamInboxCount(userId: userId, type: countType),
+      stream: useVisibleUnreadMessages
+          ? streamVisibleUnreadMessageCount(userId: userId)
+          : streamInboxCount(userId: userId, type: countType),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           final error = snapshot.error;
@@ -6353,7 +6364,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       final listingsSnap = await listingsRef.get();
       if (listingsSnap.exists) {
         final callable =
-            FirebaseFunctions.instanceFor(region: 'europe-west1').httpsCallable(
+            prestoFirebaseFunctions.httpsCallable(
           'deleteListing',
           options: HttpsCallableOptions(
             timeout: const Duration(seconds: 30),
@@ -7670,7 +7681,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final List<String> _uploadedPhotoUrls = [];
 
   final FirebaseFunctions _functions =
-      FirebaseFunctions.instanceFor(region: 'europe-west1');
+      prestoFirebaseFunctions;
 
   // Autocomplétion villes
   List<CityRecord> _citySuggestions = [];
@@ -10280,7 +10291,7 @@ class _AccountPageState extends State<AccountPage> {
   final GoogleAuthService _googleAuthService = GoogleAuthService();
 
   final FirebaseFunctions _functions =
-      FirebaseFunctions.instanceFor(region: 'europe-west1');
+      prestoFirebaseFunctions;
 
   Future<void> _trackLogin({
     String? authMethod,
@@ -14467,7 +14478,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
 
       if (isListing) {
         final callable =
-            FirebaseFunctions.instanceFor(region: 'europe-west1').httpsCallable(
+            prestoFirebaseFunctions.httpsCallable(
           'deleteListing',
           options: HttpsCallableOptions(
             timeout: const Duration(seconds: 30),

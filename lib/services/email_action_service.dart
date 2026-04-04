@@ -2,11 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'firebase_functions_region.dart';
+
 class EmailActionService {
   EmailActionService._();
 
   static final FirebaseFunctions _functions =
-      FirebaseFunctions.instanceFor(region: 'europe-west1');
+      prestoFirebaseFunctions;
 
   static Future<bool> syncCurrentUserEmailVerificationState() async {
     final currentUser = FirebaseAuth.instance.currentUser;
