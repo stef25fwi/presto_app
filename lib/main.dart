@@ -7945,6 +7945,73 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         lower.contains('immediat');
   }
 
+  String? _extractMissionDelayFromTranscript(String transcript) {
+    final lower = transcript.toLowerCase();
+
+    if (lower.contains('urgent') ||
+        lower.contains('urgence') ||
+        lower.contains('immédiat') ||
+        lower.contains('immediat')) {
+      return 'Urgent';
+    }
+    if (lower.contains("aujourd'hui") ||
+        lower.contains('aujourd hui') ||
+        lower.contains('dans la journée') ||
+        lower.contains('dans la journee') ||
+        lower.contains('24h')) {
+      return 'Dans la journée';
+    }
+    if (lower.contains('demain')) {
+      return 'Demain';
+    }
+    if (lower.contains('48h') || lower.contains('sous 48h')) {
+      return 'Sous 48h';
+    }
+    if (lower.contains('cette semaine') ||
+        lower.contains('dans la semaine') ||
+        lower.contains('7 jours') ||
+        lower.contains('7j')) {
+      return 'Cette semaine';
+    }
+    if (lower.contains('à convenir') ||
+        lower.contains('a convenir') ||
+        lower.contains('quand vous pouvez') ||
+        lower.contains('quand tu peux') ||
+        lower.contains('flexible') ||
+        lower.contains('pas urgent')) {
+      return 'À convenir';
+    }
+
+    return null;
+  }
+
+  bool _transcriptRequestsNegotiatedBudget(String transcript) {
+    final lower = transcript.toLowerCase();
+    return lower.contains('à négocier') ||
+        lower.contains('a negocier') ||
+        lower.contains('à discuter') ||
+        lower.contains('a discuter') ||
+        lower.contains('prix flexible') ||
+        lower.contains('budget flexible');
+  }
+
+  double? _extractBudgetAmountFromTranscript(String transcript) {
+    final matches = RegExp(
+      r'\b(\d{2,5}(?:[.,]\d{1,2})?)\s*(€|euros?)\b',
+      caseSensitive: false,
+    ).allMatches(transcript);
+
+    for (final match in matches) {
+      final raw = (match.group(1) ?? '').replaceAll(',', '.');
+      final value = double.tryParse(raw);
+      if (value != null && value > 0) {
+        return value;
+      }
+    }
+
+    return null;
+  }
+
   bool _shouldSkipFinalStreamingDraft(String transcript) {
     final hasTitle = _titleController.text.trim().isNotEmpty;
     final hasDescription = _descriptionController.text.trim().isNotEmpty;
@@ -8277,6 +8344,34 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           _selectedRegionCode = cityRec.region;
           _selectedPhoneCountryCode = _countryCodeForDept(cityRec.dept);
         });
+      }
+    }
+
+    final inferredMissionDelay = _extractMissionDelayFromTranscript(t);
+    if (!_delayEditedByUser && inferredMissionDelay != null) {
+      setState(() {
+        _missionDelay = inferredMissionDelay;
+        _isUrgent = inferredMissionDelay == 'Urgent';
+      });
+    }
+
+    if (!_budgetEditedByUser) {
+      if (_transcriptRequestsNegotiatedBudget(t)) {
+        setState(() {
+          _budgetType = 'À négocier';
+          _setControllerText(_budgetController, '');
+        });
+      } else {
+        final inferredBudget = _extractBudgetAmountFromTranscript(t);
+        if (inferredBudget != null) {
+          final formattedBudget = inferredBudget % 1 == 0
+              ? inferredBudget.toInt().toString()
+              : inferredBudget.toStringAsFixed(2);
+          setState(() {
+            _budgetType = 'Fixe';
+            _setControllerText(_budgetController, formattedBudget);
+          });
+        }
       }
     }
 
