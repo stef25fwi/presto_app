@@ -1,8 +1,10 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
+import 'firebase_functions_region.dart';
+
 class ConversationService {
   static final FirebaseFunctions _functions =
-      FirebaseFunctions.instanceFor(region: 'europe-west1');
+      prestoFirebaseFunctions;
 
   static Future<String> ensureConversation({
     required String offerId,

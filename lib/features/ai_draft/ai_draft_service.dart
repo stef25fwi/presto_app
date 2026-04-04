@@ -1,11 +1,12 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../../services/firebase_functions_region.dart';
 import '../../utils/crashlytics_context.dart';
 import '../../utils/retry.dart';
 
 class AiDraftService {
   final FirebaseFunctions _functions =
-      FirebaseFunctions.instanceFor(region: 'europe-west1');
+      prestoFirebaseFunctions;
 
   /// Génère un brouillon simple (compatible ancien format)
   Future<Map<String, dynamic>> generateOfferDraft(

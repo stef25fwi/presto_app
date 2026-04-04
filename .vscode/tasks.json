@@ -105,6 +105,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Commit us-east1 + Bottom Bar",
+      "type": "shell",
+      "command": "git commit -m \"fix(ui,infra): stabilize bottom bar and move functions to us-east1\"",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Commit UI Improvements",
       "type": "shell",
       "command": "git commit -m \"feat(ui): improve filters, profile, phone input and overlay theming\"",

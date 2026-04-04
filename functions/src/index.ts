@@ -1,7 +1,8 @@
 import { setGlobalOptions } from "firebase-functions/v2";
-import { EMAIL_PROVIDER_SECRETS } from "./config/env";
+import { EMAIL_PROVIDER_SECRETS, PROJECT_REGION } from "./config/env";
 
 setGlobalOptions({
+  region: PROJECT_REGION,
   secrets: EMAIL_PROVIDER_SECRETS,
 });
 

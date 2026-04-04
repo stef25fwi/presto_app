@@ -5,6 +5,7 @@ exports.syncEmailAnalytics = exports.purgeOldEmailLogs = exports.purgeOldEmailWe
 const v2_1 = require("firebase-functions/v2");
 const env_1 = require("./config/env");
 (0, v2_1.setGlobalOptions)({
+    region: env_1.PROJECT_REGION,
     secrets: env_1.EMAIL_PROVIDER_SECRETS,
 });
 var triggers_1 = require("./modules/auth/triggers");

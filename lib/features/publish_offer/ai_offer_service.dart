@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../../services/firebase_functions_region.dart';
+
 import '../../utils/retry.dart';
 
 double? _doubleOrNull(Object? value) {
@@ -206,7 +208,7 @@ class AiOfferService {
     FirebaseFunctions? functions,
   }) async {
     final callable =
-        (functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'))
+        (functions ?? prestoFirebaseFunctions)
             .httpsCallable(
       'generateOfferDraft',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),

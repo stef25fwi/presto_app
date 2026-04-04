@@ -4,6 +4,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import '../../models/marketplace_enums.dart';
 import '../../models/marketplace_listing.dart';
 import '../../models/marketplace_listing_draft.dart';
+import '../../services/firebase_functions_region.dart';
 import '../../services/product_analytics_service.dart';
 
 class ListingRepository {
@@ -12,7 +13,7 @@ class ListingRepository {
     FirebaseFunctions? functions,
     ProductAnalyticsService? analytics,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _functions = functions ?? FirebaseFunctions.instanceFor(region: 'europe-west1'),
+      _functions = functions ?? prestoFirebaseFunctions,
         _analytics = analytics ?? ProductAnalyticsService();
 
   final FirebaseFirestore _firestore;
