@@ -7683,6 +7683,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     _latestRecognizedTranscript = transcript;
 
+    if (_shouldSkipFinalStreamingDraft(transcript)) {
+      debugPrint('[Streaming] Final draft skipped: core fields already filled');
+      return;
+    }
+
     if (!mounted) return;
     setState(() => _isAnalyzing = true);
 
@@ -7910,6 +7915,63 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       default:
         return null;
     }
+  }
+
+  bool _transcriptMentionsBudget(String transcript) {
+    final lower = transcript.toLowerCase();
+    return RegExp(r'\b\d{2,5}(?:[.,]\d{1,2})?\s*(€|euros?)\b')
+            .hasMatch(lower) ||
+        lower.contains('budget') ||
+        lower.contains('tarif') ||
+        lower.contains('prix') ||
+        lower.contains('à négocier') ||
+        lower.contains('a negocier');
+  }
+
+  bool _transcriptMentionsUrgency(String transcript) {
+    final lower = transcript.toLowerCase();
+    return lower.contains('urgent') ||
+        lower.contains('urgence') ||
+        lower.contains("aujourd'hui") ||
+        lower.contains('aujourd hui') ||
+        lower.contains('demain') ||
+        lower.contains('ce soir') ||
+        lower.contains('48h') ||
+        lower.contains('cette semaine') ||
+        lower.contains('rapidement') ||
+        lower.contains('dès que possible') ||
+        lower.contains('des que possible') ||
+        lower.contains('immédiat') ||
+        lower.contains('immediat');
+  }
+
+  bool _shouldSkipFinalStreamingDraft(String transcript) {
+    final hasTitle = _titleController.text.trim().isNotEmpty;
+    final hasDescription = _descriptionController.text.trim().isNotEmpty;
+    final hasCity = _locationController.text.trim().isNotEmpty;
+    final hasCategory = (_category ?? '').trim().isNotEmpty;
+    final hasDelay = (_missionDelay ?? '').trim().isNotEmpty;
+    final hasBudget =
+        _budgetType == 'À négocier' || _budgetController.text.trim().isNotEmpty;
+
+    final missingCoreField = !hasTitle || !hasDescription || !hasCity || !hasCategory;
+    if (missingCoreField) {
+      return false;
+    }
+
+    final likelyNeedsDelay =
+        !_delayEditedByUser && !hasDelay && _transcriptMentionsUrgency(transcript);
+    if (likelyNeedsDelay) {
+      return false;
+    }
+
+    final likelyNeedsBudget =
+        !_budgetEditedByUser && !hasBudget && _transcriptMentionsBudget(transcript);
+    if (likelyNeedsBudget) {
+      return false;
+    }
+
+    return true;
   }
 
   String _buildRichDraftDescription(Map<String, dynamic> draft) {
