@@ -105,9 +105,9 @@
       "problemMatcher": []
     },
     {
-      "label": "Git: Commit us-east1 + Bottom Bar",
+      "label": "Git: Commit Tasks Cleanup",
       "type": "shell",
-      "command": "git commit -m \"fix(ui,infra): stabilize bottom bar and move functions to us-east1\"",
+      "command": "git commit -m \"chore(tasks): remove temporary commit task\"",
       "problemMatcher": []
     },
     {
