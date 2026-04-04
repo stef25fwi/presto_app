@@ -1,4 +1,5 @@
-// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
+// igno
+//re_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
 
 import 'dart:async';
 import 'dart:math' as math;
@@ -2653,28 +2654,25 @@ class _HomePageState extends State<HomePage>
           resizeToAvoidBottomInset: false,
           extendBody: false,
           backgroundColor: Colors.white,
-          body: SafeArea(
-            bottom: false,
-            child: IndexedStack(
-              index: _selectedIndex,
-              children: [
-                _buildHomeContent(),
-                ConsultOffersPage(
-                  key: ValueKey<String>(
-                    'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
-                  ),
-                  onScroll: _onPageScroll,
-                  categoryFilter: _consultCategoryFilter,
-                  searchQuery: _consultSearchQuery,
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: [
+              _buildHomeContent(),
+              ConsultOffersPage(
+                key: ValueKey<String>(
+                  'consult:${_consultCategoryFilter ?? ''}|${_consultSearchQuery ?? ''}',
                 ),
-                PublishOfferPage(onScroll: _onPageScroll),
-                MessagesPageV2(
-                  initialConversationId: widget.initialMessagesConversationId,
-                  initialDraftText: widget.initialMessagesDraftText,
-                ),
-                const AccountPage(),
-              ],
-            ),
+                onScroll: _onPageScroll,
+                categoryFilter: _consultCategoryFilter,
+                searchQuery: _consultSearchQuery,
+              ),
+              PublishOfferPage(onScroll: _onPageScroll),
+              MessagesPageV2(
+                initialConversationId: widget.initialMessagesConversationId,
+                initialDraftText: widget.initialMessagesDraftText,
+              ),
+              const AccountPage(),
+            ],
           ),
           bottomNavigationBar: MediaQuery.removeViewInsets(
             removeBottom: true,
@@ -2768,6 +2766,7 @@ class _HomePageState extends State<HomePage>
     const double bottomPadding = 16;
 
     return SafeArea(
+      bottom: false,
       child: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -7334,6 +7333,87 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // ✅ AJOUT: Subscription pour le stream audio
   StreamSubscription<Uint8List>? _streamMicSub;
 
+  int _startStreamingSession() {
+    _streamingSessionId += 1;
+    _nextStreamingChunkSequence = 0;
+    _streamingChunkTexts.clear();
+    _partialTranscript = '';
+    return _streamingSessionId;
+  }
+
+  int _reserveStreamingChunkSequence() {
+    final sequence = _nextStreamingChunkSequence;
+    _nextStreamingChunkSequence += 1;
+    return sequence;
+  }
+
+  void _acceptStreamingChunkTranscript({
+    required int sessionId,
+    required int sequence,
+    required String text,
+  }) {
+    if (!mounted || sessionId != _streamingSessionId) return;
+    final normalized = text.trim();
+    if (normalized.isEmpty) return;
+
+    _streamingChunkTexts[sequence] = normalized;
+    final orderedKeys = _streamingChunkTexts.keys.toList()..sort();
+    final transcript = orderedKeys
+        .map((key) => _streamingChunkTexts[key] ?? '')
+        .where((value) => value.trim().isNotEmpty)
+        .join(' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    if (transcript.isNotEmpty) {
+      _transcriptionStream.add(transcript);
+    }
+  }
+
+  String _closeStreamingSession() {
+    final transcript = _partialTranscript.trim();
+    _streamingSessionId += 1;
+    _nextStreamingChunkSequence = 0;
+    _streamingChunkTexts.clear();
+    return transcript;
+  }
+
+  /// Wrap raw PCM16 little-endian bytes in a valid WAV header.
+  static Uint8List _wrapPcm16InWav(Uint8List pcmData, {required int sampleRate, required int numChannels}) {
+    const bitsPerSample = 16;
+    final blockAlign = numChannels * (bitsPerSample ~/ 8);
+    final byteRate = sampleRate * blockAlign;
+    final dataSize = pcmData.length;
+    const headerSize = 44;
+
+    final out = ByteData(headerSize + dataSize);
+
+    void writeStr(int offset, String s) {
+      for (int i = 0; i < s.length; i++) {
+        out.setUint8(offset + i, s.codeUnitAt(i));
+      }
+    }
+
+    writeStr(0, 'RIFF');
+    out.setUint32(4, 36 + dataSize, Endian.little);
+    writeStr(8, 'WAVE');
+    writeStr(12, 'fmt ');
+    out.setUint32(16, 16, Endian.little);
+    out.setUint16(20, 1, Endian.little); // PCM
+    out.setUint16(22, numChannels, Endian.little);
+    out.setUint32(24, sampleRate, Endian.little);
+    out.setUint32(28, byteRate, Endian.little);
+    out.setUint16(32, blockAlign, Endian.little);
+    out.setUint16(34, bitsPerSample, Endian.little);
+    writeStr(36, 'data');
+    out.setUint32(40, dataSize, Endian.little);
+
+    // Copy PCM data after header
+    final result = out.buffer.asUint8List();
+    result.setRange(headerSize, headerSize + dataSize, pcmData);
+    return result;
+  }
+
   /// ✅ STREAMING RÉEL: Mobile avec startStream() + PCM16
   Future<void> _startStreamingMic() async {
     if (_isListening || _isStreaming) return;
@@ -7350,10 +7430,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         await _webRec.start();
 
+        final sessionId = _startStreamingSession();
+
         setState(() {
           _isListening = true;
           _isStreaming = true; // Web: mode chunking (quasi temps-réel)
-          _partialTranscript = '';
         });
 
         debugPrint('[Streaming Web] Web recording started (chunked mode)');
@@ -7372,24 +7453,25 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             // ✅ Redémarrer pour le prochain chunk
             await _webRec.start();
 
-            // ✅ Convertir blob en bytes et uploader
-            final chunkBytes = await webBlobToBytes(blob);
-            if (chunkBytes.isEmpty) {
-              debugPrint('[Streaming Web] Empty chunk bytes');
+            // ⚡ Convertir WEBM→WAV PCM16 16kHz mono côté client
+            final wavBytes = await webBlobToWav16kMono(blob);
+            if (wavBytes.isEmpty || wavBytes.length < 1000) {
+              debugPrint('[Streaming Web] Empty/tiny WAV chunk');
               return;
             }
 
             final ts = DateTime.now().millisecondsSinceEpoch;
-            final chunkPath = 'stt_streaming/$uid/${ts}_chunk.webm';
+            final sequence = _reserveStreamingChunkSequence();
+            final chunkPath = 'stt_streaming/$uid/${ts}_chunk.wav';
 
             final ref = FirebaseStorage.instance.ref(chunkPath);
             await ref.putData(
-              chunkBytes,
-              SettableMetadata(contentType: 'audio/webm'),
+              wavBytes,
+              SettableMetadata(contentType: 'audio/wav'),
             );
 
             debugPrint(
-                '[Streaming Web] Chunk uploaded: $chunkPath (${chunkBytes.length} bytes)');
+                '[Streaming Web] Chunk uploaded: $chunkPath (${wavBytes.length} bytes)');
 
             // ✅ Transcription du chunk (async, non-bloquant)
             MicroIaService.processAudio(
@@ -7401,12 +7483,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
               final text = (result['text'] ?? '').toString().trim();
               if (text.isNotEmpty) {
-                final newTranscript = _partialTranscript.isEmpty
-                    ? text
-                    : '$_partialTranscript $text';
-
-                // ✅ Envoyer au stream pour update UI
-                _transcriptionStream.add(newTranscript);
+                _acceptStreamingChunkTranscript(
+                  sessionId: sessionId,
+                  sequence: sequence,
+                  text: text,
+                );
                 debugPrint('[Streaming Web] Chunk transcribed: "$text"');
               }
             }).catchError((e) {
@@ -7451,15 +7532,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       if (!mounted) return;
 
+      final sessionId = _startStreamingSession();
+
       setState(() {
         _isListening = true;
         _isStreaming = true; // Mode streaming réel
-        _partialTranscript = '';
       });
 
       final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
-      int chunkBytes = 0;
-      final int chunkThreshold = 16000 * 2; // ~2 secondes à 16kHz
+      final _pcmAccumulator = <int>[];
+      final int chunkThreshold = 16000 * 2 * 2; // ~2s à 16kHz mono 16-bit = 64000 bytes
 
       debugPrint('[Streaming Mobile] Stream started with PCM16');
 
@@ -7470,22 +7552,28 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           if (!_isListening || !mounted) return;
 
           try {
-            chunkBytes += chunk.length;
+            _pcmAccumulator.addAll(chunk);
 
             // Envoyer quand le seuil est atteint
-            if (chunkBytes >= chunkThreshold) {
-              final ts = DateTime.now().millisecondsSinceEpoch;
-              final chunkPath = 'stt_streaming/$uid/${ts}_chunk.pcm';
+            if (_pcmAccumulator.length >= chunkThreshold) {
+              final pcmData = Uint8List.fromList(_pcmAccumulator);
+              _pcmAccumulator.clear();
 
-              // ✅ CHANGEMENT 3: Upload du chunk PCM
+              // ⚡ Wrapper PCM16 brut dans un header WAV valide
+              final wavBytes = _wrapPcm16InWav(pcmData, sampleRate: 16000, numChannels: 1);
+
+              final ts = DateTime.now().millisecondsSinceEpoch;
+              final sequence = _reserveStreamingChunkSequence();
+              final chunkPath = 'stt_streaming/$uid/${ts}_chunk.wav';
+
               final ref = FirebaseStorage.instance.ref(chunkPath);
               await ref.putData(
-                chunk,
-                SettableMetadata(contentType: 'audio/pcm'),
+                wavBytes,
+                SettableMetadata(contentType: 'audio/wav'),
               );
 
               debugPrint(
-                  '[Streaming Mobile] Chunk uploaded: ${chunk.length} bytes at $chunkPath');
+                  '[Streaming Mobile] Chunk uploaded: ${wavBytes.length} bytes at $chunkPath');
 
               // ✅ Transcription du chunk (async, non-bloquant)
               MicroIaService.processAudio(
@@ -7497,19 +7585,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
                 final text = (result['text'] ?? '').toString().trim();
                 if (text.isNotEmpty) {
-                  final newTranscript = _partialTranscript.isEmpty
-                      ? text
-                      : '$_partialTranscript $text';
-
-                  // ✅ Envoyer au stream pour update UI
-                  _transcriptionStream.add(newTranscript);
+                  _acceptStreamingChunkTranscript(
+                    sessionId: sessionId,
+                    sequence: sequence,
+                    text: text,
+                  );
                   debugPrint('[Streaming Mobile] Chunk transcribed: "$text"');
                 }
               }).catchError((e) {
                 debugPrint('[Streaming Mobile] Transcription error: $e');
               });
 
-              chunkBytes = 0; // Reset
             }
           } catch (e) {
             debugPrint('[Streaming Mobile] Chunk error: $e');
@@ -7549,13 +7635,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _stopStreamingMic() async {
     if (!_isListening) return;
 
+    final transcript = _closeStreamingSession();
+
     _streamingTimer?.cancel();
     _streamingTimer = null;
 
     // Stop Web chunking
     if (kIsWeb) {
       try {
-        // Stopper l'enregistreur (on ignore le blob final)
         await _webRec.stopToBlob();
       } catch (_) {}
 
@@ -7564,6 +7651,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _isListening = false;
         _isStreaming = false;
       });
+
+      // ⚡ Draft final: si on a accumulé une transcription, affiner via IA
+      await _finalizeDraftFromStreaming(transcript);
       return;
     }
 
@@ -7582,6 +7672,37 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _isListening = false;
       _isStreaming = false;
     });
+
+    // ⚡ Draft final: si on a accumulé une transcription, affiner via IA
+    await _finalizeDraftFromStreaming(transcript);
+  }
+
+  /// Génère un draft IA final à partir de la transcription accumulée en streaming.
+  Future<void> _finalizeDraftFromStreaming(String transcript) async {
+    if (transcript.isEmpty || transcript.length < 10) return;
+
+    _latestRecognizedTranscript = transcript;
+
+    if (!mounted) return;
+    setState(() => _isAnalyzing = true);
+
+    try {
+      final draft = await _aiService.generateOfferDraftV2(
+        text: transcript,
+        city: _locationController.text.trim(),
+        category: (_category ?? '').trim(),
+      );
+
+      if (!mounted) return;
+      if (draft['success'] == true) {
+        _applyRichDraftToForm(draft);
+        showSuccessSnackBar(context, 'Champs affinés par l\'IA');
+      }
+    } catch (e) {
+      debugPrint('[Streaming] Draft finalization error: $e');
+    } finally {
+      if (mounted) setState(() => _isAnalyzing = false);
+    }
   }
 
   /// Bouton micro: utiliser le flux audio classique, qui traite l'audio au stop
@@ -7699,6 +7820,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _publishLocked = false; // lock après tentative invalide
   bool _canPublish = false;
   String _latestRecognizedTranscript = '';
+  bool _isApplyingProgrammaticPublishUpdate = false;
+  bool _titleEditedByUser = false;
+  bool _descriptionEditedByUser = false;
+  bool _locationEditedByUser = false;
+  bool _postalCodeEditedByUser = false;
+  bool _categoryEditedByUser = false;
+  bool _delayEditedByUser = false;
+  bool _budgetEditedByUser = false;
+  int _streamingSessionId = 0;
+  int _nextStreamingChunkSequence = 0;
+  final Map<int, String> _streamingChunkTexts = <int, String>{};
   String? _shakingPublishFieldId;
   int _publishShakeTick = 0;
 
@@ -7717,6 +7849,148 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   String? _recordingPath;
   // Toujours actif (améliore la qualité via Google STT côté serveur)
   final bool _useCloudStt = true;
+
+  void _runWithoutMarkingUserEdits(VoidCallback action) {
+    final previous = _isApplyingProgrammaticPublishUpdate;
+    _isApplyingProgrammaticPublishUpdate = true;
+    try {
+      action();
+    } finally {
+      _isApplyingProgrammaticPublishUpdate = previous;
+    }
+  }
+
+  void _setControllerText(TextEditingController controller, String value) {
+    if (controller.text == value) return;
+    _runWithoutMarkingUserEdits(() {
+      controller.value = controller.value.copyWith(
+        text: value,
+        selection: TextSelection.collapsed(offset: value.length),
+        composing: TextRange.empty,
+      );
+    });
+  }
+
+  void _handlePublishTitleChanged() {
+    if (_isApplyingProgrammaticPublishUpdate) return;
+    _titleEditedByUser = true;
+  }
+
+  void _handlePublishDescriptionChanged() {
+    if (_isApplyingProgrammaticPublishUpdate) return;
+    _descriptionEditedByUser = true;
+  }
+
+  void _handlePublishLocationChanged() {
+    if (_isApplyingProgrammaticPublishUpdate) return;
+    _locationEditedByUser = true;
+  }
+
+  void _handlePublishPostalCodeChanged() {
+    if (_isApplyingProgrammaticPublishUpdate) return;
+    _postalCodeEditedByUser = true;
+  }
+
+  void _handlePublishBudgetChanged() {
+    if (_isApplyingProgrammaticPublishUpdate) return;
+    _budgetEditedByUser = true;
+  }
+
+  String? _normalizeDraftMissionDelay(String? rawUrgency) {
+    final urgency = (rawUrgency ?? '').trim().toLowerCase();
+    switch (urgency) {
+      case 'immediat':
+        return 'Urgent';
+      case '24h':
+        return 'Dans la journée';
+      case '7j':
+        return 'Cette semaine';
+      case 'flexible':
+        return 'À convenir';
+      default:
+        return null;
+    }
+  }
+
+  String _buildRichDraftDescription(Map<String, dynamic> draft) {
+    final shortDescription = ((draft['description_courte'] ?? draft['description'])
+            as String? ?? '')
+        .trim();
+    final details = (draft['details'] is List)
+        ? (draft['details'] as List)
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList()
+        : const <String>[];
+    final availabilities = ((draft['disponibilites'] ?? '') as String?)?.trim() ?? '';
+
+    final lines = <String>[];
+    if (shortDescription.isNotEmpty) {
+      lines.add(shortDescription);
+    }
+    if (details.isNotEmpty) {
+      lines.addAll(details.map((detail) => '- $detail'));
+    }
+    if (availabilities.isNotEmpty) {
+      lines.add('Disponibilités : $availabilities');
+    }
+    return lines.join('\n').trim();
+  }
+
+  void _applyRichDraftToForm(Map<String, dynamic> draft) {
+    final title = (draft['title'] ?? draft['titre'] ?? '').toString().trim();
+    final description = _buildRichDraftDescription(draft);
+    final category = _resolvePublishCategoryLabel(
+      (draft['category'] ?? draft['categorie'] ?? '').toString(),
+    );
+    final missionDelay = _normalizeDraftMissionDelay(
+      (draft['urgence'] ?? '').toString(),
+    );
+    final budget = draft['budget'] is Map
+        ? Map<String, dynamic>.from(draft['budget'] as Map)
+        : const <String, dynamic>{};
+    final budgetMin = budget['min'];
+    final budgetMax = budget['max'];
+    final parsedMin = budgetMin is num ? budgetMin.toDouble() : null;
+    final parsedMax = budgetMax is num ? budgetMax.toDouble() : null;
+    final inferredBudget = parsedMin ?? parsedMax;
+    final wantsNegotiation = inferredBudget == null;
+
+    setState(() {
+      if (!_titleEditedByUser && title.isNotEmpty) {
+        _setControllerText(_titleController, title);
+      }
+      if (!_descriptionEditedByUser && description.isNotEmpty) {
+        _setControllerText(_descriptionController, description);
+      }
+      if (!_categoryEditedByUser && category != null && category.isNotEmpty) {
+        _category = category;
+        _selectedSubCategory = null;
+      }
+      if (!_delayEditedByUser && missionDelay != null) {
+        _missionDelay = missionDelay;
+        _isUrgent = missionDelay == 'Urgent';
+      }
+      if (!_budgetEditedByUser) {
+        if (wantsNegotiation) {
+          _budgetType = 'À négocier';
+          _setControllerText(_budgetController, '');
+        } else {
+          _budgetType = 'Fixe';
+          final formattedBudget = inferredBudget % 1 == 0
+              ? inferredBudget.toInt().toString()
+              : inferredBudget.toStringAsFixed(2);
+          _setControllerText(_budgetController, formattedBudget);
+        }
+      }
+    });
+
+    _applyDetectedCityData(
+      city: (draft['city'] ?? draft['ville'] ?? '').toString(),
+      postalCode: (draft['postalCode'] ?? '').toString(),
+    );
+    _applyKeywordCategoryPairFromText('$title\n$description');
+  }
 
   // ✅ Extraction rapide CP (FR + DROM) depuis la transcription
   String? _extractPostalCodeFromTranscript(String transcript) {
@@ -7832,11 +8106,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     setState(() {
-      if (rawCity.isNotEmpty) {
-        _locationController.text = rawCity;
+      if (!_locationEditedByUser && rawCity.isNotEmpty) {
+        _setControllerText(_locationController, rawCity);
       }
-      if (rawPostalCode.isNotEmpty) {
-        _postalCodeController.text = rawPostalCode;
+      if (!_postalCodeEditedByUser && rawPostalCode.isNotEmpty) {
+        _setControllerText(_postalCodeController, rawPostalCode);
         final dept = departmentFromPostalCode(rawPostalCode);
         if (dept != null && dept.isNotEmpty) {
           _selectedDeptCode = dept;
@@ -7855,10 +8129,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final sameCategory = currentCategory.isNotEmpty &&
         normalizeOfferText(currentCategory) ==
             normalizeOfferText(match.category);
-    final canSetCategory = currentCategory.isEmpty;
+    final canSetCategory = !_categoryEditedByUser && currentCategory.isEmpty;
     final canSetSubCategory =
-        currentSubCategory.isEmpty && (canSetCategory || sameCategory);
-    final canSetTitle = _titleController.text.trim().isEmpty &&
+      !_categoryEditedByUser &&
+      currentSubCategory.isEmpty && (canSetCategory || sameCategory);
+    final canSetTitle = !_titleEditedByUser &&
+      _titleController.text.trim().isEmpty &&
         (match.suggestedTitle ?? '').trim().isNotEmpty;
 
     if (!canSetCategory && !canSetSubCategory && !canSetTitle) {
@@ -7867,7 +8143,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     setState(() {
       if (canSetTitle) {
-        _titleController.text = match.suggestedTitle!.trim();
+        _setControllerText(_titleController, match.suggestedTitle!.trim());
       }
 
       if (canSetCategory) {
@@ -7893,13 +8169,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final t = transcript.trim();
     if (t.isEmpty) return;
 
-    // Description: si vide, on met la transcription brute immédiatement.
-    if (_descriptionController.text.trim().isEmpty) {
-      _descriptionController.text = t;
+    if (!_descriptionEditedByUser) {
+      _setControllerText(_descriptionController, t);
     }
 
-    // Titre: si vide, on extrait une 1ère ligne/sentence courte.
-    if (_titleController.text.trim().isEmpty) {
+    if (!_titleEditedByUser) {
       final firstLine = t.split('\n').first.trim();
       final firstSentence = firstLine.split(RegExp(r'[.!?]')).first.trim();
       final candidate = (firstSentence.isNotEmpty ? firstSentence : firstLine);
@@ -7907,28 +8181,31 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final title = candidate.length > 72
           ? '${candidate.substring(0, 72).trim()}…'
           : candidate;
-      if (title.isNotEmpty) _titleController.text = title;
+      if (title.isNotEmpty) {
+        _setControllerText(_titleController, title);
+      }
     }
 
-    // ✅ CP + ville (sans inventer): uniquement si on détecte un CP ou une ville matchable
-    if (_postalCodeController.text.trim().isEmpty) {
+    if (!_postalCodeEditedByUser) {
       final cp = _extractPostalCodeFromTranscript(t);
-      if (cp != null && cp.isNotEmpty) _postalCodeController.text = cp;
+      if (cp != null && cp.isNotEmpty) {
+        _setControllerText(_postalCodeController, cp);
+      }
     }
 
     final effectiveCp = _postalCodeController.text.trim().isEmpty
         ? null
         : _postalCodeController.text.trim();
 
-    if (_locationController.text.trim().isEmpty) {
+    if (!_locationEditedByUser) {
       final cityRec = _extractCityRecordFromTranscript(t, cp: effectiveCp);
       if (cityRec != null) {
-        _locationController.text = cityRec.name;
+        _setControllerText(_locationController, cityRec.name);
 
-        // si CP vide mais la ville en a un, on complète
-        if (_postalCodeController.text.trim().isEmpty &&
+        if (!_postalCodeEditedByUser &&
+            _postalCodeController.text.trim().isEmpty &&
             cityRec.cp.isNotEmpty) {
-          _postalCodeController.text = cityRec.cp;
+          _setControllerText(_postalCodeController, cityRec.cp);
         }
 
         // bonus cohérence UI: indicatif selon dept (déjà présent dans le code)
@@ -7947,60 +8224,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   /// Apply server-side draft (from microIaProcessAudio combined mode).
   /// The draft uses the rich JSON format from _internalGenerateDraft.
   void _applyServerDraftToForm(Map<String, dynamic> draft) {
-    final title = (draft['title'] ?? '').toString().trim();
-    final description = (draft['description'] ?? '').toString().trim();
-    final shouldReplaceDescription =
-        _latestRecognizedTranscript.trim().isEmpty &&
-            _descriptionController.text.trim().isEmpty;
-
-    setState(() {
-      final category =
-          _resolvePublishCategoryLabel((draft['category'] ?? '').toString());
-
-      if (title.isNotEmpty) _titleController.text = title;
-      if (shouldReplaceDescription && description.isNotEmpty) {
-        _descriptionController.text = description;
-      }
-      if (category != null && category.isNotEmpty) {
-        _category = category;
-        _selectedSubCategory = null;
-      }
-    });
-
-    _applyDetectedCityData(
-      city: (draft['city'] ?? '').toString(),
-      postalCode: (draft['postalCode'] ?? '').toString(),
-    );
-    _applyKeywordCategoryPairFromText('$title\n$description');
+    _applyRichDraftToForm(draft);
   }
 
   /// Apply legacy draft from AiDraftService (fallback path).
   void _applyLegacyDraftToForm(Map<String, dynamic> draft) {
-    final title = (draft['title'] as String? ?? '').trim();
-    final description = (draft['description'] as String? ?? '').trim();
-    final shouldReplaceDescription =
-        _latestRecognizedTranscript.trim().isEmpty &&
-            _descriptionController.text.trim().isEmpty;
-
-    setState(() {
-      final category =
-          _resolvePublishCategoryLabel(draft['category'] as String? ?? '');
-
-      if (title.isNotEmpty) _titleController.text = title;
-      if (shouldReplaceDescription && description.isNotEmpty) {
-        _descriptionController.text = description;
-      }
-      if (category != null && category.isNotEmpty) {
-        _category = category;
-        _selectedSubCategory = null;
-      }
-    });
-
-    _applyDetectedCityData(
-      city: draft['location'] as String? ?? '',
-      postalCode: draft['postalCode'] as String? ?? '',
-    );
-    _applyKeywordCategoryPairFromText('$title\n$description');
+    _applyRichDraftToForm(draft);
   }
 
   @override
@@ -8014,10 +8243,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
 
     _titleController.addListener(_recompute);
+    _titleController.addListener(_handlePublishTitleChanged);
     _descriptionController.addListener(_recompute);
+    _descriptionController.addListener(_handlePublishDescriptionChanged);
     _locationController.addListener(_recompute);
+    _locationController.addListener(_handlePublishLocationChanged);
+    _postalCodeController.addListener(_handlePublishPostalCodeChanged);
     _phoneController.addListener(_recompute);
     _budgetController.addListener(_recompute);
+    _budgetController.addListener(_handlePublishBudgetChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
 
@@ -8825,17 +9059,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (uid == null) throw Exception('Not authenticated');
 
         final blob = await _webRec.stopToBlob();
-        final webmBytes = await webBlobToBytes(blob);
-        if (webmBytes.length < 30000) {
+        // ⚡ Convertir WEBM→WAV PCM16 16kHz mono côté client
+        // pour éliminer l'étape FFmpeg côté serveur (~2-4s de gain).
+        final wavBytes = await webBlobToWav16kMono(blob);
+        if (wavBytes.length < 30000) {
           throw Exception(
-              'Audio invalide (blob trop petit: ${webmBytes.length} bytes).');
+              'Audio invalide (WAV trop petit: ${wavBytes.length} bytes).');
         }
 
         final ts = DateTime.now().millisecondsSinceEpoch;
-        final destPath = 'stt/${uid}_$ts.webm';
+        final destPath = 'stt/${uid}_$ts.wav';
         final ref = FirebaseStorage.instance.ref(destPath);
         await ref.putData(
-            webmBytes, SettableMetadata(contentType: 'audio/webm'));
+            wavBytes, SettableMetadata(contentType: 'audio/wav'));
 
         // ⚡ Single round-trip: STT + Draft combined in one CF call
         final out = await MicroIaService.processAudio(
@@ -8865,10 +9101,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         } else {
           // Fallback: server draft failed, try client-side call
           try {
-            final draft = await _aiService.generateOfferDraft(text: transcript);
+            final draft = await _aiService.generateOfferDraftV2(
+              text: transcript,
+              city: _locationController.text.trim(),
+              category: (_category ?? '').trim(),
+            );
             if (!mounted) return;
             if (draft['success'] == true) {
-              _applyLegacyDraftToForm(draft);
+              _applyRichDraftToForm(draft);
               showSuccessSnackBar(
                   context, 'Transcription réussie et champs remplis');
             }
@@ -9050,10 +9290,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     } else {
       // Fallback: server draft failed, try client-side call
       try {
-        final draft = await _aiService.generateOfferDraft(text: transcript);
+        final draft = await _aiService.generateOfferDraftV2(
+          text: transcript,
+          city: _locationController.text.trim(),
+          category: (_category ?? '').trim(),
+        );
         if (!mounted) return;
         if (draft['success'] == true) {
-          _applyLegacyDraftToForm(draft);
+          _applyRichDraftToForm(draft);
           showSuccessSnackBar(
               context, 'Transcription réussie et champs remplis');
         }
@@ -9074,12 +9318,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     setState(() => _isAnalyzing = true);
 
     try {
-      final draft = await _aiService.generateOfferDraft(text: input);
+      final draft = await _aiService.generateOfferDraftV2(
+        text: input,
+        city: _locationController.text.trim(),
+        category: (_category ?? '').trim(),
+      );
 
       if (!mounted) return;
 
       if (draft['success'] == true) {
-        _applyLegacyDraftToForm(draft);
+        _applyRichDraftToForm(draft);
         _applyKeywordCategoryPairFromText(input);
 
         showSuccessSnackBar(
@@ -9132,6 +9380,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _selectedPhotoBytes.clear();
       _uploadedPhotoUrls.clear();
       _latestRecognizedTranscript = '';
+      _partialTranscript = '';
+      _titleEditedByUser = false;
+      _descriptionEditedByUser = false;
+      _locationEditedByUser = false;
+      _postalCodeEditedByUser = false;
+      _categoryEditedByUser = false;
+      _delayEditedByUser = false;
+      _budgetEditedByUser = false;
+      _isApplyingProgrammaticPublishUpdate = false;
+      _streamingSessionId = 0;
+      _nextStreamingChunkSequence = 0;
+      _streamingChunkTexts.clear();
       _citySuggestions.clear();
       _highlightedIndex = -1;
       _selectedRegionCode = null;
@@ -9199,14 +9459,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
-  void _applyCity(CityRecord city) {
+  void _applyCity(CityRecord city, {bool markAsUserEdited = false}) {
     setState(() {
-      _locationController.text = city.name;
-      _postalCodeController.text = city.cp;
+      if (markAsUserEdited || !_locationEditedByUser) {
+        _setControllerText(_locationController, city.name);
+      }
+      if (markAsUserEdited || !_postalCodeEditedByUser) {
+        _setControllerText(_postalCodeController, city.cp);
+      }
 
       _selectedDeptCode = city.dept;
       _selectedRegionCode = city.region;
       _selectedPhoneCountryCode = _countryCodeForDept(city.dept);
+      if (markAsUserEdited) {
+        _locationEditedByUser = true;
+        _postalCodeEditedByUser = true;
+      }
 
       _citySuggestions = [];
       _highlightedIndex = -1;
@@ -9248,7 +9516,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           final selected = index == _highlightedIndex;
 
           return InkWell(
-            onTap: () => _applyCity(city),
+            onTap: () => _applyCity(city, markAsUserEdited: true),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               color: selected ? kPrestoBlue.withOpacity(0.08) : null,
@@ -9767,7 +10035,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   child: _isListening
                       ? _buildMicRecordingButton()
                       : PremiumAiButton(
-                          onPressed: _isAnalyzing ? null : _startMic,
+                          onPressed: _isAnalyzing ? null : _startStreamingMic,
                           label: 'Décrire mon besoin (IA)',
                           isLoading: _isAnalyzing,
                         ),
@@ -9917,6 +10185,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           .toList(),
                       onChanged: (value) {
                         setState(() {
+                          _categoryEditedByUser = true;
                           _category = value;
                           _selectedSubCategory = null;
                         });
@@ -10147,7 +10416,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         )
                         .toList(),
                     onChanged: (value) {
-                      setState(() => _missionDelay = value);
+                      setState(() {
+                        _delayEditedByUser = true;
+                        _missionDelay = value;
+                        _isUrgent = value == 'Urgent';
+                      });
                       _recompute();
                     },
                     validator: (value) {
@@ -10189,7 +10462,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               .toList(),
                           onChanged: (value) {
                             if (value == null) return;
-                            setState(() => _budgetType = value);
+                            setState(() {
+                              _budgetEditedByUser = true;
+                              _budgetType = value;
+                            });
                             _recompute();
                           },
                         ),

@@ -1173,12 +1173,13 @@ exports.microIaProcessAudio = onCall(
         throw new HttpsError("unauthenticated", "Authentication required.");
       }
 
-      // 🔒 Rate limiting: 10 appels / 60s par utilisateur
-      await rateLimitOrThrow({ uid, action: 'micro_ia_process', limit: 10, windowSec: 60 });
-
       if (!storagePath || typeof storagePath !== "string") {
         throw new HttpsError("invalid-argument", "storagePath is required (Firebase Storage path).");
       }
+
+      // 🔒 Rate limiting
+      const isStreamingChunk = storagePath.startsWith('stt_streaming/');
+      await rateLimitOrThrow({ uid, action: 'micro_ia_process', limit: isStreamingChunk ? 40 : 10, windowSec: 60 });
 
       const storagePathRedacted = redactStoragePath(storagePath);
 
@@ -1187,13 +1188,16 @@ exports.microIaProcessAudio = onCall(
         throw new HttpsError("invalid-argument", "Invalid storagePath.");
       }
 
-      // Ownership strict: la page client upload sous stt/${uid}_${timestamp}.wav
+      // Ownership strict: stt/${uid}_*.wav OU stt_streaming/${uid}/*_chunk.wav
       const expectedPrefix = `stt/${uid}_`;
+      const expectedStreamingPrefix = `stt_streaming/${uid}/`;
       const isWavPath = storagePath.endsWith('.wav');
       const isWebmPath = storagePath.endsWith('.webm');
       const isM4aPath = storagePath.endsWith('.m4a');
       const isMp4Path = storagePath.endsWith('.mp4');
-      if (!storagePath.startsWith(expectedPrefix) || (!isWavPath && !isWebmPath && !isM4aPath && !isMp4Path)) {
+      const ownsPath = storagePath.startsWith(expectedPrefix) || storagePath.startsWith(expectedStreamingPrefix);
+      const validExt = isWavPath || isWebmPath || isM4aPath || isMp4Path;
+      if (!ownsPath || !validExt) {
         throw new HttpsError("permission-denied", "storagePath does not belong to authenticated user.");
       }
 
@@ -1301,9 +1305,11 @@ exports.microIaProcessAudio = onCall(
         );
       }
 
-      const tryOrder = ultraFastEnabled
-        ? ["GOOGLE_ONLY", "WHISPER_ONLY"]
-        : buildTryOrder(cfg.mode);
+      const tryOrder = isStreamingChunk
+        ? ["GOOGLE_ONLY"]
+        : ultraFastEnabled
+          ? ["GOOGLE_ONLY", "WHISPER_ONLY"]
+          : buildTryOrder(cfg.mode);
 
       // En ultra-rapide, on accepte plus souvent le premier résultat pour éviter d'enchaîner des tentatives.
       // On garde tout de même un fallback si le score est extrêmement bas (ex: texte vide).
