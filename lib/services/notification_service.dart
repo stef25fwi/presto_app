@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../firebase_options.dart';
+import 'firebase_functions_region.dart';
 
 @pragma('vm:entry-point')
 Future<void> prestoFirebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -51,7 +52,7 @@ class NotificationService {
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirebaseFunctions _functions =
-      FirebaseFunctions.instanceFor(region: 'europe-west1');
+      prestoFirebaseFunctions;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 

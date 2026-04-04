@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../../services/firebase_functions_region.dart';
 import '../../utils/crashlytics_context.dart';
 import '../../utils/retry.dart';
 
@@ -9,7 +10,7 @@ class MicroIaService {
   MicroIaService._();
 
   static final _functions =
-      FirebaseFunctions.instanceFor(region: 'europe-west1');
+      prestoFirebaseFunctions;
 
   /// Process audio and optionally generate a draft in a single round-trip.
   /// When [generateDraft] is true, the CF merges STT + OpenAI draft

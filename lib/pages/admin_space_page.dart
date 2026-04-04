@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../utils/friendly_snackbar.dart';
 
 import '../constants.dart';
+import '../services/firebase_functions_region.dart';
 
 class AdminSpacePage extends StatefulWidget {
   const AdminSpacePage({super.key});
@@ -154,7 +155,7 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
   static const Color prestoBlue = Color(0xFF1A73E8);
 
   final FirebaseFunctions _functions =
-      FirebaseFunctions.instanceFor(region: 'europe-west1');
+      prestoFirebaseFunctions;
 
   bool _loading = true;
   bool _saving = false;
@@ -1756,7 +1757,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
   static const Color prestoBlue = Color(0xFF1A73E8);
 
   final FirebaseFunctions _functions =
-      FirebaseFunctions.instanceFor(region: 'europe-west1');
+      prestoFirebaseFunctions;
 
   bool _userStatsLoading = true;
   Map<String, dynamic>? _userStats;
