@@ -720,10 +720,7 @@ class _LegacyPublishOfferPageState extends State<LegacyPublishOfferPage>
         actions: [
           IconButton(
             icon: const Icon(Icons.home_outlined),
-            onPressed: () {
-              // TODO: remplace par ta navigation Home
-              Navigator.popUntil(context, (r) => r.isFirst);
-            },
+            onPressed: () => Navigator.popUntil(context, (r) => r.isFirst),
           ),
         ],
       ),
