@@ -51,7 +51,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
   // Parcours Firestore
   String? _parcoursId;
-  // bool _isFromCache = false; // Utilisé dans _recomputeDerivedWithCache
+  bool _isFromCache = false;
 
   // Form fields
   final TextEditingController _projectCtrl = TextEditingController();
@@ -117,7 +117,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       if (snap.docs.isNotEmpty) return snap.docs.first;
       return null;
     } catch (e) {
-      debugPrint('[Toolbox] latest parcours orderBy failed: $e');
+      debugPrint('[Toolbox] latest parcours orderBy query failed: $e');
     }
 
     // Fallback 2 : lecture sans orderBy + sélection locale
@@ -141,7 +141,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
       return best ?? snap.docs.first;
     } catch (e) {
-      debugPrint('[Toolbox] latest parcours fallback failed: $e');
+      debugPrint('[Toolbox] latest parcours fallback query failed: $e');
       return null;
     }
   }
@@ -165,6 +165,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
       if (user == null) {
         _parcoursId = null;
         _isLocalOnlyMode = true;
+        _isFromCache = false;
         _journeyStatus = 'draft';
         _recomputeDerived();
         setState(() {
@@ -185,6 +186,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         _parcoursId = doc.id;
         _journeyStatus = 'draft';
         _isLocalOnlyMode = false;
+        _isFromCache = false;
 
         final now = FieldValue.serverTimestamp();
         await doc.set({
@@ -213,6 +215,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         _step = step.clamp(1, 3);
         _journeyStatus = status == 'completed' ? 'completed' : 'draft';
         _isLocalOnlyMode = false;
+        _isFromCache = false;
 
         // Répare `updatedAt` si absent/non-Timestamp (évite crashes orderBy futur)
         final updatedAt = map['updatedAt'];
@@ -233,12 +236,14 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         _error = null;
       });
     } on FirebaseException catch (e) {
+      debugPrint('[Toolbox] bootstrap firebase error: $e');
       final isDenied = e.code.toLowerCase() == 'permission-denied';
       if (isDenied) {
         // Si Firestore est inaccessible (App Check / règles / auth), on laisse l'utilisateur
         // accéder à la toolbox en mode local (sans persistance).
         _parcoursId = null;
         _isLocalOnlyMode = true;
+        _isFromCache = false;
         _journeyStatus = 'draft';
         _recomputeDerived();
         setState(() {
@@ -250,12 +255,15 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
       setState(() {
         _loading = false;
-        _error = "Erreur de chargement : ${e.message ?? e.code}";
+        _error =
+            'Le parcours est temporairement indisponible. Reessayez dans un instant.';
       });
     } catch (e) {
+      debugPrint('[Toolbox] bootstrap error: $e');
       setState(() {
         _loading = false;
-        _error = "Erreur de chargement : $e";
+        _error =
+            'Le parcours est temporairement indisponible. Reessayez dans un instant.';
       });
     }
   }
@@ -309,20 +317,24 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
 
       if (mounted) setState(() => _saving = false);
     } on FirebaseException catch (e) {
+      debugPrint('[Toolbox] save draft firebase error: $e');
       // Ne bloque pas l'écran si Firestore est interdit; on continue en mode non persistant.
       if (mounted) {
         setState(() {
           _saving = false;
           if (e.code.toLowerCase() != 'permission-denied') {
-            _error = "Erreur de sauvegarde : ${e.message ?? e.code}";
+            _error =
+                'Les modifications n ont pas pu etre enregistrees pour le moment.';
           }
         });
       }
     } catch (e) {
+      debugPrint('[Toolbox] save draft error: $e');
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = "Erreur de sauvegarde : $e";
+          _error =
+              'Les modifications n ont pas pu etre enregistrees pour le moment.';
         });
       }
     }
@@ -413,14 +425,13 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     );
 
     if (cachedJourney != null) {
-      // Parcours trouvé en cache!
-      // _isFromCache = true; // TODO: activer quand la fonctionnalité sera affichée
+      _isFromCache = true;
       debugPrint(
-          '✅ Parcours trouvé en cache ($_activityType / ${_projectCtrl.text} / $_region)');
+        '[Toolbox] cache hit ($_activityType / ${_projectCtrl.text.trim()} / $_region)',
+      );
       _importDerived(cachedJourney['content'] as Map<String, dynamic>? ?? {});
     } else {
-      // Générer un nouveau parcours
-      // _isFromCache = false;
+      _isFromCache = false;
       final r = _computeRecommendationRules();
       _recommendation = r['recommendation'] as Map<String, dynamic>;
       _blockingAlerts = (r['blockingAlerts'] as List).cast<String>();
@@ -453,6 +464,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   }
 
   void _recomputeDerived() {
+    _isFromCache = false;
     final r = _computeRecommendationRules();
     _recommendation = r['recommendation'] as Map<String, dynamic>;
     _blockingAlerts = (r['blockingAlerts'] as List).cast<String>();
@@ -666,11 +678,14 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       } catch (e) {
+        debugPrint('[Toolbox] complete journey final sync error: $e');
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  'Parcours validé, mais fin de sauvegarde incomplète: $e')),
+          const SnackBar(
+            content: Text(
+              'Le parcours est valide, mais la synchronisation finale a echoue.',
+            ),
+          ),
         );
         return;
       }
@@ -704,6 +719,7 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
   void _resetJourneyValues() {
     _step = 1;
     _journeyStatus = 'draft';
+    _isFromCache = false;
     _projectCtrl.clear();
     _regionCtrl.clear();
     _departementCtrl.clear();
@@ -775,6 +791,163 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
     await _saveDraft();
   }
 
+  Widget _buildJourneyStatusStrip() {
+    final chips = <Widget>[
+      _JourneyStatusChip(
+        icon: _journeyStatus == 'completed'
+            ? Icons.verified_rounded
+            : Icons.edit_note_rounded,
+        label: _journeyStatus == 'completed' ? 'Valide' : 'Brouillon',
+        color: _journeyStatus == 'completed' ? const Color(0xFF0F766E) : kBlue,
+      ),
+    ];
+
+    if (_saving) {
+      chips.add(
+        const _JourneyStatusChip(
+          icon: Icons.sync_rounded,
+          label: 'Sauvegarde',
+          color: kOrange,
+        ),
+      );
+    }
+
+    if (_isFromCache) {
+      chips.add(
+        const _JourneyStatusChip(
+          icon: Icons.history_toggle_off_rounded,
+          label: 'Source cache',
+          color: Color(0xFF7C3AED),
+        ),
+      );
+    }
+
+    if (_isLocalOnlyMode) {
+      chips.add(
+        const _JourneyStatusChip(
+          icon: Icons.cloud_off_outlined,
+          label: 'Mode local',
+          color: Color(0xFF6B7280),
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: chips,
+    );
+  }
+
+  Widget _buildHeaderStatusPanel() {
+    String helperText =
+        'Chaque modification recalcule et met a jour le parcours automatiquement.';
+
+    if (_isFromCache) {
+      helperText =
+          'Resultat propose a partir de criteres similaires. Modifiez vos reponses pour lancer un recalcul sur mesure.';
+    } else if (_isLocalOnlyMode) {
+      helperText =
+          'Le parcours reste utilisable sur cet appareil, sans synchronisation distante pour le moment.';
+    } else if (_journeyStatus == 'completed') {
+      helperText =
+          'Le parcours est valide. Toute modification le repassera automatiquement en brouillon.';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 14),
+        _buildHeroHighlights(),
+        const SizedBox(height: 12),
+        _buildJourneyStatusStrip(),
+        const SizedBox(height: 12),
+        Text(
+          helperText,
+          style: TextStyle(
+            color: Colors.grey.shade700,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            height: 1.35,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String get _currentStepTitle {
+    switch (_step) {
+      case 1:
+        return 'Clarifier le projet';
+      case 2:
+        return 'Qualifier la situation';
+      case 3:
+        return 'Activer le territoire';
+      default:
+        return 'Parcours personnalisé';
+    }
+  }
+
+  String get _currentStepDescription {
+    if (_journeyStatus == 'completed') {
+      return 'Le parcours est valide avec une recommandation, un plan 30 jours et les aides a suivre.';
+    }
+
+    switch (_step) {
+      case 1:
+        return 'Posez les bases du projet pour lancer une premiere recommandation exploitable.';
+      case 2:
+        return 'On ajuste les alertes et aides selon votre contexte personnel et professionnel.';
+      case 3:
+        return 'La derniere etape active les relais locaux et finalise le plan d action.';
+      default:
+        return 'Décrivez ton projet, ta situation et ton territoire.';
+    }
+  }
+
+  IconData get _currentStepIcon {
+    switch (_step) {
+      case 1:
+        return Icons.explore_outlined;
+      case 2:
+        return Icons.badge_outlined;
+      case 3:
+        return Icons.place_outlined;
+      default:
+        return Icons.auto_awesome;
+    }
+  }
+
+  Widget _buildHeroHighlights() {
+    final items = <Map<String, String>>[
+      {
+        'label': 'Etape',
+        'value': _journeyStatus == 'completed' ? 'Finalise' : '$_step/3',
+      },
+      {
+        'label': 'Sortie',
+        'value': 'Statut + aides',
+      },
+      {
+        'label': 'Cadence',
+        'value': _saving ? 'Synchro' : 'Auto-save',
+      },
+    ];
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: items
+          .map(
+            (item) => _HeroMetricPill(
+              label: item['label']!,
+              value: item['value']!,
+            ),
+          )
+          .toList(),
+    );
+  }
+
   // --------------------------
   // UI
   // --------------------------
@@ -815,10 +988,19 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _HeaderInfoCard(
-                          title: "Je me lance",
-                          subtitle:
-                              "Décris ton projet, ta situation et ton territoire. On génère un parcours personnalisé avec statut conseillé, aides, coûts et plan 30 jours.",
+                          title: _currentStepTitle,
+                          subtitle: _currentStepDescription,
                           accent: kBlue,
+                          icon: _currentStepIcon,
+                          eyebrow: _journeyStatus == 'completed'
+                              ? 'Parcours finalise'
+                              : 'Etape $_step sur 3',
+                          progressValue:
+                              _journeyStatus == 'completed' ? 1 : _step / 3,
+                          progressLabel: _journeyStatus == 'completed'
+                              ? 'Parcours pret a relire ou modifier'
+                              : 'Progression active du parcours',
+                          footer: _buildHeaderStatusPanel(),
                         ),
                         if (_isLocalOnlyMode) ...[
                           const SizedBox(height: 12),
@@ -1141,39 +1323,85 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         (_step == 3 && _step3Valid);
     final isFinalStep = _step == 3;
 
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: _step > 1 ? _back : null,
-            icon: const Icon(Icons.arrow_back),
-            label: const Text("Retour"),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed:
-                canNext ? (isFinalStep ? _completeJourney : _next) : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kBlue,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: kBlue.withOpacity(0.35),
-              disabledForegroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            isFinalStep
+                ? 'Derniere etape avant validation du parcours.'
+                : 'Continuez pour enrichir la recommandation automatiquement.',
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _step > 1 ? _back : null,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF111827),
+                    side: BorderSide(color: Colors.grey.shade300),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text("Retour"),
+                ),
               ),
-            ),
-            icon: const Icon(Icons.arrow_forward),
-            label: Text(
-              _step < 3
-                  ? "Suivant"
-                  : (_journeyStatus == 'completed' ? "Revalider" : "Valider"),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed:
+                      canNext ? (isFinalStep ? _completeJourney : _next) : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kBlue,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: kBlue.withOpacity(0.35),
+                    disabledForegroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  icon: Icon(
+                    _step < 3
+                        ? Icons.arrow_forward
+                        : Icons.check_circle_outline,
+                  ),
+                  label: Text(
+                    _step < 3
+                        ? "Suivant"
+                        : (_journeyStatus == 'completed'
+                            ? "Revalider"
+                            : "Valider"),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1205,6 +1433,11 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
         (_costs['formalitesEstimees'] as Map?)?.cast<String, dynamic>() ?? {};
     final fMin = formalites['min'] ?? 0;
     final fMax = formalites['max'] ?? 0;
+    final relevantAidesCount =
+        _aides.where((a) => (a['relevant'] ?? true) as bool).length;
+    final completedTasksCount =
+        _plan30.where((t) => (t['done'] ?? false) as bool).length;
+    final hasBlockingAlerts = _blockingAlerts.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1214,30 +1447,78 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _PillRow(
-                title: "Statut conseillé",
-                value: statut,
+              _RecommendationHero(
+                statut: statut,
+                why: why,
                 color: kBlue,
+                helper: hasBlockingAlerts
+                    ? 'Des points de vigilance sont identifies avant execution.'
+                    : 'La recommandation est exploitable immediatement pour cadrer la suite.',
               ),
-              const SizedBox(height: 10),
-              if (why.isNotEmpty)
-                _InfoBox(
-                    icon: Icons.lightbulb_outline,
-                    title: "Pourquoi",
-                    text: why),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ResultMetricTile(
+                      icon: Icons.priority_high_rounded,
+                      label: 'Alertes',
+                      value: '${_blockingAlerts.length}',
+                      tone: hasBlockingAlerts
+                          ? const Color(0xFFD97706)
+                          : const Color(0xFF0F766E),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ResultMetricTile(
+                      icon: Icons.volunteer_activism_outlined,
+                      label: 'Aides utiles',
+                      value: '$relevantAidesCount',
+                      tone: kBlue,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ResultMetricTile(
+                      icon: Icons.task_alt_rounded,
+                      label: 'Plan avance',
+                      value: '$completedTasksCount/${_plan30.length}',
+                      tone: const Color(0xFF7C3AED),
+                    ),
+                  ),
+                ],
+              ),
               if (planB.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                _InfoBox(
-                    icon: Icons.swap_horiz,
-                    title: "Plan B si ça grossit",
-                    text: planB),
+                const SizedBox(height: 12),
+                _ResultCallout(
+                  icon: Icons.swap_horiz,
+                  title: 'Plan B si ca grossit',
+                  text: planB,
+                  tone: const Color(0xFF7C3AED),
+                ),
               ],
               if (prios.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
+                Text(
+                  'Priorites identifiees',
+                  style: TextStyle(
+                    color: Colors.grey.shade800,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: prios.map((p) => Chip(label: Text(p))).toList(),
+                  children: prios
+                      .map(
+                        (p) => _PriorityChip(
+                          label: p,
+                          color: kBlue,
+                        ),
+                      )
+                      .toList(),
                 ),
               ],
             ],
@@ -1261,23 +1542,31 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           child: Column(
             children: [
               _CostRow(
-                  label: "Frais de formalités", value: "≈ $fMin à $fMax €"),
+                  icon: Icons.receipt_long_outlined,
+                  label: "Frais de formalités",
+                  value: "≈ $fMin à $fMax €"),
               _CostRow(
+                  icon: Icons.campaign_outlined,
                   label: "Annonce légale",
                   value: "≈ ${_costs['annonceLegale'] ?? 0} €"),
               _CostRow(
+                  icon: Icons.shield_outlined,
                   label: "Assurance pro / an",
                   value: "≈ ${_costs['assuranceProAn'] ?? 0} €"),
               _CostRow(
+                  icon: Icons.calculate_outlined,
                   label: "Comptable / an",
                   value: "≈ ${_costs['comptableAn'] ?? 0} €"),
               _CostRow(
+                  icon: Icons.account_balance_wallet_outlined,
                   label: "Banque + outils / an",
                   value: "≈ ${_costs['banqueOutilsAn'] ?? 0} €"),
               const SizedBox(height: 8),
-              Text(
-                "${_costs['note'] ?? ''}",
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+              _ResultCallout(
+                icon: Icons.info_outline,
+                title: 'Note de lecture',
+                text: "${_costs['note'] ?? ''}",
+                tone: const Color(0xFF6B7280),
               ),
             ],
           ),
@@ -1289,26 +1578,15 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
             children: _aides.map((a) {
               final relevant = (a['relevant'] ?? true) as bool;
               if (!relevant) return const SizedBox.shrink();
-              return ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.check_circle_outline),
-                title: Text("${a['name']}"),
-                subtitle: Text("${a['desc']}"),
-                trailing: DropdownButton<String>(
-                  value: (a['status'] ?? 'à checker') as String,
-                  underline: const SizedBox.shrink(),
-                  items: const [
-                    DropdownMenuItem(
-                        value: 'à checker', child: Text("à checker")),
-                    DropdownMenuItem(value: 'demandé', child: Text("demandé")),
-                    DropdownMenuItem(value: 'obtenu', child: Text("obtenu")),
-                  ],
-                  onChanged: (v) async {
-                    if (v == null) return;
-                    setState(() => a['status'] = v);
-                    await _saveDraft();
-                  },
-                ),
+              return _AidStatusTile(
+                name: "${a['name']}",
+                description: "${a['desc']}",
+                status: (a['status'] ?? 'à checker') as String,
+                onChanged: (v) async {
+                  if (v == null) return;
+                  setState(() => a['status'] = v);
+                  await _saveDraft();
+                },
               );
             }).toList(),
           ),
@@ -1318,16 +1596,14 @@ class _ToolboxJeMeLancePageState extends State<ToolboxJeMeLancePage> {
           title: "Plan d’action 30 jours",
           child: Column(
             children: _plan30.map((t) {
-              return CheckboxListTile(
-                value: (t['done'] ?? false) as bool,
+              return _PlanTaskTile(
+                title: "${t['label']}",
+                week: "${t['week']}",
+                completed: (t['done'] ?? false) as bool,
                 onChanged: (v) async {
                   setState(() => t['done'] = v ?? false);
                   await _saveDraft();
                 },
-                title: Text("${t['label']}"),
-                subtitle: Text("${t['week']}"),
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
               );
             }).toList(),
           ),
@@ -1384,6 +1660,12 @@ class _StepperBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final activeLabel = step == 1
+        ? 'Projet en cours de cadrage'
+        : step == 2
+            ? 'Situation en cours de qualification'
+            : 'Territoire en cours de finalisation';
+
     Widget dot(int n, String label) {
       final active = step == n;
       final done = step > n;
@@ -1403,6 +1685,15 @@ class _StepperBar extends StatelessWidget {
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
+              boxShadow: active
+                  ? [
+                      BoxShadow(
+                        color: color.withOpacity(0.28),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ]
+                  : null,
             ),
             alignment: Alignment.center,
             child: Text(
@@ -1429,19 +1720,128 @@ class _StepperBar extends StatelessWidget {
         );
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white,
+            Color(0xFFF8FAFF),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.035),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              dot(1, "Projet"),
+              line(),
+              dot(2, "Situation"),
+              line(),
+              dot(3, "Région"),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            activeLabel,
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroMetricPill extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _HeroMetricPill({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.82),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Color(0xFF111827),
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _JourneyStatusChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _JourneyStatusChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.22)),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          dot(1, "Projet"),
-          line(),
-          dot(2, "Situation"),
-          line(),
-          dot(3, "Région"),
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w800,
+              fontSize: 12,
+            ),
+          ),
         ],
       ),
     );
@@ -1464,15 +1864,46 @@ class _Card extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
-        color: _ToolboxJeMeLancePageState.kCardBg, // Fond gris clair
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade300),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white,
+            Color(0xFFF8F9FC),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.035),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4F6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  stepLabel?.split('/').first.replaceAll('Étape ', '') ?? '•',
+                  style: const TextStyle(
+                    color: Color(0xFF111827),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   title,
@@ -1504,55 +1935,134 @@ class _HeaderInfoCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color accent;
+  final Widget? footer;
+  final IconData icon;
+  final String eyebrow;
+  final double progressValue;
+  final String progressLabel;
 
   const _HeaderInfoCard({
     required this.title,
     required this.subtitle,
     required this.accent,
+    required this.icon,
+    required this.eyebrow,
+    required this.progressValue,
+    required this.progressLabel,
+    this.footer,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        color: _ToolboxJeMeLancePageState.kCardBg, // Fond gris clair
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade300),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFFFBF7),
+            Color(0xFFF5F8FF),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: accent.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            alignment: Alignment.center,
-            child: Icon(Icons.auto_awesome, color: accent),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800, // Plus épais
-                  ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: accent.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: accent.withOpacity(0.12)),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  subtitle,
-                  style: TextStyle(color: Colors.grey.shade700),
+                alignment: Alignment.center,
+                child: Icon(icon, color: accent, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      eyebrow.toUpperCase(),
+                      style: TextStyle(
+                        color: accent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(999),
+                            child: LinearProgressIndicator(
+                              value: progressValue,
+                              minHeight: 8,
+                              backgroundColor: const Color(0xFFE5E7EB),
+                              valueColor: AlwaysStoppedAnimation<Color>(accent),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          '${(progressValue * 100).round()}%',
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      progressLabel,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+          if (footer != null) footer!,
         ],
       ),
     );
@@ -1733,35 +2243,234 @@ class _NumberField extends StatelessWidget {
   }
 }
 
-class _PillRow extends StatelessWidget {
-  final String title;
-  final String value;
+class _RecommendationHero extends StatelessWidget {
+  final String statut;
+  final String why;
   final Color color;
+  final String helper;
 
-  const _PillRow({
-    required this.title,
-    required this.value,
+  const _RecommendationHero({
+    required this.statut,
+    required this.why,
     required this.color,
+    required this.helper,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-            child: Text(title,
-                style: const TextStyle(fontWeight: FontWeight.bold))),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: color.withOpacity(0.35)),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color.withOpacity(0.10),
+            const Color(0xFFFFF7ED),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withOpacity(0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.72),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                alignment: Alignment.center,
+                child: Icon(Icons.workspace_premium_outlined,
+                    color: color, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Statut conseille',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      statut,
+                      style: const TextStyle(
+                        color: Color(0xFF111827),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          child: Text(value,
-              style: TextStyle(color: color, fontWeight: FontWeight.w700)),
-        )
-      ],
+          if (why.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              why,
+              style: TextStyle(
+                color: Colors.grey.shade800,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Text(
+            helper,
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResultMetricTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color tone;
+
+  const _ResultMetricTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.tone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: tone),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Color(0xFF111827),
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResultCallout extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String text;
+  final Color tone;
+
+  const _ResultCallout({
+    required this.icon,
+    required this.title,
+    required this.text,
+    required this.tone,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: tone.withOpacity(0.07),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: tone.withOpacity(0.16)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: tone, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFF111827),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  text,
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PriorityChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _PriorityChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.18)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w800,
+          fontSize: 12,
+        ),
+      ),
     );
   }
 }
@@ -1788,20 +2497,269 @@ class _Bullet extends StatelessWidget {
 }
 
 class _CostRow extends StatelessWidget {
+  final IconData icon;
   final String label;
   final String value;
-  const _CostRow({required this.label, required this.value});
+  const _CostRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Row(
         children: [
-          Expanded(child: Text(label)),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 18, color: const Color(0xFF374151)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF111827),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
           Text(value,
               style: const TextStyle(
                   fontWeight: FontWeight.w800, fontSize: 15)), // Plus épais
+        ],
+      ),
+    );
+  }
+}
+
+class _AidStatusTile extends StatelessWidget {
+  final String name;
+  final String description;
+  final String status;
+  final ValueChanged<String?> onChanged;
+
+  const _AidStatusTile({
+    required this.name,
+    required this.description,
+    required this.status,
+    required this.onChanged,
+  });
+
+  Color get _statusColor {
+    switch (status) {
+      case 'obtenu':
+        return const Color(0xFF0F766E);
+      case 'demandé':
+        return const Color(0xFF1D4ED8);
+      default:
+        return const Color(0xFF6B7280);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: _statusColor.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.volunteer_activism_outlined,
+                  color: _statusColor,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        color: Color(0xFF111827),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _statusColor.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: _statusColor.withOpacity(0.16)),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    color: _statusColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: status,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF9FAFB),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                        value: 'à checker', child: Text('à checker')),
+                    DropdownMenuItem(value: 'demandé', child: Text('demandé')),
+                    DropdownMenuItem(value: 'obtenu', child: Text('obtenu')),
+                  ],
+                  onChanged: onChanged,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanTaskTile extends StatelessWidget {
+  final String title;
+  final String week;
+  final bool completed;
+  final ValueChanged<bool?> onChanged;
+
+  const _PlanTaskTile({
+    required this.title,
+    required this.week,
+    required this.completed,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
+      decoration: BoxDecoration(
+        color: completed ? const Color(0xFFF0FDF4) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: completed ? const Color(0xFFBBF7D0) : const Color(0xFFE5E7EB),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Checkbox(
+            value: completed,
+            onChanged: onChanged,
+            activeColor: const Color(0xFF0F766E),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      week,
+                      style: const TextStyle(
+                        color: Color(0xFF374151),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: const Color(0xFF111827),
+                      fontWeight: FontWeight.w700,
+                      decoration: completed ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (completed)
+            const Padding(
+              padding: EdgeInsets.only(top: 6),
+              child: Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF0F766E),
+                size: 18,
+              ),
+            ),
         ],
       ),
     );

@@ -2038,6 +2038,7 @@ class _HomePageState extends State<HomePage>
       builder: (context, child) {
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 6),
           child: Row(
             children: [
               for (var index = 0;
@@ -2066,7 +2067,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildLatestOffersSection() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(10, 4, 10, 0),
+      padding: const EdgeInsets.fromLTRB(6, 4, 6, 0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -3432,130 +3433,6 @@ class _FieldPendingDotState extends State<_FieldPendingDot>
         decoration: const BoxDecoration(
           color: kPrestoBlue,
           shape: BoxShape.circle,
-        ),
-      ),
-    );
-  }
-}
-
-class _BottomNavItem extends StatefulWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final bool isBig;
-  final VoidCallback onTap;
-
-  const _BottomNavItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.selected = false,
-    this.isBig = false,
-  });
-
-  @override
-  State<_BottomNavItem> createState() => _BottomNavItemState();
-}
-
-class _BottomNavItemState extends State<_BottomNavItem>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.12).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void didUpdateWidget(_BottomNavItem oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Jouer l'animation quand sélectionné
-    if (widget.selected && !oldWidget.selected) {
-      _controller.forward().then((_) {
-        if (mounted) {
-          _controller.reverse();
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = Colors.white;
-    final fontWeight = widget.selected ? FontWeight.w700 : FontWeight.w500;
-
-    return _TapScale(
-      onTap: widget.onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ScaleTransition(
-              scale: _scaleAnimation,
-              child: Container(
-                padding: EdgeInsets.all(widget.isBig ? 6 : 4),
-                decoration: BoxDecoration(
-                  color: widget.isBig
-                      ? Colors.white
-                      : widget.selected
-                          ? Colors.white.withOpacity(0.35)
-                          : Colors.transparent,
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: widget.isBig
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.35),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : widget.selected
-                          ? [
-                              BoxShadow(
-                                color: Colors.white.withOpacity(0.5),
-                                blurRadius: 12,
-                                spreadRadius: 3,
-                              ),
-                            ]
-                          : null,
-                ),
-                child: Icon(
-                  widget.icon,
-                  size: widget.isBig ? 28 : 24,
-                  color: widget.isBig ? kPrestoOrange : color,
-                ),
-              ),
-            ),
-            const SizedBox(height: 3),
-            SizedBox(
-              width: 70,
-              child: Text(
-                widget.label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: color,
-                  fontWeight: fontWeight,
-                  height: 1.2,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -6499,6 +6376,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
     const outerRadius = 24.0;
     const innerUrgentInset = 3.0;
     const innerUrgentWidth = 4.0;
+    const cornerAccentSize = 54.0;
 
     final showUrgentContour = widget.data.isUrgent;
     final blink = pulse.clamp(0.0, 1.0);
@@ -6507,159 +6385,179 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
     );
 
     return RepaintBoundary(
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(outerRadius),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(outerRadius),
-          onTap: widget.onTap,
-          child: Ink(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.98),
-              borderRadius: BorderRadius.circular(outerRadius),
-              border: Border.all(
-                color: _ConsultOffersPageState._offersCardBorder,
-                width: 1,
-              ),
-              boxShadow: [
-                const BoxShadow(
-                  color: Color(0x0C000000),
-                  blurRadius: 18,
-                  offset: Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                if (showUrgentContour)
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: Padding(
-                        padding: const EdgeInsets.all(innerUrgentInset),
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(
-                              outerRadius - innerUrgentInset,
-                            ),
-                            border: Border.all(
-                              color: urgentBorderColor,
-                              width: innerUrgentWidth,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            child: IgnorePointer(
+              child: Container(
+                width: cornerAccentSize,
+                height: cornerAccentSize,
+                decoration: const BoxDecoration(
+                  color: kPrestoBlue,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24),
                   ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.data.title.toUpperCase(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          height: 1.15,
-                          fontWeight: FontWeight.w700,
-                          color: _ConsultOffersPageState._offersNavy,
-                          letterSpacing: 0.15,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        widget.data.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1.0,
-                          fontWeight: FontWeight.w500,
-                          color: _ConsultOffersPageState._offersNavy
-                              .withValues(alpha: 0.82),
-                          letterSpacing: -0.1,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              widget.data.publishedText,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                height: 1.0,
-                                fontWeight: FontWeight.w500,
-                                color: _ConsultOffersPageState._offersSoftText,
+                ),
+              ),
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(outerRadius),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(outerRadius),
+              onTap: widget.onTap,
+              child: Ink(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.98),
+                  borderRadius: BorderRadius.circular(outerRadius),
+                  border: Border.all(
+                    color: _ConsultOffersPageState._offersCardBorder,
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    const BoxShadow(
+                      color: Color(0x0C000000),
+                      blurRadius: 18,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    if (showUrgentContour)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: Padding(
+                            padding: const EdgeInsets.all(innerUrgentInset),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(
+                                  outerRadius - innerUrgentInset,
+                                ),
+                                border: Border.all(
+                                  color: urgentBorderColor,
+                                  width: innerUrgentWidth,
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 148),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  '${widget.data.price} €',
-                                  textAlign: TextAlign.right,
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.data.title.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              height: 1.15,
+                              fontWeight: FontWeight.w700,
+                              color: _ConsultOffersPageState._offersNavy,
+                              letterSpacing: 0.15,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            widget.data.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.0,
+                              fontWeight: FontWeight.w500,
+                              color: _ConsultOffersPageState._offersNavy
+                                  .withValues(alpha: 0.82),
+                              letterSpacing: -0.1,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  widget.data.publishedText,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 26,
+                                    fontSize: 13,
                                     height: 1.0,
-                                    fontWeight: FontWeight.w700,
-                                    color:
-                                        _ConsultOffersPageState._offersOrange,
-                                    letterSpacing: -0.9,
+                                    fontWeight: FontWeight.w500,
+                                    color: _ConsultOffersPageState._offersSoftText,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                _OfferMissionDelayChip(
-                                  label: widget.data.missionDelayLabel,
+                              ),
+                              const SizedBox(width: 12),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 148),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      '${widget.data.price} €',
+                                      textAlign: TextAlign.right,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 26,
+                                        height: 1.0,
+                                        fontWeight: FontWeight.w700,
+                                        color:
+                                            _ConsultOffersPageState._offersOrange,
+                                        letterSpacing: -0.9,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _OfferMissionDelayChip(
+                                      label: widget.data.missionDelayLabel,
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                if (widget.data.showJobDoneOverlay)
-                  Positioned.fill(
-                    child: RepaintBoundary(
-                      child: IgnorePointer(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.78),
-                            borderRadius: BorderRadius.circular(outerRadius),
-                          ),
-                          alignment: Alignment.center,
-                          child: Padding(
-                            padding: const EdgeInsets.all(18),
-                            child: Image.asset(
-                              'assets/images/jobfait.webp',
-                              height: 132,
-                              fit: BoxFit.contain,
-                              filterQuality: FilterQuality
-                                  .none, // Maximum performance sur le web
+                    ),
+                    if (widget.data.showJobDoneOverlay)
+                      Positioned.fill(
+                        child: RepaintBoundary(
+                          child: IgnorePointer(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.78),
+                                borderRadius: BorderRadius.circular(outerRadius),
+                              ),
+                              alignment: Alignment.center,
+                              child: Padding(
+                                padding: const EdgeInsets.all(18),
+                                child: Image.asset(
+                                  'assets/images/jobfait.webp',
+                                  height: 132,
+                                  fit: BoxFit.contain,
+                                  filterQuality: FilterQuality
+                                      .none, // Maximum performance sur le web
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

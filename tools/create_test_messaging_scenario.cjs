@@ -3,7 +3,8 @@ const { verifySeededMessagesVisibility } = require('./verify_messages_list_visib
 
 const API_KEY = 'AIzaSyB-Oo_86VpG_refQU7my0qk10tQFQDU-Fo';
 const PROJECT_ID = 'presto-app-74abe';
-const CALLABLE_BASE_URL = `https://europe-west1-${PROJECT_ID}.cloudfunctions.net`;
+const FUNCTIONS_REGION = process.env.FUNCTIONS_REGION || 'us-east1';
+const CALLABLE_BASE_URL = `https://${FUNCTIONS_REGION}-${PROJECT_ID}.cloudfunctions.net`;
 const SEED_TAG = 'messaging-test-20260328';
 const BUYER_EMAIL = process.env.TEST_BUYER_EMAIL || 'messaging.buyer.20260328@presto-app.test';
 const BUYER_PASSWORD = process.env.TEST_BUYER_PASSWORD || 'PrestoBuyer!2026';
