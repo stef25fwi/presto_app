@@ -130,7 +130,7 @@ class ToolboxCacheService {
       return null;
     } catch (e) {
       _monitoring.recordCacheError('fetchExistingJourney: $e');
-      debugPrint('❌ Erreur lors de la récupération du cache: $e');
+      debugPrint('[ToolboxCache] fetch existing journey failed: $e');
       return null;
     }
   }
@@ -180,7 +180,7 @@ class ToolboxCacheService {
 
       return journeyId;
     } catch (e) {
-      debugPrint('❌ Erreur lors de la sauvegarde du parcours: $e');
+      debugPrint('[ToolboxCache] save new journey failed: $e');
       return null;
     }
   }
@@ -206,7 +206,7 @@ class ToolboxCacheService {
 
       return true;
     } catch (e) {
-      debugPrint('❌ Erreur lors de la suppression: $e');
+      debugPrint('[ToolboxCache] delete journey failed: $e');
       return false;
     }
   }
@@ -217,7 +217,7 @@ class ToolboxCacheService {
       final snapshot = await _db.collection('toolbox_journeys').count().get();
       return snapshot.count ?? 0;
     } catch (e) {
-      debugPrint('❌ Erreur stats cache: $e');
+      debugPrint('[ToolboxCache] get cache stats failed: $e');
       return 0;
     }
   }

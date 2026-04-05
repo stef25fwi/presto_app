@@ -643,8 +643,13 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       }
     } catch (error) {
       if (!mounted) return;
+      debugPrint(
+        '[MessagesList] conversation action failed id=$conversationId action=$action error=$error',
+      );
       showErrorSnackBar(
-          context, 'Action impossible sur cette conversation : $error');
+        context,
+        'Cette action est temporairement indisponible. Reessayez dans un instant.',
+      );
     }
   }
 
@@ -893,17 +898,17 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     if (orphanCount > 0) {
       lines.add(
         orphanCount == 1
-            ? '1 conversation ignoree car le participant courant est absent des metadonnees.'
-            : '$orphanCount conversations ignorees car les participants sont invalides.',
+            ? '1 conversation n est pas affichee pour ce compte car les metadonnees participants sont incompletes.'
+            : '$orphanCount conversations ne sont pas affichees car les metadonnees participants sont incompletes.',
       );
     }
     if (errorsByField.isNotEmpty && shouldExposeErrors) {
       if (errorsByField.containsKey(conversationPrimaryParticipantField)) {
         lines.add(
-            'La source principale participants a echoue temporairement ; un affichage de secours tente de recuperer les conversations via les alias legacy pendant la relance automatique.');
+            'La source principale participants est temporairement indisponible ; la page continue a tenter une recuperation via les alias legacy pendant la relance automatique.');
       } else {
         lines.add(
-            'Certaines sources Firestore ont echoue ; la liste affiche seulement les conversations recuperables.');
+            'Certaines sources Firestore sont temporairement indisponibles ; la liste affiche uniquement les conversations recuperables.');
       }
       if (kDebugMode) {
         for (final entry in errorsByField.entries) {
@@ -1151,9 +1156,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                           _ConversationListFilter.archived
                                       ? 'Aucune conversation archivee.'
                                       : orphanCount > 0
-                                          ? 'Des messages existent, mais certaines conversations sont orphelines ou mal normalisees. Consultez le bandeau de diagnostic.'
+                                        ? 'Aucune conversation affichable pour le moment. Le diagnostic ci-dessous signale des metadonnees participants incompletes sur certaines conversations.'
                                           : hiddenWithoutPreviewCount > 0
-                                              ? 'Certaines conversations existent mais n ont pas encore de metadonnees exploitables.'
+                                          ? 'Aucune conversation affichable pour le moment. Certaines conversations existent deja, mais leurs metadonnees d apercu ne sont pas encore suffisantes.'
                                               : 'Aucune conversation pour le moment.';
 
                           return Column(

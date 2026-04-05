@@ -439,7 +439,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       if (!mounted) return;
       showErrorSnackBar(
         context,
-        'Erreur lors du chargement des messages plus anciens.',
+        'Les messages plus anciens sont temporairement indisponibles.',
       );
     } finally {
       if (mounted) {
@@ -455,7 +455,10 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     final text = rawDraft.trim();
     if (text.isEmpty || _isSending) return;
     if (_isBlocked) {
-      showErrorSnackBar(context, 'Cette conversation est bloquee.');
+      showErrorSnackBar(
+        context,
+        'L envoi est indisponible tant que cette conversation est bloquee.',
+      );
       return;
     }
 
@@ -485,12 +488,16 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
         );
       }
     } catch (error) {
+      debugPrint('[ConversationThread] _sendMessage error: $error');
       if (!mounted) return;
       _controller.value = TextEditingValue(
         text: rawDraft,
         selection: TextSelection.collapsed(offset: rawDraft.length),
       );
-      showErrorSnackBar(context, 'Erreur lors de l\'envoi du message : $error');
+      showErrorSnackBar(
+        context,
+        'L envoi du message a echoue. Reessayez dans un instant.',
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -566,8 +573,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
       }
     } catch (error) {
       if (!mounted) return;
+      debugPrint(
+        '[ConversationThread] conversation action failed id=${widget.conversationId} action=$action error=$error',
+      );
       showErrorSnackBar(
-          context, 'Action impossible sur cette conversation : $error');
+        context,
+        'Cette action est temporairement indisponible. Reessayez dans un instant.',
+      );
     }
   }
 
@@ -792,8 +804,8 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
 
                     if (snapshot.hasError) {
                       final message = _isPermissionDenied(snapshot.error)
-                          ? 'Accès refusé à cette conversation.'
-                          : 'Erreur de chargement des messages.';
+                          ? 'Cette conversation n est pas disponible pour ce compte.'
+                          : 'Les messages sont temporairement indisponibles. Reessayez dans un instant.';
                       return Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24),
@@ -825,7 +837,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                         child: Padding(
                           padding: const EdgeInsets.all(24),
                           child: Text(
-                            'Aucun message pour le moment.\nCommencez la conversation.',
+                            'Aucun message pour le moment.\nVous pouvez lancer la conversation.',
                             textAlign: TextAlign.center,
                             style: kPrestoBodyTextStyle.copyWith(
                               fontWeight: FontWeight.w600,
@@ -1086,7 +1098,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                             onSubmitted: (_) => _sendMessage(),
                             decoration: InputDecoration(
                               hintText: _isBlocked
-                                  ? 'Conversation bloquee'
+                                  ? 'Envoi indisponible : conversation bloquee'
                                   : 'Votre message...',
                               border: InputBorder.none,
                               contentPadding: const EdgeInsets.symmetric(
