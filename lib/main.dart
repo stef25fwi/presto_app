@@ -7266,6 +7266,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   int _streamingChunkSuccessCount = 0;
   int _streamingChunkErrorCount = 0;
+  String? _lastStreamingChunkErrorMessage;
+
+  static const int _kMinStreamingChunkBytes = 30000;
 
   int _startStreamingSession() {
     _streamingSessionId += 1;
@@ -7274,6 +7277,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _partialTranscript = '';
     _streamingChunkSuccessCount = 0;
     _streamingChunkErrorCount = 0;
+    _lastStreamingChunkErrorMessage = null;
     return _streamingSessionId;
   }
 
@@ -7300,6 +7304,21 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   String _formatMicroIaRuntimeError(Object error) {
+    if (error is FirebaseFunctionsException) {
+      final code = error.code.trim();
+      final message = (error.message ?? '').trim();
+      if (code == 'unauthenticated') {
+        return 'Connecte-toi pour utiliser la dictée.';
+      }
+      if (code == 'permission-denied') {
+        return 'Cette dictée ne correspond plus à ta session. Recharge la page puis réessaie.';
+      }
+      if (message.isNotEmpty) {
+        return _translatePublishIssue(message);
+      }
+      return _translatePublishIssue(code);
+    }
+
     final message = error
         .toString()
         .replaceFirst('Exception: ', '')
@@ -7311,6 +7330,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return 'Le micro a été interrompu. Réessaie.';
     }
     return message;
+  }
+
+  bool _isIgnorableStreamingChunkError(Object error) {
+    if (error is FirebaseFunctionsException) {
+      final message = (error.message ?? '').toLowerCase();
+      if (error.code == 'failed-precondition' &&
+          (message.contains('audio trop court/faible') ||
+              message.contains('audio file is empty'))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   Future<bool> _ensureAppCheckReady({required String flow}) async {
@@ -7381,6 +7412,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // Counters are read BEFORE close, then reset here for next session.
     _streamingChunkSuccessCount = 0;
     _streamingChunkErrorCount = 0;
+    _lastStreamingChunkErrorMessage = null;
     return transcript;
   }
 
@@ -7471,8 +7503,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
       debugPrint('[$logPrefix] Chunk transcribed: "$text"');
     } catch (e) {
+      final formatted = _formatMicroIaRuntimeError(e);
+      if (_lastStreamingChunkErrorMessage == null ||
+          _lastStreamingChunkErrorMessage!.isEmpty) {
+        _lastStreamingChunkErrorMessage = formatted;
+      }
+      if (_isIgnorableStreamingChunkError(e)) {
+        debugPrint(
+          '[$logPrefix] Chunk $sequence ignored: $formatted',
+        );
+        return;
+      }
       _streamingChunkErrorCount += 1;
-      debugPrint('[$logPrefix] Chunk $sequence failed: $e');
+      debugPrint('[$logPrefix] Chunk $sequence failed: $formatted');
     }
   }
 
@@ -7482,7 +7525,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }) async {
     final blob = await _webRec.stopToBlob();
     final wavBytes = await webBlobToWav16kMono(blob);
-    if (wavBytes.isEmpty || wavBytes.length < 1000) {
+    if (wavBytes.isEmpty || wavBytes.length < _kMinStreamingChunkBytes) {
       debugPrint('[Streaming Web] Final chunk ignored: empty/tiny WAV');
       return;
     }
@@ -7617,7 +7660,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
               // ⚡ Convertir WEBM→WAV PCM16 16kHz mono côté client
               final wavBytes = await webBlobToWav16kMono(blob);
-              if (wavBytes.isEmpty || wavBytes.length < 1000) {
+              if (wavBytes.isEmpty ||
+                  wavBytes.length < _kMinStreamingChunkBytes) {
                 debugPrint('[Streaming Web] Empty/tiny WAV chunk');
                 return;
               }
@@ -7805,7 +7849,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       if (transcript.isEmpty) {
         if (!mounted) return;
-        if (chunkErrors > 0 && chunkSuccesses == 0) {
+        final chunkErrorMessage = _lastStreamingChunkErrorMessage;
+        if (chunkErrors > 0 &&
+            chunkSuccesses == 0 &&
+            chunkErrorMessage != null &&
+            chunkErrorMessage.isNotEmpty) {
+          showSuccessSnackBar(context, chunkErrorMessage);
+        } else if (chunkErrors > 0 && chunkSuccesses == 0) {
           showSuccessSnackBar(
             context,
             'Erreur réseau ou serveur. Vérifie ta connexion et réessaie.',
@@ -8922,6 +8972,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
     if (trimmed == 'reCAPTCHA assessment rejected the listing submission') {
       return 'La vérification anti-abus a échoué. Réessaie dans quelques secondes.';
+    }
+    if (trimmed == 'Authentication required.' || trimmed == 'unauthenticated') {
+      return 'Connecte-toi pour utiliser la dictée.';
+    }
+    if (trimmed == 'storagePath does not belong to authenticated user.' ||
+        trimmed == 'permission-denied') {
+      return 'Cette dictée ne correspond plus à ta session. Recharge la page puis réessaie.';
+    }
+    if (trimmed == 'Audio file is empty.') {
+      return 'Le micro n\'a capté aucun son exploitable. Réessaie en parlant plus près du micro.';
+    }
+    if (trimmed.startsWith('Audio trop court/faible')) {
+      return 'L\'audio est trop court pour être transcrit. Parle un peu plus longtemps puis réessaie.';
+    }
+    if (trimmed.startsWith('Type audio invalide')) {
+      return 'Le format audio envoyé au serveur est invalide. Recharge la page puis réessaie.';
     }
     if (trimmed == 'Too many listing submissions, please retry later') {
       return 'Trop de tentatives de publication en peu de temps. Réessaie plus tard.';
