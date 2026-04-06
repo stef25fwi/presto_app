@@ -175,7 +175,7 @@ await _trackLogin(authMethod: 'google', isNewUser: isNew);
 ### 1. Analytics dashboard admin
 
 ```dart
-final callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
+final callable = FirebaseFunctions.instanceFor(region: 'us-east1')
     .httpsCallable('adminGetUserStats');
 final result = await callable.call();
 
