@@ -1094,8 +1094,7 @@ function isAllowedAudioContentType(ct) {
     v === 'audio/mp4' ||
     v === 'video/mp4' ||
     v === 'audio/x-m4a' ||
-    v === 'audio/aac' ||
-    v === 'application/octet-stream'
+    v === 'audio/aac'
   );
 }
 
@@ -1421,6 +1420,18 @@ exports.microIaProcessAudio = onCall(
           best.draft = null;
           best.draftError = draftErr?.message || 'Draft generation failed';
         }
+      }
+
+      // 🧹 Cleanup: supprimer le fichier audio source après traitement réussi
+      try {
+        await file.delete();
+        console.log("[microIaProcessAudio] CLEANUP", { requestId, storagePath: storagePathRedacted });
+      } catch (cleanupErr) {
+        console.warn("[microIaProcessAudio] CLEANUP_ERROR", {
+          requestId,
+          storagePath: storagePathRedacted,
+          err: cleanupErr?.message || String(cleanupErr),
+        });
       }
 
       return best;
