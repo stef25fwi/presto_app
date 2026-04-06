@@ -7,6 +7,9 @@ class PremiumAiButton extends StatefulWidget {
   final String label;
   final double width;
   final bool isLoading;
+  final IconData icon;
+  final List<Color>? gradientColors;
+  final Color? shadowColor;
 
   const PremiumAiButton({
     super.key,
@@ -14,6 +17,9 @@ class PremiumAiButton extends StatefulWidget {
     this.label = 'Décrire mon besoin (IA)',
     this.width = 0.92, // 92% de la largeur
     this.isLoading = false,
+    this.icon = Icons.auto_awesome,
+    this.gradientColors,
+    this.shadowColor,
   });
 
   @override
@@ -27,28 +33,33 @@ class _PremiumAiButtonState extends State<PremiumAiButton> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final buttonWidth = screenWidth * widget.width;
+    final gradientColors =
+        widget.gradientColors ?? const [Color(0xFF2D84F6), Color(0xFF1A73E8)];
+    final shadowColor = widget.shadowColor ?? gradientColors.last;
 
     return Container(
       width: buttonWidth,
       height: 56, // Entre 54-58px
       decoration: BoxDecoration(
         // Dégradé vertical : bleu plus clair en haut → plus profond en bas
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF2D84F6), // Bleu plus clair en haut
-            Color(0xFF1A73E8), // Bleu principal plus profond en bas
-          ],
+          colors: gradientColors,
         ),
         borderRadius: BorderRadius.circular(20), // Forme de pilule (18-22px)
         // Ombre douce
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1A73E8)
-                .withValues(alpha: 0.18), // 15-20% opacity
+            color: shadowColor.withValues(alpha: 0.22),
             blurRadius: 14, // Entre 12-16
             offset: const Offset(0, 4),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: gradientColors.first.withValues(alpha: 0.10),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
             spreadRadius: 0,
           ),
         ],
@@ -68,7 +79,7 @@ class _PremiumAiButtonState extends State<PremiumAiButton> {
               if (!widget.isLoading && !_isLoading) ...[
                 const SizedBox(width: 4),
                 Icon(
-                  Icons.auto_awesome, // Sparkles icon
+                  widget.icon,
                   color: Colors.white,
                   size: 20,
                 ),
