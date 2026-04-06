@@ -7,6 +7,20 @@ import 'dart:js_interop';
 
 import 'package:web/web.dart' as web;
 
+class WebMicroIaAudioUpload {
+  const WebMicroIaAudioUpload({
+    required this.bytes,
+    required this.contentType,
+    required this.extension,
+    required this.usedClientSideWavConversion,
+  });
+
+  final Uint8List bytes;
+  final String contentType;
+  final String extension;
+  final bool usedClientSideWavConversion;
+}
+
 class WebAudioRecorder {
   web.MediaRecorder? _rec;
   web.MediaStream? _stream;
@@ -96,6 +110,38 @@ Future<Uint8List> webBlobToBytes(web.Blob blob) async {
   return byteBuffer.asUint8List();
 }
 
+Future<WebMicroIaAudioUpload> webBlobToMicroIaUpload(web.Blob blob) async {
+  final fallbackContentType = _normalizeMicroIaContentType(blob.type);
+
+  try {
+    final wavBytes = await webBlobToWav16kMono(blob);
+    if (wavBytes.isNotEmpty) {
+      return WebMicroIaAudioUpload(
+        bytes: wavBytes,
+        contentType: 'audio/wav',
+        extension: 'wav',
+        usedClientSideWavConversion: true,
+      );
+    }
+  } catch (_) {
+    if (fallbackContentType == null) {
+      rethrow;
+    }
+  }
+
+  if (fallbackContentType == null) {
+    throw StateError('Unable to decode audio data');
+  }
+
+  final rawBytes = await webBlobToBytes(blob);
+  return WebMicroIaAudioUpload(
+    bytes: rawBytes,
+    contentType: fallbackContentType,
+    extension: _extensionForMicroIaContentType(fallbackContentType),
+    usedClientSideWavConversion: false,
+  );
+}
+
 /// Convert any recorded blob (webm/opus) -> WAV PCM16 16k mono (Uint8List)
 Future<Uint8List> webBlobToWav16kMono(web.Blob blob) async {
   // Blob -> ArrayBuffer
@@ -140,6 +186,44 @@ Future<Uint8List> webBlobToWav16kMono(web.Blob blob) async {
     } catch (_) {
       // ignore
     }
+  }
+}
+
+String? _normalizeMicroIaContentType(String rawType) {
+  final type = rawType.trim().toLowerCase();
+  if (type.isEmpty) return null;
+
+  final baseType = type.split(';').first.trim();
+  switch (baseType) {
+    case 'audio/wav':
+    case 'audio/x-wav':
+    case 'audio/wave':
+    case 'audio/vnd.wave':
+      return 'audio/wav';
+    case 'audio/webm':
+    case 'video/webm':
+      return 'audio/webm';
+    case 'audio/mp4':
+    case 'video/mp4':
+      return 'audio/mp4';
+    case 'audio/x-m4a':
+      return 'audio/x-m4a';
+    default:
+      return null;
+  }
+}
+
+String _extensionForMicroIaContentType(String contentType) {
+  switch (contentType) {
+    case 'audio/webm':
+      return 'webm';
+    case 'audio/mp4':
+      return 'mp4';
+    case 'audio/x-m4a':
+      return 'm4a';
+    case 'audio/wav':
+    default:
+      return 'wav';
   }
 }
 

@@ -7329,6 +7329,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         normalized.contains('recorder not started')) {
       return 'Le micro a été interrompu. Réessaie.';
     }
+    if (normalized.contains('unable to decode audio data')) {
+      return 'Le navigateur n’a pas pu relire l’audio du micro. Réessaie.';
+    }
     return message;
   }
 
@@ -7448,16 +7451,19 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _queueStreamingChunkProcessing({
     required int sessionId,
     required String uid,
-    required Uint8List wavBytes,
+    required Uint8List audioBytes,
+    required String contentType,
+    required String fileExtension,
     required String logPrefix,
   }) async {
     final sequence = _reserveStreamingChunkSequence();
     final ts = DateTime.now().millisecondsSinceEpoch;
-    final chunkPath = 'stt_streaming/$uid/${ts}_chunk.wav';
+    final chunkPath = 'stt_streaming/$uid/${ts}_chunk.$fileExtension';
     await _processStreamingChunk(
       sessionId: sessionId,
       sequence: sequence,
-      wavBytes: wavBytes,
+      audioBytes: audioBytes,
+      contentType: contentType,
       storagePath: chunkPath,
       logPrefix: logPrefix,
     );
@@ -7466,19 +7472,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _processStreamingChunk({
     required int sessionId,
     required int sequence,
-    required Uint8List wavBytes,
+    required Uint8List audioBytes,
+    required String contentType,
     required String storagePath,
     required String logPrefix,
   }) async {
     try {
       final ref = FirebaseStorage.instance.ref(storagePath);
       await ref.putData(
-        wavBytes,
-        SettableMetadata(contentType: 'audio/wav'),
+        audioBytes,
+        SettableMetadata(contentType: contentType),
       );
 
       debugPrint(
-        '[$logPrefix] Chunk uploaded: $storagePath (${wavBytes.length} bytes)',
+        '[$logPrefix] Chunk uploaded: $storagePath (${audioBytes.length} bytes, $contentType)',
       );
 
       final result = await MicroIaService.processAudio(
@@ -7524,8 +7531,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     required String uid,
   }) async {
     final blob = await _webRec.stopToBlob();
-    final wavBytes = await webBlobToWav16kMono(blob);
-    if (wavBytes.isEmpty || wavBytes.length < _kMinStreamingChunkBytes) {
+    final audioUpload = await webBlobToMicroIaUpload(blob);
+    if (audioUpload.bytes.isEmpty) {
+      debugPrint('[Streaming Web] Final chunk ignored: empty audio');
+      return;
+    }
+    if (audioUpload.usedClientSideWavConversion &&
+        audioUpload.bytes.length < _kMinStreamingChunkBytes) {
       debugPrint('[Streaming Web] Final chunk ignored: empty/tiny WAV');
       return;
     }
@@ -7533,7 +7545,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     await _queueStreamingChunkProcessing(
       sessionId: sessionId,
       uid: uid,
-      wavBytes: wavBytes,
+      audioBytes: audioUpload.bytes,
+      contentType: audioUpload.contentType,
+      fileExtension: audioUpload.extension,
       logPrefix: 'Streaming Web',
     );
   }
@@ -7557,7 +7571,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     await _queueStreamingChunkProcessing(
       sessionId: sessionId,
       uid: uid,
-      wavBytes: wavBytes,
+      audioBytes: wavBytes,
+      contentType: 'audio/wav',
+      fileExtension: 'wav',
       logPrefix: 'Streaming Mobile',
     );
   }
@@ -7659,9 +7675,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               }
 
               // ⚡ Convertir WEBM→WAV PCM16 16kHz mono côté client
-              final wavBytes = await webBlobToWav16kMono(blob);
-              if (wavBytes.isEmpty ||
-                  wavBytes.length < _kMinStreamingChunkBytes) {
+              final audioUpload = await webBlobToMicroIaUpload(blob);
+              if (audioUpload.bytes.isEmpty) {
+                debugPrint('[Streaming Web] Empty audio chunk');
+                return;
+              }
+              if (audioUpload.usedClientSideWavConversion &&
+                  audioUpload.bytes.length < _kMinStreamingChunkBytes) {
                 debugPrint('[Streaming Web] Empty/tiny WAV chunk');
                 return;
               }
@@ -7669,7 +7689,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               await _queueStreamingChunkProcessing(
                 sessionId: sessionId,
                 uid: uid,
-                wavBytes: wavBytes,
+                audioBytes: audioUpload.bytes,
+                contentType: audioUpload.contentType,
+                fileExtension: audioUpload.extension,
                 logPrefix: 'Streaming Web',
               );
             } catch (e) {
@@ -7759,7 +7781,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               final task = _queueStreamingChunkProcessing(
                 sessionId: sessionId,
                 uid: uid,
-                wavBytes: wavBytes,
+                audioBytes: wavBytes,
+                contentType: 'audio/wav',
+                fileExtension: 'wav',
                 logPrefix: 'Streaming Mobile',
               );
               _trackStreamingChunkTask(sessionId, task);
@@ -9481,16 +9505,23 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         final blob = await _webRec.stopToBlob();
         // ⚡ Convertir WEBM→WAV PCM16 16kHz mono côté client
         // pour éliminer l'étape FFmpeg côté serveur (~2-4s de gain).
-        final wavBytes = await webBlobToWav16kMono(blob);
-        if (wavBytes.length < 30000) {
+        final audioUpload = await webBlobToMicroIaUpload(blob);
+        if (audioUpload.bytes.isEmpty) {
+          throw Exception('Audio invalide (fichier vide).');
+        }
+        if (audioUpload.usedClientSideWavConversion &&
+            audioUpload.bytes.length < 30000) {
           throw Exception(
-              'Audio invalide (WAV trop petit: ${wavBytes.length} bytes).');
+              'Audio invalide (WAV trop petit: ${audioUpload.bytes.length} bytes).');
         }
 
         final ts = DateTime.now().millisecondsSinceEpoch;
-        final destPath = 'stt/${uid}_$ts.wav';
+        final destPath = 'stt/${uid}_$ts.${audioUpload.extension}';
         final ref = FirebaseStorage.instance.ref(destPath);
-        await ref.putData(wavBytes, SettableMetadata(contentType: 'audio/wav'));
+        await ref.putData(
+          audioUpload.bytes,
+          SettableMetadata(contentType: audioUpload.contentType),
+        );
 
         // ⚡ Single round-trip: STT + Draft combined in one CF call
         final out = await MicroIaService.processAudio(
