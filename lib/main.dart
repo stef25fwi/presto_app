@@ -7227,6 +7227,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   String _partialTranscript = '';
   Timer? _streamingTimer;
   bool _isStreaming = false;
+  final List<int> _streamingPcmAccumulator = <int>[];
+  final Map<int, Set<Future<void>>> _pendingStreamingChunkTasksBySession =
+      <int, Set<Future<void>>>{};
   final MarketplaceRemoteConfigService _marketplaceRemoteConfigService =
       MarketplaceRemoteConfigService();
   int _maxListingPhotos = _defaultMaxListingPhotos;
@@ -7276,7 +7279,137 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _streamingSessionId += 1;
     _nextStreamingChunkSequence = 0;
     _streamingChunkTexts.clear();
+    _streamingPcmAccumulator.clear();
+    _pendingStreamingChunkTasksBySession.remove(_streamingSessionId - 1);
     return transcript;
+  }
+
+  void _trackStreamingChunkTask(int sessionId, Future<void> task) {
+    final tasks = _pendingStreamingChunkTasksBySession.putIfAbsent(
+      sessionId,
+      () => <Future<void>>{},
+    );
+    tasks.add(task);
+    task.whenComplete(() {
+      final sessionTasks = _pendingStreamingChunkTasksBySession[sessionId];
+      if (sessionTasks == null) return;
+      sessionTasks.remove(task);
+      if (sessionTasks.isEmpty) {
+        _pendingStreamingChunkTasksBySession.remove(sessionId);
+      }
+    });
+  }
+
+  Future<void> _awaitStreamingChunkTasks(int sessionId) async {
+    final pending = _pendingStreamingChunkTasksBySession[sessionId]
+            ?.toList(growable: false) ??
+        const <Future<void>>[];
+    if (pending.isEmpty) return;
+
+    try {
+      await Future.wait(pending).timeout(const Duration(seconds: 20));
+    } catch (e) {
+      debugPrint('[Streaming] Pending chunk wait interrupted: $e');
+    }
+  }
+
+  Future<void> _queueStreamingChunkProcessing({
+    required int sessionId,
+    required String uid,
+    required Uint8List wavBytes,
+    required String logPrefix,
+  }) async {
+    final sequence = _reserveStreamingChunkSequence();
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final chunkPath = 'stt_streaming/$uid/${ts}_chunk.wav';
+    await _processStreamingChunk(
+      sessionId: sessionId,
+      sequence: sequence,
+      wavBytes: wavBytes,
+      storagePath: chunkPath,
+      logPrefix: logPrefix,
+    );
+  }
+
+  Future<void> _processStreamingChunk({
+    required int sessionId,
+    required int sequence,
+    required Uint8List wavBytes,
+    required String storagePath,
+    required String logPrefix,
+  }) async {
+    final ref = FirebaseStorage.instance.ref(storagePath);
+    await ref.putData(
+      wavBytes,
+      SettableMetadata(contentType: 'audio/wav'),
+    );
+
+    debugPrint(
+      '[$logPrefix] Chunk uploaded: $storagePath (${wavBytes.length} bytes)',
+    );
+
+    final result = await MicroIaService.processAudio(
+      storagePath: storagePath,
+      languageCode: 'fr-FR',
+    ).timeout(const Duration(seconds: 75));
+
+    if (!mounted || sessionId != _streamingSessionId) return;
+
+    final text = (result['text'] ?? '').toString().trim();
+    if (text.isEmpty) {
+      debugPrint('[$logPrefix] Empty transcript for chunk $sequence');
+      return;
+    }
+
+    _acceptStreamingChunkTranscript(
+      sessionId: sessionId,
+      sequence: sequence,
+      text: text,
+    );
+    debugPrint('[$logPrefix] Chunk transcribed: "$text"');
+  }
+
+  Future<void> _flushStreamingAudioForWeb({
+    required int sessionId,
+    required String uid,
+  }) async {
+    final blob = await _webRec.stopToBlob();
+    final wavBytes = await webBlobToWav16kMono(blob);
+    if (wavBytes.isEmpty || wavBytes.length < 1000) {
+      debugPrint('[Streaming Web] Final chunk ignored: empty/tiny WAV');
+      return;
+    }
+
+    await _queueStreamingChunkProcessing(
+      sessionId: sessionId,
+      uid: uid,
+      wavBytes: wavBytes,
+      logPrefix: 'Streaming Web',
+    );
+  }
+
+  Future<void> _flushStreamingAudioForMobile({
+    required int sessionId,
+    required String uid,
+  }) async {
+    if (_streamingPcmAccumulator.isEmpty) return;
+
+    final pcmData = Uint8List.fromList(_streamingPcmAccumulator);
+    _streamingPcmAccumulator.clear();
+    final wavBytes =
+        _wrapPcm16InWav(pcmData, sampleRate: 16000, numChannels: 1);
+
+    if (wavBytes.length < 1000) {
+      debugPrint('[Streaming Mobile] Final chunk ignored: empty/tiny WAV');
+      return;
+    }
+
+    await _queueStreamingChunkProcessing(
+      sessionId: sessionId,
+      uid: uid,
+      wavBytes: wavBytes,
+      logPrefix: 'Streaming Mobile',
+    );
   }
 
   /// Wrap raw PCM16 little-endian bytes in a valid WAV header.
@@ -7343,61 +7476,37 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         // ✅ Chunking timer: toutes les 2 secondes
         _streamingTimer?.cancel();
-        _streamingTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
+        _streamingTimer = Timer.periodic(const Duration(seconds: 2), (_) {
           if (!_isListening || !mounted) return;
 
-          try {
-            // ✅ Arrêter temporairement et récupérer le blob du chunk
-            final blob = await _webRec.stopToBlob();
+          final task = () async {
+            try {
+              // ✅ Arrêter temporairement et récupérer le blob du chunk
+              final blob = await _webRec.stopToBlob();
 
-            debugPrint('[Streaming Web] Chunk blob acquired');
+              debugPrint('[Streaming Web] Chunk blob acquired');
 
-            // ✅ Redémarrer pour le prochain chunk
-            await _webRec.start();
+              // ✅ Redémarrer pour le prochain chunk
+              await _webRec.start();
 
-            // ⚡ Convertir WEBM→WAV PCM16 16kHz mono côté client
-            final wavBytes = await webBlobToWav16kMono(blob);
-            if (wavBytes.isEmpty || wavBytes.length < 1000) {
-              debugPrint('[Streaming Web] Empty/tiny WAV chunk');
-              return;
-            }
-
-            final ts = DateTime.now().millisecondsSinceEpoch;
-            final sequence = _reserveStreamingChunkSequence();
-            final chunkPath = 'stt_streaming/$uid/${ts}_chunk.wav';
-
-            final ref = FirebaseStorage.instance.ref(chunkPath);
-            await ref.putData(
-              wavBytes,
-              SettableMetadata(contentType: 'audio/wav'),
-            );
-
-            debugPrint(
-                '[Streaming Web] Chunk uploaded: $chunkPath (${wavBytes.length} bytes)');
-
-            // ✅ Transcription du chunk (async, non-bloquant)
-            MicroIaService.processAudio(
-              storagePath: chunkPath,
-              languageCode: 'fr-FR',
-              // streamingMode: true,
-            ).then((result) {
-              if (!mounted) return;
-
-              final text = (result['text'] ?? '').toString().trim();
-              if (text.isNotEmpty) {
-                _acceptStreamingChunkTranscript(
-                  sessionId: sessionId,
-                  sequence: sequence,
-                  text: text,
-                );
-                debugPrint('[Streaming Web] Chunk transcribed: "$text"');
+              // ⚡ Convertir WEBM→WAV PCM16 16kHz mono côté client
+              final wavBytes = await webBlobToWav16kMono(blob);
+              if (wavBytes.isEmpty || wavBytes.length < 1000) {
+                debugPrint('[Streaming Web] Empty/tiny WAV chunk');
+                return;
               }
-            }).catchError((e) {
-              debugPrint('[Streaming Web] Transcription error: $e');
-            });
-          } catch (e) {
-            debugPrint('[Streaming Web] Chunk processing error: $e');
-          }
+
+              await _queueStreamingChunkProcessing(
+                sessionId: sessionId,
+                uid: uid,
+                wavBytes: wavBytes,
+                logPrefix: 'Streaming Web',
+              );
+            } catch (e) {
+              debugPrint('[Streaming Web] Chunk processing error: $e');
+            }
+          }();
+          _trackStreamingChunkTask(sessionId, task);
         });
       } catch (e, st) {
         await CrashlyticsContext.recordError(
@@ -7435,6 +7544,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (!mounted) return;
 
       final sessionId = _startStreamingSession();
+      _streamingPcmAccumulator.clear();
 
       setState(() {
         _isListening = true;
@@ -7442,7 +7552,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
 
       final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
-      final _pcmAccumulator = <int>[];
       final int chunkThreshold =
           16000 * 2 * 2; // ~2s à 16kHz mono 16-bit = 64000 bytes
 
@@ -7455,50 +7564,23 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           if (!_isListening || !mounted) return;
 
           try {
-            _pcmAccumulator.addAll(chunk);
+            _streamingPcmAccumulator.addAll(chunk);
 
             // Envoyer quand le seuil est atteint
-            if (_pcmAccumulator.length >= chunkThreshold) {
-              final pcmData = Uint8List.fromList(_pcmAccumulator);
-              _pcmAccumulator.clear();
+            if (_streamingPcmAccumulator.length >= chunkThreshold) {
+              final pcmData = Uint8List.fromList(_streamingPcmAccumulator);
+              _streamingPcmAccumulator.clear();
 
               // ⚡ Wrapper PCM16 brut dans un header WAV valide
               final wavBytes =
                   _wrapPcm16InWav(pcmData, sampleRate: 16000, numChannels: 1);
-
-              final ts = DateTime.now().millisecondsSinceEpoch;
-              final sequence = _reserveStreamingChunkSequence();
-              final chunkPath = 'stt_streaming/$uid/${ts}_chunk.wav';
-
-              final ref = FirebaseStorage.instance.ref(chunkPath);
-              await ref.putData(
-                wavBytes,
-                SettableMetadata(contentType: 'audio/wav'),
+              final task = _queueStreamingChunkProcessing(
+                sessionId: sessionId,
+                uid: uid,
+                wavBytes: wavBytes,
+                logPrefix: 'Streaming Mobile',
               );
-
-              debugPrint(
-                  '[Streaming Mobile] Chunk uploaded: ${wavBytes.length} bytes at $chunkPath');
-
-              // ✅ Transcription du chunk (async, non-bloquant)
-              MicroIaService.processAudio(
-                storagePath: chunkPath,
-                languageCode: 'fr-FR',
-                // streamingMode: true,
-              ).then((result) {
-                if (!mounted) return;
-
-                final text = (result['text'] ?? '').toString().trim();
-                if (text.isNotEmpty) {
-                  _acceptStreamingChunkTranscript(
-                    sessionId: sessionId,
-                    sequence: sequence,
-                    text: text,
-                  );
-                  debugPrint('[Streaming Mobile] Chunk transcribed: "$text"');
-                }
-              }).catchError((e) {
-                debugPrint('[Streaming Mobile] Transcription error: $e');
-              });
+              _trackStreamingChunkTask(sessionId, task);
             }
           } catch (e) {
             debugPrint('[Streaming Mobile] Chunk error: $e');
@@ -7537,47 +7619,91 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<void> _stopStreamingMic() async {
     if (!_isListening) return;
-
-    final transcript = _closeStreamingSession();
+    final sessionId = _streamingSessionId;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    var sessionClosed = false;
 
     _streamingTimer?.cancel();
     _streamingTimer = null;
 
-    // Stop Web chunking
-    if (kIsWeb) {
-      try {
-        await _webRec.stopToBlob();
-      } catch (_) {}
-
-      if (!mounted) return;
+    if (mounted) {
       setState(() {
         _isListening = false;
         _isStreaming = false;
+        _isAnalyzing = true;
       });
-
-      // ⚡ Draft final: si on a accumulé une transcription, affiner via IA
-      await _finalizeDraftFromStreaming(transcript);
-      return;
     }
 
-    // Stop Mobile streaming
     try {
-      await _streamMicSub?.cancel();
-      _streamMicSub = null;
-    } catch (_) {}
+      if (uid == null) {
+        throw Exception('Not authenticated');
+      }
 
-    try {
-      await _recorder.stop();
-    } catch (_) {}
+      // Stop Web chunking
+      if (kIsWeb) {
+        await _flushStreamingAudioForWeb(sessionId: sessionId, uid: uid);
+      } else {
+        // Stop Mobile streaming
+        try {
+          await _streamMicSub?.cancel();
+          _streamMicSub = null;
+        } catch (_) {}
 
-    if (!mounted) return;
-    setState(() {
-      _isListening = false;
-      _isStreaming = false;
-    });
+        try {
+          await _recorder.stop();
+        } catch (_) {}
 
-    // ⚡ Draft final: si on a accumulé une transcription, affiner via IA
-    await _finalizeDraftFromStreaming(transcript);
+        await _flushStreamingAudioForMobile(sessionId: sessionId, uid: uid);
+      }
+
+      await _awaitStreamingChunkTasks(sessionId);
+
+      final transcript = _closeStreamingSession();
+      sessionClosed = true;
+
+      if (transcript.isEmpty) {
+        if (!mounted) return;
+        showSuccessSnackBar(
+          context,
+          'Aucun texte reconnu. Réessaie en parlant plus près du micro.',
+        );
+        return;
+      }
+
+      await _finalizeDraftFromStreaming(transcript);
+    } catch (e, st) {
+      await CrashlyticsContext.recordError(
+        e is Exception ? e : Exception(e.toString()),
+        st,
+        reason: 'Streaming mic stop/process failed',
+        fatal: false,
+        keys: {
+          'component': 'Main',
+          'flow': kIsWeb ? 'webStreamingMic' : 'mobileStreamingMic',
+          'step': 'stop',
+        },
+      );
+      try {
+        if (!mounted) return;
+        if (isTimeoutError(e)) {
+          showTimeoutSnackBar(context);
+        } else {
+          showSuccessSnackBar(context, 'Erreur transcription: $e');
+        }
+      } finally {
+        if (!sessionClosed) {
+          _closeStreamingSession();
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isListening = false;
+          _isStreaming = false;
+          _isAnalyzing = false;
+        });
+      }
+    }
   }
 
   /// Génère un draft IA final à partir de la transcription accumulée en streaming.
