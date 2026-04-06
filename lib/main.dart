@@ -9426,67 +9426,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   /// Construire le bouton d'enregistrement au micro avec indicateur visuel
   Widget _buildMicRecordingButton() {
-    final buttonWidth = MediaQuery.of(context).size.width * 0.92;
-
-    return SizedBox(
-      width: buttonWidth,
-      height: 88,
-      child: Stack(
-        alignment: Alignment.center,
-        clipBehavior: Clip.none,
-        children: [
-          _PulseWaveLayer(width: buttonWidth, delay: 0),
-          _PulseWaveLayer(width: buttonWidth, delay: 220),
-          _PulseWaveLayer(width: buttonWidth, delay: 440),
-          Container(
-            width: buttonWidth,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFFE53935),
-                  Color(0xFFC62828),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFC62828).withOpacity(0.24),
-                  blurRadius: 18,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _isStreaming ? _stopStreamingMic : _stopMic,
-                borderRadius: BorderRadius.circular(20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.stop_circle,
-                        color: Colors.white, size: 20),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Arrêter',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 17,
-                            letterSpacing: 0.3,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return PremiumAiButton(
+      onPressed: _isStreaming ? _stopStreamingMic : _stopMic,
+      label: 'Arrêter',
+      icon: Icons.stop_circle_rounded,
+      gradientColors: const [
+        Color(0xFFFF5A4F),
+        Color(0xFFE53935),
+      ],
+      shadowColor: const Color(0xFFE53935),
     );
   }
 
@@ -9494,59 +9442,37 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final showCloudBadge = _useCloudStt && !kIsWeb;
 
     if (_isListening) {
-      return Column(
+      return Center(
         key: const ValueKey('publish-ai-listening'),
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _PulsingDot(delay: 0),
-              const SizedBox(width: 8),
-              _PulsingDot(delay: 200),
-              const SizedBox(width: 8),
-              _PulsingDot(delay: 400),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Enregistrement en cours...',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-              fontStyle: FontStyle.italic,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE53935).withOpacity(0.08),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: const Color(0xFFE53935).withOpacity(0.24),
             ),
           ),
-          const SizedBox(height: 8),
-          if (showCloudBadge)
-            Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: kPrestoBlue.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: kPrestoBlue.withOpacity(0.25)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.cloud_done, size: 16, color: kPrestoBlue),
-                    SizedBox(width: 6),
-                    Text(
-                      'Qualité audio améliorée (Cloud)',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: kPrestoBlue,
-                      ),
-                    ),
-                  ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                showCloudBadge ? Icons.cloud_upload_rounded : Icons.mic_rounded,
+                size: 16,
+                color: const Color(0xFFE53935),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Enregistrement en cours',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFE53935),
                 ),
               ),
-            ),
-        ],
+            ],
+          ),
+        ),
       );
     }
 
@@ -10402,7 +10328,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: (_useCloudStt && !kIsWeb) ? 92 : 56,
+                  height: 56,
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 180),
                     switchInCurve: Curves.easeOut,
