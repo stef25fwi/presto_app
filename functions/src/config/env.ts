@@ -8,7 +8,7 @@ export const BREVO_WEBHOOK_SECRET = defineSecret("BREVO_WEBHOOK_SECRET");
 export const EMAIL_PROVIDER_NAME = process.env.EMAIL_PROVIDER_NAME || "";
 export const DEFAULT_LOCALE = (process.env.DEFAULT_LOCALE || "fr") as "fr" | "en";
 export const DEFAULT_TIMEZONE = process.env.DEFAULT_TIMEZONE || "Europe/Paris";
-export const EMAIL_FROM = process.env.EMAIL_FROM || "PRESTO <no-reply@presto.app>";
+export const EMAIL_FROM = process.env.EMAIL_FROM || "PRESTO <sahai.stephane@gmail.com>";
 
 export const PROJECT_REGION = process.env.FUNCTION_REGION || "us-east1";
 export const ENFORCE_APP_CHECK = String(process.env.ENFORCE_APP_CHECK || "").toLowerCase() === "true";
