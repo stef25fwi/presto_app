@@ -8,6 +8,16 @@ setGlobalOptions({
 
 export { onUserCreated, onUserUpdated } from "./modules/auth/triggers";
 export {
+  placesAutocomplete,
+  placesDetails,
+  generateOfferDraft,
+  adminGetUserStats,
+  getUserPresenceStatus,
+  microIaProcessAudio,
+  adminGetMicroIaConfig,
+  adminSetMicroIaConfig,
+} from "./legacy/callables_compat";
+export {
   requestPasswordResetEmail,
   requestEmailVerificationEmail,
   requestLoginOtpEmail,
