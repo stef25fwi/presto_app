@@ -11,11 +11,21 @@ class WebAudioRecorder {
   web.MediaRecorder? _rec;
   web.MediaStream? _stream;
   final _chunks = <web.Blob>[];
+  Completer<web.Blob>? _pendingStop;
 
   web.EventListener? _onData;
   web.EventListener? _onStop;
 
   Future<void> start() async {
+    final pendingStop = _pendingStop;
+    if (pendingStop != null) {
+      await pendingStop.future;
+    }
+
+    if (_rec != null) {
+      return;
+    }
+
     _chunks.clear();
 
     final mediaDevices = web.window.navigator.mediaDevices;
@@ -37,20 +47,32 @@ class WebAudioRecorder {
   }
 
   Future<web.Blob> stopToBlob() async {
+    final pendingStop = _pendingStop;
+    if (pendingStop != null) {
+      return pendingStop.future;
+    }
+
     final rec = _rec;
-    if (rec == null) throw StateError('Recorder not started');
+    if (rec == null) {
+      return web.Blob([Uint8List(0).toJS].toJS);
+    }
 
     final completer = Completer<web.Blob>();
+    _pendingStop = completer;
 
     _onStop = ((web.Event _) {
       if (_onData != null) rec.removeEventListener('dataavailable', _onData!);
       if (_onStop != null) rec.removeEventListener('stop', _onStop!);
 
       final blob = web.Blob(_chunks.toJS);
-      completer.complete(blob);
+      if (!completer.isCompleted) {
+        completer.complete(blob);
+      }
+      _pendingStop = null;
     }).toJS;
 
     rec.addEventListener('stop', _onStop!);
+    rec.requestData();
     rec.stop();
 
     // stop tracks
