@@ -54,8 +54,8 @@ void main() async {
 
     // 4. Test Firebase Functions
     print('4️⃣ Test Firebase Functions...');
-    final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
-    print('   Region: europe-west1');
+    final functions = FirebaseFunctions.instanceFor(region: 'us-east1');
+    print('   Region: us-east1');
 
     try {
       // Ping simple pour tester la connexion
