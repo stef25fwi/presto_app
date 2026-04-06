@@ -149,6 +149,11 @@ bool _isOfferJobDoneOverlayVisible(Map<String, dynamic> data) {
 /// Collection principale des annonces marketplace (nouvelle architecture).
 const String _kListingsCollection = 'listings';
 
+bool _appCheckActivationAttempted = false;
+bool _appCheckActivationSucceeded = false;
+Object? _appCheckActivationError;
+StackTrace? _appCheckActivationStackTrace;
+
 /// Collection legacy des annonces (ancienne architecture, en lecture seule).
 const String _kOffersCollection = 'offers';
 
@@ -901,6 +906,10 @@ Future<void> main() async {
       'APPCHECK_RECAPTCHA_SITE_KEY',
       defaultValue: '6LehQ0IsAAAAAIVtHXyi-obNQFOZEnBKXAW_P2de',
     );
+    _appCheckActivationAttempted = true;
+    _appCheckActivationSucceeded = false;
+    _appCheckActivationError = null;
+    _appCheckActivationStackTrace = null;
     try {
       if (kIsWeb) {
         debugPrint(
@@ -918,7 +927,10 @@ Future<void> main() async {
               kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
         );
       }
-    } catch (e) {
+      _appCheckActivationSucceeded = true;
+    } catch (e, st) {
+      _appCheckActivationError = e;
+      _appCheckActivationStackTrace = st;
       debugPrint('[AppCheck] activation failed: $e');
     }
 
@@ -7290,39 +7302,41 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<bool> _ensureAppCheckReady({required String flow}) async {
     if (!_useCloudStt) return true;
 
+    if (!_appCheckActivationAttempted || _appCheckActivationSucceeded) {
+      return true;
+    }
+
+    final activationError = _appCheckActivationError;
+    final activationStackTrace = _appCheckActivationStackTrace;
+    final exception = Exception(
+      'App Check activation unavailable: ${activationError ?? 'unknown error'}',
+    );
+
     try {
-      final cachedToken = await FirebaseAppCheck.instance.getToken(false);
-      if ((cachedToken ?? '').trim().isNotEmpty) {
-        return true;
-      }
-
-      final refreshedToken = await FirebaseAppCheck.instance.getToken(true);
-      if ((refreshedToken ?? '').trim().isNotEmpty) {
-        return true;
-      }
-
-      throw Exception('App Check token unavailable');
-    } catch (e, st) {
       await CrashlyticsContext.recordError(
-        e is Exception ? e : Exception(e.toString()),
-        st,
-        reason: 'App Check token unavailable before micro IA flow',
+        exception,
+        activationStackTrace ?? StackTrace.current,
+        reason: 'App Check activation unavailable before micro IA flow',
         fatal: false,
         keys: {
           'component': 'Main',
           'flow': flow,
           'step': 'appCheck',
+          'activationAttempted': _appCheckActivationAttempted.toString(),
+          'activationSucceeded': _appCheckActivationSucceeded.toString(),
         },
       );
 
-      if (mounted) {
-        showSuccessSnackBar(
-          context,
-          'Vérification de sécurité indisponible. Recharge l\'application puis réessaie.',
-        );
-      }
-      return false;
+      debugPrint('[AppCheck] blocking $flow: $activationError');
+    } catch (_) {}
+
+    if (mounted) {
+      showSuccessSnackBar(
+        context,
+        'Vérification de sécurité indisponible. Recharge l\'application puis réessaie.',
+      );
     }
+    return false;
   }
 
   void _acceptStreamingChunkTranscript({
