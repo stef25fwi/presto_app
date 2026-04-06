@@ -8,6 +8,7 @@ import { moveJobToDeadLetter } from "./dead_letter";
 import { computeRetryDelayMs } from "./retry";
 import { EMAIL_FROM } from "../../../config/env";
 import { APP_BASE_URL } from "../../../config/env";
+import { getProviderName } from "../../../config/provider";
 import { loadActiveTemplateVersion } from "../templates/loader";
 import { applyFirestoreEmailBranding } from "../templates/branding";
 import { getCompatDefaultTemplateContent, getCompatTemplateMeta } from "../templates/compat_registry";
@@ -102,22 +103,35 @@ export async function processEmailJob(jobId: string): Promise<void> {
     text = `PRESTO — ${job.template_code}`;
   }
 
-  const provider = createEmailProvider();
+  let providerName = getProviderName();
+  let sendResult;
 
-  const sendResult = await provider.send({
-    to: job.recipient_email,
-    from: EMAIL_FROM,
-    subject,
-    html,
-    text,
-    tags: [job.template_code, job.channel],
-    metadata: {
-      job_id: job.job_id,
-      event_id: job.event_id,
-    },
-    idempotencyKey: job.idempotency_key,
-    stream: job.channel === "marketing" ? "broadcast" : "transactional",
-  });
+  try {
+    const provider = createEmailProvider();
+    providerName = provider.name();
+    sendResult = await provider.send({
+      to: job.recipient_email,
+      from: EMAIL_FROM,
+      subject,
+      html,
+      text,
+      tags: [job.template_code, job.channel],
+      metadata: {
+        job_id: job.job_id,
+        event_id: job.event_id,
+      },
+      idempotencyKey: job.idempotency_key,
+      stream: job.channel === "marketing" ? "broadcast" : "transactional",
+    });
+  } catch (err) {
+    sendResult = {
+      accepted: false,
+      status: "rejected",
+      errorCode: "provider_exception",
+      errorMessage: String(err),
+    };
+    logger.error("email_job_provider_failed", { jobId: job.job_id, error: String(err), providerName });
+  }
 
   if (sendResult.accepted) {
     await ref.set(
@@ -136,7 +150,7 @@ export async function processEmailJob(jobId: string): Promise<void> {
       channel: job.channel,
       recipient_user_id: job.recipient_user_id || null,
       recipient_email: job.recipient_email,
-      provider: provider.name(),
+      provider: providerName,
       provider_message_id: sendResult.providerMessageId || null,
       status: "sent",
       created_at: Date.now(),
@@ -172,7 +186,7 @@ export async function processEmailJob(jobId: string): Promise<void> {
     channel: job.channel,
     recipient_user_id: job.recipient_user_id || null,
     recipient_email: job.recipient_email,
-    provider: provider.name(),
+    provider: providerName,
     status: "failed",
     error_code: sendResult.errorCode || "provider_rejected",
     error_message: sendResult.errorMessage || "provider rejected request",

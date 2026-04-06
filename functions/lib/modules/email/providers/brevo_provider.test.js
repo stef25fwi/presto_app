@@ -83,7 +83,7 @@ function withEnv(vars, run) {
         strict_1.default.equal(provider.name(), "brevo");
     });
 });
-(0, node_test_1.default)("provider factory rejects ambiguous dual-provider secrets without explicit provider", () => {
+(0, node_test_1.default)("provider factory prefers Brevo when dual-provider secrets are present without explicit provider", () => {
     withEnv({
         EMAIL_PROVIDER_NAME: undefined,
         BREVO_API_KEY: "brevo_api_key",
@@ -91,7 +91,8 @@ function withEnv(vars, run) {
         EMAIL_PROVIDER_API_KEY: "resend_api_key",
         EMAIL_PROVIDER_WEBHOOK_SECRET: "resend_webhook_secret",
     }, () => {
-        strict_1.default.throws(() => (0, provider_factory_1.createEmailProvider)(), /EMAIL_PROVIDER_NAME is required when both Brevo and generic provider secrets are configured/);
+        const provider = (0, provider_factory_1.createEmailProvider)();
+        strict_1.default.equal(provider.name(), "brevo");
     });
 });
 (0, node_test_1.default)("provider factory honors explicit resend selection", () => {

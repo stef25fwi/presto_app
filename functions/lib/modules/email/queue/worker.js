@@ -9,6 +9,7 @@ const dead_letter_1 = require("./dead_letter");
 const retry_1 = require("./retry");
 const env_1 = require("../../../config/env");
 const env_2 = require("../../../config/env");
+const provider_1 = require("../../../config/provider");
 const loader_1 = require("../templates/loader");
 const branding_1 = require("../templates/branding");
 const compat_registry_1 = require("../templates/compat_registry");
@@ -88,21 +89,35 @@ async function processEmailJob(jobId) {
         html = `<p>PRESTO — ${job.template_code}</p>`;
         text = `PRESTO — ${job.template_code}`;
     }
-    const provider = (0, provider_factory_1.createEmailProvider)();
-    const sendResult = await provider.send({
-        to: job.recipient_email,
-        from: env_1.EMAIL_FROM,
-        subject,
-        html,
-        text,
-        tags: [job.template_code, job.channel],
-        metadata: {
-            job_id: job.job_id,
-            event_id: job.event_id,
-        },
-        idempotencyKey: job.idempotency_key,
-        stream: job.channel === "marketing" ? "broadcast" : "transactional",
-    });
+    let providerName = (0, provider_1.getProviderName)();
+    let sendResult;
+    try {
+        const provider = (0, provider_factory_1.createEmailProvider)();
+        providerName = provider.name();
+        sendResult = await provider.send({
+            to: job.recipient_email,
+            from: env_1.EMAIL_FROM,
+            subject,
+            html,
+            text,
+            tags: [job.template_code, job.channel],
+            metadata: {
+                job_id: job.job_id,
+                event_id: job.event_id,
+            },
+            idempotencyKey: job.idempotency_key,
+            stream: job.channel === "marketing" ? "broadcast" : "transactional",
+        });
+    }
+    catch (err) {
+        sendResult = {
+            accepted: false,
+            status: "rejected",
+            errorCode: "provider_exception",
+            errorMessage: String(err),
+        };
+        logger_1.logger.error("email_job_provider_failed", { jobId: job.job_id, error: String(err), providerName });
+    }
     if (sendResult.accepted) {
         await ref.set({
             status: "sent",
@@ -116,7 +131,7 @@ async function processEmailJob(jobId) {
             channel: job.channel,
             recipient_user_id: job.recipient_user_id || null,
             recipient_email: job.recipient_email,
-            provider: provider.name(),
+            provider: providerName,
             provider_message_id: sendResult.providerMessageId || null,
             status: "sent",
             created_at: Date.now(),
@@ -145,7 +160,7 @@ async function processEmailJob(jobId) {
         channel: job.channel,
         recipient_user_id: job.recipient_user_id || null,
         recipient_email: job.recipient_email,
-        provider: provider.name(),
+        provider: providerName,
         status: "failed",
         error_code: sendResult.errorCode || "provider_rejected",
         error_message: sendResult.errorMessage || "provider rejected request",

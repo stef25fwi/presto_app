@@ -5,7 +5,8 @@
 - `BREVO_API_KEY` present in Firebase Functions secrets.
 - `BREVO_WEBHOOK_SECRET` present in Firebase Functions secrets.
 - `EMAIL_PROVIDER_NAME` set to `brevo` in production (explicit mode recommended).
-- `EMAIL_FROM` configured with a validated Brevo sender domain.
+- `EMAIL_FROM` configured with a validated Brevo sender domain or sender identity.
+- If no authenticated domain exists yet in Brevo, keep `EMAIL_FROM` on the validated sender identity until DNS auth is completed.
 
 Verification commands:
 

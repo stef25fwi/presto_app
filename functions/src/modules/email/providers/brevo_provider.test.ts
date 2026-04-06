@@ -91,7 +91,7 @@ test("provider factory auto-selects Brevo when BREVO_API_KEY is present", () => 
   );
 });
 
-test("provider factory rejects ambiguous dual-provider secrets without explicit provider", () => {
+test("provider factory prefers Brevo when dual-provider secrets are present without explicit provider", () => {
   withEnv(
     {
       EMAIL_PROVIDER_NAME: undefined,
@@ -101,10 +101,8 @@ test("provider factory rejects ambiguous dual-provider secrets without explicit 
       EMAIL_PROVIDER_WEBHOOK_SECRET: "resend_webhook_secret",
     },
     () => {
-      assert.throws(
-        () => createEmailProvider(),
-        /EMAIL_PROVIDER_NAME is required when both Brevo and generic provider secrets are configured/,
-      );
+      const provider = createEmailProvider();
+      assert.equal(provider.name(), "brevo");
     },
   );
 });

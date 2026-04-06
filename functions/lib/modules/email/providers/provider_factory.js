@@ -9,7 +9,6 @@ function hasValue(value) {
     return String(value || "").trim().length > 0;
 }
 function createEmailProvider() {
-    const explicitProvider = String(process.env.EMAIL_PROVIDER_NAME || "").trim().toLowerCase();
     const providerName = String((0, provider_1.getProviderName)() || "resend").toLowerCase();
     const brevoApiKey = env_1.BREVO_API_KEY.value();
     const brevoWebhookSecret = env_1.BREVO_WEBHOOK_SECRET.value();
@@ -17,9 +16,6 @@ function createEmailProvider() {
     const resendWebhookSecret = env_1.EMAIL_PROVIDER_WEBHOOK_SECRET.value();
     const hasBrevoConfig = hasValue(brevoApiKey) && hasValue(brevoWebhookSecret);
     const hasResendConfig = hasValue(resendApiKey) && hasValue(resendWebhookSecret);
-    if (!explicitProvider && hasBrevoConfig && hasResendConfig) {
-        throw new Error("EMAIL_PROVIDER_NAME is required when both Brevo and generic provider secrets are configured");
-    }
     switch (providerName) {
         case "brevo": {
             if (!hasBrevoConfig) {

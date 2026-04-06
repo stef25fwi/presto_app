@@ -2736,7 +2736,8 @@ class _HomePageState extends State<HomePage>
                               monitoringKeyPrefix: 'bottomBar.messages',
                               countType: InboxCountType.unreadMessages,
                               useVisibleUnreadMessages: true,
-                              builder: (context, badgeCount) => HomeBottomNavItem(
+                              builder: (context, badgeCount) =>
+                                  HomeBottomNavItem(
                                 icon: Icons.chat_bubble_outline,
                                 label: "Messages",
                                 badgeCount: badgeCount,
@@ -6239,8 +6240,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
           .doc(offerId);
       final listingsSnap = await listingsRef.get();
       if (listingsSnap.exists) {
-        final callable =
-            prestoFirebaseFunctions.httpsCallable(
+        final callable = prestoFirebaseFunctions.httpsCallable(
           'deleteListing',
           options: HttpsCallableOptions(
             timeout: const Duration(seconds: 30),
@@ -6491,13 +6491,15 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                                     fontSize: 13,
                                     height: 1.0,
                                     fontWeight: FontWeight.w500,
-                                    color: _ConsultOffersPageState._offersSoftText,
+                                    color:
+                                        _ConsultOffersPageState._offersSoftText,
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 148),
+                                constraints:
+                                    const BoxConstraints(maxWidth: 148),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -6511,8 +6513,8 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                                         fontSize: 26,
                                         height: 1.0,
                                         fontWeight: FontWeight.w700,
-                                        color:
-                                            _ConsultOffersPageState._offersOrange,
+                                        color: _ConsultOffersPageState
+                                            ._offersOrange,
                                         letterSpacing: -0.9,
                                       ),
                                     ),
@@ -6535,7 +6537,8 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                             child: Container(
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.78),
-                                borderRadius: BorderRadius.circular(outerRadius),
+                                borderRadius:
+                                    BorderRadius.circular(outerRadius),
                               ),
                               alignment: Alignment.center,
                               child: Padding(
@@ -7277,7 +7280,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   /// Wrap raw PCM16 little-endian bytes in a valid WAV header.
-  static Uint8List _wrapPcm16InWav(Uint8List pcmData, {required int sampleRate, required int numChannels}) {
+  static Uint8List _wrapPcm16InWav(Uint8List pcmData,
+      {required int sampleRate, required int numChannels}) {
     const bitsPerSample = 16;
     final blockAlign = numChannels * (bitsPerSample ~/ 8);
     final byteRate = sampleRate * blockAlign;
@@ -7439,7 +7443,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
       final _pcmAccumulator = <int>[];
-      final int chunkThreshold = 16000 * 2 * 2; // ~2s à 16kHz mono 16-bit = 64000 bytes
+      final int chunkThreshold =
+          16000 * 2 * 2; // ~2s à 16kHz mono 16-bit = 64000 bytes
 
       debugPrint('[Streaming Mobile] Stream started with PCM16');
 
@@ -7458,7 +7463,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               _pcmAccumulator.clear();
 
               // ⚡ Wrapper PCM16 brut dans un header WAV valide
-              final wavBytes = _wrapPcm16InWav(pcmData, sampleRate: 16000, numChannels: 1);
+              final wavBytes =
+                  _wrapPcm16InWav(pcmData, sampleRate: 16000, numChannels: 1);
 
               final ts = DateTime.now().millisecondsSinceEpoch;
               final sequence = _reserveStreamingChunkSequence();
@@ -7493,7 +7499,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               }).catchError((e) {
                 debugPrint('[Streaming Mobile] Transcription error: $e');
               });
-
             }
           } catch (e) {
             debugPrint('[Streaming Mobile] Chunk error: $e');
@@ -7704,8 +7709,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final List<Uint8List?> _selectedPhotoBytes = [];
   final List<String> _uploadedPhotoUrls = [];
 
-  final FirebaseFunctions _functions =
-      prestoFirebaseFunctions;
+  final FirebaseFunctions _functions = prestoFirebaseFunctions;
 
   // Autocomplétion villes
   List<CityRecord> _citySuggestions = [];
@@ -7919,19 +7923,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final hasBudget =
         _budgetType == 'À négocier' || _budgetController.text.trim().isNotEmpty;
 
-    final missingCoreField = !hasTitle || !hasDescription || !hasCity || !hasCategory;
+    final missingCoreField =
+        !hasTitle || !hasDescription || !hasCity || !hasCategory;
     if (missingCoreField) {
       return false;
     }
 
-    final likelyNeedsDelay =
-        !_delayEditedByUser && !hasDelay && _transcriptMentionsUrgency(transcript);
+    final likelyNeedsDelay = !_delayEditedByUser &&
+        !hasDelay &&
+        _transcriptMentionsUrgency(transcript);
     if (likelyNeedsDelay) {
       return false;
     }
 
-    final likelyNeedsBudget =
-        !_budgetEditedByUser && !hasBudget && _transcriptMentionsBudget(transcript);
+    final likelyNeedsBudget = !_budgetEditedByUser &&
+        !hasBudget &&
+        _transcriptMentionsBudget(transcript);
     if (likelyNeedsBudget) {
       return false;
     }
@@ -7940,16 +7947,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   String _buildRichDraftDescription(Map<String, dynamic> draft) {
-    final shortDescription = ((draft['description_courte'] ?? draft['description'])
-            as String? ?? '')
-        .trim();
+    final shortDescription =
+        ((draft['description_courte'] ?? draft['description']) as String? ?? '')
+            .trim();
     final details = (draft['details'] is List)
         ? (draft['details'] as List)
             .map((e) => e.toString().trim())
             .where((e) => e.isNotEmpty)
             .toList()
         : const <String>[];
-    final availabilities = ((draft['disponibilites'] ?? '') as String?)?.trim() ?? '';
+    final availabilities =
+        ((draft['disponibilites'] ?? '') as String?)?.trim() ?? '';
 
     final lines = <String>[];
     if (shortDescription.isNotEmpty) {
@@ -8157,11 +8165,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         normalizeOfferText(currentCategory) ==
             normalizeOfferText(match.category);
     final canSetCategory = !_categoryEditedByUser && currentCategory.isEmpty;
-    final canSetSubCategory =
-      !_categoryEditedByUser &&
-      currentSubCategory.isEmpty && (canSetCategory || sameCategory);
+    final canSetSubCategory = !_categoryEditedByUser &&
+        currentSubCategory.isEmpty &&
+        (canSetCategory || sameCategory);
     final canSetTitle = !_titleEditedByUser &&
-      _titleController.text.trim().isEmpty &&
+        _titleController.text.trim().isEmpty &&
         (match.suggestedTitle ?? '').trim().isNotEmpty;
 
     if (!canSetCategory && !canSetSubCategory && !canSetTitle) {
@@ -9125,8 +9133,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         final ts = DateTime.now().millisecondsSinceEpoch;
         final destPath = 'stt/${uid}_$ts.wav';
         final ref = FirebaseStorage.instance.ref(destPath);
-        await ref.putData(
-            wavBytes, SettableMetadata(contentType: 'audio/wav'));
+        await ref.putData(wavBytes, SettableMetadata(contentType: 'audio/wav'));
 
         // ⚡ Single round-trip: STT + Draft combined in one CF call
         final out = await MicroIaService.processAudio(
@@ -9277,7 +9284,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                         color: Colors.white, size: 20),
                     const SizedBox(width: 10),
                     Text(
-                      'Appuyer pour arrêter',
+                      'Arrêter',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
@@ -9292,6 +9299,112 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPublishAiStatusArea() {
+    final showCloudBadge = _useCloudStt && !kIsWeb;
+
+    if (_isListening) {
+      return Column(
+        key: const ValueKey('publish-ai-listening'),
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _PulsingDot(delay: 0),
+              const SizedBox(width: 8),
+              _PulsingDot(delay: 200),
+              const SizedBox(width: 8),
+              _PulsingDot(delay: 400),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Enregistrement en cours...',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (showCloudBadge)
+            Center(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: kPrestoBlue.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: kPrestoBlue.withOpacity(0.25)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.cloud_done, size: 16, color: kPrestoBlue),
+                    SizedBox(width: 6),
+                    Text(
+                      'Qualité audio améliorée (Cloud)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: kPrestoBlue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    if (_isAnalyzing) {
+      return Center(
+        key: const ValueKey('publish-ai-analyzing'),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: kPrestoBlue.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: kPrestoBlue.withOpacity(0.2)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              showCloudBadge
+                  ? const Icon(Icons.cloud_sync, size: 16, color: kPrestoBlue)
+                  : SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(kPrestoBlue),
+                      ),
+                    ),
+              const SizedBox(width: 8),
+              Text(
+                showCloudBadge
+                    ? 'Transcription et analyse (Cloud)…'
+                    : 'Analyse en cours…',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: kPrestoBlue,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox(
+      key: ValueKey('publish-ai-idle'),
+      width: double.infinity,
     );
   }
 
@@ -10090,106 +10203,24 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   child: _isListening
                       ? _buildMicRecordingButton()
                       : PremiumAiButton(
-                          onPressed: _isAnalyzing ? null : _startStreamingMic,
+                          onPressed: _isAnalyzing
+                              ? null
+                              : () {
+                                  unawaited(_startStreamingMic());
+                                },
                           label: 'Décrire mon besoin (IA)',
-                          isLoading: _isAnalyzing,
                         ),
                 ),
-                if (_isListening) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _PulsingDot(delay: 0),
-                      const SizedBox(width: 8),
-                      _PulsingDot(delay: 200),
-                      const SizedBox(width: 8),
-                      _PulsingDot(delay: 400),
-                    ],
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: (_useCloudStt && !kIsWeb) ? 92 : 56,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    child: _buildPublishAiStatusArea(),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Enregistrement en cours...',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (_useCloudStt && !kIsWeb)
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: kPrestoBlue.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(999),
-                          border:
-                              Border.all(color: kPrestoBlue.withOpacity(0.25)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.cloud_done,
-                                size: 16, color: kPrestoBlue),
-                            SizedBox(width: 6),
-                            Text(
-                              'Qualité audio améliorée (Cloud)',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: kPrestoBlue,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-                if (_isAnalyzing) ...[
-                  const SizedBox(height: 8),
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: kPrestoBlue.withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: kPrestoBlue.withOpacity(0.2)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _useCloudStt && !kIsWeb
-                              ? const Icon(Icons.cloud_sync,
-                                  size: 16, color: kPrestoBlue)
-                              : SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        kPrestoBlue),
-                                  ),
-                                ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _useCloudStt && !kIsWeb
-                                ? 'Transcription et analyse (Cloud)…'
-                                : 'Analyse en cours…',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: kPrestoBlue,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                ),
                 const SizedBox(height: 16),
 
                 // TITRE
@@ -10621,8 +10652,7 @@ class _AccountPageState extends State<AccountPage> {
   final ScrollController _scrollController = ScrollController();
   final GoogleAuthService _googleAuthService = GoogleAuthService();
 
-  final FirebaseFunctions _functions =
-      prestoFirebaseFunctions;
+  final FirebaseFunctions _functions = prestoFirebaseFunctions;
 
   Future<void> _trackLogin({
     String? authMethod,
@@ -13031,6 +13061,8 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   bool _isLoading = true;
   String? _error;
   String? _busyOfferId;
+  bool _rejectedSectionExpanded = false;
+  bool _archivedSectionExpanded = false;
 
   bool _isPermissionDeniedError(Object error) {
     if (error is FirebaseException) {
@@ -13555,6 +13587,14 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     _OfferManagementSection section,
     List<_ManagedOfferItem> items,
   ) {
+    if (section == _OfferManagementSection.rejected) {
+      return _buildRejectedOfferSection(items);
+    }
+
+    if (section == _OfferManagementSection.archived) {
+      return _buildArchivedOfferSection(items);
+    }
+
     final color = _statusColor(section);
 
     return Container(
@@ -13617,6 +13657,262 @@ class _UserOffersSectionState extends State<UserOffersSection> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRejectedOfferSection(List<_ManagedOfferItem> items) {
+    final color = _statusColor(_OfferManagementSection.rejected);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withOpacity(0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: () {
+                setState(() {
+                  _rejectedSectionExpanded = !_rejectedSectionExpanded;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Refusées',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _rejectedSectionExpanded
+                                ? 'Masquer la liste'
+                                : 'Ouvrir le menu pour consulter la liste',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '${items.length}',
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    AnimatedRotation(
+                      turns: _rejectedSectionExpanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 180),
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: color,
+                        size: 24,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 180),
+            crossFadeState: _rejectedSectionExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: items.isEmpty
+                  ? Text(
+                      _sectionEmptyLabel(_OfferManagementSection.rejected),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Divider(height: 1),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Consulte les motifs de refus puis modifie l’annonce pour la republier dans de meilleures conditions.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...items.map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildOfferTile(item),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildArchivedOfferSection(List<_ManagedOfferItem> items) {
+    final color = _statusColor(_OfferManagementSection.archived);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withOpacity(0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: () {
+                setState(() {
+                  _archivedSectionExpanded = !_archivedSectionExpanded;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Supprimées / archivées',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _archivedSectionExpanded
+                                ? 'Masquer la liste'
+                                : 'Ouvrir le menu pour consulter la liste',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '${items.length}',
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    AnimatedRotation(
+                      turns: _archivedSectionExpanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 180),
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: color,
+                        size: 24,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 180),
+            crossFadeState: _archivedSectionExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: items.isEmpty
+                  ? Text(
+                      _sectionEmptyLabel(_OfferManagementSection.archived),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Divider(height: 1),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Retrouve ici les annonces retirées de la diffusion et ouvre leur fiche quand tu en as besoin.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...items.map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildOfferTile(item),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
         ],
       ),
     );
@@ -13771,6 +14067,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   Widget _buildOfferTile(_ManagedOfferItem item) {
     final data = item.data;
     final statusColor = _statusColor(item.section);
+    final isArchived = item.section == _OfferManagementSection.archived;
     final isBusy = _busyOfferId == item.offerId;
     final canEdit = _canEditOffer(item.section) && !isBusy;
     final canDelete = _canDeleteOffer(item.section) && !isBusy;
@@ -13894,55 +14191,72 @@ class _UserOffersSectionState extends State<UserOffersSection> {
             ),
           ],
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          if (isArchived)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  onPressed: canEdit
-                      ? () => _showEditOfferDialog(context, item)
-                      : null,
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text('Modifier'),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w800),
                 ),
+                onPressed: () => _openOfferDetails(item),
+                icon: const Icon(Icons.visibility_outlined, size: 18),
+                label: const Text('Voir le détail'),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(0xFFE5E7EB),
-                    disabledForegroundColor: const Color(0xFF6B7280),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w800),
                     ),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                    onPressed: canEdit
+                        ? () => _showEditOfferDialog(context, item)
+                        : null,
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: const Text('Modifier'),
                   ),
-                  onPressed: canDelete ? () => _deleteOffer(item) : null,
-                  icon: isBusy
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Icon(Icons.delete_outline, size: 18),
-                  label: Text(isBusy ? 'Suppression...' : 'Supprimer'),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: const Color(0xFFE5E7EB),
+                      disabledForegroundColor: const Color(0xFF6B7280),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    onPressed: canDelete ? () => _deleteOffer(item) : null,
+                    icon: isBusy
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.delete_outline, size: 18),
+                    label: Text(isBusy ? 'Suppression...' : 'Supprimer'),
+                  ),
+                ),
+              ],
+            ),
           if (!canEdit &&
               item.section == _OfferManagementSection.published) ...[
             const SizedBox(height: 8),
@@ -14808,8 +15122,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
       debugPrint('Suppression offre ${item.offerId} avec motif: $reason');
 
       if (isListing) {
-        final callable =
-            prestoFirebaseFunctions.httpsCallable(
+        final callable = prestoFirebaseFunctions.httpsCallable(
           'deleteListing',
           options: HttpsCallableOptions(
             timeout: const Duration(seconds: 30),
@@ -15118,75 +15431,96 @@ class _AutoScrollingOffersCarouselState
     final location = (data['location'] ?? 'Lieu non précisé') as String;
     final displayTitle = _displayOfferTitle(title, location);
     final whenLabel = _labelWhenFromTitle(title);
+    const cornerAccentSize = 42.0;
 
     return GestureDetector(
       onTap: () => widget.onOfferTap?.call(doc),
-      child: Container(
-        width: 280,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: const Color(0x551A73E8),
-            width: 1.1,
+      child: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            child: IgnorePointer(
+              child: Container(
+                width: cornerAccentSize,
+                height: cornerAccentSize,
+                decoration: const BoxDecoration(
+                  color: kPrestoBlue,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 8,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF3E0),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.flash_on_outlined,
-                color: kPrestoOrange,
-                size: 20,
+          Container(
+            width: 280,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0x551A73E8),
+                width: 1.1,
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    displayTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      height: 1.1,
-                    ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3E0),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(height: 1),
-                  Text(
-                    "$location — $whenLabel",
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: const Icon(
+                    Icons.flash_on_outlined,
+                    color: kPrestoOrange,
+                    size: 20,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        "$location — $whenLabel",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: Colors.black38,
+                ),
+              ],
             ),
-            const SizedBox(width: 4),
-            const Icon(
-              Icons.chevron_right,
-              size: 18,
-              color: Colors.black38,
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
