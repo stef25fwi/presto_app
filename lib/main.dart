@@ -8694,7 +8694,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     required Widget child,
     required bool showPending,
     Alignment alignment = Alignment.centerRight,
-    EdgeInsets padding = const EdgeInsets.only(right: 12),
+    EdgeInsets padding = const EdgeInsets.only(right: 42),
   }) {
     if (!showPending) return child;
 
@@ -10420,7 +10420,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                   fieldId: 'category',
                   child: _withAiPendingOverlay(
                     showPending: _showAiPendingForCategory,
-                    padding: const EdgeInsets.only(right: 42),
                     child: DropdownButtonFormField<String>(
                       value: _category,
                       dropdownColor: Colors.white,
@@ -10503,7 +10502,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     showPending:
                         _showAiPendingForController(_descriptionController),
                     alignment: Alignment.topRight,
-                    padding: const EdgeInsets.only(top: 14, right: 12),
+                    padding: const EdgeInsets.only(top: 14, right: 42),
                     child: TextFormField(
                       controller: _descriptionController,
                       decoration: InputDecoration(
