@@ -7299,6 +7299,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return _partialTranscript.trim();
   }
 
+  String _formatMicroIaRuntimeError(Object error) {
+    final message = error
+        .toString()
+        .replaceFirst('Exception: ', '')
+        .replaceFirst('StateError: ', '')
+        .trim();
+    final normalized = message.toLowerCase();
+    if (normalized.contains('bad state') ||
+        normalized.contains('recorder not started')) {
+      return 'Le micro a été interrompu. Réessaie.';
+    }
+    return message;
+  }
+
   Future<bool> _ensureAppCheckReady({required String flow}) async {
     if (!_useCloudStt) return true;
 
@@ -7595,7 +7609,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               debugPrint('[Streaming Web] Chunk blob acquired');
 
               // ✅ Redémarrer pour le prochain chunk
-              await _webRec.start();
+              if (_isListening && mounted && sessionId == _streamingSessionId) {
+                await _webRec.start();
+              } else {
+                debugPrint('[Streaming Web] Restart skipped: session ended');
+              }
 
               // ⚡ Convertir WEBM→WAV PCM16 16kHz mono côté client
               final wavBytes = await webBlobToWav16kMono(blob);
@@ -7624,7 +7642,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           fatal: false,
         );
         if (!mounted) return;
-        showSuccessSnackBar(context, 'Erreur streaming micro: $e');
+        showSuccessSnackBar(
+          context,
+          'Erreur streaming micro: ${_formatMicroIaRuntimeError(e)}',
+        );
       }
       return;
     }
@@ -7821,7 +7842,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
-          showSuccessSnackBar(context, 'Erreur transcription: $e');
+          showSuccessSnackBar(
+            context,
+            'Erreur transcription: ${_formatMicroIaRuntimeError(e)}',
+          );
         }
       } finally {
         if (!sessionClosed) {
@@ -9332,7 +9356,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           },
         );
         if (!mounted) return;
-        showSuccessSnackBar(context, 'Micro web indisponible: $e');
+        showSuccessSnackBar(
+          context,
+          'Micro web indisponible: ${_formatMicroIaRuntimeError(e)}',
+        );
       }
       return;
     }
@@ -9458,7 +9485,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
-          showSuccessSnackBar(context, 'Erreur transcription (web): $e');
+          showSuccessSnackBar(
+            context,
+            'Erreur transcription (web): ${_formatMicroIaRuntimeError(e)}',
+          );
         }
       } finally {
         if (mounted) setState(() => _isAnalyzing = false);
