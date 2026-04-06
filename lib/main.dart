@@ -7237,7 +7237,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // ✅ NOUVEAU: Variables pour le streaming
   final StreamController<String> _transcriptionStream =
-      StreamController<String>.broadcast();
+      StreamController<String>.broadcast(sync: true);
   String _partialTranscript = '';
   Timer? _streamingTimer;
   bool _isStreaming = false;
@@ -7271,6 +7271,60 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return sequence;
   }
 
+  String _buildStreamingTranscript() {
+    final orderedKeys = _streamingChunkTexts.keys.toList()..sort();
+    final transcript = orderedKeys
+        .map((key) => _streamingChunkTexts[key] ?? '')
+        .where((value) => value.trim().isNotEmpty)
+        .join(' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    if (transcript.isNotEmpty) {
+      return transcript;
+    }
+
+    return _partialTranscript.trim();
+  }
+
+  Future<bool> _ensureAppCheckReady({required String flow}) async {
+    if (!_useCloudStt) return true;
+
+    try {
+      final cachedToken = await FirebaseAppCheck.instance.getToken(false);
+      if ((cachedToken ?? '').trim().isNotEmpty) {
+        return true;
+      }
+
+      final refreshedToken = await FirebaseAppCheck.instance.getToken(true);
+      if ((refreshedToken ?? '').trim().isNotEmpty) {
+        return true;
+      }
+
+      throw Exception('App Check token unavailable');
+    } catch (e, st) {
+      await CrashlyticsContext.recordError(
+        e is Exception ? e : Exception(e.toString()),
+        st,
+        reason: 'App Check token unavailable before micro IA flow',
+        fatal: false,
+        keys: {
+          'component': 'Main',
+          'flow': flow,
+          'step': 'appCheck',
+        },
+      );
+
+      if (mounted) {
+        showSuccessSnackBar(
+          context,
+          'Vérification de sécurité indisponible. Recharge l\'application puis réessaie.',
+        );
+      }
+      return false;
+    }
+  }
+
   void _acceptStreamingChunkTranscript({
     required int sessionId,
     required int sequence,
@@ -7281,21 +7335,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (normalized.isEmpty) return;
 
     _streamingChunkTexts[sequence] = normalized;
-    final orderedKeys = _streamingChunkTexts.keys.toList()..sort();
-    final transcript = orderedKeys
-        .map((key) => _streamingChunkTexts[key] ?? '')
-        .where((value) => value.trim().isNotEmpty)
-        .join(' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+    final transcript = _buildStreamingTranscript();
 
     if (transcript.isNotEmpty) {
+      _partialTranscript = transcript;
       _transcriptionStream.add(transcript);
     }
   }
 
   String _closeStreamingSession() {
-    final transcript = _partialTranscript.trim();
+    final transcript = _buildStreamingTranscript();
     _streamingSessionId += 1;
     _nextStreamingChunkSequence = 0;
     _streamingChunkTexts.clear();
@@ -7482,6 +7531,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   /// ✅ STREAMING RÉEL: Mobile avec startStream() + PCM16
   Future<void> _startStreamingMic() async {
     if (_isListening || _isStreaming) return;
+
+    final appCheckReady = await _ensureAppCheckReady(
+      flow: kIsWeb ? 'webStreamingMic' : 'mobileStreamingMic',
+    );
+    if (!appCheckReady) return;
+    if (!mounted) return;
 
     if (kIsWeb) {
       // ✅ WEB: Chunking mode (chunks toutes les 2 secondes)
@@ -7673,6 +7728,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     _streamingTimer?.cancel();
     _streamingTimer = null;
+    _streamingMaxDurationTimer?.cancel();
+    _streamingMaxDurationTimer = null;
 
     if (mounted) {
       setState(() {
@@ -9226,6 +9283,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _startMic() async {
     if (_isListening) return;
 
+    final appCheckReady = await _ensureAppCheckReady(
+      flow: kIsWeb ? 'webMic' : 'mobileMic',
+    );
+    if (!appCheckReady) return;
+
     // ✅ Micro global: on ne fait PLUS speech_to_text (trop variable)
     // On enregistre uniquement en WAV 16k mono, puis _stopMic() déclenchera _uploadAndTranscribe() (MicroIA).
     if (kIsWeb) {
@@ -9596,6 +9658,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       showSuccessSnackBar(context, "Veuillez d'abord saisir une description");
       return;
     }
+
+    final appCheckReady = await _ensureAppCheckReady(flow: 'publishAiAnalyze');
+    if (!appCheckReady) return;
 
     setState(() => _isAnalyzing = true);
 
