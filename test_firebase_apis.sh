@@ -72,7 +72,7 @@ echo ""
 
 # Test 3: Firebase Functions
 echo "3️⃣  Test Firebase Functions..."
-FUNCTIONS_URL="https://europe-west1-$PROJECT_ID.cloudfunctions.net/trackUserLogin"
+FUNCTIONS_URL="https://us-east1-$PROJECT_ID.cloudfunctions.net/trackUserLogin"
 FUNCTIONS_RESPONSE=$(curl -s -w "\n%{http_code}" \
   -X POST "$FUNCTIONS_URL" \
   -H "Content-Type: application/json" \

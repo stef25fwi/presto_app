@@ -1,7 +1,7 @@
 # Résumé des Paramètres OpenAI - Bouton IA "Je Publie une Offre"
 
 ## Configuration Firebase
-- **Région**: `europe-west1`
+- **Région**: `us-east1`
 - **Secret requis**: `OPENAI_API_KEY` (à configurer avec `firebase functions:secrets:set OPENAI_API_KEY`)
 - **Package OpenAI**: `openai: ^4.104.0`
 
@@ -21,7 +21,7 @@
 - **Modèle**: `gpt-4o-mini`
 - **Temperature**: `0.4` (réponses déterministes)
 - **Max tokens**: `600`
-- **Région**: `europe-west1`
+- **Région**: `us-east1`
 
 ### Système de Prompt
 **Rôle**: Rédaction de demandes de services courtes pour des particuliers en Guadeloupe et en Martinique

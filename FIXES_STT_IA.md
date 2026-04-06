@@ -15,7 +15,7 @@
 
 ### Architecture finale:
 
-**2 Cloud Functions, toutes les 2 en `europe-west1`:**
+**2 Cloud Functions, toutes les 2 en `us-east1`:**
 
 1. **`generateOfferDraft(hint, city, category)`**
    - Input: Texte simple du besoin
@@ -49,7 +49,7 @@ Aucun changement - utilise `AiOfferService`:
 - `generateDraft(hint, currentCity, currentCategory)` → appelle `generateOfferDraft`
 - `transcribeAndDraft(gcsUri, languageCode, category, city)` → appelle `transcribeAndDraftOffer`
 
-Région client: `FirebaseFunctions.instanceFor(region: 'europe-west1')`
+Région client: `FirebaseFunctions.instanceFor(region: 'us-east1')`
 
 ### Dépendances requises:
 

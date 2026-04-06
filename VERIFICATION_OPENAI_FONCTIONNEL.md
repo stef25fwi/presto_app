@@ -46,7 +46,7 @@ final draft = await _aiService.generateOfferDraft(text: text);
 
 **Détails du service**:
 - **Fichier**: [lib/services/ai_draft_service.dart](lib/services/ai_draft_service.dart#L7)
-- **Région Firebase**: `europe-west1`
+- **Région Firebase**: `us-east1`
 - **Cloud Function appelée**: `generateOfferDraft`
 
 ✅ Service Dart appelle la Cloud Function Firebase
@@ -228,7 +228,7 @@ firebase functions:secrets:set OPENAI_API_KEY=sk-your-actual-key
 # 2. Les Cloud Functions doivent être déployées
 firebase deploy --only functions
 
-# 3. La région doit être europe-west1
+# 3. La région doit être us-east1
 # (déjà configuré dans le code)
 ```
 

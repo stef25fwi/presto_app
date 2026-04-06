@@ -42,7 +42,7 @@ Future<Map<String, dynamic>> getUserPresenceStatus(List<String> userIds) async {
   if (userIds.isEmpty) return {};
 
   try {
-    final functions = FirebaseFunctions.instanceFor(region: 'europe-west1');
+    final functions = FirebaseFunctions.instanceFor(region: 'us-east1');
     final callable = functions.httpsCallable(
       'getUserPresenceStatus',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 10)),
