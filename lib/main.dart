@@ -224,6 +224,8 @@ class _HomeCategoryShortcut {
   });
 }
 
+const double kMarketplaceOutlineWidth = 2.0;
+
 const String kAppBuildSha =
     String.fromEnvironment('APP_BUILD_SHA', defaultValue: 'local');
 const String kAppVersion =
@@ -2331,15 +2333,24 @@ class _HomePageState extends State<HomePage>
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(color: kPrestoBlue, width: 1.5),
+                borderSide: const BorderSide(
+                  color: kPrestoBlue,
+                  width: kMarketplaceOutlineWidth,
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(color: kPrestoBlue, width: 1.5),
+                borderSide: const BorderSide(
+                  color: kPrestoBlue,
+                  width: kMarketplaceOutlineWidth,
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(color: kPrestoBlue, width: 2),
+                borderSide: const BorderSide(
+                  color: kPrestoBlue,
+                  width: kMarketplaceOutlineWidth,
+                ),
               ),
             ),
           ),
@@ -3184,7 +3195,7 @@ class _CategoryChip extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(
                 color: kPrestoBlue,
-                width: 2,
+                width: kMarketplaceOutlineWidth,
               ),
               boxShadow: [
                 BoxShadow(
@@ -6414,7 +6425,7 @@ class _OfferBrowseTileState extends State<_OfferBrowseTile>
                   borderRadius: BorderRadius.circular(outerRadius),
                   border: Border.all(
                     color: _ConsultOffersPageState._offersCardBorder,
-                    width: 1,
+                    width: kMarketplaceOutlineWidth,
                   ),
                   boxShadow: [
                     const BoxShadow(
@@ -6589,6 +6600,10 @@ class _OfferMissionDelayChip extends StatelessWidget {
             Color(0xFFFFC04A),
             Color(0xFFFF7A00),
           ],
+        ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.65),
+          width: kMarketplaceOutlineWidth,
         ),
         boxShadow: [
           BoxShadow(
