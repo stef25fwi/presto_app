@@ -1,5 +1,4 @@
-// igno
-//re_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
+// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
 
 import 'dart:async';
 import 'dart:math' as math;
@@ -7236,12 +7235,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // ✅ AJOUT: Subscription pour le stream audio
   StreamSubscription<Uint8List>? _streamMicSub;
+  Timer? _streamingMaxDurationTimer;
+
+  int _streamingChunkSuccessCount = 0;
+  int _streamingChunkErrorCount = 0;
 
   int _startStreamingSession() {
     _streamingSessionId += 1;
     _nextStreamingChunkSequence = 0;
     _streamingChunkTexts.clear();
     _partialTranscript = '';
+    _streamingChunkSuccessCount = 0;
+    _streamingChunkErrorCount = 0;
     return _streamingSessionId;
   }
 
@@ -7281,6 +7286,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _streamingChunkTexts.clear();
     _streamingPcmAccumulator.clear();
     _pendingStreamingChunkTasksBySession.remove(_streamingSessionId - 1);
+    // Counters are read BEFORE close, then reset here for next session.
+    _streamingChunkSuccessCount = 0;
+    _streamingChunkErrorCount = 0;
     return transcript;
   }
 
@@ -7338,35 +7346,42 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     required String storagePath,
     required String logPrefix,
   }) async {
-    final ref = FirebaseStorage.instance.ref(storagePath);
-    await ref.putData(
-      wavBytes,
-      SettableMetadata(contentType: 'audio/wav'),
-    );
+    try {
+      final ref = FirebaseStorage.instance.ref(storagePath);
+      await ref.putData(
+        wavBytes,
+        SettableMetadata(contentType: 'audio/wav'),
+      );
 
-    debugPrint(
-      '[$logPrefix] Chunk uploaded: $storagePath (${wavBytes.length} bytes)',
-    );
+      debugPrint(
+        '[$logPrefix] Chunk uploaded: $storagePath (${wavBytes.length} bytes)',
+      );
 
-    final result = await MicroIaService.processAudio(
-      storagePath: storagePath,
-      languageCode: 'fr-FR',
-    ).timeout(const Duration(seconds: 75));
+      final result = await MicroIaService.processAudio(
+        storagePath: storagePath,
+        languageCode: 'fr-FR',
+      ).timeout(const Duration(seconds: 75));
 
-    if (!mounted || sessionId != _streamingSessionId) return;
+      if (!mounted || sessionId != _streamingSessionId) return;
 
-    final text = (result['text'] ?? '').toString().trim();
-    if (text.isEmpty) {
-      debugPrint('[$logPrefix] Empty transcript for chunk $sequence');
-      return;
+      final text = (result['text'] ?? '').toString().trim();
+      if (text.isEmpty) {
+        debugPrint('[$logPrefix] Empty transcript for chunk $sequence');
+        _streamingChunkSuccessCount += 1; // STT succeeded but nothing heard
+        return;
+      }
+
+      _streamingChunkSuccessCount += 1;
+      _acceptStreamingChunkTranscript(
+        sessionId: sessionId,
+        sequence: sequence,
+        text: text,
+      );
+      debugPrint('[$logPrefix] Chunk transcribed: "$text"');
+    } catch (e) {
+      _streamingChunkErrorCount += 1;
+      debugPrint('[$logPrefix] Chunk $sequence failed: $e');
     }
-
-    _acceptStreamingChunkTranscript(
-      sessionId: sessionId,
-      sequence: sequence,
-      text: text,
-    );
-    debugPrint('[$logPrefix] Chunk transcribed: "$text"');
   }
 
   Future<void> _flushStreamingAudioForWeb({
@@ -7474,6 +7489,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         debugPrint('[Streaming Web] Web recording started (chunked mode)');
 
+        // ⏱ Auto-stop après 60s max
+        _streamingMaxDurationTimer?.cancel();
+        _streamingMaxDurationTimer = Timer(const Duration(seconds: 60), () {
+          if (_isListening && mounted) {
+            debugPrint('[Streaming] Max duration (60s) reached, auto-stopping');
+            unawaited(_stopStreamingMic());
+          }
+        });
+
         // ✅ Chunking timer: toutes les 2 secondes
         _streamingTimer?.cancel();
         _streamingTimer = Timer.periodic(const Duration(seconds: 2), (_) {
@@ -7556,6 +7580,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           16000 * 2 * 2; // ~2s à 16kHz mono 16-bit = 64000 bytes
 
       debugPrint('[Streaming Mobile] Stream started with PCM16');
+
+      // ⏱ Auto-stop après 60s max
+      _streamingMaxDurationTimer?.cancel();
+      _streamingMaxDurationTimer = Timer(const Duration(seconds: 60), () {
+        if (_isListening && mounted) {
+          debugPrint('[Streaming] Max duration (60s) reached, auto-stopping');
+          unawaited(_stopStreamingMic());
+        }
+      });
 
       // ✅ CHANGEMENT 2: Écouter le stream audio
       _streamMicSub?.cancel();
@@ -7658,15 +7691,29 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       await _awaitStreamingChunkTasks(sessionId);
 
+      final chunkErrors = _streamingChunkErrorCount;
+      final chunkSuccesses = _streamingChunkSuccessCount;
       final transcript = _closeStreamingSession();
       sessionClosed = true;
 
       if (transcript.isEmpty) {
         if (!mounted) return;
-        showSuccessSnackBar(
-          context,
-          'Aucun texte reconnu. Réessaie en parlant plus près du micro.',
-        );
+        if (chunkErrors > 0 && chunkSuccesses == 0) {
+          showSuccessSnackBar(
+            context,
+            'Erreur réseau ou serveur. Vérifie ta connexion et réessaie.',
+          );
+        } else if (chunkErrors > 0) {
+          showSuccessSnackBar(
+            context,
+            'Certains segments audio ont échoué. Réessaie dans un endroit calme.',
+          );
+        } else {
+          showSuccessSnackBar(
+            context,
+            'Aucun texte reconnu. Réessaie en parlant plus près du micro.',
+          );
+        }
         return;
       }
 
@@ -9646,6 +9693,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   void dispose() {
     _transcriptionStream.close();
     _streamingTimer?.cancel();
+    _streamingMaxDurationTimer?.cancel();
     _streamMicSub?.cancel(); // ✅ AJOUT: Cleanup du stream
     _streamMicSub = null;
     _titleController.dispose();
