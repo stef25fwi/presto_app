@@ -26,6 +26,7 @@ class WebAudioRecorder {
   web.MediaStream? _stream;
   final _chunks = <web.Blob>[];
   Completer<web.Blob>? _pendingStop;
+  String? _recordedMimeType;
 
   web.EventListener? _onData;
   web.EventListener? _onStop;
@@ -41,19 +42,29 @@ class WebAudioRecorder {
     }
 
     _chunks.clear();
+    _recordedMimeType = null;
 
     final mediaDevices = web.window.navigator.mediaDevices;
 
     final constraints = web.MediaStreamConstraints(audio: true.toJS);
     _stream = await mediaDevices.getUserMedia(constraints).toDart;
 
-    // Browser will likely pick audio/webm;codecs=opus
-    _rec = web.MediaRecorder(_stream!);
+    final preferredMimeType = _pickSupportedMimeType();
+    _rec = preferredMimeType == null
+        ? web.MediaRecorder(_stream!)
+        : web.MediaRecorder(
+            _stream!,
+            web.MediaRecorderOptions(mimeType: preferredMimeType),
+          );
+    _recordedMimeType = _normalizeMicroIaContentType(_rec!.mimeType);
 
     _onData = ((web.Event e) {
       final event = e as web.BlobEvent;
       final data = event.data;
-      if (data.size > 0) _chunks.add(data);
+      if (data.size > 0) {
+        _recordedMimeType ??= _normalizeMicroIaContentType(data.type);
+        _chunks.add(data);
+      }
     }).toJS;
 
     _rec!.addEventListener('dataavailable', _onData!);
@@ -78,11 +89,22 @@ class WebAudioRecorder {
       if (_onData != null) rec.removeEventListener('dataavailable', _onData!);
       if (_onStop != null) rec.removeEventListener('stop', _onStop!);
 
-      final blob = web.Blob(_chunks.toJS);
+      final normalizedType = _recordedMimeType ??
+          _normalizeMicroIaContentType(rec.mimeType) ??
+          (_chunks.isNotEmpty
+              ? _normalizeMicroIaContentType(_chunks.first.type)
+              : null);
+      final blob = normalizedType == null
+          ? web.Blob(_chunks.toJS)
+          : web.Blob(
+              _chunks.toJS,
+              web.BlobPropertyBag(type: normalizedType),
+            );
       if (!completer.isCompleted) {
         completer.complete(blob);
       }
       _pendingStop = null;
+      _recordedMimeType = null;
     }).toJS;
 
     rec.addEventListener('stop', _onStop!);
@@ -101,6 +123,22 @@ class WebAudioRecorder {
 
     return completer.future;
   }
+}
+
+String? _pickSupportedMimeType() {
+  const candidates = <String>[
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+  ];
+
+  for (final candidate in candidates) {
+    if (web.MediaRecorder.isTypeSupported(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
 
 /// Convert recorded blob -> bytes (Uint8List)
@@ -125,7 +163,18 @@ Future<WebMicroIaAudioUpload> webBlobToMicroIaUpload(web.Blob blob) async {
     }
   } catch (_) {
     if (fallbackContentType == null) {
-      rethrow;
+      final rawBytes = await webBlobToBytes(blob);
+      final inferredContentType = _inferMicroIaContentTypeFromBytes(rawBytes);
+      if (inferredContentType == null) {
+        rethrow;
+      }
+
+      return WebMicroIaAudioUpload(
+        bytes: rawBytes,
+        contentType: inferredContentType,
+        extension: _extensionForMicroIaContentType(inferredContentType),
+        usedClientSideWavConversion: false,
+      );
     }
   }
 
@@ -140,6 +189,44 @@ Future<WebMicroIaAudioUpload> webBlobToMicroIaUpload(web.Blob blob) async {
     extension: _extensionForMicroIaContentType(fallbackContentType),
     usedClientSideWavConversion: false,
   );
+}
+
+String? _inferMicroIaContentTypeFromBytes(Uint8List bytes) {
+  if (bytes.length < 4) return null;
+
+  if (bytes.length >= 12 &&
+      bytes[0] == 0x52 &&
+      bytes[1] == 0x49 &&
+      bytes[2] == 0x46 &&
+      bytes[3] == 0x46 &&
+      bytes[8] == 0x57 &&
+      bytes[9] == 0x41 &&
+      bytes[10] == 0x56 &&
+      bytes[11] == 0x45) {
+    return 'audio/wav';
+  }
+
+  if (bytes.length >= 4 &&
+      bytes[0] == 0x1A &&
+      bytes[1] == 0x45 &&
+      bytes[2] == 0xDF &&
+      bytes[3] == 0xA3) {
+    return 'audio/webm';
+  }
+
+  if (bytes.length >= 8 &&
+      bytes[4] == 0x66 &&
+      bytes[5] == 0x74 &&
+      bytes[6] == 0x79 &&
+      bytes[7] == 0x70) {
+    return 'audio/mp4';
+  }
+
+  if (bytes[0] == 0xFF && (bytes[1] & 0xF0) == 0xF0) {
+    return 'audio/aac';
+  }
+
+  return null;
 }
 
 /// Convert any recorded blob (webm/opus) -> WAV PCM16 16k mono (Uint8List)
@@ -208,6 +295,8 @@ String? _normalizeMicroIaContentType(String rawType) {
       return 'audio/mp4';
     case 'audio/x-m4a':
       return 'audio/x-m4a';
+    case 'audio/aac':
+      return 'audio/aac';
     default:
       return null;
   }
@@ -221,6 +310,8 @@ String _extensionForMicroIaContentType(String contentType) {
       return 'mp4';
     case 'audio/x-m4a':
       return 'm4a';
+    case 'audio/aac':
+      return 'aac';
     case 'audio/wav':
     default:
       return 'wav';
