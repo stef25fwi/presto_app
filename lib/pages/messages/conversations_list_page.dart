@@ -454,6 +454,16 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             '[MessagesList] fallback error source=$source user=$userId error=$error',
           );
         }
+        if (_isNonRetryableConversationSourceError(error)) {
+          docsByField[source] = const <ConversationSummary>[];
+          errorsByField.remove(source);
+          retryCountsByField[source] = 0;
+          _appendAdminConversationLog(
+            'Fallback $source desactive: erreur non recuperable',
+          );
+          emit();
+          return;
+        }
         emit();
         scheduleRetry(source);
       }
@@ -525,6 +535,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           );
           if (_isNonRetryableConversationSourceError(error)) {
             docsByField[participantField] = const <ConversationSummary>[];
+            errorsByField.remove(participantField);
+            retryCountsByField[participantField] = 0;
             retryTimersByField.remove(participantField)?.cancel();
             _appendAdminConversationLog(
               'Source $participantField desactivee: erreur non recuperable',
@@ -567,6 +579,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           if (_isNonRetryableConversationSourceError(error)) {
             docsByField[notificationsFallbackSource] =
                 const <ConversationSummary>[];
+            errorsByField.remove(notificationsFallbackSource);
+            retryCountsByField[notificationsFallbackSource] = 0;
             retryTimersByField.remove(notificationsFallbackSource)?.cancel();
             _appendAdminConversationLog(
               'Notifications fallback desactivees: erreur non recuperable',
@@ -648,6 +662,8 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           _appendAdminConversationLog('Erreur fallback $senderField: $error');
           if (_isNonRetryableConversationSourceError(error)) {
             docsByField[source] = const <ConversationSummary>[];
+            errorsByField.remove(source);
+            retryCountsByField[source] = 0;
             retryTimersByField.remove(source)?.cancel();
             _appendAdminConversationLog(
               'Fallback $senderField desactive: erreur non recuperable',
