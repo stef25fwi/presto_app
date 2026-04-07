@@ -26,6 +26,8 @@ import 'constants.dart';
 import 'firebase_options.dart';
 import 'dev/seed_offers.dart';
 import 'debug_auth.dart';
+import 'features/ai_draft/ai_draft_service.dart';
+import 'features/micro_ia/micro_ia_service.dart';
 import 'features/micro_ia/web_audio_recorder.dart';
 import 'config/env/openai_config.dart';
 import 'models/ai/listing_ai_request.dart';
@@ -7384,7 +7386,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return false;
   }
 
-  Future<bool> _ensureAppCheckReady({required String flow}) async {
+  Future<bool> _ensureAppCheckReady({
+    required String flow,
+    bool showBlockingMessage = true,
+  }) async {
     if (!_useCloudStt) return true;
 
     if (!_appCheckActivationAttempted || _appCheckActivationSucceeded) {
@@ -7415,7 +7420,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       debugPrint('[AppCheck] blocking $flow: $activationError');
     } catch (_) {}
 
-    if (mounted) {
+    if (mounted && showBlockingMessage) {
       showSuccessSnackBar(
         context,
         'Vérification de sécurité indisponible. Recharge l\'application puis réessaie.',
@@ -7662,8 +7667,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     final appCheckReady = await _ensureAppCheckReady(
       flow: kIsWeb ? 'webStreamingMic' : 'mobileStreamingMic',
+      showBlockingMessage: false,
     );
-    if (!appCheckReady) return;
+    if (!appCheckReady) {
+      debugPrint('[AppCheck] Continuing publish streaming mic despite activation issue');
+    }
     if (!mounted) return;
 
     if (kIsWeb) {
@@ -7991,6 +7999,60 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _applyRichDraftToForm(result.toDraftPayload());
   }
 
+  Future<String> _transcribePublishAudioWithLegacyPipeline({
+    required String ownerUid,
+    required Uint8List audioBytes,
+    required String contentType,
+    required String extension,
+  }) async {
+    final storagePath = await _listingAudioAiService.uploadAudioBytes(
+      ownerUid: ownerUid,
+      audioBytes: audioBytes,
+      contentType: contentType,
+      extension: extension,
+    );
+
+    final out = await MicroIaService.processAudio(
+      storagePath: storagePath,
+      languageCode: OpenAiConfig.defaultLanguageCode,
+    ).timeout(const Duration(seconds: 90));
+
+    final transcript = (out['text'] ?? '').toString().trim();
+    if (transcript.isEmpty) {
+      throw Exception('Aucun texte reconnu');
+    }
+
+    return transcript;
+  }
+
+  Future<void> _applyLegacyPublishDraftFromTranscript(String transcript) async {
+    _latestRecognizedTranscript = transcript;
+    _applyFastDraftFromTranscript(transcript);
+
+    final city = _locationController.text.trim();
+    final category = (_category ?? '').trim();
+    final draft = await _aiService.generateOfferDraftV2(
+      text: transcript,
+      city: city.isEmpty ? null : city,
+      category: category.isEmpty ? null : category,
+    );
+
+    if (!mounted) return;
+
+    if (draft['success'] == true) {
+      _applyLegacyDraftToForm(draft);
+      showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
+      return;
+    }
+
+    final code = (draft['code'] ?? '').toString();
+    throw Exception(
+      code == 'deadline-exceeded'
+          ? 'Connexion lente, réessaie.'
+          : (draft['error'] ?? 'Erreur IA inconnue').toString(),
+    );
+  }
+
   /// Génère un draft IA final à partir de la transcription accumulée en streaming.
   Future<void> _finalizeDraftFromStreaming(String transcript) async {
     if (transcript.isEmpty || transcript.length < 10) return;
@@ -8006,13 +8068,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     setState(() => _isAnalyzing = true);
 
     try {
-      final draft = await _openAiService.extractListingFieldsFromText(
-        _buildListingAiRequest(input: transcript),
-      );
-
-      if (!mounted) return;
-      _applyListingAiResult(draft);
-      showSuccessSnackBar(context, 'Champs affinés par l\'IA');
+      await _applyLegacyPublishDraftFromTranscript(transcript);
     } catch (e) {
       debugPrint('[Streaming] Draft finalization error: $e');
     } finally {
@@ -8157,6 +8213,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final GlobalKey _budgetFieldKey = GlobalKey();
 
   // Service IA structuré pour le formulaire publier
+  final AiDraftService _aiService = AiDraftService();
   final OpenAiService _openAiService = OpenAiService();
   final ListingAudioAiService _listingAudioAiService = ListingAudioAiService();
   final AudioRecorder _recorder = AudioRecorder();
@@ -9469,8 +9526,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     final appCheckReady = await _ensureAppCheckReady(
       flow: kIsWeb ? 'webMic' : 'mobileMic',
+      showBlockingMessage: false,
     );
-    if (!appCheckReady) return;
+    if (!appCheckReady) {
+      debugPrint('[AppCheck] Continuing publish mic despite activation issue');
+    }
 
     // ✅ Micro global: on ne fait PLUS speech_to_text (trop variable)
     // On enregistre uniquement en WAV 16k mono, puis _stopMic() déclenchera _uploadAndTranscribe() (MicroIA).
@@ -9559,8 +9619,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (uid == null) throw Exception('Not authenticated');
 
         final blob = await _webRec.stopToBlob();
-        // ⚡ Convertir WEBM→WAV PCM16 16kHz mono côté client
-        // pour éliminer l'étape FFmpeg côté serveur (~2-4s de gain).
         final audioUpload = await webBlobToMicroIaUpload(blob);
         if (audioUpload.bytes.isEmpty) {
           throw Exception('Audio invalide (fichier vide).');
@@ -9571,28 +9629,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               'Audio invalide (WAV trop petit: ${audioUpload.bytes.length} bytes).');
         }
 
-        final result = await _listingAudioAiService
-            .extractListingFieldsFromAudioBytes(
-              ownerUid: uid,
-              audioBytes: audioUpload.bytes,
-              contentType: audioUpload.contentType,
-              extension: audioUpload.extension,
-              request: _buildListingAiRequest(input: ''),
-            )
-            .timeout(const Duration(seconds: 90));
-
-        final transcript = result.transcriptText;
-        if (transcript.isEmpty) throw Exception('Aucun texte reconnu');
-
-        _latestRecognizedTranscript = transcript;
-
-        // Remplissage immédiat (titre/desc/ville/cp) avant l'IA.
-        _applyFastDraftFromTranscript(transcript);
+        final transcript = await _transcribePublishAudioWithLegacyPipeline(
+          ownerUid: uid,
+          audioBytes: audioUpload.bytes,
+          contentType: audioUpload.contentType,
+          extension: audioUpload.extension,
+        );
 
         if (!mounted) return;
 
-        _applyListingAiResult(result);
-        showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
+        await _applyLegacyPublishDraftFromTranscript(transcript);
       } catch (e, st) {
         await CrashlyticsContext.recordError(
           e is Exception ? e : Exception(e.toString()),
@@ -9770,30 +9816,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final isMp4 = lower.endsWith('.mp4');
     final ext = isM4a ? 'm4a' : (isMp4 ? 'mp4' : 'wav');
     final contentType = (isM4a || isMp4) ? 'audio/mp4' : 'audio/wav';
-    final result = await _listingAudioAiService
-        .extractListingFieldsFromAudioBytes(
-          ownerUid: uid,
-          audioBytes: audioBytes,
-          contentType: contentType,
-          extension: ext,
-          request: _buildListingAiRequest(input: ''),
-        )
-        .timeout(const Duration(seconds: 90));
-
-    final transcript = result.transcriptText;
-    if (transcript.isEmpty) {
-      throw Exception('Aucun texte reconnu');
-    }
-
-    _latestRecognizedTranscript = transcript;
-
-    // Remplissage immédiat (titre/desc/ville/cp) avant l'IA.
-    _applyFastDraftFromTranscript(transcript);
+    final transcript = await _transcribePublishAudioWithLegacyPipeline(
+      ownerUid: uid,
+      audioBytes: audioBytes,
+      contentType: contentType,
+      extension: ext,
+    );
 
     if (!mounted) return;
 
-    _applyListingAiResult(result);
-    showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
+    await _applyLegacyPublishDraftFromTranscript(transcript);
   }
 
   /// Appelle la Cloud Function pour analyser la description avec OpenAI
