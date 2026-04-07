@@ -420,18 +420,29 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         }
 
         final snapshots = await Future.wait(
-          conversationIds.map(
-            (conversationId) => FirebaseFirestore.instance
-                .collection('conversations')
-                .doc(conversationId)
-                .get(),
-          ),
+          conversationIds.map((conversationId) async {
+            try {
+              return await FirebaseFirestore.instance
+                  .collection('conversations')
+                  .doc(conversationId)
+                  .get();
+            } catch (error) {
+              // Une conversation inaccessible ne doit pas casser tout le fallback.
+              if (kDebugMode) {
+                debugPrint(
+                  '[MessagesList] skip fallback conversation source=$source id=$conversationId error=$error',
+                );
+              }
+              return null;
+            }
+          }),
         );
 
         if (controller.isClosed) return;
 
         docsByField[source] = snapshots
-            .where((snapshot) => snapshot.exists)
+          .whereType<DocumentSnapshot<Map<String, dynamic>>>()
+          .where((snapshot) => snapshot.exists)
             .map((snapshot) {
               final data = snapshot.data();
               if (data == null) return null;
