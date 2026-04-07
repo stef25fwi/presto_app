@@ -234,6 +234,22 @@ class _HomeCategoryShortcut {
   });
 }
 
+enum _PublishAiTraceLevel { info, success, warning, error }
+
+class _PublishAiTraceEntry {
+  const _PublishAiTraceEntry({
+    required this.timestamp,
+    required this.level,
+    required this.stage,
+    required this.detail,
+  });
+
+  final DateTime timestamp;
+  final _PublishAiTraceLevel level;
+  final String stage;
+  final String detail;
+}
+
 const double kMarketplaceOutlineWidth = 2.0;
 
 const String kAppBuildSha =
@@ -7393,6 +7409,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!_useCloudStt) return true;
 
     if (!_appCheckActivationAttempted || _appCheckActivationSucceeded) {
+      _appendPublishAiTrace(
+        'appcheck',
+        'App Check OK pour $flow',
+        level: _PublishAiTraceLevel.success,
+      );
       return true;
     }
 
@@ -7420,10 +7441,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       debugPrint('[AppCheck] blocking $flow: $activationError');
     } catch (_) {}
 
+    _appendPublishAiTrace(
+      'appcheck',
+      'Blocage sur $flow: ${activationError ?? 'activation indisponible'}',
+      level: _PublishAiTraceLevel.error,
+    );
+
     if (mounted && showBlockingMessage) {
       showSuccessSnackBar(
         context,
-        'Vérification de sécurité indisponible. Recharge l\'application puis réessaie.',
+        'App Check indisponible. Le micro IA est bloqué tant que la vérification de sécurité n\'est pas active. Recharge l\'application puis réessaie.',
       );
     }
     return false;
@@ -7520,6 +7547,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     required String logPrefix,
   }) async {
     try {
+      _appendPublishAiTrace(
+        'streaming_chunk_$sequence',
+        'Upload chunk ${audioBytes.length} bytes, $contentType, .$fileExtension',
+      );
       final storagePath = await _listingAudioAiService.uploadAudioBytes(
         ownerUid: uid,
         audioBytes: audioBytes,
@@ -7530,6 +7561,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       debugPrint(
         '[$logPrefix] Chunk uploaded: $storagePath (${audioBytes.length} bytes, $contentType)',
+      );
+      _appendPublishAiTrace(
+        'streaming_chunk_$sequence',
+        'Chunk uploadé: $storagePath',
+        level: _PublishAiTraceLevel.success,
       );
 
       final result = await _listingAudioAiService
@@ -7545,6 +7581,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (text.isEmpty) {
         debugPrint('[$logPrefix] Empty transcript for chunk $sequence');
         _streamingChunkSuccessCount += 1; // STT succeeded but nothing heard
+        _appendPublishAiTrace(
+          'streaming_chunk_$sequence',
+          'Chunk transcrit mais vide',
+          level: _PublishAiTraceLevel.warning,
+        );
         return;
       }
 
@@ -7555,6 +7596,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         text: text,
       );
       debugPrint('[$logPrefix] Chunk transcribed: "$text"');
+      _appendPublishAiTrace(
+        'streaming_chunk_$sequence',
+        'Chunk transcrit (${text.length} caractères)',
+        level: _PublishAiTraceLevel.success,
+      );
     } catch (e) {
       final formatted = _formatMicroIaRuntimeError(e);
       if (_lastStreamingChunkErrorMessage == null ||
@@ -7569,6 +7615,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
       _streamingChunkErrorCount += 1;
       debugPrint('[$logPrefix] Chunk $sequence failed: $formatted');
+      _appendPublishAiTrace(
+        'streaming_chunk_$sequence',
+        formatted,
+        level: _PublishAiTraceLevel.error,
+      );
     }
   }
 
@@ -7664,14 +7715,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   /// ✅ STREAMING RÉEL: Mobile avec startStream() + PCM16
   Future<void> _startStreamingMic() async {
     if (_isListening || _isStreaming) return;
+    _resetPublishAiTrace(kIsWeb ? 'micro streaming web' : 'micro streaming mobile');
+    _appendPublishAiTrace('start_streaming', 'Demande de démarrage du micro streaming');
 
     final appCheckReady = await _ensureAppCheckReady(
       flow: kIsWeb ? 'webStreamingMic' : 'mobileStreamingMic',
-      showBlockingMessage: false,
     );
-    if (!appCheckReady) {
-      debugPrint('[AppCheck] Continuing publish streaming mic despite activation issue');
-    }
+    if (!appCheckReady) return;
     if (!mounted) return;
 
     if (kIsWeb) {
@@ -7680,6 +7730,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       try {
         final uid = FirebaseAuth.instance.currentUser?.uid;
         if (uid == null) {
+          _appendPublishAiTrace(
+            'auth',
+            'Utilisateur non connecté',
+            level: _PublishAiTraceLevel.error,
+          );
           showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
           return;
         }
@@ -7692,6 +7747,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           _isListening = true;
           _isStreaming = true; // Web: mode chunking (quasi temps-réel)
         });
+        _appendPublishAiTrace(
+          'start_streaming',
+          'Micro streaming web démarré',
+          level: _PublishAiTraceLevel.success,
+        );
 
         debugPrint('[Streaming Web] Web recording started (chunked mode)');
 
@@ -7757,6 +7817,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           fatal: false,
         );
         if (!mounted) return;
+        _appendPublishAiTrace(
+          'start_streaming',
+          _formatMicroIaRuntimeError(e),
+          level: _PublishAiTraceLevel.error,
+        );
         showSuccessSnackBar(
           context,
           'Erreur streaming micro: ${_formatMicroIaRuntimeError(e)}',
@@ -7771,6 +7836,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (!mounted) return;
 
       if (!hasPermission) {
+        _appendPublishAiTrace(
+          'permission_micro',
+          'Permission micro refusée',
+          level: _PublishAiTraceLevel.error,
+        );
         if (!mounted) return;
         showSuccessSnackBar(context, 'Permission micro requise');
         return;
@@ -7794,6 +7864,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _isListening = true;
         _isStreaming = true; // Mode streaming réel
       });
+      _appendPublishAiTrace(
+        'start_streaming',
+        'Micro streaming mobile démarré en PCM16 16k mono',
+        level: _PublishAiTraceLevel.success,
+      );
 
       final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
       final int chunkThreshold =
@@ -7863,6 +7938,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
     } catch (e) {
       debugPrint('[Streaming Mobile] Start error: $e');
+      _appendPublishAiTrace(
+        'start_streaming',
+        'Fallback micro classique après erreur: ${_formatMicroIaRuntimeError(e)}',
+        level: _PublishAiTraceLevel.warning,
+      );
       if (mounted) {
         showSuccessSnackBar(context, 'Erreur streaming: $e');
       }
@@ -7874,6 +7954,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<void> _stopStreamingMic() async {
     if (!_isListening) return;
+    _appendPublishAiTrace('stop_streaming', 'Arrêt demandé pour le micro streaming');
     final sessionId = _streamingSessionId;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     var sessionClosed = false;
@@ -7893,6 +7974,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     try {
       if (uid == null) {
+        _appendPublishAiTrace(
+          'auth',
+          'Utilisateur non connecté au stop streaming',
+          level: _PublishAiTraceLevel.error,
+        );
         throw Exception('Not authenticated');
       }
 
@@ -7914,11 +8000,24 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
 
       await _awaitStreamingChunkTasks(sessionId);
+      _appendPublishAiTrace(
+        'stop_streaming',
+        'Chunks terminés: succès=$_streamingChunkSuccessCount, erreurs=$_streamingChunkErrorCount',
+      );
 
       final chunkErrors = _streamingChunkErrorCount;
       final chunkSuccesses = _streamingChunkSuccessCount;
       final transcript = _closeStreamingSession();
       sessionClosed = true;
+      _appendPublishAiTrace(
+        'stop_streaming',
+        transcript.isEmpty
+            ? 'Aucune transcription finale'
+            : 'Transcription finale ${transcript.length} caractères',
+        level: transcript.isEmpty
+            ? _PublishAiTraceLevel.warning
+            : _PublishAiTraceLevel.success,
+      );
 
       if (transcript.isEmpty) {
         if (!mounted) return;
@@ -7962,6 +8061,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
       try {
         if (!mounted) return;
+        _appendPublishAiTrace(
+          'stop_streaming',
+          _formatMicroIaRuntimeError(e),
+          level: _PublishAiTraceLevel.error,
+        );
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
@@ -8005,13 +8109,26 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     required String contentType,
     required String extension,
   }) async {
+    _appendPublishAiTrace(
+      'upload_audio',
+      'Préparation upload ${audioBytes.length} bytes, $contentType, .$extension',
+    );
     final storagePath = await _listingAudioAiService.uploadAudioBytes(
       ownerUid: ownerUid,
       audioBytes: audioBytes,
       contentType: contentType,
       extension: extension,
     );
+    _appendPublishAiTrace(
+      'upload_audio',
+      'Audio uploadé vers $storagePath',
+      level: _PublishAiTraceLevel.success,
+    );
 
+    _appendPublishAiTrace(
+      'microia_callable',
+      'Appel microIaProcessAudio en cours',
+    );
     final out = await MicroIaService.processAudio(
       storagePath: storagePath,
       languageCode: OpenAiConfig.defaultLanguageCode,
@@ -8019,14 +8136,32 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     final transcript = (out['text'] ?? '').toString().trim();
     if (transcript.isEmpty) {
+      _appendPublishAiTrace(
+        'microia_callable',
+        'Réponse reçue mais transcription vide',
+        level: _PublishAiTraceLevel.error,
+      );
       throw Exception('Aucun texte reconnu');
     }
+
+    final modeUsed = (out['modeUsed'] ?? '').toString().trim();
+    _appendPublishAiTrace(
+      'microia_callable',
+      modeUsed.isEmpty
+          ? 'Transcription reçue (${transcript.length} caractères)'
+          : 'Transcription reçue via $modeUsed (${transcript.length} caractères)',
+      level: _PublishAiTraceLevel.success,
+    );
 
     return transcript;
   }
 
   Future<void> _applyLegacyPublishDraftFromTranscript(String transcript) async {
     _latestRecognizedTranscript = transcript;
+    _appendPublishAiTrace(
+      'draft_local',
+      'Pré-remplissage local depuis la transcription (${transcript.length} caractères)',
+    );
     _applyFastDraftFromTranscript(transcript);
 
     final city = _locationController.text.trim();
@@ -8036,11 +8171,23 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       city: city.isEmpty ? null : city,
       category: category.isEmpty ? null : category,
     );
+    _appendPublishAiTrace(
+      'draft_remote',
+      'Réponse generateOfferDraft reçue',
+      level: draft['success'] == true
+          ? _PublishAiTraceLevel.success
+          : _PublishAiTraceLevel.warning,
+    );
 
     if (!mounted) return;
 
     if (draft['success'] == true) {
       _applyLegacyDraftToForm(draft);
+      _appendPublishAiTrace(
+        'draft_remote',
+        'Champs du formulaire remplis par le draft IA',
+        level: _PublishAiTraceLevel.success,
+      );
       showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
       return;
     }
@@ -8058,9 +8205,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (transcript.isEmpty || transcript.length < 10) return;
 
     _latestRecognizedTranscript = transcript;
+    _appendPublishAiTrace(
+      'finalize_streaming',
+      'Finalisation du draft depuis le transcript streaming',
+    );
 
     if (_shouldSkipFinalStreamingDraft(transcript)) {
       debugPrint('[Streaming] Final draft skipped: core fields already filled');
+      _appendPublishAiTrace(
+        'finalize_streaming',
+        'Draft final ignoré: champs principaux déjà remplis',
+        level: _PublishAiTraceLevel.warning,
+      );
       return;
     }
 
@@ -8071,6 +8227,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       await _applyLegacyPublishDraftFromTranscript(transcript);
     } catch (e) {
       debugPrint('[Streaming] Draft finalization error: $e');
+      _appendPublishAiTrace(
+        'finalize_streaming',
+        _formatMicroIaRuntimeError(e),
+        level: _PublishAiTraceLevel.error,
+      );
     } finally {
       if (mounted) setState(() => _isAnalyzing = false);
     }
@@ -8201,6 +8362,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   int _streamingSessionId = 0;
   int _nextStreamingChunkSequence = 0;
   final Map<int, String> _streamingChunkTexts = <int, String>{};
+  final List<_PublishAiTraceEntry> _publishAiTraceEntries =
+      <_PublishAiTraceEntry>[];
+  final ValueNotifier<int> _publishAiTraceVersion = ValueNotifier<int>(0);
+  bool _publishAiTraceDisposed = false;
+  int _publishAiTraceAttempt = 0;
   String? _shakingPublishFieldId;
   int _publishShakeTick = 0;
 
@@ -8230,6 +8396,295 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     } finally {
       _isApplyingProgrammaticPublishUpdate = previous;
     }
+  }
+
+  void _notifyPublishAiTraceChanged() {
+    if (_publishAiTraceDisposed) return;
+    _publishAiTraceVersion.value++;
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _resetPublishAiTrace(String flowLabel) {
+    _publishAiTraceAttempt += 1;
+    _publishAiTraceEntries
+      ..clear()
+      ..add(
+        _PublishAiTraceEntry(
+          timestamp: DateTime.now(),
+          level: _PublishAiTraceLevel.info,
+          stage: 'start',
+          detail: 'Essai #$_publishAiTraceAttempt lance via $flowLabel',
+        ),
+      );
+    _notifyPublishAiTraceChanged();
+  }
+
+  void _appendPublishAiTrace(
+    String stage,
+    String detail, {
+    _PublishAiTraceLevel level = _PublishAiTraceLevel.info,
+  }) {
+    if (_publishAiTraceEntries.length >= 120) {
+      _publishAiTraceEntries.removeAt(0);
+    }
+    _publishAiTraceEntries.add(
+      _PublishAiTraceEntry(
+        timestamp: DateTime.now(),
+        level: level,
+        stage: stage,
+        detail: detail,
+      ),
+    );
+    _notifyPublishAiTraceChanged();
+  }
+
+  void _clearPublishAiTrace() {
+    _publishAiTraceEntries.clear();
+    _notifyPublishAiTraceChanged();
+  }
+
+  String _formatPublishAiTraceTime(DateTime value) {
+    String two(int v) => v.toString().padLeft(2, '0');
+    String three(int v) => v.toString().padLeft(3, '0');
+    return '${two(value.hour)}:${two(value.minute)}:${two(value.second)}.${three(value.millisecond)}';
+  }
+
+  IconData _iconForPublishAiTraceLevel(_PublishAiTraceLevel level) {
+    switch (level) {
+      case _PublishAiTraceLevel.success:
+        return Icons.check_circle_rounded;
+      case _PublishAiTraceLevel.warning:
+        return Icons.warning_amber_rounded;
+      case _PublishAiTraceLevel.error:
+        return Icons.error_rounded;
+      case _PublishAiTraceLevel.info:
+        return Icons.radio_button_checked_rounded;
+    }
+  }
+
+  Color _colorForPublishAiTraceLevel(_PublishAiTraceLevel level) {
+    switch (level) {
+      case _PublishAiTraceLevel.success:
+        return const Color(0xFF2E7D32);
+      case _PublishAiTraceLevel.warning:
+        return const Color(0xFFF9A825);
+      case _PublishAiTraceLevel.error:
+        return const Color(0xFFC62828);
+      case _PublishAiTraceLevel.info:
+        return kPrestoBlue;
+    }
+  }
+
+  String _currentPublishAiRuntimeState() {
+    if (_isListening) return _isStreaming ? 'Ecoute streaming' : 'Ecoute micro';
+    if (_isAnalyzing) return 'Analyse en cours';
+    return 'En attente';
+  }
+
+  Future<void> _showPublishAiTraceDialog() async {
+    if (!mounted) return;
+    final overlayTheme = context.prestoOverlayTheme;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return ValueListenableBuilder<int>(
+          valueListenable: _publishAiTraceVersion,
+          builder: (context, _, __) {
+            final entries = List<_PublishAiTraceEntry>.unmodifiable(
+              _publishAiTraceEntries,
+            );
+
+            return Dialog(
+              backgroundColor: overlayTheme.surfaceColor,
+              surfaceTintColor: overlayTheme.surfaceTintColor,
+              insetPadding: const EdgeInsets.all(16),
+              shape: overlayTheme.dialogShape,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760, maxHeight: 680),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Diagnostic micro IA',
+                              style: kPrestoSectionTitleStyle,
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Fermer',
+                            onPressed: () => Navigator.of(dialogContext).pop(),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: kPrestoBlue.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: kPrestoBlue.withOpacity(0.18),
+                              ),
+                            ),
+                            child: Text(
+                              'Etat: ${_currentPublishAiRuntimeState()}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: kPrestoBlue,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.04),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              'Entrees: ${entries.length}',
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (_latestRecognizedTranscript.trim().isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.035),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.black12),
+                          ),
+                          child: Text(
+                            'Dernière transcription: ${_latestRecognizedTranscript.trim()}',
+                            style: const TextStyle(fontSize: 12, height: 1.35),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          TextButton.icon(
+                            onPressed: entries.isEmpty ? null : _clearPublishAiTrace,
+                            icon: const Icon(Icons.delete_outline_rounded),
+                            label: const Text('Effacer'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: entries.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'Aucun diagnostic pour le moment.',
+                                  style: TextStyle(color: Colors.black54),
+                                ),
+                              )
+                            : ListView.separated(
+                                itemCount: entries.length,
+                                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                                itemBuilder: (context, index) {
+                                  final entry = entries[index];
+                                  final color = _colorForPublishAiTraceLevel(
+                                    entry.level,
+                                  );
+                                  return Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: color.withOpacity(0.06),
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: color.withOpacity(0.18),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 2),
+                                          child: Icon(
+                                            _iconForPublishAiTraceLevel(entry.level),
+                                            color: color,
+                                            size: 18,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                '${_formatPublishAiTraceTime(entry.timestamp)}  ${entry.stage}',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                  color: color,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                entry.detail,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  height: 1.35,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPublishAiTraceActions() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        TextButton.icon(
+          onPressed: _showPublishAiTraceDialog,
+          icon: const Icon(Icons.bug_report_outlined),
+          label: const Text('Diagnostic IA'),
+        ),
+        if (_publishAiTraceEntries.isNotEmpty)
+          TextButton(
+            onPressed: _clearPublishAiTrace,
+            child: const Text('Effacer'),
+          ),
+      ],
+    );
   }
 
   void _setControllerText(TextEditingController controller, String value) {
@@ -9523,14 +9978,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<void> _startMic() async {
     if (_isListening) return;
+    _resetPublishAiTrace(kIsWeb ? 'micro web classique' : 'micro mobile classique');
+    _appendPublishAiTrace('start_mic', 'Demande de démarrage du micro classique');
 
     final appCheckReady = await _ensureAppCheckReady(
       flow: kIsWeb ? 'webMic' : 'mobileMic',
-      showBlockingMessage: false,
     );
-    if (!appCheckReady) {
-      debugPrint('[AppCheck] Continuing publish mic despite activation issue');
-    }
+    if (!appCheckReady) return;
 
     // ✅ Micro global: on ne fait PLUS speech_to_text (trop variable)
     // On enregistre uniquement en WAV 16k mono, puis _stopMic() déclenchera _uploadAndTranscribe() (MicroIA).
@@ -9538,6 +9992,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       try {
         final uid = FirebaseAuth.instance.currentUser?.uid;
         if (uid == null) {
+          _appendPublishAiTrace(
+            'auth',
+            'Utilisateur non connecté',
+            level: _PublishAiTraceLevel.error,
+          );
           if (!mounted) return;
           showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
           return;
@@ -9549,6 +10008,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         await _webRec.start();
         if (!mounted) return;
         setState(() => _isListening = true);
+        _appendPublishAiTrace(
+          'start_mic',
+          'Micro web démarré',
+          level: _PublishAiTraceLevel.success,
+        );
       } catch (e, st) {
         await CrashlyticsContext.recordError(
           e is Exception ? e : Exception(e.toString()),
@@ -9562,6 +10026,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           },
         );
         if (!mounted) return;
+        _appendPublishAiTrace(
+          'start_mic',
+          _formatMicroIaRuntimeError(e),
+          level: _PublishAiTraceLevel.error,
+        );
         showSuccessSnackBar(
           context,
           'Micro web indisponible: ${_formatMicroIaRuntimeError(e)}',
@@ -9585,22 +10054,38 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         );
         _recordingPath = filePath;
       } else {
+        _appendPublishAiTrace(
+          'permission_micro',
+          'Permission micro refusée',
+          level: _PublishAiTraceLevel.error,
+        );
         if (!mounted) return;
         showSuccessSnackBar(context, 'Permission micro requise');
         return;
       }
     } catch (e) {
       debugPrint('Recorder start error: $e');
+      _appendPublishAiTrace(
+        'start_mic',
+        _formatMicroIaRuntimeError(e),
+        level: _PublishAiTraceLevel.error,
+      );
     }
 
     setState(() {
       _isListening = true;
     });
+    _appendPublishAiTrace(
+      'start_mic',
+      kIsWeb ? 'Micro en écoute' : 'Enregistrement mobile lancé en AAC/m4a',
+      level: _PublishAiTraceLevel.success,
+    );
   }
 
   Future<void> _stopMic() async {
     if (!_isListening) return;
     if (_isAnalyzing) return;
+    _appendPublishAiTrace('stop_mic', 'Arrêt demandé pour le micro classique');
 
     // ✅ Arrêter le timer de chunking web (streaming mode)
     _streamingTimer?.cancel();
@@ -9620,6 +10105,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         final blob = await _webRec.stopToBlob();
         final audioUpload = await webBlobToMicroIaUpload(blob);
+        _appendPublishAiTrace(
+          'web_audio',
+          'Blob converti: ${audioUpload.bytes.length} bytes, ${audioUpload.contentType}, .${audioUpload.extension}',
+        );
         if (audioUpload.bytes.isEmpty) {
           throw Exception('Audio invalide (fichier vide).');
         }
@@ -9652,6 +10141,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           },
         );
         if (!mounted) return;
+        _appendPublishAiTrace(
+          'stop_mic',
+          _formatMicroIaRuntimeError(e),
+          level: _PublishAiTraceLevel.error,
+        );
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
         } else {
@@ -9672,8 +10166,22 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (recordedPath == null) {
         recordedPath = _recordingPath;
       }
+      _appendPublishAiTrace(
+        'mobile_audio',
+        recordedPath == null
+            ? 'Aucun fichier audio retourné par le recorder'
+            : 'Fichier enregistré: $recordedPath',
+        level: recordedPath == null
+            ? _PublishAiTraceLevel.warning
+            : _PublishAiTraceLevel.success,
+      );
     } catch (e) {
       debugPrint('Recorder stop error: $e');
+      _appendPublishAiTrace(
+        'mobile_audio',
+        _formatMicroIaRuntimeError(e),
+        level: _PublishAiTraceLevel.error,
+      );
     }
     setState(() {
       _isListening = false;
@@ -9684,6 +10192,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       try {
         await _uploadAndTranscribe(recordedPath);
       } catch (e) {
+        _appendPublishAiTrace(
+          'stop_mic',
+          _formatMicroIaRuntimeError(e),
+          level: _PublishAiTraceLevel.error,
+        );
         if (!mounted) return;
         if (isTimeoutError(e)) {
           showTimeoutSnackBar(context);
@@ -9700,6 +10213,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     if (!mounted) return;
+    _appendPublishAiTrace(
+      'stop_mic',
+      'Arrêt sans audio exploitable',
+      level: _PublishAiTraceLevel.warning,
+    );
     showSuccessSnackBar(context, 'Aucun audio disponible');
   }
 
@@ -9809,6 +10327,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final xfile = XFile(localPath);
     final audioBytes = await xfile.readAsBytes();
     if (audioBytes.isEmpty) {
+      _appendPublishAiTrace(
+        'mobile_audio',
+        'Fichier audio introuvable ou vide: $localPath',
+        level: _PublishAiTraceLevel.error,
+      );
       throw 'Fichier audio introuvable';
     }
     final lower = localPath.toLowerCase();
@@ -9816,6 +10339,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final isMp4 = lower.endsWith('.mp4');
     final ext = isM4a ? 'm4a' : (isMp4 ? 'mp4' : 'wav');
     final contentType = (isM4a || isMp4) ? 'audio/mp4' : 'audio/wav';
+    _appendPublishAiTrace(
+      'mobile_audio',
+      'Lecture locale OK: ${audioBytes.length} bytes, $contentType, .$ext',
+      level: _PublishAiTraceLevel.success,
+    );
     final transcript = await _transcribePublishAudioWithLegacyPipeline(
       ownerUid: uid,
       audioBytes: audioBytes,
@@ -9869,6 +10397,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   void dispose() {
     _transcriptionStream.close();
+    _publishAiTraceDisposed = true;
+    _publishAiTraceVersion.dispose();
     _streamingTimer?.cancel();
     _streamingMaxDurationTimer?.cancel();
     _streamMicSub?.cancel(); // ✅ AJOUT: Cleanup du stream
@@ -9911,6 +10441,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _streamingSessionId = 0;
       _nextStreamingChunkSequence = 0;
       _streamingChunkTexts.clear();
+      _publishAiTraceEntries.clear();
       _citySuggestions.clear();
       _highlightedIndex = -1;
       _selectedRegionCode = null;
@@ -10572,6 +11103,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     child: _buildPublishAiStatusArea(),
                   ),
                 ),
+                _buildPublishAiTraceActions(),
                 const SizedBox(height: 16),
 
                 // TITRE
