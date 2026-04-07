@@ -12068,6 +12068,16 @@ class _AccountPageState extends State<AccountPage> {
     bool allowAuthRetry = true,
   }) async {
     final sw = Stopwatch()..start();
+    final currentUser = _auth.currentUser ??
+        await _auth.authStateChanges().first.timeout(
+              const Duration(seconds: 2),
+              onTimeout: () => null,
+            );
+    if (currentUser != null) {
+      try {
+        await currentUser.getIdToken(true);
+      } catch (_) {}
+    }
     final callable = _functions.httpsCallable(
       'adminGetAccessStatus',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
@@ -12159,7 +12169,7 @@ class _AccountPageState extends State<AccountPage> {
         case 'permission-denied':
           return 'Accès refusé par la fonction admin.';
         case 'unauthenticated':
-          return 'La session utilisateur n’est plus authentifiée.';
+          return 'La session n’a pas encore été validée côté serveur. Recharge la page ou reconnecte-toi.';
         case 'unavailable':
           return 'Le service admin est indisponible ou le réseau ne répond pas.';
         case 'deadline-exceeded':
