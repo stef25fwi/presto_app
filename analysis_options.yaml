@@ -15,6 +15,7 @@ analyzer:
     - dev/archive/**
     - bin/**
     - tools/**
+    - audit_microia/**
 
   # Le projet contient du code historique (Flutter/Dart évolue vite).
   # On ignore volontairement certaines "infos" à faible risque pour

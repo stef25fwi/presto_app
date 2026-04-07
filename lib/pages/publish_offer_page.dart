@@ -4,15 +4,16 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cross_file/cross_file.dart';
+import '../config/env/openai_config.dart';
+import '../models/ai/listing_ai_request.dart';
 import '../services/audio_service.dart';
-import '../services/micro_ia_service.dart';
+import '../services/ai/listing_audio_ai_service.dart';
+import '../services/ai/openai_service.dart';
 import '../features/publish_offer/ai_offer_service.dart';
 import '../features/micro_ia/web_audio_recorder_stub.dart'
     if (dart.library.html) '../features/micro_ia/web_audio_recorder.dart';
 import '../utils/crashlytics_context.dart';
-import '../utils/retry.dart';
 import '../utils/friendly_snackbar.dart';
 import '../utils/recording_path.dart';
 import '../services/city_repo_compact.dart';
@@ -47,6 +48,8 @@ class _LegacyPublishOfferPageState extends State<LegacyPublishOfferPage>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   late final CityRepoCompact _repo;
+  final OpenAiService _openAiService = OpenAiService();
+  final ListingAudioAiService _listingAudioAiService = ListingAudioAiService();
 
   final WebAudioRecorder _webRec = WebAudioRecorder();
 
@@ -281,6 +284,19 @@ class _LegacyPublishOfferPageState extends State<LegacyPublishOfferPage>
     }
   }
 
+  ListingAiRequest _buildListingAiRequest({required String input}) {
+    return ListingAiRequest(
+      input: input,
+      city: _cityCtrl.text.trim(),
+      category: (_category ?? '').trim(),
+      languageCode: OpenAiConfig.defaultLanguageCode,
+    );
+  }
+
+  OfferDraft _draftFromListingResult(Map<String, dynamic> payload) {
+    return OfferDraft.fromMap(payload);
+  }
+
   InputDecoration _decoration(String hint, {Widget? suffix}) {
     return InputDecoration(
       hintText: hint,
@@ -385,14 +401,12 @@ class _LegacyPublishOfferPageState extends State<LegacyPublishOfferPage>
     setState(() => _aiLoading = true);
 
     try {
-      final draft = await AiOfferService.generateDraft(
-        hint: hint,
-        currentCity: cityCtrl.text.trim(),
-        currentCategory: (_category ?? "").toString(),
+      final draft = await _openAiService.extractListingFieldsFromText(
+        _buildListingAiRequest(input: hint),
       );
 
       _applyDraftToForm(
-        draft,
+        _draftFromListingResult(draft.toDraftPayload()),
         replaceExistingTitleDescription: replaceExistingTitleDescription,
       );
 
@@ -554,72 +568,25 @@ class _LegacyPublishOfferPageState extends State<LegacyPublishOfferPage>
         );
       }
 
-      final normalizedExtension = extension.replaceFirst('.', '').toLowerCase();
-      final storagePath =
-          'stt/${user.uid}_${DateTime.now().millisecondsSinceEpoch}.$normalizedExtension';
+      final result = await _listingAudioAiService
+          .extractListingFieldsFromAudioBytes(
+            ownerUid: user.uid,
+            audioBytes: audioBytes,
+            contentType: contentType,
+            extension: extension,
+            request: _buildListingAiRequest(input: ''),
+          )
+          .timeout(const Duration(seconds: 90));
 
-      final storageRef = FirebaseStorage.instance.ref().child(storagePath);
-
-      await retry(
-        () => storageRef
-            .putData(
-              audioBytes,
-              SettableMetadata(
-                contentType: contentType,
-                cacheControl: 'private, max-age=3600',
-              ),
-            )
-            .timeout(const Duration(seconds: 60)),
-        maxAttempts: 3,
-        retryIf: (e) {
-          if (e is TimeoutException) return true;
-          if (e is FirebaseException) {
-            return e.code == 'network-error' ||
-                e.code == 'retry-limit-exceeded' ||
-                e.code == 'unknown';
-          }
-          return false;
-        },
-      );
-
-      // ⚡ Single round-trip: STT + Draft combined in one CF call
-      // Global timeout 90s to avoid 3×75s worst-case retry stacking
-      final out = await MicroIaService.processAudio(
-        storagePath: storagePath,
-        languageCode: 'fr-FR',
-        generateDraft: true,
-        draftCity: _cityCtrl.text.trim(),
-        draftCategory: (_category ?? '').trim(),
-      ).timeout(const Duration(seconds: 90));
-
-      final transcript = (out['text'] ?? '').toString().trim();
-      final score = ((out['quality']?['score'] ?? 0.0) as num).toDouble();
+      final transcript = result.transcriptText;
+      final score = result.confidenceScore ?? 0.0;
 
       // Apply transcript immediately as fallback
       _applyTranscriptFallback(transcript);
 
-      // Use the server-side draft if available (combined mode)
-      final serverDraft = out['draft'];
-      if (serverDraft is Map) {
-        final draft = OfferDraft.fromMap(
-          Map<String, dynamic>.from(serverDraft),
-        );
+      if (transcript.isNotEmpty) {
+        final draft = _draftFromListingResult(result.toDraftPayload());
         _applyDraftToForm(draft, transcript: transcript);
-      } else if (transcript.isNotEmpty) {
-        // Fallback: server draft failed, try client-side call
-        try {
-          final draftHint = _buildDraftHint(transcript: transcript);
-          if (draftHint.isNotEmpty) {
-            final draft = await AiOfferService.generateDraft(
-              hint: draftHint,
-              currentCity: _cityCtrl.text.trim(),
-              currentCategory: (_category ?? '').trim(),
-            );
-            _applyDraftToForm(draft, transcript: transcript);
-          }
-        } catch (_) {
-          // Draft is best-effort; transcript already applied above
-        }
       }
 
       if (mounted) {

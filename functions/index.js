@@ -487,6 +487,209 @@ Retourne uniquement le JSON demandé.`;
   };
 }
 
+const LISTING_AI_SYSTEM_PROMPT = `Tu es l'assistant OpenAI de l'application Prestō.
+Tu extrais un brouillon d'annonce structuré à partir d'un texte utilisateur libre ou d'une transcription audio.
+
+Règles absolues :
+- Tu renvoies uniquement un JSON strict conforme au schéma fourni.
+- Tu n'inventes aucune information absente.
+- Si une donnée n'est pas clairement présente, utilise null, [] ou une faible confiance.
+- Tu peux utiliser la ville ou la catégorie de contexte uniquement comme fallback prudent.
+- Le champ description doit être publiable, fidèle et concis.
+- keywords doit contenir des mots-clés courts réellement présents ou implicites avec forte certitude.
+- missingFields doit contenir uniquement les champs encore utiles pour finaliser la publication.
+- confidenceScore est une valeur entre 0 et 1.`;
+
+const LISTING_AI_RESPONSE_FORMAT = {
+  type: 'json_schema',
+  json_schema: {
+    name: 'listing_ai_result',
+    strict: true,
+    schema: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        title: { type: ['string', 'null'] },
+        category: { type: ['string', 'null'] },
+        description: { type: ['string', 'null'] },
+        price: { type: ['number', 'null'] },
+        currency: { type: ['string', 'null'] },
+        city: { type: ['string', 'null'] },
+        department: { type: ['string', 'null'] },
+        postalCode: { type: ['string', 'null'] },
+        listingType: { type: ['string', 'null'] },
+        urgency: { type: ['string', 'null'] },
+        contactPreference: { type: ['string', 'null'] },
+        keywords: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+        details: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+        missingFields: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+        confidenceScore: { type: ['number', 'null'] },
+        questionsToAsk: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+      },
+      required: [
+        'title',
+        'category',
+        'description',
+        'price',
+        'currency',
+        'city',
+        'department',
+        'postalCode',
+        'listingType',
+        'urgency',
+        'contactPreference',
+        'keywords',
+        'details',
+        'missingFields',
+        'confidenceScore',
+        'questionsToAsk',
+      ],
+    },
+  },
+};
+
+function nullableTrimmedString(value) {
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text ? text : null;
+}
+
+function stringListOrEmpty(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => String(item || '').trim())
+    .filter((item) => item.length > 0);
+}
+
+function normalizeListingDepartment(postalCode, city) {
+  const cp = nullableTrimmedString(postalCode);
+  if (cp && /^\d{5}$/.test(cp)) {
+    if (cp.startsWith('97') || cp.startsWith('98')) {
+      return cp.slice(0, 3);
+    }
+    return cp.slice(0, 2);
+  }
+
+  const fallbackPostalCode = findPostalCode(city);
+  if (!fallbackPostalCode) return null;
+  if (fallbackPostalCode.startsWith('97') || fallbackPostalCode.startsWith('98')) {
+    return fallbackPostalCode.slice(0, 3);
+  }
+  return fallbackPostalCode.slice(0, 2);
+}
+
+function computeListingMissingFields(result) {
+  const missing = new Set(stringListOrEmpty(result?.missingFields));
+
+  if (!result?.title) missing.add('title');
+  if (!result?.description) missing.add('description');
+  if (!result?.category) missing.add('category');
+  if (!result?.city) missing.add('city');
+  if (!result?.postalCode) missing.add('postalCode');
+
+  return Array.from(missing);
+}
+
+function computeListingConfidenceScore(result) {
+  const raw = Number(result?.confidenceScore);
+  if (Number.isFinite(raw)) {
+    return Math.max(0, Math.min(1, raw));
+  }
+
+  const weightedSignals = [
+    result?.title ? 1 : 0,
+    result?.description ? 1 : 0,
+    result?.category ? 1 : 0,
+    result?.city ? 1 : 0,
+    result?.postalCode ? 1 : 0,
+    typeof result?.price === 'number' ? 1 : 0,
+  ];
+  const score = weightedSignals.reduce((sum, value) => sum + value, 0) / weightedSignals.length;
+  return Number(score.toFixed(2));
+}
+
+function normalizeListingAiResult(raw, { city, category }) {
+  const normalizedTitle = nullableTrimmedString(raw?.title);
+  const normalizedDescription = nullableTrimmedString(raw?.description);
+  const normalizedCategory = nullableTrimmedString(raw?.category) || nullableTrimmedString(category);
+  const normalizedCity = nullableTrimmedString(raw?.city) || nullableTrimmedString(city);
+  const detectedPostalCode = nullableTrimmedString(raw?.postalCode) || findPostalCode(normalizedCity);
+  const detectedDepartment = nullableTrimmedString(raw?.department) || normalizeListingDepartment(detectedPostalCode, normalizedCity);
+  const normalizedCurrency = (nullableTrimmedString(raw?.currency) || 'EUR').toUpperCase();
+  const rawPrice = raw?.price;
+  const normalizedPrice = typeof rawPrice === 'number'
+    ? rawPrice
+    : (typeof rawPrice === 'string' ? Number(rawPrice) : null);
+
+  const result = {
+    title: normalizedTitle || '',
+    category: normalizedCategory,
+    description: normalizedDescription || '',
+    price: Number.isFinite(normalizedPrice) ? normalizedPrice : null,
+    currency: normalizedCurrency,
+    city: normalizedCity,
+    department: detectedDepartment,
+    postalCode: detectedPostalCode || null,
+    listingType: nullableTrimmedString(raw?.listingType),
+    urgency: nullableTrimmedString(raw?.urgency),
+    contactPreference: nullableTrimmedString(raw?.contactPreference),
+    keywords: stringListOrEmpty(raw?.keywords),
+    details: stringListOrEmpty(raw?.details),
+    missingFields: [],
+    confidenceScore: null,
+    questionsToAsk: stringListOrEmpty(raw?.questionsToAsk),
+  };
+
+  result.missingFields = computeListingMissingFields(result);
+  result.confidenceScore = computeListingConfidenceScore({
+    ...result,
+    confidenceScore: raw?.confidenceScore,
+  });
+
+  return result;
+}
+
+async function _internalExtractListingFieldsWithOpenAi({ openai, input, city, category, languageCode }) {
+  const userPrompt = `Texte source :\n${input}\n\nContexte :\n- Ville: ${city || 'non précisée'}\n- Catégorie: ${category || 'non précisée'}\n- Langue: ${languageCode || 'fr-FR'}\n\nExtrais uniquement les informations utiles pour préremplir une annonce.`;
+
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    temperature: 0.1,
+    max_tokens: 700,
+    response_format: LISTING_AI_RESPONSE_FORMAT,
+    messages: [
+      { role: 'system', content: LISTING_AI_SYSTEM_PROMPT },
+      { role: 'user', content: userPrompt },
+    ],
+  });
+
+  const content = completion?.choices?.[0]?.message?.content?.trim();
+  if (!content) {
+    throw new Error('Pas de réponse structurée de OpenAI');
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(content);
+  } catch (error) {
+    throw new Error(`Réponse OpenAI invalide: ${error?.message || error}`);
+  }
+
+  return normalizeListingAiResult(parsed, { city, category });
+}
+
 /**
  * Cloud Function qui génère un brouillon d'offre avec l'IA
  * 
@@ -522,6 +725,50 @@ exports.generateOfferDraft = onCall({ region: PROJECT_REGION, secrets: [OPENAI_A
     throw new HttpsError('internal', `Erreur IA : ${error.message}`);
   }
 });
+
+exports.openAiExtractListingFields = onCall(
+  {
+    region: PROJECT_REGION,
+    timeoutSeconds: 45,
+    secrets: [OPENAI_API_KEY],
+    enforceAppCheck: ENFORCE_APP_CHECK,
+  },
+  async (request) => {
+    const uid = assertAuthenticated(request);
+    await rateLimitOrThrow({ uid, action: 'openai_extract_listing_fields', limit: 15, windowSec: 60 });
+
+    const input = preprocessTranscript(String(request.data?.input || request.data?.hint || '').trim());
+    const city = nullableTrimmedString(request.data?.city) || '';
+    const category = nullableTrimmedString(request.data?.category) || '';
+    const languageCode = nullableTrimmedString(request.data?.languageCode) || 'fr-FR';
+
+    if (!input) {
+      throw new HttpsError('invalid-argument', 'Le champ input est requis');
+    }
+
+    const apiKey = OPENAI_API_KEY.value();
+    if (!apiKey) {
+      throw new HttpsError('failed-precondition', 'OPENAI_API_KEY manquante');
+    }
+
+    const openai = new OpenAI({ apiKey });
+
+    try {
+      const result = await _internalExtractListingFieldsWithOpenAi({
+        openai,
+        input,
+        city,
+        category,
+        languageCode,
+      });
+      return { result };
+    } catch (error) {
+      console.error('[openAiExtractListingFields] Error:', error?.message || error);
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError('internal', error?.message || 'openAiExtractListingFields failed');
+    }
+  }
+);
 
 // [REMOVED] transcribeAndDraftOffer — orphaned, replaced by microIaProcessAudio combined mode.
 // See microIaProcessAudio with generateDraft=true.
@@ -1128,6 +1375,256 @@ async function runFfmpegToWav16kMono({ inputPath, outputPath }) {
   });
 }
 
+async function prepareUploadedAudioForOpenAi({ uid, storagePath, requestId }) {
+  if (!storagePath || typeof storagePath !== 'string') {
+    throw new HttpsError('invalid-argument', 'storagePath is required (Firebase Storage path).');
+  }
+
+  if (storagePath.includes('..') || storagePath.startsWith('/') || storagePath.includes('\\')) {
+    throw new HttpsError('invalid-argument', 'Invalid storagePath.');
+  }
+
+  const expectedPrefix = `stt/${uid}_`;
+  const expectedStreamingPrefix = `stt_streaming/${uid}/`;
+  const isWavPath = storagePath.endsWith('.wav');
+  const isWebmPath = storagePath.endsWith('.webm');
+  const isAacPath = storagePath.endsWith('.aac');
+  const isM4aPath = storagePath.endsWith('.m4a');
+  const isMp4Path = storagePath.endsWith('.mp4');
+  const ownsPath = storagePath.startsWith(expectedPrefix) || storagePath.startsWith(expectedStreamingPrefix);
+  const validExt = isWavPath || isWebmPath || isAacPath || isM4aPath || isMp4Path;
+  if (!ownsPath || !validExt) {
+    throw new HttpsError('permission-denied', 'storagePath does not belong to authenticated user.');
+  }
+
+  const bucket = admin.storage().bucket();
+  const file = bucket.file(storagePath);
+  const storagePathRedacted = redactStoragePath(storagePath);
+
+  let metadata;
+  try {
+    const [rawMetadata] = await file.getMetadata();
+    metadata = rawMetadata || null;
+  } catch (error) {
+    console.warn('[prepareUploadedAudioForOpenAi] META', {
+      requestId,
+      storagePath: storagePathRedacted,
+      err: error?.message || String(error),
+    });
+    throw new HttpsError('not-found', 'Audio file not found.');
+  }
+
+  const objectBytes = Number(metadata?.size || 0);
+  const contentType = metadata?.contentType || null;
+  if (!Number.isFinite(objectBytes) || objectBytes <= 0) {
+    throw new HttpsError('failed-precondition', 'Audio file is empty.');
+  }
+  if (objectBytes > 20_000_000) {
+    throw new HttpsError('failed-precondition', `Audio trop gros (${objectBytes} bytes).`);
+  }
+  if (!isAllowedAudioContentType(contentType)) {
+    throw new HttpsError(
+      'failed-precondition',
+      `Type audio invalide (contentType=${contentType || 'null'}).`
+    );
+  }
+
+  let audioBuffer = await loadAudioBufferFromStorage(storagePath);
+  let audioInfo = parseWavHeader(audioBuffer);
+  const shouldConvertToWav = !audioInfo?.isWav || audioInfo.audioFormat !== 1 || audioInfo.bitsPerSample !== 16;
+
+  if (shouldConvertToWav) {
+    const tmpDir = path.join(os.tmpdir(), 'presto_openai_audio');
+    const ext = isWebmPath
+      ? '.webm'
+      : (isAacPath ? '.aac' : (isM4aPath ? '.m4a' : (isMp4Path ? '.mp4' : '.bin')));
+    const inputPath = path.join(tmpDir, `in_${requestId}${ext}`);
+    const outputPath = path.join(tmpDir, `out_${requestId}.wav`);
+
+    try {
+      await fs.mkdir(tmpDir, { recursive: true });
+      await fs.writeFile(inputPath, audioBuffer);
+      await runFfmpegToWav16kMono({ inputPath, outputPath });
+      audioBuffer = await fs.readFile(outputPath);
+      audioInfo = parseWavHeader(audioBuffer);
+    } finally {
+      await fs.unlink(inputPath).catch(() => {});
+      await fs.unlink(outputPath).catch(() => {});
+    }
+  }
+
+  if (!audioInfo?.isWav) {
+    throw new HttpsError('failed-precondition', 'Audio invalide: WAV requis.');
+  }
+  if (audioInfo.audioFormat !== 1 || audioInfo.bitsPerSample !== 16) {
+    throw new HttpsError(
+      'failed-precondition',
+      `Audio invalide: WAV PCM 16-bit requis (format=${audioInfo.audioFormat}, bps=${audioInfo.bitsPerSample}).`
+    );
+  }
+  if (!audioInfo || audioInfo.dataBytes < 30_000) {
+    throw new HttpsError(
+      'failed-precondition',
+      `Audio trop court/faible (dataBytes=${audioInfo?.dataBytes || 0}). Réessaie en parlant plus près du micro.`
+    );
+  }
+
+  const durationSec = estimateDurationSec(audioInfo);
+  if (typeof durationSec === 'number' && durationSec > 120) {
+    throw new HttpsError('failed-precondition', `Audio trop long (~${durationSec.toFixed(1)}s). Max 120s.`);
+  }
+
+  return {
+    file,
+    audioBuffer,
+    audioInfo,
+    durationSec,
+    storagePathRedacted,
+  };
+}
+
+function buildAudioTranscriptionPayload({ text, provider, languageCode, storagePath, durationSeconds }) {
+  return {
+    text: text || '',
+    provider,
+    languageCode,
+    storagePath,
+    durationSeconds: typeof durationSeconds === 'number' ? Number(durationSeconds.toFixed(2)) : null,
+    confidence: null,
+  };
+}
+
+exports.openAiTranscribeListingAudio = onCall(
+  {
+    region: PROJECT_REGION,
+    timeoutSeconds: 120,
+    secrets: [OPENAI_API_KEY],
+    enforceAppCheck: ENFORCE_APP_CHECK,
+  },
+  async (request) => {
+    const uid = assertAuthenticated(request);
+    await rateLimitOrThrow({ uid, action: 'openai_transcribe_listing_audio', limit: 20, windowSec: 60 });
+
+    const storagePath = String(request.data?.storagePath || '').trim();
+    const languageCode = nullableTrimmedString(request.data?.languageCode) || 'fr-FR';
+    const requestId = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    const apiKey = OPENAI_API_KEY.value();
+
+    if (!apiKey) {
+      throw new HttpsError('failed-precondition', 'OPENAI_API_KEY manquante');
+    }
+
+    let prepared;
+    try {
+      prepared = await prepareUploadedAudioForOpenAi({ uid, storagePath, requestId });
+      const openai = new OpenAI({ apiKey });
+      const transcription = await withTimeout(
+        providerWhisper({
+          audioBuffer: prepared.audioBuffer,
+          languageCode,
+          openai,
+        }),
+        60_000,
+        'openai_transcribe_listing_audio'
+      );
+
+      const text = preprocessTranscript(transcription?.text || '');
+      return {
+        transcription: buildAudioTranscriptionPayload({
+          text,
+          provider: 'whisper-1',
+          languageCode,
+          storagePath,
+          durationSeconds: prepared.durationSec,
+        }),
+      };
+    } catch (error) {
+      console.error('[openAiTranscribeListingAudio] Error:', {
+        code: error?.code || null,
+        message: error?.message || String(error),
+      });
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError('internal', error?.message || 'openAiTranscribeListingAudio failed');
+    } finally {
+      if (prepared?.file) {
+        await prepared.file.delete().catch(() => {});
+      }
+    }
+  }
+);
+
+exports.openAiExtractListingFieldsFromAudio = onCall(
+  {
+    region: PROJECT_REGION,
+    timeoutSeconds: 120,
+    secrets: [OPENAI_API_KEY],
+    enforceAppCheck: ENFORCE_APP_CHECK,
+  },
+  async (request) => {
+    const uid = assertAuthenticated(request);
+    await rateLimitOrThrow({ uid, action: 'openai_extract_listing_fields_from_audio', limit: 10, windowSec: 60 });
+
+    const storagePath = String(request.data?.storagePath || '').trim();
+    const city = nullableTrimmedString(request.data?.city) || '';
+    const category = nullableTrimmedString(request.data?.category) || '';
+    const languageCode = nullableTrimmedString(request.data?.languageCode) || 'fr-FR';
+    const requestId = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    const apiKey = OPENAI_API_KEY.value();
+
+    if (!apiKey) {
+      throw new HttpsError('failed-precondition', 'OPENAI_API_KEY manquante');
+    }
+
+    let prepared;
+    try {
+      prepared = await prepareUploadedAudioForOpenAi({ uid, storagePath, requestId });
+      const openai = new OpenAI({ apiKey });
+      const transcription = await withTimeout(
+        providerWhisper({
+          audioBuffer: prepared.audioBuffer,
+          languageCode,
+          openai,
+        }),
+        60_000,
+        'openai_extract_listing_fields_from_audio_transcription'
+      );
+
+      const text = preprocessTranscript(transcription?.text || '');
+      const result = text
+        ? await _internalExtractListingFieldsWithOpenAi({
+            openai,
+            input: text,
+            city,
+            category,
+            languageCode,
+          })
+        : normalizeListingAiResult({}, { city, category });
+
+      return {
+        result,
+        transcription: buildAudioTranscriptionPayload({
+          text,
+          provider: 'whisper-1',
+          languageCode,
+          storagePath,
+          durationSeconds: prepared.durationSec,
+        }),
+      };
+    } catch (error) {
+      console.error('[openAiExtractListingFieldsFromAudio] Error:', {
+        code: error?.code || null,
+        message: error?.message || String(error),
+      });
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError('internal', error?.message || 'openAiExtractListingFieldsFromAudio failed');
+    } finally {
+      if (prepared?.file) {
+        await prepared.file.delete().catch(() => {});
+      }
+    }
+  }
+);
+
 function estimateDurationSec(audioInfo) {
   const dataBytes = typeof audioInfo?.dataBytes === 'number' ? audioInfo.dataBytes : null;
   if (dataBytes == null || dataBytes <= 0) return null;
@@ -1192,10 +1689,11 @@ exports.microIaProcessAudio = onCall(
       const expectedStreamingPrefix = `stt_streaming/${uid}/`;
       const isWavPath = storagePath.endsWith('.wav');
       const isWebmPath = storagePath.endsWith('.webm');
+      const isAacPath = storagePath.endsWith('.aac');
       const isM4aPath = storagePath.endsWith('.m4a');
       const isMp4Path = storagePath.endsWith('.mp4');
       const ownsPath = storagePath.startsWith(expectedPrefix) || storagePath.startsWith(expectedStreamingPrefix);
-      const validExt = isWavPath || isWebmPath || isM4aPath || isMp4Path;
+      const validExt = isWavPath || isWebmPath || isAacPath || isM4aPath || isMp4Path;
       if (!ownsPath || !validExt) {
         throw new HttpsError("permission-denied", "storagePath does not belong to authenticated user.");
       }
@@ -1243,7 +1741,9 @@ exports.microIaProcessAudio = onCall(
       const shouldConvertToWav = !audioInfo?.isWav || audioInfo.audioFormat !== 1 || audioInfo.bitsPerSample !== 16;
       if (shouldConvertToWav) {
         const tmpDir = path.join(os.tmpdir(), 'presto_microia');
-        const ext = isWebmPath ? '.webm' : (isM4aPath ? '.m4a' : (isMp4Path ? '.mp4' : '.bin'));
+        const ext = isWebmPath
+          ? '.webm'
+          : (isAacPath ? '.aac' : (isM4aPath ? '.m4a' : (isMp4Path ? '.mp4' : '.bin')));
         const inputPath = path.join(tmpDir, `in_${requestId}${ext}`);
         const outputPath = path.join(tmpDir, `out_${requestId}.wav`);
 
