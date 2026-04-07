@@ -51,14 +51,12 @@ import 'services/marketplace_publish_service.dart';
 import 'services/marketplace_remote_config_service.dart';
 import 'services/notification_service.dart';
 import 'services/offer_indexing.dart';
+import 'services/admin_audio_runtime_store.dart';
 import 'utils/crashlytics_context.dart';
 import 'utils/friendly_snackbar.dart';
 import 'utils/recording_path_web.dart'
     if (dart.library.io) 'utils/recording_path_io.dart';
 import 'widgets/ad_banner.dart';
-import 'widgets/account_admin_analytics_panel.dart';
-import 'widgets/account_admin_micro_ia_panel.dart';
-import 'widgets/account_build_version_panel.dart';
 import 'widgets/account_profile_sections.dart';
 import 'widgets/entrepreneur_toolbox_slide.dart';
 import 'widgets/home_bottom_nav_item.dart';
@@ -68,6 +66,8 @@ import 'widgets/phone_input_field.dart';
 import 'widgets/photo_selector_tile.dart';
 
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
+final AdminAudioRuntimeStore _adminAudioRuntimeStore =
+  AdminAudioRuntimeStore.instance;
 
 class PrestoRemoteConfig {
   static String audioPipeline = 'HYBRID';
@@ -7628,7 +7628,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     required String uid,
   }) async {
     final blob = await _webRec.stopToBlob();
-    final audioUpload = await webBlobToMicroIaUpload(blob);
+    final audioUpload = await webBlobToMicroIaUpload(blob, preferRawBytes: true);
     if (audioUpload.bytes.isEmpty) {
       debugPrint('[Streaming Web] Final chunk ignored: empty audio');
       return;
@@ -7715,6 +7715,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   /// ✅ STREAMING RÉEL: Mobile avec startStream() + PCM16
   Future<void> _startStreamingMic() async {
     if (_isListening || _isStreaming) return;
+    if (_adminAudioRuntimeAccessState == 0) {
+      unawaited(_refreshAdminAudioRuntimeAccess());
+    }
     _resetPublishAiTrace(kIsWeb ? 'micro streaming web' : 'micro streaming mobile');
     _appendPublishAiTrace('start_streaming', 'Demande de démarrage du micro streaming');
 
@@ -7728,7 +7731,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       // ✅ WEB: Chunking mode (chunks toutes les 2 secondes)
       // Note: Web enregistre des chunks et les envoie progressivement
       try {
-        final uid = (await _resolveSignedInUser())?.uid;
+        final uid =
+          (await _ensureProtectedSessionReady(forceRefreshToken: true))?.uid;
         if (uid == null) {
           _appendPublishAiTrace(
             'auth',
@@ -7743,6 +7747,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         await _webRec.start();
 
         final sessionId = _startStreamingSession();
+        _rememberAdminAudioRuntime(
+          flowKey: 'streaming_web',
+          label: 'Streaming web chunké',
+          detail: 'Chunks audio web -> GOOGLE_ONLY force cote serveur',
+          status: 'forced',
+          backendModeUsed: 'GOOGLE_ONLY',
+        );
 
         setState(() {
           _isListening = true;
@@ -7785,7 +7796,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               }
 
               // ⚡ Convertir WEBM→WAV PCM16 16kHz mono côté client
-              final audioUpload = await webBlobToMicroIaUpload(blob);
+              final audioUpload = await webBlobToMicroIaUpload(
+                blob,
+                preferRawBytes: true,
+              );
               if (audioUpload.bytes.isEmpty) {
                 debugPrint('[Streaming Web] Empty audio chunk');
                 return;
@@ -7833,7 +7847,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     // ✅ MOBILE: Streaming RÉEL avec startStream() + PCM16
     try {
-      final resolvedUser = await _resolveSignedInUser();
+        final resolvedUser =
+          await _ensureProtectedSessionReady(forceRefreshToken: true);
       if (resolvedUser == null) {
         _appendPublishAiTrace(
           'auth',
@@ -7872,6 +7887,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
       final sessionId = _startStreamingSession();
       _streamingPcmAccumulator.clear();
+      _rememberAdminAudioRuntime(
+        flowKey: 'streaming_mobile',
+        label: 'Streaming mobile',
+        detail: 'PCM16 mobile decoupe en chunks -> GOOGLE_ONLY force cote serveur',
+        status: 'forced',
+        backendModeUsed: 'GOOGLE_ONLY',
+      );
 
       setState(() {
         _isListening = true;
@@ -7969,7 +7991,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!_isListening) return;
     _appendPublishAiTrace('stop_streaming', 'Arrêt demandé pour le micro streaming');
     final sessionId = _streamingSessionId;
-    final uid = (await _resolveSignedInUser())?.uid;
+    final uid =
+      (await _ensureProtectedSessionReady(forceRefreshToken: true))?.uid;
     var sessionClosed = false;
 
     _streamingTimer?.cancel();
@@ -8158,6 +8181,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     final modeUsed = (out['modeUsed'] ?? '').toString().trim();
+    if (modeUsed.isNotEmpty) {
+      _adminAudioRuntimeStore.confirmLatestBackendResult(
+        backendModeUsed: modeUsed,
+        detail:
+            'Réponse backend confirmée via $modeUsed (${transcript.length} caractères)',
+        transcriptLength: transcript.length,
+      );
+    }
     _appendPublishAiTrace(
       'microia_callable',
       modeUsed.isEmpty
@@ -8400,6 +8431,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   String? _recordingPath;
   // Toujours actif (améliore la qualité via Google STT côté serveur)
   final bool _useCloudStt = true;
+  int _adminAudioRuntimeAccessState = 0;
+  String _adminAudioRuntimeMode = 'HYBRID';
+  String _adminAudioRuntimeLabel = 'Mode serveur';
+  String _adminAudioRuntimeDetail = 'En attente de verification admin';
 
   void _runWithoutMarkingUserEdits(VoidCallback action) {
     final previous = _isApplyingProgrammaticPublishUpdate;
@@ -8494,6 +8529,247 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (_isListening) return _isStreaming ? 'Ecoute streaming' : 'Ecoute micro';
     if (_isAnalyzing) return 'Analyse en cours';
     return 'En attente';
+  }
+
+  String _adminAudioModeLabel(String mode) {
+    switch (mode.toUpperCase()) {
+      case 'GOOGLE_ONLY':
+        return 'Google STT';
+      case 'WHISPER_ONLY':
+        return 'Whisper';
+      case 'HYBRID':
+      default:
+        return 'Hybride';
+    }
+  }
+
+  String _classicAdminAudioRuntimeDetail() {
+    switch (_adminAudioRuntimeMode.toUpperCase()) {
+      case 'GOOGLE_ONLY':
+        return 'Micro classique -> transcription Google STT uniquement';
+      case 'WHISPER_ONLY':
+        return 'Micro classique -> transcription Whisper uniquement';
+      case 'HYBRID':
+      default:
+        return 'Micro classique -> Google STT puis nettoyage IA, avec fallback Whisper/Google';
+    }
+  }
+
+  Future<void> _refreshAdminAudioRuntimeAccess() async {
+    final user = await _resolveSignedInUser();
+    if (user == null) {
+      if (!mounted) return;
+      setState(() {
+        _adminAudioRuntimeAccessState = 0;
+      });
+      return;
+    }
+
+    try {
+      final accessCallable = _functions.httpsCallable(
+        'adminGetAccessStatus',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+      );
+      await accessCallable.call<dynamic>({});
+
+      if (!mounted) return;
+      setState(() {
+        _adminAudioRuntimeAccessState = 1;
+        if (_adminAudioRuntimeLabel == 'Mode serveur') {
+          _adminAudioRuntimeDetail = 'Accès admin confirmé';
+        }
+      });
+
+      try {
+        final configCallable = _functions.httpsCallable(
+          'adminGetMicroIaConfig',
+          options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+        );
+        final configRes = await configCallable.call<dynamic>({});
+        final data = Map<String, dynamic>.from(configRes.data as Map);
+        final mode = (data['mode'] ?? 'HYBRID').toString().toUpperCase();
+
+        if (!mounted) return;
+        setState(() {
+          _adminAudioRuntimeMode = mode;
+          if (_adminAudioRuntimeLabel == 'Mode serveur') {
+            _adminAudioRuntimeDetail =
+                'Mode configure: ${_adminAudioModeLabel(mode)}';
+          }
+        });
+        unawaited(_adminAudioRuntimeStore.enableCloudSync());
+        _adminAudioRuntimeStore.updateConfiguredMode(mode);
+      } catch (_) {}
+    } on FirebaseFunctionsException catch (e) {
+      if ((e.code == 'permission-denied' || e.code == 'unauthenticated') &&
+          user.uid.isNotEmpty) {
+        await _ensureProtectedSessionReady(forceRefreshToken: true);
+        if (!mounted) return;
+        try {
+          final retryCallable = _functions.httpsCallable(
+            'adminGetAccessStatus',
+            options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+          );
+          await retryCallable.call<dynamic>({});
+          if (!mounted) return;
+          setState(() {
+            _adminAudioRuntimeAccessState = 1;
+            if (_adminAudioRuntimeLabel == 'Mode serveur') {
+              _adminAudioRuntimeDetail = 'Accès admin confirmé';
+            }
+          });
+          return;
+        } on FirebaseFunctionsException {
+          // Laisse la gestion standard ci-dessous.
+        } catch (_) {
+          // Laisse la gestion standard ci-dessous.
+        }
+      }
+      if (!mounted) return;
+      if (e.code == 'permission-denied' || e.code == 'unauthenticated') {
+        setState(() {
+          _adminAudioRuntimeAccessState = -1;
+        });
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _adminAudioRuntimeAccessState = -1;
+      });
+    }
+  }
+
+  void _rememberAdminAudioRuntime({
+    required String flowKey,
+    required String label,
+    required String detail,
+    String status = 'pending',
+    String? backendModeUsed,
+  }) {
+    _adminAudioRuntimeLabel = label;
+    _adminAudioRuntimeDetail = detail;
+    _adminAudioRuntimeStore.recordRuntime(
+      flowKey: flowKey,
+      label: label,
+      detail: detail,
+      status: status,
+      backendModeUsed: backendModeUsed,
+    );
+  }
+
+  Widget _buildAdminAudioRuntimeIndicator() {
+    if (_adminAudioRuntimeAccessState != 1) {
+      return const SizedBox.shrink();
+    }
+
+    final accent = _isListening
+        ? (_isStreaming ? const Color(0xFF00897B) : kPrestoOrange)
+        : (_isAnalyzing ? kPrestoBlue : const Color(0xFF455A64));
+    final stateLabel = _isListening
+        ? 'LIVE'
+        : (_isAnalyzing ? 'ANALYSE' : 'ADMIN');
+
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 520),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: accent.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: accent.withOpacity(0.24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.tune_rounded, size: 16, color: accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _adminAudioRuntimeLabel,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: accent,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: accent.withOpacity(0.24)),
+                  ),
+                  child: Text(
+                    stateLabel,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: accent,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _adminAudioRuntimeDetail,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: accent.withOpacity(0.2)),
+                  ),
+                  child: Text(
+                    'Mode serveur: ${_adminAudioModeLabel(_adminAudioRuntimeMode)}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: accent.withOpacity(0.2)),
+                  ),
+                  child: Text(
+                    'Etat: ${_currentPublishAiRuntimeState()}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _showPublishAiTraceDialog() async {
@@ -9236,8 +9512,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   @override
   void initState() {
     super.initState();
+    unawaited(_adminAudioRuntimeStore.ensureInitialized());
     unawaited(_loadMarketplacePhotoLimit());
     unawaited(_prefillPublishPhoneFromProfileIfNeeded());
+    unawaited(_refreshAdminAudioRuntimeAccess());
 
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
@@ -9976,7 +10254,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     try {
       final streamedUser =
-          await auth.authStateChanges().first.timeout(const Duration(seconds: 2));
+          await auth.authStateChanges().first.timeout(const Duration(seconds: 5));
       if (streamedUser != null) {
         SessionState.userId = streamedUser.uid;
       }
@@ -9984,6 +10262,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     } catch (_) {
       return null;
     }
+  }
+
+  Future<User?> _ensureProtectedSessionReady({
+    bool forceRefreshToken = false,
+  }) async {
+    final user = await _resolveSignedInUser();
+    if (user == null) return null;
+
+    try {
+      await user.getIdToken(forceRefreshToken);
+    } catch (_) {}
+
+    SessionState.userId = user.uid;
+    return FirebaseAuth.instance.currentUser ?? user;
   }
 
   Future<void> _onPublishPressed() async {
@@ -10012,6 +10304,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   Future<void> _startMic() async {
     if (_isListening) return;
+    if (_adminAudioRuntimeAccessState == 0) {
+      unawaited(_refreshAdminAudioRuntimeAccess());
+    }
     _resetPublishAiTrace(kIsWeb ? 'micro web classique' : 'micro mobile classique');
     _appendPublishAiTrace('start_mic', 'Demande de démarrage du micro classique');
 
@@ -10040,6 +10335,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         await CrashlyticsContext.setKey('flow', 'webMic');
 
         await _webRec.start();
+        _rememberAdminAudioRuntime(
+          flowKey: 'classic_web',
+          label: 'Micro classique web',
+          detail: _classicAdminAudioRuntimeDetail(),
+        );
         if (!mounted) return;
         setState(() => _isListening = true);
         _appendPublishAiTrace(
@@ -10119,6 +10419,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     setState(() {
+      _rememberAdminAudioRuntime(
+        flowKey: 'classic_mobile',
+        label: 'Micro classique mobile',
+        detail: _classicAdminAudioRuntimeDetail(),
+      );
       _isListening = true;
     });
     _appendPublishAiTrace(
@@ -10150,7 +10455,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (uid == null) throw Exception('Not authenticated');
 
         final blob = await _webRec.stopToBlob();
-        final audioUpload = await webBlobToMicroIaUpload(blob);
+        final audioUpload = await webBlobToMicroIaUpload(
+          blob,
+          preferRawBytes: true,
+        );
         _appendPublishAiTrace(
           'web_audio',
           'Blob converti: ${audioUpload.bytes.length} bytes, ${audioUpload.contentType}, .${audioUpload.extension}',
@@ -11157,6 +11465,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                     child: _buildPublishAiStatusArea(),
                   ),
                 ),
+                if (_adminAudioRuntimeAccessState == 1) ...[
+                  const SizedBox(height: 8),
+                  _buildAdminAudioRuntimeIndicator(),
+                ],
                 _buildPublishAiTraceActions(),
                 const SizedBox(height: 16),
 
@@ -11640,9 +11952,6 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  final TextEditingController _adminMicroIaLanguageController =
-      TextEditingController();
-
   // final _formKey = GlobalKey<FormState>(); // Plus utilisé avec PrestoPremiumAuthPage
 
   // Email / mot de passe - Maintenant gérés par PrestoPremiumAuthPage
@@ -11673,6 +11982,7 @@ class _AccountPageState extends State<AccountPage> {
   bool _profileLoadError = false;
   int _profileLoadRetries = 0;
   static const int _maxProfileLoadRetries = 3;
+  int _lastMissingRequiredCount = -1;
 
   static const List<String> _requiredProfileFieldLabels = <String>[
     'Pseudo',
@@ -11680,24 +11990,122 @@ class _AccountPageState extends State<AccountPage> {
     'Numéro de téléphone',
   ];
 
-  // Admin: paramètres Micro-IA (Remote Config)
-  bool _adminConfigLoaded = false;
-  bool _adminSaving = false;
-  bool _adminMicroIaEditing = false;
-  String _adminMicroIaMode = 'HYBRID';
-  bool _adminMicroIaFallbackEnabled = true;
-  double _adminMicroIaQualityThreshold = 0.62;
-  String _adminMicroIaLanguageCode = 'fr-FR';
-
+  Future<Map<String, dynamic>>? _adminAccessFuture;
+  String? _adminAccessFutureUid;
   Future<Map<String, dynamic>>? _adminCfgFuture;
   String? _adminCfgFutureUid;
+  DateTime? _adminLastCheckedAt;
+  bool _adminLocalAccessHint = false;
+  String _adminLocalAccessSource = '';
 
   void _resetAdminAccessState() {
-    _adminConfigLoaded = false;
-    _adminSaving = false;
-    _adminMicroIaEditing = false;
+    _adminAccessFuture = null;
+    _adminAccessFutureUid = null;
     _adminCfgFuture = null;
     _adminCfgFutureUid = null;
+    _adminLastCheckedAt = null;
+    _adminLocalAccessHint = false;
+    _adminLocalAccessSource = '';
+  }
+
+  bool _hasAdminRoleInValues(Iterable<String> values) {
+    return values.any(
+      (value) => value == 'admin' || value == 'superadmin',
+    );
+  }
+
+  bool _hasAdminHintFromProfileData(Map<String, dynamic>? data) {
+    if (data == null) return false;
+
+    final roles = (data['roles'] as List<dynamic>? ?? <dynamic>[])
+        .map((role) => role.toString().trim().toLowerCase())
+        .where((role) => role.isNotEmpty)
+        .toList();
+    if (_hasAdminRoleInValues(roles)) {
+      return true;
+    }
+
+    final primaryRole = (data['primaryRole'] ?? '').toString().trim().toLowerCase();
+    if (primaryRole == 'admin' || primaryRole == 'superadmin') {
+      return true;
+    }
+
+    return data['admin'] == true || data['superadmin'] == true;
+  }
+
+  Future<void> _refreshAdminLocalAccessHint(
+    User user, {
+    bool forceRefreshToken = false,
+    Map<String, dynamic>? profileData,
+  }) async {
+    var hinted = _hasAdminHintFromProfileData(profileData);
+    var source = hinted ? 'profil' : '';
+
+    try {
+      final tokenResult = await user.getIdTokenResult(forceRefreshToken);
+      final claims = tokenResult.claims ?? const <String, dynamic>{};
+      final roleClaims = (claims['roles'] as List<dynamic>? ?? <dynamic>[])
+          .map((role) => role.toString().trim().toLowerCase())
+          .where((role) => role.isNotEmpty)
+          .toList();
+      final tokenHasAdmin = _hasAdminRoleInValues(roleClaims) ||
+          claims['admin'] == true ||
+          claims['superadmin'] == true;
+      if (tokenHasAdmin) {
+        hinted = true;
+        source = 'token';
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+    setState(() {
+      _adminLocalAccessHint = hinted;
+      _adminLocalAccessSource = source;
+    });
+  }
+
+  Future<Map<String, dynamic>> _adminCheckAccessStatus({
+    bool allowAuthRetry = true,
+  }) async {
+    final sw = Stopwatch()..start();
+    final callable = _functions.httpsCallable(
+      'adminGetAccessStatus',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+    );
+    try {
+      final res = await callable.call<dynamic>({});
+      sw.stop();
+      PrestoMonitoring.I.trackFunctionsCall(
+          name: 'adminGetAccessStatus', ms: sw.elapsedMilliseconds);
+      if (mounted) {
+        setState(() {
+          _adminLastCheckedAt = DateTime.now();
+          _adminLocalAccessHint = true;
+          if (_adminLocalAccessSource.isEmpty) {
+            _adminLocalAccessSource = 'callable';
+          }
+        });
+      }
+      unawaited(_adminAudioRuntimeStore.enableCloudSync());
+      return Map<String, dynamic>.from(res.data as Map);
+    } on FirebaseFunctionsException catch (e) {
+      if (allowAuthRetry &&
+          (e.code == 'permission-denied' || e.code == 'unauthenticated')) {
+        final user = _auth.currentUser;
+        if (user != null) {
+          await _refreshAdminLocalAccessHint(
+            user,
+            forceRefreshToken: true,
+          );
+          return _adminCheckAccessStatus(allowAuthRetry: false);
+        }
+      }
+      PrestoMonitoring.I.trackError('adminGetAccessStatus', e);
+      rethrow;
+    } catch (e) {
+      PrestoMonitoring.I.trackError('adminGetAccessStatus', e);
+      rethrow;
+    }
   }
 
   Future<Map<String, dynamic>> _adminGetMicroIaConfig() async {
@@ -11711,6 +12119,7 @@ class _AccountPageState extends State<AccountPage> {
       sw.stop();
       PrestoMonitoring.I.trackFunctionsCall(
           name: 'adminGetMicroIaConfig', ms: sw.elapsedMilliseconds);
+      unawaited(_adminAudioRuntimeStore.enableCloudSync());
       return Map<String, dynamic>.from(res.data as Map);
     } catch (e) {
       PrestoMonitoring.I.trackError('adminGetMicroIaConfig', e);
@@ -11718,250 +12127,206 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  Future<void> _adminSetMicroIaConfig() async {
-    if (_adminSaving) return;
-    setState(() => _adminSaving = true);
-    final sw = Stopwatch()..start();
-    try {
-      final callable = _functions.httpsCallable(
-        'adminSetMicroIaConfig',
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
-      );
+  void _refreshAdminAccessForUser(String uid) {
+    _adminAccessFutureUid = uid;
+    _adminAccessFuture = _adminCheckAccessStatus();
+  }
 
-      final res = await callable.call<dynamic>({
-        'mode': _adminMicroIaMode,
-        'fallbackEnabled': _adminMicroIaFallbackEnabled,
-        'qualityThreshold': _adminMicroIaQualityThreshold,
-        'languageCode': _adminMicroIaLanguageCode,
-      });
+  void _refreshAdminConfigForUser(String uid) {
+    _adminCfgFutureUid = uid;
+    _adminCfgFuture = _adminGetMicroIaConfig();
+  }
 
-      sw.stop();
-      PrestoMonitoring.I.trackFunctionsCall(
-          name: 'adminSetMicroIaConfig', ms: sw.elapsedMilliseconds);
+  bool _isAdminAccessDenied(Object? error) {
+    if (error is FirebaseFunctionsException) {
+      return error.code == 'permission-denied' ||
+          error.code == 'unauthenticated';
+    }
 
-      // ✅ Re-synchronise l'UI avec la config effectivement publiée.
-      final data = (res.data is Map)
-          ? Map<String, dynamic>.from(res.data as Map)
-          : <String, dynamic>{};
-      final mode = (data['mode'] ?? _adminMicroIaMode).toString();
-      final fallback = data['fallbackEnabled'] == true;
-      final threshold = (data['qualityThreshold'] as num?)?.toDouble() ??
-          _adminMicroIaQualityThreshold;
-      final lang =
-          (data['languageCode'] ?? _adminMicroIaLanguageCode).toString();
+    final errStr = error?.toString() ?? '';
+    return errStr.contains('permission-denied') ||
+        errStr.contains('unauthenticated');
+  }
 
-      if (!mounted) return;
+  String _adminErrorDetail(Object? error) {
+    if (error is FirebaseFunctionsException) {
+      final message = error.message?.trim();
+      if (message != null && message.isNotEmpty) {
+        return message;
+      }
 
-      setState(() {
-        _adminMicroIaMode = mode;
-        _adminMicroIaFallbackEnabled = fallback;
-        _adminMicroIaQualityThreshold = threshold;
-        _adminMicroIaLanguageCode = lang;
-        _adminMicroIaLanguageController.text = lang;
-        _adminMicroIaEditing = false; // ✅ re-griser les champs
-      });
-      showSuccessSnackBar(context, 'Paramètres Micro-IA mis à jour');
-    } on FirebaseFunctionsException catch (e) {
-      PrestoMonitoring.I.trackError('adminSetMicroIaConfig', e);
-      if (!mounted) return;
-      showSuccessSnackBar(context, e.message ?? 'Erreur admin');
-    } catch (e) {
-      PrestoMonitoring.I.trackError('adminSetMicroIaConfig', e);
-      if (!mounted) return;
-      showSuccessSnackBar(context, 'Erreur admin: $e');
-    } finally {
-      if (mounted) setState(() => _adminSaving = false);
+      switch (error.code) {
+        case 'permission-denied':
+          return 'Accès refusé par la fonction admin.';
+        case 'unauthenticated':
+          return 'La session utilisateur n’est plus authentifiée.';
+        case 'unavailable':
+          return 'Le service admin est indisponible ou le réseau ne répond pas.';
+        case 'deadline-exceeded':
+          return 'La vérification admin a dépassé le délai autorisé.';
+        case 'internal':
+          return 'La fonction admin a renvoyé une erreur interne.';
+      }
+    }
+
+    final errStr = error?.toString().trim() ?? '';
+    final errLower = errStr.toLowerCase();
+    if (errLower.contains('socketexception') ||
+        errLower.contains('network') ||
+        errLower.contains('failed host lookup')) {
+      return 'Échec réseau pendant la vérification admin.';
+    }
+    if (errLower.contains('timeout') ||
+        errLower.contains('deadline-exceeded')) {
+      return 'La vérification admin a expiré.';
+    }
+    if (errStr.isEmpty) {
+      return 'Détail indisponible.';
+    }
+    return errStr;
+  }
+
+  String _adminModeStatusLabel(String mode) {
+    switch (mode) {
+      case 'GOOGLE_ONLY':
+        return 'Google uniquement';
+      case 'WHISPER_ONLY':
+        return 'Whisper uniquement';
+      case 'HYBRID':
+      default:
+        return 'Hybride';
     }
   }
 
-  Widget _buildAdminAnalyticsPanel() {
-    return AnimatedBuilder(
-      animation: PrestoMonitoring.I,
-      builder: (context, _) {
-        final m = PrestoMonitoring.I;
+  String _formatAdminCheckTime(DateTime? value) {
+    if (value == null) return 'inconnu';
+    String two(int v) => v.toString().padLeft(2, '0');
+    final local = value.toLocal();
+    return '${two(local.day)}/${two(local.month)}/${local.year} ${two(local.hour)}:${two(local.minute)}';
+  }
 
-        return AccountAdminAnalyticsPanel(
-          enabled: m.enabled,
-          verboseLogs: m.verboseLogs,
-          sessionLabel: m.sessionDurationLabel,
-          errorsCount: m.errorsCount,
-          onEnabledChanged: m.setEnabled,
-          onVerboseChanged: m.setVerbose,
-          onReset: m.reset,
-          metrics: [
-            AccountAnalyticsMetricItem(
-              icon: '🧾',
-              label: 'Offres — Stream Firestore',
-              subtitle: 'snapshots() sur la query (temps réel)',
-              enabled: m.monitorOffersStream,
-              onToggle: m.setMonitorOffersStream,
-              value:
-                  '${m.offersSnapshotsCount} snap • ${m.lastOffersSnapshotDocs} docs',
-              hint: m.lastOffersQuerySignature,
-              color: kPrestoBlue,
+  Widget _buildAdminLoadingCard() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: kPrestoBlue.withOpacity(0.07),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: kPrestoBlue.withOpacity(0.18)),
+      ),
+      child: Row(
+        children: const [
+          SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2.4),
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Verification admin en cours',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Chargement des droits et de la configuration Micro-IA pour ce profil.',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
             ),
-            AccountAnalyticsMetricItem(
-              icon: '📥',
-              label: 'Offres — Fetch once',
-              subtitle: 'get() ponctuel (debug/pagination)',
-              enabled: m.monitorOffersFetchOnce,
-              onToggle: m.setMonitorOffersFetchOnce,
-              value:
-                  '${m.offersFetchOnceCount} • ${m.lastOffersFetchMs}ms • ${m.lastOffersFetchDocs} docs',
-              color: kPrestoOrange,
-            ),
-            AccountAnalyticsMetricItem(
-              icon: '💬',
-              label: 'Messages — Fetch once',
-              subtitle: 'get() messages d’une conversation',
-              enabled: m.monitorMessagesFetchOnce,
-              onToggle: m.setMonitorMessagesFetchOnce,
-              value:
-                  '${m.messagesFetchOnceCount} • ${m.lastMessagesFetchMs}ms • ${m.lastMessagesFetchDocs} docs',
-              color: Colors.purple,
-            ),
-            AccountAnalyticsMetricItem(
-              icon: '⚡',
-              label: 'Cloud Functions',
-              subtitle: 'callable (admin/login/...)',
-              enabled: m.monitorFunctionsCalls,
-              onToggle: m.setMonitorFunctionsCalls,
-              value: '${m.functionsCallsCount} • ${m.lastFunctionsCallMs}ms',
-              hint: m.lastError,
-              color: Colors.teal,
-            ),
-            AccountAnalyticsMetricItem(
-              icon: '🛰️',
-              label: 'Autres streams Firestore',
-              subtitle: 'notifications / conversations / profils / home',
-              enabled: m.monitorOtherStreams,
-              onToggle: m.setMonitorOtherStreams,
-              value: '${m.otherStreamsEvents} • ${m.lastOtherStreamDocs} docs',
-              hint: m.lastOtherStreamKey,
-              color: Colors.indigo,
-            ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildAdminMicroIaPanel(User user) {
-    _adminCfgFuture ??= _adminGetMicroIaConfig();
-
-    return FutureBuilder<Map<String, dynamic>>(
-      future: _adminCfgFuture,
-      builder: (context, cfgSnap) {
-        if (cfgSnap.connectionState == ConnectionState.waiting &&
-            !_adminConfigLoaded) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(kPrestoOrange),
-              ),
+  Widget _buildAdminLoadRetryCard({
+    required User user,
+    required String title,
+    required String message,
+    String? detail,
+    bool showOpenButton = false,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Colors.black87,
             ),
-          );
-        }
-
-        if (cfgSnap.hasError && !_adminConfigLoaded) {
-          final err = cfgSnap.error;
-          if (err is FirebaseFunctionsException) {
-            if (err.code == 'permission-denied' ||
-                err.code == 'unauthenticated') {
-              return const SizedBox.shrink();
-            }
-          }
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              "Erreur chargement Admin.\n$err",
-              style: const TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          );
-        }
-
-        if (cfgSnap.hasData && !_adminConfigLoaded) {
-          final cfg = cfgSnap.data!;
-          final mode = (cfg['mode'] ?? 'HYBRID').toString();
-          final fallback = cfg['fallbackEnabled'] == true;
-          final threshold =
-              (cfg['qualityThreshold'] as num?)?.toDouble() ?? 0.62;
-          final lang = (cfg['languageCode'] ?? 'fr-FR').toString();
-
-          _adminMicroIaMode = mode;
-          _adminMicroIaFallbackEnabled = fallback;
-          _adminMicroIaQualityThreshold = threshold;
-          _adminMicroIaLanguageCode = lang;
-          _adminMicroIaLanguageController.text = lang;
-          _adminConfigLoaded = true;
-        }
-
-        final techLines = <String>[
-          'uid: ${user.uid}',
-          'email: ${user.email ?? "(null)"}',
-          'providers: ${user.providerData.map((p) => p.providerId).join(', ')}',
-          'createdAt: ${user.metadata.creationTime?.toIso8601String() ?? "(null)"}',
-          'lastSignIn: ${user.metadata.lastSignInTime?.toIso8601String() ?? "(null)"}',
-        ];
-
-        return AccountAdminMicroIaPanel(
-          techLines: techLines,
-          buildVersionPanel: AccountBuildVersionPanel(
-            platformLabel: kIsWeb ? 'web' : defaultTargetPlatform.name,
-            modeLabel:
-                kReleaseMode ? 'release' : (kProfileMode ? 'profile' : 'debug'),
-            version: kAppVersion,
-            buildNumber: kAppBuildNumber,
-            repository: kAppRepository,
-            sha: kAppBuildSha,
-            tag: kAppBuildTag,
-            branch: kAppBuildBranch,
-            buildTimeUtc: kAppBuildTimeUtc,
-            onCopySha: () async {
-              await Clipboard.setData(
-                const ClipboardData(text: kAppBuildSha),
-              );
-              if (!context.mounted) return;
-              showSuccessSnackBar(context, 'SHA copié');
-            },
-            onCopySnapshot: (snapshotText) async {
-              await Clipboard.setData(
-                ClipboardData(text: snapshotText),
-              );
-              if (!context.mounted) return;
-              showSuccessSnackBar(context, 'Snapshot build copié');
-            },
           ),
-          analyticsPanel: _buildAdminAnalyticsPanel(),
-          mode: _adminMicroIaMode,
-          fallbackEnabled: _adminMicroIaFallbackEnabled,
-          qualityThreshold: _adminMicroIaQualityThreshold,
-          languageController: _adminMicroIaLanguageController,
-          canEdit: _adminMicroIaEditing && !_adminSaving,
-          isSaving: _adminSaving,
-          onModeChanged: (v) {
-            if (v == null) return;
-            setState(() => _adminMicroIaMode = v);
-          },
-          onFallbackChanged: (v) =>
-              setState(() => _adminMicroIaFallbackEnabled = v),
-          onThresholdChanged: (v) =>
-              setState(() => _adminMicroIaQualityThreshold = v),
-          onLanguageChanged: (v) {
-            _adminMicroIaLanguageCode = v.trim();
-          },
-          onApplyPressed: _adminSetMicroIaConfig,
-          onEditPressed: () {
-            setState(() => _adminMicroIaEditing = true);
-          },
-        );
-      },
+          const SizedBox(height: 6),
+          Text(
+            message,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
+          ),
+          if (detail != null && detail.trim().isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Détail: ${detail.trim()}',
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.black45,
+                fontSize: 12,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () {
+              setState(() {
+                _refreshAdminAccessForUser(user.uid);
+                _refreshAdminConfigForUser(user.uid);
+              });
+            },
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Réessayer'),
+          ),
+          if (showOpenButton) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AdminSpacePage(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.open_in_new_rounded),
+                label: const Text("Ouvrir l'espace admin"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrestoOrange,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -11999,6 +12364,7 @@ class _AccountPageState extends State<AccountPage> {
   @override
   void initState() {
     super.initState();
+    unawaited(_adminAudioRuntimeStore.ensureInitialized());
     // _isLoginMode = !widget.startInSignup; // Plus utilisé avec PrestoPremiumAuthPage
     _scrollController.addListener(() {
       widget.onScroll?.call(_scrollController.offset);
@@ -12006,9 +12372,6 @@ class _AccountPageState extends State<AccountPage> {
     _profilePseudoController.addListener(_handleProfileCompletenessChanged);
     _profileCityController.addListener(_handleProfileCompletenessChanged);
     _profilePhoneController.addListener(_handleProfileCompletenessChanged);
-    _profileAuthSub = _auth.authStateChanges().listen((user) {
-      unawaited(_handleProfileAuthStateChanged(user));
-    });
 
     // Sur Web, vérifie si l'utilisateur revient d'un redirect Google Sign-In
     if (kIsWeb) {
@@ -12018,7 +12381,13 @@ class _AccountPageState extends State<AccountPage> {
 
   void _handleProfileCompletenessChanged() {
     if (!mounted) return;
-    setState(() {});
+    final nextMissingCount = _missingRequiredProfileFields().length;
+    if (nextMissingCount == _lastMissingRequiredCount) {
+      return;
+    }
+    setState(() {
+      _lastMissingRequiredCount = nextMissingCount;
+    });
   }
 
   void _resetProfileState({
@@ -12029,6 +12398,7 @@ class _AccountPageState extends State<AccountPage> {
     _profileLoadRequested = false;
     _profileLoadError = false;
     _profileLoadRetries = 0;
+    _lastMissingRequiredCount = -1;
     _isEditingProfile = false;
     _profilePhoneCountryCode = '+33';
     _favoriteCategories = <String>{};
@@ -12070,7 +12440,10 @@ class _AccountPageState extends State<AccountPage> {
       _profileLoadRequested = true;
     });
 
+    final adminHintFuture =
+      _refreshAdminLocalAccessHint(user, forceRefreshToken: true);
     await _loadUserProfile(user);
+    await adminHintFuture;
   }
 
   bool _hasProfileValuesInMemory() {
@@ -12183,6 +12556,7 @@ class _AccountPageState extends State<AccountPage> {
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       String msg = "Erreur Google";
+      var shouldShow = true;
       if (e.code == 'unauthorized-domain') {
         msg =
             "Domaine non autorisé. Ajoute ce domaine dans Firebase Console → Authentication → Authorized domains.";
@@ -12191,6 +12565,11 @@ class _AccountPageState extends State<AccountPage> {
             "Google Sign-In non activé. Active-le dans Firebase Console → Authentication → Sign-in method.";
       } else if (e.code != 'invalid-credential' && e.code != 'no-auth-event') {
         msg = "Erreur Google : ${e.message ?? e.code}";
+      } else {
+        shouldShow = false;
+      }
+
+      if (shouldShow) {
         showErrorSnackBar(context, msg);
       }
     } catch (e) {
@@ -12210,7 +12589,6 @@ class _AccountPageState extends State<AccountPage> {
     _profilePseudoController.dispose();
     _profileCityController.dispose();
     _profilePhoneController.dispose();
-    _adminMicroIaLanguageController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -12240,6 +12618,15 @@ class _AccountPageState extends State<AccountPage> {
 
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
+        final profileHasAdminHint = _hasAdminHintFromProfileData(data);
+        if (profileHasAdminHint) {
+          _adminLocalAccessHint = true;
+          if (_adminLocalAccessSource != 'token') {
+            _adminLocalAccessSource = 'profil';
+          }
+        } else if (!_adminLocalAccessHint) {
+          _adminLocalAccessSource = '';
+        }
         _profilePseudoController.text = _firstNonEmptyProfileValue(
           data,
           const ['pseudo', 'displayName', 'userName', 'user_name', 'name'],
@@ -12328,6 +12715,9 @@ class _AccountPageState extends State<AccountPage> {
         _draftFavoriteSelections = previousDraftFavoriteSelections;
         _isEditingProfile = !_hasProfileValuesInMemory();
         _profileLoadError = false;
+        if (!_adminLocalAccessHint) {
+          _adminLocalAccessSource = '';
+        }
       }
     } catch (e) {
       debugPrint('[Profile] Erreur chargement profil: $e');
@@ -12363,6 +12753,7 @@ class _AccountPageState extends State<AccountPage> {
 
     if (mounted) {
       setState(() {
+        _lastMissingRequiredCount = _missingRequiredProfileFields().length;
         _profileLoaded = true;
         _profileLoadRequested = true;
       });
@@ -13355,66 +13746,302 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildAdminSpaceEntry(User user) {
-    if (_adminCfgFuture == null || _adminCfgFutureUid != user.uid) {
-      _adminCfgFutureUid = user.uid;
-      _adminCfgFuture = _adminGetMicroIaConfig();
+    if (_adminAccessFuture == null || _adminAccessFutureUid != user.uid) {
+      _refreshAdminAccessForUser(user.uid);
     }
 
     return FutureBuilder<Map<String, dynamic>>(
-      future: _adminCfgFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox.shrink();
+      future: _adminAccessFuture,
+      builder: (context, accessSnapshot) {
+        if (accessSnapshot.connectionState == ConnectionState.waiting) {
+          return _buildAdminLoadingCard();
         }
 
-        if (snapshot.hasError) {
-          // Non-admin => on masque.
-          final errStr = snapshot.error.toString();
-          if (errStr.contains('permission-denied') ||
-              errStr.contains('unauthenticated')) {
+        if (accessSnapshot.hasError) {
+          if (_isAdminAccessDenied(accessSnapshot.error) &&
+              !_adminLocalAccessHint) {
             return const SizedBox.shrink();
           }
-          return const SizedBox.shrink();
+          if (_adminLocalAccessHint) {
+            return _buildAdminLocalFallbackCard(
+              user: user,
+              detail: _adminErrorDetail(accessSnapshot.error),
+            );
+          }
+          return _buildAdminLoadRetryCard(
+            user: user,
+            title: 'Espace admin indisponible',
+            message:
+                'Le chargement du profil admin a échoué temporairement. Réessaie pour vérifier l’accès.',
+            detail: _adminErrorDetail(accessSnapshot.error),
+          );
         }
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 18),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: kPrestoBlue.withOpacity(0.25)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        if (_adminCfgFuture == null || _adminCfgFutureUid != user.uid) {
+          _refreshAdminConfigForUser(user.uid);
+        }
+
+        return FutureBuilder<Map<String, dynamic>>(
+          future: _adminCfgFuture,
+          builder: (context, cfgSnapshot) {
+            final cfg = cfgSnapshot.data ?? const <String, dynamic>{};
+            final mode = (cfg['mode'] ?? _adminAudioRuntimeStore.configuredMode)
+                .toString();
+            if (cfgSnapshot.hasData) {
+              _adminAudioRuntimeStore.updateConfiguredMode(mode);
+            }
+
+            final configLoaded = cfgSnapshot.hasData;
+            final configError = cfgSnapshot.hasError;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 18),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: kPrestoBlue.withOpacity(0.25)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.admin_panel_settings,
-                      color: kPrestoBlue.withOpacity(0.95)),
-                  const SizedBox(width: 10),
-                  const Expanded(
-                    child: Text(
-                      'Espace admin',
+                  Row(
+                    children: [
+                      Icon(Icons.admin_panel_settings,
+                          color: kPrestoBlue.withOpacity(0.95)),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          'Espace admin',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: Colors.green.shade200),
+                        ),
+                        child: Text(
+                          'Verifie',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12,
+                            color: Colors.green.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    configLoaded
+                        ? 'Acces admin confirme pour ce profil. Mode serveur actuel: ${_adminModeStatusLabel(mode)}.'
+                        : 'Acces admin confirme pour ce profil. La configuration serveur est en cours de chargement.',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Dernier controle: ${_formatAdminCheckTime(_adminLastCheckedAt)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black45,
+                      fontSize: 12,
+                    ),
+                  ),
+                  if (configError) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Config Micro-IA indisponible: ${_adminErrorDetail(cfgSnapshot.error)}',
                       style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.orange.shade700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: (configLoaded ? kPrestoBlue : Colors.orange)
+                              .withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          configLoaded
+                              ? 'Config Micro-IA chargee'
+                              : 'Config Micro-IA en attente',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            color: (configLoaded ? kPrestoBlue : Colors.orange)
+                                .withOpacity(0.92),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: kPrestoOrange.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'Pipeline: ${_adminModeStatusLabel(mode)}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            color: kPrestoOrange.withOpacity(0.92),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const AdminSpacePage(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.open_in_new_rounded),
+                      label: const Text("Ouvrir l'espace admin"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrestoOrange,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 12),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              const Text(
-                "Outils d’administration et réglages Micro-IA.",
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black54,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildAdminLocalFallbackCard({
+    required User user,
+    String? detail,
+  }) {
+    final sourceLabel = _adminLocalAccessSource.isNotEmpty
+        ? ' via $_adminLocalAccessSource'
+        : '';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.admin_panel_settings,
+                  color: kPrestoBlue.withOpacity(0.95)),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Espace admin',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Text(
+                  'Mode secours',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                    color: Colors.orange.shade700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Accès admin détecté localement$sourceLabel. La vérification serveur a échoué, mais la tuile reste disponible.',
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Dernier contrôle: ${_formatAdminCheckTime(_adminLastCheckedAt)}',
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black45,
+              fontSize: 12,
+            ),
+          ),
+          if (detail != null && detail.trim().isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Détail: ${detail.trim()}',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.orange.shade700,
+                fontSize: 12,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _refreshAdminAccessForUser(user.uid);
+                      _refreshAdminConfigForUser(user.uid);
+                    });
+                  },
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Relancer le contrôle'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
                     Navigator.of(context).push(
@@ -13432,15 +14059,15 @@ class _AccountPageState extends State<AccountPage> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 12),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
                 ),
               ),
             ],
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -14013,6 +14640,7 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   bool _isLoading = true;
   String? _error;
   String? _busyOfferId;
+  bool _publishedSectionExpanded = false;
   bool _rejectedSectionExpanded = false;
   bool _archivedSectionExpanded = false;
 
@@ -14539,6 +15167,10 @@ class _UserOffersSectionState extends State<UserOffersSection> {
     _OfferManagementSection section,
     List<_ManagedOfferItem> items,
   ) {
+    if (section == _OfferManagementSection.published) {
+      return _buildPublishedOfferSection(items);
+    }
+
     if (section == _OfferManagementSection.rejected) {
       return _buildRejectedOfferSection(items);
     }
@@ -14609,6 +15241,134 @@ class _UserOffersSectionState extends State<UserOffersSection> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPublishedOfferSection(List<_ManagedOfferItem> items) {
+    final color = _statusColor(_OfferManagementSection.published);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withOpacity(0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: () {
+                setState(() {
+                  _publishedSectionExpanded = !_publishedSectionExpanded;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Publiées',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _publishedSectionExpanded
+                                ? 'Masquer la liste'
+                                : 'Ouvrir le menu pour consulter la liste',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '${items.length}',
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    AnimatedRotation(
+                      turns: _publishedSectionExpanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 180),
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: color,
+                        size: 24,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 180),
+            crossFadeState: _publishedSectionExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: items.isEmpty
+                  ? Text(
+                      _sectionEmptyLabel(_OfferManagementSection.published),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Divider(height: 1),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Retrouve ici toutes les annonces déjà en ligne et ouvre leur fiche quand tu veux les consulter.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ...items.map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _buildOfferTile(item),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
         ],
       ),
     );

@@ -278,9 +278,9 @@ exports.placesAutocomplete = onCall(
     const predictions = Array.isArray(data.predictions) ? data.predictions : [];
     return {
       status,
-      predictions: predictions.slice(0, 10).map((p) => ({
-        description: String(p?.description || ''),
-        placeId: String(p?.place_id || ''),
+      predictions: predictions.map((item) => ({
+        description: String(item?.description || ''),
+        placeId: String(item?.place_id || ''),
       })),
     };
   }
@@ -915,6 +915,42 @@ async function assertIsAdmin(req) {
     throw new HttpsError('unauthenticated', 'Authentication required.');
   }
 
+  const token = req.auth?.token || {};
+  const tokenRoles = Array.isArray(token.roles)
+    ? token.roles
+        .map((role) => String(role || '').trim().toLowerCase())
+        .filter(Boolean)
+    : [];
+  const tokenHasAdminRole =
+    tokenRoles.includes('admin') ||
+    tokenRoles.includes('superadmin') ||
+    token.admin === true ||
+    token.superadmin === true;
+
+  if (tokenHasAdminRole) {
+    return;
+  }
+
+  const userSnap = await admin.firestore().collection('users').doc(uid).get();
+  const userData = userSnap.data() || {};
+  const userRoles = Array.isArray(userData.roles)
+    ? userData.roles
+        .map((role) => String(role || '').trim().toLowerCase())
+        .filter(Boolean)
+    : [];
+  const primaryRole = String(userData.primaryRole || '').trim().toLowerCase();
+  const userHasAdminRole =
+    userRoles.includes('admin') ||
+    userRoles.includes('superadmin') ||
+    primaryRole === 'admin' ||
+    primaryRole === 'superadmin' ||
+    userData.admin === true ||
+    userData.superadmin === true;
+
+  if (userHasAdminRole) {
+    return;
+  }
+
   const snap = await admin.firestore().collection('admins').doc(uid).get();
   const data = snap.data() || {};
   const enabled = data.enabled !== false; // défaut: true si doc existe
@@ -1105,6 +1141,23 @@ exports.adminGetUserStats = onCall(
       loginsByMethod,
       loginsByPlatform,
       windowMinutes: 5,
+    };
+  }
+);
+// ✅ Admin: vérifier rapidement l'accès admin sans dépendre de Remote Config.
+exports.adminGetAccessStatus = onCall(
+  {
+    region: PROJECT_REGION,
+    timeoutSeconds: 15,
+    enforceAppCheck: ENFORCE_APP_CHECK,
+  },
+  async (req) => {
+    await assertIsAdmin(req);
+    return {
+      ok: true,
+      isAdmin: true,
+      uid: req.auth?.uid || null,
+      checkedAt: Date.now(),
     };
   }
 );

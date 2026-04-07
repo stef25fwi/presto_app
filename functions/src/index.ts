@@ -14,6 +14,7 @@ export {
   openAiExtractListingFields,
   openAiTranscribeListingAudio,
   openAiExtractListingFieldsFromAudio,
+  adminGetAccessStatus,
   adminGetUserStats,
   getUserPresenceStatus,
   microIaProcessAudio,

@@ -46,6 +46,7 @@ class ConversationsListPage extends StatefulWidget {
 class _ConversationsListPageState extends State<ConversationsListPage> {
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _hiddenConversationIds = <String>{};
+  final List<String> _adminConversationLoadLogs = <String>[];
   bool _didHandleInitialConversation = false;
   bool _isResolvingInitialConversation = false;
   int _initialConversationResolveAttempts = 0;
@@ -53,6 +54,78 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   _ConversationListFilter _activeFilter = _ConversationListFilter.all;
   Stream<_ConversationQueryState>? _conversationStateStream;
   String? _conversationStateUserId;
+  String? _adminStatusUid;
+  bool _isAdminViewer = false;
+
+  void _appendAdminConversationLog(String message) {
+    if (!_isAdminViewer || !mounted) return;
+
+    final now = DateTime.now();
+    String two(int v) => v.toString().padLeft(2, '0');
+    final stamp =
+        '${two(now.hour)}:${two(now.minute)}:${two(now.second)}';
+    final line = '[$stamp] $message';
+
+    setState(() {
+      _adminConversationLoadLogs.insert(0, line);
+      if (_adminConversationLoadLogs.length > 12) {
+        _adminConversationLoadLogs.removeRange(12, _adminConversationLoadLogs.length);
+      }
+    });
+  }
+
+  Future<void> _refreshAdminViewerStatus(User user) async {
+    if (_adminStatusUid == user.uid) return;
+    _adminStatusUid = user.uid;
+
+    bool isAdmin = false;
+    try {
+      final tokenResult = await user.getIdTokenResult(true);
+      final claims = tokenResult.claims ?? const <String, dynamic>{};
+      final claimRoles = (claims['roles'] as List<dynamic>? ?? const <dynamic>[])
+          .map((role) => role.toString().trim().toLowerCase())
+          .where((role) => role.isNotEmpty)
+          .toSet();
+      isAdmin = claimRoles.contains('admin') ||
+          claimRoles.contains('superadmin') ||
+          claims['admin'] == true ||
+          claims['superadmin'] == true;
+
+      if (!isAdmin) {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        final data = userDoc.data() ?? const <String, dynamic>{};
+        final docRoles = (data['roles'] as List<dynamic>? ?? const <dynamic>[])
+            .map((role) => role.toString().trim().toLowerCase())
+            .where((role) => role.isNotEmpty)
+            .toSet();
+        final primaryRole =
+            (data['primaryRole'] ?? '').toString().trim().toLowerCase();
+        isAdmin = docRoles.contains('admin') ||
+            docRoles.contains('superadmin') ||
+            primaryRole == 'admin' ||
+            primaryRole == 'superadmin' ||
+            data['admin'] == true ||
+            data['superadmin'] == true;
+      }
+    } catch (_) {
+      isAdmin = false;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isAdminViewer = isAdmin;
+      if (!isAdmin) {
+        _adminConversationLoadLogs.clear();
+      } else if (_adminConversationLoadLogs.isEmpty) {
+        _adminConversationLoadLogs.add(
+          '[init] Journal admin actif pour le chargement des conversations.',
+        );
+      }
+    });
+  }
 
   Object? _conversationValue(Map<String, dynamic> data, List<String> keys) {
     for (final key in keys) {
@@ -215,6 +288,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
   }
 
   Stream<_ConversationQueryState> _buildConversationStateStream(String userId) {
+    _appendAdminConversationLog(
+      'Demarrage du chargement des conversations pour user=$userId',
+    );
     final controller = StreamController<_ConversationQueryState>();
     final errorsByField = <String, Object>{};
     final docsByField = <String, List<ConversationSummary>>{};
@@ -234,6 +310,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     void emit() {
       if (controller.isClosed) return;
       docs = _mergeConversationDocs(docsByField.values);
+      _appendAdminConversationLog(
+        'Etat fusionne: total=${docs.length}, sources_ok=${docsByField.length}, sources_erreur=${errorsByField.length}',
+      );
       controller.add(
         _ConversationQueryState(
           docs: docs,
@@ -391,6 +470,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
 
     listenField = (String participantField) {
+      _appendAdminConversationLog('Abonnement source participants: $participantField');
       subscriptionsByField.remove(participantField)?.cancel();
       final subscription = _conversationStream(participantField, userId).listen(
         (snapshot) {
@@ -405,6 +485,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               '[MessagesList] query field=$participantField docs=${snapshot.docs.length} user=$userId',
             );
           }
+          _appendAdminConversationLog(
+            'Source $participantField -> ${snapshot.docs.length} conversation(s)',
+          );
           emit();
         },
         onError: (error, stackTrace) {
@@ -414,6 +497,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               '[MessagesList] query error field=$participantField user=$userId error=$error',
             );
           }
+          _appendAdminConversationLog(
+            'Erreur source $participantField: $error',
+          );
           emit();
           scheduleRetry(participantField);
         },
@@ -422,6 +508,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     };
 
     listenNotifications = () {
+      _appendAdminConversationLog('Abonnement fallback notifications');
       subscriptionsByField.remove(notificationsFallbackSource)?.cancel();
       final subscription = FirebaseFirestore.instance
           .collection('notifications')
@@ -432,6 +519,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           .listen(
         (snapshot) {
           retryTimersByField.remove(notificationsFallbackSource)?.cancel();
+          _appendAdminConversationLog(
+            'Notifications fallback -> ${snapshot.docs.length} notification(s) recues',
+          );
           unawaited(refreshNotificationFallback(snapshot.docs));
         },
         onError: (error, stackTrace) {
@@ -441,6 +531,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               '[MessagesList] notifications stream error user=$userId error=$error',
             );
           }
+          _appendAdminConversationLog('Erreur notifications fallback: $error');
           emit();
           scheduleRetry(notificationsFallbackSource);
         },
@@ -450,6 +541,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
 
     listenStartedMessagesField = (String senderField) {
       final source = '$startedMessageFallbackSourcePrefix$senderField';
+      _appendAdminConversationLog(
+        'Abonnement fallback messages demarres: $senderField',
+      );
       subscriptionsByField.remove(source)?.cancel();
       final baseQuery = FirebaseFirestore.instance
           .collectionGroup('messages')
@@ -464,6 +558,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           .listen(
         (snapshot) {
           retryTimersByField.remove(source)?.cancel();
+          _appendAdminConversationLog(
+            'Fallback $senderField -> ${snapshot.docs.length} message(s) source',
+          );
           unawaited(
             () async {
               final conversationIds = snapshot.docs.length <
@@ -506,6 +603,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
               '[MessagesList] started messages stream error field=$senderField user=$userId error=$error',
             );
           }
+          _appendAdminConversationLog('Erreur fallback $senderField: $error');
           emit();
           scheduleRetry(source);
         },
@@ -516,6 +614,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     scheduleRetry = (String participantField) {
       retryTimersByField.remove(participantField)?.cancel();
       final delay = retryDelayForField(participantField);
+      _appendAdminConversationLog(
+        'Retry programme pour $participantField dans ${delay.inSeconds}s',
+      );
       retryTimersByField[participantField] = Timer(delay, () {
         retryTimersByField.remove(participantField);
         if (controller.isClosed) return;
@@ -543,6 +644,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     }
 
     controller.onCancel = () async {
+      _appendAdminConversationLog('Arret du flux de chargement des conversations');
       for (final timer in retryTimersByField.values) {
         timer.cancel();
       }
@@ -554,6 +656,59 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     };
 
     return controller.stream;
+  }
+
+  Widget _buildAdminConversationLoadLogPanel() {
+    if (!_isAdminViewer) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 2),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFF7EE),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFCDE7C9)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Log admin - chargement conversations',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1E5E28),
+              ),
+            ),
+            const SizedBox(height: 8),
+            if (_adminConversationLoadLogs.isEmpty)
+              const Text(
+                'Aucun evenement de chargement pour le moment.',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2F6C38),
+                ),
+              )
+            else
+              ..._adminConversationLoadLogs.map(
+                (line) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    line,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2F6C38),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Stream<_ConversationQueryState> _conversationStateForUser(String userId) {
@@ -1034,6 +1189,10 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
         final currentUser = authSnapshot.data;
         final userId = currentUser?.uid;
 
+        if (currentUser != null) {
+          unawaited(_refreshAdminViewerStatus(currentUser));
+        }
+
         if (userId == null) {
           return Scaffold(
             backgroundColor: kMessagesPageBackground,
@@ -1074,6 +1233,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                 children: [
                   if (currentUser != null)
                     _buildCurrentAccountBanner(currentUser),
+                  _buildAdminConversationLoadLogPanel(),
                   _buildSearchField(),
                   _buildFilterTabs(),
                   Expanded(

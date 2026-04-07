@@ -183,9 +183,21 @@
       "problemMatcher": []
     },
     {
-      "label": "Firebase: Deploy Hosting + Firestore Rules",
+      "label": "Firebase: Deploy Hosting + Firestore Rules (Combined)",
       "type": "shell",
       "command": "firebase deploy --project presto-app-74abe --only hosting,firestore:rules",
+      "problemMatcher": []
+    },
+    {
+      "label": "Firebase: Deploy Firestore Rules Only",
+      "type": "shell",
+      "command": "firebase deploy --project presto-app-74abe --only firestore:rules",
+      "problemMatcher": []
+    },
+    {
+      "label": "Firebase: Deploy Functions Only",
+      "type": "shell",
+      "command": "firebase deploy --project presto-app-74abe --only functions",
       "problemMatcher": []
     },
     {
@@ -268,6 +280,30 @@
       "problemMatcher": []
     },
     {
+      "label": "add commtipsuh build dpeloy",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Add Commit Push Build Deploy"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "add commti push build deploy",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Add Commit Push Build Deploy"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "zdd commit push build dpeloy",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Add Commit Push Build Deploy"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Release: Build Commit Push Deploy",
       "dependsOrder": "sequence",
       "dependsOn": [
@@ -282,6 +318,38 @@
       "problemMatcher": []
     },
     {
+      "label": "Release: Firestore Rules Only",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: Add All",
+        "Git: Commit Prompt",
+        "Git: Push Main",
+        "Firebase: Deploy Firestore Rules Only"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Release: Hosting + Firestore Rules",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: Add All",
+        "Flutter: Build Web Release",
+        "Git: Commit Prompt",
+        "Git: Push Main",
+        "Firebase: Deploy Hosting + Firestore Rules (Combined)"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Release: Functions Only",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Functions: Build",
+        "Firebase: Deploy Functions Only"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "Release: Messaging Recovery",
       "dependsOrder": "sequence",
       "dependsOn": [
@@ -291,7 +359,7 @@
         "Flutter: Build Web Release",
         "Git: Commit Messaging Recovery",
         "Git: Push Main",
-        "Firebase: Deploy Hosting + Firestore Rules"
+        "Firebase: Deploy Firestore Rules Only"
       ],
       "problemMatcher": []
     },

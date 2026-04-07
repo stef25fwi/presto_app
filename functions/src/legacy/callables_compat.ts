@@ -5,6 +5,7 @@ type LegacyCallableExportMap = {
   openAiExtractListingFields: unknown;
   openAiTranscribeListingAudio: unknown;
   openAiExtractListingFieldsFromAudio: unknown;
+  adminGetAccessStatus: unknown;
   adminGetUserStats: unknown;
   getUserPresenceStatus: unknown;
   microIaProcessAudio: unknown;
@@ -21,6 +22,7 @@ export const generateOfferDraft = legacy.generateOfferDraft;
 export const openAiExtractListingFields = legacy.openAiExtractListingFields;
 export const openAiTranscribeListingAudio = legacy.openAiTranscribeListingAudio;
 export const openAiExtractListingFieldsFromAudio = legacy.openAiExtractListingFieldsFromAudio;
+export const adminGetAccessStatus = legacy.adminGetAccessStatus;
 export const adminGetUserStats = legacy.adminGetUserStats;
 export const getUserPresenceStatus = legacy.getUserPresenceStatus;
 export const microIaProcessAudio = legacy.microIaProcessAudio;
