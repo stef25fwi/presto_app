@@ -1,8 +1,0 @@
-{
-  "settings/microia": {
-    "mode": "HYBRID",
-    "fallbackEnabled": true,
-    "qualityThreshold": 0.62,
-    "languageCode": "fr-FR"
-  }
-}

@@ -52,3 +52,4 @@ node_modules/
 
 # Local diagnostics and accidental merge/export residue
 mic_toggle_audit_*.txt
+audit_microia/
