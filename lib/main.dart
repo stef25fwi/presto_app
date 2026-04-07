@@ -7728,13 +7728,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       // ✅ WEB: Chunking mode (chunks toutes les 2 secondes)
       // Note: Web enregistre des chunks et les envoie progressivement
       try {
-        final uid = FirebaseAuth.instance.currentUser?.uid;
+        final uid = (await _resolveSignedInUser())?.uid;
         if (uid == null) {
           _appendPublishAiTrace(
             'auth',
             'Utilisateur non connecté',
             level: _PublishAiTraceLevel.error,
           );
+          if (!mounted) return;
           showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
           return;
         }
@@ -7832,6 +7833,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     // ✅ MOBILE: Streaming RÉEL avec startStream() + PCM16
     try {
+      final resolvedUser = await _resolveSignedInUser();
+      if (resolvedUser == null) {
+        _appendPublishAiTrace(
+          'auth',
+          'Utilisateur non connecté',
+          level: _PublishAiTraceLevel.error,
+        );
+        if (!mounted) return;
+        showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
+        return;
+      }
+
       final hasPermission = await _recorder.hasPermission();
       if (!mounted) return;
 
@@ -7870,7 +7883,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         level: _PublishAiTraceLevel.success,
       );
 
-      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+      final uid = resolvedUser.uid;
       final int chunkThreshold =
           16000 * 2 * 2; // ~2s à 16kHz mono 16-bit = 64000 bytes
 
@@ -7956,7 +7969,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!_isListening) return;
     _appendPublishAiTrace('stop_streaming', 'Arrêt demandé pour le micro streaming');
     final sessionId = _streamingSessionId;
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = (await _resolveSignedInUser())?.uid;
     var sessionClosed = false;
 
     _streamingTimer?.cancel();
@@ -9868,8 +9881,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<bool> _ensureLoggedInForPublish() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = await _resolveSignedInUser();
     if (user != null) return true;
+    if (!mounted) return false;
     final overlayTheme = context.prestoOverlayTheme;
 
     final startInSignup = await showModalBottomSheet<bool>(
@@ -9949,7 +9963,27 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       ),
     );
 
-    return FirebaseAuth.instance.currentUser != null;
+    return (await _resolveSignedInUser()) != null;
+  }
+
+  Future<User?> _resolveSignedInUser() async {
+    final auth = FirebaseAuth.instance;
+    final currentUser = auth.currentUser;
+    if (currentUser != null) {
+      SessionState.userId = currentUser.uid;
+      return currentUser;
+    }
+
+    try {
+      final streamedUser =
+          await auth.authStateChanges().first.timeout(const Duration(seconds: 2));
+      if (streamedUser != null) {
+        SessionState.userId = streamedUser.uid;
+      }
+      return streamedUser;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _onPublishPressed() async {
@@ -9990,7 +10024,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // On enregistre uniquement en WAV 16k mono, puis _stopMic() déclenchera _uploadAndTranscribe() (MicroIA).
     if (kIsWeb) {
       try {
-        final uid = FirebaseAuth.instance.currentUser?.uid;
+        final uid = (await _resolveSignedInUser())?.uid;
         if (uid == null) {
           _appendPublishAiTrace(
             'auth',
@@ -10041,6 +10075,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     // Préparer l'enregistreur haute qualité (WAV)
     try {
+      final resolvedUser = await _resolveSignedInUser();
+      if (resolvedUser == null) {
+        _appendPublishAiTrace(
+          'auth',
+          'Utilisateur non connecté',
+          level: _PublishAiTraceLevel.error,
+        );
+        if (!mounted) return;
+        showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
+        return;
+      }
+
       if (await _recorder.hasPermission()) {
         final filePath =
             await createTempAudioPath(prefix: 'presto', extension: 'm4a');
@@ -10099,7 +10145,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
 
       try {
-        final user = FirebaseAuth.instance.currentUser;
+        final user = await _resolveSignedInUser();
         final uid = user?.uid;
         if (uid == null) throw Exception('Not authenticated');
 
@@ -10322,8 +10368,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _uploadAndTranscribe(String localPath) async {
     // Upload vers Firebase Storage puis appel de la Cloud Function.
     // Le traitement reste côté backend pour conserver les secrets serveur.
-    final user = FirebaseAuth.instance.currentUser;
-    final uid = user?.uid ?? 'anonymous';
+    final user = await _resolveSignedInUser();
+    final uid = user?.uid;
+    if (uid == null) {
+      _appendPublishAiTrace(
+        'auth',
+        'Utilisateur non connecté au moment de l\'upload',
+        level: _PublishAiTraceLevel.error,
+      );
+      throw 'Utilisateur non connecté';
+    }
     final xfile = XFile(localPath);
     final audioBytes = await xfile.readAsBytes();
     if (audioBytes.isEmpty) {
@@ -11636,6 +11690,15 @@ class _AccountPageState extends State<AccountPage> {
   String _adminMicroIaLanguageCode = 'fr-FR';
 
   Future<Map<String, dynamic>>? _adminCfgFuture;
+  String? _adminCfgFutureUid;
+
+  void _resetAdminAccessState() {
+    _adminConfigLoaded = false;
+    _adminSaving = false;
+    _adminMicroIaEditing = false;
+    _adminCfgFuture = null;
+    _adminCfgFutureUid = null;
+  }
 
   Future<Map<String, dynamic>> _adminGetMicroIaConfig() async {
     final sw = Stopwatch()..start();
@@ -11972,6 +12035,7 @@ class _AccountPageState extends State<AccountPage> {
     _selectedFavoriteCategories = <String>{};
     _selectedFavoriteSubcategories = <String>{};
     _draftFavoriteSelections = <String>{};
+    _resetAdminAccessState();
 
     if (clearControllers) {
       _profilePseudoController.clear();
@@ -11984,11 +12048,14 @@ class _AccountPageState extends State<AccountPage> {
     if (!mounted) return;
 
     if (user == null) {
+      SessionState.userId = null;
       setState(() {
         _resetProfileState();
       });
       return;
     }
+
+    SessionState.userId = user.uid;
 
     if (_activeProfileUid == user.uid &&
         (_profileLoaded || _profileLoadRequested)) {
@@ -13288,7 +13355,10 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildAdminSpaceEntry(User user) {
-    _adminCfgFuture ??= _adminGetMicroIaConfig();
+    if (_adminCfgFuture == null || _adminCfgFutureUid != user.uid) {
+      _adminCfgFutureUid = user.uid;
+      _adminCfgFuture = _adminGetMicroIaConfig();
+    }
 
     return FutureBuilder<Map<String, dynamic>>(
       future: _adminCfgFuture,
