@@ -127,6 +127,29 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
     });
   }
 
+  bool _isNonRetryableConversationSourceError(Object error) {
+    if (error is FirebaseException) {
+      final code = error.code.trim().toLowerCase();
+      if (code == 'permission-denied' ||
+          code == 'failed-precondition' ||
+          code == 'invalid-argument' ||
+          code == 'unimplemented') {
+        return true;
+      }
+
+      final message = (error.message ?? '').toLowerCase();
+      if (message.contains('requires an index') ||
+          message.contains('index') && message.contains('create it')) {
+        return true;
+      }
+    }
+
+    final message = error.toString().toLowerCase();
+    return message.contains('requires an index') ||
+        message.contains('failed-precondition') ||
+        message.contains('create it here');
+  }
+
   Object? _conversationValue(Map<String, dynamic> data, List<String> keys) {
     for (final key in keys) {
       if (!data.containsKey(key)) continue;
@@ -500,6 +523,15 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
           _appendAdminConversationLog(
             'Erreur source $participantField: $error',
           );
+          if (_isNonRetryableConversationSourceError(error)) {
+            docsByField[participantField] = const <ConversationSummary>[];
+            retryTimersByField.remove(participantField)?.cancel();
+            _appendAdminConversationLog(
+              'Source $participantField desactivee: erreur non recuperable',
+            );
+            emit();
+            return;
+          }
           emit();
           scheduleRetry(participantField);
         },
@@ -532,6 +564,16 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             );
           }
           _appendAdminConversationLog('Erreur notifications fallback: $error');
+          if (_isNonRetryableConversationSourceError(error)) {
+            docsByField[notificationsFallbackSource] =
+                const <ConversationSummary>[];
+            retryTimersByField.remove(notificationsFallbackSource)?.cancel();
+            _appendAdminConversationLog(
+              'Notifications fallback desactivees: erreur non recuperable',
+            );
+            emit();
+            return;
+          }
           emit();
           scheduleRetry(notificationsFallbackSource);
         },
@@ -604,6 +646,15 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
             );
           }
           _appendAdminConversationLog('Erreur fallback $senderField: $error');
+          if (_isNonRetryableConversationSourceError(error)) {
+            docsByField[source] = const <ConversationSummary>[];
+            retryTimersByField.remove(source)?.cancel();
+            _appendAdminConversationLog(
+              'Fallback $senderField desactive: erreur non recuperable',
+            );
+            emit();
+            return;
+          }
           emit();
           scheduleRetry(source);
         },
