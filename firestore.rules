@@ -12,9 +12,13 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn()
-        && exists(/databases/$(database)/documents/admins/$(uid()))
-        && (get(/databases/$(database)/documents/admins/$(uid())).data.enabled != false);
+      return hasClaimRole('admin')
+        || hasClaimRole('superadmin')
+        || hasUserDocRole('admin')
+        || hasUserDocRole('superadmin')
+        || (isSignedIn()
+          && exists(/databases/$(database)/documents/admins/$(uid()))
+          && (get(/databases/$(database)/documents/admins/$(uid())).data.enabled != false));
     }
 
     function hasClaimRole(role) {
@@ -23,16 +27,34 @@ service cloud.firestore {
         && request.auth.token.roles.hasAny([role]);
     }
 
+    function hasUserDocRole(role) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(uid()))
+        && (
+          ((get(/databases/$(database)/documents/users/$(uid())).data.roles is list)
+            && get(/databases/$(database)/documents/users/$(uid())).data.roles.hasAny([role]))
+          || get(/databases/$(database)/documents/users/$(uid())).data.primaryRole == role
+          || (role == 'moderator' && get(/databases/$(database)/documents/users/$(uid())).data.moderator == true)
+          || (role == 'admin' && get(/databases/$(database)/documents/users/$(uid())).data.admin == true)
+          || (role == 'superadmin' && get(/databases/$(database)/documents/users/$(uid())).data.superadmin == true)
+        );
+    }
+
     function isMarketplaceModerator() {
       return hasClaimRole('moderator')
+        || hasUserDocRole('moderator')
         || hasClaimRole('admin')
+        || hasUserDocRole('admin')
         || hasClaimRole('superadmin')
+        || hasUserDocRole('superadmin')
         || isAdmin();
     }
 
     function isMarketplaceAdmin() {
       return hasClaimRole('admin')
+        || hasUserDocRole('admin')
         || hasClaimRole('superadmin')
+        || hasUserDocRole('superadmin')
         || isAdmin();
     }
 
@@ -214,6 +236,10 @@ service cloud.firestore {
     match /adminActions/{actionId} {
       allow read: if isMarketplaceModerator();
       allow write: if false;
+    }
+
+    match /admin_runtime_audio/{docId} {
+      allow read, create, update, delete: if isMarketplaceAdmin();
     }
 
     match /categories/{categoryId} {

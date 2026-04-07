@@ -148,12 +148,32 @@ Future<Uint8List> webBlobToBytes(web.Blob blob) async {
   return byteBuffer.asUint8List();
 }
 
-Future<WebMicroIaAudioUpload> webBlobToMicroIaUpload(web.Blob blob) async {
+Future<WebMicroIaAudioUpload> webBlobToMicroIaUpload(
+  web.Blob blob, {
+  bool preferRawBytes = false,
+}) async {
   final fallbackContentType = _normalizeMicroIaContentType(blob.type);
+
+  if (preferRawBytes) {
+    final rawBytes = await webBlobToBytes(blob);
+    final rawContentType =
+        fallbackContentType ?? _inferMicroIaContentTypeFromBytes(rawBytes);
+    if (rawContentType == null) {
+      throw StateError('Unknown content type');
+    }
+
+    return WebMicroIaAudioUpload(
+      bytes: rawBytes,
+      contentType: rawContentType,
+      extension: _extensionForMicroIaContentType(rawContentType),
+      usedClientSideWavConversion: false,
+    );
+  }
 
   try {
     final wavBytes = await webBlobToWav16kMono(blob);
-    if (wavBytes.isNotEmpty) {
+    // > 44 : header WAV seul (44 bytes) = audio vide, on ignore
+    if (wavBytes.length > 44) {
       return WebMicroIaAudioUpload(
         bytes: wavBytes,
         contentType: 'audio/wav',

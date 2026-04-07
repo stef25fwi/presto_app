@@ -29,6 +29,123 @@ class _AdminMetricDomain {
   });
 }
 
+class _FirebaseDeployDiagnosticRule {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final String summary;
+  final String action;
+  final List<String> needles;
+
+  const _FirebaseDeployDiagnosticRule({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.summary,
+    required this.action,
+    required this.needles,
+  });
+}
+
+const String _kFirestoreRulesDeployCommand =
+    'firebase deploy --project presto-app-74abe --only firestore:rules';
+
+const List<_FirebaseDeployDiagnosticRule> _kFirebaseDeployDiagnosticRules = [
+  _FirebaseDeployDiagnosticRule(
+    title: 'Authentification Firebase CLI',
+    icon: Icons.login_rounded,
+    color: Color(0xFF1A73E8),
+    summary: 'Le terminal n’est plus authentifié ou la session CLI a expiré.',
+    action:
+        'Relance firebase login, vérifie le compte actif puis réessaie le déploiement.',
+    needles: [
+      'firebase login',
+      'authentication error',
+      'not logged in',
+      'reauth',
+      'login required',
+    ],
+  ),
+  _FirebaseDeployDiagnosticRule(
+    title: 'Permissions projet insuffisantes',
+    icon: Icons.admin_panel_settings_rounded,
+    color: Color(0xFFD93025),
+    summary: 'Le compte connecté n’a pas les droits nécessaires sur le projet Firebase.',
+    action:
+        'Vérifie l’owner du projet presto-app-74abe, les rôles IAM et le compte Google utilisé par la CLI.',
+    needles: [
+      'permission denied',
+      'permission-denied',
+      'insufficient permissions',
+      'caller does not have permission',
+      'http error: 403',
+    ],
+  ),
+  _FirebaseDeployDiagnosticRule(
+    title: 'Projet ou configuration Firebase invalide',
+    icon: Icons.folder_off_rounded,
+    color: Color(0xFFF29900),
+    summary: 'La CLI ne retrouve pas le projet, firebase.json ou la cible attendue.',
+    action:
+        'Vérifie le dossier courant, le project id, firebase.json et le chemin vers firestore.rules.',
+    needles: [
+      'failed to get firebase project',
+      'project not found',
+      'no currently active project',
+      'firebase.json',
+      'firestore.rules',
+      'not in a firebase app directory',
+    ],
+  ),
+  _FirebaseDeployDiagnosticRule(
+    title: 'Erreur de syntaxe ou compilation des rules',
+    icon: Icons.rule_folder_rounded,
+    color: Color(0xFF8E24AA),
+    summary: 'Le fichier firestore.rules ne compile pas ou contient une règle invalide.',
+    action:
+        'Relis firestore.rules, corrige la ligne signalée puis relance uniquement les rules.',
+    needles: [
+      'error parsing firestore.rules',
+      'compilation errors',
+      'syntax error',
+      'invalid rules',
+      'ruleset',
+    ],
+  ),
+  _FirebaseDeployDiagnosticRule(
+    title: 'Réseau ou service Google indisponible',
+    icon: Icons.cloud_off_rounded,
+    color: Color(0xFF00897B),
+    summary: 'Le poste n’a pas réussi à joindre l’API Firebase ou Google Cloud.',
+    action:
+        'Teste la connectivité, relance plus tard si les API sont dégradées, puis réessaie le deploy.',
+    needles: [
+      'failed host lookup',
+      'socketexception',
+      'network error',
+      'econnreset',
+      'service unavailable',
+      'etimedout',
+      'deadline-exceeded',
+    ],
+  ),
+  _FirebaseDeployDiagnosticRule(
+    title: 'Quota, billing ou API Google Cloud',
+    icon: Icons.account_balance_wallet_rounded,
+    color: Color(0xFF6D4C41),
+    summary: 'Le projet n’a pas accès à la ressource requise ou a atteint une limite.',
+    action:
+        'Contrôle billing, quotas, APIs activées et l’état du projet dans Google Cloud Console.',
+    needles: [
+      'quota',
+      'billing',
+      'resource exhausted',
+      'api has not been used',
+      'enable it by visiting',
+    ],
+  ),
+];
+
 const List<_AdminMetricDomain> _kAdminDashboardMetricDomains = [
   _AdminMetricDomain(
     title: 'Acquisition & trafic',
@@ -1758,14 +1875,569 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
 
   final FirebaseFunctions _functions =
       prestoFirebaseFunctions;
+  final TextEditingController _deployDiagnosticController =
+      TextEditingController();
 
+  bool _adminStatusLoading = true;
+  String _adminMode = 'HYBRID';
+  DateTime? _adminCheckedAt;
+  Object? _adminStatusError;
   bool _userStatsLoading = true;
   Map<String, dynamic>? _userStats;
 
   @override
   void initState() {
     super.initState();
+    _loadAdminStatus();
     _loadUserStats();
+  }
+
+  @override
+  void dispose() {
+    _deployDiagnosticController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadAdminStatus({
+    bool allowAuthRetry = true,
+  }) async {
+    setState(() {
+      _adminStatusLoading = true;
+      _adminStatusError = null;
+    });
+
+    try {
+      final accessCallable = _functions.httpsCallable(
+        'adminGetAccessStatus',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+      );
+      await accessCallable.call<dynamic>({});
+      if (!mounted) return;
+      setState(() {
+        _adminCheckedAt = DateTime.now();
+      });
+
+      try {
+        final configCallable = _functions.httpsCallable(
+          'adminGetMicroIaConfig',
+          options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+        );
+        final configRes = await configCallable.call<dynamic>({});
+        final configData = (configRes.data is Map)
+            ? Map<String, dynamic>.from(configRes.data as Map)
+            : <String, dynamic>{};
+        if (!mounted) return;
+        setState(() {
+          _adminMode = (configData['mode'] ?? _adminMode).toString();
+        });
+      } catch (_) {}
+    } on FirebaseFunctionsException catch (error) {
+      if (allowAuthRetry &&
+          (error.code == 'permission-denied' ||
+              error.code == 'unauthenticated')) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          try {
+            await user.getIdTokenResult(true);
+            if (!mounted) return;
+            await _loadAdminStatus(allowAuthRetry: false);
+            return;
+          } catch (_) {}
+        }
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _adminStatusError = error;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _adminStatusError = error;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _adminStatusLoading = false;
+        });
+      }
+    }
+  }
+
+  bool _isAdminAccessDenied(Object? error) {
+    if (error is FirebaseFunctionsException) {
+      return error.code == 'permission-denied' ||
+          error.code == 'unauthenticated';
+    }
+
+    final errStr = error?.toString() ?? '';
+    return errStr.contains('permission-denied') ||
+        errStr.contains('unauthenticated');
+  }
+
+  String _adminErrorDetail(Object? error) {
+    if (error is FirebaseFunctionsException) {
+      final message = error.message?.trim();
+      if (message != null && message.isNotEmpty) {
+        return message;
+      }
+
+      switch (error.code) {
+        case 'permission-denied':
+          return 'Accès refusé par la fonction admin.';
+        case 'unauthenticated':
+          return 'La session utilisateur n’est plus authentifiée.';
+        case 'unavailable':
+          return 'Le service admin est indisponible ou le réseau ne répond pas.';
+        case 'deadline-exceeded':
+          return 'La vérification admin a dépassé le délai autorisé.';
+        case 'internal':
+          return 'La fonction admin a renvoyé une erreur interne.';
+      }
+    }
+
+    final errStr = error?.toString().trim() ?? '';
+    final errLower = errStr.toLowerCase();
+    if (errLower.contains('socketexception') ||
+        errLower.contains('network') ||
+        errLower.contains('failed host lookup')) {
+      return 'Échec réseau pendant la vérification admin.';
+    }
+    if (errLower.contains('timeout') ||
+        errLower.contains('deadline-exceeded')) {
+      return 'La vérification admin a expiré.';
+    }
+    if (errStr.isEmpty) {
+      return 'Détail indisponible.';
+    }
+    return errStr;
+  }
+
+  String _adminModeLabel(String mode) {
+    switch (mode) {
+      case 'GOOGLE_ONLY':
+        return 'Google uniquement';
+      case 'WHISPER_ONLY':
+        return 'Whisper uniquement';
+      case 'HYBRID':
+      default:
+        return 'Hybride';
+    }
+  }
+
+  List<_FirebaseDeployDiagnosticRule> _matchFirebaseDeployDiagnostics(
+      String rawOutput) {
+    final normalized = rawOutput.toLowerCase();
+    return _kFirebaseDeployDiagnosticRules.where((rule) {
+      return rule.needles.any(normalized.contains);
+    }).toList();
+  }
+
+  Widget _buildFirebaseDeployDiagnosticPanel() {
+    final rawOutput = _deployDiagnosticController.text.trim();
+    final matches = _matchFirebaseDeployDiagnostics(rawOutput);
+    final hasOutput = rawOutput.isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.cloud_sync_rounded, color: prestoBlue),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Diagnostic Firebase deploy',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(
+                    const ClipboardData(text: _kFirestoreRulesDeployCommand),
+                  );
+                  if (!mounted) return;
+                  showSuccessSnackBar(context, 'Commande Firebase copiée');
+                },
+                icon: const Icon(Icons.copy_all_rounded, size: 16),
+                label: const Text('Copier la commande'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Colle ici la sortie du terminal Codespaces pour mapper l’erreur de deploy vers une cause probable et une action utile.',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: SelectableText(
+              _kFirestoreRulesDeployCommand,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _deployDiagnosticController,
+            minLines: 5,
+            maxLines: 8,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              hintText:
+                  'Colle ici la sortie firebase deploy --only firestore:rules',
+              filled: true,
+              fillColor: Colors.grey.shade50,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: hasOutput
+                    ? () {
+                        _deployDiagnosticController.clear();
+                        setState(() {});
+                      }
+                    : null,
+                icon: const Icon(Icons.clear_rounded),
+                label: const Text('Vider'),
+              ),
+              const SizedBox(width: 10),
+              if (hasOutput)
+                Text(
+                  matches.isEmpty
+                      ? 'Aucun motif connu détecté'
+                      : '${matches.length} diagnostic${matches.length > 1 ? 's' : ''} détecté${matches.length > 1 ? 's' : ''}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: matches.isEmpty ? Colors.black45 : prestoBlue,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (!hasOutput)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _kFirebaseDeployDiagnosticRules.take(4).map((rule) {
+                return Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: rule.color.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    rule.title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      color: rule.color,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          if (hasOutput && matches.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.black12),
+              ),
+              child: const Text(
+                'La sortie ne correspond pas à un motif connu. Vérifie le project id, le compte CLI, le fichier firestore.rules et la connectivité réseau.',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
+          if (matches.isNotEmpty) ...[
+            for (final rule in matches) ...[
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 10),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: rule.color.withOpacity(0.07),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: rule.color.withOpacity(0.22)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(rule.icon, color: rule.color),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            rule.title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      rule.summary,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Action: ${rule.action}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdminStatusBanner() {
+    if (_adminStatusLoading) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: prestoBlue.withOpacity(0.07),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: prestoBlue.withOpacity(0.18)),
+        ),
+        child: Row(
+          children: const [
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.4),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Verification admin en cours pour cet espace.',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_adminStatusError != null) {
+      final denied = _isAdminAccessDenied(_adminStatusError);
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: denied ? Colors.red.shade50 : Colors.orange.shade50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: denied ? Colors.red.shade200 : Colors.orange.shade200,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              denied ? 'Acces admin non confirme' : 'Controle admin indisponible',
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              denied
+                  ? 'Les droits admin ne sont plus valides pour cette session.'
+                  : 'La verification admin a echoue temporairement. Relance le controle.',
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.black54,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Detail: ${_adminErrorDetail(_adminStatusError)}',
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.black45,
+                fontSize: 12,
+              ),
+            ),
+            if (_adminCheckedAt != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Dernier controle valide: ${_formatAdminTimestamp(_adminCheckedAt!.millisecondsSinceEpoch)}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black45,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _loadAdminStatus,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Relancer le controle'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: prestoBlue.withOpacity(0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.verified_user_rounded, color: Colors.green.shade700),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'Statut admin verifie',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: Colors.green.shade200),
+                ),
+                child: Text(
+                  'Verifie',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                    color: Colors.green.shade700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Mode serveur charge: ${_adminModeLabel(_adminMode)}.',
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Dernier controle: ${_formatAdminTimestamp(_adminCheckedAt?.millisecondsSinceEpoch)}',
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black45,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: prestoBlue.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  'Config Micro-IA chargee',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    color: prestoBlue.withOpacity(0.92),
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: prestoOrange.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  'Pipeline: ${_adminModeLabel(_adminMode)}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    color: prestoOrange.withOpacity(0.92),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _loadUserStats() async {
@@ -1863,6 +2535,10 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
                   showSuccessSnackBar(context, 'UID copié');
                 },
               ),
+              const SizedBox(height: 14),
+              _buildAdminStatusBanner(),
+              const SizedBox(height: 14),
+              _buildFirebaseDeployDiagnosticPanel(),
               const SizedBox(height: 14),
               GridView(
                 shrinkWrap: true,
