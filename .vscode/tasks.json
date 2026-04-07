@@ -195,6 +195,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Firebase: Deploy Storage Rules Only",
+      "type": "shell",
+      "command": "firebase deploy --project presto-app-74abe --only storage",
+      "problemMatcher": []
+    },
+    {
       "label": "Firebase: Deploy Functions Only",
       "type": "shell",
       "command": "firebase deploy --project presto-app-74abe --only functions",
@@ -393,6 +399,18 @@
       "label": "Messaging: Create Stephane Test Conversation",
       "type": "shell",
       "command": "node tools/create_stephane_test_conversation.cjs",
+      "problemMatcher": []
+    },
+    {
+      "label": "Admin: Check Stephane Access",
+      "type": "shell",
+      "command": "node tools/check_stephane_admin_access.cjs",
+      "problemMatcher": []
+    },
+    {
+      "label": "Admin: Grant Stephane Access",
+      "type": "shell",
+      "command": "node tools/grant_stephane_admin_access.cjs",
       "problemMatcher": []
     },
     {
