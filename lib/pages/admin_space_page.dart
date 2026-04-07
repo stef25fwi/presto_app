@@ -1898,6 +1898,24 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     super.dispose();
   }
 
+  Future<User?> _ensureSignedInUser({
+    bool forceRefreshToken = false,
+  }) async {
+    final auth = FirebaseAuth.instance;
+    final user = auth.currentUser ??
+        await auth.authStateChanges().first.timeout(
+              const Duration(seconds: 2),
+              onTimeout: () => null,
+            );
+    if (user == null) return null;
+
+    try {
+      await user.getIdToken(forceRefreshToken);
+    } catch (_) {}
+
+    return auth.currentUser ?? user;
+  }
+
   Future<void> _loadAdminStatus({
     bool allowAuthRetry = true,
   }) async {
@@ -1907,6 +1925,13 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     });
 
     try {
+      final signedInUser = await _ensureSignedInUser(
+        forceRefreshToken: true,
+      );
+      if (signedInUser == null) {
+        throw StateError('unauthenticated: no current user');
+      }
+
       final accessCallable = _functions.httpsCallable(
         'adminGetAccessStatus',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
@@ -1935,10 +1960,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
       if (allowAuthRetry &&
           (error.code == 'permission-denied' ||
               error.code == 'unauthenticated')) {
-        final user = FirebaseAuth.instance.currentUser;
+        final user = await _ensureSignedInUser(forceRefreshToken: true);
         if (user != null) {
           try {
-            await user.getIdTokenResult(true);
             if (!mounted) return;
             await _loadAdminStatus(allowAuthRetry: false);
             return;
@@ -1986,7 +2010,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
         case 'permission-denied':
           return 'Accès refusé par la fonction admin.';
         case 'unauthenticated':
-          return 'La session utilisateur n’est plus authentifiée.';
+          return 'Session non synchronisee avec le serveur. Recharge la page ou reconnecte-toi.';
         case 'unavailable':
           return 'Le service admin est indisponible ou le réseau ne répond pas.';
         case 'deadline-exceeded':
@@ -2296,8 +2320,8 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
             ),
             const SizedBox(height: 6),
             Text(
-              denied
-                  ? 'Les droits admin ne sont plus valides pour cette session.'
+                denied
+                  ? 'La session admin n est pas encore validee. Relance le controle apres rechargement.'
                   : 'La verification admin a echoue temporairement. Relance le controle.',
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
@@ -2443,6 +2467,13 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
   Future<void> _loadUserStats() async {
     setState(() => _userStatsLoading = true);
     try {
+      final signedInUser = await _ensureSignedInUser(
+        forceRefreshToken: true,
+      );
+      if (signedInUser == null) {
+        throw StateError('unauthenticated: no current user');
+      }
+
       final callable = _functions.httpsCallable(
         'adminGetUserStats',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
@@ -2456,6 +2487,26 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
         _userStats = data;
       });
     } on FirebaseFunctionsException catch (e) {
+      if (e.code == 'permission-denied' || e.code == 'unauthenticated') {
+        final user = await _ensureSignedInUser(forceRefreshToken: true);
+        if (user != null) {
+          try {
+            final callable = _functions.httpsCallable(
+              'adminGetUserStats',
+              options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+            );
+            final res = await callable.call<dynamic>({});
+            final data = (res.data is Map)
+                ? Map<String, dynamic>.from(res.data as Map)
+                : <String, dynamic>{};
+            if (!mounted) return;
+            setState(() {
+              _userStats = data;
+            });
+            return;
+          } catch (_) {}
+        }
+      }
       if (!mounted) return;
       showSuccessSnackBar(context, e.message ?? 'Erreur stats utilisateurs');
     } catch (e) {
