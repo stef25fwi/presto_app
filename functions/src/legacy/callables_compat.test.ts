@@ -9,6 +9,7 @@ const requiredExports = [
   "openAiTranscribeListingAudio",
   "openAiExtractListingFieldsFromAudio",
   "adminGetAccessStatus",
+  "getMyAdminAccessStatus",
   "adminGetUserStats",
   "getUserPresenceStatus",
   "microIaProcessAudio",

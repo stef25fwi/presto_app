@@ -7361,6 +7361,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   String _formatMicroIaRuntimeError(Object error) {
+    if (error is MicroIaClientAuthException) {
+      return error.message;
+    }
+
     if (error is FirebaseFunctionsException) {
       final code = error.code.trim();
       final message = (error.message ?? '').trim();
@@ -7615,9 +7619,28 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     required String logPrefix,
   }) async {
     try {
+      final secureContext = await MicroIaService.prepareSecureCallableContext(
+        forceRefreshToken: false,
+      );
+      if (secureContext.uid != uid) {
+        throw const MicroIaClientAuthException(
+          code: 'auth-changed',
+          message: 'La session utilisateur a changé. Relance la dictée IA.',
+        );
+      }
+      _logMicroIaDebug(
+        'AUTH',
+        'uid=${secureContext.uid} email=${secureContext.email ?? ''} chunk=$sequence',
+      );
+      _logMicroIaDebug('TOKEN', 'fetched=yes chunk=$sequence');
+
       _appendPublishAiTrace(
         'streaming_chunk_$sequence',
         'Upload chunk ${audioBytes.length} bytes, $contentType, .$fileExtension',
+      );
+      _logMicroIaDebug(
+        'UPLOAD',
+        'chunk=$sequence bytes=${audioBytes.length} contentType=$contentType',
       );
       final storagePath = await _listingAudioAiService.uploadAudioBytes(
         ownerUid: uid,
@@ -7643,6 +7666,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       final result = await MicroIaService.processAudio(
         storagePath: storagePath,
         languageCode: OpenAiConfig.defaultLanguageCode,
+        debugLabel: 'streaming_chunk_$sequence',
       ).timeout(const Duration(seconds: 75));
 
       if (!mounted || sessionId != _streamingSessionId) return;
@@ -7687,6 +7711,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (_lastStreamingChunkErrorMessage == null ||
           _lastStreamingChunkErrorMessage!.isEmpty) {
         _lastStreamingChunkErrorMessage = formatted;
+      }
+      if (e is MicroIaClientAuthException) {
+        _logMicroIaDebug('PROCESS', 'auth missing chunk=$sequence code=${e.code}');
+        if (_isListening &&
+            !_isStoppingStreaming &&
+            mounted &&
+            sessionId == _streamingSessionId) {
+          unawaited(_stopStreamingMic());
+        }
       }
       if (_isIgnorableStreamingChunkError(e)) {
         debugPrint(
@@ -7795,7 +7828,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   /// ✅ STREAMING RÉEL: Mobile avec startStream() + PCM16
   Future<void> _startStreamingMic() async {
-    if (_isListening || _isStreaming) return;
+    if (_isListening || _isStreaming || _isStoppingStreaming) return;
     if (_adminAudioRuntimeAccessState == 0) {
       unawaited(_refreshAdminAudioRuntimeAccess());
     }
@@ -7812,18 +7845,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       // ✅ WEB: Chunking mode (chunks toutes les 2 secondes)
       // Note: Web enregistre des chunks et les envoie progressivement
       try {
-        final uid =
-          (await _ensureProtectedSessionReady(forceRefreshToken: true))?.uid;
-        if (uid == null) {
-          _appendPublishAiTrace(
-            'auth',
-            'Utilisateur non connecté',
-            level: _PublishAiTraceLevel.error,
-          );
-          if (!mounted) return;
-          showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
-          return;
-        }
+        final secureContext = await _requirePublishAiSecureContext(
+          stage: 'webStreamingMic.start',
+          forceRefreshToken: true,
+        );
+        if (secureContext == null) return;
+        final uid = secureContext.uid;
+        _logMicroIaDebug('AUTH', 'uid=$uid email=${secureContext.email ?? ''}');
 
         await _webRec.start();
 
@@ -7891,6 +7919,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 return;
               }
 
+              _logMicroIaDebug(
+                'UPLOAD',
+                'chunk=pending session=$sessionId bytes=${audioUpload.bytes.length} contentType=${audioUpload.contentType}',
+              );
+
               await _queueStreamingChunkProcessing(
                 sessionId: sessionId,
                 uid: uid,
@@ -7928,18 +7961,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     // ✅ MOBILE: Streaming RÉEL avec startStream() + PCM16
     try {
-        final resolvedUser =
-          await _ensureProtectedSessionReady(forceRefreshToken: true);
-      if (resolvedUser == null) {
-        _appendPublishAiTrace(
-          'auth',
-          'Utilisateur non connecté',
-          level: _PublishAiTraceLevel.error,
-        );
-        if (!mounted) return;
-        showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
-        return;
-      }
+      final secureContext = await _requirePublishAiSecureContext(
+        stage: 'mobileStreamingMic.start',
+        forceRefreshToken: true,
+      );
+      if (secureContext == null) return;
 
       final hasPermission = await _recorder.hasPermission();
       if (!mounted) return;
@@ -7986,7 +8012,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         level: _PublishAiTraceLevel.success,
       );
 
-      final uid = resolvedUser.uid;
+      final uid = secureContext.uid;
       final int chunkThreshold =
           16000 * 2 * 2; // ~2s à 16kHz mono 16-bit = 64000 bytes
 
@@ -8069,17 +8095,24 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _stopStreamingMic() async {
-    if (!_isListening) return;
+    if (!_isListening || _isStoppingStreaming) return;
+    _isStoppingStreaming = true;
     _appendPublishAiTrace('stop_streaming', 'Arrêt demandé pour le micro streaming');
     final sessionId = _streamingSessionId;
-    final uid =
-      (await _ensureProtectedSessionReady(forceRefreshToken: true))?.uid;
-    var sessionClosed = false;
+    _logMicroIaDebug('STOP', 'requested session=$sessionId');
 
     _streamingTimer?.cancel();
     _streamingTimer = null;
     _streamingMaxDurationTimer?.cancel();
     _streamingMaxDurationTimer = null;
+
+    final secureContext = await _requirePublishAiSecureContext(
+      stage: 'streaming.stop',
+      forceRefreshToken: true,
+      showUserMessage: false,
+    );
+    final uid = secureContext?.uid;
+    var sessionClosed = false;
 
     if (mounted) {
       setState(() {
@@ -8135,6 +8168,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
             ? _PublishAiTraceLevel.warning
             : _PublishAiTraceLevel.success,
       );
+          _logMicroIaDebug(
+            'STOP',
+            'success=$chunkSuccesses errors=$chunkErrors transcript=${transcript.isEmpty ? 'no' : 'yes'}',
+          );
 
       if (transcript.isEmpty) {
         if (!mounted) return;
@@ -8204,6 +8241,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           _isAnalyzing = false;
         });
       }
+      _isStoppingStreaming = false;
     }
   }
 
@@ -8216,6 +8254,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _appendPublishAiTrace(
       'upload_audio',
       'Préparation upload ${audioBytes.length} bytes, $contentType, .$extension',
+    );
+    _logMicroIaDebug(
+      'UPLOAD',
+      'chunk=final bytes=${audioBytes.length} contentType=$contentType extension=$extension',
     );
     final storagePath = await _listingAudioAiService.uploadAudioBytes(
       ownerUid: ownerUid,
@@ -8236,6 +8278,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final out = await MicroIaService.processAudio(
       storagePath: storagePath,
       languageCode: OpenAiConfig.defaultLanguageCode,
+      debugLabel: 'publish_final_audio',
     ).timeout(const Duration(seconds: 90));
 
     final transcript = (out['text'] ?? '').toString().trim();
@@ -8471,6 +8514,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _budgetEditedByUser = false;
   int _streamingSessionId = 0;
   int _nextStreamingChunkSequence = 0;
+  bool _isStoppingStreaming = false;
   final Map<int, String> _streamingChunkTexts = <int, String>{};
   final List<_PublishAiTraceEntry> _publishAiTraceEntries =
       <_PublishAiTraceEntry>[];
@@ -8594,6 +8638,61 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (_isListening) return _isStreaming ? 'Ecoute streaming' : 'Ecoute micro';
     if (_isAnalyzing) return 'Analyse en cours';
     return 'En attente';
+  }
+
+  void _logMicroIaDebug(String stage, String message) {
+    debugPrint('[MICIA][$stage] $message');
+  }
+
+  Future<MicroIaSecureContext?> _requirePublishAiSecureContext({
+    required String stage,
+    bool forceRefreshToken = false,
+    bool showUserMessage = true,
+  }) async {
+    try {
+      final secureContext = await MicroIaService.prepareSecureCallableContext(
+        forceRefreshToken: forceRefreshToken,
+      );
+      _appendPublishAiTrace(
+        'auth',
+        'Session OK uid=${secureContext.uid} token=ok appcheck=${secureContext.hasAppCheckToken ? 'ok' : 'missing'}',
+        level: _PublishAiTraceLevel.success,
+      );
+      _logMicroIaDebug(
+        'AUTH',
+        'uid=${secureContext.uid} email=${secureContext.email ?? ''} stage=$stage',
+      );
+      _logMicroIaDebug('TOKEN', 'fetched=yes stage=$stage');
+      _logMicroIaDebug(
+        'APPCHECK',
+        'token=${secureContext.hasAppCheckToken ? 'yes' : 'no'} stage=$stage',
+      );
+      return secureContext;
+    } on MicroIaClientAuthException catch (error) {
+      _appendPublishAiTrace(
+        'auth',
+        error.message,
+        level: _PublishAiTraceLevel.error,
+      );
+      _logMicroIaDebug('AUTH', 'user=null code=${error.code} stage=$stage');
+      _logMicroIaDebug('TOKEN', 'fetched=no stage=$stage');
+      if (showUserMessage && mounted) {
+        showSuccessSnackBar(context, error.message);
+      }
+      return null;
+    } catch (error) {
+      final message = _formatMicroIaRuntimeError(error);
+      _appendPublishAiTrace(
+        'auth',
+        message,
+        level: _PublishAiTraceLevel.error,
+      );
+      _logMicroIaDebug('AUTH', 'unexpected_error stage=$stage err=$message');
+      if (showUserMessage && mounted) {
+        showSuccessSnackBar(context, message);
+      }
+      return null;
+    }
   }
 
   String _adminAudioModeLabel(String mode) {
@@ -10379,17 +10478,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     // On enregistre l'audio puis _stopMic() déclenche le pipeline IA unifié.
     if (kIsWeb) {
       try {
-        final uid = (await _resolveSignedInUser())?.uid;
-        if (uid == null) {
-          _appendPublishAiTrace(
-            'auth',
-            'Utilisateur non connecté',
-            level: _PublishAiTraceLevel.error,
-          );
-          if (!mounted) return;
-          showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
-          return;
-        }
+        final secureContext = await _requirePublishAiSecureContext(
+          stage: 'webMic.start',
+          forceRefreshToken: true,
+        );
+        if (secureContext == null) return;
+        final uid = secureContext.uid;
 
         await CrashlyticsContext.setUserId(uid);
         await CrashlyticsContext.setKey('flow', 'webMic');
@@ -10435,17 +10529,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     // Préparer l'enregistreur haute qualité (WAV)
     try {
-      final resolvedUser = await _resolveSignedInUser();
-      if (resolvedUser == null) {
-        _appendPublishAiTrace(
-          'auth',
-          'Utilisateur non connecté',
-          level: _PublishAiTraceLevel.error,
-        );
-        if (!mounted) return;
-        showSuccessSnackBar(context, 'Connecte-toi pour utiliser la dictée');
-        return;
-      }
+      final secureContext = await _requirePublishAiSecureContext(
+        stage: 'mobileMic.start',
+        forceRefreshToken: true,
+      );
+      if (secureContext == null) return;
 
       if (await _recorder.hasPermission()) {
         final filePath =
@@ -10510,9 +10598,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
 
       try {
-        final user = await _resolveSignedInUser();
-        final uid = user?.uid;
-        if (uid == null) throw Exception('Not authenticated');
+        final secureContext = await _requirePublishAiSecureContext(
+          stage: 'webMic.stop',
+          forceRefreshToken: true,
+          showUserMessage: false,
+        );
+        final uid = secureContext?.uid;
+        if (uid == null) throw const MicroIaClientAuthException(
+          code: 'auth-missing',
+          message: 'Connecte-toi pour utiliser la dictée IA.',
+        );
 
         final blob = await _webRec.stopToBlob();
         final audioUpload = await webBlobToMicroIaUpload(
@@ -10736,8 +10831,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _uploadAndTranscribe(String localPath) async {
     // Upload vers Firebase Storage puis appel de la Cloud Function.
     // Le traitement reste côté backend pour conserver les secrets serveur.
-    final user = await _resolveSignedInUser();
-    final uid = user?.uid;
+    final secureContext = await _requirePublishAiSecureContext(
+      stage: 'uploadAndTranscribe',
+      forceRefreshToken: true,
+      showUserMessage: false,
+    );
+    final uid = secureContext?.uid;
     if (uid == null) {
       _appendPublishAiTrace(
         'auth',
@@ -11516,17 +11615,40 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 150),
               children: [
                 // Bouton Premium AI avec enregistrement audio
-                Center(
-                  child: _isListening
-                      ? _buildMicRecordingButton()
-                      : PremiumAiButton(
-                          onPressed: _isAnalyzing
-                              ? null
-                              : () {
-                                  unawaited(_startStreamingMic());
-                                },
-                          label: 'Décrire mon besoin (IA)',
+                StreamBuilder<User?>(
+                  stream: FirebaseAuth.instance.authStateChanges(),
+                  initialData: FirebaseAuth.instance.currentUser,
+                  builder: (context, snapshot) {
+                    final signedInUser = snapshot.data;
+                    return Column(
+                      children: [
+                        Center(
+                          child: _isListening
+                              ? _buildMicRecordingButton()
+                              : PremiumAiButton(
+                                  onPressed: _isAnalyzing || signedInUser == null
+                                      ? null
+                                      : () {
+                                          unawaited(_startStreamingMic());
+                                        },
+                                  label: 'Décrire mon besoin (IA)',
+                                ),
                         ),
+                        if (!_isListening && signedInUser == null) ...[
+                          const SizedBox(height: 8),
+                          TextButton.icon(
+                            onPressed: () {
+                              unawaited(_ensureLoggedInForPublish());
+                            },
+                            icon: const Icon(Icons.login_rounded),
+                            label: const Text(
+                              'Connectez-vous pour utiliser la dictée IA',
+                            ),
+                          ),
+                        ],
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
@@ -12152,26 +12274,41 @@ class _AccountPageState extends State<AccountPage> {
       } catch (_) {}
     }
     final callable = _functions.httpsCallable(
-      'adminGetAccessStatus',
+      'getMyAdminAccessStatus',
       options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
     );
     try {
       final res = await callable.call<dynamic>({});
       sw.stop();
+      final data = Map<String, dynamic>.from(res.data as Map);
+      final isAdmin = data['isAdmin'] == true;
+      final serverSource = (data['source'] ?? '').toString().trim();
+      final checkedAtRaw = data['checkedAt'];
+      final checkedAtMs = checkedAtRaw is num ? checkedAtRaw.toInt() : null;
+      debugPrint(
+        '[AdminProfile] getMyAdminAccessStatus isAdmin=$isAdmin source=$serverSource',
+      );
       PrestoMonitoring.I.trackFunctionsCall(
-          name: 'adminGetAccessStatus', ms: sw.elapsedMilliseconds);
+          name: 'getMyAdminAccessStatus', ms: sw.elapsedMilliseconds);
       if (mounted) {
         setState(() {
-          _adminLastCheckedAt = DateTime.now();
-          _adminLocalAccessHint = true;
-          if (_adminLocalAccessSource.isEmpty) {
-            _adminLocalAccessSource = 'callable';
-          }
+          _adminLastCheckedAt = checkedAtMs != null
+              ? DateTime.fromMillisecondsSinceEpoch(checkedAtMs)
+              : DateTime.now();
+          _adminLocalAccessHint = isAdmin;
+          _adminLocalAccessSource = isAdmin
+              ? (serverSource.isNotEmpty ? 'serveur:$serverSource' : 'serveur')
+              : '';
         });
       }
-      unawaited(_adminAudioRuntimeStore.enableCloudSync());
-      return Map<String, dynamic>.from(res.data as Map);
+      if (isAdmin) {
+        unawaited(_adminAudioRuntimeStore.enableCloudSync());
+      }
+      return data;
     } on FirebaseFunctionsException catch (e) {
+      debugPrint(
+        '[AdminProfile] getMyAdminAccessStatus error code=${e.code} message=${e.message}',
+      );
       if (allowAuthRetry &&
           (e.code == 'permission-denied' || e.code == 'unauthenticated')) {
         final user = _auth.currentUser;
@@ -12183,10 +12320,11 @@ class _AccountPageState extends State<AccountPage> {
           return _adminCheckAccessStatus(allowAuthRetry: false);
         }
       }
-      PrestoMonitoring.I.trackError('adminGetAccessStatus', e);
+      PrestoMonitoring.I.trackError('getMyAdminAccessStatus', e);
       rethrow;
     } catch (e) {
-      PrestoMonitoring.I.trackError('adminGetAccessStatus', e);
+      debugPrint('[AdminProfile] getMyAdminAccessStatus unexpected error: $e');
+      PrestoMonitoring.I.trackError('getMyAdminAccessStatus', e);
       rethrow;
     }
   }
@@ -12229,6 +12367,15 @@ class _AccountPageState extends State<AccountPage> {
     final errStr = error?.toString() ?? '';
     return errStr.contains('permission-denied') ||
         errStr.contains('unauthenticated');
+  }
+
+  bool _isAdminAccessUnauthenticated(Object? error) {
+    if (error is FirebaseFunctionsException) {
+      return error.code == 'unauthenticated';
+    }
+
+    final errStr = error?.toString() ?? '';
+    return errStr.contains('unauthenticated');
   }
 
   String _adminErrorDetail(Object? error) {
@@ -13842,6 +13989,7 @@ class _AccountPageState extends State<AccountPage> {
 
         if (accessSnapshot.hasError) {
           if (_isAdminAccessDenied(accessSnapshot.error) &&
+              !_isAdminAccessUnauthenticated(accessSnapshot.error) &&
               !_adminLocalAccessHint) {
             return const SizedBox.shrink();
           }
@@ -13858,6 +14006,11 @@ class _AccountPageState extends State<AccountPage> {
                 'Le chargement du profil admin a échoué temporairement. Réessaie pour vérifier l’accès.',
             detail: _adminErrorDetail(accessSnapshot.error),
           );
+        }
+
+        final accessData = accessSnapshot.data ?? const <String, dynamic>{};
+        if (accessData['isAdmin'] != true) {
+          return const SizedBox.shrink();
         }
 
         if (_adminCfgFuture == null || _adminCfgFutureUid != user.uid) {
