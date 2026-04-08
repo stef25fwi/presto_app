@@ -1,13 +1,20 @@
 #!/bin/bash
 
+set -euo pipefail
+
 echo "🔍 Test des clés API Firebase - Presto App"
 echo "=========================================="
 echo ""
 
 # Configuration
-API_KEY="AIzaSyB-Oo_86VpG_refQU7my0qk10tQFQDU-Fo"
+API_KEY="${FIREBASE_WEB_API_KEY:-}"
 PROJECT_ID="presto-app-74abe"
 AUTH_DOMAIN="presto-app-74abe.firebaseapp.com"
+
+if [ -z "$API_KEY" ]; then
+  echo "FIREBASE_WEB_API_KEY manquante" >&2
+  exit 1
+fi
 
 # Couleurs
 RED='\033[0;31m'

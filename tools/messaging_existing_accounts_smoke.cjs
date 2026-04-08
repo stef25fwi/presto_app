@@ -1,6 +1,6 @@
 const admin = require('../functions/node_modules/firebase-admin');
 
-const API_KEY = 'AIzaSyB-Oo_86VpG_refQU7my0qk10tQFQDU-Fo';
+const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY || '';
 const PROJECT_ID = 'presto-app-74abe';
 const FUNCTIONS_REGION = process.env.FUNCTIONS_REGION || 'europe-west1';
 const CALLABLE_BASE_URL = `https://${FUNCTIONS_REGION}-${PROJECT_ID}.cloudfunctions.net`;
@@ -20,6 +20,7 @@ const db = admin.firestore();
 
 function assertEnvCredentials() {
   const missing = [];
+  if (!FIREBASE_WEB_API_KEY) missing.push('FIREBASE_WEB_API_KEY');
   if (!USER1_EMAIL) missing.push('USER1_EMAIL');
   if (!USER1_PASSWORD) missing.push('USER1_PASSWORD');
   if (!USER2_EMAIL) missing.push('USER2_EMAIL');
@@ -38,7 +39,7 @@ function logStep(label, payload) {
 
 async function signInWithPassword(email, password) {
   const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`,
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}`,
     {
       method: 'POST',
       headers: {

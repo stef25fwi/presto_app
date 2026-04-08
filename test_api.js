@@ -5,9 +5,16 @@
  * Usage: node test_api.js
  */
 
+const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY || '';
+
+if (!FIREBASE_WEB_API_KEY) {
+  console.error('Variable d\'environnement requise manquante: FIREBASE_WEB_API_KEY');
+  process.exit(1);
+}
+
 // Configuration Firebase
 const CONFIG = {
-  apiKey: 'AIzaSyB-Oo_86VpG_refQU7my0qk10tQFQDU-Fo',
+  apiKey: FIREBASE_WEB_API_KEY,
   projectId: 'presto-app-74abe',
   authDomain: 'presto-app-74abe.firebaseapp.com',
   storageBucket: 'presto-app-74abe.firebasestorage.app',

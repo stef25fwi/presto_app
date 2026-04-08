@@ -1,12 +1,12 @@
 const admin = require('../functions/node_modules/firebase-admin');
 
-const API_KEY = 'AIzaSyB-Oo_86VpG_refQU7my0qk10tQFQDU-Fo';
+const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY || '';
 const PROJECT_ID = 'presto-app-74abe';
 const FUNCTIONS_REGION = process.env.FUNCTIONS_REGION || 'europe-west1';
 const CALLABLE_BASE_URL = `https://${FUNCTIONS_REGION}-${PROJECT_ID}.cloudfunctions.net`;
 const STEPHANE_UID = process.env.STEPHANE_UID || 'modRxXduO8TnMlD6MFxobuKigVy2';
-const TEST_EMAIL = process.env.STEPHANE_TEST_EMAIL || 'messaging.stephane.test.20260329@presto-app.test';
-const TEST_PASSWORD = process.env.STEPHANE_TEST_PASSWORD || 'PrestoStephaneTest!2026';
+const TEST_EMAIL = process.env.STEPHANE_TEST_EMAIL || '';
+const TEST_PASSWORD = process.env.STEPHANE_TEST_PASSWORD || '';
 const TEST_DISPLAY_NAME = process.env.STEPHANE_TEST_DISPLAY_NAME || 'Profil Test Stephane';
 const SEED_TAG = 'messaging-stephane-test-20260329';
 
@@ -28,6 +28,16 @@ function logStep(label, payload) {
 
 function normalizeString(value) {
   return String(value ?? '').trim();
+}
+
+function assertRequiredEnv() {
+  const missing = [];
+  if (!FIREBASE_WEB_API_KEY) missing.push('FIREBASE_WEB_API_KEY');
+  if (!TEST_EMAIL) missing.push('STEPHANE_TEST_EMAIL');
+  if (!TEST_PASSWORD) missing.push('STEPHANE_TEST_PASSWORD');
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
 }
 
 async function sleep(ms) {
@@ -95,7 +105,7 @@ function readDisplayName(userDoc, authUser, fallback) {
 
 async function signInWithCustomToken(customToken) {
   const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${API_KEY}`,
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${FIREBASE_WEB_API_KEY}`,
     {
       method: 'POST',
       headers: {
@@ -117,7 +127,7 @@ async function signInWithCustomToken(customToken) {
 
 async function signInWithPassword(email, password) {
   const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`,
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}`,
     {
       method: 'POST',
       headers: {
@@ -252,6 +262,8 @@ async function inspectMessagesVisibility({ userId, conversationId }) {
 }
 
 async function main() {
+  assertRequiredEnv();
+
   const [stephaneAuth, stephaneDocSnap] = await Promise.all([
     admin.auth().getUser(STEPHANE_UID),
     db.collection('users').doc(STEPHANE_UID).get(),
@@ -319,7 +331,6 @@ async function main() {
   logStep('testProfile', {
     uid: testUser.uid,
     email: TEST_EMAIL,
-    password: TEST_PASSWORD,
     displayName: TEST_DISPLAY_NAME,
   });
   logStep('offer', offer);
