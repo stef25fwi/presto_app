@@ -942,24 +942,47 @@ async function resolveAdminAccess(req) {
   }
 
   const token = req.auth?.token || {};
-  if (hasAdminRoleData(token)) {
-    return { uid, isAdmin: true, source: 'token' };
-  }
+  const tokenRoles = normalizeRoleValues(token.roles);
+  const tokenHasAdmin = hasAdminRoleData(token);
 
-  const userSnap = await admin.firestore().collection('users').doc(uid).get();
+  const [userSnap, adminSnap] = await Promise.all([
+    admin.firestore().collection('users').doc(uid).get(),
+    admin.firestore().collection('admins').doc(uid).get(),
+  ]);
   const userData = userSnap.data() || {};
-  if (hasAdminRoleData(userData)) {
-    return { uid, isAdmin: true, source: 'users' };
-  }
+  const userRoles = normalizeRoleValues(userData.roles);
+  const userPrimaryRole = String(userData.primaryRole || '').trim().toLowerCase();
+  const userHasAdmin = hasAdminRoleData(userData);
 
-  const adminSnap = await admin.firestore().collection('admins').doc(uid).get();
   const adminData = adminSnap.data() || {};
   const adminDocEnabled = adminSnap.exists && adminData.enabled !== false;
+
+  const debug = {
+    tokenHasAdmin,
+    tokenRoles,
+    userDocExists: userSnap.exists,
+    userHasAdmin,
+    userRoles,
+    userPrimaryRole: userPrimaryRole || null,
+    userAdminFlag: userData.admin === true,
+    userSuperadminFlag: userData.superadmin === true,
+    adminDocExists: adminSnap.exists,
+    adminDocEnabled,
+  };
+
+  if (tokenHasAdmin) {
+    return { uid, isAdmin: true, source: 'token', debug };
+  }
+
+  if (userHasAdmin) {
+    return { uid, isAdmin: true, source: 'users', debug };
+  }
 
   return {
     uid,
     isAdmin: adminDocEnabled,
     source: adminDocEnabled ? 'admins' : null,
+    debug,
   };
 }
 
@@ -1188,6 +1211,7 @@ exports.getMyAdminAccessStatus = onCall(
       isAdmin: access.isAdmin,
       uid: access.uid || null,
       source: access.source,
+      debug: access.debug || null,
       checkedAt: Date.now(),
     };
   }

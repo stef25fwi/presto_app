@@ -12,10 +12,36 @@ service firebase.storage {
         && request.auth.token.roles.hasAny([role]);
     }
 
+    function hasUserDocRole(role) {
+      let userPath = /databases/(default)/documents/users/$(request.auth.uid);
+      let userData = firestore.get(userPath).data;
+      return isSignedIn()
+        && firestore.exists(userPath)
+        && (
+          ((userData.roles is list) && userData.roles.hasAny([role]))
+          || userData.primaryRole == role
+          || (role == 'moderator' && userData.moderator == true)
+          || (role == 'admin' && userData.admin == true)
+          || (role == 'superadmin' && userData.superadmin == true)
+        );
+    }
+
+    function hasAdminDocAccess() {
+      let adminPath = /databases/(default)/documents/admins/$(request.auth.uid);
+      let adminData = firestore.get(adminPath).data;
+      return isSignedIn()
+        && firestore.exists(adminPath)
+        && adminData.enabled != false;
+    }
+
     function isMarketplaceModerator() {
       return hasClaimRole('moderator')
+        || hasUserDocRole('moderator')
         || hasClaimRole('admin')
-        || hasClaimRole('superadmin');
+        || hasUserDocRole('admin')
+        || hasClaimRole('superadmin')
+        || hasUserDocRole('superadmin')
+        || hasAdminDocAccess();
     }
 
     function isImageUpload() {
