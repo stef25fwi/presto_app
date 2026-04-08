@@ -3,9 +3,11 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../models/admin_access_state.dart';
 import '../utils/friendly_snackbar.dart';
 
 import '../constants.dart';
+import '../services/admin_access_resolver.dart';
 import '../services/firebase_functions_region.dart';
 
 class AdminSpacePage extends StatefulWidget {
@@ -1872,10 +1874,10 @@ void _showSupportTicketsSheet(
 class _AdminSpacePageState extends State<AdminSpacePage> {
   static const Color prestoOrange = Color(0xFFFF6600);
   static const Color prestoBlue = Color(0xFF1A73E8);
-  static const Duration _kAdminAuthRestoreTimeout = Duration(seconds: 5);
 
   final FirebaseFunctions _functions =
       prestoFirebaseFunctions;
+  final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
   final TextEditingController _deployDiagnosticController =
       TextEditingController();
 
@@ -1885,6 +1887,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
   String _adminAccessSource = '';
   DateTime? _adminCheckedAt;
   Object? _adminStatusError;
+  AdminAccessState? _adminAccessState;
   bool _userStatsLoading = true;
   Map<String, dynamic>? _userStats;
 
@@ -1903,19 +1906,16 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
   Future<User?> _ensureSignedInUser({
     bool forceRefreshToken = false,
   }) async {
-    final auth = FirebaseAuth.instance;
-    final user = auth.currentUser ??
-        await auth.authStateChanges().first.timeout(
-              _kAdminAuthRestoreTimeout,
-              onTimeout: () => null,
-            );
-    if (user == null) return null;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return null;
+    }
 
     try {
       await user.getIdToken(forceRefreshToken);
     } catch (_) {}
 
-    return auth.currentUser ?? user;
+    return FirebaseAuth.instance.currentUser ?? user;
   }
 
   Future<void> _reloadAdminPage() async {
@@ -1931,49 +1931,37 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     await _loadUserStats();
   }
 
-  Future<void> _loadAdminStatus({
-    bool allowAuthRetry = true,
-  }) async {
+  Future<void> _loadAdminStatus() async {
     setState(() {
       _adminStatusLoading = true;
       _adminAccessGranted = false;
       _adminAccessSource = '';
       _adminStatusError = null;
+      _adminAccessState = null;
     });
 
     try {
-      final signedInUser = await _ensureSignedInUser(
-        forceRefreshToken: true,
+      final accessState = await _adminAccessResolver.resolveAdminAccess(
+        forceRefresh: true,
       );
-      if (signedInUser == null) {
-        throw StateError('unauthenticated: no current user');
-      }
-
-      final accessCallable = _functions.httpsCallable(
-        'getMyAdminAccessStatus',
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
-      );
-      final accessRes = await accessCallable.call<dynamic>({});
-      final accessData = (accessRes.data is Map)
-          ? Map<String, dynamic>.from(accessRes.data as Map)
-          : <String, dynamic>{};
-      final isAdmin = accessData['isAdmin'] == true;
-      final source = (accessData['source'] ?? '').toString().trim();
-      final checkedAtRaw = accessData['checkedAt'];
-      final checkedAtMs = checkedAtRaw is num ? checkedAtRaw.toInt() : null;
       if (!mounted) return;
       setState(() {
-        _adminAccessGranted = isAdmin;
-        _adminAccessSource = source;
-        _adminCheckedAt = checkedAtMs != null
-            ? DateTime.fromMillisecondsSinceEpoch(checkedAtMs)
-            : DateTime.now();
-        _adminStatusError = isAdmin
+        _adminAccessState = accessState;
+        _adminAccessGranted = accessState.effectiveIsAdmin;
+        _adminAccessSource = accessState.sourceOfTruth == 'none'
+            ? ''
+            : accessState.sourceOfTruth;
+        _adminCheckedAt = accessState.serverCheckedAt ?? _adminCheckedAt;
+        _adminStatusError = accessState.effectiveIsAdmin
             ? null
-            : StateError('permission-denied: admin required');
+            : StateError(
+                accessState.isAuthenticated
+                    ? 'permission-denied: admin required'
+                    : 'unauthenticated: no current user',
+              );
       });
 
-      if (!isAdmin) {
+      if (!accessState.effectiveIsAdmin) {
         return;
       }
 
@@ -1991,25 +1979,6 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
           _adminMode = (configData['mode'] ?? _adminMode).toString();
         });
       } catch (_) {}
-    } on FirebaseFunctionsException catch (error) {
-      if (allowAuthRetry &&
-          (error.code == 'permission-denied' ||
-              error.code == 'unauthenticated')) {
-        final user = await _ensureSignedInUser(forceRefreshToken: true);
-        if (user != null) {
-          try {
-            if (!mounted) return;
-            await _loadAdminStatus(allowAuthRetry: false);
-            return;
-          } catch (_) {}
-        }
-      }
-
-      if (!mounted) return;
-      setState(() {
-        _adminAccessGranted = false;
-        _adminStatusError = error;
-      });
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -2451,6 +2420,19 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
               color: Colors.black54,
             ),
           ),
+          if (_adminAccessState != null &&
+              _adminAccessState!.serverCheckAttempted &&
+              !_adminAccessState!.serverCheckSucceeded) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Vérification serveur temporairement indisponible, accès confirmé par ${_adminAccessSource.isNotEmpty ? _adminAccessSource : 'une source locale'}.',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.orange.shade700,
+                fontSize: 12,
+              ),
+            ),
+          ],
           const SizedBox(height: 6),
           Text(
             'Dernier controle: ${_formatAdminTimestamp(_adminCheckedAt?.millisecondsSinceEpoch)}',

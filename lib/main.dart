@@ -31,11 +31,13 @@ import 'features/micro_ia/micro_ia_service.dart';
 import 'features/micro_ia/web_audio_recorder.dart';
 import 'config/env/openai_config.dart';
 import 'profile_page.dart';
+import 'models/admin_access_state.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/offers/offer_details_page.dart';
 import 'pages/messages/messages_page_v2.dart';
 import 'pages/toolbox_hub_page.dart';
+import 'services/admin_access_resolver.dart';
 import 'services/ai/listing_audio_ai_service.dart';
 import 'services/city_search.dart';
 import 'services/account_social_auth_actions.dart';
@@ -12124,6 +12126,7 @@ class _AccountPageState extends State<AccountPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ScrollController _scrollController = ScrollController();
   final GoogleAuthService _googleAuthService = GoogleAuthService();
+  final AdminAccessResolver _adminAccessResolver = AdminAccessResolver();
 
   final FirebaseFunctions _functions = prestoFirebaseFunctions;
 
@@ -12215,57 +12218,31 @@ class _AccountPageState extends State<AccountPage> {
     'Numéro de téléphone',
   ];
 
-  Future<Map<String, dynamic>>? _adminAccessFuture;
+  Future<AdminAccessState>? _adminAccessFuture;
   String? _adminAccessFutureUid;
+  AdminAccessState? _lastAdminAccessState;
   Future<Map<String, dynamic>>? _adminCfgFuture;
   String? _adminCfgFutureUid;
   DateTime? _adminLastCheckedAt;
-  bool _adminLocalAccessHint = false;
-  String _adminLocalAccessSource = '';
-  Map<String, dynamic> _adminDebugInfo = const <String, dynamic>{};
-  DateTime? _adminDebugUpdatedAt;
 
   void _resetAdminAccessState() {
     _adminAccessFuture = null;
     _adminAccessFutureUid = null;
+    _lastAdminAccessState = null;
     _adminCfgFuture = null;
     _adminCfgFutureUid = null;
     _adminLastCheckedAt = null;
-    _adminLocalAccessHint = false;
-    _adminLocalAccessSource = '';
-    _adminDebugInfo = const <String, dynamic>{};
-    _adminDebugUpdatedAt = null;
-  }
-
-  List<String> _adminRolesFromValue(dynamic value) {
-    if (value is! Iterable) return const <String>[];
-    return value
-        .map((entry) => entry.toString().trim().toLowerCase())
-        .where((entry) => entry.isNotEmpty)
-        .toList();
-  }
-
-  void _updateAdminDebugInfo(Map<String, dynamic> patch) {
-    if (!mounted) return;
-    setState(() {
-      _adminDebugInfo = <String, dynamic>{
-        ..._adminDebugInfo,
-        ...patch,
-      };
-      _adminDebugUpdatedAt = DateTime.now();
-    });
   }
 
   bool _shouldShowAdminDebugCard(
     User user, {
-    Map<String, dynamic>? accessData,
-    Object? error,
+    AdminAccessState? state,
   }) {
+    final resolvedState = state ?? _lastAdminAccessState;
     final email = (user.email ?? '').trim().toLowerCase();
     return email == 'sahai.stephane@gmail.com' ||
-        _adminLocalAccessHint ||
-        accessData?['isAdmin'] == true ||
-        error != null;
+        (resolvedState?.effectiveIsAdmin ?? false) ||
+        resolvedState?.serverErrorCode != null;
   }
 
   String _adminDebugText(dynamic value) {
@@ -12279,164 +12256,131 @@ class _AccountPageState extends State<AccountPage> {
     return text.isEmpty ? '-' : text;
   }
 
-  bool _hasAdminRoleInValues(Iterable<String> values) {
-    return values.any(
-      (value) => value == 'admin' || value == 'superadmin',
-    );
+  String _adminLocalSource(AdminAccessState state) {
+    final sources = <String>[];
+    if (state.tokenHasAdmin) {
+      sources.add('token');
+    }
+    if (state.profileHasAdmin) {
+      sources.add('profil');
+    }
+    if (state.adminDocHasAdmin) {
+      sources.add('adminDoc');
+    }
+    if (sources.isEmpty) {
+      return '';
+    }
+    return sources.join('+');
   }
 
-  bool _hasAdminHintFromProfileData(Map<String, dynamic>? data) {
-    if (data == null) return false;
+  List<String> _adminStatusMessages(AdminAccessState state) {
+    final messages = <String>[];
+    if (!state.isAuthenticated) {
+      messages.add('Utilisateur non authentifié');
+    }
 
-    final roles = (data['roles'] as List<dynamic>? ?? <dynamic>[])
-        .map((role) => role.toString().trim().toLowerCase())
-        .where((role) => role.isNotEmpty)
-        .toList();
-    if (_hasAdminRoleInValues(roles)) {
+    if (state.tokenHasAdmin) {
+      messages.add('Accès admin confirmé par le token');
+    }
+
+    if (state.tokenHasAdmin && state.profileLoaded && !state.profileHasAdmin) {
+      messages.add('Profil Firestore non synchronisé avec les claims admin');
+    }
+
+    if (state.serverCheckAttempted && !state.serverCheckSucceeded) {
+      messages.add(
+        state.serverErrorCode == 'unauthenticated'
+            ? 'Vérification serveur temporairement indisponible'
+            : 'Vérification serveur indisponible',
+      );
+    }
+    if (state.effectiveIsAdmin &&
+        state.serverCheckAttempted &&
+        !state.serverCheckSucceeded) {
+      messages.add('Accès admin confirmé malgré échec serveur');
+    }
+    return messages;
+  }
+
+  bool _adminShouldUseLocalFallback(AdminAccessState state) {
+    if (!state.effectiveIsAdmin) {
+      return false;
+    }
+    if (state.serverCheckAttempted && !state.serverCheckSucceeded) {
       return true;
     }
-
-    final primaryRole = (data['primaryRole'] ?? '').toString().trim().toLowerCase();
-    if (primaryRole == 'admin' || primaryRole == 'superadmin') {
-      return true;
-    }
-
-    return data['admin'] == true || data['superadmin'] == true;
+    return state.serverCheckSucceeded &&
+        state.serverIsAdmin != true &&
+        state.hasLocalAdminEvidence;
   }
 
-  Future<void> _refreshAdminLocalAccessHint(
-    User user, {
-    bool forceRefreshToken = false,
-    Map<String, dynamic>? profileData,
-  }) async {
-    var hinted = _hasAdminHintFromProfileData(profileData);
-    var source = hinted ? 'profil' : '';
-    final profileRoles = _adminRolesFromValue(profileData?['roles']);
-    final profilePrimaryRole =
-        (profileData?['primaryRole'] ?? '').toString().trim().toLowerCase();
-    var tokenRoles = const <String>[];
-    var tokenHasAdmin = false;
-
-    try {
-      final tokenResult = await user.getIdTokenResult(forceRefreshToken);
-      final claims = tokenResult.claims ?? const <String, dynamic>{};
-      tokenRoles = _adminRolesFromValue(claims['roles']);
-      tokenHasAdmin = _hasAdminRoleInValues(tokenRoles) ||
-          claims['admin'] == true ||
-          claims['superadmin'] == true;
-      if (tokenHasAdmin) {
-        hinted = true;
-        source = 'token';
-      }
-    } catch (_) {}
-
-    if (!mounted) return;
-    setState(() {
-      _adminLocalAccessHint = hinted;
-      _adminLocalAccessSource = source;
-      _adminDebugInfo = <String, dynamic>{
-        ..._adminDebugInfo,
-        'user.uid': user.uid,
-        'user.email': user.email ?? '',
-        'token.roles': tokenRoles,
-        'token.hasAdmin': tokenHasAdmin,
-        'profile.roles': profileRoles,
-        'profile.primaryRole': profilePrimaryRole,
-        'profile.admin': profileData?['admin'] == true,
-        'profile.superadmin': profileData?['superadmin'] == true,
-        'profile.hasAdminHint': _hasAdminHintFromProfileData(profileData),
-        'local.hint': hinted,
-        'local.source': source,
-        'last.stage': 'local-refresh',
-      };
-      _adminDebugUpdatedAt = DateTime.now();
-    });
+  String _adminFallbackMessage(AdminAccessState state) {
+    final messages = _adminStatusMessages(state);
+    if (messages.isEmpty) {
+      return 'Accès admin local confirmé. La vérification serveur reste complémentaire pour ce profil.';
+    }
+    return messages.join('. ');
   }
 
-  Future<Map<String, dynamic>> _adminCheckAccessStatus({
-    bool allowAuthRetry = true,
-  }) async {
-    final sw = Stopwatch()..start();
-    final currentUser = _auth.currentUser ??
-        await _auth.authStateChanges().first.timeout(
-              const Duration(seconds: 2),
-              onTimeout: () => null,
-            );
-    if (currentUser != null) {
-      try {
-        await currentUser.getIdToken(false);
-      } catch (_) {}
-    }
-    final callable = _functions.httpsCallable(
-      'getMyAdminAccessStatus',
-      options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+  void _refreshAdminAccessForUser(
+    String uid, {
+    bool forceRefresh = false,
+  }) {
+    _adminAccessFutureUid = uid;
+    final future = _adminAccessResolver.resolveAdminAccess(
+      forceRefresh: forceRefresh,
     );
-    try {
-      final res = await callable.call<dynamic>({});
-      sw.stop();
-      final data = Map<String, dynamic>.from(res.data as Map);
-      final isAdmin = data['isAdmin'] == true;
-      final serverSource = (data['source'] ?? '').toString().trim();
-      final checkedAtRaw = data['checkedAt'];
-      final checkedAtMs = checkedAtRaw is num ? checkedAtRaw.toInt() : null;
-      debugPrint(
-        '[AdminProfile] getMyAdminAccessStatus isAdmin=$isAdmin source=$serverSource',
-      );
-      PrestoMonitoring.I.trackFunctionsCall(
-          name: 'getMyAdminAccessStatus', ms: sw.elapsedMilliseconds);
-      if (mounted) {
-        setState(() {
-          _adminLastCheckedAt = checkedAtMs != null
-              ? DateTime.fromMillisecondsSinceEpoch(checkedAtMs)
-              : DateTime.now();
-          _adminLocalAccessHint = isAdmin;
-          _adminLocalAccessSource = isAdmin
-              ? (serverSource.isNotEmpty ? 'serveur:$serverSource' : 'serveur')
-              : '';
-          _adminDebugInfo = <String, dynamic>{
-            ..._adminDebugInfo,
-            'server.isAdmin': isAdmin,
-            'server.source': serverSource,
-            'server.checkedAt': checkedAtMs,
-            'server.debug': data['debug'],
-            'server.errorCode': '',
-            'server.errorMessage': '',
-            'last.stage': 'server-access-ok',
-          };
-          _adminDebugUpdatedAt = DateTime.now();
-        });
-      }
-      if (isAdmin) {
-        unawaited(_adminAudioRuntimeStore.enableCloudSync());
-      }
-      return data;
-    } on FirebaseFunctionsException catch (e) {
-      _updateAdminDebugInfo(<String, dynamic>{
-        'server.errorCode': e.code,
-        'server.errorMessage': e.message ?? '',
-        'last.stage': 'server-access-error',
-      });
-      debugPrint(
-        '[AdminProfile] getMyAdminAccessStatus error code=${e.code} message=${e.message}',
-      );
-      if (allowAuthRetry &&
-          (e.code == 'permission-denied' || e.code == 'unauthenticated')) {
-        final user = _auth.currentUser;
-        if (user != null) {
-          await _refreshAdminLocalAccessHint(
-            user,
-            forceRefreshToken: true,
-          );
-          return _adminCheckAccessStatus(allowAuthRetry: false);
+    _adminAccessFuture = future;
+    unawaited(
+      future.then((state) {
+        if (!mounted || _adminAccessFuture != future) {
+          return;
         }
-      }
-      PrestoMonitoring.I.trackError('getMyAdminAccessStatus', e);
-      rethrow;
-    } catch (e) {
-      debugPrint('[AdminProfile] getMyAdminAccessStatus unexpected error: $e');
-      PrestoMonitoring.I.trackError('getMyAdminAccessStatus', e);
-      rethrow;
+        setState(() {
+          _lastAdminAccessState = state;
+          _adminLastCheckedAt = state.serverCheckedAt ?? _adminLastCheckedAt;
+        });
+        if (state.effectiveIsAdmin) {
+          unawaited(_adminAudioRuntimeStore.enableCloudSync());
+        }
+      }).catchError((Object error, StackTrace stackTrace) {
+        debugPrint('[AdminProfile] admin access resolution failed: $error');
+      }),
+    );
+  }
+
+  Map<String, dynamic> _adminServerDebug(AdminAccessState state) {
+    return state.serverDebug;
+  }
+
+  String _adminStateErrorDetail(AdminAccessState state) {
+    final code = state.serverErrorCode?.trim();
+    final message = state.serverErrorMessage?.trim();
+    if (message != null && message.isNotEmpty) {
+      return message;
     }
+    switch (code) {
+      case 'permission-denied':
+        return 'Accès refusé par la fonction admin.';
+      case 'unauthenticated':
+        return 'La session n’a pas encore été validée côté serveur. Recharge la page ou reconnecte-toi.';
+      case 'unavailable':
+        return 'Le service admin est indisponible ou le réseau ne répond pas.';
+      case 'deadline-exceeded':
+        return 'La vérification admin a dépassé le délai autorisé.';
+      case 'internal':
+        return 'La fonction admin a renvoyé une erreur interne.';
+      case 'unknown':
+        return 'La vérification admin a échoué de manière inattendue.';
+    }
+    return 'Détail indisponible.';
+  }
+
+  String _adminConfigSourceLabel(AdminAccessState state) {
+    if (state.sourceOfTruth == 'none') {
+      return 'inconnu';
+    }
+    return state.sourceOfTruth;
   }
 
   Future<Map<String, dynamic>> _adminGetMicroIaConfig() async {
@@ -12456,11 +12400,6 @@ class _AccountPageState extends State<AccountPage> {
       PrestoMonitoring.I.trackError('adminGetMicroIaConfig', e);
       rethrow;
     }
-  }
-
-  void _refreshAdminAccessForUser(String uid) {
-    _adminAccessFutureUid = uid;
-    _adminAccessFuture = _adminCheckAccessStatus();
   }
 
   void _refreshAdminConfigForUser(String uid) {
@@ -12547,29 +12486,28 @@ class _AccountPageState extends State<AccountPage> {
 
   Widget _buildAdminDebugCard(
     User user, {
-    Map<String, dynamic>? accessData,
-    Object? error,
+    required AdminAccessState state,
   }) {
-    final serverDebugRaw = accessData?['debug'];
-    final serverDebug = serverDebugRaw is Map
-        ? Map<String, dynamic>.from(serverDebugRaw)
-        : const <String, dynamic>{};
-    final serverCheckedAtRaw = accessData?['checkedAt'];
-    final serverCheckedAt = serverCheckedAtRaw is num
-        ? DateTime.fromMillisecondsSinceEpoch(serverCheckedAtRaw.toInt())
-        : _adminLastCheckedAt;
+    final serverDebug = _adminServerDebug(state);
+    final serverCheckedAt = state.serverCheckedAt ?? _adminLastCheckedAt;
+    final localSource = _adminLocalSource(state);
+    final statusMessages = _adminStatusMessages(state);
+    final recentSteps = state.debugSteps.length > 5
+        ? state.debugSteps.sublist(state.debugSteps.length - 5)
+        : state.debugSteps;
     final lines = <String>[
       'uid=${user.uid}',
-      'email=${_adminDebugText(user.email ?? _adminDebugInfo['user.email'])}',
-      'localHint=${_adminDebugText(_adminLocalAccessHint)}',
-      'localSource=${_adminDebugText(_adminLocalAccessSource)}',
-      'tokenHasAdmin=${_adminDebugText(_adminDebugInfo['token.hasAdmin'])}',
-      'tokenRoles=${_adminDebugText(_adminDebugInfo['token.roles'])}',
-      'profileHasAdmin=${_adminDebugText(_adminDebugInfo['profile.hasAdminHint'])}',
-      'profileRoles=${_adminDebugText(_adminDebugInfo['profile.roles'])}',
-      'profilePrimaryRole=${_adminDebugText(_adminDebugInfo['profile.primaryRole'])}',
-      'serverIsAdmin=${_adminDebugText(accessData?['isAdmin'])}',
-      'serverSource=${_adminDebugText(accessData?['source'])}',
+      'email=${_adminDebugText(state.email ?? user.email)}',
+      'localHint=${_adminDebugText(state.hasLocalAdminEvidence)}',
+      'localSource=${_adminDebugText(localSource)}',
+      'tokenHasAdmin=${_adminDebugText(state.tokenHasAdmin)}',
+      'tokenRoles=${_adminDebugText(state.tokenRoles)}',
+      'profileHasAdmin=${_adminDebugText(state.profileHasAdmin)}',
+      'profileRoles=${_adminDebugText(state.profileRoles)}',
+      'profilePrimaryRole=${_adminDebugText(state.profilePrimaryRole)}',
+      'adminDocHasAdmin=${_adminDebugText(state.adminDocHasAdmin)}',
+      'serverIsAdmin=${_adminDebugText(state.serverIsAdmin)}',
+      'serverSource=${_adminDebugText(state.serverSource)}',
       'serverCheckedAt=${_formatAdminCheckTime(serverCheckedAt)}',
       'server.tokenHasAdmin=${_adminDebugText(serverDebug['tokenHasAdmin'])}',
       'server.userDocExists=${_adminDebugText(serverDebug['userDocExists'])}',
@@ -12578,11 +12516,12 @@ class _AccountPageState extends State<AccountPage> {
       'server.userPrimaryRole=${_adminDebugText(serverDebug['userPrimaryRole'])}',
       'server.adminDocExists=${_adminDebugText(serverDebug['adminDocExists'])}',
       'server.adminDocEnabled=${_adminDebugText(serverDebug['adminDocEnabled'])}',
-      'server.errorCode=${_adminDebugText(_adminDebugInfo['server.errorCode'])}',
-      'server.errorMessage=${_adminDebugText(_adminDebugInfo['server.errorMessage'])}',
-      'lastStage=${_adminDebugText(_adminDebugInfo['last.stage'])}',
-      'debugUpdatedAt=${_formatAdminCheckTime(_adminDebugUpdatedAt)}',
-      if (error != null) 'uiError=${_adminErrorDetail(error)}',
+      'server.errorCode=${_adminDebugText(state.serverErrorCode)}',
+      'server.errorMessage=${_adminDebugText(state.serverErrorMessage)}',
+      'sourceOfTruth=${_adminDebugText(state.sourceOfTruth)}',
+      'lastStage=${_adminDebugText(state.lastStage)}',
+      if (statusMessages.isNotEmpty) 'messages=${statusMessages.join(' | ')}',
+      if (recentSteps.isNotEmpty) 'debugSteps=${recentSteps.join(' | ')}',
     ];
 
     return Container(
@@ -12612,7 +12551,7 @@ class _AccountPageState extends State<AccountPage> {
               TextButton.icon(
                 onPressed: () {
                   setState(() {
-                    _refreshAdminAccessForUser(user.uid);
+                    _refreshAdminAccessForUser(user.uid, forceRefresh: true);
                     _adminCfgFuture = null;
                     _adminCfgFutureUid = null;
                   });
@@ -12729,7 +12668,7 @@ class _AccountPageState extends State<AccountPage> {
           OutlinedButton.icon(
             onPressed: () {
               setState(() {
-                _refreshAdminAccessForUser(user.uid);
+                _refreshAdminAccessForUser(user.uid, forceRefresh: true);
                 _refreshAdminConfigForUser(user.uid);
               });
             },
@@ -12865,7 +12804,6 @@ class _AccountPageState extends State<AccountPage> {
 
     if (_activeProfileUid == user.uid &&
         (_profileLoaded || _profileLoadRequested)) {
-      await _refreshAdminLocalAccessHint(user, forceRefreshToken: false);
       if (!mounted) return;
       setState(() {
         _refreshAdminAccessForUser(user.uid);
@@ -12879,12 +12817,10 @@ class _AccountPageState extends State<AccountPage> {
       final displayName = user.displayName?.trim() ?? '';
       _profilePseudoController.text = displayName;
       _profileLoadRequested = true;
+      _refreshAdminAccessForUser(user.uid, forceRefresh: true);
     });
 
-    final adminHintFuture =
-      _refreshAdminLocalAccessHint(user, forceRefreshToken: true);
     await _loadUserProfile(user);
-    await adminHintFuture;
   }
 
   bool _hasProfileValuesInMemory() {
@@ -13059,24 +12995,6 @@ class _AccountPageState extends State<AccountPage> {
 
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
-        final profileHasAdminHint = _hasAdminHintFromProfileData(data);
-        _updateAdminDebugInfo(<String, dynamic>{
-          'profile.roles': _adminRolesFromValue(data['roles']),
-          'profile.primaryRole':
-              (data['primaryRole'] ?? '').toString().trim().toLowerCase(),
-          'profile.admin': data['admin'] == true,
-          'profile.superadmin': data['superadmin'] == true,
-          'profile.hasAdminHint': profileHasAdminHint,
-          'last.stage': 'profile-doc-loaded',
-        });
-        if (profileHasAdminHint) {
-          _adminLocalAccessHint = true;
-          if (_adminLocalAccessSource != 'token') {
-            _adminLocalAccessSource = 'profil';
-          }
-        } else if (!_adminLocalAccessHint) {
-          _adminLocalAccessSource = '';
-        }
         _profilePseudoController.text = _firstNonEmptyProfileValue(
           data,
           const ['pseudo', 'displayName', 'userName', 'user_name', 'name'],
@@ -13165,9 +13083,6 @@ class _AccountPageState extends State<AccountPage> {
         _draftFavoriteSelections = previousDraftFavoriteSelections;
         _isEditingProfile = !_hasProfileValuesInMemory();
         _profileLoadError = false;
-        if (!_adminLocalAccessHint) {
-          _adminLocalAccessSource = '';
-        }
       }
     } catch (e) {
       debugPrint('[Profile] Erreur chargement profil: $e');
@@ -14200,45 +14115,12 @@ class _AccountPageState extends State<AccountPage> {
       _refreshAdminAccessForUser(user.uid);
     }
 
-    return FutureBuilder<Map<String, dynamic>>(
+    return FutureBuilder<AdminAccessState>(
       future: _adminAccessFuture,
       builder: (context, accessSnapshot) {
-        if (accessSnapshot.connectionState == ConnectionState.waiting) {
-          final loadingCard = _buildAdminLoadingCard();
-          if (_shouldShowAdminDebugCard(user)) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                loadingCard,
-                _buildAdminDebugCard(user),
-              ],
-            );
-          }
-          return loadingCard;
-        }
+        final resolvedState = accessSnapshot.data ?? _lastAdminAccessState;
 
         if (accessSnapshot.hasError) {
-          if (_isAdminAccessDenied(accessSnapshot.error) &&
-              !_isAdminAccessUnauthenticated(accessSnapshot.error) &&
-              !_adminLocalAccessHint) {
-            if (_shouldShowAdminDebugCard(user, error: accessSnapshot.error)) {
-              return _buildAdminDebugCard(user, error: accessSnapshot.error);
-            }
-            return const SizedBox.shrink();
-          }
-          if (_adminLocalAccessHint) {
-            final fallbackCard = _buildAdminLocalFallbackCard(
-              user: user,
-              detail: _adminErrorDetail(accessSnapshot.error),
-            );
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                fallbackCard,
-                _buildAdminDebugCard(user, error: accessSnapshot.error),
-              ],
-            );
-          }
           final retryCard = _buildAdminLoadRetryCard(
             user: user,
             title: 'Espace admin indisponible',
@@ -14250,17 +14132,65 @@ class _AccountPageState extends State<AccountPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               retryCard,
-              _buildAdminDebugCard(user, error: accessSnapshot.error),
+              if (resolvedState != null &&
+                  _shouldShowAdminDebugCard(user, state: resolvedState))
+                _buildAdminDebugCard(user, state: resolvedState),
             ],
           );
         }
 
-        final accessData = accessSnapshot.data ?? const <String, dynamic>{};
-        if (accessData['isAdmin'] != true) {
-          if (_shouldShowAdminDebugCard(user, accessData: accessData)) {
-            return _buildAdminDebugCard(user, accessData: accessData);
+        if (accessSnapshot.connectionState == ConnectionState.waiting &&
+            resolvedState == null) {
+          final loadingCard = _buildAdminLoadingCard();
+          if (_shouldShowAdminDebugCard(user)) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                loadingCard,
+                if (resolvedState != null)
+                  _buildAdminDebugCard(user, state: resolvedState),
+              ],
+            );
+          }
+          return loadingCard;
+        }
+
+        final accessState = resolvedState ?? AdminAccessState.initial();
+
+        if (accessSnapshot.connectionState == ConnectionState.waiting) {
+          final loadingCard = _buildAdminLoadingCard();
+          if (_shouldShowAdminDebugCard(user, state: accessState)) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                loadingCard,
+                _buildAdminDebugCard(user, state: accessState),
+              ],
+            );
+          }
+          return loadingCard;
+        }
+
+        if (!accessState.effectiveIsAdmin) {
+          if (_shouldShowAdminDebugCard(user, state: accessState)) {
+            return _buildAdminDebugCard(user, state: accessState);
           }
           return const SizedBox.shrink();
+        }
+
+        if (_adminShouldUseLocalFallback(accessState)) {
+          final fallbackCard = _buildAdminLocalFallbackCard(
+            user: user,
+            state: accessState,
+          );
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              fallbackCard,
+              if (_shouldShowAdminDebugCard(user, state: accessState))
+                _buildAdminDebugCard(user, state: accessState),
+            ],
+          );
         }
 
         if (_adminCfgFuture == null || _adminCfgFutureUid != user.uid) {
@@ -14327,7 +14257,7 @@ class _AccountPageState extends State<AccountPage> {
                   const SizedBox(height: 8),
                   Text(
                     configLoaded
-                        ? 'Acces admin confirme pour ce profil. Mode serveur actuel: ${_adminModeStatusLabel(mode)}.'
+                        ? 'Acces admin confirme pour ce profil. Source: ${_adminConfigSourceLabel(accessState)}. Mode serveur actuel: ${_adminModeStatusLabel(mode)}.'
                         : 'Acces admin confirme pour ce profil. La configuration serveur est en cours de chargement.',
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
@@ -14350,6 +14280,17 @@ class _AccountPageState extends State<AccountPage> {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: Colors.orange.shade700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                  if (accessState.sourceOfTruth != 'none') ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Source droits admin: ${_adminConfigSourceLabel(accessState)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black45,
                         fontSize: 12,
                       ),
                     ),
@@ -14427,18 +14368,13 @@ class _AccountPageState extends State<AccountPage> {
             );
             if (_shouldShowAdminDebugCard(
               user,
-              accessData: accessData,
-              error: cfgSnapshot.hasError ? cfgSnapshot.error : null,
+              state: accessState,
             )) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   adminCard,
-                  _buildAdminDebugCard(
-                    user,
-                    accessData: accessData,
-                    error: cfgSnapshot.hasError ? cfgSnapshot.error : null,
-                  ),
+                  _buildAdminDebugCard(user, state: accessState),
                 ],
               );
             }
@@ -14451,11 +14387,14 @@ class _AccountPageState extends State<AccountPage> {
 
   Widget _buildAdminLocalFallbackCard({
     required User user,
+    required AdminAccessState state,
     String? detail,
   }) {
-    final sourceLabel = _adminLocalAccessSource.isNotEmpty
-        ? ' via $_adminLocalAccessSource'
-        : '';
+    final localSource = _adminLocalSource(state);
+    final sourceLabel = localSource.isNotEmpty ? ' via $localSource' : '';
+    final fallbackDetail = detail?.trim().isNotEmpty == true
+        ? detail!.trim()
+        : (state.serverErrorCode != null ? _adminStateErrorDetail(state) : null);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
@@ -14503,7 +14442,7 @@ class _AccountPageState extends State<AccountPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Accès admin détecté localement$sourceLabel. La vérification serveur a échoué, mais la tuile reste disponible.',
+            '${_adminFallbackMessage(state)}${sourceLabel.isNotEmpty ? ' Détection locale$sourceLabel.' : ''}',
             style: const TextStyle(
               fontWeight: FontWeight.w600,
               color: Colors.black54,
@@ -14518,10 +14457,10 @@ class _AccountPageState extends State<AccountPage> {
               fontSize: 12,
             ),
           ),
-          if (detail != null && detail.trim().isNotEmpty) ...[
+          if (fallbackDetail != null && fallbackDetail.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
-              'Détail: ${detail.trim()}',
+              'Détail: $fallbackDetail',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: Colors.orange.shade700,
@@ -14536,7 +14475,7 @@ class _AccountPageState extends State<AccountPage> {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     setState(() {
-                      _refreshAdminAccessForUser(user.uid);
+                      _refreshAdminAccessForUser(user.uid, forceRefresh: true);
                       _refreshAdminConfigForUser(user.uid);
                     });
                   },
