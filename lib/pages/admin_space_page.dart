@@ -292,9 +292,18 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
     _load();
   }
 
+  Future<void> _prepareAdminCallableAuth() async {
+    try {
+      await FirebaseAuth.instance.currentUser?.getIdToken(true);
+    } catch (_) {
+      // Best effort: the callable will still provide the definitive auth error.
+    }
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
+      await _prepareAdminCallableAuth();
       final callable = _functions.httpsCallable(
         'adminGetMicroIaConfig',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
@@ -372,6 +381,7 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
     setState(() => _saving = true);
 
     try {
+      await _prepareAdminCallableAuth();
       final callable = _functions.httpsCallable(
         'adminSetMicroIaConfig',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 30)),
@@ -480,6 +490,7 @@ class _MicroIaTranscriptionPageState extends State<MicroIaTranscriptionPage> {
                     setState(() => _audioQuality = q);
 
                     try {
+                      await _prepareAdminCallableAuth();
                       final callable = _functions.httpsCallable(
                         'adminSetMicroIaConfig',
                         options: HttpsCallableOptions(

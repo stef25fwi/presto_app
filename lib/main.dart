@@ -7706,6 +7706,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // Service IA structuré pour le formulaire publier
   final AiDraftService _aiService = AiDraftService();
   final ListingAudioAiService _listingAudioAiService = ListingAudioAiService();
+  final AdminAccessResolver _publishAdminAccessResolver =
+      AdminAccessResolver();
   final AudioRecorder _recorder = AudioRecorder();
   final WebAudioRecorder _webRec = WebAudioRecorder();
   String? _recordingPath;
@@ -7805,6 +7807,47 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     _appendPublishAiTrace(stage, parts.join(' | '), level: level);
+  }
+
+  void _appendAdminAccessStateTrace(
+    String stage,
+    AdminAccessState state, {
+    _PublishAiTraceLevel level = _PublishAiTraceLevel.info,
+  }) {
+    final parts = <String>[
+      'uid=${_publishAiDebugValue(state.uid)}',
+      'effectiveAdmin=${_publishAiDebugValue(state.effectiveIsAdmin)}',
+      'source=${_publishAiDebugValue(state.sourceOfTruth)}',
+      'tokenAdmin=${_publishAiDebugValue(state.tokenHasAdmin)}',
+      'profileAdmin=${_publishAiDebugValue(state.profileHasAdmin)}',
+      'serverOk=${_publishAiDebugValue(state.serverCheckSucceeded)}',
+      'serverAdmin=${_publishAiDebugValue(state.serverIsAdmin)}',
+    ];
+
+    if ((state.serverErrorCode ?? '').trim().isNotEmpty) {
+      parts.add('serverError=${_publishAiDebugValue(state.serverErrorCode)}');
+    }
+
+    _appendPublishAiTrace(stage, parts.join(' | '), level: level);
+  }
+
+  String _publishAdminRuntimeDetail(AdminAccessState state) {
+    if (state.serverCheckSucceeded && state.serverIsAdmin == true) {
+      return 'Accès admin confirmé';
+    }
+    if (state.effectiveIsAdmin) {
+      final source = state.sourceOfTruth.trim().isEmpty
+          ? 'token/profil'
+          : state.sourceOfTruth;
+      return 'Accès admin confirmé via $source';
+    }
+    if ((state.serverErrorMessage ?? '').trim().isNotEmpty) {
+      return state.serverErrorMessage!.trim();
+    }
+    if ((state.serverErrorCode ?? '').trim().isNotEmpty) {
+      return 'Vérification admin indisponible (${state.serverErrorCode})';
+    }
+    return 'Accès admin non confirmé';
   }
 
   String _formatPublishAiTraceTime(DateTime value) {
@@ -7940,23 +7983,24 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     try {
-      final accessCallable = _functions.httpsCallable(
-        'getMyAdminAccessStatus',
-        options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+      final accessState = await _publishAdminAccessResolver.resolveAdminAccess(
+        forceRefresh: true,
       );
-      final accessRes = await accessCallable.call<dynamic>({});
-      final accessData = Map<String, dynamic>.from(accessRes.data as Map);
-      _appendAdminAccessDiagnosticTrace(
+      _appendAdminAccessStateTrace(
         'admin_check',
-        accessData,
-        level: accessData['isAdmin'] == true
+        accessState,
+        level: accessState.effectiveIsAdmin
             ? _PublishAiTraceLevel.success
             : _PublishAiTraceLevel.warning,
       );
-      if (accessData['isAdmin'] != true) {
+
+      if (!accessState.effectiveIsAdmin) {
         if (!mounted) return;
         setState(() {
           _adminAudioRuntimeAccessState = -1;
+          if (_adminAudioRuntimeLabel == 'Mode serveur') {
+            _adminAudioRuntimeDetail = _publishAdminRuntimeDetail(accessState);
+          }
         });
         return;
       }
@@ -7965,11 +8009,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       setState(() {
         _adminAudioRuntimeAccessState = 1;
         if (_adminAudioRuntimeLabel == 'Mode serveur') {
-          _adminAudioRuntimeDetail = 'Accès admin confirmé';
+          _adminAudioRuntimeDetail = _publishAdminRuntimeDetail(accessState);
         }
       });
+      unawaited(_adminAudioRuntimeStore.enableCloudSync());
 
       try {
+        await FirebaseAuth.instance.currentUser?.getIdToken(true);
         final configCallable = _functions.httpsCallable(
           'adminGetMicroIaConfig',
           options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
@@ -7993,7 +8039,27 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         });
         unawaited(_adminAudioRuntimeStore.enableCloudSync());
         _adminAudioRuntimeStore.updateConfiguredMode(mode);
-      } catch (_) {}
+      } on FirebaseFunctionsException catch (e) {
+        _appendPublishAiTrace(
+          'admin_config',
+          'Erreur config code=${e.code} message=${_publishAiDebugValue(e.message)}',
+          level: _PublishAiTraceLevel.warning,
+        );
+        if (!mounted) return;
+        setState(() {
+          _adminAudioRuntimeAccessState = 1;
+          if (_adminAudioRuntimeLabel == 'Mode serveur') {
+            _adminAudioRuntimeDetail =
+                '${_publishAdminRuntimeDetail(accessState)}. Config serveur indisponible';
+          }
+        });
+      } catch (error) {
+        _appendPublishAiTrace(
+          'admin_config',
+          'Erreur config inattendue: ${_publishAiDebugValue(error)}',
+          level: _PublishAiTraceLevel.warning,
+        );
+      }
     } on FirebaseFunctionsException catch (e) {
       _appendPublishAiTrace(
         'admin_check',
@@ -8042,6 +8108,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (e.code == 'permission-denied' || e.code == 'unauthenticated') {
         setState(() {
           _adminAudioRuntimeAccessState = -1;
+          if (_adminAudioRuntimeLabel == 'Mode serveur') {
+            _adminAudioRuntimeDetail =
+                'Vérification admin serveur indisponible. Recharge la session.';
+          }
         });
       }
     } catch (_) {
@@ -8053,6 +8123,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (!mounted) return;
       setState(() {
         _adminAudioRuntimeAccessState = -1;
+        if (_adminAudioRuntimeLabel == 'Mode serveur') {
+          _adminAudioRuntimeDetail =
+              'Vérification admin impossible pour cette session';
+        }
       });
     }
   }
@@ -11559,6 +11633,7 @@ class _AccountPageState extends State<AccountPage> {
       options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
     );
     try {
+      await _auth.currentUser?.getIdToken(true);
       final res = await callable.call<dynamic>({});
       sw.stop();
       PrestoMonitoring.I.trackFunctionsCall(
