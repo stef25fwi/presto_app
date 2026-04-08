@@ -909,55 +909,67 @@ function evaluateQuality({ text, googleConfidence, audioInfo }) {
   return { score, reasons };
 }
 
-async function assertIsAdmin(req) {
+function normalizeRoleValues(rawRoles) {
+  return Array.isArray(rawRoles)
+    ? rawRoles
+        .map((role) => String(role || '').trim().toLowerCase())
+        .filter(Boolean)
+    : [];
+}
+
+function hasAdminRoleData(data) {
+  if (!data || typeof data !== 'object') {
+    return false;
+  }
+
+  const roles = normalizeRoleValues(data.roles);
+  const primaryRole = String(data.primaryRole || '').trim().toLowerCase();
+
+  return (
+    roles.includes('admin') ||
+    roles.includes('superadmin') ||
+    primaryRole === 'admin' ||
+    primaryRole === 'superadmin' ||
+    data.admin === true ||
+    data.superadmin === true
+  );
+}
+
+async function resolveAdminAccess(req) {
   const uid = req.auth?.uid;
   if (!uid) {
     throw new HttpsError('unauthenticated', 'Authentication required.');
   }
 
   const token = req.auth?.token || {};
-  const tokenRoles = Array.isArray(token.roles)
-    ? token.roles
-        .map((role) => String(role || '').trim().toLowerCase())
-        .filter(Boolean)
-    : [];
-  const tokenHasAdminRole =
-    tokenRoles.includes('admin') ||
-    tokenRoles.includes('superadmin') ||
-    token.admin === true ||
-    token.superadmin === true;
-
-  if (tokenHasAdminRole) {
-    return;
+  if (hasAdminRoleData(token)) {
+    return { uid, isAdmin: true, source: 'token' };
   }
 
   const userSnap = await admin.firestore().collection('users').doc(uid).get();
   const userData = userSnap.data() || {};
-  const userRoles = Array.isArray(userData.roles)
-    ? userData.roles
-        .map((role) => String(role || '').trim().toLowerCase())
-        .filter(Boolean)
-    : [];
-  const primaryRole = String(userData.primaryRole || '').trim().toLowerCase();
-  const userHasAdminRole =
-    userRoles.includes('admin') ||
-    userRoles.includes('superadmin') ||
-    primaryRole === 'admin' ||
-    primaryRole === 'superadmin' ||
-    userData.admin === true ||
-    userData.superadmin === true;
-
-  if (userHasAdminRole) {
-    return;
+  if (hasAdminRoleData(userData)) {
+    return { uid, isAdmin: true, source: 'users' };
   }
 
-  const snap = await admin.firestore().collection('admins').doc(uid).get();
-  const data = snap.data() || {};
-  const enabled = data.enabled !== false; // défaut: true si doc existe
+  const adminSnap = await admin.firestore().collection('admins').doc(uid).get();
+  const adminData = adminSnap.data() || {};
+  const adminDocEnabled = adminSnap.exists && adminData.enabled !== false;
 
-  if (!snap.exists || !enabled) {
+  return {
+    uid,
+    isAdmin: adminDocEnabled,
+    source: adminDocEnabled ? 'admins' : null,
+  };
+}
+
+async function assertIsAdmin(req) {
+  const access = await resolveAdminAccess(req);
+  if (!access.isAdmin) {
     throw new HttpsError('permission-denied', 'Admin only.');
   }
+
+  return access;
 }
 
 async function getAuthUsersCount() {
@@ -1152,11 +1164,30 @@ exports.adminGetAccessStatus = onCall(
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
   async (req) => {
-    await assertIsAdmin(req);
+    const access = await assertIsAdmin(req);
     return {
       ok: true,
       isAdmin: true,
       uid: req.auth?.uid || null,
+      source: access.source || 'unknown',
+      checkedAt: Date.now(),
+    };
+  }
+);
+
+exports.getMyAdminAccessStatus = onCall(
+  {
+    region: PROJECT_REGION,
+    timeoutSeconds: 15,
+    enforceAppCheck: ENFORCE_APP_CHECK,
+  },
+  async (req) => {
+    const access = await resolveAdminAccess(req);
+    return {
+      ok: true,
+      isAdmin: access.isAdmin,
+      uid: access.uid || null,
+      source: access.source,
       checkedAt: Date.now(),
     };
   }
@@ -1715,11 +1746,54 @@ exports.microIaProcessAudio = onCall(
     try {
       const requestId = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
       const { storagePath, languageCode, generateDraft: wantDraft, draftCity, draftCategory } = req.data || {};
+      const clientAuthUid = String(req.data?.clientAuthUid || '').trim() || null;
+      const clientAuthEmail = String(req.data?.clientAuthEmail || '').trim() || null;
+      const clientAuthSource = String(req.data?.clientAuthSource || '').trim() || null;
+      const clientDebugLabel = String(req.data?.clientDebugLabel || '').trim() || null;
+      const clientRequestId = String(req.data?.clientRequestId || '').trim() || null;
+      const clientTokenPresent = req.data?.clientTokenPresent === true;
+      const clientAppCheckTokenPresent = req.data?.clientAppCheckTokenPresent === true;
+      const appCheckAppId = req.app?.appId || req.app?.app_id || null;
+      const rawStoragePath = typeof storagePath === 'string' ? storagePath : '';
+      const earlyStoragePathRedacted = rawStoragePath ? redactStoragePath(rawStoragePath) : null;
 
       const uid = req.auth?.uid || null;
 
+      console.log('[microIaProcessAudio] CALL', {
+        requestId,
+        clientRequestId,
+        clientDebugLabel,
+        authPresent: Boolean(req.auth),
+        uid,
+        appCheckPresent: Boolean(req.app),
+        appCheckAppId,
+        clientAuthUid,
+        clientAuthEmail,
+        clientAuthSource,
+        clientTokenPresent,
+        clientAppCheckTokenPresent,
+        storagePath: earlyStoragePathRedacted,
+      });
+
       if (!uid) {
-        throw new HttpsError("unauthenticated", "Authentication required.");
+        console.warn('[microIaProcessAudio] AUTH_MISSING', {
+          requestId,
+          clientRequestId,
+          clientDebugLabel,
+          authPresent: Boolean(req.auth),
+          appCheckPresent: Boolean(req.app),
+          appCheckAppId,
+          clientAuthUid,
+          clientAuthEmail,
+          clientAuthSource,
+          clientTokenPresent,
+          clientAppCheckTokenPresent,
+          storagePath: earlyStoragePathRedacted,
+        });
+        throw new HttpsError(
+          "unauthenticated",
+          "Authentication missing in callable context. Sign in again and retry the dictation."
+        );
       }
 
       if (!storagePath || typeof storagePath !== "string") {
@@ -1992,6 +2066,10 @@ exports.microIaProcessAudio = onCall(
       console.error("[microIaProcessAudio] Error:", {
         code: error?.code || null,
         message: error?.message || String(error),
+        authPresent: Boolean(req?.auth),
+        uid: req?.auth?.uid || null,
+        appCheckPresent: Boolean(req?.app),
+        appCheckAppId: req?.app?.appId || req?.app?.app_id || null,
       });
       if (error instanceof HttpsError) throw error;
       throw new HttpsError("internal", error?.message || "microIaProcessAudio failed");

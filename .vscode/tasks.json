@@ -69,6 +69,12 @@
       "problemMatcher": []
     },
     {
+      "label": "Git: Stage Admin + MicroIA Fixes",
+      "type": "shell",
+      "command": "git add .vscode/tasks.json lib/main.dart lib/features/micro_ia/micro_ia_service.dart functions/index.js functions/src/index.ts functions/src/legacy/callables_compat.ts functions/src/legacy/callables_compat.test.ts",
+      "problemMatcher": []
+    },
+    {
       "label": "Git: Commit All",
       "type": "shell",
       "command": "git commit -m \"fix(offers): use web html image fallback on detail page\"",
@@ -120,6 +126,12 @@
       "label": "Git: Commit Messaging Recovery",
       "type": "shell",
       "command": "git commit -m \"fix(messages): recover started conversations and harden legacy repair tooling\"",
+      "problemMatcher": []
+    },
+    {
+      "label": "Git: Commit Admin + MicroIA Fixes",
+      "type": "shell",
+      "command": "git commit -m \"fix(admin,microia): align profile access and harden dictation auth\"",
       "problemMatcher": []
     },
     {
@@ -204,6 +216,12 @@
       "label": "Firebase: Deploy Functions Only",
       "type": "shell",
       "command": "firebase deploy --project presto-app-74abe --only functions",
+      "problemMatcher": []
+    },
+    {
+      "label": "Firebase: Deploy Functions + Hosting",
+      "type": "shell",
+      "command": "firebase deploy --project presto-app-74abe --only functions,hosting",
       "problemMatcher": []
     },
     {
@@ -366,6 +384,28 @@
         "Git: Commit Messaging Recovery",
         "Git: Push Main",
         "Firebase: Deploy Firestore Rules Only"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Release: Admin + MicroIA Fixes",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Git: Stage Admin + MicroIA Fixes",
+        "Functions: Build",
+        "Flutter: Analyze",
+        "Flutter: Build Web Release",
+        "Git: Commit Admin + MicroIA Fixes",
+        "Git: Push Main",
+        "Firebase: Deploy Functions + Hosting"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "ADDCOMMIT PUSH BUIL DEPLOY A CLQIUER",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Release: Admin + MicroIA Fixes"
       ],
       "problemMatcher": []
     },
