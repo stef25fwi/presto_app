@@ -174,7 +174,7 @@ Future<Map<String, dynamic>> generateOfferDraft({required String text}) async {
 ```
 
 **Optimisations ✅**:
-- ✅ Région correcte `us-east1`
+- ✅ Région correcte `europe-west1`
 - ✅ Type safety avec `<dynamic>`
 - ✅ Parsing sûr avec fallback `?? ''`
 - ✅ Conversion `.toString()` systématique
@@ -193,7 +193,7 @@ Future<Map<String, dynamic>> generateOfferDraft({required String text}) async {
 **Fonctionnement**:
 ```javascript
 exports.generateOfferDraft = onCall({
-  region: 'us-east1',  // ✅ Région de production
+  region: 'europe-west1',  // ✅ Région de production
   secrets: [OPENAI_API_KEY] // ✅ Sécurité clé API
 }, async (request) => {
   let { hint, city, category, lang = 'fr' } = request.data;
@@ -256,7 +256,7 @@ exports.generateOfferDraft = onCall({
 ```
 
 **Optimisations ✅**:
-- ✅ Région `us-east1` (alignée avec la prod actuelle)
+- ✅ Région `europe-west1` (alignée avec la prod actuelle)
 - ✅ Clé API en secret (sécurisé)
 - ✅ Prétraitement: `preprocessTranscript()` corrige erreurs STT
 - ✅ Validation entrée

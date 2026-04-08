@@ -106,7 +106,7 @@ async function testFirestoreAPI() {
 async function testFunctionsAPI() {
   console.log('3️⃣  Test Firebase Functions...');
   try {
-    const url = `https://us-east1-${CONFIG.projectId}.cloudfunctions.net/trackUserLogin`;
+    const url = `https://europe-west1-${CONFIG.projectId}.cloudfunctions.net/trackUserLogin`;
     const response = await httpRequest(url, {
       method: 'POST',
       headers: {

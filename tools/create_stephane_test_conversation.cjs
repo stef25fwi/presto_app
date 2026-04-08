@@ -2,7 +2,7 @@ const admin = require('../functions/node_modules/firebase-admin');
 
 const API_KEY = 'AIzaSyB-Oo_86VpG_refQU7my0qk10tQFQDU-Fo';
 const PROJECT_ID = 'presto-app-74abe';
-const FUNCTIONS_REGION = process.env.FUNCTIONS_REGION || 'us-east1';
+const FUNCTIONS_REGION = process.env.FUNCTIONS_REGION || 'europe-west1';
 const CALLABLE_BASE_URL = `https://${FUNCTIONS_REGION}-${PROJECT_ID}.cloudfunctions.net`;
 const STEPHANE_UID = process.env.STEPHANE_UID || 'modRxXduO8TnMlD6MFxobuKigVy2';
 const TEST_EMAIL = process.env.STEPHANE_TEST_EMAIL || 'messaging.stephane.test.20260329@presto-app.test';

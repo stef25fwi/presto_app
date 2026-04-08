@@ -1,7 +1,7 @@
 // Simple test runner to call the HTTPS callable function generateOfferDraft
-// Requires the function to be deployed in us-east1 on project presto-app-74abe
+// Requires the function to be deployed in europe-west1 on project presto-app-74abe
 
-const REGION = 'us-east1';
+const REGION = 'europe-west1';
 const PROJECT_ID = 'presto-app-74abe';
 const FUNCTION_NAME = 'generateOfferDraft';
 

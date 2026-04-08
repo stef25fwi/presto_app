@@ -73,7 +73,7 @@ async function notifyUser(admin, uid, payload) {
     });
 }
 
-function createModerateNewOffer({ admin, onDocumentCreated, region = 'us-east1' }) {
+function createModerateNewOffer({ admin, onDocumentCreated, region = 'europe-west1' }) {
   return onDocumentCreated(
     { document: "offers/{offerId}", region },
     async (event) => {

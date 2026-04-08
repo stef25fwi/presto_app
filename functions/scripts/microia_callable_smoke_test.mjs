@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 
 const projectId = process.env.PROJECT_ID || "presto-app-74abe";
-const region = process.env.FUNCTIONS_REGION || "us-east1";
+const region = process.env.FUNCTIONS_REGION || "europe-west1";
 const idToken = process.env.FIREBASE_ID_TOKEN || "";
 const appCheckToken = process.env.FIREBASE_APP_CHECK_TOKEN || "";
 const requireAppCheck = String(process.env.REQUIRE_APP_CHECK || "true").toLowerCase() !== "false";
