@@ -1872,6 +1872,7 @@ void _showSupportTicketsSheet(
 class _AdminSpacePageState extends State<AdminSpacePage> {
   static const Color prestoOrange = Color(0xFFFF6600);
   static const Color prestoBlue = Color(0xFF1A73E8);
+  static const Duration _kAdminAuthRestoreTimeout = Duration(seconds: 5);
 
   final FirebaseFunctions _functions =
       prestoFirebaseFunctions;
@@ -1879,7 +1880,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
       TextEditingController();
 
   bool _adminStatusLoading = true;
+  bool _adminAccessGranted = false;
   String _adminMode = 'HYBRID';
+  String _adminAccessSource = '';
   DateTime? _adminCheckedAt;
   Object? _adminStatusError;
   bool _userStatsLoading = true;
@@ -1888,8 +1891,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
   @override
   void initState() {
     super.initState();
-    _loadAdminStatus();
-    _loadUserStats();
+    _reloadAdminPage();
   }
 
   @override
@@ -1904,7 +1906,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     final auth = FirebaseAuth.instance;
     final user = auth.currentUser ??
         await auth.authStateChanges().first.timeout(
-              const Duration(seconds: 2),
+              _kAdminAuthRestoreTimeout,
               onTimeout: () => null,
             );
     if (user == null) return null;
@@ -1916,11 +1918,26 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
     return auth.currentUser ?? user;
   }
 
+  Future<void> _reloadAdminPage() async {
+    await _loadAdminStatus();
+    if (!mounted || !_adminAccessGranted) {
+      if (mounted) {
+        setState(() {
+          _userStatsLoading = false;
+        });
+      }
+      return;
+    }
+    await _loadUserStats();
+  }
+
   Future<void> _loadAdminStatus({
     bool allowAuthRetry = true,
   }) async {
     setState(() {
       _adminStatusLoading = true;
+      _adminAccessGranted = false;
+      _adminAccessSource = '';
       _adminStatusError = null;
     });
 
@@ -1933,14 +1950,32 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
       }
 
       final accessCallable = _functions.httpsCallable(
-        'adminGetAccessStatus',
+        'getMyAdminAccessStatus',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
       );
-      await accessCallable.call<dynamic>({});
+      final accessRes = await accessCallable.call<dynamic>({});
+      final accessData = (accessRes.data is Map)
+          ? Map<String, dynamic>.from(accessRes.data as Map)
+          : <String, dynamic>{};
+      final isAdmin = accessData['isAdmin'] == true;
+      final source = (accessData['source'] ?? '').toString().trim();
+      final checkedAtRaw = accessData['checkedAt'];
+      final checkedAtMs = checkedAtRaw is num ? checkedAtRaw.toInt() : null;
       if (!mounted) return;
       setState(() {
-        _adminCheckedAt = DateTime.now();
+        _adminAccessGranted = isAdmin;
+        _adminAccessSource = source;
+        _adminCheckedAt = checkedAtMs != null
+            ? DateTime.fromMillisecondsSinceEpoch(checkedAtMs)
+            : DateTime.now();
+        _adminStatusError = isAdmin
+            ? null
+            : StateError('permission-denied: admin required');
       });
+
+      if (!isAdmin) {
+        return;
+      }
 
       try {
         final configCallable = _functions.httpsCallable(
@@ -1972,11 +2007,13 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
 
       if (!mounted) return;
       setState(() {
+        _adminAccessGranted = false;
         _adminStatusError = error;
       });
     } catch (error) {
       if (!mounted) return;
       setState(() {
+        _adminAccessGranted = false;
         _adminStatusError = error;
       });
     } finally {
@@ -2298,6 +2335,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
 
     if (_adminStatusError != null) {
       final denied = _isAdminAccessDenied(_adminStatusError);
+      final detail = _adminAccessSource.isNotEmpty
+          ? 'Source serveur: $_adminAccessSource'
+          : _adminErrorDetail(_adminStatusError);
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(14),
@@ -2321,7 +2361,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
             const SizedBox(height: 6),
             Text(
                 denied
-                  ? 'La session admin n est pas encore validee. Relance le controle apres rechargement.'
+                  ? 'Le chargement admin n est pas encore confirme pour cette session. Relance le controle apres synchronisation.'
                   : 'La verification admin a echoue temporairement. Relance le controle.',
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
@@ -2330,7 +2370,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Detail: ${_adminErrorDetail(_adminStatusError)}',
+              'Detail: $detail',
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 color: Colors.black45,
@@ -2350,7 +2390,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
             ],
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: _loadAdminStatus,
+              onPressed: _reloadAdminPage,
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Relancer le controle'),
             ),
@@ -2420,6 +2460,17 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
               fontSize: 12,
             ),
           ),
+          if (_adminAccessSource.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Source droits admin: $_adminAccessSource',
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.black45,
+                fontSize: 12,
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
@@ -2466,6 +2517,10 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
 
   Future<void> _loadUserStats() async {
     setState(() => _userStatsLoading = true);
+    if (!_adminAccessGranted) {
+      setState(() => _userStatsLoading = false);
+      return;
+    }
     try {
       final signedInUser = await _ensureSignedInUser(
         forceRefreshToken: true,
