@@ -46,6 +46,10 @@
         <button id="signOut">Sign Out</button>
     </div>
 
+    <p>
+        Renseigner la clé via l'URL avec <strong>?apiKey=...</strong> ou via le prompt affiché au chargement.
+    </p>
+
     <h2>Configuration actuelle</h2>
     <pre id="config"></pre>
 
@@ -57,8 +61,18 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, GoogleAuthProvider, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
+        const apiKeyFromUrl = new URLSearchParams(window.location.search).get('apiKey');
+        const storedApiKey = window.localStorage.getItem('FIREBASE_WEB_API_KEY');
+        const runtimeApiKey = apiKeyFromUrl || storedApiKey || window.prompt('Entrer FIREBASE_WEB_API_KEY pour ce test:');
+
+        if (!runtimeApiKey) {
+            throw new Error('FIREBASE_WEB_API_KEY manquante. Ajoutez ?apiKey=... a l\'URL ou saisissez-la dans le prompt.');
+        }
+
+        window.localStorage.setItem('FIREBASE_WEB_API_KEY', runtimeApiKey);
+
         const firebaseConfig = {
-            apiKey: 'AIzaSyB-Oo_86VpG_refQU7my0qk10tQFQDU-Fo',
+            apiKey: runtimeApiKey,
             authDomain: 'presto-app-74abe.firebaseapp.com',
             projectId: 'presto-app-74abe',
             storageBucket: 'presto-app-74abe.firebasestorage.app',
@@ -112,6 +126,7 @@
 
         // Display config
         configDiv.textContent = JSON.stringify({
+            apiKeyPreview: `${runtimeApiKey.slice(0, 12)}...`,
             authDomain: firebaseConfig.authDomain,
             projectId: firebaseConfig.projectId,
             appId: firebaseConfig.appId,

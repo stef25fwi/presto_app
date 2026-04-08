@@ -2,8 +2,8 @@ const admin = require('../functions/node_modules/firebase-admin');
 
 const PROJECT_ID = 'presto-app-74abe';
 const SEED_TAG = 'messaging-test-20260328';
-const BUYER_EMAIL = process.env.TEST_BUYER_EMAIL || 'messaging.buyer.20260328@presto-app.test';
-const SELLER_EMAIL = process.env.TEST_SELLER_EMAIL || 'messaging.seller.20260328@presto-app.test';
+const BUYER_EMAIL = process.env.TEST_BUYER_EMAIL || '';
+const SELLER_EMAIL = process.env.TEST_SELLER_EMAIL || '';
 const PARTICIPANT_QUERY_FIELDS = [
   'participants',
   'participant_ids',
@@ -42,6 +42,15 @@ function logStep(label, payload) {
 
 function normalizeString(value) {
   return String(value ?? '').trim();
+}
+
+function assertRequiredEnv() {
+  const missing = [];
+  if (!BUYER_EMAIL) missing.push('TEST_BUYER_EMAIL');
+  if (!SELLER_EMAIL) missing.push('TEST_SELLER_EMAIL');
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
 }
 
 function readConversationParticipants(data) {
@@ -308,6 +317,8 @@ async function collectConversationStateForUser(userId, expectedConversationId) {
 }
 
 async function verifySeededMessagesVisibility() {
+  assertRequiredEnv();
+
   const [buyerUser, sellerUser] = await Promise.all([
     admin.auth().getUserByEmail(BUYER_EMAIL),
     admin.auth().getUserByEmail(SELLER_EMAIL),

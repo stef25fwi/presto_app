@@ -1,15 +1,15 @@
 const admin = require('../functions/node_modules/firebase-admin');
 const { verifySeededMessagesVisibility } = require('./verify_messages_list_visibility.cjs');
 
-const API_KEY = 'AIzaSyB-Oo_86VpG_refQU7my0qk10tQFQDU-Fo';
+const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY || '';
 const PROJECT_ID = 'presto-app-74abe';
 const FUNCTIONS_REGION = process.env.FUNCTIONS_REGION || 'europe-west1';
 const CALLABLE_BASE_URL = `https://${FUNCTIONS_REGION}-${PROJECT_ID}.cloudfunctions.net`;
 const SEED_TAG = 'messaging-test-20260328';
-const BUYER_EMAIL = process.env.TEST_BUYER_EMAIL || 'messaging.buyer.20260328@presto-app.test';
-const BUYER_PASSWORD = process.env.TEST_BUYER_PASSWORD || 'PrestoBuyer!2026';
-const SELLER_EMAIL = process.env.TEST_SELLER_EMAIL || 'messaging.seller.20260328@presto-app.test';
-const SELLER_PASSWORD = process.env.TEST_SELLER_PASSWORD || 'PrestoSeller!2026';
+const BUYER_EMAIL = process.env.TEST_BUYER_EMAIL || '';
+const BUYER_PASSWORD = process.env.TEST_BUYER_PASSWORD || '';
+const SELLER_EMAIL = process.env.TEST_SELLER_EMAIL || '';
+const SELLER_PASSWORD = process.env.TEST_SELLER_PASSWORD || '';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -24,6 +24,18 @@ function logStep(label, payload) {
   console.log(`\n[${label}]`);
   if (payload !== undefined) {
     console.log(typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2));
+  }
+}
+
+function assertRequiredEnv() {
+  const missing = [];
+  if (!FIREBASE_WEB_API_KEY) missing.push('FIREBASE_WEB_API_KEY');
+  if (!BUYER_EMAIL) missing.push('TEST_BUYER_EMAIL');
+  if (!BUYER_PASSWORD) missing.push('TEST_BUYER_PASSWORD');
+  if (!SELLER_EMAIL) missing.push('TEST_SELLER_EMAIL');
+  if (!SELLER_PASSWORD) missing.push('TEST_SELLER_PASSWORD');
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   }
 }
 
@@ -75,7 +87,7 @@ async function upsertUserDoc(userRecord, roleLabel) {
 
 async function signInWithPassword(email, password) {
   const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`,
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_WEB_API_KEY}`,
     {
       method: 'POST',
       headers: {
@@ -140,6 +152,8 @@ async function createOffer({ sellerUser, title }) {
 }
 
 async function main() {
+  assertRequiredEnv();
+
   const buyerRecord = await upsertAuthUser({
     email: BUYER_EMAIL,
     password: BUYER_PASSWORD,
@@ -160,13 +174,11 @@ async function main() {
     buyer: {
       uid: buyerRecord.uid,
       email: buyerRecord.email,
-      password: BUYER_PASSWORD,
       displayName: buyerRecord.displayName,
     },
     seller: {
       uid: sellerRecord.uid,
       email: sellerRecord.email,
-      password: SELLER_PASSWORD,
       displayName: sellerRecord.displayName,
     },
   });
@@ -247,9 +259,7 @@ async function main() {
   logStep('summary', {
     seedTag: SEED_TAG,
     buyerEmail: BUYER_EMAIL,
-    buyerPassword: BUYER_PASSWORD,
     sellerEmail: SELLER_EMAIL,
-    sellerPassword: SELLER_PASSWORD,
     offerId: offerRef.id,
     conversationId,
   });

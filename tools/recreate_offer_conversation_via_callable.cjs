@@ -3,7 +3,7 @@ const {
   buildConversationMirrorFields,
 } = require('../functions/lib/modules/messaging/mirror.js');
 
-const API_KEY = 'AIzaSyB-Oo_86VpG_refQU7my0qk10tQFQDU-Fo';
+const FIREBASE_WEB_API_KEY = process.env.FIREBASE_WEB_API_KEY || '';
 const PROJECT_ID = 'presto-app-74abe';
 const FUNCTIONS_REGION = process.env.FUNCTIONS_REGION || 'europe-west1';
 const CALLABLE_BASE_URL = `https://${FUNCTIONS_REGION}-${PROJECT_ID}.cloudfunctions.net`;
@@ -28,6 +28,12 @@ function normalizeString(value) {
   return String(value ?? '').trim();
 }
 
+function assertRequiredEnv() {
+  if (!FIREBASE_WEB_API_KEY) {
+    throw new Error('Missing required environment variable: FIREBASE_WEB_API_KEY');
+  }
+}
+
 function canonicalConversationId({ offerId, currentUserId, otherUserId }) {
   return `offer_${offerId.replaceAll('/', '_')}__${[currentUserId, otherUserId]
     .map((value) => value.replaceAll('/', '_'))
@@ -37,7 +43,7 @@ function canonicalConversationId({ offerId, currentUserId, otherUserId }) {
 
 async function signInWithCustomToken(customToken) {
   const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${API_KEY}`,
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${FIREBASE_WEB_API_KEY}`,
     {
       method: 'POST',
       headers: {
@@ -86,6 +92,8 @@ function readDisplayName(userDoc, authUser, fallback) {
 }
 
 async function main() {
+  assertRequiredEnv();
+
   const offerId = normalizeString(process.argv[2]);
   const currentUserId = normalizeString(process.argv[3]);
   const otherUserId = normalizeString(process.argv[4]);
