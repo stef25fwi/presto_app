@@ -7773,6 +7773,40 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _notifyPublishAiTraceChanged();
   }
 
+  String _publishAiDebugValue(Object? value) {
+    if (value == null) return '-';
+    if (value is bool) return value ? 'yes' : 'no';
+    final text = value.toString().trim();
+    return text.isEmpty ? '-' : text;
+  }
+
+  void _appendAdminAccessDiagnosticTrace(
+    String stage,
+    Map<String, dynamic> payload, {
+    _PublishAiTraceLevel level = _PublishAiTraceLevel.info,
+  }) {
+    final debug = payload['debug'] is Map
+        ? Map<String, dynamic>.from(payload['debug'] as Map)
+        : const <String, dynamic>{};
+    final parts = <String>[
+      'uid=${_publishAiDebugValue(payload['uid'])}',
+      'isAdmin=${_publishAiDebugValue(payload['isAdmin'])}',
+      'source=${_publishAiDebugValue(payload['source'])}',
+    ];
+
+    if (debug.isNotEmpty) {
+      parts.addAll(<String>[
+        'tokenAdmin=${_publishAiDebugValue(debug['tokenHasAdmin'])}',
+        'userDoc=${_publishAiDebugValue(debug['userDocExists'])}',
+        'userAdmin=${_publishAiDebugValue(debug['userHasAdmin'])}',
+        'adminDoc=${_publishAiDebugValue(debug['adminDocExists'])}',
+        'adminEnabled=${_publishAiDebugValue(debug['adminDocEnabled'])}',
+      ]);
+    }
+
+    _appendPublishAiTrace(stage, parts.join(' | '), level: level);
+  }
+
   String _formatPublishAiTraceTime(DateTime value) {
     String two(int v) => v.toString().padLeft(2, '0');
     String three(int v) => v.toString().padLeft(3, '0');
@@ -7893,6 +7927,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _refreshAdminAudioRuntimeAccess() async {
     final user = await _resolveSignedInUser();
     if (user == null) {
+      _appendPublishAiTrace(
+        'admin_check',
+        'Aucun utilisateur FirebaseAuth disponible pour la verification admin',
+        level: _PublishAiTraceLevel.warning,
+      );
       if (!mounted) return;
       setState(() {
         _adminAudioRuntimeAccessState = 0;
@@ -7907,6 +7946,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
       final accessRes = await accessCallable.call<dynamic>({});
       final accessData = Map<String, dynamic>.from(accessRes.data as Map);
+      _appendAdminAccessDiagnosticTrace(
+        'admin_check',
+        accessData,
+        level: accessData['isAdmin'] == true
+            ? _PublishAiTraceLevel.success
+            : _PublishAiTraceLevel.warning,
+      );
       if (accessData['isAdmin'] != true) {
         if (!mounted) return;
         setState(() {
@@ -7931,6 +7977,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         final configRes = await configCallable.call<dynamic>({});
         final data = Map<String, dynamic>.from(configRes.data as Map);
         final mode = (data['mode'] ?? 'HYBRID').toString().toUpperCase();
+        _appendPublishAiTrace(
+          'admin_config',
+          'mode=${_publishAiDebugValue(mode)} source=${_publishAiDebugValue(data['source'])}',
+          level: _PublishAiTraceLevel.success,
+        );
 
         if (!mounted) return;
         setState(() {
@@ -7944,6 +7995,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _adminAudioRuntimeStore.updateConfiguredMode(mode);
       } catch (_) {}
     } on FirebaseFunctionsException catch (e) {
+      _appendPublishAiTrace(
+        'admin_check',
+        'Erreur callable code=${e.code} message=${_publishAiDebugValue(e.message)} uid=${user.uid}',
+        level: _PublishAiTraceLevel.error,
+      );
       if ((e.code == 'permission-denied' || e.code == 'unauthenticated') &&
           user.uid.isNotEmpty) {
         await _ensureProtectedSessionReady(forceRefreshToken: true);
@@ -7955,6 +8011,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           );
           final retryRes = await retryCallable.call<dynamic>({});
           final retryData = Map<String, dynamic>.from(retryRes.data as Map);
+          _appendAdminAccessDiagnosticTrace(
+            'admin_retry',
+            retryData,
+            level: retryData['isAdmin'] == true
+                ? _PublishAiTraceLevel.success
+                : _PublishAiTraceLevel.warning,
+          );
           if (retryData['isAdmin'] != true) {
             throw FirebaseFunctionsException(
               code: 'permission-denied',
@@ -7982,6 +8045,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         });
       }
     } catch (_) {
+      _appendPublishAiTrace(
+        'admin_check',
+        'Erreur inattendue pendant la verification admin',
+        level: _PublishAiTraceLevel.error,
+      );
       if (!mounted) return;
       setState(() {
         _adminAudioRuntimeAccessState = -1;
@@ -9556,8 +9624,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     try {
-      final streamedUser =
-          await auth.authStateChanges().first.timeout(const Duration(seconds: 5));
+      final streamedUser = await auth
+          .authStateChanges()
+          .firstWhere((candidate) => candidate != null)
+          .timeout(const Duration(seconds: 5));
       if (streamedUser != null) {
         SessionState.userId = streamedUser.uid;
       }

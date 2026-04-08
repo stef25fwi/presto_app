@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
+import '../micro_ia/micro_ia_service.dart';
 import '../../services/firebase_functions_region.dart';
 import '../../utils/crashlytics_context.dart';
 import '../../utils/retry.dart';
@@ -8,10 +10,18 @@ class AiDraftService {
   final FirebaseFunctions _functions =
       prestoFirebaseFunctions;
 
+  Future<void> _prepareAuthenticatedCallableSession() async {
+    await MicroIaService.prepareSecureCallableContext(
+      forceRefreshToken: true,
+    );
+    await FirebaseAuth.instance.currentUser?.getIdToken(false);
+  }
+
   /// Génère un brouillon simple (compatible ancien format)
   Future<Map<String, dynamic>> generateOfferDraft(
       {required String text}) async {
     try {
+      await _prepareAuthenticatedCallableSession();
       final callable = _functions.httpsCallable(
         'generateOfferDraft',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),
@@ -84,6 +94,7 @@ class AiDraftService {
     String? category,
   }) async {
     try {
+      await _prepareAuthenticatedCallableSession();
       final callable = _functions.httpsCallable(
         'generateOfferDraft',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 45)),

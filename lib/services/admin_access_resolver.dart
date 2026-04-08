@@ -38,7 +38,10 @@ class AdminAccessResolver {
     var user = _auth.currentUser;
     if (user == null) {
       try {
-        user = await _auth.authStateChanges().first.timeout(
+        user = await _auth
+            .authStateChanges()
+            .firstWhere((candidate) => candidate != null)
+            .timeout(
               _authRestoreTimeout,
               onTimeout: () => null,
             );
