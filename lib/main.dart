@@ -7619,10 +7619,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     required String logPrefix,
   }) async {
     try {
-      final secureContext = await MicroIaService.prepareSecureCallableContext(
-        forceRefreshToken: false,
-      );
-      if (secureContext.uid != uid) {
+      // ── Lightweight session guard ──
+      // Full auth preparation is done inside MicroIaService.processAudio().
+      // Here we only verify the user hasn't changed since streaming started.
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        throw const MicroIaClientAuthException(
+          code: 'auth-lost',
+          message: 'Session perdue. Reconnecte-toi puis relance la dictée.',
+        );
+      }
+      if (currentUser.uid != uid) {
         throw const MicroIaClientAuthException(
           code: 'auth-changed',
           message: 'La session utilisateur a changé. Relance la dictée IA.',
@@ -7630,9 +7637,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       }
       _logMicroIaDebug(
         'AUTH',
-        'uid=${secureContext.uid} email=${secureContext.email ?? ''} chunk=$sequence',
+        'uid=${currentUser.uid} chunk=$sequence session_ok=yes',
       );
-      _logMicroIaDebug('TOKEN', 'fetched=yes chunk=$sequence');
 
       _appendPublishAiTrace(
         'streaming_chunk_$sequence',
@@ -7712,8 +7718,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           _lastStreamingChunkErrorMessage!.isEmpty) {
         _lastStreamingChunkErrorMessage = formatted;
       }
-      if (e is MicroIaClientAuthException) {
-        _logMicroIaDebug('PROCESS', 'auth missing chunk=$sequence code=${e.code}');
+
+      // ── Stop streaming on any auth failure ──
+      final isAuthError = e is MicroIaClientAuthException ||
+          (e is FirebaseFunctionsException && e.code == 'unauthenticated');
+      if (isAuthError) {
+        _logMicroIaDebug(
+          'PROCESS',
+          'auth_failure chunk=$sequence type=${e.runtimeType} '
+          '${e is MicroIaClientAuthException ? 'code=${e.code}' : 'code=unauthenticated'}',
+        );
         if (_isListening &&
             !_isStoppingStreaming &&
             mounted &&
@@ -7721,6 +7735,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           unawaited(_stopStreamingMic());
         }
       }
+
       if (_isIgnorableStreamingChunkError(e)) {
         debugPrint(
           '[$logPrefix] Chunk $sequence ignored: $formatted',
