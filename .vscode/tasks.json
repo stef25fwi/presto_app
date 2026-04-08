@@ -71,7 +71,7 @@
     {
       "label": "Git: Stage Admin + MicroIA Fixes",
       "type": "shell",
-      "command": "git add .vscode/tasks.json lib/main.dart lib/features/micro_ia/micro_ia_service.dart functions/index.js functions/src/index.ts functions/src/legacy/callables_compat.ts functions/src/legacy/callables_compat.test.ts",
+      "command": "git add .vscode/tasks.json lib/main.dart lib/pages/admin_space_page.dart lib/features/micro_ia/micro_ia_service.dart functions/index.js functions/src/index.ts functions/src/legacy/callables_compat.ts functions/src/legacy/callables_compat.test.ts",
       "problemMatcher": []
     },
     {
@@ -131,7 +131,7 @@
     {
       "label": "Git: Commit Admin + MicroIA Fixes",
       "type": "shell",
-      "command": "git commit -m \"fix(admin,microia): align profile access and harden dictation auth\"",
+      "command": "git commit -m \"fix(admin,microia): align admin access and harden dictation auth\"",
       "problemMatcher": []
     },
     {
