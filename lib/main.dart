@@ -8746,10 +8746,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     try {
       final accessCallable = _functions.httpsCallable(
-        'adminGetAccessStatus',
+        'getMyAdminAccessStatus',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
       );
-      await accessCallable.call<dynamic>({});
+      final accessRes = await accessCallable.call<dynamic>({});
+      final accessData = Map<String, dynamic>.from(accessRes.data as Map);
+      if (accessData['isAdmin'] != true) {
+        if (!mounted) return;
+        setState(() {
+          _adminAudioRuntimeAccessState = -1;
+        });
+        return;
+      }
 
       if (!mounted) return;
       setState(() {
@@ -8786,10 +8794,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         if (!mounted) return;
         try {
           final retryCallable = _functions.httpsCallable(
-            'adminGetAccessStatus',
+            'getMyAdminAccessStatus',
             options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
           );
-          await retryCallable.call<dynamic>({});
+          final retryRes = await retryCallable.call<dynamic>({});
+          final retryData = Map<String, dynamic>.from(retryRes.data as Map);
+          if (retryData['isAdmin'] != true) {
+            throw FirebaseFunctionsException(
+              code: 'permission-denied',
+              message: 'Accès admin non confirmé après nouvelle tentative.',
+            );
+          }
           if (!mounted) return;
           setState(() {
             _adminAudioRuntimeAccessState = 1;
@@ -12207,6 +12222,8 @@ class _AccountPageState extends State<AccountPage> {
   DateTime? _adminLastCheckedAt;
   bool _adminLocalAccessHint = false;
   String _adminLocalAccessSource = '';
+  Map<String, dynamic> _adminDebugInfo = const <String, dynamic>{};
+  DateTime? _adminDebugUpdatedAt;
 
   void _resetAdminAccessState() {
     _adminAccessFuture = null;
@@ -12216,6 +12233,50 @@ class _AccountPageState extends State<AccountPage> {
     _adminLastCheckedAt = null;
     _adminLocalAccessHint = false;
     _adminLocalAccessSource = '';
+    _adminDebugInfo = const <String, dynamic>{};
+    _adminDebugUpdatedAt = null;
+  }
+
+  List<String> _adminRolesFromValue(dynamic value) {
+    if (value is! Iterable) return const <String>[];
+    return value
+        .map((entry) => entry.toString().trim().toLowerCase())
+        .where((entry) => entry.isNotEmpty)
+        .toList();
+  }
+
+  void _updateAdminDebugInfo(Map<String, dynamic> patch) {
+    if (!mounted) return;
+    setState(() {
+      _adminDebugInfo = <String, dynamic>{
+        ..._adminDebugInfo,
+        ...patch,
+      };
+      _adminDebugUpdatedAt = DateTime.now();
+    });
+  }
+
+  bool _shouldShowAdminDebugCard(
+    User user, {
+    Map<String, dynamic>? accessData,
+    Object? error,
+  }) {
+    final email = (user.email ?? '').trim().toLowerCase();
+    return email == 'sahai.stephane@gmail.com' ||
+        _adminLocalAccessHint ||
+        accessData?['isAdmin'] == true ||
+        error != null;
+  }
+
+  String _adminDebugText(dynamic value) {
+    if (value == null) return '-';
+    if (value is bool) return value ? 'oui' : 'non';
+    if (value is Iterable) {
+      final items = value.map((entry) => entry.toString()).toList();
+      return items.isEmpty ? '-' : items.join(', ');
+    }
+    final text = value.toString().trim();
+    return text.isEmpty ? '-' : text;
   }
 
   bool _hasAdminRoleInValues(Iterable<String> values) {
@@ -12250,15 +12311,17 @@ class _AccountPageState extends State<AccountPage> {
   }) async {
     var hinted = _hasAdminHintFromProfileData(profileData);
     var source = hinted ? 'profil' : '';
+    final profileRoles = _adminRolesFromValue(profileData?['roles']);
+    final profilePrimaryRole =
+        (profileData?['primaryRole'] ?? '').toString().trim().toLowerCase();
+    var tokenRoles = const <String>[];
+    var tokenHasAdmin = false;
 
     try {
       final tokenResult = await user.getIdTokenResult(forceRefreshToken);
       final claims = tokenResult.claims ?? const <String, dynamic>{};
-      final roleClaims = (claims['roles'] as List<dynamic>? ?? <dynamic>[])
-          .map((role) => role.toString().trim().toLowerCase())
-          .where((role) => role.isNotEmpty)
-          .toList();
-      final tokenHasAdmin = _hasAdminRoleInValues(roleClaims) ||
+      tokenRoles = _adminRolesFromValue(claims['roles']);
+      tokenHasAdmin = _hasAdminRoleInValues(tokenRoles) ||
           claims['admin'] == true ||
           claims['superadmin'] == true;
       if (tokenHasAdmin) {
@@ -12271,6 +12334,22 @@ class _AccountPageState extends State<AccountPage> {
     setState(() {
       _adminLocalAccessHint = hinted;
       _adminLocalAccessSource = source;
+      _adminDebugInfo = <String, dynamic>{
+        ..._adminDebugInfo,
+        'user.uid': user.uid,
+        'user.email': user.email ?? '',
+        'token.roles': tokenRoles,
+        'token.hasAdmin': tokenHasAdmin,
+        'profile.roles': profileRoles,
+        'profile.primaryRole': profilePrimaryRole,
+        'profile.admin': profileData?['admin'] == true,
+        'profile.superadmin': profileData?['superadmin'] == true,
+        'profile.hasAdminHint': _hasAdminHintFromProfileData(profileData),
+        'local.hint': hinted,
+        'local.source': source,
+        'last.stage': 'local-refresh',
+      };
+      _adminDebugUpdatedAt = DateTime.now();
     });
   }
 
@@ -12285,7 +12364,7 @@ class _AccountPageState extends State<AccountPage> {
             );
     if (currentUser != null) {
       try {
-        await currentUser.getIdToken(true);
+        await currentUser.getIdToken(false);
       } catch (_) {}
     }
     final callable = _functions.httpsCallable(
@@ -12314,6 +12393,17 @@ class _AccountPageState extends State<AccountPage> {
           _adminLocalAccessSource = isAdmin
               ? (serverSource.isNotEmpty ? 'serveur:$serverSource' : 'serveur')
               : '';
+          _adminDebugInfo = <String, dynamic>{
+            ..._adminDebugInfo,
+            'server.isAdmin': isAdmin,
+            'server.source': serverSource,
+            'server.checkedAt': checkedAtMs,
+            'server.debug': data['debug'],
+            'server.errorCode': '',
+            'server.errorMessage': '',
+            'last.stage': 'server-access-ok',
+          };
+          _adminDebugUpdatedAt = DateTime.now();
         });
       }
       if (isAdmin) {
@@ -12321,6 +12411,11 @@ class _AccountPageState extends State<AccountPage> {
       }
       return data;
     } on FirebaseFunctionsException catch (e) {
+      _updateAdminDebugInfo(<String, dynamic>{
+        'server.errorCode': e.code,
+        'server.errorMessage': e.message ?? '',
+        'last.stage': 'server-access-error',
+      });
       debugPrint(
         '[AdminProfile] getMyAdminAccessStatus error code=${e.code} message=${e.message}',
       );
@@ -12448,6 +12543,98 @@ class _AccountPageState extends State<AccountPage> {
     String two(int v) => v.toString().padLeft(2, '0');
     final local = value.toLocal();
     return '${two(local.day)}/${two(local.month)}/${local.year} ${two(local.hour)}:${two(local.minute)}';
+  }
+
+  Widget _buildAdminDebugCard(
+    User user, {
+    Map<String, dynamic>? accessData,
+    Object? error,
+  }) {
+    final serverDebugRaw = accessData?['debug'];
+    final serverDebug = serverDebugRaw is Map
+        ? Map<String, dynamic>.from(serverDebugRaw)
+        : const <String, dynamic>{};
+    final serverCheckedAtRaw = accessData?['checkedAt'];
+    final serverCheckedAt = serverCheckedAtRaw is num
+        ? DateTime.fromMillisecondsSinceEpoch(serverCheckedAtRaw.toInt())
+        : _adminLastCheckedAt;
+    final lines = <String>[
+      'uid=${user.uid}',
+      'email=${_adminDebugText(user.email ?? _adminDebugInfo['user.email'])}',
+      'localHint=${_adminDebugText(_adminLocalAccessHint)}',
+      'localSource=${_adminDebugText(_adminLocalAccessSource)}',
+      'tokenHasAdmin=${_adminDebugText(_adminDebugInfo['token.hasAdmin'])}',
+      'tokenRoles=${_adminDebugText(_adminDebugInfo['token.roles'])}',
+      'profileHasAdmin=${_adminDebugText(_adminDebugInfo['profile.hasAdminHint'])}',
+      'profileRoles=${_adminDebugText(_adminDebugInfo['profile.roles'])}',
+      'profilePrimaryRole=${_adminDebugText(_adminDebugInfo['profile.primaryRole'])}',
+      'serverIsAdmin=${_adminDebugText(accessData?['isAdmin'])}',
+      'serverSource=${_adminDebugText(accessData?['source'])}',
+      'serverCheckedAt=${_formatAdminCheckTime(serverCheckedAt)}',
+      'server.tokenHasAdmin=${_adminDebugText(serverDebug['tokenHasAdmin'])}',
+      'server.userDocExists=${_adminDebugText(serverDebug['userDocExists'])}',
+      'server.userHasAdmin=${_adminDebugText(serverDebug['userHasAdmin'])}',
+      'server.userRoles=${_adminDebugText(serverDebug['userRoles'])}',
+      'server.userPrimaryRole=${_adminDebugText(serverDebug['userPrimaryRole'])}',
+      'server.adminDocExists=${_adminDebugText(serverDebug['adminDocExists'])}',
+      'server.adminDocEnabled=${_adminDebugText(serverDebug['adminDocEnabled'])}',
+      'server.errorCode=${_adminDebugText(_adminDebugInfo['server.errorCode'])}',
+      'server.errorMessage=${_adminDebugText(_adminDebugInfo['server.errorMessage'])}',
+      'lastStage=${_adminDebugText(_adminDebugInfo['last.stage'])}',
+      'debugUpdatedAt=${_formatAdminCheckTime(_adminDebugUpdatedAt)}',
+      if (error != null) 'uiError=${_adminErrorDetail(error)}',
+    ];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F8FC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFD9DDEB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.bug_report_rounded, color: Colors.black54),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Diagnostic admin visible',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _refreshAdminAccessForUser(user.uid);
+                    _adminCfgFuture = null;
+                    _adminCfgFutureUid = null;
+                  });
+                },
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Relancer'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SelectableText(
+            lines.join('\n'),
+            style: const TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 12,
+              height: 1.35,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildAdminLoadingCard() {
@@ -12617,6 +12804,10 @@ class _AccountPageState extends State<AccountPage> {
     _profilePseudoController.addListener(_handleProfileCompletenessChanged);
     _profileCityController.addListener(_handleProfileCompletenessChanged);
     _profilePhoneController.addListener(_handleProfileCompletenessChanged);
+    _profileAuthSub = _auth.idTokenChanges().listen((user) {
+      if (!mounted) return;
+      unawaited(_handleProfileAuthStateChanged(user));
+    });
 
     // Sur Web, vérifie si l'utilisateur revient d'un redirect Google Sign-In
     if (kIsWeb) {
@@ -12674,6 +12865,11 @@ class _AccountPageState extends State<AccountPage> {
 
     if (_activeProfileUid == user.uid &&
         (_profileLoaded || _profileLoadRequested)) {
+      await _refreshAdminLocalAccessHint(user, forceRefreshToken: false);
+      if (!mounted) return;
+      setState(() {
+        _refreshAdminAccessForUser(user.uid);
+      });
       return;
     }
 
@@ -12864,6 +13060,15 @@ class _AccountPageState extends State<AccountPage> {
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         final profileHasAdminHint = _hasAdminHintFromProfileData(data);
+        _updateAdminDebugInfo(<String, dynamic>{
+          'profile.roles': _adminRolesFromValue(data['roles']),
+          'profile.primaryRole':
+              (data['primaryRole'] ?? '').toString().trim().toLowerCase(),
+          'profile.admin': data['admin'] == true,
+          'profile.superadmin': data['superadmin'] == true,
+          'profile.hasAdminHint': profileHasAdminHint,
+          'last.stage': 'profile-doc-loaded',
+        });
         if (profileHasAdminHint) {
           _adminLocalAccessHint = true;
           if (_adminLocalAccessSource != 'token') {
@@ -13999,32 +14204,62 @@ class _AccountPageState extends State<AccountPage> {
       future: _adminAccessFuture,
       builder: (context, accessSnapshot) {
         if (accessSnapshot.connectionState == ConnectionState.waiting) {
-          return _buildAdminLoadingCard();
+          final loadingCard = _buildAdminLoadingCard();
+          if (_shouldShowAdminDebugCard(user)) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                loadingCard,
+                _buildAdminDebugCard(user),
+              ],
+            );
+          }
+          return loadingCard;
         }
 
         if (accessSnapshot.hasError) {
           if (_isAdminAccessDenied(accessSnapshot.error) &&
               !_isAdminAccessUnauthenticated(accessSnapshot.error) &&
               !_adminLocalAccessHint) {
+            if (_shouldShowAdminDebugCard(user, error: accessSnapshot.error)) {
+              return _buildAdminDebugCard(user, error: accessSnapshot.error);
+            }
             return const SizedBox.shrink();
           }
           if (_adminLocalAccessHint) {
-            return _buildAdminLocalFallbackCard(
+            final fallbackCard = _buildAdminLocalFallbackCard(
               user: user,
               detail: _adminErrorDetail(accessSnapshot.error),
             );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                fallbackCard,
+                _buildAdminDebugCard(user, error: accessSnapshot.error),
+              ],
+            );
           }
-          return _buildAdminLoadRetryCard(
+          final retryCard = _buildAdminLoadRetryCard(
             user: user,
             title: 'Espace admin indisponible',
             message:
                 'Le chargement du profil admin a échoué temporairement. Réessaie pour vérifier l’accès.',
             detail: _adminErrorDetail(accessSnapshot.error),
           );
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              retryCard,
+              _buildAdminDebugCard(user, error: accessSnapshot.error),
+            ],
+          );
         }
 
         final accessData = accessSnapshot.data ?? const <String, dynamic>{};
         if (accessData['isAdmin'] != true) {
+          if (_shouldShowAdminDebugCard(user, accessData: accessData)) {
+            return _buildAdminDebugCard(user, accessData: accessData);
+          }
           return const SizedBox.shrink();
         }
 
@@ -14045,7 +14280,7 @@ class _AccountPageState extends State<AccountPage> {
             final configLoaded = cfgSnapshot.hasData;
             final configError = cfgSnapshot.hasError;
 
-            return Container(
+            final adminCard = Container(
               margin: const EdgeInsets.only(bottom: 18),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -14190,6 +14425,24 @@ class _AccountPageState extends State<AccountPage> {
                 ],
               ),
             );
+            if (_shouldShowAdminDebugCard(
+              user,
+              accessData: accessData,
+              error: cfgSnapshot.hasError ? cfgSnapshot.error : null,
+            )) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  adminCard,
+                  _buildAdminDebugCard(
+                    user,
+                    accessData: accessData,
+                    error: cfgSnapshot.hasError ? cfgSnapshot.error : null,
+                  ),
+                ],
+              );
+            }
+            return adminCard;
           },
         );
       },
@@ -14339,7 +14592,7 @@ class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
-      stream: _auth.authStateChanges(),
+      stream: _auth.idTokenChanges(),
       builder: (context, snapshot) {
         final user = snapshot.data;
         if (user == null) {
