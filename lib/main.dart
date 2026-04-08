@@ -30,8 +30,6 @@ import 'features/ai_draft/ai_draft_service.dart';
 import 'features/micro_ia/micro_ia_service.dart';
 import 'features/micro_ia/web_audio_recorder.dart';
 import 'config/env/openai_config.dart';
-import 'models/ai/listing_ai_request.dart';
-import 'models/ai/listing_ai_result.dart';
 import 'profile_page.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/legal_info_page.dart';
@@ -39,7 +37,6 @@ import 'pages/offers/offer_details_page.dart';
 import 'pages/messages/messages_page_v2.dart';
 import 'pages/toolbox_hub_page.dart';
 import 'services/ai/listing_audio_ai_service.dart';
-import 'services/ai/openai_service.dart';
 import 'services/city_search.dart';
 import 'services/account_social_auth_actions.dart';
 import 'services/google_auth_service.dart';
@@ -7639,16 +7636,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         level: _PublishAiTraceLevel.success,
       );
 
-      final result = await _listingAudioAiService
-          .transcribeUploadedAudio(
-            storagePath: storagePath,
-            languageCode: OpenAiConfig.defaultLanguageCode,
-          )
-          .timeout(const Duration(seconds: 75));
+      _appendPublishAiTrace(
+        'streaming_chunk_$sequence',
+        'Appel microIaProcessAudio pour le chunk',
+      );
+      final result = await MicroIaService.processAudio(
+        storagePath: storagePath,
+        languageCode: OpenAiConfig.defaultLanguageCode,
+      ).timeout(const Duration(seconds: 75));
 
       if (!mounted || sessionId != _streamingSessionId) return;
 
-      final text = result.text.trim();
+      final text = (result['text'] ?? '').toString().trim();
       if (text.isEmpty) {
         debugPrint('[$logPrefix] Empty transcript for chunk $sequence');
         _streamingChunkSuccessCount += 1; // STT succeeded but nothing heard
@@ -7660,6 +7659,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         return;
       }
 
+      final modeUsed = (result['modeUsed'] ?? '').toString().trim();
+      if (modeUsed.isNotEmpty) {
+        _adminAudioRuntimeStore.confirmLatestBackendResult(
+          backendModeUsed: modeUsed,
+          detail: 'Chunk backend confirmé via $modeUsed (${text.length} caractères)',
+          transcriptLength: text.length,
+        );
+      }
+
       _streamingChunkSuccessCount += 1;
       _acceptStreamingChunkTranscript(
         sessionId: sessionId,
@@ -7669,7 +7677,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       debugPrint('[$logPrefix] Chunk transcribed: "$text"');
       _appendPublishAiTrace(
         'streaming_chunk_$sequence',
-        'Chunk transcrit (${text.length} caractères)',
+        modeUsed.isEmpty
+            ? 'Chunk transcrit (${text.length} caractères)'
+            : 'Chunk transcrit via $modeUsed (${text.length} caractères)',
         level: _PublishAiTraceLevel.success,
       );
     } catch (e) {
@@ -8197,20 +8207,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
   }
 
-  ListingAiRequest _buildListingAiRequest({required String input}) {
-    return ListingAiRequest(
-      input: input,
-      city: _locationController.text.trim(),
-      category: (_category ?? '').trim(),
-      languageCode: OpenAiConfig.defaultLanguageCode,
-    );
-  }
-
-  void _applyListingAiResult(ListingAiResult result) {
-    _applyRichDraftToForm(result.toDraftPayload());
-  }
-
-  Future<String> _transcribePublishAudioWithLegacyPipeline({
+  Future<String> _transcribePublishAudio({
     required String ownerUid,
     required Uint8List audioBytes,
     required String contentType,
@@ -8271,7 +8268,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return transcript;
   }
 
-  Future<void> _applyLegacyPublishDraftFromTranscript(String transcript) async {
+  Future<void> _applyPublishDraftFromTranscript(String transcript) async {
     _latestRecognizedTranscript = transcript;
     _appendPublishAiTrace(
       'draft_local',
@@ -8279,13 +8276,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
     _applyFastDraftFromTranscript(transcript);
 
-    final city = _locationController.text.trim();
-    final category = (_category ?? '').trim();
-    final draft = await _aiService.generateOfferDraftV2(
-      text: transcript,
-      city: city.isEmpty ? null : city,
-      category: category.isEmpty ? null : category,
+    _appendPublishAiTrace(
+      'draft_remote',
+      'Appel generateOfferDraft depuis la transcription',
     );
+    final draft = await _aiService.generateOfferDraft(text: transcript);
     _appendPublishAiTrace(
       'draft_remote',
       'Réponse generateOfferDraft reçue',
@@ -8297,7 +8292,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!mounted) return;
 
     if (draft['success'] == true) {
-      _applyLegacyDraftToForm(draft);
+      _applyDraftToForm(draft);
       _appendPublishAiTrace(
         'draft_remote',
         'Champs du formulaire remplis par le draft IA',
@@ -8339,7 +8334,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     setState(() => _isAnalyzing = true);
 
     try {
-      await _applyLegacyPublishDraftFromTranscript(transcript);
+      await _applyPublishDraftFromTranscript(transcript);
     } catch (e) {
       debugPrint('[Streaming] Draft finalization error: $e');
       _appendPublishAiTrace(
@@ -8495,7 +8490,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   // Service IA structuré pour le formulaire publier
   final AiDraftService _aiService = AiDraftService();
-  final OpenAiService _openAiService = OpenAiService();
   final ListingAudioAiService _listingAudioAiService = ListingAudioAiService();
   final AudioRecorder _recorder = AudioRecorder();
   final WebAudioRecorder _webRec = WebAudioRecorder();
@@ -9570,13 +9564,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _applyKeywordCategoryPairFromText(t);
   }
 
-  /// Apply structured draft returned by the OpenAI publish flow.
-  void _applyServerDraftToForm(Map<String, dynamic> draft) {
-    _applyRichDraftToForm(draft);
-  }
-
-  /// Apply compatibility draft payload.
-  void _applyLegacyDraftToForm(Map<String, dynamic> draft) {
+  /// Apply draft payload returned by the publish IA pipeline.
+  void _applyDraftToForm(Map<String, dynamic> draft) {
     _applyRichDraftToForm(draft);
   }
 
@@ -10387,7 +10376,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (!appCheckReady) return;
 
     // ✅ Micro global: on ne fait PLUS speech_to_text (trop variable)
-    // On enregistre uniquement en WAV 16k mono, puis _stopMic() déclenchera _uploadAndTranscribe() (MicroIA).
+    // On enregistre l'audio puis _stopMic() déclenche le pipeline IA unifié.
     if (kIsWeb) {
       try {
         final uid = (await _resolveSignedInUser())?.uid;
@@ -10543,7 +10532,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               'Audio invalide (WAV trop petit: ${audioUpload.bytes.length} bytes).');
         }
 
-        final transcript = await _transcribePublishAudioWithLegacyPipeline(
+        final transcript = await _transcribePublishAudio(
           ownerUid: uid,
           audioBytes: audioUpload.bytes,
           contentType: audioUpload.contentType,
@@ -10552,7 +10541,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         if (!mounted) return;
 
-        await _applyLegacyPublishDraftFromTranscript(transcript);
+        await _applyPublishDraftFromTranscript(transcript);
       } catch (e, st) {
         await CrashlyticsContext.recordError(
           e is Exception ? e : Exception(e.toString()),
@@ -10777,7 +10766,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       'Lecture locale OK: ${audioBytes.length} bytes, $contentType, .$ext',
       level: _PublishAiTraceLevel.success,
     );
-    final transcript = await _transcribePublishAudioWithLegacyPipeline(
+    final transcript = await _transcribePublishAudio(
       ownerUid: uid,
       audioBytes: audioBytes,
       contentType: contentType,
@@ -10786,7 +10775,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     if (!mounted) return;
 
-    await _applyLegacyPublishDraftFromTranscript(transcript);
+    await _applyPublishDraftFromTranscript(transcript);
   }
 
   /// Appelle la Cloud Function pour analyser la description avec OpenAI
@@ -10803,18 +10792,31 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     setState(() => _isAnalyzing = true);
 
     try {
-      final draft = await _openAiService.extractListingFieldsFromText(
-        _buildListingAiRequest(input: input),
+      _appendPublishAiTrace(
+        'draft_remote',
+        'Appel generateOfferDraft depuis le bouton IA',
       );
+      final draft = await _aiService.generateOfferDraft(text: input);
 
       if (!mounted) return;
 
-      _applyListingAiResult(draft);
-      _applyKeywordCategoryPairFromText(input);
+      if (draft['success'] == true) {
+        _applyDraftToForm(draft);
+        _applyKeywordCategoryPairFromText(input);
 
+        showSuccessSnackBar(
+          context,
+          '✨ Analyse IA complétée\nChamps remplis automatiquement',
+        );
+        return;
+      }
+
+      final code = (draft['code'] ?? '').toString();
       showSuccessSnackBar(
         context,
-        '✨ Analyse IA complétée\nChamps remplis automatiquement',
+        code == 'deadline-exceeded'
+            ? 'Connexion lente, réessaie.'
+            : 'Erreur IA: ${(draft['error'] ?? 'inconnue').toString()}',
       );
     } catch (e) {
       if (!mounted) return;
