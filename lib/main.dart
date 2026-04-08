@@ -7306,61 +7306,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   static const int _defaultMaxListingPhotos = _publishPhotoHardLimit;
   static const int _minimumMaxListingPhotos = 1;
 
-  // ✅ NOUVEAU: Variables pour le streaming
-  final StreamController<String> _transcriptionStream =
-      StreamController<String>.broadcast(sync: true);
-  String _partialTranscript = '';
-  Timer? _streamingTimer;
-  bool _isStreaming = false;
-  final List<int> _streamingPcmAccumulator = <int>[];
-  final Map<int, Set<Future<void>>> _pendingStreamingChunkTasksBySession =
-      <int, Set<Future<void>>>{};
   final MarketplaceRemoteConfigService _marketplaceRemoteConfigService =
       MarketplaceRemoteConfigService();
   int _maxListingPhotos = _defaultMaxListingPhotos;
-
-  // ✅ AJOUT: Subscription pour le stream audio
-  StreamSubscription<Uint8List>? _streamMicSub;
-  Timer? _streamingMaxDurationTimer;
-
-  int _streamingChunkSuccessCount = 0;
-  int _streamingChunkErrorCount = 0;
-  String? _lastStreamingChunkErrorMessage;
-
-  static const int _kMinStreamingChunkBytes = 30000;
-
-  int _startStreamingSession() {
-    _streamingSessionId += 1;
-    _nextStreamingChunkSequence = 0;
-    _streamingChunkTexts.clear();
-    _partialTranscript = '';
-    _streamingChunkSuccessCount = 0;
-    _streamingChunkErrorCount = 0;
-    _lastStreamingChunkErrorMessage = null;
-    return _streamingSessionId;
-  }
-
-  int _reserveStreamingChunkSequence() {
-    final sequence = _nextStreamingChunkSequence;
-    _nextStreamingChunkSequence += 1;
-    return sequence;
-  }
-
-  String _buildStreamingTranscript() {
-    final orderedKeys = _streamingChunkTexts.keys.toList()..sort();
-    final transcript = orderedKeys
-        .map((key) => _streamingChunkTexts[key] ?? '')
-        .where((value) => value.trim().isNotEmpty)
-        .join(' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-
-    if (transcript.isNotEmpty) {
-      return transcript;
-    }
-
-    return _partialTranscript.trim();
-  }
 
   String _formatMicroIaRuntimeError(Object error) {
     if (error is MicroIaClientAuthException) {
@@ -7421,27 +7369,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return 'Problème de connexion réseau. Vérifie ta connexion puis réessaie.';
     }
     return message;
-  }
-
-  bool _isIgnorableStreamingChunkError(Object error) {
-    if (error is FirebaseFunctionsException) {
-      final message = (error.message ?? '').toLowerCase();
-      if (error.code == 'failed-precondition' &&
-          (message.contains('audio trop court/faible') ||
-              message.contains('audio file is empty'))) {
-        return true;
-      }
-    }
-    // Chunk vide ou format non décodable (silence, chunk trop court)
-    final msg = error.toString().toLowerCase();
-    if (msg.contains('unable to decode audio data') ||
-        msg.contains('unknown content type') ||
-        msg.contains('audio invalide') ||
-        msg.contains('audio vide') ||
-        msg.contains('empty audio')) {
-      return true;
-    }
-    return false;
   }
 
   Future<bool> _ensureAppCheckReady({
@@ -7528,738 +7455,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
     }
     return false;
-  }
-
-  void _acceptStreamingChunkTranscript({
-    required int sessionId,
-    required int sequence,
-    required String text,
-  }) {
-    if (!mounted || sessionId != _streamingSessionId) return;
-    final normalized = text.trim();
-    if (normalized.isEmpty) return;
-
-    _streamingChunkTexts[sequence] = normalized;
-    final transcript = _buildStreamingTranscript();
-
-    if (transcript.isNotEmpty) {
-      _partialTranscript = transcript;
-      _transcriptionStream.add(transcript);
-    }
-  }
-
-  String _closeStreamingSession() {
-    final transcript = _buildStreamingTranscript();
-    _streamingSessionId += 1;
-    _nextStreamingChunkSequence = 0;
-    _streamingChunkTexts.clear();
-    _streamingPcmAccumulator.clear();
-    _pendingStreamingChunkTasksBySession.remove(_streamingSessionId - 1);
-    // Counters are read BEFORE close, then reset here for next session.
-    _streamingChunkSuccessCount = 0;
-    _streamingChunkErrorCount = 0;
-    _lastStreamingChunkErrorMessage = null;
-    return transcript;
-  }
-
-  void _trackStreamingChunkTask(int sessionId, Future<void> task) {
-    final tasks = _pendingStreamingChunkTasksBySession.putIfAbsent(
-      sessionId,
-      () => <Future<void>>{},
-    );
-    tasks.add(task);
-    task.whenComplete(() {
-      final sessionTasks = _pendingStreamingChunkTasksBySession[sessionId];
-      if (sessionTasks == null) return;
-      sessionTasks.remove(task);
-      if (sessionTasks.isEmpty) {
-        _pendingStreamingChunkTasksBySession.remove(sessionId);
-      }
-    });
-  }
-
-  Future<void> _awaitStreamingChunkTasks(int sessionId) async {
-    final pending = _pendingStreamingChunkTasksBySession[sessionId]
-            ?.toList(growable: false) ??
-        const <Future<void>>[];
-    if (pending.isEmpty) return;
-
-    try {
-      await Future.wait(pending).timeout(const Duration(seconds: 20));
-    } catch (e) {
-      debugPrint('[Streaming] Pending chunk wait interrupted: $e');
-    }
-  }
-
-  Future<void> _queueStreamingChunkProcessing({
-    required int sessionId,
-    required String uid,
-    required Uint8List audioBytes,
-    required String contentType,
-    required String fileExtension,
-    required String logPrefix,
-  }) async {
-    final sequence = _reserveStreamingChunkSequence();
-    await _processStreamingChunk(
-      sessionId: sessionId,
-      uid: uid,
-      sequence: sequence,
-      audioBytes: audioBytes,
-      contentType: contentType,
-      fileExtension: fileExtension,
-      logPrefix: logPrefix,
-    );
-  }
-
-  Future<void> _processStreamingChunk({
-    required int sessionId,
-    required String uid,
-    required int sequence,
-    required Uint8List audioBytes,
-    required String contentType,
-    required String fileExtension,
-    required String logPrefix,
-  }) async {
-    try {
-      // ── Lightweight session guard ──
-      // Full auth preparation is done inside MicroIaService.processAudio().
-      // Here we only verify the user hasn't changed since streaming started.
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) {
-        throw const MicroIaClientAuthException(
-          code: 'auth-lost',
-          message: 'Session perdue. Reconnecte-toi puis relance la dictée.',
-        );
-      }
-      if (currentUser.uid != uid) {
-        throw const MicroIaClientAuthException(
-          code: 'auth-changed',
-          message: 'La session utilisateur a changé. Relance la dictée IA.',
-        );
-      }
-      _logMicroIaDebug(
-        'AUTH',
-        'uid=${currentUser.uid} chunk=$sequence session_ok=yes',
-      );
-
-      _appendPublishAiTrace(
-        'streaming_chunk_$sequence',
-        'Upload chunk ${audioBytes.length} bytes, $contentType, .$fileExtension',
-      );
-      _logMicroIaDebug(
-        'UPLOAD',
-        'chunk=$sequence bytes=${audioBytes.length} contentType=$contentType',
-      );
-      final storagePath = await _listingAudioAiService.uploadAudioBytes(
-        ownerUid: uid,
-        audioBytes: audioBytes,
-        contentType: contentType,
-        extension: fileExtension,
-        storagePrefix: 'stt_streaming',
-      );
-
-      debugPrint(
-        '[$logPrefix] Chunk uploaded: $storagePath (${audioBytes.length} bytes, $contentType)',
-      );
-      _appendPublishAiTrace(
-        'streaming_chunk_$sequence',
-        'Chunk uploadé: $storagePath',
-        level: _PublishAiTraceLevel.success,
-      );
-
-      _appendPublishAiTrace(
-        'streaming_chunk_$sequence',
-        'Appel microIaProcessAudio pour le chunk',
-      );
-      final result = await MicroIaService.processAudio(
-        storagePath: storagePath,
-        languageCode: OpenAiConfig.defaultLanguageCode,
-        debugLabel: 'streaming_chunk_$sequence',
-      ).timeout(const Duration(seconds: 75));
-
-      if (!mounted || sessionId != _streamingSessionId) return;
-
-      final text = (result['text'] ?? '').toString().trim();
-      if (text.isEmpty) {
-        debugPrint('[$logPrefix] Empty transcript for chunk $sequence');
-        _streamingChunkSuccessCount += 1; // STT succeeded but nothing heard
-        _appendPublishAiTrace(
-          'streaming_chunk_$sequence',
-          'Chunk transcrit mais vide',
-          level: _PublishAiTraceLevel.warning,
-        );
-        return;
-      }
-
-      final modeUsed = (result['modeUsed'] ?? '').toString().trim();
-      if (modeUsed.isNotEmpty) {
-        _adminAudioRuntimeStore.confirmLatestBackendResult(
-          backendModeUsed: modeUsed,
-          detail: 'Chunk backend confirmé via $modeUsed (${text.length} caractères)',
-          transcriptLength: text.length,
-        );
-      }
-
-      _streamingChunkSuccessCount += 1;
-      _acceptStreamingChunkTranscript(
-        sessionId: sessionId,
-        sequence: sequence,
-        text: text,
-      );
-      debugPrint('[$logPrefix] Chunk transcribed: "$text"');
-      _appendPublishAiTrace(
-        'streaming_chunk_$sequence',
-        modeUsed.isEmpty
-            ? 'Chunk transcrit (${text.length} caractères)'
-            : 'Chunk transcrit via $modeUsed (${text.length} caractères)',
-        level: _PublishAiTraceLevel.success,
-      );
-    } catch (e) {
-      final formatted = _formatMicroIaRuntimeError(e);
-      if (_lastStreamingChunkErrorMessage == null ||
-          _lastStreamingChunkErrorMessage!.isEmpty) {
-        _lastStreamingChunkErrorMessage = formatted;
-      }
-
-      // ── Stop streaming on any auth failure ──
-      final isAuthError = e is MicroIaClientAuthException ||
-          (e is FirebaseFunctionsException && e.code == 'unauthenticated');
-      if (isAuthError) {
-        _logMicroIaDebug(
-          'PROCESS',
-          'auth_failure chunk=$sequence type=${e.runtimeType} '
-          '${e is MicroIaClientAuthException ? 'code=${e.code}' : 'code=unauthenticated'}',
-        );
-        if (_isListening &&
-            !_isStoppingStreaming &&
-            mounted &&
-            sessionId == _streamingSessionId) {
-          unawaited(_stopStreamingMic());
-        }
-      }
-
-      if (_isIgnorableStreamingChunkError(e)) {
-        debugPrint(
-          '[$logPrefix] Chunk $sequence ignored: $formatted',
-        );
-        return;
-      }
-      _streamingChunkErrorCount += 1;
-      debugPrint('[$logPrefix] Chunk $sequence failed: $formatted');
-      _appendPublishAiTrace(
-        'streaming_chunk_$sequence',
-        formatted,
-        level: _PublishAiTraceLevel.error,
-      );
-    }
-  }
-
-  Future<void> _flushStreamingAudioForWeb({
-    required int sessionId,
-    required String uid,
-  }) async {
-    final blob = await _webRec.stopToBlob();
-    final audioUpload = await webBlobToMicroIaUpload(blob, preferRawBytes: true);
-    if (audioUpload.bytes.isEmpty) {
-      debugPrint('[Streaming Web] Final chunk ignored: empty audio');
-      return;
-    }
-    if (audioUpload.usedClientSideWavConversion &&
-        audioUpload.bytes.length < _kMinStreamingChunkBytes) {
-      debugPrint('[Streaming Web] Final chunk ignored: empty/tiny WAV');
-      return;
-    }
-
-    await _queueStreamingChunkProcessing(
-      sessionId: sessionId,
-      uid: uid,
-      audioBytes: audioUpload.bytes,
-      contentType: audioUpload.contentType,
-      fileExtension: audioUpload.extension,
-      logPrefix: 'Streaming Web',
-    );
-  }
-
-  Future<void> _flushStreamingAudioForMobile({
-    required int sessionId,
-    required String uid,
-  }) async {
-    if (_streamingPcmAccumulator.isEmpty) return;
-
-    final pcmData = Uint8List.fromList(_streamingPcmAccumulator);
-    _streamingPcmAccumulator.clear();
-    final wavBytes =
-        _wrapPcm16InWav(pcmData, sampleRate: 16000, numChannels: 1);
-
-    if (wavBytes.length < 1000) {
-      debugPrint('[Streaming Mobile] Final chunk ignored: empty/tiny WAV');
-      return;
-    }
-
-    await _queueStreamingChunkProcessing(
-      sessionId: sessionId,
-      uid: uid,
-      audioBytes: wavBytes,
-      contentType: 'audio/wav',
-      fileExtension: 'wav',
-      logPrefix: 'Streaming Mobile',
-    );
-  }
-
-  /// Wrap raw PCM16 little-endian bytes in a valid WAV header.
-  static Uint8List _wrapPcm16InWav(Uint8List pcmData,
-      {required int sampleRate, required int numChannels}) {
-    const bitsPerSample = 16;
-    final blockAlign = numChannels * (bitsPerSample ~/ 8);
-    final byteRate = sampleRate * blockAlign;
-    final dataSize = pcmData.length;
-    const headerSize = 44;
-
-    final out = ByteData(headerSize + dataSize);
-
-    void writeStr(int offset, String s) {
-      for (int i = 0; i < s.length; i++) {
-        out.setUint8(offset + i, s.codeUnitAt(i));
-      }
-    }
-
-    writeStr(0, 'RIFF');
-    out.setUint32(4, 36 + dataSize, Endian.little);
-    writeStr(8, 'WAVE');
-    writeStr(12, 'fmt ');
-    out.setUint32(16, 16, Endian.little);
-    out.setUint16(20, 1, Endian.little); // PCM
-    out.setUint16(22, numChannels, Endian.little);
-    out.setUint32(24, sampleRate, Endian.little);
-    out.setUint32(28, byteRate, Endian.little);
-    out.setUint16(32, blockAlign, Endian.little);
-    out.setUint16(34, bitsPerSample, Endian.little);
-    writeStr(36, 'data');
-    out.setUint32(40, dataSize, Endian.little);
-
-    // Copy PCM data after header
-    final result = out.buffer.asUint8List();
-    result.setRange(headerSize, headerSize + dataSize, pcmData);
-    return result;
-  }
-
-  /// ✅ STREAMING RÉEL: Mobile avec startStream() + PCM16
-  Future<void> _startStreamingMic() async {
-    if (_isListening || _isStreaming || _isStoppingStreaming) return;
-    if (_adminAudioRuntimeAccessState == 0) {
-      unawaited(_refreshAdminAudioRuntimeAccess());
-    }
-    _resetPublishAiTrace(kIsWeb ? 'micro streaming web' : 'micro streaming mobile');
-    _appendPublishAiTrace('start_streaming', 'Demande de démarrage du micro streaming');
-
-    final appCheckReady = await _ensureAppCheckReady(
-      flow: kIsWeb ? 'webStreamingMic' : 'mobileStreamingMic',
-    );
-    if (!appCheckReady) return;
-    if (!mounted) return;
-
-    if (kIsWeb) {
-      // ✅ WEB: Chunking mode (chunks toutes les 2 secondes)
-      // Note: Web enregistre des chunks et les envoie progressivement
-      try {
-        final secureContext = await _requirePublishAiSecureContext(
-          stage: 'webStreamingMic.start',
-          forceRefreshToken: true,
-        );
-        if (secureContext == null) return;
-        final uid = secureContext.uid;
-        _logMicroIaDebug('AUTH', 'uid=$uid email=${secureContext.email ?? ''}');
-
-        await _webRec.start();
-
-        final sessionId = _startStreamingSession();
-        _rememberAdminAudioRuntime(
-          flowKey: 'streaming_web',
-          label: 'Streaming web chunké',
-          detail: 'Chunks audio web -> GOOGLE_ONLY force cote serveur',
-          status: 'forced',
-          backendModeUsed: 'GOOGLE_ONLY',
-        );
-
-        setState(() {
-          _isListening = true;
-          _isStreaming = true; // Web: mode chunking (quasi temps-réel)
-        });
-        _appendPublishAiTrace(
-          'start_streaming',
-          'Micro streaming web démarré',
-          level: _PublishAiTraceLevel.success,
-        );
-
-        debugPrint('[Streaming Web] Web recording started (chunked mode)');
-
-        // ⏱ Auto-stop après 60s max
-        _streamingMaxDurationTimer?.cancel();
-        _streamingMaxDurationTimer = Timer(const Duration(seconds: 60), () {
-          if (_isListening && mounted) {
-            debugPrint('[Streaming] Max duration (60s) reached, auto-stopping');
-            unawaited(_stopStreamingMic());
-          }
-        });
-
-        // ✅ Chunking timer: toutes les 2 secondes
-        _streamingTimer?.cancel();
-        _streamingTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-          if (!_isListening || !mounted) return;
-
-          final task = () async {
-            try {
-              // ✅ Arrêter temporairement et récupérer le blob du chunk
-              final blob = await _webRec.stopToBlob();
-
-              debugPrint('[Streaming Web] Chunk blob acquired');
-
-              // ✅ Redémarrer pour le prochain chunk
-              if (_isListening && mounted && sessionId == _streamingSessionId) {
-                await _webRec.start();
-              } else {
-                debugPrint('[Streaming Web] Restart skipped: session ended');
-              }
-
-              // ⚡ Convertir WEBM→WAV PCM16 16kHz mono côté client
-              final audioUpload = await webBlobToMicroIaUpload(
-                blob,
-                preferRawBytes: true,
-              );
-              if (audioUpload.bytes.isEmpty) {
-                debugPrint('[Streaming Web] Empty audio chunk');
-                return;
-              }
-              if (audioUpload.usedClientSideWavConversion &&
-                  audioUpload.bytes.length < _kMinStreamingChunkBytes) {
-                debugPrint('[Streaming Web] Empty/tiny WAV chunk');
-                return;
-              }
-
-              _logMicroIaDebug(
-                'UPLOAD',
-                'chunk=pending session=$sessionId bytes=${audioUpload.bytes.length} contentType=${audioUpload.contentType}',
-              );
-
-              await _queueStreamingChunkProcessing(
-                sessionId: sessionId,
-                uid: uid,
-                audioBytes: audioUpload.bytes,
-                contentType: audioUpload.contentType,
-                fileExtension: audioUpload.extension,
-                logPrefix: 'Streaming Web',
-              );
-            } catch (e) {
-              debugPrint('[Streaming Web] Chunk processing error: $e');
-            }
-          }();
-          _trackStreamingChunkTask(sessionId, task);
-        });
-      } catch (e, st) {
-        await CrashlyticsContext.recordError(
-          e is Exception ? e : Exception(e.toString()),
-          st,
-          reason: 'Web streaming mic failed',
-          fatal: false,
-        );
-        if (!mounted) return;
-        _appendPublishAiTrace(
-          'start_streaming',
-          _formatMicroIaRuntimeError(e),
-          level: _PublishAiTraceLevel.error,
-        );
-        showSuccessSnackBar(
-          context,
-          'Erreur streaming micro: ${_formatMicroIaRuntimeError(e)}',
-        );
-      }
-      return;
-    }
-
-    // ✅ MOBILE: Streaming RÉEL avec startStream() + PCM16
-    try {
-      final secureContext = await _requirePublishAiSecureContext(
-        stage: 'mobileStreamingMic.start',
-        forceRefreshToken: true,
-      );
-      if (secureContext == null) return;
-
-      final hasPermission = await _recorder.hasPermission();
-      if (!mounted) return;
-
-      if (!hasPermission) {
-        _appendPublishAiTrace(
-          'permission_micro',
-          'Permission micro refusée',
-          level: _PublishAiTraceLevel.error,
-        );
-        if (!mounted) return;
-        showSuccessSnackBar(context, 'Permission micro requise');
-        return;
-      }
-
-      // ✅ CHANGEMENT 1: startStream() retourne un Stream<Uint8List>
-      final stream = await _recorder.startStream(
-        const RecordConfig(
-          encoder: AudioEncoder.pcm16bits, // ✅ PCM16 (requis pour Google STT)
-          sampleRate: 16000, // ✅ 16kHz
-          numChannels: 1,
-        ),
-      );
-
-      if (!mounted) return;
-
-      final sessionId = _startStreamingSession();
-      _streamingPcmAccumulator.clear();
-      _rememberAdminAudioRuntime(
-        flowKey: 'streaming_mobile',
-        label: 'Streaming mobile',
-        detail: 'PCM16 mobile decoupe en chunks -> GOOGLE_ONLY force cote serveur',
-        status: 'forced',
-        backendModeUsed: 'GOOGLE_ONLY',
-      );
-
-      setState(() {
-        _isListening = true;
-        _isStreaming = true; // Mode streaming réel
-      });
-      _appendPublishAiTrace(
-        'start_streaming',
-        'Micro streaming mobile démarré en PCM16 16k mono',
-        level: _PublishAiTraceLevel.success,
-      );
-
-      final uid = secureContext.uid;
-      final int chunkThreshold =
-          16000 * 2 * 2; // ~2s à 16kHz mono 16-bit = 64000 bytes
-
-      debugPrint('[Streaming Mobile] Stream started with PCM16');
-
-      // ⏱ Auto-stop après 60s max
-      _streamingMaxDurationTimer?.cancel();
-      _streamingMaxDurationTimer = Timer(const Duration(seconds: 60), () {
-        if (_isListening && mounted) {
-          debugPrint('[Streaming] Max duration (60s) reached, auto-stopping');
-          unawaited(_stopStreamingMic());
-        }
-      });
-
-      // ✅ CHANGEMENT 2: Écouter le stream audio
-      _streamMicSub?.cancel();
-      _streamMicSub = stream.listen(
-        (Uint8List chunk) async {
-          if (!_isListening || !mounted) return;
-
-          try {
-            _streamingPcmAccumulator.addAll(chunk);
-
-            // Envoyer quand le seuil est atteint
-            if (_streamingPcmAccumulator.length >= chunkThreshold) {
-              final pcmData = Uint8List.fromList(_streamingPcmAccumulator);
-              _streamingPcmAccumulator.clear();
-
-              // ⚡ Wrapper PCM16 brut dans un header WAV valide
-              final wavBytes =
-                  _wrapPcm16InWav(pcmData, sampleRate: 16000, numChannels: 1);
-              final task = _queueStreamingChunkProcessing(
-                sessionId: sessionId,
-                uid: uid,
-                audioBytes: wavBytes,
-                contentType: 'audio/wav',
-                fileExtension: 'wav',
-                logPrefix: 'Streaming Mobile',
-              );
-              _trackStreamingChunkTask(sessionId, task);
-            }
-          } catch (e) {
-            debugPrint('[Streaming Mobile] Chunk error: $e');
-          }
-        },
-        onError: (error) {
-          debugPrint('[Streaming Mobile] Stream error: $error');
-          if (mounted) {
-            setState(() {
-              _isListening = false;
-              _isStreaming = false;
-            });
-          }
-        },
-        onDone: () {
-          debugPrint('[Streaming Mobile] Stream done');
-          if (mounted) {
-            setState(() {
-              _isListening = false;
-              _isStreaming = false;
-            });
-          }
-        },
-        cancelOnError: false,
-      );
-    } catch (e) {
-      debugPrint('[Streaming Mobile] Start error: $e');
-      _appendPublishAiTrace(
-        'start_streaming',
-        'Fallback micro classique après erreur: ${_formatMicroIaRuntimeError(e)}',
-        level: _PublishAiTraceLevel.warning,
-      );
-      if (mounted) {
-        showSuccessSnackBar(context, 'Erreur streaming: $e');
-      }
-
-      // ✅ Fallback: enregistrement classique si streaming non supporté
-      await _startMic();
-    }
-  }
-
-  Future<void> _stopStreamingMic() async {
-    if (!_isListening || _isStoppingStreaming) return;
-    _isStoppingStreaming = true;
-    _appendPublishAiTrace('stop_streaming', 'Arrêt demandé pour le micro streaming');
-    final sessionId = _streamingSessionId;
-    _logMicroIaDebug('STOP', 'requested session=$sessionId');
-
-    _streamingTimer?.cancel();
-    _streamingTimer = null;
-    _streamingMaxDurationTimer?.cancel();
-    _streamingMaxDurationTimer = null;
-
-    final secureContext = await _requirePublishAiSecureContext(
-      stage: 'streaming.stop',
-      forceRefreshToken: true,
-      showUserMessage: false,
-    );
-    final uid = secureContext?.uid;
-    var sessionClosed = false;
-
-    if (mounted) {
-      setState(() {
-        _isListening = false;
-        _isStreaming = false;
-        _isAnalyzing = true;
-      });
-    }
-
-    try {
-      if (uid == null) {
-        _appendPublishAiTrace(
-          'auth',
-          'Utilisateur non connecté au stop streaming',
-          level: _PublishAiTraceLevel.error,
-        );
-        throw Exception('Not authenticated');
-      }
-
-      // Stop Web chunking
-      if (kIsWeb) {
-        await _flushStreamingAudioForWeb(sessionId: sessionId, uid: uid);
-      } else {
-        // Stop Mobile streaming
-        try {
-          await _streamMicSub?.cancel();
-          _streamMicSub = null;
-        } catch (_) {}
-
-        try {
-          await _recorder.stop();
-        } catch (_) {}
-
-        await _flushStreamingAudioForMobile(sessionId: sessionId, uid: uid);
-      }
-
-      await _awaitStreamingChunkTasks(sessionId);
-      _appendPublishAiTrace(
-        'stop_streaming',
-        'Chunks terminés: succès=$_streamingChunkSuccessCount, erreurs=$_streamingChunkErrorCount',
-      );
-
-      final chunkErrors = _streamingChunkErrorCount;
-      final chunkSuccesses = _streamingChunkSuccessCount;
-      final transcript = _closeStreamingSession();
-      sessionClosed = true;
-      _appendPublishAiTrace(
-        'stop_streaming',
-        transcript.isEmpty
-            ? 'Aucune transcription finale'
-            : 'Transcription finale ${transcript.length} caractères',
-        level: transcript.isEmpty
-            ? _PublishAiTraceLevel.warning
-            : _PublishAiTraceLevel.success,
-      );
-          _logMicroIaDebug(
-            'STOP',
-            'success=$chunkSuccesses errors=$chunkErrors transcript=${transcript.isEmpty ? 'no' : 'yes'}',
-          );
-
-      if (transcript.isEmpty) {
-        if (!mounted) return;
-        final chunkErrorMessage = _lastStreamingChunkErrorMessage;
-        if (chunkErrors > 0 &&
-            chunkSuccesses == 0 &&
-            chunkErrorMessage != null &&
-            chunkErrorMessage.isNotEmpty) {
-          showSuccessSnackBar(context, chunkErrorMessage);
-        } else if (chunkErrors > 0 && chunkSuccesses == 0) {
-          showSuccessSnackBar(
-            context,
-            'Erreur réseau ou serveur. Vérifie ta connexion et réessaie.',
-          );
-        } else if (chunkErrors > 0) {
-          showSuccessSnackBar(
-            context,
-            'Certains segments audio ont échoué. Réessaie dans un endroit calme.',
-          );
-        } else {
-          showSuccessSnackBar(
-            context,
-            'Aucun texte reconnu. Réessaie en parlant plus près du micro.',
-          );
-        }
-        return;
-      }
-
-      await _finalizeDraftFromStreaming(transcript);
-    } catch (e, st) {
-      await CrashlyticsContext.recordError(
-        e is Exception ? e : Exception(e.toString()),
-        st,
-        reason: 'Streaming mic stop/process failed',
-        fatal: false,
-        keys: {
-          'component': 'Main',
-          'flow': kIsWeb ? 'webStreamingMic' : 'mobileStreamingMic',
-          'step': 'stop',
-        },
-      );
-      try {
-        if (!mounted) return;
-        _appendPublishAiTrace(
-          'stop_streaming',
-          _formatMicroIaRuntimeError(e),
-          level: _PublishAiTraceLevel.error,
-        );
-        if (isTimeoutError(e)) {
-          showTimeoutSnackBar(context);
-        } else {
-          showSuccessSnackBar(
-            context,
-            'Erreur transcription: ${_formatMicroIaRuntimeError(e)}',
-          );
-        }
-      } finally {
-        if (!sessionClosed) {
-          _closeStreamingSession();
-        }
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isListening = false;
-          _isStreaming = false;
-          _isAnalyzing = false;
-        });
-      }
-      _isStoppingStreaming = false;
-    }
   }
 
   Future<String> _transcribePublishAudio({
@@ -8368,43 +7563,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           ? 'Connexion lente, réessaie.'
           : (draft['error'] ?? 'Erreur IA inconnue').toString(),
     );
-  }
-
-  /// Génère un draft IA final à partir de la transcription accumulée en streaming.
-  Future<void> _finalizeDraftFromStreaming(String transcript) async {
-    if (transcript.isEmpty || transcript.length < 10) return;
-
-    _latestRecognizedTranscript = transcript;
-    _appendPublishAiTrace(
-      'finalize_streaming',
-      'Finalisation du draft depuis le transcript streaming',
-    );
-
-    if (_shouldSkipFinalStreamingDraft(transcript)) {
-      debugPrint('[Streaming] Final draft skipped: core fields already filled');
-      _appendPublishAiTrace(
-        'finalize_streaming',
-        'Draft final ignoré: champs principaux déjà remplis',
-        level: _PublishAiTraceLevel.warning,
-      );
-      return;
-    }
-
-    if (!mounted) return;
-    setState(() => _isAnalyzing = true);
-
-    try {
-      await _applyPublishDraftFromTranscript(transcript);
-    } catch (e) {
-      debugPrint('[Streaming] Draft finalization error: $e');
-      _appendPublishAiTrace(
-        'finalize_streaming',
-        _formatMicroIaRuntimeError(e),
-        level: _PublishAiTraceLevel.error,
-      );
-    } finally {
-      if (mounted) setState(() => _isAnalyzing = false);
-    }
   }
 
   /// Bouton micro: utiliser le flux audio classique, qui traite l'audio au stop
@@ -8529,10 +7687,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   bool _categoryEditedByUser = false;
   bool _delayEditedByUser = false;
   bool _budgetEditedByUser = false;
-  int _streamingSessionId = 0;
-  int _nextStreamingChunkSequence = 0;
-  bool _isStoppingStreaming = false;
-  final Map<int, String> _streamingChunkTexts = <int, String>{};
   final List<_PublishAiTraceEntry> _publishAiTraceEntries =
       <_PublishAiTraceEntry>[];
   final ValueNotifier<int> _publishAiTraceVersion = ValueNotifier<int>(0);
@@ -8652,7 +7806,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   String _currentPublishAiRuntimeState() {
-    if (_isListening) return _isStreaming ? 'Ecoute streaming' : 'Ecoute micro';
+    if (_isListening) return 'Ecoute micro';
     if (_isAnalyzing) return 'Analyse en cours';
     return 'En attente';
   }
@@ -8859,7 +8013,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     final accent = _isListening
-        ? (_isStreaming ? const Color(0xFF00897B) : kPrestoOrange)
+        ? kPrestoOrange
         : (_isAnalyzing ? kPrestoBlue : const Color(0xFF455A64));
     final stateLabel = _isListening
         ? 'LIVE'
@@ -9319,38 +8473,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return null;
   }
 
-  bool _shouldSkipFinalStreamingDraft(String transcript) {
-    final hasTitle = _titleController.text.trim().isNotEmpty;
-    final hasDescription = _descriptionController.text.trim().isNotEmpty;
-    final hasCity = _locationController.text.trim().isNotEmpty;
-    final hasCategory = (_category ?? '').trim().isNotEmpty;
-    final hasDelay = (_missionDelay ?? '').trim().isNotEmpty;
-    final hasBudget =
-        _budgetType == 'À négocier' || _budgetController.text.trim().isNotEmpty;
-
-    final missingCoreField =
-        !hasTitle || !hasDescription || !hasCity || !hasCategory;
-    if (missingCoreField) {
-      return false;
-    }
-
-    final likelyNeedsDelay = !_delayEditedByUser &&
-        !hasDelay &&
-        _transcriptMentionsUrgency(transcript);
-    if (likelyNeedsDelay) {
-      return false;
-    }
-
-    final likelyNeedsBudget = !_budgetEditedByUser &&
-        !hasBudget &&
-        _transcriptMentionsBudget(transcript);
-    if (likelyNeedsBudget) {
-      return false;
-    }
-
-    return true;
-  }
-
   String _buildRichDraftDescription(Map<String, dynamic> draft) {
     final shortDescription =
         ((draft['description_courte'] ?? draft['description']) as String? ?? '')
@@ -9724,16 +8846,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     _budgetController.addListener(_handlePublishBudgetChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
-
-    // ✅ Écouter le stream de transcription
-    _transcriptionStream.stream.listen((text) {
-      if (!mounted) return;
-      setState(() {
-        _partialTranscript = text;
-        // Remplir les champs au fur et à mesure
-        _applyFastDraftFromTranscript(text);
-      });
-    });
   }
 
   Future<void> _loadMarketplacePhotoLimit() async {
@@ -10618,10 +9730,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (_isAnalyzing) return;
     _appendPublishAiTrace('stop_mic', 'Arrêt demandé pour le micro classique');
 
-    // ✅ Arrêter le timer de chunking web (streaming mode)
-    _streamingTimer?.cancel();
-    _streamingTimer = null;
-
     if (kIsWeb) {
       if (!mounted) return;
       setState(() {
@@ -10765,7 +9873,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   /// Construire le bouton d'enregistrement au micro avec indicateur visuel
   Widget _buildMicRecordingButton() {
     return PremiumAiButton(
-      onPressed: _isStreaming ? _stopStreamingMic : _stopMic,
+      onPressed: _stopMic,
       label: 'Arrêter',
       icon: Icons.stop_circle_rounded,
       gradientColors: const [
@@ -10962,13 +10070,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   void dispose() {
-    _transcriptionStream.close();
     _publishAiTraceDisposed = true;
     _publishAiTraceVersion.dispose();
-    _streamingTimer?.cancel();
-    _streamingMaxDurationTimer?.cancel();
-    _streamMicSub?.cancel(); // ✅ AJOUT: Cleanup du stream
-    _streamMicSub = null;
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
@@ -10995,7 +10098,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _selectedPhotoBytes.clear();
       _uploadedPhotoUrls.clear();
       _latestRecognizedTranscript = '';
-      _partialTranscript = '';
       _titleEditedByUser = false;
       _descriptionEditedByUser = false;
       _locationEditedByUser = false;
@@ -11004,9 +10106,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       _delayEditedByUser = false;
       _budgetEditedByUser = false;
       _isApplyingProgrammaticPublishUpdate = false;
-      _streamingSessionId = 0;
-      _nextStreamingChunkSequence = 0;
-      _streamingChunkTexts.clear();
       _publishAiTraceEntries.clear();
       _citySuggestions.clear();
       _highlightedIndex = -1;
@@ -11661,7 +10760,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                   onPressed: _isAnalyzing || signedInUser == null
                                       ? null
                                       : () {
-                                          unawaited(_startStreamingMic());
+                                          unawaited(_startMic());
                                         },
                                   label: 'Décrire mon besoin (IA)',
                                 ),

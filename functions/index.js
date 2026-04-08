@@ -23,7 +23,7 @@ const USER_STATS_DOC = admin.firestore().collection('_stats').doc('users');
 // Secrets (Firebase Functions v2)
 const OPENAI_API_KEY = defineSecret('OPENAI_API_KEY');
 const GOOGLE_PLACES_API_KEY = defineSecret('GOOGLE_PLACES_API_KEY');
-const PROJECT_REGION = process.env.FUNCTION_REGION || 'us-east1';
+const PROJECT_REGION = process.env.FUNCTION_REGION || 'europe-west1';
 
 // Carte des villes et codes postaux (Guadeloupe et Martinique)
 const CITY_POSTAL_MAP = {

@@ -367,9 +367,9 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
                     const SizedBox(height: 10),
                     _AudioPipelineRow(
                       icon: '📱',
-                      label: 'Streaming mobile',
+                      label: 'Enregistrement mobile unitaire',
                       description:
-                          'PCM16 16k mono en flux continu, transcription chunk par chunk.',
+                          'Un seul enregistrement mobile puis transcription serveur sur le fichier complet.',
                       isActive: !kIsWeb,
                       status: !kIsWeb ? 'DISPO ICI' : 'MOBILE',
                       accentColor: const Color(0xFF1A73E8),
@@ -377,9 +377,9 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
                     const SizedBox(height: 8),
                     _AudioPipelineRow(
                       icon: '🌐',
-                      label: 'Streaming web chunké',
+                      label: 'Enregistrement web unitaire',
                       description:
-                          'Blob toutes ~2s puis reprise du micro pour un quasi temps réel.',
+                          'Un seul enregistrement web puis envoi du blob audio complet à la transcription.',
                       isActive: kIsWeb,
                       status: kIsWeb ? 'DISPO ICI' : 'WEB',
                       accentColor: const Color(0xFF00897B),
@@ -396,12 +396,12 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     const _AudioPipelineRow(
-                      icon: '☁️',
-                      label: 'Chunks streaming -> Google STT',
+                      icon: '🧾',
+                      label: 'Chunking temps reel',
                       description:
-                          'Le streaming temps reel force GOOGLE_ONLY cote Functions pour chaque chunk.',
+                          'Désactivé pour la dictée Micro IA: le flux utilise désormais un seul fichier audio par session.',
                       isActive: true,
-                      status: 'FIXE',
+                      status: 'OFF',
                       accentColor: Color(0xFF3949AB),
                     ),
                     const SizedBox(height: 8),
@@ -467,7 +467,7 @@ class AccountAdminMicroIaPanel extends StatelessWidget {
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Important: le mode choisi ici agit sur le micro classique et les traitements serveur non streaming. Le streaming temps reel reste route en GOOGLE_ONLY pour les chunks audio.',
+                        'Important: le mode choisi ici agit sur la dictée Micro IA actuelle, qui enregistre maintenant un seul fichier audio avant transcription serveur.',
                         style: TextStyle(
                           fontSize: 11,
                           color: Colors.black87,
