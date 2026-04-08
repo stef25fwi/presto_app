@@ -159,6 +159,11 @@ bool _appCheckActivationSucceeded = false;
 Object? _appCheckActivationError;
 StackTrace? _appCheckActivationStackTrace;
 
+const String _kAppCheckWebRecaptchaSiteKey = String.fromEnvironment(
+  'APPCHECK_RECAPTCHA_SITE_KEY',
+  defaultValue: '6LehQ0IsAAAAAIVtHXyi-obNQFOZEnBKXAW_P2de',
+);
+
 /// Collection legacy des annonces (ancienne architecture, en lecture seule).
 const String _kOffersCollection = 'offers';
 
@@ -923,10 +928,6 @@ Future<void> main() async {
     //   Exemple:
     //   `flutter run -d chrome --dart-define=APPCHECK_RECAPTCHA_SITE_KEY=xxxxx`
     // Clé site reCAPTCHA v3 (override possible via --dart-define=APPCHECK_RECAPTCHA_SITE_KEY)
-    const webRecaptchaSiteKey = String.fromEnvironment(
-      'APPCHECK_RECAPTCHA_SITE_KEY',
-      defaultValue: '6LehQ0IsAAAAAIVtHXyi-obNQFOZEnBKXAW_P2de',
-    );
     _appCheckActivationAttempted = true;
     _appCheckActivationSucceeded = false;
     _appCheckActivationError = null;
@@ -934,9 +935,9 @@ Future<void> main() async {
     try {
       if (kIsWeb) {
         debugPrint(
-            '[APPCHECK] siteKey=${webRecaptchaSiteKey.substring(0, 10)}...');
+            '[APPCHECK] siteKey=${_kAppCheckWebRecaptchaSiteKey.substring(0, 10)}...');
         await FirebaseAppCheck.instance.activate(
-          webProvider: ReCaptchaV3Provider(webRecaptchaSiteKey),
+          webProvider: ReCaptchaV3Provider(_kAppCheckWebRecaptchaSiteKey),
         );
         debugPrint('[AppCheck] Web activated (reCAPTCHA v3)');
       } else {
@@ -2070,29 +2071,67 @@ class _HomePageState extends State<HomePage>
     return AnimatedBuilder(
       animation: _categoryController,
       builder: (context, child) {
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: Row(
-            children: [
-              for (var index = 0;
-                  index < compactCategories.length;
-                  index++) ...[
-                if (index > 0) const SizedBox(width: 6),
-                _CategoryChip(
-                  icon: compactCategories[index].icon,
-                  label: compactCategories[index].label,
-                  iconScale: _categoryScaleForIndex(
-                    index,
-                    count: compactCategories.length,
+        return Column(
+          children: [
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Row(
+                children: [
+                  for (var index = 0;
+                      index < compactCategories.length;
+                      index++) ...[
+                    if (index > 0) const SizedBox(width: 6),
+                    _CategoryChip(
+                      icon: compactCategories[index].icon,
+                      label: compactCategories[index].label,
+                      iconScale: _categoryScaleForIndex(
+                        index,
+                        count: compactCategories.length,
+                      ),
+                      onTap: () => _goToCategoryOffers(
+                        compactCategories[index].targetCategory,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            IgnorePointer(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: const Color(0x401A73E8),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                   ),
-                  onTap: () => _goToCategoryOffers(
-                    compactCategories[index].targetCategory,
+                  const SizedBox(width: 4),
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: const Color(0xAA1A73E8),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                   ),
-                ),
-              ],
-            ],
-          ),
+                  const SizedBox(width: 4),
+                  Container(
+                    width: 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: const Color(0x401A73E8),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         );
       },
     );
@@ -2889,7 +2928,7 @@ class _HomePageState extends State<HomePage>
                 ),
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 8),
 
               // SLIDER
               Padding(
@@ -3138,7 +3177,7 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
 
               _buildHomeCategoriesSection(),
 
@@ -7417,6 +7456,38 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return true;
     }
 
+    try {
+      if (kIsWeb) {
+        debugPrint('[AppCheck] retry activation for $flow');
+        await FirebaseAppCheck.instance.activate(
+          webProvider: ReCaptchaV3Provider(_kAppCheckWebRecaptchaSiteKey),
+        );
+      } else {
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: kDebugMode
+              ? AndroidProvider.debug
+              : AndroidProvider.playIntegrity,
+          appleProvider:
+              kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+        );
+      }
+      _appCheckActivationAttempted = true;
+      _appCheckActivationSucceeded = true;
+      _appCheckActivationError = null;
+      _appCheckActivationStackTrace = null;
+      _appendPublishAiTrace(
+        'appcheck',
+        'App Check reactive avec succes pour $flow',
+        level: _PublishAiTraceLevel.success,
+      );
+      return true;
+    } catch (e, st) {
+      _appCheckActivationAttempted = true;
+      _appCheckActivationSucceeded = false;
+      _appCheckActivationError = e;
+      _appCheckActivationStackTrace = st;
+    }
+
     final activationError = _appCheckActivationError;
     final activationStackTrace = _appCheckActivationStackTrace;
     final exception = Exception(
@@ -7450,7 +7521,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (mounted && showBlockingMessage) {
       showSuccessSnackBar(
         context,
-        'App Check indisponible. Le micro IA est bloqué tant que la vérification de sécurité n\'est pas active. Recharge l\'application puis réessaie.',
+        'App Check indisponible apres nouvelle tentative. Le bouton IA reste bloque tant que la verification de securite n\'est pas active. Recharge l\'application puis reessaie.',
       );
     }
     return false;
