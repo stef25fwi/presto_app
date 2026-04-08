@@ -47,6 +47,19 @@ class MicroIaService {
   static const Duration _kAuthRestoreTimeout = Duration(seconds: 8);
   static const Duration _kCurrentUserBindingTimeout = Duration(seconds: 3);
 
+  /// Tracks the last time a force-refresh was performed on the ID token.
+  /// Used to pre-emptively refresh before the 60-minute expiry window.
+  static DateTime? _lastForcedTokenRefresh;
+  static const Duration _kTokenPreemptiveRefreshAge = Duration(minutes: 50);
+
+  /// Returns true if a forced token refresh is advisable (first call or
+  /// token is older than 50 minutes).
+  static bool _shouldForceTokenRefresh() {
+    if (_lastForcedTokenRefresh == null) return true;
+    return DateTime.now().difference(_lastForcedTokenRefresh!) >
+        _kTokenPreemptiveRefreshAge;
+  }
+
   static void _log(String stage, String message) {
     debugPrint('[MICIA][$stage] $message');
   }
@@ -147,7 +160,10 @@ class MicroIaService {
           message: 'Session utilisateur invalide. Reconnecte-toi puis réessaie.',
         );
       }
-      _log('TOKEN', 'fetched=yes uid=${boundUser.uid}');
+      if (forceRefreshToken) {
+        _lastForcedTokenRefresh = DateTime.now();
+      }
+      _log('TOKEN', 'fetched=yes uid=${boundUser.uid} forced=$forceRefreshToken');
       return normalizedToken;
     } catch (error) {
       if (error is MicroIaClientAuthException) rethrow;
@@ -218,6 +234,33 @@ class MicroIaService {
     Future<Map<String, dynamic>> invokeCallable(
       MicroIaSecureContext secureContext,
     ) async {
+      // ── Guard: verify Firebase Auth SDK has a signed-in user ──
+      // The callable SDK independently reads currentUser to attach
+      // the Authorization header.  If currentUser is null, the
+      // request will reach the backend without auth (req.auth=null).
+      final callableUser = FirebaseAuth.instance.currentUser;
+      if (callableUser == null) {
+        _log('PROCESS', 'currentUser=null before callable label=${debugLabel ?? 'default'}');
+        throw const MicroIaClientAuthException(
+          code: 'auth-lost',
+          message: 'Session perdue avant l\'appel serveur. Reconnecte-toi puis réessaie.',
+        );
+      }
+
+      // ── Prime the SDK token cache ──
+      // Force the SDK to resolve a valid ID token *right now* so
+      // that the callable's internal getIdToken() call returns
+      // immediately with a fresh value instead of a stale cached one.
+      try {
+        await callableUser.getIdToken(false);
+      } catch (e) {
+        _log('PROCESS', 'token_prime_failed err=${e.runtimeType} label=${debugLabel ?? 'default'}');
+        throw const MicroIaClientAuthException(
+          code: 'token-prime-failed',
+          message: 'Impossible de préparer la session. Reconnecte-toi puis réessaie.',
+        );
+      }
+
       final callable = _functions.httpsCallable(
         'microIaProcessAudio',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 75)),
@@ -262,25 +305,28 @@ class MicroIaService {
 
     try {
       final secureContext = await prepareSecureCallableContext(
-        forceRefreshToken: false,
+        forceRefreshToken: _shouldForceTokenRefresh(),
       );
       return await invokeCallable(secureContext);
     } on FirebaseFunctionsException catch (error, st) {
       if (error.code == 'unauthenticated') {
         _log(
           'PROCESS',
-          'auth missing code=${error.code} retrying=yes label=${debugLabel ?? 'default'}',
+          'backend unauthenticated retrying_with_forced_refresh=yes label=${debugLabel ?? 'default'}',
         );
         try {
           final refreshedContext = await prepareSecureCallableContext(
             forceRefreshToken: true,
             forceRefreshAppCheckToken: true,
           );
+          // After forced refresh, also force-prime the SDK cache
+          // so that the callable picks up the very latest token.
+          await FirebaseAuth.instance.currentUser?.getIdToken(true);
           return await invokeCallable(refreshedContext);
         } on FirebaseFunctionsException catch (retryError) {
           _log(
             'PROCESS',
-            'auth missing retry_failed code=${retryError.code} label=${debugLabel ?? 'default'}',
+            'auth retry_failed code=${retryError.code} label=${debugLabel ?? 'default'}',
           );
           await CrashlyticsContext.recordError(
             retryError,

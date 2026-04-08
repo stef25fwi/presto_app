@@ -1758,6 +1758,8 @@ exports.microIaProcessAudio = onCall(
       const earlyStoragePathRedacted = rawStoragePath ? redactStoragePath(rawStoragePath) : null;
 
       const uid = req.auth?.uid || null;
+      const authTokenExp = req.auth?.token?.exp || null;
+      const authTokenIat = req.auth?.token?.iat || null;
 
       console.log('[microIaProcessAudio] CALL', {
         requestId,
@@ -1765,6 +1767,9 @@ exports.microIaProcessAudio = onCall(
         clientDebugLabel,
         authPresent: Boolean(req.auth),
         uid,
+        authTokenExp,
+        authTokenIat,
+        authTokenAgeSec: authTokenIat ? Math.floor(Date.now() / 1000) - authTokenIat : null,
         appCheckPresent: Boolean(req.app),
         appCheckAppId,
         clientAuthUid,
@@ -1781,6 +1786,7 @@ exports.microIaProcessAudio = onCall(
           clientRequestId,
           clientDebugLabel,
           authPresent: Boolean(req.auth),
+          authRawKeys: req.auth ? Object.keys(req.auth) : [],
           appCheckPresent: Boolean(req.app),
           appCheckAppId,
           clientAuthUid,
@@ -1789,6 +1795,7 @@ exports.microIaProcessAudio = onCall(
           clientTokenPresent,
           clientAppCheckTokenPresent,
           storagePath: earlyStoragePathRedacted,
+          clientSaysUserSignedIn: Boolean(clientAuthUid),
         });
         throw new HttpsError(
           "unauthenticated",
