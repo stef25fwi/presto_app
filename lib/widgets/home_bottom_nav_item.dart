@@ -81,7 +81,7 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
                 clipBehavior: Clip.none,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(widget.isBig ? 6 : 4),
+                    padding: EdgeInsets.all(widget.isBig ? 7 : 5),
                     decoration: BoxDecoration(
                       color: widget.isBig
                           ? Colors.white
@@ -109,7 +109,7 @@ class _HomeBottomNavItemState extends State<HomeBottomNavItem>
                     ),
                     child: Icon(
                       widget.icon,
-                      size: widget.isBig ? 28 : 24,
+                      size: widget.isBig ? 32 : 27,
                       color: widget.isBig ? _kPrestoOrange : color,
                     ),
                   ),

@@ -6,6 +6,8 @@ const require = createRequire(import.meta.url);
 const projectId = process.env.PROJECT_ID || "presto-app-74abe";
 const region = process.env.FUNCTIONS_REGION || "us-east1";
 const idToken = process.env.FIREBASE_ID_TOKEN || "";
+const appCheckToken = process.env.FIREBASE_APP_CHECK_TOKEN || "";
+const requireAppCheck = String(process.env.REQUIRE_APP_CHECK || "true").toLowerCase() !== "false";
 const draftHint =
   process.env.DRAFT_HINT ||
   "Peintre pour salon à Pointe-à-Pitre demain, budget 120 euros.";
@@ -44,6 +46,7 @@ async function callCallable(name, data) {
     headers: {
       "Content-Type": "application/json",
       ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+      ...(appCheckToken ? { "X-Firebase-AppCheck": appCheckToken } : {}),
     },
     body: JSON.stringify({ data }),
   });
@@ -69,6 +72,11 @@ async function main() {
 
   if (!idToken) {
     console.log("[skip] No FIREBASE_ID_TOKEN provided, live callable checks skipped.");
+    return;
+  }
+
+  if (requireAppCheck && !appCheckToken) {
+    console.log("[skip] No FIREBASE_APP_CHECK_TOKEN provided, live callable checks skipped because production callables require App Check.");
     return;
   }
 
