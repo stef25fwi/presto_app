@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.adminSetMicroIaConfig = exports.adminGetMicroIaConfig = exports.microIaProcessAudio = exports.getUserPresenceStatus = exports.adminGetUserStats = exports.adminGetAccessStatus = exports.openAiExtractListingFieldsFromAudio = exports.openAiTranscribeListingAudio = exports.openAiExtractListingFields = exports.generateOfferDraft = exports.placesDetails = exports.placesAutocomplete = void 0;
+exports.adminSetMicroIaConfig = exports.adminGetMicroIaConfig = exports.microIaProcessAudio = exports.getUserPresenceStatus = exports.adminGetUserStats = exports.getMyAdminAccessStatus = exports.adminGetAccessStatus = exports.openAiExtractListingFieldsFromAudio = exports.openAiTranscribeListingAudio = exports.openAiExtractListingFields = exports.generateOfferDraft = exports.placesDetails = exports.placesAutocomplete = void 0;
 // Compatibility bridge: these callables still live in the legacy root entrypoint.
 const legacy = require("../../index.js");
 exports.placesAutocomplete = legacy.placesAutocomplete;
@@ -10,6 +10,7 @@ exports.openAiExtractListingFields = legacy.openAiExtractListingFields;
 exports.openAiTranscribeListingAudio = legacy.openAiTranscribeListingAudio;
 exports.openAiExtractListingFieldsFromAudio = legacy.openAiExtractListingFieldsFromAudio;
 exports.adminGetAccessStatus = legacy.adminGetAccessStatus;
+exports.getMyAdminAccessStatus = legacy.getMyAdminAccessStatus;
 exports.adminGetUserStats = legacy.adminGetUserStats;
 exports.getUserPresenceStatus = legacy.getUserPresenceStatus;
 exports.microIaProcessAudio = legacy.microIaProcessAudio;
