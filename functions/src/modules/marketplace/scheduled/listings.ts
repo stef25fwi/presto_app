@@ -20,9 +20,18 @@ export function isListingReadyForScheduledPublication(
     !(autoPublishAfter instanceof admin.firestore.Timestamp) ||
     autoPublishAfter.toMillis() <= now.toMillis();
 
+  const moderationStatus = normalizeString(data.moderationStatus);
+  const mediaProcessingStatus = normalizeString(data.mediaProcessingStatus);
+  const moderationStatusAllowed = moderationStatus === "" ||
+    moderationStatus === "approved" ||
+    moderationStatus === "auto_flagged" ||
+    moderationStatus === "manual_review";
+  const mediaStatusAllowed = mediaProcessingStatus === "" ||
+    mediaProcessingStatus === "completed";
+
   return normalizeString(data.status) === "pending" &&
-    normalizeString(data.moderationStatus) === "approved" &&
-    normalizeString(data.mediaProcessingStatus) === "completed" &&
+    moderationStatusAllowed &&
+    mediaStatusAllowed &&
     isDue;
 }
 
@@ -79,7 +88,6 @@ export const publishApprovedListings = onSchedule({
   const now = admin.firestore.Timestamp.now();
   const snapshot = await db.collection(COLLECTIONS.listings)
     .where("status", "==", "pending")
-    .where("moderationStatus", "==", "approved")
     .limit(250)
     .get();
 

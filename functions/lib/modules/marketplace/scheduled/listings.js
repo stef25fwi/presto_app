@@ -20,9 +20,17 @@ function isListingReadyForScheduledPublication(data, now) {
     const isDue = autoPublishAfter == null ||
         !(autoPublishAfter instanceof firebase_admin_1.default.firestore.Timestamp) ||
         autoPublishAfter.toMillis() <= now.toMillis();
+    const moderationStatus = normalizeString(data.moderationStatus);
+    const mediaProcessingStatus = normalizeString(data.mediaProcessingStatus);
+    const moderationStatusAllowed = moderationStatus === "" ||
+        moderationStatus === "approved" ||
+        moderationStatus === "auto_flagged" ||
+        moderationStatus === "manual_review";
+    const mediaStatusAllowed = mediaProcessingStatus === "" ||
+        mediaProcessingStatus === "completed";
     return normalizeString(data.status) === "pending" &&
-        normalizeString(data.moderationStatus) === "approved" &&
-        normalizeString(data.mediaProcessingStatus) === "completed" &&
+        moderationStatusAllowed &&
+        mediaStatusAllowed &&
         isDue;
 }
 exports.expireOldListings = (0, scheduler_1.onSchedule)({
@@ -73,7 +81,6 @@ exports.publishApprovedListings = (0, scheduler_1.onSchedule)({
     const now = firebase_admin_1.default.firestore.Timestamp.now();
     const snapshot = await firestore_1.db.collection(constants_1.COLLECTIONS.listings)
         .where("status", "==", "pending")
-        .where("moderationStatus", "==", "approved")
         .limit(250)
         .get();
     const readyDocs = snapshot.docs.filter((doc) => isListingReadyForScheduledPublication(doc.data(), now));
