@@ -1,7 +1,10 @@
 const admin = require('../functions/node_modules/firebase-admin');
 
 const PROJECT_ID = 'presto-app-74abe';
-const UID = process.env.STEPHANE_UID || 'modRxXduO8TnMlD6MFxobuKigVy2';
+const EMAIL = process.env.STEPHANE_EMAIL || 'sahai.stephane@gmail.com';
+const UID = process.env.STEPHANE_UID || '';
+const GRANT_SUPERADMIN =
+  (process.env.STEPHANE_SUPERADMIN || 'true').trim().toLowerCase() !== 'false';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -11,6 +14,14 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
+
+async function resolveTargetUser() {
+  if (UID.trim()) {
+    return admin.auth().getUser(UID.trim());
+  }
+
+  return admin.auth().getUserByEmail(EMAIL.trim().toLowerCase());
+}
 
 function mergeRoles(...roleLists) {
   const merged = new Set(['user']);
@@ -24,59 +35,94 @@ function mergeRoles(...roleLists) {
     }
   }
   merged.add('admin');
+  if (GRANT_SUPERADMIN) {
+    merged.add('superadmin');
+  }
   return Array.from(merged);
 }
 
 async function main() {
-  const [authUser, userSnap, adminSnap] = await Promise.all([
-    admin.auth().getUser(UID),
-    db.collection('users').doc(UID).get(),
-    db.collection('admins').doc(UID).get(),
+  const authUser = await resolveTargetUser();
+  const targetUid = authUser.uid;
+  const normalizedEmail = (authUser.email || EMAIL).trim().toLowerCase();
+
+  const [userSnap, adminSnap] = await Promise.all([
+    db.collection('users').doc(targetUid).get(),
+    db.collection('admins').doc(targetUid).get(),
   ]);
 
   const existingClaims = authUser.customClaims || {};
   const userData = userSnap.exists ? userSnap.data() : {};
   const mergedRoles = mergeRoles(existingClaims.roles, userData.roles);
+  const hasSuperadmin =
+    GRANT_SUPERADMIN ||
+    existingClaims.superadmin === true ||
+    mergedRoles.includes('superadmin');
+  const hasModerator =
+    existingClaims.moderator === true || mergedRoles.includes('moderator');
+  const hasPro = existingClaims.pro === true || mergedRoles.includes('pro');
+  const primaryRole = hasSuperadmin ? 'superadmin' : 'admin';
 
-  await admin.auth().setCustomUserClaims(UID, {
+  await admin.auth().setCustomUserClaims(targetUid, {
     ...existingClaims,
     roles: mergedRoles,
-    primaryRole: 'admin',
+    primaryRole,
     marketplaceAccess: true,
     admin: true,
-    superadmin: existingClaims.superadmin === true,
-    moderator: existingClaims.moderator === true || mergedRoles.includes('moderator'),
-    pro: existingClaims.pro === true || mergedRoles.includes('pro'),
+    superadmin: hasSuperadmin,
+    moderator: hasModerator,
+    pro: hasPro,
   });
 
-  await db.collection('users').doc(UID).set(
+  await db.collection('users').doc(targetUid).set(
     {
+      uid: targetUid,
+      email: normalizedEmail,
+      displayName: authUser.displayName || userData.displayName || null,
       roles: mergedRoles,
-      primaryRole: 'admin',
+      primaryRole,
       admin: true,
+      superadmin: hasSuperadmin,
+      moderator: hasModerator,
+      pro: hasPro,
+      marketplaceAccess: true,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       lastRoleSyncAt: admin.firestore.FieldValue.serverTimestamp(),
     },
     { merge: true },
   );
 
-  await db.collection('admins').doc(UID).set(
+  await db.collection('admins').doc(targetUid).set(
     {
+      uid: targetUid,
+      email: normalizedEmail,
+      displayName: authUser.displayName || userData.displayName || null,
       enabled: true,
+      roles: mergedRoles,
+      primaryRole,
+      marketplaceAccess: true,
+      grantedBy: 'tools/grant_stephane_admin_access.cjs',
+      grantedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     },
     { merge: true },
   );
 
-  const refreshed = await admin.auth().getUser(UID);
-  const refreshedUserDoc = await db.collection('users').doc(UID).get();
-  const refreshedAdminDoc = await db.collection('admins').doc(UID).get();
+  const refreshed = await admin.auth().getUser(targetUid);
+  const refreshedUserDoc = await db.collection('users').doc(targetUid).get();
+  const refreshedAdminDoc = await db.collection('admins').doc(targetUid).get();
 
   console.log(
     JSON.stringify(
       {
+        lookup: {
+          email: normalizedEmail,
+          uid: targetUid,
+          grantSuperadmin: GRANT_SUPERADMIN,
+        },
         uid: refreshed.uid,
         email: refreshed.email || null,
+        displayName: refreshed.displayName || null,
         customClaims: refreshed.customClaims || {},
         usersDoc: refreshedUserDoc.data() || null,
         adminsDoc: refreshedAdminDoc.data() || null,

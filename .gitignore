@@ -53,3 +53,9 @@ node_modules/
 # Local diagnostics and accidental merge/export residue
 mic_toggle_audit_*.txt
 audit_microia/
+page_screenshots/
+*.har
+*.zip
+*.tar.gz
+zicAlExN
+/android/build/reports/

@@ -1,7 +1,8 @@
 const admin = require('../functions/node_modules/firebase-admin');
 
 const PROJECT_ID = 'presto-app-74abe';
-const UID = process.env.STEPHANE_UID || 'modRxXduO8TnMlD6MFxobuKigVy2';
+const EMAIL = process.env.STEPHANE_EMAIL || 'sahai.stephane@gmail.com';
+const UID = process.env.STEPHANE_UID || '';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -11,6 +12,14 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
+
+async function resolveTargetUser() {
+  if (UID.trim()) {
+    return admin.auth().getUser(UID.trim());
+  }
+
+  return admin.auth().getUserByEmail(EMAIL.trim().toLowerCase());
+}
 
 function normalizeRoles(value) {
   if (!Array.isArray(value)) return [];
@@ -27,6 +36,8 @@ function summarizeAdminAccess({ authUser, userData, adminDocExists, adminData })
     claimRoles.includes('superadmin') ||
     claims.admin === true ||
     claims.superadmin === true;
+  const tokenHasSuperadmin =
+    claimRoles.includes('superadmin') || claims.superadmin === true;
 
   const userRoles = normalizeRoles(userData?.roles);
   const primaryRole = String(userData?.primaryRole || '').trim().toLowerCase();
@@ -37,25 +48,39 @@ function summarizeAdminAccess({ authUser, userData, adminDocExists, adminData })
     primaryRole === 'superadmin' ||
     userData?.admin === true ||
     userData?.superadmin === true;
+  const userHasSuperadmin =
+    userRoles.includes('superadmin') ||
+    primaryRole === 'superadmin' ||
+    userData?.superadmin === true;
 
   const adminDocEnabled = adminDocExists && adminData?.enabled !== false;
+  const adminDocHasSuperadmin =
+    adminDocEnabled &&
+    (normalizeRoles(adminData?.roles).includes('superadmin') ||
+      String(adminData?.primaryRole || '').trim().toLowerCase() === 'superadmin');
 
   return {
     tokenHasAdmin,
+    tokenHasSuperadmin,
     tokenRoles: claimRoles,
     userHasAdmin,
+    userHasSuperadmin,
     userRoles,
     primaryRole: primaryRole || null,
     adminDocEnabled,
+    adminDocHasSuperadmin,
     finalShouldPassAssertIsAdmin: tokenHasAdmin || userHasAdmin || adminDocEnabled,
+    finalShouldPassAssertIsSuperadmin:
+      tokenHasSuperadmin || userHasSuperadmin || adminDocHasSuperadmin,
   };
 }
 
 async function main() {
-  const [authUser, userSnap, adminSnap] = await Promise.all([
-    admin.auth().getUser(UID),
-    db.collection('users').doc(UID).get(),
-    db.collection('admins').doc(UID).get(),
+  const authUser = await resolveTargetUser();
+  const targetUid = authUser.uid;
+  const [userSnap, adminSnap] = await Promise.all([
+    db.collection('users').doc(targetUid).get(),
+    db.collection('admins').doc(targetUid).get(),
   ]);
 
   const userData = userSnap.exists ? userSnap.data() : null;
@@ -70,6 +95,10 @@ async function main() {
   console.log(
     JSON.stringify(
       {
+        lookup: {
+          email: (authUser.email || EMAIL).trim().toLowerCase(),
+          uid: targetUid,
+        },
         uid: authUser.uid,
         email: authUser.email || null,
         displayName: authUser.displayName || null,

@@ -154,12 +154,15 @@ class ConversationSummary {
   }
 
   bool get hasRenderableContent {
-    // Keep conversations visible even before the first message if basic context exists.
+    // A conversation that is correctly attached to the user should stay visible
+    // even if preview metadata is still sparse or partially backfilled.
     return messageCount > 0 ||
         lastMessage.isNotEmpty ||
         lastMessageAt != null ||
         offerTitle.trim().isNotEmpty ||
-        otherUserName.trim().isNotEmpty;
+      otherUserName.trim().isNotEmpty ||
+      participants.isNotEmpty ||
+      id.trim().isNotEmpty;
   }
 
   DateTime? get sortDate {
@@ -178,6 +181,11 @@ class ConversationSummary {
       final value = candidate.trim();
       if (value.isNotEmpty) return value;
     }
+
+    if (participants.any((participant) => participant.trim() != userId.trim())) {
+      return 'Conversation en cours';
+    }
+
     return 'Conversation';
   }
 
@@ -197,7 +205,11 @@ class ConversationSummary {
       return offerTitle;
     }
 
-    return 'Touchez pour ouvrir la conversation';
+    if (participants.isNotEmpty || id.trim().isNotEmpty) {
+      return 'Touchez pour ouvrir cette conversation';
+    }
+
+    return 'Conversation en attente de synchronisation';
   }
 
   bool matchesQuery(String userId, String query) {

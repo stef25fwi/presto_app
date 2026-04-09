@@ -2556,10 +2556,10 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
         }
       }
       if (!mounted) return;
-      showSuccessSnackBar(context, e.message ?? 'Erreur stats utilisateurs');
+      showErrorSnackBar(context, e.message ?? 'Erreur stats utilisateurs');
     } catch (e) {
       if (!mounted) return;
-      showSuccessSnackBar(context, 'Erreur stats utilisateurs: $e');
+      showErrorSnackBar(context, 'Erreur stats utilisateurs: $e');
     } finally {
       if (mounted) setState(() => _userStatsLoading = false);
     }
@@ -2594,7 +2594,7 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
         actions: [
           _AdminChip(
             label: 'Admin',
-            onTap: () {},
+            onTap: null,
           ),
           const SizedBox(width: 12),
         ],
@@ -2725,41 +2725,47 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
 
 class _AdminChip extends StatelessWidget {
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _AdminChip({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final content = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 12,
+            backgroundColor: Colors.grey.shade200,
+            child: const Icon(Icons.person_rounded,
+                size: 16, color: Colors.black54),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (onTap == null) {
+      return ExcludeSemantics(child: content);
+    }
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: Colors.black12),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 12,
-              backgroundColor: Colors.grey.shade200,
-              child: const Icon(Icons.person_rounded,
-                  size: 16, color: Colors.black54),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Admin',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-      ),
+      child: content,
     );
   }
 }

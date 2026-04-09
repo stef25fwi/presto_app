@@ -14,6 +14,7 @@ import 'package:presto_app/models/marketplace_report.dart';
 import 'package:presto_app/services/app_route_parser.dart';
 import 'package:presto_app/services/conversation_service.dart';
 import 'package:presto_app/services/marketplace_human_verification.dart';
+import 'package:presto_app/utils/runtime_action_logger.dart';
 import 'package:presto_app/widgets/offer_network_image.dart';
 
 // ─── Data models ─────────────────────────────────────────────────────────────
@@ -333,7 +334,24 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     final authUser = FirebaseAuth.instance.currentUser;
     final me = authUser?.uid.isNotEmpty == true ? authUser!.uid : currentUserId;
 
+    logRuntimeAction(
+      area: 'messaging',
+      action: 'open-from-offer',
+      details: <String, Object?>{
+        'offerId': data.offerId,
+        'advertiserId': data.advertiserId,
+        'currentUserId': me,
+      },
+    );
+
     if (me.isEmpty || me == 'buyer_demo_001') {
+      logRuntimeAction(
+        area: 'messaging',
+        action: 'blocked-auth',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text("Connectez-vous pour envoyer un message.")),
@@ -342,6 +360,13 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     }
 
     if (data.advertiserId.isEmpty) {
+      logRuntimeAction(
+        area: 'messaging',
+        action: 'blocked-missing-advertiser',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Annonceur introuvable.")),
       );
@@ -349,6 +374,13 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     }
 
     if (data.advertiserId == me) {
+      logRuntimeAction(
+        area: 'messaging',
+        action: 'blocked-self-message',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text("Vous ne pouvez pas vous envoyer un message.")),
@@ -372,11 +404,21 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     );
 
     if (!context.mounted) return;
+    final targetRoute = buildMessagesRoute(
+      conversationId: resolvedConversationId,
+      initialDraftText: initialDraftText,
+    );
+    logRuntimeAction(
+      area: 'messaging',
+      action: 'open-route',
+      details: <String, Object?>{
+        'route': targetRoute,
+        'conversationId': resolvedConversationId,
+        'offerId': data.offerId,
+      },
+    );
     Navigator.of(context).pushNamed(
-      buildMessagesRoute(
-        conversationId: resolvedConversationId,
-        initialDraftText: initialDraftText,
-      ),
+      targetRoute,
     );
   }
 
@@ -679,7 +721,25 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     final authUser = FirebaseAuth.instance.currentUser;
     final uid = authUser?.uid.trim() ?? '';
 
+    logRuntimeAction(
+      area: 'favorites',
+      action: 'toggle-from-offer',
+      details: <String, Object?>{
+        'offerId': data.offerId,
+        'userId': uid,
+        'isFavorite': isFavorite,
+        'isMarketplace': data.isMarketplace,
+      },
+    );
+
     if (uid.isEmpty) {
+      logRuntimeAction(
+        area: 'favorites',
+        action: 'blocked-auth',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Connectez-vous pour enregistrer vos favoris.'),
@@ -690,6 +750,10 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     final offerId = data.offerId.trim();
     if (offerId.isEmpty) {
+      logRuntimeAction(
+        area: 'favorites',
+        action: 'blocked-missing-offer',
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Annonce introuvable.')),
       );
@@ -699,6 +763,15 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     try {
       if (data.isMarketplace) {
         final active = await _favoriteRepository.toggleFavorite(offerId);
+        logRuntimeAction(
+          area: 'favorites',
+          action: 'toggle-success',
+          details: <String, Object?>{
+            'offerId': offerId,
+            'active': active,
+            'source': 'marketplace',
+          },
+        );
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -738,6 +811,16 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
       await batch.commit();
 
+      logRuntimeAction(
+        area: 'favorites',
+        action: 'toggle-success',
+        details: <String, Object?>{
+          'offerId': offerId,
+          'active': !isFavorite,
+          'source': 'legacy-user-doc',
+        },
+      );
+
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -749,6 +832,15 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         ),
       );
     } catch (e) {
+      logRuntimeAction(
+        area: 'favorites',
+        action: 'toggle-failure',
+        details: <String, Object?>{
+          'offerId': offerId,
+          'errorType': e.runtimeType,
+          'message': e,
+        },
+      );
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur lors de la mise à jour du favori : $e')),
@@ -760,7 +852,24 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     final authUser = FirebaseAuth.instance.currentUser;
     final uid = authUser?.uid.trim() ?? '';
 
+    logRuntimeAction(
+      area: 'offers',
+      action: 'report-open',
+      details: <String, Object?>{
+        'offerId': data.offerId,
+        'userId': uid,
+        'isMarketplace': data.isMarketplace,
+      },
+    );
+
     if (uid.isEmpty) {
+      logRuntimeAction(
+        area: 'offers',
+        action: 'report-blocked-auth',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Connectez-vous pour signaler cette annonce.'),
@@ -770,6 +879,14 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     }
 
     if (!data.isMarketplace || data.offerId.trim().isEmpty) {
+      logRuntimeAction(
+        area: 'offers',
+        action: 'report-blocked-unsupported',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+          'isMarketplace': data.isMarketplace,
+        },
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -781,6 +898,13 @@ class PrestoOfferDetailsPage extends StatelessWidget {
 
     if (data.advertiserId.trim().isNotEmpty &&
         data.advertiserId.trim() == uid) {
+      logRuntimeAction(
+        area: 'offers',
+        action: 'report-blocked-self',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Vous ne pouvez pas signaler votre propre annonce.'),
@@ -825,6 +949,13 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     );
 
     if (reason == null) {
+      logRuntimeAction(
+        area: 'offers',
+        action: 'report-cancelled',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+        },
+      );
       return;
     }
 
@@ -891,6 +1022,15 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         recaptchaToken: recaptchaToken,
       );
 
+      logRuntimeAction(
+        area: 'offers',
+        action: ok ? 'report-success' : 'report-rejected',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+          'reason': reason.name,
+        },
+      );
+
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -902,6 +1042,15 @@ class PrestoOfferDetailsPage extends StatelessWidget {
         ),
       );
     } catch (e) {
+      logRuntimeAction(
+        area: 'offers',
+        action: 'report-failure',
+        details: <String, Object?>{
+          'offerId': data.offerId,
+          'errorType': e.runtimeType,
+          'message': e,
+        },
+      );
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur lors du signalement : $e')),
@@ -1654,7 +1803,23 @@ class _TopHeader extends StatelessWidget {
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              logRuntimeAction(
+                area: 'offers',
+                action: 'listing-alert-unavailable',
+                details: <String, Object?>{
+                  'title': title,
+                },
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Les alertes sur annonce arrivent bientot.',
+                  ),
+                ),
+              );
+            },
+            tooltip: 'Alertes bientot disponibles',
             icon: Icon(
               Icons.notifications_none_rounded,
               color: blue,
