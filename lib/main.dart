@@ -51,6 +51,7 @@ import 'services/marketplace_remote_config_service.dart';
 import 'services/notification_service.dart';
 import 'services/offer_indexing.dart';
 import 'services/admin_audio_runtime_store.dart';
+import 'services/user_profile_bootstrap_service.dart';
 import 'utils/crashlytics_context.dart';
 import 'utils/friendly_snackbar.dart';
 import 'utils/recording_path_web.dart'
@@ -167,9 +168,17 @@ const String _kAppCheckWebRecaptchaSiteKey = String.fromEnvironment(
 const String _kOffersCollection = 'offers';
 
 Filter _publicListingsFilter() {
-  return Filter.and(
-    Filter('status', isEqualTo: 'active'),
-    Filter('visibility', isEqualTo: 'public'),
+  return Filter.or(
+    // Format marketplace nominal
+    Filter.and(
+      Filter('status', isEqualTo: 'active'),
+      Filter('visibility', isEqualTo: 'public'),
+    ),
+    // Variantes historiques / legacy publication
+    Filter('status', isEqualTo: 'published'),
+    Filter('isPublished', isEqualTo: true),
+    Filter('isActive', isEqualTo: true),
+    Filter('visibility.isPublic', isEqualTo: true),
   );
 }
 
@@ -1236,6 +1245,11 @@ void _showSignupDialog(BuildContext context) {
                 password: pass,
               );
               if (credential.user != null) {
+                await UserProfileBootstrapService.ensureUserDocument(
+                  user: credential.user!,
+                  authMethod: 'email',
+                  isNewUserHint: true,
+                );
                 await EmailActionService.requestEmailVerificationEmail();
               }
               if (ctx.mounted) Navigator.of(ctx).pop();
@@ -2774,7 +2788,7 @@ class _HomePageState extends State<HomePage>
               padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
               child: SafeArea(
                 top: false,
-                maintainBottomViewPadding: true,
+                maintainBottomViewPadding: false,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -12045,6 +12059,15 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     SessionState.userId = user.uid;
+
+    try {
+      await UserProfileBootstrapService.ensureUserDocument(
+        user: user,
+        authMethod: 'session_restore',
+      );
+    } catch (error) {
+      debugPrint('[AuthBootstrap] account session restore failed: $error');
+    }
 
     if (_activeProfileUid == user.uid &&
         (_profileLoaded || _profileLoadRequested)) {
