@@ -2747,7 +2747,7 @@ class _HomePageState extends State<HomePage>
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
-          resizeToAvoidBottomInset: false,
+          resizeToAvoidBottomInset: true,
           extendBody: false,
           backgroundColor: Colors.white,
           body: IndexedStack(
@@ -5408,7 +5408,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Scaffold(
-          resizeToAvoidBottomInset: false,
+          resizeToAvoidBottomInset: true,
           backgroundColor: _offersBg,
           body: SafeArea(
             child: Column(
@@ -10832,7 +10832,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        resizeToAvoidBottomInset: false,
+        resizeToAvoidBottomInset: true,
         backgroundColor: Colors.white,
         appBar: AppBar(
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
@@ -13080,7 +13080,7 @@ class _AccountPageState extends State<AccountPage> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        resizeToAvoidBottomInset: false,
+        resizeToAvoidBottomInset: true,
         appBar: AppBar(
           systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
           title: const Text(
