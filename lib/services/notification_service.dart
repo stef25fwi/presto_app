@@ -2,25 +2,20 @@ import 'dart:async';
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-import '../firebase_options.dart';
+import '../firebase_init.dart';
+import '../utils/runtime_action_logger.dart';
 import 'firebase_functions_region.dart';
 
 @pragma('vm:entry-point')
-Future<void> prestoFirebaseMessagingBackgroundHandler(RemoteMessage message) async {
+Future<void> prestoFirebaseMessagingBackgroundHandler(
+    RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (kIsWeb) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } else {
-    await Firebase.initializeApp();
-  }
+  await ensureFirebaseInitialized(source: 'messaging_background');
   debugPrint('[Notifications-Background] Message reçu: ${message.messageId}');
 }
 
@@ -29,15 +24,18 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   static const String _webVapidKey = String.fromEnvironment(
     'FCM_WEB_VAPID_KEY',
-    defaultValue: 'BMVwXhhckC038dAe0sdu-Q34tjeJBVofwehlfEeF1X9KtHVe16sF46E6S4UmbsNiVi5kmfYaRxLdL3CZB49MxgY',
+    defaultValue:
+        'BMVwXhhckC038dAe0sdu-Q34tjeJBVofwehlfEeF1X9KtHVe16sF46E6S4UmbsNiVi5kmfYaRxLdL3CZB49MxgY',
   );
-  static const AndroidNotificationChannel _messagesChannel = AndroidNotificationChannel(
+  static const AndroidNotificationChannel _messagesChannel =
+      AndroidNotificationChannel(
     'ilipresto_messages',
     'Messages IliPresto',
     description: 'Nouveaux messages de la messagerie IliPresto.',
     importance: Importance.max,
   );
-  static const AndroidNotificationChannel _activityChannel = AndroidNotificationChannel(
+  static const AndroidNotificationChannel _activityChannel =
+      AndroidNotificationChannel(
     'ilipresto_activity',
     'Activité IliPresto',
     description: 'Nouvelles annonces et notifications produit IliPresto.',
@@ -51,8 +49,7 @@ class NotificationService {
   NotificationService._internal();
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  final FirebaseFunctions _functions =
-      prestoFirebaseFunctions;
+  final FirebaseFunctions _functions = prestoFirebaseFunctions;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
@@ -61,14 +58,23 @@ class NotificationService {
   RemoteMessage? _initialMessage;
   String? _pendingRouteName;
   String? _lastRegisteredToken;
+  String? _lastHandledMessageId;
+  String? _lastOpenedRouteName;
+  DateTime? _lastOpenedRouteAt;
   bool _initialized = false;
   bool _localNotificationsReady = false;
+  bool _navigatorReady = false;
+  bool _pendingRouteFlushScheduled = false;
 
   /// Initialise le service de notifications
   Future<void> initialize({
     required GlobalKey<NavigatorState> navigatorKey,
   }) async {
+    final navigatorChanged = _navigatorKey != navigatorKey;
     _navigatorKey = navigatorKey;
+    if (navigatorChanged) {
+      _navigatorReady = false;
+    }
     if (!kIsWeb) {
       await ensureLocalNotificationsInitialized();
     }
@@ -159,6 +165,11 @@ class NotificationService {
     _schedulePendingRouteFlush();
   }
 
+  void markNavigatorReady() {
+    _navigatorReady = true;
+    _schedulePendingRouteFlush();
+  }
+
   Future<void> ensureLocalNotificationsInitialized() async {
     if (kIsWeb) return;
     if (_localNotificationsReady) return;
@@ -229,7 +240,8 @@ class NotificationService {
     if (notification == null) return;
 
     final routeName = _resolveRouteName(message);
-    final requestedChannelId = (message.data['channelId'] ?? '').toString().trim();
+    final requestedChannelId =
+        (message.data['channelId'] ?? '').toString().trim();
     final channel = requestedChannelId == _messagesChannel.id
         ? _messagesChannel
         : _activityChannel;
@@ -262,6 +274,14 @@ class NotificationService {
 
   /// Handler pour les clics sur les notifications
   void _messageOpenedHandler(RemoteMessage message) {
+    final messageId = message.messageId?.trim();
+    if (messageId != null && messageId.isNotEmpty) {
+      if (_lastHandledMessageId == messageId) {
+        debugPrint('[Notifications] Message déjà traité: $messageId');
+        return;
+      }
+      _lastHandledMessageId = messageId;
+    }
     debugPrint('[Notifications] Notification cliquée: ${message.messageId}');
     _handleMessage(message);
   }
@@ -362,7 +382,8 @@ class NotificationService {
 
   String _resolveRouteName(RemoteMessage message) {
     final type = (message.data['type'] ?? '').toString().trim();
-    final conversationId = (message.data['conversationId'] ?? '').toString().trim();
+    final conversationId =
+        (message.data['conversationId'] ?? '').toString().trim();
     final routeName = (message.data['routeName'] ?? '').toString().trim();
 
     if (conversationId.isNotEmpty &&
@@ -374,7 +395,8 @@ class NotificationService {
     }
 
     if (routeName.startsWith('/chat/')) {
-      final segments = Uri.tryParse(routeName)?.pathSegments ?? const <String>[];
+      final segments =
+          Uri.tryParse(routeName)?.pathSegments ?? const <String>[];
       if (segments.length >= 2 && segments[1].trim().isNotEmpty) {
         return '/messages/${Uri.encodeComponent(segments[1].trim())}';
       }
@@ -405,24 +427,62 @@ class NotificationService {
     if (safeRoute.isEmpty) return;
 
     final navigator = _navigatorKey?.currentState;
-    if (navigator == null) {
+    if (!_navigatorReady || navigator == null) {
+      logRuntimeAction(
+        area: 'notifications',
+        action: 'queue-route',
+        details: <String, Object?>{
+          'route': safeRoute,
+        },
+      );
       _pendingRouteName = safeRoute;
       _schedulePendingRouteFlush();
       return;
     }
 
+    _pushRoute(navigator, safeRoute);
+  }
+
+  void _pushRoute(NavigatorState navigator, String routeName) {
+    final now = DateTime.now();
+    if (_lastOpenedRouteName == routeName &&
+        _lastOpenedRouteAt != null &&
+        now.difference(_lastOpenedRouteAt!) < const Duration(seconds: 2)) {
+      debugPrint('[Notifications] Route déjà ouverte récemment: $routeName');
+      return;
+    }
+
+    _lastOpenedRouteName = routeName;
+    _lastOpenedRouteAt = now;
     _pendingRouteName = null;
-    navigator.pushNamed(safeRoute);
+    logRuntimeAction(
+      area: 'notifications',
+      action: 'push-route',
+      details: <String, Object?>{
+        'route': routeName,
+      },
+    );
+    navigator.pushNamed(routeName);
   }
 
   void _schedulePendingRouteFlush() {
+    if (_pendingRouteFlushScheduled) return;
+    _pendingRouteFlushScheduled = true;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _pendingRouteFlushScheduled = false;
       final routeName = _pendingRouteName;
       final navigator = _navigatorKey?.currentState;
-      if (routeName == null || navigator == null) return;
+      if (routeName == null) return;
+      if (!_navigatorReady || navigator == null) {
+        Future<void>.delayed(
+          const Duration(milliseconds: 120),
+          _schedulePendingRouteFlush,
+        );
+        return;
+      }
 
-      _pendingRouteName = null;
-      navigator.pushNamed(routeName);
+      _pushRoute(navigator, routeName);
     });
   }
 

@@ -104,13 +104,13 @@ class _ProProfilePageState extends State<ProProfilePage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_acceptTerms) {
-      showSuccessSnackBar(context, "Veuillez accepter les conditions.");
+      showErrorSnackBar(context, "Veuillez accepter les conditions.");
       return;
     }
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      showSuccessSnackBar(context, "Veuillez vous connecter avant.");
+      showErrorSnackBar(context, "Veuillez vous connecter avant.");
       return;
     }
 
@@ -181,7 +181,7 @@ class _ProProfilePageState extends State<ProProfilePage> {
 
     if (!mounted) return;
     showSuccessSnackBar(
-        context, "Profil Pro enregistré ✅ (abonnement bientôt)");
+      context, "Profil Pro enregistré ✅ (options avancées bientôt)");
     Navigator.pop(context);
   }
 

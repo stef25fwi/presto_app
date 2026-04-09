@@ -10,7 +10,6 @@ import 'package:flutter/services.dart';
 
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,23 +19,25 @@ import 'package:record/record.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app/presto_overlay_theme.dart';
+import 'app/secondary_named_routes.dart';
 import 'app/theme.dart';
 import 'app_core.dart';
 import 'constants.dart';
-import 'firebase_options.dart';
+import 'firebase_init.dart';
+import 'dev/page_capture_catalog_page.dart';
 import 'dev/seed_offers.dart';
 import 'debug_auth.dart';
 import 'features/ai_draft/ai_draft_service.dart';
+import 'features/account/signed_out_account_fallback.dart';
 import 'features/micro_ia/micro_ia_service.dart';
+import 'features/offers/public_offers_read_diagnostics.dart';
 import 'features/micro_ia/web_audio_recorder.dart';
 import 'config/env/openai_config.dart';
-import 'profile_page.dart';
 import 'models/admin_access_state.dart';
 import 'pages/admin_space_page.dart';
 import 'pages/legal_info_page.dart';
 import 'pages/offers/offer_details_page.dart';
 import 'pages/messages/messages_page_v2.dart';
-import 'pages/toolbox_hub_page.dart';
 import 'services/admin_access_resolver.dart';
 import 'services/ai/listing_audio_ai_service.dart';
 import 'services/city_search.dart';
@@ -54,12 +55,14 @@ import 'services/admin_audio_runtime_store.dart';
 import 'services/user_profile_bootstrap_service.dart';
 import 'utils/crashlytics_context.dart';
 import 'utils/friendly_snackbar.dart';
+import 'utils/runtime_action_logger.dart';
 import 'utils/recording_path_web.dart'
     if (dart.library.io) 'utils/recording_path_io.dart';
 import 'widgets/ad_banner.dart';
 import 'widgets/account_profile_sections.dart';
 import 'widgets/entrepreneur_toolbox_slide.dart';
 import 'widgets/home_bottom_nav_item.dart';
+import 'widgets/home_interactions.dart';
 import 'widgets/presto_info_icon_animated.dart';
 import 'widgets/premium_ai_button.dart';
 import 'widgets/phone_input_field.dart';
@@ -67,7 +70,7 @@ import 'widgets/photo_selector_tile.dart';
 
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 final AdminAudioRuntimeStore _adminAudioRuntimeStore =
-  AdminAudioRuntimeStore.instance;
+    AdminAudioRuntimeStore.instance;
 
 class PrestoRemoteConfig {
   static String audioPipeline = 'HYBRID';
@@ -154,6 +157,9 @@ bool _isOfferJobDoneOverlayVisible(Map<String, dynamic> data) {
 /// Collection principale des annonces marketplace (nouvelle architecture).
 const String _kListingsCollection = 'listings';
 
+/// Backfill legacy temporaire en lecture seule pour les annonces publiques.
+const bool _kEnableLegacyPublicOffersBackfill = true;
+
 bool _appCheckActivationAttempted = false;
 bool _appCheckActivationSucceeded = false;
 Object? _appCheckActivationError;
@@ -206,6 +212,29 @@ List<QueryDocumentSnapshot<Map<String, dynamic>>> _mergeOfferDocsById(
   }
 
   return byId.values.toList(growable: false);
+}
+
+Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+    _loadLegacyPublicOffersBackfill({
+  required Query<Map<String, dynamic>> query,
+  required String source,
+}) async {
+  if (!_kEnableLegacyPublicOffersBackfill) {
+    return const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+  }
+
+  try {
+    final snapshot = await query.get();
+    if (kDebugMode) {
+      debugPrint(
+        '[PUBLIC_OFFERS][$source] legacy_backfill=${snapshot.docs.length}',
+      );
+    }
+    return snapshot.docs;
+  } catch (error, stackTrace) {
+    _logPublicOffersReadError(source, error, stackTrace);
+    return const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+  }
 }
 
 bool _isPublishedOfferData(Map<String, dynamic> data) {
@@ -886,20 +915,15 @@ Future<void> main() async {
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    if (kIsWeb) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    } else {
-      await Firebase.initializeApp();
-    }
+    await ensureFirebaseInitialized(source: 'main');
 
     // 📋 Diagnostics
     debugPrint('=== Firebase Initialization ===');
-    debugPrint('✓ Firebase initialized');
+    debugPrint('[FirebaseInit] ready platform=${firebaseInitPlatformLabel()}');
     debugPrint('✓ Auth instance: ${FirebaseAuth.instance.runtimeType}');
     debugPrint(
         '✓ Firestore instance: ${FirebaseFirestore.instance.runtimeType}');
+    debugPrint('[Firestore] initialization ready');
     if (kIsWeb) {
       debugPrint('✓ Platform: Web');
       debugPrint('  - Google Sign-In: Popup + Redirect fallback');
@@ -940,6 +964,8 @@ Future<void> main() async {
     _appCheckActivationSucceeded = false;
     _appCheckActivationError = null;
     _appCheckActivationStackTrace = null;
+    debugPrint(
+        '[AppCheck] initializing platform=${firebaseInitPlatformLabel()}');
     try {
       if (kIsWeb) {
         debugPrint(
@@ -958,6 +984,7 @@ Future<void> main() async {
         );
       }
       _appCheckActivationSucceeded = true;
+      debugPrint('[AppCheck] ready');
     } catch (e, st) {
       _appCheckActivationError = e;
       _appCheckActivationStackTrace = st;
@@ -1033,10 +1060,47 @@ Future<void> main() async {
   });
 }
 
-class PrestoApp extends StatelessWidget {
+class PrestoApp extends StatefulWidget {
   const PrestoApp({super.key});
 
+  @override
+  State<PrestoApp> createState() => _PrestoAppState();
+}
+
+class _PrestoAppState extends State<PrestoApp> {
+  bool _navigatorReadySignaled = false;
+
+  Widget _buildInitialHome() {
+    if (kIsWeb) {
+      final rawPath = Uri.base.path.trim();
+      final normalizedPath =
+          rawPath.endsWith('/') && rawPath.length > 1
+              ? rawPath.substring(0, rawPath.length - 1)
+              : rawPath;
+      if (normalizedPath == '/page-catalog') {
+        return const PageCaptureCatalogPage();
+      }
+    }
+
+    return const SplashScreen();
+  }
+
+  void _signalNavigatorReady() {
+    if (_navigatorReadySignaled) return;
+    _navigatorReadySignaled = true;
+    NotificationService().markNavigatorReady();
+  }
+
   Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
+    final routeName = settings.name ?? '';
+    final parsedRoute = Uri.tryParse(routeName);
+    if (parsedRoute != null && parsedRoute.path == '/page-catalog') {
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (_) => const PageCaptureCatalogPage(),
+      );
+    }
+
     final target = parseAppDeepLink(settings.name);
     if (target == null) return null;
 
@@ -1077,12 +1141,20 @@ class PrestoApp extends StatelessWidget {
       title: 'iliprestō',
       debugShowCheckedModeBanner: false,
       navigatorKey: appNavigatorKey,
+      builder: (context, child) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _signalNavigatorReady();
+        });
+        return child ?? const SizedBox.shrink();
+      },
       onGenerateRoute: _onGenerateRoute,
       routes: {
         '/publish': (_) => const PublishOfferPage(),
         '/messages': (_) => const MessagesPageV2(),
         '/messages-2': (_) => const MessagesPageV2(),
         '/account': (_) => const AccountPage(),
+        '/page-catalog': (_) => const PageCaptureCatalogPage(),
         /*
         '/auth': (context) => PrestoPremiumAuthPage(
               onGoogle: () async {
@@ -1144,13 +1216,10 @@ class PrestoApp extends StatelessWidget {
               },
             ),
         */
-        AppRoutes.toolboxHub: (_) => const ToolboxHubPage(),
-        AppRoutes.toolboxCurrent: (_) => const CurrentToolboxPage(),
-        AppRoutes.entrepreneurCalculator: (_) =>
-            const EntrepreneurCalculatorPage(),
+        ...buildSecondaryNamedRoutes(),
       },
       theme: buildPrestoTheme(),
-      home: const SplashScreen(),
+      home: _buildInitialHome(),
     );
   }
 }
@@ -1700,21 +1769,21 @@ class _HomePageState extends State<HomePage>
   ];
 
   /// Slides d’accueil
-  final List<_HomeSlide> _slides = const [
-    _HomeSlide(
+  final List<HomeSlide> _slides = const [
+    HomeSlide(
       title: "Trouvez immédiatement quelqu’un pour faire le job.",
       subtitle: "Trouvez une personne près de chez vous en quelques secondes.",
       badge: "",
       // plus d'image chrono ici
       imageAsset: null,
     ),
-    _HomeSlide(
+    HomeSlide(
       title: "Boîte à outils de l'entrepreneur",
       subtitle: "Liens utiles CCI, Région, aides et infos clés.",
       badge: "Pro",
       icon: Icons.business_center_outlined,
     ),
-    _HomeSlide(
+    HomeSlide(
       title: "iliprestō",
       subtitle: "Qui sommes-nous ? Mentions légales, confidentialité, CGU.",
       badge: "Infos",
@@ -1742,6 +1811,14 @@ class _HomePageState extends State<HomePage>
     final normalizedCategory = category.trim();
     if (normalizedCategory.isEmpty) return;
 
+    logRuntimeAction(
+      area: 'home',
+      action: 'open-category',
+      details: <String, Object?>{
+        'category': normalizedCategory,
+      },
+    );
+
     setState(() {
       _consultCategoryFilter = normalizedCategory;
       _consultSearchQuery = null;
@@ -1759,7 +1836,25 @@ class _HomePageState extends State<HomePage>
   }
 
   void _onBottomTap(int index) {
-    if (_selectedIndex == index) return;
+    if (_selectedIndex == index) {
+      logRuntimeAction(
+        area: 'nav',
+        action: 'bottom-tab-repeat',
+        details: <String, Object?>{
+          'tab': index,
+        },
+      );
+      return;
+    }
+
+    logRuntimeAction(
+      area: 'nav',
+      action: 'bottom-tab-change',
+      details: <String, Object?>{
+        'from': _selectedIndex,
+        'to': index,
+      },
+    );
 
     // ✅ Log le changement d'onglet
     /*
@@ -2006,41 +2101,74 @@ class _HomePageState extends State<HomePage>
       if (snapshot.docs.length >= 8) return snapshot.docs;
 
       // Compléter avec les annonces legacy (collection offers)
-      final fallback = await FirebaseFirestore.instance
-          .collection(_kOffersCollection)
-          .where(_publicOffersFilter())
-          .orderBy('createdAt', descending: true)
-          .limit(16)
-          .get();
+      final fallback = await _loadLegacyPublicOffersBackfill(
+        query: FirebaseFirestore.instance
+            .collection(_kOffersCollection)
+            .where(_publicOffersFilter())
+            .orderBy('createdAt', descending: true)
+            .limit(16),
+        source: 'home_latest_offers_legacy_backfill',
+      );
 
       final seen = snapshot.docs.map((d) => d.id).toSet();
       final merged = [...snapshot.docs];
-      for (final doc in fallback.docs) {
+      for (final doc in fallback) {
         if (seen.contains(doc.id)) continue;
         merged.add(doc);
         if (merged.length >= 8) break;
       }
       return merged;
-    } catch (error) {
+    } catch (error, stackTrace) {
       // Si l'index n'est pas encore prêt, fallback sur la query générique
       // avec filtre côté client.
+      _logPublicOffersReadError(
+        'home_latest_offers_primary',
+        error,
+        stackTrace,
+      );
       debugPrint('[LatestOffers] Primary query failed, falling back: $error');
-      final results = await Future.wait([
-        _recentOffersQuery().get(),
-        _legacyRecentOffersQuery().get(),
-      ]);
-      final merged = _mergeOfferDocsById(results[0].docs, results[1].docs);
-      merged.sort((a, b) {
-        final aTs = a.data()['createdAt'];
-        final bTs = b.data()['createdAt'];
-        final aMs = aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
-        final bMs = bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
-        return bMs.compareTo(aMs);
-      });
-      return merged
-          .where((doc) => _isPublishedOfferData(doc.data()))
-          .take(8)
-          .toList(growable: false);
+      try {
+        final listings = await _recentOffersQuery().get();
+        final legacy = await _loadLegacyPublicOffersBackfill(
+          query: _legacyRecentOffersQuery(),
+          source: 'home_latest_offers_fallback_legacy_backfill',
+        );
+        final merged = _mergeOfferDocsById(listings.docs, legacy);
+        merged.sort((a, b) {
+          final aTs = a.data()['createdAt'];
+          final bTs = b.data()['createdAt'];
+          final aMs = aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
+          final bMs = bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
+          return bMs.compareTo(aMs);
+        });
+        return merged
+            .where((doc) => _isPublishedOfferData(doc.data()))
+            .take(8)
+            .toList(growable: false);
+      } catch (fallbackError, fallbackStackTrace) {
+        _logPublicOffersReadError(
+          'home_latest_offers_fallback',
+          fallbackError,
+          fallbackStackTrace,
+        );
+        throw PublicOffersReadException(
+          _mergePublicOffersReadIssues(
+            source: 'home_latest_offers',
+            primary: _diagnosePublicOffersReadIssue(
+              fallbackError,
+              source: 'home_latest_offers_fallback',
+            ),
+            secondary: _diagnosePublicOffersReadIssue(
+              error,
+              source: 'home_latest_offers_primary',
+            ),
+          ),
+          secondaryIssue: _diagnosePublicOffersReadIssue(
+            error,
+            source: 'home_latest_offers_primary',
+          ),
+        );
+      }
     }
   }
 
@@ -2053,12 +2181,21 @@ class _HomePageState extends State<HomePage>
         _isLatestOffersLoading = false;
         _latestOffersError = null;
       });
-    } catch (error) {
+    } catch (error, stackTrace) {
+      _logPublicOffersReadError('home_latest_offers', error, stackTrace);
+      final diagnosedError = error is PublicOffersReadException
+          ? error
+          : PublicOffersReadException(
+              _diagnosePublicOffersReadIssue(
+                error,
+                source: 'home_latest_offers',
+              ),
+            );
       if (!mounted) return;
       setState(() {
         _latestOffers = const [];
         _isLatestOffersLoading = false;
-        _latestOffersError = error;
+        _latestOffersError = diagnosedError;
       });
     }
   }
@@ -2095,7 +2232,7 @@ class _HomePageState extends State<HomePage>
                       index < compactCategories.length;
                       index++) ...[
                     if (index > 0) const SizedBox(width: 6),
-                    _CategoryChip(
+                    HomeCategoryChip(
                       icon: compactCategories[index].icon,
                       label: compactCategories[index].label,
                       iconScale: _categoryScaleForIndex(
@@ -2206,13 +2343,23 @@ class _HomePageState extends State<HomePage>
           else if (_latestOffersError != null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                _friendlyFirestoreErrorMessage(_latestOffersError!),
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w500,
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _friendlyPublicOffersReadError(_latestOffersError!),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  _buildPublicOffersDebugCard(
+                    _latestOffersError!,
+                    source: 'home_latest_offers',
+                  ),
+                ],
               ),
             )
           else if (_latestOffers.isEmpty)
@@ -2342,7 +2489,7 @@ class _HomePageState extends State<HomePage>
       }
     } catch (e) {
       if (mounted) {
-        showSuccessSnackBar(context, "Erreur lors du seed des offres : $e");
+        showErrorSnackBar(context, "Erreur lors du seed des offres : $e");
       }
     } finally {
       if (mounted) setState(() => _isSeeding = false);
@@ -2493,25 +2640,25 @@ class _HomePageState extends State<HomePage>
 
         // Non connecté → cloche simple
         if (user == null) {
-          return _TapScale(
+          return PrestoTapScale(
             onTap: () {
               showSuccessSnackBar(
                 context,
                 "Connecte-toi à ton compte pour recevoir les notifications de nouveaux messages et annonces.",
               );
             },
-            child: const _NotificationBellBase(badgeCount: 0),
+            child: const PrestoNotificationBellBase(badgeCount: 0),
           );
         }
 
         return _UnreadInboxBell(
           userId: user.uid,
           monitoringKeyPrefix: 'home.bell',
-          builder: (context, badgeCount) => _TapScale(
+          builder: (context, badgeCount) => PrestoTapScale(
             onTap: () {
               _showNotificationsDialog(context, user.uid);
             },
-            child: _NotificationBellBase(badgeCount: badgeCount),
+            child: PrestoNotificationBellBase(badgeCount: badgeCount),
           ),
         );
       },
@@ -2521,6 +2668,13 @@ class _HomePageState extends State<HomePage>
   /// Affiche un dialogue avec les notifications récentes
   void _showNotificationsDialog(BuildContext context, String userId) {
     final overlayTheme = context.prestoOverlayTheme;
+    logRuntimeAction(
+      area: 'notifications',
+      action: 'open-dialog',
+      details: <String, Object?>{
+        'userId': userId,
+      },
+    );
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2620,33 +2774,76 @@ class _HomePageState extends State<HomePage>
                                   routeName.startsWith('/messages/'));
 
                       if (shouldOpenMessages) {
+                        final targetRoute = buildMessagesRoute(
+                          conversationId: normalizedConversationId,
+                        );
+                        logRuntimeAction(
+                          area: 'notifications',
+                          action: 'open-route',
+                          details: <String, Object?>{
+                            'route': targetRoute,
+                            'type': notificationType,
+                            'conversationId': normalizedConversationId,
+                          },
+                        );
                         Navigator.of(context).pushNamed(
-                          buildMessagesRoute(
-                            conversationId: normalizedConversationId,
-                          ),
+                          targetRoute,
                         );
                         return;
                       }
 
                       if (routeName.isNotEmpty) {
+                        logRuntimeAction(
+                          area: 'notifications',
+                          action: 'open-route',
+                          details: <String, Object?>{
+                            'route': routeName,
+                            'type': notificationType,
+                          },
+                        );
                         Navigator.of(context).pushNamed(routeName);
                         return;
                       }
 
                       if (normalizedConversationId.isNotEmpty) {
+                        final targetRoute = buildMessagesRoute(
+                          conversationId: normalizedConversationId,
+                        );
+                        logRuntimeAction(
+                          area: 'notifications',
+                          action: 'open-route',
+                          details: <String, Object?>{
+                            'route': targetRoute,
+                            'conversationId': normalizedConversationId,
+                          },
+                        );
                         Navigator.of(context).pushNamed(
-                          buildMessagesRoute(
-                            conversationId: normalizedConversationId,
-                          ),
+                          targetRoute,
                         );
                         return;
                       }
 
                       if (offerId != null) {
-                        Navigator.of(context).pushNamed('/offers/$offerId');
+                        final targetRoute = '/offers/$offerId';
+                        logRuntimeAction(
+                          area: 'notifications',
+                          action: 'open-route',
+                          details: <String, Object?>{
+                            'route': targetRoute,
+                            'offerId': offerId,
+                          },
+                        );
+                        Navigator.of(context).pushNamed(targetRoute);
                         return;
                       }
 
+                      logRuntimeAction(
+                        area: 'notifications',
+                        action: 'fallback-home',
+                        details: <String, Object?>{
+                          'targetIndex': 1,
+                        },
+                      );
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const HomePage(initialIndex: 1),
@@ -2701,7 +2898,7 @@ class _HomePageState extends State<HomePage>
 
   /// Illustration à droite du slide (plus de chrono image)
   Widget _buildSlideIllustration(
-    _HomeSlide slide,
+    HomeSlide slide,
     int index, {
     VoidCallback? onTap,
   }) {
@@ -3207,125 +3404,6 @@ class _HomePageState extends State<HomePage>
   }
 }
 
-/// SLIDE MODEL
-class _HomeSlide {
-  final String title;
-  final String subtitle;
-  final String badge;
-  final IconData? icon;
-  final String? imageAsset;
-
-  const _HomeSlide({
-    required this.title,
-    required this.subtitle,
-    required this.badge,
-    this.icon,
-    this.imageAsset,
-  });
-}
-
-/// EFFET SCALE SUR TAP
-class _TapScale extends StatelessWidget {
-  final Widget child;
-  final VoidCallback? onTap;
-
-  const _TapScale({required this.child, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTap: onTap,
-      child: AnimatedScale(
-        scale: 1.0,
-        duration: const Duration(milliseconds: 120),
-        child: child,
-      ),
-    );
-  }
-}
-
-/// CHIPS / CARDS ///////////////////////////////////////////////////////////
-
-class _CategoryChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-  final double iconScale;
-
-  const _CategoryChip({
-    required this.icon,
-    required this.label,
-    this.onTap,
-    this.iconScale = 1.0,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return _TapScale(
-      onTap: onTap ??
-          () {
-            showSuccessSnackBar(
-              context,
-              'Catégorie "$label" : bientôt disponible',
-            );
-          },
-      child: Column(
-        children: [
-          Container(
-            width: 62,
-            height: 62,
-            decoration: BoxDecoration(
-              color: kPrestoOrange,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: kPrestoBlue,
-                width: kMarketplaceOutlineWidth,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 14,
-                  offset: const Offset(0, 5),
-                ),
-                BoxShadow(
-                  color: const Color(0x2B1A73E8),
-                  blurRadius: 18,
-                  spreadRadius: 0.5,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Transform.scale(
-                scale: iconScale,
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                  size: 30,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          SizedBox(
-            width: 90,
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF6B7280),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Widget pour l'animation de point pulsant pendant l'enregistrement
 class _PulsingDot extends StatefulWidget {
   final int delay;
@@ -3535,82 +3613,6 @@ class _FieldPendingDotState extends State<_FieldPendingDot>
   }
 }
 
-/// Cloche de notifications avec badge dynamique /////////////////////////////
-
-class _NotificationBellBase extends StatelessWidget {
-  final int badgeCount;
-  final bool showBackground;
-  final Color iconColor;
-
-  const _NotificationBellBase({
-    required this.badgeCount,
-    this.showBackground = true,
-    this.iconColor = Colors.black87,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final String? label;
-    if (badgeCount <= 0) {
-      label = null;
-    } else if (badgeCount > 9) {
-      label = "9+";
-    } else {
-      label = badgeCount.toString();
-    }
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: showBackground
-              ? BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                )
-              : null,
-          child: Icon(
-            Icons.notifications_none_outlined,
-            size: 22,
-            color: iconColor,
-          ),
-        ),
-        if (label != null)
-          Positioned(
-            right: -2,
-            top: -2,
-            child: Container(
-              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-              padding: const EdgeInsets.symmetric(horizontal: 5),
-              decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: Colors.white, width: 1.5),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
 class _UnreadInboxBell extends StatelessWidget {
   final String userId;
   final String? monitoringKeyPrefix;
@@ -3791,45 +3793,70 @@ class _Debouncer {
   void dispose() => _t?.cancel();
 }
 
-/// ✅ Conversion d'erreur Firestore en message amical
-String _friendlyFirestoreErrorMessage(Object error) {
-  final msg = error.toString().toLowerCase();
+String _publicOffersAppCheckStateLabel() {
+  if (!_appCheckActivationAttempted) return 'not-attempted';
+  if (_appCheckActivationSucceeded) return 'ok';
+  return 'failed';
+}
 
-  // ✅ failed-precondition : index manquant
-  if (msg.contains('failed-precondition') || msg.contains('index')) {
-    debugPrint('[Error] Firestore index missing: $error');
-    return "Mise à jour en cours, réessaie dans 1 minute";
-  }
+PublicOffersReadIssue _mergePublicOffersReadIssues({
+  required String source,
+  required PublicOffersReadIssue primary,
+  required PublicOffersReadIssue secondary,
+}) {
+  return mergePublicOffersReadIssues(
+    source: source,
+    primary: primary,
+    secondary: secondary,
+    appCheckState: _publicOffersAppCheckStateLabel(),
+  );
+}
 
-  // ✅ permission-denied : accès refusé
-  if (msg.contains('permission-denied') || msg.contains('permission')) {
-    debugPrint('[Error] Permission denied: $error');
-    return "Tu n'as pas accès à ces offres";
-  }
+PublicOffersReadIssue _diagnosePublicOffersReadIssue(
+  Object error, {
+  required String source,
+}) {
+  return diagnosePublicOffersReadIssue(
+    error,
+    source: source,
+    appCheckState: _publicOffersAppCheckStateLabel(),
+  );
+}
 
-  // ✅ unavailable : problème réseau
-  if (msg.contains('unavailable') ||
-      msg.contains('deadline-exceeded') ||
-      msg.contains('network')) {
-    debugPrint('[Error] Network issue: $error');
-    return "Problème réseau, réessaie";
-  }
+String _friendlyPublicOffersReadError(
+  Object error, {
+  bool debug = kDebugMode,
+}) {
+  return friendlyPublicOffersReadError(
+    error,
+    source: 'public_offers_read',
+    appCheckState: _publicOffersAppCheckStateLabel(),
+    debug: debug,
+  );
+}
 
-  // ✅ not-found
-  if (msg.contains('not-found') || msg.contains('not found')) {
-    debugPrint('[Error] Not found: $error');
-    return "Ressource introuvable";
-  }
+void _logPublicOffersReadError(
+  String source,
+  Object error, [
+  StackTrace? stackTrace,
+]) {
+  logPublicOffersReadError(
+    source,
+    error,
+    appCheckState: _publicOffersAppCheckStateLabel(),
+    stackTrace: stackTrace,
+  );
+}
 
-  // ✅ invalid-argument
-  if (msg.contains('invalid-argument') || msg.contains('invalid')) {
-    debugPrint('[Error] Invalid argument: $error');
-    return "Requête invalide, vérifie les filtres";
-  }
-
-  // Fallback : log technique complet en console
-  debugPrint('[Error] Unknown Firestore error: $error');
-  return "Une erreur s'est produite, réessaie";
+Widget _buildPublicOffersDebugCard(
+  Object error, {
+  required String source,
+}) {
+  return buildPublicOffersDebugCard(
+    error,
+    source: source,
+    appCheckState: _publicOffersAppCheckStateLabel(),
+  );
 }
 
 class _ConsultOffersPageState extends State<ConsultOffersPage> {
@@ -3838,6 +3865,75 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
   static const Color _offersOrange = Color(0xFFFF7A00);
   static const Color _offersSoftText = Color(0xFF626584);
   static const Color _offersCardBorder = Color(0xFFF0E8E8);
+
+  void _logPageView() {
+    logRuntimeAction(
+      area: 'consult',
+      action: 'page-view',
+      details: <String, Object?>{
+        'categoryFilter': widget.categoryFilter ?? '',
+        'searchQuery': widget.searchQuery ?? '',
+      },
+    );
+  }
+
+  void _logSearch(String searchQuery) {
+    final query = searchQuery.trim();
+    if (query.isEmpty) return;
+    logRuntimeAction(
+      area: 'consult',
+      action: 'search',
+      details: <String, Object?>{
+        'query': query,
+      },
+    );
+  }
+
+  void _logFilterUsage(String filterType, String value) {
+    final normalizedValue = value.trim();
+    if (normalizedValue.isEmpty) return;
+    logRuntimeAction(
+      area: 'consult',
+      action: 'filter-usage',
+      details: <String, Object?>{
+        'type': filterType,
+        'value': normalizedValue,
+      },
+    );
+  }
+
+  void _logFiltersApplied({
+    String? category,
+    String? region,
+    String? department,
+    String? city,
+    String? searchQuery,
+    int? resultCount,
+  }) {
+    logRuntimeAction(
+      area: 'consult',
+      action: 'filters-applied',
+      details: <String, Object?>{
+        'category': category?.trim() ?? '',
+        'region': region?.trim() ?? '',
+        'department': department?.trim() ?? '',
+        'city': city?.trim() ?? '',
+        'searchQuery': searchQuery?.trim() ?? '',
+        'resultCount': resultCount,
+      },
+    );
+  }
+
+  void _logOfferClicked(String offerId, String title) {
+    logRuntimeAction(
+      area: 'consult',
+      action: 'open-offer',
+      details: <String, Object?>{
+        'offerId': offerId,
+        'title': title,
+      },
+    );
+  }
 
   // --- Normalisation (réduction index) ---
   String _slugId(String input) {
@@ -3850,109 +3946,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
         .replaceAll(RegExp(r'[îï]'), 'i')
         .replaceAll(RegExp(r'[ôö]'), 'o')
         .replaceAll(RegExp(r'[ùûü]'), 'u')
-        .replaceAll('œ', 'oe')
+        .replaceAll('œ', 'oe');
+    return s
         .replaceAll(RegExp(r"[/\-'’']"), ' ')
-        .replaceAll(RegExp(r'[^a-z0-9 ]'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim()
-        .replaceAll(' ', '-');
-    return s;
+        .replaceAll(RegExp(r'\s+'), '_');
   }
-
-  // ✅ Logs analytics
-  // late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
-
-  /// ✅ Enregistre la recherche effectuée
-  Future<void> _logSearch(String searchQuery) async {
-    try {
-      // await _analytics.logSearch(searchTerm: searchQuery);
-    } catch (e) {
-      debugPrint('[Analytics] logSearch error: $e');
-    }
-  }
-
-  /// ✅ Enregistre l'utilisation des filtres
-  Future<void> _logFilterUsage(String filterType, String filterValue) async {
-    try {
-      /*
-      await _analytics.logEvent(
-        name: 'filter_applied',
-        parameters: {
-          'filter_type': filterType,
-          'filter_value': filterValue,
-          'timestamp': DateTime.now().millisecondsSinceEpoch,
-        },
-      );
-      */
-    } catch (e) {
-      debugPrint('[Analytics] logFilterUsage error: $e');
-    }
-  }
-
-  /// ✅ Enregistre la visite de la page ConsultOffers
-  Future<void> _logPageView() async {
-    try {
-      /*
-      await _analytics.logScreenView(
-        screenName: 'ConsultOffers',
-        screenClass: 'ConsultOffersPage',
-      );
-      */
-    } catch (e) {
-      debugPrint('[Analytics] logPageView error: $e');
-    }
-  }
-
-  /// ✅ Enregistre les filtres appliqués
-  Future<void> _logFiltersApplied({
-    required String? category,
-    required String? region,
-    required String? department,
-    required String? city,
-    required String? searchQuery,
-    required int resultCount,
-  }) async {
-    try {
-      /*
-      await _analytics.logEvent(
-        name: 'filters_applied',
-        parameters: {
-          'category': category ?? 'none',
-          'region': region ?? 'none',
-          'department': department ?? 'none',
-          'city': city ?? 'none',
-          'search_query': searchQuery ?? 'none',
-          'result_count': resultCount,
-          'timestamp': DateTime.now().millisecondsSinceEpoch,
-        },
-      );
-      */
-    } catch (e) {
-      debugPrint('[Analytics] logFiltersApplied error: $e');
-    }
-  }
-
-  /// ✅ Enregistre quand l'utilisateur clique sur une offre
-  Future<void> _logOfferClicked(String offerId, String title) async {
-    try {
-      /*
-      await _analytics.logEvent(
-        name: 'select_item',
-        parameters: {
-          'item_id': offerId,
-          'item_name': title,
-          'item_category': _filterCategory ?? 'unknown',
-        },
-      );
-      */
-    } catch (e) {
-      debugPrint('[Analytics] logOfferClicked error: $e');
-    }
-  }
-
-  // ✅ Suivi du statut réseau
-  final bool _isOnline = true;
-  // late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   String? _makeCategoryId(String? categoryLabel) {
     final s = (categoryLabel ?? '').trim();
@@ -4180,7 +4178,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                 'Connecte-toi pour recevoir les notifications.',
               );
             },
-            icon: const _NotificationBellBase(
+            icon: const PrestoNotificationBellBase(
               badgeCount: 0,
               showBackground: false,
               iconColor: Colors.white,
@@ -4196,7 +4194,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
             onPressed: () {
               Navigator.of(context).pushNamed(buildMessagesRoute());
             },
-            icon: _NotificationBellBase(
+            icon: PrestoNotificationBellBase(
               badgeCount: badgeCount,
               showBackground: false,
               iconColor: Colors.white,
@@ -4569,52 +4567,83 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
       _watchCombinedOffers() {
     return Stream.multi((controller) {
       QuerySnapshot<Map<String, dynamic>>? listingsSnapshot;
-      QuerySnapshot<Map<String, dynamic>>? legacyOffersSnapshot;
+      List<QueryDocumentSnapshot<Map<String, dynamic>>> legacyOffersDocs =
+          const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      Object? listingsError;
+      StackTrace? listingsErrorStackTrace;
+      bool legacyBackfillLoaded = !_kEnableLegacyPublicOffersBackfill;
+      bool controllerClosed = false;
 
-      void emitMerged() {
+      void emitMergedOrError() {
+        if (controllerClosed) return;
+
+        final listingsDocs = listingsSnapshot?.docs ??
+            const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+
+        if (listingsError != null && listingsDocs.isEmpty && legacyBackfillLoaded) {
+          if (legacyOffersDocs.isNotEmpty) {
+            controller.add(legacyOffersDocs);
+            return;
+          }
+          controller.addError(
+            PublicOffersReadException(
+              _diagnosePublicOffersReadIssue(
+                listingsError!,
+                source: 'consult_listings_stream',
+              ),
+            ),
+            listingsErrorStackTrace ?? StackTrace.current,
+          );
+          return;
+        }
+
+        if (listingsSnapshot == null && !legacyBackfillLoaded) {
+          return;
+        }
+
         controller.add(
           _mergeOfferDocsById(
-            listingsSnapshot?.docs ??
-                <QueryDocumentSnapshot<Map<String, dynamic>>>[],
-            legacyOffersSnapshot?.docs ??
-                <QueryDocumentSnapshot<Map<String, dynamic>>>[],
+            listingsDocs,
+            legacyOffersDocs,
           ),
         );
       }
 
       final listingsSub = _buildOffersQuery().snapshots().listen(
         (snapshot) {
+          listingsError = null;
+          listingsErrorStackTrace = null;
           listingsSnapshot = snapshot;
-          emitMerged();
+          emitMergedOrError();
         },
         onError: (error, stackTrace) {
-          debugPrint('[OFFERS][LISTINGS] snapshot error: $error');
-          if (legacyOffersSnapshot == null) {
-            controller.addError(error, stackTrace);
-            return;
-          }
-          emitMerged();
+          listingsSnapshot = null;
+          listingsError = error;
+          listingsErrorStackTrace = stackTrace;
+          _logPublicOffersReadError(
+            'consult_listings_stream',
+            error,
+            stackTrace,
+          );
+          emitMergedOrError();
         },
       );
 
-      final offersSub = _buildLegacyOffersQuery().snapshots().listen(
-        (snapshot) {
-          legacyOffersSnapshot = snapshot;
-          emitMerged();
-        },
-        onError: (error, stackTrace) {
-          debugPrint('[OFFERS][LEGACY] snapshot error: $error');
-          if (listingsSnapshot == null) {
-            controller.addError(error, stackTrace);
-            return;
-          }
-          emitMerged();
-        },
+      unawaited(
+        _loadLegacyPublicOffersBackfill(
+          query: _buildLegacyOffersQuery(),
+          source: 'consult_legacy_backfill',
+        ).then((docs) {
+          if (controllerClosed) return;
+          legacyOffersDocs = docs;
+          legacyBackfillLoaded = true;
+          emitMergedOrError();
+        }),
       );
 
       controller.onCancel = () async {
+        controllerClosed = true;
         await listingsSub.cancel();
-        await offersSub.cancel();
       };
     });
   }
@@ -4795,28 +4824,30 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
       if (!_hasActiveClientFilters) {
         // ⚡ Aucun filtre client actif → count aggregation (0 lecture doc)
-        final countSnaps = await Future.wait([
-          FirebaseFirestore.instance
-              .collection(_kListingsCollection)
-              .where(_publicListingsFilter())
-              .count()
-              .get(),
-          FirebaseFirestore.instance
+        final listingsCount = await FirebaseFirestore.instance
+            .collection(_kListingsCollection)
+            .where(_publicListingsFilter())
+            .count()
+            .get();
+        var total = listingsCount.count ?? 0;
+        if (_kEnableLegacyPublicOffersBackfill) {
+          final legacyCount = await FirebaseFirestore.instance
               .collection(_kOffersCollection)
               .where(_publicOffersFilter())
               .count()
-              .get(),
-        ]);
-        visibleCount = (countSnaps[0].count ?? 0) + (countSnaps[1].count ?? 0);
+              .get();
+          total += legacyCount.count ?? 0;
+        }
+        visibleCount = total;
       } else {
         // Filtres actifs → on doit charger les docs pour filtrer côté client
         // Limiter à 500 docs maximum pour protéger le quota
-        final snapshots = await Future.wait([
-          _buildOffersQuery().limit(500).get(),
-          _buildLegacyOffersQuery().limit(500).get(),
-        ]);
-        final merged =
-            _mergeOfferDocsById(snapshots[0].docs, snapshots[1].docs);
+        final listings = await _buildOffersQuery().limit(500).get();
+        final legacy = await _loadLegacyPublicOffersBackfill(
+          query: _buildLegacyOffersQuery().limit(500),
+          source: 'consult_visible_count_legacy_backfill',
+        );
+        final merged = _mergeOfferDocsById(listings.docs, legacy);
         visibleCount =
             merged.where((doc) => _matchesOfferFilters(doc.data())).length;
       }
@@ -5463,8 +5494,8 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                         }
 
                         final friendly = err == null
-                            ? "Une erreur s'est produite, réessaie"
-                            : _friendlyFirestoreErrorMessage(err);
+                            ? 'Impossible de charger les annonces pour le moment.'
+                            : _friendlyPublicOffersReadError(err);
 
                         return Center(
                           child: Padding(
@@ -5496,6 +5527,11 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                                     color: Colors.grey.shade700,
                                   ),
                                 ),
+                                if (err != null)
+                                  _buildPublicOffersDebugCard(
+                                    err,
+                                    source: 'consult_combined_offers',
+                                  ),
                                 const SizedBox(height: 16),
                                 ElevatedButton.icon(
                                   onPressed: () {
@@ -7720,8 +7756,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   // Service IA structuré pour le formulaire publier
   final AiDraftService _aiService = AiDraftService();
   final ListingAudioAiService _listingAudioAiService = ListingAudioAiService();
-  final AdminAccessResolver _publishAdminAccessResolver =
-      AdminAccessResolver();
+  final AdminAccessResolver _publishAdminAccessResolver = AdminAccessResolver();
   final AudioRecorder _recorder = AudioRecorder();
   final WebAudioRecorder _webRec = WebAudioRecorder();
   String? _recordingPath;
@@ -8171,9 +8206,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     final accent = _isListening
         ? kPrestoOrange
         : (_isAnalyzing ? kPrestoBlue : const Color(0xFF455A64));
-    final stateLabel = _isListening
-        ? 'LIVE'
-        : (_isAnalyzing ? 'ANALYSE' : 'ADMIN');
+    final stateLabel =
+        _isListening ? 'LIVE' : (_isAnalyzing ? 'ANALYSE' : 'ADMIN');
 
     return Center(
       child: Container(
@@ -8298,7 +8332,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               insetPadding: const EdgeInsets.all(16),
               shape: overlayTheme.dialogShape,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 760, maxHeight: 680),
+                constraints:
+                    const BoxConstraints(maxWidth: 760, maxHeight: 680),
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -8355,7 +8390,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                             ),
                             child: Text(
                               'Entrees: ${entries.length}',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ),
                         ],
@@ -8380,7 +8416,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                       Row(
                         children: [
                           TextButton.icon(
-                            onPressed: entries.isEmpty ? null : _clearPublishAiTrace,
+                            onPressed:
+                                entries.isEmpty ? null : _clearPublishAiTrace,
                             icon: const Icon(Icons.delete_outline_rounded),
                             label: const Text('Effacer'),
                           ),
@@ -8397,7 +8434,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                               )
                             : ListView.separated(
                                 itemCount: entries.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 8),
                                 itemBuilder: (context, index) {
                                   final entry = entries[index];
                                   final color = _colorForPublishAiTraceLevel(
@@ -8413,12 +8451,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                       ),
                                     ),
                                     child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Padding(
-                                          padding: const EdgeInsets.only(top: 2),
+                                          padding:
+                                              const EdgeInsets.only(top: 2),
                                           child: Icon(
-                                            _iconForPublishAiTraceLevel(entry.level),
+                                            _iconForPublishAiTraceLevel(
+                                                entry.level),
                                             color: color,
                                             size: 18,
                                           ),
@@ -9700,6 +9741,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       ),
     );
 
+    if (!mounted) return false;
+
     return (await _resolveSignedInUser()) != null;
   }
 
@@ -9740,8 +9783,23 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _onPublishPressed() async {
+    logRuntimeAction(
+      area: 'publish',
+      action: 'tap-submit',
+      details: <String, Object?>{
+        'signedIn': FirebaseAuth.instance.currentUser != null,
+        'category': _category ?? '',
+      },
+    );
+
     final loggedIn = await _ensureLoggedInForPublish();
-    if (!loggedIn) return;
+    if (!loggedIn) {
+      logRuntimeAction(
+        area: 'publish',
+        action: 'blocked-auth',
+      );
+      return;
+    }
 
     await _prefillPublishPhoneFromProfileIfNeeded();
 
@@ -9754,6 +9812,13 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     final valid = _formKey.currentState?.validate() ?? false;
     if (!valid || !_requiredOk()) {
+      logRuntimeAction(
+        area: 'publish',
+        action: 'blocked-validation',
+        details: <String, Object?>{
+          'category': _category ?? '',
+        },
+      );
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToFirstInvalidPublishField();
       });
@@ -9768,8 +9833,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     if (_adminAudioRuntimeAccessState == 0) {
       unawaited(_refreshAdminAudioRuntimeAccess());
     }
-    _resetPublishAiTrace(kIsWeb ? 'micro web classique' : 'micro mobile classique');
-    _appendPublishAiTrace('start_mic', 'Demande de démarrage du micro classique');
+    _resetPublishAiTrace(
+        kIsWeb ? 'micro web classique' : 'micro mobile classique');
+    _appendPublishAiTrace(
+        'start_mic', 'Demande de démarrage du micro classique');
 
     final appCheckReady = await _ensureAppCheckReady(
       flow: kIsWeb ? 'webMic' : 'mobileMic',
@@ -9902,10 +9969,11 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           showUserMessage: false,
         );
         final uid = secureContext?.uid;
-        if (uid == null) throw const MicroIaClientAuthException(
-          code: 'auth-missing',
-          message: 'Connecte-toi pour utiliser la dictée IA.',
-        );
+        if (uid == null)
+          throw const MicroIaClientAuthException(
+            code: 'auth-missing',
+            message: 'Connecte-toi pour utiliser la dictée IA.',
+          );
 
         final blob = await _webRec.stopToBlob();
         final audioUpload = await webBlobToMicroIaUpload(
@@ -10608,7 +10676,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       });
     } catch (e) {
       if (!mounted) return;
-      showSuccessSnackBar(context, 'Erreur lors de la sélection : $e');
+      showErrorSnackBar(context, 'Erreur lors de la sélection : $e');
     }
   }
 
@@ -10734,6 +10802,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (user == null) {
         throw Exception('Utilisateur non connecté');
       }
+      logRuntimeAction(
+        area: 'publish',
+        action: 'submit-start',
+        details: <String, Object?>{
+          'userId': user.uid,
+          'category': _category ?? '',
+          'city': _locationController.text.trim(),
+          'hasPhotos': _selectedPhotos.isNotEmpty,
+        },
+      );
       final budgetValue = _budgetType == 'À négocier'
           ? 0.0
           : (_parseBudget(_budgetController.text) ?? 0.0);
@@ -10772,6 +10850,16 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _selectedSubCategory,
         _titleController.text.trim(),
         user.uid,
+      );
+
+      logRuntimeAction(
+        area: 'publish',
+        action: 'submit-success',
+        details: <String, Object?>{
+          'listingId': publishResult.listingId,
+          'category': _category ?? '',
+          'city': _locationController.text.trim(),
+        },
       );
 
       if (!mounted) return;
@@ -10813,6 +10901,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         ),
       );
     } catch (e) {
+      logRuntimeAction(
+        area: 'publish',
+        action: 'submit-failure',
+        details: <String, Object?>{
+          'errorType': e.runtimeType,
+          'message': e,
+        },
+      );
       if (!mounted) return;
       final message = _formatPublishError(e);
       showErrorSnackBar(context, 'Erreur lors de la publication : $message');
@@ -10915,11 +11011,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                           child: _isListening
                               ? _buildMicRecordingButton()
                               : PremiumAiButton(
-                                  onPressed: _isAnalyzing || signedInUser == null
-                                      ? null
-                                      : () {
-                                          unawaited(_startMic());
-                                        },
+                                  onPressed:
+                                      _isAnalyzing || signedInUser == null
+                                          ? null
+                                          : () {
+                                              unawaited(_startMic());
+                                            },
                                   label: 'Décrire mon besoin (IA)',
                                 ),
                         ),
@@ -13661,7 +13758,9 @@ class _AccountPageState extends State<AccountPage> {
     final sourceLabel = localSource.isNotEmpty ? ' via $localSource' : '';
     final fallbackDetail = detail?.trim().isNotEmpty == true
         ? detail!.trim()
-        : (state.serverErrorCode != null ? _adminStateErrorDetail(state) : null);
+        : (state.serverErrorCode != null
+            ? _adminStateErrorDetail(state)
+            : null);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
@@ -13769,8 +13868,8 @@ class _AccountPageState extends State<AccountPage> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
                   ),
                 ),
               ),
@@ -13804,7 +13903,7 @@ class _AccountPageState extends State<AccountPage> {
         if (user == null) {
           SessionState.userId = null;
           CrashlyticsContext.setUserId(null);
-          return const ProfilePage();
+          return const SignedOutAccountFallback(source: 'account-route');
           /*
           return PrestoPremiumAuthPage(
             onGoogle: () async => await _signInWithGoogle(),
@@ -14010,6 +14109,14 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
   }
 
   Future<void> _removeFavorite(String offerId) async {
+    logRuntimeAction(
+      area: 'favorites',
+      action: 'remove-start',
+      details: <String, Object?>{
+        'offerId': offerId,
+        'userId': widget.userId,
+      },
+    );
     try {
       await FirebaseFirestore.instance
           .collection('users')
@@ -14027,10 +14134,26 @@ class _FavoriteOffersSectionState extends State<FavoriteOffersSection> {
 
       if (!mounted) return;
       showSuccessSnackBar(context, 'Annonce retirée des favoris');
+      logRuntimeAction(
+        area: 'favorites',
+        action: 'remove-success',
+        details: <String, Object?>{
+          'offerId': offerId,
+        },
+      );
       await _loadFavorites();
     } catch (e) {
+      logRuntimeAction(
+        area: 'favorites',
+        action: 'remove-failure',
+        details: <String, Object?>{
+          'offerId': offerId,
+          'errorType': e.runtimeType,
+          'message': e,
+        },
+      );
       if (!mounted) return;
-      showSuccessSnackBar(context, 'Erreur lors du retrait du favori : $e');
+      showErrorSnackBar(context, 'Erreur lors du retrait du favori : $e');
     }
   }
 
@@ -15421,6 +15544,14 @@ class _UserOffersSectionState extends State<UserOffersSection> {
   }
 
   void _openOfferDetails(_ManagedOfferItem item) {
+    logRuntimeAction(
+      area: 'offers',
+      action: 'open-detail',
+      details: <String, Object?>{
+        'offerId': item.offerId,
+        'source': 'account-managed-offers',
+      },
+    );
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => OfferDetailsPage(

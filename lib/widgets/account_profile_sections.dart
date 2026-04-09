@@ -638,7 +638,7 @@ class AccountProUpgradeSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Créez un profil Pro pour publier plus facilement et accéder aux options Pro.\nAbonnement bientôt disponible.',
+            'Créez un profil Pro pour publier plus facilement. Les options d\'abonnement avancées arrivent bientôt.',
             style: TextStyle(
               color: Colors.black87,
               fontSize: 14,
@@ -661,7 +661,7 @@ class AccountProUpgradeSection extends StatelessWidget {
               onPressed: onOpenProProfile,
               icon: const Icon(Icons.business_center_outlined, size: 20),
               label: const Text(
-                'Créer un compte Pro',
+                'Créer mon profil Pro',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 15,

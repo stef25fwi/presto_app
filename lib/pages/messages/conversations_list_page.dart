@@ -1341,7 +1341,6 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                         final query =
                             _searchController.text.trim().toLowerCase();
                         var orphanCount = 0;
-                        var hiddenWithoutPreviewCount = 0;
                         final conversations = docs;
 
                         final visibleConversations =
@@ -1362,8 +1361,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                           }
 
                           if (!conversation.hasRenderableContent) {
-                            hiddenWithoutPreviewCount += 1;
-                            return false;
+                              return false;
                           }
 
                           switch (_activeFilter) {
@@ -1395,9 +1393,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                                       ? 'Aucune conversation archivee.'
                                       : orphanCount > 0
                                         ? 'Aucune conversation affichable pour le moment. Le diagnostic ci-dessous signale des metadonnees participants incompletes sur certaines conversations.'
-                                          : hiddenWithoutPreviewCount > 0
-                                          ? 'Aucune conversation affichable pour le moment. Certaines conversations existent deja, mais leurs metadonnees d apercu ne sont pas encore suffisantes.'
-                                              : 'Aucune conversation pour le moment.';
+                                          : 'Aucune conversation pour le moment.';
 
                           return Column(
                             children: [

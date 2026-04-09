@@ -1,3 +1,5 @@
+// ACTIF_SECONDAIRE: flux auth/profil fallback encore reachable hors parcours compte principal.
+
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
