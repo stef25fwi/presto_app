@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../services/google_auth_service.dart';
+import '../services/user_profile_bootstrap_service.dart';
 import '../utils/friendly_snackbar.dart';
 
 typedef AccountTrackLoginCallback = Future<void> Function({
@@ -84,6 +85,14 @@ class AccountSocialAuthActions {
 
       final user = auth.currentUser;
       if (user != null) {
+        try {
+          await UserProfileBootstrapService.ensureUserDocument(
+            user: user,
+            authMethod: 'google',
+          );
+        } catch (bootstrapError) {
+          googleAuthService.logError('AuthBootstrap', bootstrapError);
+        }
         try {
           final userDoc = await FirebaseFirestore.instance
               .collection('users')
@@ -196,6 +205,17 @@ class AccountSocialAuthActions {
       }
 
       final user = auth.currentUser;
+      if (user != null) {
+        try {
+          await UserProfileBootstrapService.ensureUserDocument(
+            user: user,
+            authMethod: 'apple',
+            isNewUserHint: userCredential.additionalUserInfo?.isNewUser ?? false,
+          );
+        } catch (bootstrapError) {
+          debugPrint('[Apple Sign-In] Auth bootstrap error: $bootstrapError');
+        }
+      }
       final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user?.uid)

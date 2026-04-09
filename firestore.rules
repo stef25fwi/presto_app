@@ -63,7 +63,15 @@ service cloud.firestore {
     }
 
     function isPublicListingData(data) {
-      return data.status == 'active' && data.visibility == 'public';
+      return (
+        (data.status == 'active' && data.visibility == 'public')
+        || data.status == 'published'
+        || data.isPublished == true
+        || data.isActive == true
+        || ((data.visibility is map) && data.visibility.isPublic == true)
+      )
+      && data.archivedAt == null
+      && data.deletedAt == null;
     }
 
     function isListingOwner(data) {

@@ -10,6 +10,7 @@ import 'pages/pro_profile_page.dart';
 import 'services/city_search.dart';
 import 'services/email_action_service.dart';
 import 'services/notification_service.dart';
+import 'services/user_profile_bootstrap_service.dart';
 import 'services/app_route_parser.dart';
 import 'utils/friendly_snackbar.dart';
 import 'constants.dart';
@@ -122,6 +123,14 @@ class _ProfilePageState extends State<ProfilePage> {
       }
       if (user != null) {
         try {
+          await UserProfileBootstrapService.ensureUserDocument(
+            user: user,
+            authMethod: 'session_restore',
+          );
+        } catch (e) {
+          debugPrint('[AuthBootstrap] session restore failed: $e');
+        }
+        try {
           await EmailActionService.syncCurrentUserEmailVerificationState();
         } catch (_) {
           // Best effort
@@ -143,6 +152,16 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final result = await _auth.getRedirectResult();
       if (result.user != null) {
+        final isNewUser = result.additionalUserInfo?.isNewUser ?? false;
+        try {
+          await UserProfileBootstrapService.ensureUserDocument(
+            user: result.user!,
+            authMethod: 'google',
+            isNewUserHint: isNewUser,
+          );
+        } catch (e) {
+          debugPrint('[AuthBootstrap] google redirect failed: $e');
+        }
         if (!mounted) return;
         showSuccessSnackBar(context, "Connecté avec Google");
       }
@@ -568,6 +587,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (_isLoading) return;
     setState(() => _isLoading = true);
     try {
+      UserCredential? credential;
       final provider = GoogleAuthProvider()
         ..setCustomParameters({'prompt': 'select_account'});
       provider.addScope('email');
@@ -575,7 +595,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (kIsWeb) {
         try {
-          await _auth.signInWithPopup(provider);
+          credential = await _auth.signInWithPopup(provider);
           if (!mounted) return;
           showSuccessSnackBar(context, 'Connecté avec Google');
         } catch (popupError) {
@@ -586,9 +606,25 @@ class _ProfilePageState extends State<ProfilePage> {
           return;
         }
       } else {
-        await _auth.signInWithProvider(provider);
+        credential = await _auth.signInWithProvider(provider);
         if (!mounted) return;
         showSuccessSnackBar(context, 'Connecté avec Google');
+      }
+
+      final socialCredential = credential;
+      final signedInUser = socialCredential.user ?? _auth.currentUser;
+      if (signedInUser != null) {
+        final isNewUser =
+            socialCredential.additionalUserInfo?.isNewUser ?? false;
+        try {
+          await UserProfileBootstrapService.ensureUserDocument(
+            user: signedInUser,
+            authMethod: 'google',
+            isNewUserHint: isNewUser,
+          );
+        } catch (e) {
+          debugPrint('[AuthBootstrap] google sign-in failed: $e');
+        }
       }
     } on FirebaseAuthException catch (e) {
       debugPrint("GOOGLE AUTH FAIL -> code=${e.code} message=${e.message}");
@@ -598,6 +634,13 @@ class _ProfilePageState extends State<ProfilePage> {
         msg = "Connexion annulée";
       } else if (e.code == 'unauthorized-domain') {
         msg = "Domaine non autorisé dans Firebase Console";
+      } else if (e.code == 'operation-not-allowed') {
+        msg = "Connexion Google non activée dans Firebase Authentication";
+      } else if (e.code == 'network-request-failed') {
+        msg = "Erreur réseau. Vérifie la connexion internet puis réessaie.";
+      } else if (e.code == 'account-exists-with-different-credential') {
+        msg =
+            "Un compte existe déjà avec cet email via une autre méthode de connexion.";
       } else {
         msg = "Erreur : ${e.message ?? e.code}";
       }
@@ -607,6 +650,14 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       showErrorSnackBar(context, 'Erreur lors de la connexion : $e');
     } finally {
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        try {
+          await EmailActionService.syncCurrentUserEmailVerificationState();
+        } catch (_) {
+          // Best effort.
+        }
+      }
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -636,7 +687,20 @@ class _ProfilePageState extends State<ProfilePage> {
         accessToken: appleCredential.authorizationCode,
       );
 
-      await _auth.signInWithCredential(oauthCredential);
+      final credential = await _auth.signInWithCredential(oauthCredential);
+      final signedInUser = credential.user ?? _auth.currentUser;
+      if (signedInUser != null) {
+        final isNewUser = credential.additionalUserInfo?.isNewUser ?? false;
+        try {
+          await UserProfileBootstrapService.ensureUserDocument(
+            user: signedInUser,
+            authMethod: 'apple',
+            isNewUserHint: isNewUser,
+          );
+        } catch (e) {
+          debugPrint('[AuthBootstrap] apple sign-in failed: $e');
+        }
+      }
       if (!mounted) return;
       showSuccessSnackBar(context, 'Connecté avec Apple');
     } on FirebaseAuthException catch (e) {
@@ -660,8 +724,14 @@ class _ProfilePageState extends State<ProfilePage> {
       final password = _passwordCtrl.text;
 
       if (_authMode == AuthMode.login) {
-        await _auth.signInWithEmailAndPassword(
+        final credential = await _auth.signInWithEmailAndPassword(
             email: email, password: password);
+        if (credential.user != null) {
+          await UserProfileBootstrapService.ensureUserDocument(
+            user: credential.user!,
+            authMethod: 'email',
+          );
+        }
         if (!mounted) return;
         showSuccessSnackBar(context, 'Connexion réussie');
       } else {
@@ -670,6 +740,11 @@ class _ProfilePageState extends State<ProfilePage> {
           password: password,
         );
         if (credential.user != null) {
+          await UserProfileBootstrapService.ensureUserDocument(
+            user: credential.user!,
+            authMethod: 'email',
+            isNewUserHint: true,
+          );
           await EmailActionService.requestEmailVerificationEmail();
         }
         if (!mounted) return;
