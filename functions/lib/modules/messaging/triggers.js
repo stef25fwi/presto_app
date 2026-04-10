@@ -67,8 +67,9 @@ exports.onConversationSubMessageCreated = (0, firestore_1.onDocumentCreated)("co
         ? "message.created.new_thread"
         : "message.created.existing_thread";
     const conversationSnap = await firestore_2.db.collection(constants_1.COLLECTIONS.conversations).doc(conversationId).get();
-    const conversation = (0, mirror_1.readConversationMirrorData)(conversationSnap.data() ?? {});
-    const normalizedParticipants = (0, participants_1.readConversationParticipants)(conversationSnap.data() ?? {});
+    const conversationData = (conversationSnap.data() ?? {});
+    const conversation = (0, mirror_1.readConversationMirrorData)(conversationData, { conversationId });
+    const normalizedParticipants = (0, participants_1.readConversationParticipants)(conversationData, { conversationId });
     const normalizedMessageText = String(message.text || message.body || "").trim();
     if (normalizedParticipants.length > 0) {
         const archivedBy = conversation.archivedBy;

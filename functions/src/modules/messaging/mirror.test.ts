@@ -81,3 +81,52 @@ test("readConversationMessageCount falls back to mirrored last message aliases",
   assert.equal(readConversationMessageCount({ last_message: "Salut" }), 1);
   assert.equal(readConversationMessageCount({ last_message: "   " }), 0);
 });
+
+test("buildConversationMirrorFields scopes participant maps to normalized participants", () => {
+  const fields = buildConversationMirrorFields({
+    participants: ["buyer_a", "seller_b"],
+    participantNames: {
+      buyer_a: "Alice",
+      seller_b: "Bruno",
+      ghost_user: "Ghost",
+    },
+    unreadCount: {
+      buyer_a: 0,
+      seller_b: 2,
+      ghost_user: 99,
+    },
+    archivedBy: {
+      seller_b: true,
+      ghost_user: true,
+    },
+    blockedBy: {
+      ghost_user: true,
+    },
+    lastReadAt: {
+      seller_b: "2026-01-01T00:00:00.000Z",
+      ghost_user: "2026-01-01T00:00:00.000Z",
+    },
+  });
+
+  assert.deepEqual(fields.participants, ["buyer_a", "seller_b"]);
+  assert.deepEqual(fields.participantNames, { buyer_a: "Alice", seller_b: "Bruno" });
+  assert.deepEqual(fields.unreadCount, { buyer_a: 0, seller_b: 2 });
+  assert.deepEqual(fields.archivedBy, { buyer_a: false, seller_b: true });
+  assert.deepEqual(fields.blockedBy, { buyer_a: false, seller_b: false });
+  assert.deepEqual(fields.lastReadAt, { seller_b: "2026-01-01T00:00:00.000Z" });
+});
+
+test("readConversationMirrorData can recover participants from canonical id", () => {
+  const mirror = readConversationMirrorData(
+    {
+      unreadCount: {
+        b: 0,
+      },
+    },
+    {
+      conversationId: "offer_offer123__seller_b__buyer_a",
+    },
+  );
+
+  assert.deepEqual(mirror.participants, ["buyer_a", "seller_b"]);
+});

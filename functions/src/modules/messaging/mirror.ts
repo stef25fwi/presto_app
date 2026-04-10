@@ -66,6 +66,16 @@ function normalizeParticipants(values: unknown[]): string[] {
     .sort();
 }
 
+function normalizeBooleanMap(map: Record<string, unknown>): BooleanMap {
+  const result: BooleanMap = {};
+  for (const [key, value] of Object.entries(map)) {
+    const normalizedKey = normalizeString(key);
+    if (!normalizedKey) continue;
+    result[normalizedKey] = value === true;
+  }
+  return result;
+}
+
 function readStringMap(data: UnknownRecord, keys: string[]): StringMap {
   const raw = pickFirstValue(data, keys);
   if (!raw || typeof raw !== "object") return {};
@@ -127,6 +137,94 @@ function buildParticipantUniverse(input: ConversationMirrorFieldsInput): string[
   ]);
 }
 
+function resolveParticipantsForWrite(input: ConversationMirrorFieldsInput): string[] {
+  const explicitParticipants = normalizeParticipants(input.participants ?? []);
+  if (explicitParticipants.length > 0) {
+    return explicitParticipants;
+  }
+
+  return buildParticipantUniverse(input);
+}
+
+function scopeStringMapToParticipants(
+  map: StringMap,
+  participants: string[],
+): StringMap {
+  if (participants.length === 0) {
+    return sanitizeMapKeys(map);
+  }
+
+  const normalizedMap = sanitizeMapKeys(map);
+  const result: StringMap = {};
+
+  for (const participantId of participants) {
+    const value = normalizeString(normalizedMap[participantId]);
+    if (!value) continue;
+    result[participantId] = value;
+  }
+
+  return result;
+}
+
+function scopeUnknownMapToParticipants(
+  map: UnknownRecord,
+  participants: string[],
+): UnknownRecord {
+  if (participants.length === 0) {
+    return sanitizeMapKeys(map);
+  }
+
+  const normalizedMap = sanitizeMapKeys(map);
+  const result: UnknownRecord = {};
+
+  for (const participantId of participants) {
+    if (!Object.prototype.hasOwnProperty.call(normalizedMap, participantId)) {
+      continue;
+    }
+    result[participantId] = normalizedMap[participantId];
+  }
+
+  return result;
+}
+
+function buildUnreadCountMap(
+  map: UnknownRecord,
+  participants: string[],
+): UnknownRecord {
+  if (participants.length === 0) {
+    return sanitizeMapKeys(map);
+  }
+
+  const normalizedMap = sanitizeMapKeys(map);
+  const result: UnknownRecord = {};
+
+  for (const participantId of participants) {
+    if (Object.prototype.hasOwnProperty.call(normalizedMap, participantId)) {
+      result[participantId] = normalizedMap[participantId];
+      continue;
+    }
+    result[participantId] = 0;
+  }
+
+  return result;
+}
+
+function buildBooleanMapForParticipants(
+  map: Record<string, unknown>,
+  participants: string[],
+): BooleanMap {
+  const normalizedMap = normalizeBooleanMap(map);
+  if (participants.length === 0) {
+    return normalizedMap;
+  }
+
+  const result: BooleanMap = {};
+  for (const participantId of participants) {
+    result[participantId] = normalizedMap[participantId] === true;
+  }
+  return result;
+}
+
 export function readConversationMessageCount(data: UnknownRecord): number {
   const rawCount = pickFirstValue(data, ["messageCount", "message_count"]);
   if (typeof rawCount === "number" && Number.isFinite(rawCount) && rawCount >= 0) {
@@ -137,9 +235,16 @@ export function readConversationMessageCount(data: UnknownRecord): number {
   return lastMessage ? 1 : 0;
 }
 
-export function readConversationMirrorData(data: UnknownRecord): ConversationMirrorData {
+export function readConversationMirrorData(
+  data: UnknownRecord,
+  options: {
+    conversationId?: string;
+  } = {},
+): ConversationMirrorData {
   return {
-    participants: readConversationParticipants(data),
+    participants: readConversationParticipants(data, {
+      conversationId: options.conversationId,
+    }),
     participantNames: readStringMap(data, ["participantNames", "participant_names"]),
     otherUserName: normalizeString(pickFirstValue(data, ["otherUserName", "other_user_name"])),
     offerId: normalizeString(pickFirstValue(data, ["offerId", "offer_id"])),
@@ -162,12 +267,15 @@ export function readConversationMirrorData(data: UnknownRecord): ConversationMir
 export function buildConversationMirrorFields(
   input: ConversationMirrorFieldsInput,
 ): Record<string, unknown> {
-  const participants = buildParticipantUniverse(input);
-  const participantNames = sanitizeMapKeys(input.participantNames ?? {});
-  const unreadCount = sanitizeMapKeys(input.unreadCount ?? {});
-  const lastReadAt = sanitizeMapKeys(input.lastReadAt ?? {});
-  const archivedBy = sanitizeMapKeys(input.archivedBy ?? {});
-  const blockedBy = sanitizeMapKeys(input.blockedBy ?? {});
+  const participants = resolveParticipantsForWrite(input);
+  const participantNames = scopeStringMapToParticipants(
+    input.participantNames ?? {},
+    participants,
+  );
+  const unreadCount = buildUnreadCountMap(input.unreadCount ?? {}, participants);
+  const lastReadAt = scopeUnknownMapToParticipants(input.lastReadAt ?? {}, participants);
+  const archivedBy = buildBooleanMapForParticipants(input.archivedBy ?? {}, participants);
+  const blockedBy = buildBooleanMapForParticipants(input.blockedBy ?? {}, participants);
 
   const fields: Record<string, unknown> = {
     participants,

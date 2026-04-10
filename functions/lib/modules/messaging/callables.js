@@ -174,11 +174,12 @@ async function loadConversationForParticipant(conversationId, currentUserId) {
         throw new https_1.HttpsError("not-found", "conversation not found");
     }
     const data = (convSnap.data() ?? {});
-    const participants = (0, participants_1.readConversationParticipants)(data);
+    const conversation = (0, mirror_1.readConversationMirrorData)(data, { conversationId });
+    const participants = conversation.participants;
     if (!participants.includes(currentUserId)) {
         throw new https_1.HttpsError("permission-denied", "not allowed to access this conversation");
     }
-    return { convRef, data, participants };
+    return { convRef, data, participants, conversation };
 }
 exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
     const currentUserId = requireAuthUid(request);
@@ -216,7 +217,7 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
     const existingDocs = await findConversationSnapshotsForParticipant(currentUserId, offerId);
     for (const doc of existingDocs) {
         const docData = doc.data();
-        const conversation = (0, mirror_1.readConversationMirrorData)(docData);
+        const conversation = (0, mirror_1.readConversationMirrorData)(docData, { conversationId: doc.id });
         if (!conversation.participants.includes(otherUserId))
             continue;
         const normalizedParticipants = mergeConversationParticipants(conversation.participants, [currentUserId, otherUserId]);
@@ -256,7 +257,7 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         const snap = await transaction.get(convRef);
         if (snap.exists) {
             const data = (snap.data() ?? {});
-            const conversation = (0, mirror_1.readConversationMirrorData)(data);
+            const conversation = (0, mirror_1.readConversationMirrorData)(data, { conversationId: convRef.id });
             const normalizedParticipants = mergeConversationParticipants(conversation.participants, participants);
             const archivedBy = {
                 ...conversation.archivedBy,
@@ -356,7 +357,7 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
             throw new https_1.HttpsError("not-found", "conversation not found");
         }
         const data = (convSnap.data() ?? {});
-        const conversation = (0, mirror_1.readConversationMirrorData)(data);
+        const conversation = (0, mirror_1.readConversationMirrorData)(data, { conversationId });
         const participants = conversation.participants;
         if (!participants.includes(currentUserId)) {
             throw new https_1.HttpsError("permission-denied", "not allowed to access this conversation");
@@ -419,8 +420,7 @@ exports.markConversationRead = (0, https_1.onCall)({ region: env_1.PROJECT_REGIO
     if (!conversationId) {
         throw new https_1.HttpsError("invalid-argument", "conversationId is required");
     }
-    const { convRef, data } = await loadConversationForParticipant(conversationId, currentUserId);
-    const conversation = (0, mirror_1.readConversationMirrorData)(data);
+    const { convRef, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
     await convRef.update((0, mirror_1.buildConversationMirrorFields)({
         ...conversation,
         unreadCount: {
@@ -442,8 +442,7 @@ exports.archiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION
     if (!conversationId) {
         throw new https_1.HttpsError("invalid-argument", "conversationId is required");
     }
-    const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
-    const conversation = (0, mirror_1.readConversationMirrorData)(data);
+    const { convRef, participants, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
     const archivedBy = {
         ...conversation.archivedBy,
         [currentUserId]: true,
@@ -465,8 +464,7 @@ exports.unarchiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGI
     if (!conversationId) {
         throw new https_1.HttpsError("invalid-argument", "conversationId is required");
     }
-    const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
-    const conversation = (0, mirror_1.readConversationMirrorData)(data);
+    const { convRef, participants, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
     const archivedBy = {
         ...conversation.archivedBy,
         [currentUserId]: false,
@@ -488,8 +486,7 @@ exports.blockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }
     if (!conversationId) {
         throw new https_1.HttpsError("invalid-argument", "conversationId is required");
     }
-    const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
-    const conversation = (0, mirror_1.readConversationMirrorData)(data);
+    const { convRef, participants, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
     const archivedBy = conversation.archivedBy;
     const blockedBy = {
         ...conversation.blockedBy,
@@ -511,12 +508,11 @@ exports.unblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION
     if (!conversationId) {
         throw new https_1.HttpsError("invalid-argument", "conversationId is required");
     }
-    const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+    const { convRef, data, participants, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
     if (!(0, state_1.isConversationFlagEnabledForUser)(data, "blockedBy", currentUserId)) {
         return { ok: true };
     }
     const archivedBy = (0, state_1.readConversationFlagMap)(data, "archivedBy");
-    const conversation = (0, mirror_1.readConversationMirrorData)(data);
     const blockedBy = {
         ...conversation.blockedBy,
         [currentUserId]: false,
@@ -584,8 +580,7 @@ exports.deleteConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_
     if (!conversationId || !messageId) {
         throw new https_1.HttpsError("invalid-argument", "conversationId and messageId are required");
     }
-    const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
-    const conversation = (0, mirror_1.readConversationMirrorData)(data);
+    const { convRef, participants, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
     const messageRef = convRef.collection("messages").doc(messageId);
     const messageSnap = await messageRef.get();
     if (!messageSnap.exists) {

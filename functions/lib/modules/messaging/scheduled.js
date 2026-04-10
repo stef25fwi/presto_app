@@ -26,7 +26,7 @@ exports.enqueueUnreadMessageReminders = (0, scheduler_1.onSchedule)("every 2 hou
             const status = String(data.status || "open").toLowerCase();
             if (status !== "open" && status !== "active" && status.length > 0)
                 continue;
-            const participantIds = (0, participants_1.readConversationParticipants)(data);
+            const participantIds = (0, participants_1.readConversationParticipants)(data, { conversationId: doc.id });
             const unreadCount = (data.unreadCount || data.unread_count || {});
             const reminderBucket = Math.floor(now / (12 * 60 * 60 * 1000));
             for (const uid of participantIds) {

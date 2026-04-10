@@ -13,7 +13,6 @@ import {
 } from "./state";
 import {
   CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES,
-  readConversationParticipants,
 } from "./participants";
 import {
   buildConversationMirrorFields,
@@ -256,13 +255,14 @@ async function loadConversationForParticipant(conversationId: string, currentUse
   }
 
   const data = (convSnap.data() ?? {}) as Record<string, unknown>;
-  const participants = readConversationParticipants(data);
+  const conversation = readConversationMirrorData(data, { conversationId });
+  const participants = conversation.participants;
 
   if (!participants.includes(currentUserId)) {
     throw new HttpsError("permission-denied", "not allowed to access this conversation");
   }
 
-  return { convRef, data, participants };
+  return { convRef, data, participants, conversation };
 }
 
 export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async (request) => {
@@ -319,7 +319,7 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async 
 
   for (const doc of existingDocs) {
     const docData = doc.data() as Record<string, unknown>;
-    const conversation = readConversationMirrorData(docData);
+    const conversation = readConversationMirrorData(docData, { conversationId: doc.id });
     if (!conversation.participants.includes(otherUserId)) continue;
 
     const normalizedParticipants = mergeConversationParticipants(
@@ -371,7 +371,7 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async 
     const snap = await transaction.get(convRef);
     if (snap.exists) {
       const data = (snap.data() ?? {}) as Record<string, unknown>;
-      const conversation = readConversationMirrorData(data);
+      const conversation = readConversationMirrorData(data, { conversationId: convRef.id });
       const normalizedParticipants = mergeConversationParticipants(conversation.participants, participants);
 
       const archivedBy = {
@@ -505,7 +505,7 @@ export const sendConversationMessage = onCall({ region: PROJECT_REGION }, async 
     }
 
     const data = (convSnap.data() ?? {}) as Record<string, unknown>;
-    const conversation = readConversationMirrorData(data);
+    const conversation = readConversationMirrorData(data, { conversationId });
     const participants = conversation.participants;
 
     if (!participants.includes(currentUserId)) {
@@ -583,8 +583,7 @@ export const markConversationRead = onCall({ region: PROJECT_REGION }, async (re
     throw new HttpsError("invalid-argument", "conversationId is required");
   }
 
-  const { convRef, data } = await loadConversationForParticipant(conversationId, currentUserId);
-  const conversation = readConversationMirrorData(data);
+  const { convRef, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
   await convRef.update(
     buildConversationMirrorFields({
       ...conversation,
@@ -613,8 +612,7 @@ export const archiveConversation = onCall({ region: PROJECT_REGION }, async (req
     throw new HttpsError("invalid-argument", "conversationId is required");
   }
 
-  const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
-  const conversation = readConversationMirrorData(data);
+  const { convRef, participants, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
   const archivedBy = {
     ...conversation.archivedBy,
     [currentUserId]: true,
@@ -643,8 +641,7 @@ export const unarchiveConversation = onCall({ region: PROJECT_REGION }, async (r
     throw new HttpsError("invalid-argument", "conversationId is required");
   }
 
-  const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
-  const conversation = readConversationMirrorData(data);
+  const { convRef, participants, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
   const archivedBy = {
     ...conversation.archivedBy,
     [currentUserId]: false,
@@ -673,8 +670,7 @@ export const blockConversation = onCall({ region: PROJECT_REGION }, async (reque
     throw new HttpsError("invalid-argument", "conversationId is required");
   }
 
-  const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
-  const conversation = readConversationMirrorData(data);
+  const { convRef, participants, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
   const archivedBy = conversation.archivedBy;
   const blockedBy = {
     ...conversation.blockedBy,
@@ -703,13 +699,12 @@ export const unblockConversation = onCall({ region: PROJECT_REGION }, async (req
     throw new HttpsError("invalid-argument", "conversationId is required");
   }
 
-  const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
+  const { convRef, data, participants, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
   if (!isConversationFlagEnabledForUser(data, "blockedBy", currentUserId)) {
     return { ok: true };
   }
 
   const archivedBy = readConversationFlagMap(data, "archivedBy");
-  const conversation = readConversationMirrorData(data);
   const blockedBy = {
     ...conversation.blockedBy,
     [currentUserId]: false,
@@ -795,8 +790,7 @@ export const deleteConversationMessage = onCall({ region: PROJECT_REGION }, asyn
     throw new HttpsError("invalid-argument", "conversationId and messageId are required");
   }
 
-  const { convRef, data, participants } = await loadConversationForParticipant(conversationId, currentUserId);
-  const conversation = readConversationMirrorData(data);
+  const { convRef, participants, conversation } = await loadConversationForParticipant(conversationId, currentUserId);
 
   const messageRef = convRef.collection("messages").doc(messageId);
   const messageSnap = await messageRef.get();

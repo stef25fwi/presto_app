@@ -77,4 +77,46 @@ const mirror_1 = require("./mirror");
     strict_1.default.equal((0, mirror_1.readConversationMessageCount)({ last_message: "Salut" }), 1);
     strict_1.default.equal((0, mirror_1.readConversationMessageCount)({ last_message: "   " }), 0);
 });
+(0, node_test_1.default)("buildConversationMirrorFields scopes participant maps to normalized participants", () => {
+    const fields = (0, mirror_1.buildConversationMirrorFields)({
+        participants: ["buyer_a", "seller_b"],
+        participantNames: {
+            buyer_a: "Alice",
+            seller_b: "Bruno",
+            ghost_user: "Ghost",
+        },
+        unreadCount: {
+            buyer_a: 0,
+            seller_b: 2,
+            ghost_user: 99,
+        },
+        archivedBy: {
+            seller_b: true,
+            ghost_user: true,
+        },
+        blockedBy: {
+            ghost_user: true,
+        },
+        lastReadAt: {
+            seller_b: "2026-01-01T00:00:00.000Z",
+            ghost_user: "2026-01-01T00:00:00.000Z",
+        },
+    });
+    strict_1.default.deepEqual(fields.participants, ["buyer_a", "seller_b"]);
+    strict_1.default.deepEqual(fields.participantNames, { buyer_a: "Alice", seller_b: "Bruno" });
+    strict_1.default.deepEqual(fields.unreadCount, { buyer_a: 0, seller_b: 2 });
+    strict_1.default.deepEqual(fields.archivedBy, { buyer_a: false, seller_b: true });
+    strict_1.default.deepEqual(fields.blockedBy, { buyer_a: false, seller_b: false });
+    strict_1.default.deepEqual(fields.lastReadAt, { seller_b: "2026-01-01T00:00:00.000Z" });
+});
+(0, node_test_1.default)("readConversationMirrorData can recover participants from canonical id", () => {
+    const mirror = (0, mirror_1.readConversationMirrorData)({
+        unreadCount: {
+            b: 0,
+        },
+    }, {
+        conversationId: "offer_offer123__seller_b__buyer_a",
+    });
+    strict_1.default.deepEqual(mirror.participants, ["buyer_a", "seller_b"]);
+});
 //# sourceMappingURL=mirror.test.js.map

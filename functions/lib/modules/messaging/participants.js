@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CONVERSATION_PARTICIPANT_MAP_ALIASES = exports.CONVERSATION_PARTICIPANT_FIELD_ALIASES = exports.CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES = void 0;
+exports.readConversationParticipantIdsFromCanonicalId = readConversationParticipantIdsFromCanonicalId;
 exports.readConversationParticipants = readConversationParticipants;
 exports.buildConversationParticipantFields = buildConversationParticipantFields;
 exports.CONVERSATION_PARTICIPANT_QUERY_FIELD_ALIASES = [
@@ -23,11 +24,38 @@ exports.CONVERSATION_PARTICIPANT_MAP_ALIASES = [
     "archivedBy",
     "blockedBy",
 ];
-function readConversationParticipants(data) {
+function normalizeString(value) {
+    return String(value ?? "").trim();
+}
+function readConversationParticipantIdsFromCanonicalId(conversationId) {
+    const normalizedConversationId = normalizeString(conversationId);
+    if (!normalizedConversationId.startsWith("offer_")) {
+        return [];
+    }
+    const parts = normalizedConversationId
+        .slice("offer_".length)
+        .split("__")
+        .map((value) => normalizeString(value))
+        .filter(Boolean);
+    if (parts.length < 3) {
+        return [];
+    }
+    return parts
+        .slice(1)
+        .filter((value, index, all) => all.indexOf(value) === index)
+        .sort();
+}
+function readConversationParticipants(data, options = {}) {
+    const canonicalParticipants = readConversationParticipantIdsFromCanonicalId(options.conversationId ?? "");
+    // Les conversations 1:1 suivent l'ID canonique offer_<offerId>__<uidA>__<uidB>.
+    // Quand cet ID est présent, il est la source de vérité pour la visibilité.
+    if (canonicalParticipants.length >= 2) {
+        return canonicalParticipants;
+    }
     const result = [];
     const seen = new Set();
     const appendParticipant = (value) => {
-        const normalized = String(value ?? "").trim();
+        const normalized = normalizeString(value);
         if (!normalized || seen.has(normalized))
             return;
         seen.add(normalized);

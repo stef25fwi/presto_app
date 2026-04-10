@@ -25,6 +25,27 @@ const participants_1 = require("./participants");
     });
     strict_1.default.deepEqual(participants, ["user_a", "user_b", "user_c"]);
 });
+(0, node_test_1.default)("readConversationParticipantIdsFromCanonicalId extracts participants from canonical id", () => {
+    const participants = (0, participants_1.readConversationParticipantIdsFromCanonicalId)("offer_offer123__seller_b__buyer_a");
+    strict_1.default.deepEqual(participants, ["buyer_a", "seller_b"]);
+});
+(0, node_test_1.default)("readConversationParticipants prioritizes canonical id when provided", () => {
+    const participants = (0, participants_1.readConversationParticipants)({
+        participants: ["x", "y"],
+        unreadCount: {
+            "4": 0,
+            buyer_a: 0,
+            seller_b: 2,
+        },
+        participantNames: {
+            buyer_a: "Alice",
+            seller_b: "Bruno",
+        },
+    }, {
+        conversationId: "offer_offer123__seller_b__buyer_a",
+    });
+    strict_1.default.deepEqual(participants, ["buyer_a", "seller_b"]);
+});
 (0, node_test_1.default)("buildConversationParticipantFields writes all participant aliases", () => {
     const fields = (0, participants_1.buildConversationParticipantFields)(["user_b", "user_a", "user_b"]);
     strict_1.default.deepEqual(fields, {

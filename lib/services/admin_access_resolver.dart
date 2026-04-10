@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/admin_access_state.dart';
@@ -22,13 +23,24 @@ class AdminAccessResolver {
   final FirebaseFunctions _functions;
 
   static const Duration _authRestoreTimeout = Duration(seconds: 2);
+  static const Duration _authRebindTimeout = Duration(seconds: 2);
   static const Duration _documentServerTimeout = Duration(seconds: 5);
   static const Duration _documentCacheTimeout = Duration(seconds: 3);
   static const Duration _serverTimeout = Duration(seconds: 15);
+  static const String _adminAccessCallableName = 'getMyAdminAccessStatus';
 
   Future<AdminAccessState> resolveAdminAccess({
     bool forceRefresh = false,
   }) async {
+    _diag(
+      'start forceRefresh=$forceRefresh '
+      'userNull=${_auth.currentUser == null} '
+      'project=${_firebaseProjectId()} '
+      'region=$kFirebaseFunctionsRegion '
+      'function=$_adminAccessCallableName '
+      'callType=callable',
+    );
+
     var state = _step(
       AdminAccessState.initial(),
       '[AdminResolver] started forceRefresh=$forceRefresh',
@@ -37,6 +49,10 @@ class AdminAccessResolver {
 
     var user = _auth.currentUser;
     if (user == null) {
+      _diag(
+        'auth currentUser is null, waiting authStateChanges '
+        'timeout=${_authRestoreTimeout.inSeconds}s',
+      );
       try {
         user = await _auth
             .authStateChanges()
@@ -49,6 +65,7 @@ class AdminAccessResolver {
     }
 
     if (user == null) {
+      _diag('auth user resolved: null');
       return _finalize(
         _step(
           state.copyWith(
@@ -80,9 +97,19 @@ class AdminAccessResolver {
       '[AdminResolver] auth user loaded uid=${user.uid} email=${user.email ?? ''}',
       stage: 'auth-user-loaded',
     );
+    _diag(
+      'auth user resolved uid=${user.uid} email=${user.email ?? ''} '
+      'userNull=${_auth.currentUser == null}',
+    );
 
     IdTokenResult? tokenResult;
     try {
+      final forcedToken = await user.getIdToken(true);
+      _diag(
+        'token getIdToken(true)=ok len=${(forcedToken ?? '').length} '
+        'preview=${_tokenPreview(forcedToken)}',
+      );
+
       tokenResult = await user.getIdTokenResult(forceRefresh);
       final claims = tokenResult.claims ?? const <String, dynamic>{};
       final tokenRoles = _rolesFromValue(claims['roles']);
@@ -103,7 +130,12 @@ class AdminAccessResolver {
         '[AdminResolver] token loaded claims admin=$tokenHasAdmin roles=$tokenRoles',
         stage: 'token-loaded',
       );
+      _diag(
+        'token roles=$tokenRoles primaryRole=${tokenPrimaryRole ?? '-'} '
+        'tokenHasAdmin=$tokenHasAdmin',
+      );
     } catch (error) {
+      _diag('token loading failed error=$error');
       state = _step(
         state.copyWith(tokenLoaded: false),
         '[AdminResolver] token load failed error=$error',
@@ -111,12 +143,9 @@ class AdminAccessResolver {
       );
     }
 
-    final userDocFuture = _getDocumentWithFallback('users', user.uid);
-    final adminDocFuture = _getDocumentWithFallback('admins', user.uid);
-    final docs = await Future.wait([userDocFuture, adminDocFuture]);
+    _diag('firestore profilePath=users/${user.uid} adminPath=admins/${user.uid}');
 
-    final userSnap = docs[0];
-    final adminSnap = docs[1];
+    final userSnap = await _getDocumentWithFallback('users', user.uid);
     final profileData = userSnap?.data();
     final profileRoles = _rolesFromValue(profileData?['roles']);
     final profilePrimaryRole = _normalizedText(profileData?['primaryRole']);
@@ -125,9 +154,11 @@ class AdminAccessResolver {
       roles: profileRoles,
       primaryRole: profilePrimaryRole,
     );
-    final adminDocHasAdmin = adminSnap != null &&
-        adminSnap.exists &&
-        ((adminSnap.data()?['enabled'] ?? true) != false);
+
+    // admins/{uid} is server-only in firestore.rules, do not treat client
+    // reads as a reliable source of truth for admin access.
+    const adminDocLoaded = false;
+    const adminDocHasAdmin = false;
 
     state = _step(
       state.copyWith(
@@ -135,13 +166,21 @@ class AdminAccessResolver {
         profileHasAdmin: profileHasAdmin,
         profileRoles: profileRoles,
         profilePrimaryRole: profilePrimaryRole,
-        adminDocLoaded: adminSnap != null,
+        adminDocLoaded: adminDocLoaded,
         adminDocHasAdmin: adminDocHasAdmin,
       ),
       '[AdminResolver] profile loaded admin=$profileHasAdmin roles=$profileRoles adminDoc=$adminDocHasAdmin',
       stage: userSnap == null || !userSnap.exists
           ? 'user-doc-missing'
           : 'profile-loaded',
+    );
+    _diag(
+      'firestore profileLoaded=${userSnap?.exists == true} '
+      'profileHasAdmin=$profileHasAdmin '
+      'profileRoles=$profileRoles '
+      'profilePrimaryRole=${profilePrimaryRole ?? '-'} '
+      'adminDocLoaded=$adminDocLoaded '
+      'adminDocHasAdmin=$adminDocHasAdmin',
     );
 
     if (state.tokenHasAdmin && !state.profileHasAdmin && tokenResult != null) {
@@ -191,13 +230,51 @@ class AdminAccessResolver {
       stage: 'server-access-start',
     );
 
+    User callableUser;
+    try {
+      callableUser = await _ensureCurrentUserBound(user);
+    } catch (error) {
+      _diag('call skipped auth binding failed uid=${user.uid} error=$error');
+      return _step(
+        state.copyWith(
+          serverCheckAttempted: true,
+          serverCheckSucceeded: false,
+          clearServerIsAdmin: true,
+          serverErrorCode: 'unauthenticated',
+          serverErrorMessage:
+              'Session client non synchronisée avant l\'appel callable admin.',
+        ),
+        '[AdminResolver] server verification skipped auth binding failed',
+        stage: 'server-access-error',
+      );
+    }
+
+    _diag(
+      'call start function=$_adminAccessCallableName type=callable '
+      'region=$kFirebaseFunctionsRegion uid=${callableUser.uid}',
+    );
+
     final callable = _functions.httpsCallable(
-      'getMyAdminAccessStatus',
+      _adminAccessCallableName,
       options: HttpsCallableOptions(timeout: _serverTimeout),
     );
 
     Future<AdminAccessState> runAttempt(bool retrying) async {
       try {
+        try {
+          final preflightToken = await callableUser.getIdToken(true);
+          _diag(
+            'call preflight getIdToken(true)=ok retry=$retrying '
+            'len=${(preflightToken ?? '').length} '
+            'preview=${_tokenPreview(preflightToken)}',
+          );
+        } catch (tokenError) {
+          _diag(
+            'call preflight getIdToken(true)=error retry=$retrying '
+            'error=$tokenError',
+          );
+        }
+
         final response = await callable.call<dynamic>({});
         final data = response.data is Map
             ? Map<String, dynamic>.from(response.data as Map)
@@ -209,6 +286,11 @@ class AdminAccessResolver {
             ? Map<String, dynamic>.from(data['debug'] as Map)
             : const <String, dynamic>{};
 
+        _diag(
+          'call success function=$_adminAccessCallableName '
+          'code=ok body=$data',
+        );
+
         return _step(
           state.copyWith(
             serverCheckAttempted: true,
@@ -219,6 +301,8 @@ class AdminAccessResolver {
             serverErrorCode: null,
             serverErrorMessage: null,
             serverDebug: debugData,
+            adminDocLoaded: debugData.containsKey('adminDocExists'),
+            adminDocHasAdmin: debugData['adminDocEnabled'] == true,
           ),
           '[AdminResolver] server verification success isAdmin=$isAdmin source=${serverSource ?? ''}',
           stage: 'server-access-ok',
@@ -227,15 +311,49 @@ class AdminAccessResolver {
         if (!retrying && error.code == 'unauthenticated') {
           debugPrint('[AdminResolver] server verification failed unauthenticated');
           debugPrint('[AdminResolver] retrying server verification after token refresh');
+          _diag(
+            'call error function=$_adminAccessCallableName '
+            'code=${error.code} message=${error.message ?? ''} '
+            'details=${error.details}',
+          );
           try {
-            await user.getIdToken(true);
-          } catch (_) {}
-          final refreshedUser = _auth.currentUser ?? user;
+            final refreshedToken = await callableUser.getIdToken(true);
+            _diag(
+              'call retry tokenRefresh=ok len=${(refreshedToken ?? '').length} '
+              'preview=${_tokenPreview(refreshedToken)}',
+            );
+          } catch (tokenError) {
+            _diag('call retry tokenRefresh=error error=$tokenError');
+          }
+          final refreshedUser = _auth.currentUser ?? callableUser;
+          try {
+            callableUser = await _ensureCurrentUserBound(refreshedUser);
+          } catch (rebindError) {
+            _diag('call retry aborted auth rebind failed error=$rebindError');
+            return _step(
+              state.copyWith(
+                serverCheckAttempted: true,
+                serverCheckSucceeded: false,
+                clearServerIsAdmin: true,
+                serverErrorCode: 'unauthenticated',
+                serverErrorMessage:
+                    'Session client non synchronisée après refresh token.',
+              ),
+              '[AdminResolver] server verification retry aborted auth rebind failed',
+              stage: 'server-access-error',
+            );
+          }
           return _step(
-            await _verifyServerAccessRetry(callable, refreshedUser, state),
+            await _verifyServerAccessRetry(callable, callableUser, state),
             '[AdminResolver] retry completed after token refresh',
           );
         }
+
+        _diag(
+          'call error function=$_adminAccessCallableName '
+          'code=${error.code} message=${error.message ?? ''} '
+          'details=${error.details}',
+        );
 
         return _step(
           state.copyWith(
@@ -249,6 +367,10 @@ class AdminAccessResolver {
           stage: 'server-access-error',
         );
       } catch (error) {
+        _diag(
+          'call error function=$_adminAccessCallableName '
+          'code=unknown message=$error',
+        );
         return _step(
           state.copyWith(
             serverCheckAttempted: true,
@@ -282,6 +404,10 @@ class AdminAccessResolver {
       final debugData = data['debug'] is Map
           ? Map<String, dynamic>.from(data['debug'] as Map)
           : const <String, dynamic>{};
+      _diag(
+        'call retry success function=$_adminAccessCallableName '
+        'code=ok body=$data',
+      );
       return _step(
         state.copyWith(
           uid: user.uid,
@@ -294,11 +420,18 @@ class AdminAccessResolver {
           serverErrorCode: null,
           serverErrorMessage: null,
           serverDebug: debugData,
+          adminDocLoaded: debugData.containsKey('adminDocExists'),
+          adminDocHasAdmin: debugData['adminDocEnabled'] == true,
         ),
         '[AdminResolver] server verification success after retry isAdmin=$isAdmin source=${serverSource ?? ''}',
         stage: 'server-access-ok',
       );
     } on FirebaseFunctionsException catch (error) {
+      _diag(
+        'call retry error function=$_adminAccessCallableName '
+        'code=${error.code} message=${error.message ?? ''} '
+        'details=${error.details}',
+      );
       return _step(
         state.copyWith(
           uid: user.uid,
@@ -313,6 +446,10 @@ class AdminAccessResolver {
         stage: 'server-access-error',
       );
     } catch (error) {
+      _diag(
+        'call retry error function=$_adminAccessCallableName '
+        'code=unknown message=$error',
+      );
       return _step(
         state.copyWith(
           uid: user.uid,
@@ -334,18 +471,27 @@ class AdminAccessResolver {
     String docId,
   ) async {
     final reference = _firestore.collection(collection).doc(docId);
+    final path = '$collection/$docId';
     try {
-      return await reference
+      _diag('firestore read start path=$path source=server');
+      final serverSnapshot = await reference
           .get(const GetOptions(source: Source.server))
           .timeout(_documentServerTimeout);
+      _diag('firestore read success path=$path source=server exists=${serverSnapshot.exists}');
+      return serverSnapshot;
     } catch (error) {
       debugPrint('[AdminResolver] $collection/$docId server read fallback: $error');
+      _diag('firestore read failed path=$path source=server error=$error');
       try {
-        return await reference
+        _diag('firestore read start path=$path source=cache');
+        final cacheSnapshot = await reference
             .get(const GetOptions(source: Source.cache))
             .timeout(_documentCacheTimeout);
+        _diag('firestore read success path=$path source=cache exists=${cacheSnapshot.exists}');
+        return cacheSnapshot;
       } catch (cacheError) {
         debugPrint('[AdminResolver] $collection/$docId cache read failed: $cacheError');
+        _diag('firestore read failed path=$path source=cache error=$cacheError');
         return null;
       }
     }
@@ -358,9 +504,6 @@ class AdminAccessResolver {
     }
     if (state.profileHasAdmin) {
       sources.add('profile');
-    }
-    if (state.adminDocHasAdmin) {
-      sources.add('adminDoc');
     }
     if (state.serverIsAdmin == true) {
       sources.add('server');
@@ -389,6 +532,65 @@ class AdminAccessResolver {
       lastStage: stage ?? state.lastStage,
       debugSteps: <String>[...state.debugSteps, message],
     );
+  }
+
+  Future<User> _ensureCurrentUserBound(User user) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser != null && currentUser.uid == user.uid) {
+      return currentUser;
+    }
+
+    _diag(
+      'auth rebind required current=${currentUser?.uid ?? 'null'} '
+      'expected=${user.uid}',
+    );
+
+    try {
+      final rebound = await _auth
+          .userChanges()
+          .firstWhere((candidate) => candidate?.uid == user.uid)
+          .timeout(
+            _authRebindTimeout,
+            onTimeout: () => null,
+          );
+      if (rebound != null) {
+        _diag('auth rebind success uid=${rebound.uid}');
+        return rebound;
+      }
+    } catch (error) {
+      _diag('auth rebind stream failed error=$error');
+    }
+
+    final fallbackUser = _auth.currentUser;
+    if (fallbackUser != null && fallbackUser.uid == user.uid) {
+      _diag('auth rebind fallback success uid=${fallbackUser.uid}');
+      return fallbackUser;
+    }
+
+    throw StateError('current user mismatch for uid=${user.uid}');
+  }
+
+  void _diag(String message) {
+    debugPrint('[AdminResolver][Diag] $message');
+  }
+
+  String _firebaseProjectId() {
+    try {
+      return Firebase.app().options.projectId;
+    } catch (_) {
+      return 'unknown';
+    }
+  }
+
+  String _tokenPreview(String? token) {
+    final value = (token ?? '').trim();
+    if (value.isEmpty) {
+      return '-';
+    }
+    if (value.length <= 20) {
+      return value;
+    }
+    return '${value.substring(0, 10)}...${value.substring(value.length - 10)}';
   }
 
   List<String> _rolesFromValue(dynamic value) {

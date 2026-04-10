@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildConversationParticipantFields,
+  readConversationParticipantIdsFromCanonicalId,
   readConversationParticipants,
 } from "./participants";
 
@@ -26,6 +27,36 @@ test("readConversationParticipants falls back to alias fields and metadata maps"
   });
 
   assert.deepEqual(participants, ["user_a", "user_b", "user_c"]);
+});
+
+test("readConversationParticipantIdsFromCanonicalId extracts participants from canonical id", () => {
+  const participants = readConversationParticipantIdsFromCanonicalId(
+    "offer_offer123__seller_b__buyer_a",
+  );
+
+  assert.deepEqual(participants, ["buyer_a", "seller_b"]);
+});
+
+test("readConversationParticipants prioritizes canonical id when provided", () => {
+  const participants = readConversationParticipants(
+    {
+      participants: ["x", "y"],
+      unreadCount: {
+        "4": 0,
+        buyer_a: 0,
+        seller_b: 2,
+      },
+      participantNames: {
+        buyer_a: "Alice",
+        seller_b: "Bruno",
+      },
+    },
+    {
+      conversationId: "offer_offer123__seller_b__buyer_a",
+    },
+  );
+
+  assert.deepEqual(participants, ["buyer_a", "seller_b"]);
 });
 
 test("buildConversationParticipantFields writes all participant aliases", () => {

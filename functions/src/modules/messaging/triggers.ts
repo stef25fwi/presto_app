@@ -89,8 +89,9 @@ export const onConversationSubMessageCreated = onDocumentCreated(
       : "message.created.existing_thread";
 
     const conversationSnap = await db.collection(COLLECTIONS.conversations).doc(conversationId).get();
-    const conversation = readConversationMirrorData(conversationSnap.data() ?? {});
-    const normalizedParticipants = readConversationParticipants(conversationSnap.data() ?? {});
+    const conversationData = (conversationSnap.data() ?? {}) as Record<string, unknown>;
+    const conversation = readConversationMirrorData(conversationData, { conversationId });
+    const normalizedParticipants = readConversationParticipants(conversationData, { conversationId });
     const normalizedMessageText = String(message.text || message.body || "").trim();
 
     if (normalizedParticipants.length > 0) {
