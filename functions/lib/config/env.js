@@ -11,7 +11,12 @@ exports.DEFAULT_LOCALE = (process.env.DEFAULT_LOCALE || "fr");
 exports.DEFAULT_TIMEZONE = process.env.DEFAULT_TIMEZONE || "Europe/Paris";
 exports.EMAIL_FROM = process.env.EMAIL_FROM || "PRESTO <sahai.stephane@gmail.com>";
 exports.PROJECT_REGION = process.env.FUNCTION_REGION || "europe-west1";
-exports.ENFORCE_APP_CHECK = String(process.env.ENFORCE_APP_CHECK || "").toLowerCase() === "true";
+const appCheckRequested = String(process.env.ENFORCE_APP_CHECK || "").toLowerCase() === "true";
+// Safe mode is enabled by default to avoid locking out users when client App Check
+// setup is incomplete (missing token/provider mismatch/domain mismatch).
+// To enforce App Check again in production, set APPCHECK_SAFE_MODE=false.
+const appCheckSafeMode = String(process.env.APPCHECK_SAFE_MODE || "true").toLowerCase() !== "false";
+exports.ENFORCE_APP_CHECK = appCheckRequested && !appCheckSafeMode;
 exports.APP_BASE_URL = process.env.APP_BASE_URL || "https://presto.app";
 exports.GCP_PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "";
 exports.RECAPTCHA_ENTERPRISE_SITE_KEY = process.env.RECAPTCHA_ENTERPRISE_SITE_KEY || "";
