@@ -3,7 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../main.dart' as app;
+import '../pages/account_page.dart';
+import '../pages/home_page.dart';
 import '../pages/admin_space_page.dart';
+import '../pages/consult_offers_page.dart';
+import '../pages/publish_offer_page.dart';
 import '../pages/entrepreneur_toolbox_page.dart';
 import '../pages/legal_info_page.dart';
 import '../pages/messages/conversation_thread_page.dart';
@@ -30,28 +34,28 @@ class PageCaptureCatalogPage extends StatelessWidget {
       number: 2,
       id: '02_home_page',
       title: 'HomePage',
-      builder: (_) => const app.HomePage(),
+      builder: (_) => const HomePage(),
       note: 'Accueil principal.',
     ),
     PageCaptureEntry(
       number: 3,
       id: '03_consult_offers_page',
       title: 'ConsultOffersPage',
-      builder: (_) => const app.ConsultOffersPage(),
+      builder: (_) => const ConsultOffersPage(),
       note: 'Consultation des annonces.',
     ),
     PageCaptureEntry(
       number: 4,
       id: '04_publish_offer_page',
       title: 'PublishOfferPage',
-      builder: (_) => const app.PublishOfferPage(),
+      builder: (_) => const PublishOfferPage(),
       note: 'Publication active.',
     ),
     PageCaptureEntry(
       number: 5,
       id: '05_messages_page',
       title: 'MessagesPage',
-      builder: (_) => const app.MessagesPage(),
+      builder: (_) => const MessagesPage(),
       note: 'Wrapper historique de la messagerie.',
     ),
     PageCaptureEntry(
@@ -84,14 +88,14 @@ class PageCaptureCatalogPage extends StatelessWidget {
       number: 9,
       id: '09_account_page',
       title: 'AccountPage',
-      builder: (_) => const app.AccountPage(),
+      builder: (_) => const AccountPage(),
       note: 'Compte principal.',
     ),
     PageCaptureEntry(
       number: 10,
       id: '10_user_public_profile_page',
       title: 'UserPublicProfilePage',
-      builder: (_) => const app.UserPublicProfilePage(
+      builder: (_) => const UserPublicProfilePage(
         userId: 'demo-public-user',
         initialPseudo: 'Stephane Demo',
       ),
@@ -111,7 +115,7 @@ class PageCaptureCatalogPage extends StatelessWidget {
       number: 12,
       id: '12_offer_deep_link_page',
       title: 'OfferDeepLinkPage',
-      builder: (_) => const app.OfferDeepLinkPage(
+      builder: (_) => const OfferDeepLinkPage(
         offerId: 'demo-offer',
         preferMarketplace: true,
       ),

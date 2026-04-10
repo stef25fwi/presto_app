@@ -1,0 +1,3435 @@
+// ignore_for_file: unused_element, unused_field, unused_local_variable
+
+import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../app_core.dart';
+import '../constants.dart';
+import '../features/offers/public_offers_read_diagnostics.dart';
+import '../main.dart' show CardShell, PrestoMonitoring, prestoOverlayStyleFor, inferRegionFromPostalCode, kMarketplaceOutlineWidth, buildOfferDetailsOffer;
+import 'home_page.dart' show UnreadInboxBell;
+import 'account_page.dart';
+import '../pages/offers/offer_details_page.dart';
+import '../services/app_route_parser.dart';
+import '../services/city_search.dart';
+import '../services/firebase_functions_region.dart';
+import '../services/offer_indexing.dart';
+import '../services/public_offers_query_helpers.dart';
+import '../utils/friendly_snackbar.dart';
+import '../utils/offer_helpers.dart';
+import '../utils/runtime_action_logger.dart';
+import '../widgets/ad_banner.dart';
+import '../widgets/home_interactions.dart';
+
+class ConsultOffersPage extends StatefulWidget {
+  final String? categoryFilter;
+  final String? searchQuery;
+  final Function(double)? onScroll;
+
+  const ConsultOffersPage({
+    super.key,
+    this.categoryFilter,
+    this.searchQuery,
+    this.onScroll,
+  });
+
+  @override
+  State<ConsultOffersPage> createState() => _ConsultOffersPageState();
+}
+
+class _Debouncer {
+  _Debouncer({this.delay = const Duration(milliseconds: 300)});
+  final Duration delay;
+  Timer? _t;
+
+  void run(void Function() action) {
+    _t?.cancel();
+    _t = Timer(delay, action);
+  }
+
+  void dispose() => _t?.cancel();
+}
+
+class _ConsultOffersPageState extends State<ConsultOffersPage> {
+  static const Color _offersBg = Colors.white;
+  static const Color _offersNavy = Color(0xFF1E2554);
+  static const Color _offersOrange = Color(0xFFFF7A00);
+  static const Color _offersSoftText = Color(0xFF626584);
+  static const Color _offersCardBorder = Color(0xFFF0E8E8);
+
+  void _logPageView() {
+    logRuntimeAction(
+      area: 'consult',
+      action: 'page-view',
+      details: <String, Object?>{
+        'categoryFilter': widget.categoryFilter ?? '',
+        'searchQuery': widget.searchQuery ?? '',
+      },
+    );
+  }
+
+  void _logSearch(String searchQuery) {
+    final query = searchQuery.trim();
+    if (query.isEmpty) return;
+    logRuntimeAction(
+      area: 'consult',
+      action: 'search',
+      details: <String, Object?>{
+        'query': query,
+      },
+    );
+  }
+
+  void _logFilterUsage(String filterType, String value) {
+    final normalizedValue = value.trim();
+    if (normalizedValue.isEmpty) return;
+    logRuntimeAction(
+      area: 'consult',
+      action: 'filter-usage',
+      details: <String, Object?>{
+        'type': filterType,
+        'value': normalizedValue,
+      },
+    );
+  }
+
+  void _logFiltersApplied({
+    String? category,
+    String? region,
+    String? department,
+    String? city,
+    String? searchQuery,
+    int? resultCount,
+  }) {
+    logRuntimeAction(
+      area: 'consult',
+      action: 'filters-applied',
+      details: <String, Object?>{
+        'category': category?.trim() ?? '',
+        'region': region?.trim() ?? '',
+        'department': department?.trim() ?? '',
+        'city': city?.trim() ?? '',
+        'searchQuery': searchQuery?.trim() ?? '',
+        'resultCount': resultCount,
+      },
+    );
+  }
+
+  void _logOfferClicked(String offerId, String title) {
+    logRuntimeAction(
+      area: 'consult',
+      action: 'open-offer',
+      details: <String, Object?>{
+        'offerId': offerId,
+        'title': title,
+      },
+    );
+  }
+
+  // --- Normalisation (réduction index) ---
+  String _slugId(String input) {
+    final s = input
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[àâä]'), 'a')
+        .replaceAll('ç', 'c')
+        .replaceAll(RegExp(r'[éèêë]'), 'e')
+        .replaceAll(RegExp(r'[îï]'), 'i')
+        .replaceAll(RegExp(r'[ôö]'), 'o')
+        .replaceAll(RegExp(r'[ùûü]'), 'u')
+        .replaceAll('œ', 'oe');
+    return s
+        .replaceAll(RegExp(r"[/\-'’']"), ' ')
+        .replaceAll(RegExp(r'\s+'), '_');
+  }
+
+  String? _makeCategoryId(String? categoryLabel) {
+    final s = (categoryLabel ?? '').trim();
+    if (s.isEmpty || s == 'Toutes catégories') return null;
+    return resolveOfferCategoryId(s) ?? _slugId(s);
+  }
+
+  String? _makeCityId({
+    required String cityName,
+    required String postalCode,
+  }) {
+    final city = cityName.trim();
+    final cp = postalCode.trim();
+    if (city.isEmpty || cp.length < 3) return null; // CP requis pour stabilité
+    return '${cp}_${_slugId(city)}';
+  }
+
+  String? _makeCityCategoryKey(
+      {required String? cityId, required String? categoryId}) {
+    if (cityId == null || categoryId == null) return null;
+    return '${cityId}_$categoryId';
+  }
+
+  // ✅ Range budget (AVANCÉ) — évite requêtes “impossibles” + explosion d’index
+  final bool _advancedFilters = false;
+  final TextEditingController _budgetMinCtrl = TextEditingController();
+  final TextEditingController _budgetMaxCtrl = TextEditingController();
+  String? _budgetRangeWarning; // affiché dans l’UI si range désactivé
+
+  double? _parseBudgetBound(String raw) {
+    final s = raw.trim().replaceAll(' ', '').replaceAll(',', '.');
+    if (s.isEmpty) return null;
+    return double.tryParse(s);
+  }
+
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _postalCodeController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  Future<void> _copyToClipboard(BuildContext context, String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Copié")),
+    );
+  }
+
+  Future<void> _openExternalUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    final ok = await canLaunchUrl(uri);
+    if (!ok) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  final TextEditingController _keywordCtrl = TextEditingController();
+  final TextEditingController _cityCtrl = TextEditingController();
+
+  int _filterPanelKey = 0;
+  int _lastSnapshotRawCount = 0;
+  DateTime? _lastPaginationRequestAt;
+
+  String? _selectedCategory;
+  String? _selectedRegionCode;
+  String? _selectedSubCategory;
+
+  String? _lastOffersQuerySignature;
+
+  String _buildOffersQuerySignature({
+    required bool hasCategory,
+    required bool hasDept,
+    required bool hasLocation,
+    required bool hasPostalCode,
+    required bool hasSubcategory,
+    required bool hasBudgetRange,
+  }) {
+    final parts = <String>[
+      'offers',
+      if (hasCategory) 'where(category==)',
+      if (hasDept) 'where(dept==)',
+      if (hasLocation) 'where(location==)',
+      if (hasPostalCode) 'where(postalCode==)',
+      if (hasSubcategory) 'where(subcategory==)',
+      if (hasBudgetRange) 'where(budgetValue>=/<=)',
+      if (hasBudgetRange)
+        'orderBy(budgetValue asc) + orderBy(createdAt desc)'
+      else
+        'orderBy(createdAt desc)',
+      'limit($_pageLimit)',
+    ];
+    return parts.join(' + ');
+  }
+
+  final _Debouncer _filterDebounce =
+      _Debouncer(delay: const Duration(milliseconds: 300));
+
+  String? _filterCategory;
+  String? _filterRegionCode;
+  String? _filterDepartmentCode;
+  String? _filterCityName;
+
+  // Pagination / loading state
+  DocumentSnapshot<Map<String, dynamic>>? _lastDoc;
+  bool _isLoading = false;
+
+  // + Pagination progressive (moins brutale: 10 par page au lieu de 20)
+  static const int _initialLimit = 10;
+  static const int _pageSize = 10;
+  static const int _maxLimit = 100;
+  int _pageLimit = _initialLimit;
+
+  /// Mot-clé actif appliqué aux résultats (initialisé depuis searchQuery, réinitialisable)
+  String? _activeSearchQuery;
+
+  // Variables pour l'autocomplétion de ville dans les filtres
+  final TextEditingController _filterCityController = TextEditingController();
+  final TextEditingController _filterPostalCodeController =
+      TextEditingController();
+  final FocusNode _regionFocus = FocusNode();
+  final FocusNode _deptFocus = FocusNode();
+  final FocusNode _filterCityFocusNode = FocusNode();
+  final Set<String> _manualAutoApplyCriteria = <String>{};
+  List<CityRecord> _filterCitySuggestions = [];
+  int _filterCityHighlightedIndex = -1;
+  Timer? _filterCityDebounce;
+
+  final ScrollController _scrollController = ScrollController();
+
+  bool _showFilters = false; // Panneau de filtres rétracté au départ
+  int _lastResultCount = 0;
+  int? _resolvedVisibleOffersCount;
+  int _visibleOffersCountRequestId = 0;
+  String _headerTitle = 'Je consulte les offres';
+  static const int _autoApplyFiltersThreshold = 3;
+
+  late final Map<String, String> _deptToRegion = _buildDeptToRegion();
+
+  // ✅ Cache de normalisation pour améliorer la performance de recherche
+  final Map<String, String> _normalizedTextCache = {};
+
+  // ✅ Cache des résultats Firestore pour éviter les re-queries
+  Map<String, List<DocumentSnapshot<Map<String, dynamic>>>>? _queryResultsCache;
+  String? _lastCachedQuerySignature;
+  Timer? _cacheInvalidationTimer;
+  Timer? _jobDoneOverlayTimer;
+  DateTime? _nextJobDoneOverlayRefreshAt;
+
+  /// Normalise un texte pour la recherche (diacritiques, casse, séparateurs)
+  String _normalizeText(String input) {
+    // Cache hit: retourner directement
+    if (_normalizedTextCache.containsKey(input)) {
+      return _normalizedTextCache[input]!;
+    }
+
+    final normalized = input
+        .trim()
+        .toLowerCase()
+        // Diacritiques courants FR
+        .replaceAll(RegExp(r'[àâä]'), 'a')
+        .replaceAll('ç', 'c')
+        .replaceAll(RegExp(r'[éèêë]'), 'e')
+        .replaceAll(RegExp(r'[îï]'), 'i')
+        .replaceAll(RegExp(r'[ôö]'), 'o')
+        .replaceAll(RegExp(r'[ùûü]'), 'u')
+        .replaceAll('œ', 'oe')
+        // Séparateurs usuels
+        .replaceAll(RegExp(r"[/\-'’']"), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ');
+
+    // Limiter la taille du cache à 200 entrées
+    if (_normalizedTextCache.length > 200) {
+      _normalizedTextCache.clear();
+    }
+
+    _normalizedTextCache[input] = normalized;
+    return normalized;
+  }
+
+  String _normalizeForCategoryMatch(String input) {
+    return _normalizeText(input);
+  }
+
+  String? _matchKnownCategory(String input) {
+    return canonicalizeOfferCategory(input);
+  }
+
+  Map<String, String> _buildDeptToRegion() {
+    final out = <String, String>{};
+    for (final entry in kRegionDepartments.entries) {
+      for (final deptCode in entry.value) {
+        out[deptCode] = entry.key;
+      }
+    }
+    return out;
+  }
+
+  // ✅ Départements affichés selon région sélectionnée
+  List<String> get _filteredDepartmentCodes {
+    if (_filterRegionCode == null) {
+      return kDepartments.keys.toList();
+    }
+    final depts = kRegionDepartments[_filterRegionCode!];
+    return depts?.toList() ?? [];
+  }
+
+  // ✅ Les départements autorisés pour filtrer les villes
+  List<String>? get _allowedDeptCodesForCity {
+    if (_filterDepartmentCode != null) return [_filterDepartmentCode!];
+    if (_filterRegionCode == null) return null; // null = pas de limite
+    return _filteredDepartmentCodes;
+  }
+
+  /// Badge = messages non lus + notifications d'annonces (dont favoris)
+  Widget _buildConsultNotificationBell() {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, authSnapshot) {
+        final user = authSnapshot.data;
+
+        if (user == null) {
+          return IconButton(
+            onPressed: () {
+              showSuccessSnackBar(
+                context,
+                'Connecte-toi pour recevoir les notifications.',
+              );
+            },
+            icon: const PrestoNotificationBellBase(
+              badgeCount: 0,
+              showBackground: false,
+              iconColor: Colors.white,
+            ),
+            splashRadius: 20,
+            padding: EdgeInsets.zero,
+          );
+        }
+
+        return UnreadInboxBell(
+          userId: user.uid,
+          builder: (context, badgeCount) => IconButton(
+            onPressed: () {
+              Navigator.of(context).pushNamed(buildMessagesRoute());
+            },
+            icon: PrestoNotificationBellBase(
+              badgeCount: badgeCount,
+              showBackground: false,
+              iconColor: Colors.white,
+            ),
+            splashRadius: 20,
+            padding: EdgeInsets.zero,
+          ),
+        );
+      },
+    );
+  }
+
+  bool get _hasActiveClientFilters {
+    final selectedCategory =
+        (_filterCategory != null && _filterCategory!.isNotEmpty)
+            ? _filterCategory
+            : ((_selectedCategory != null &&
+                    _selectedCategory != 'Toutes catégories')
+                ? _selectedCategory
+                : null);
+    final hasCity = _filterCityName?.trim().isNotEmpty ?? false;
+    final hasSearch = _activeSearchQuery?.trim().isNotEmpty ?? false;
+    final hasSubcategory =
+        _selectedSubCategory != null && _selectedSubCategory!.isNotEmpty;
+    final hasDept =
+        (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
+            (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) ||
+            (_selectedRegionCode != null && _selectedRegionCode!.isNotEmpty);
+    final min = _parseBudgetBound(_budgetMinCtrl.text);
+    final max = _parseBudgetBound(_budgetMaxCtrl.text);
+    final hasBudgetRange = _advancedFilters &&
+        (min != null || max != null) &&
+        _budgetRangeWarning == null;
+
+    return (selectedCategory != null && selectedCategory.isNotEmpty) ||
+        hasCity ||
+        hasSearch ||
+        hasSubcategory ||
+        hasDept ||
+        hasBudgetRange;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        precacheImage(const AssetImage('assets/images/jobfait.webp'), context);
+      }
+    });
+
+    // ✅ Analytics: page view
+    _logPageView();
+
+    _scrollController.addListener(() {
+      widget.onScroll?.call(_scrollController.offset);
+      _maybeLoadMore();
+    });
+
+    final initialCategoryFilter = widget.categoryFilter?.trim();
+    if (initialCategoryFilter != null && initialCategoryFilter.isNotEmpty) {
+      _selectedCategory = initialCategoryFilter;
+      final matched = _matchKnownCategory(initialCategoryFilter);
+      if (matched != null) {
+        _filterCategory = matched;
+        _selectedCategory = matched;
+      }
+    } else {
+      _selectedCategory = 'Toutes catégories';
+    }
+
+    _selectedRegionCode = null; // Pas de région sélectionnée par défaut
+
+    // ✅ Si un searchQuery est fourni (barre de recherche Accueil),
+    // on essaie d'abord de le refléter dans le filtre Catégorie.
+    // Si aucune catégorie ne correspond, on garde le comportement "mot-clé".
+    final initialQuery = widget.searchQuery?.trim();
+    if (initialQuery != null && initialQuery.isNotEmpty) {
+      final matchedCategory = _matchKnownCategory(initialQuery);
+      if (matchedCategory != null) {
+        _filterCategory = matchedCategory;
+        _selectedCategory = matchedCategory;
+        _activeSearchQuery = null;
+        _keywordCtrl.clear();
+      } else {
+        _activeSearchQuery = initialQuery;
+        _keywordCtrl.text = initialQuery;
+      }
+
+      // ✅ Analytics: recherche (même si ça match une catégorie)
+      _logSearch(initialQuery);
+    }
+
+    _headerTitle = _resolveConsultOffersTitle();
+
+    // Quand le code postal change, on essaie de déduire la région
+    _postalCodeController.addListener(_syncRegionWithPostalCode);
+
+    // ✅ Précharger les données région/département
+    _preloadRegionDeptData();
+
+    // Synchroniser la ville sélectionnée (si déjà connue) dans le champ visible
+    _filterCityController.addListener(_syncLocationFieldFromFilter);
+    _syncLocationFieldFromFilter();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshVisibleOffersCount();
+    });
+
+    // ✅ Écouter les changements de connectivité
+    _monitorConnectivity();
+  }
+
+  void _monitorConnectivity() {
+    // Utiliser la librairie `connectivity_plus` pour détecter le réseau
+    // (à ajouter dans pubspec.yaml si absent)
+    /*
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> results) {
+      final isNowOnline = results.any((r) => r != ConnectivityResult.none);
+      if (isNowOnline != _isOnline && mounted) {
+        setState(() {
+          _isOnline = isNowOnline;
+        });
+        if (isNowOnline) {
+          // Resync des données quand on retrouve du réseau
+          setState(() {});
+        }
+      }
+    });
+    */
+  }
+
+  void _maybeLoadMore() {
+    if (!_scrollController.hasClients) return;
+    if (_hasActiveClientFilters) return;
+    if (_pageLimit >= _maxLimit) return;
+    if (_lastSnapshotRawCount < _pageLimit) return;
+
+    final position = _scrollController.position;
+    // Seuil : quand on approche du bas (500px), on augmente la limite progressivement
+    const thresholdPx = 500.0;
+    if (position.maxScrollExtent - position.pixels > thresholdPx) return;
+
+    final now = DateTime.now();
+    final canRequest = _lastPaginationRequestAt == null ||
+        now.difference(_lastPaginationRequestAt!) >
+            const Duration(milliseconds: 450);
+    if (!canRequest) return;
+
+    _lastPaginationRequestAt = now;
+
+    setState(() {
+      _pageLimit = math.min(_pageLimit + _pageSize, _maxLimit);
+    });
+  }
+
+  /// ✅ Précharge les données région/département au démarrage
+  Future<void> _preloadRegionDeptData() async {
+    try {
+      // Simplement accéder à la map pour la forcer en mémoire
+      debugPrint(
+          '[ConsultOffers] Préchargement région/département (${_deptToRegion.length} entrées)');
+    } catch (e) {
+      debugPrint('[ConsultOffers] Erreur préchargement: $e');
+    }
+  }
+
+  /// ✅ Cache les résultats Firestore pour éviter les re-queries inutiles (template pour utilisation future)
+  List<DocumentSnapshot<Map<String, dynamic>>> _getCachedOrFreshResults(
+    String querySignature,
+    List<DocumentSnapshot<Map<String, dynamic>>> freshResults,
+  ) {
+    // Si la signature a changé, invalider le cache
+    if (_lastCachedQuerySignature != querySignature) {
+      _queryResultsCache = null;
+      _lastCachedQuerySignature = querySignature;
+      _cacheInvalidationTimer?.cancel();
+
+      // Cache expire après 5 minutes
+      _cacheInvalidationTimer = Timer(const Duration(minutes: 5), () {
+        _queryResultsCache = null;
+        _lastCachedQuerySignature = null;
+      });
+    }
+
+    // Mettre en cache les résultats
+    _queryResultsCache = {'results': freshResults};
+    return freshResults;
+  }
+
+  @override
+  void dispose() {
+    // _connectivitySubscription.cancel();
+    _filterDebounce.dispose();
+    _cacheInvalidationTimer?.cancel(); // ✅ Nettoyer le timer de cache
+    _locationController.dispose();
+    _postalCodeController.dispose();
+    _scrollController.dispose();
+    _filterCityController.dispose();
+    _filterPostalCodeController.dispose();
+    _filterCityFocusNode.dispose();
+    _filterCityDebounce?.cancel();
+    _keywordCtrl.dispose();
+    _cityCtrl.dispose();
+    _budgetMinCtrl.dispose();
+    _budgetMaxCtrl.dispose();
+    _jobDoneOverlayTimer?.cancel();
+    super.dispose();
+  }
+
+  Query<Map<String, dynamic>> _buildOffersQuery() {
+    Query<Map<String, dynamic>> query =
+        FirebaseFirestore.instance.collection(kListingsCollection).where(
+              publicListingsFilter(),
+            );
+
+    final loc = _locationController.text.trim();
+    final cp = _postalCodeController.text.trim();
+    final cat = _selectedCategory;
+    final regionCode = _selectedRegionCode;
+    final subcat = _selectedSubCategory;
+
+    final filterCat = _filterCategory;
+    final filterRegCode = _filterRegionCode;
+    final filterDeptCode = _filterDepartmentCode;
+    final filterCity = _filterCityName?.trim();
+
+    final String? categoryLabel =
+        (filterCat != null && filterCat.isNotEmpty) ? filterCat : cat;
+    final String? categoryId = _makeCategoryId(categoryLabel);
+
+    final String cityName =
+        (filterCity != null && filterCity.isNotEmpty) ? filterCity : loc;
+
+    final String cpForCity = (filterCity != null &&
+            filterCity.isNotEmpty &&
+            _filterPostalCodeController.text.trim().isNotEmpty)
+        ? _filterPostalCodeController.text.trim()
+        : cp;
+
+    final String? cityId =
+        _makeCityId(cityName: cityName, postalCode: cpForCity);
+
+    final String? cityCategoryKey =
+        _makeCityCategoryKey(cityId: cityId, categoryId: categoryId);
+
+    final bool hasSubcategory = (subcat != null && subcat.isNotEmpty);
+    final bool hasDept =
+        (filterDeptCode != null && filterDeptCode.isNotEmpty) ||
+            (filterRegCode != null && filterRegCode.isNotEmpty) ||
+            (regionCode != null && regionCode.isNotEmpty);
+
+    final min = _parseBudgetBound(_budgetMinCtrl.text);
+    final max = _parseBudgetBound(_budgetMaxCtrl.text);
+    final bool wantsBudgetRange = _advancedFilters &&
+        (min != null || max != null) &&
+        _budgetRangeWarning == null;
+
+    // NOTE:
+    // Ne pas trier côté Firestore ici: la combinaison OR (public/legacy active)
+    // + orderBy(createdAt) peut déclencher des erreurs d'index selon l'état du
+    // projet. On trie côté client après filtrage pour garder une UX stable.
+
+    final hasClientFilters = categoryId != null ||
+        cityId != null ||
+        cityCategoryKey != null ||
+        hasSubcategory ||
+        hasDept ||
+        wantsBudgetRange ||
+        (_activeSearchQuery?.trim().isNotEmpty ?? false);
+
+    query = query.limit(hasClientFilters ? _maxLimit : _pageLimit);
+
+    // Signature (audit index) — minimaliste
+    _lastOffersQuerySignature = _buildOffersQuerySignature(
+      hasCategory: categoryId != null,
+      hasDept: hasDept,
+      hasLocation: cityId != null || cityCategoryKey != null,
+      hasPostalCode: cpForCity.trim().isNotEmpty,
+      hasSubcategory: hasSubcategory,
+      hasBudgetRange: wantsBudgetRange,
+    );
+
+    // ✅ Log la signature de la query (debug only)
+    if (kDebugMode) {
+      debugPrint('[OFFERS][QUERY] $_lastOffersQuerySignature');
+    }
+
+    // ✅ Log en Crashlytics en prod (non-fatal)
+    if (!kDebugMode && _lastOffersQuerySignature != null) {
+      try {
+        FirebaseCrashlytics.instance.log(
+          'Offers Query: $_lastOffersQuerySignature',
+        );
+      } catch (e) {
+        debugPrint('[Crashlytics] log error: $e');
+      }
+    }
+
+    // ✅ Monitoring local (dashboard admin)
+    PrestoMonitoring.I
+        .trackOffersQueryBuild(signature: _lastOffersQuerySignature);
+
+    return query;
+  }
+
+  Query<Map<String, dynamic>> _buildLegacyOffersQuery() {
+    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+        .collection(kOffersCollection)
+        .where(publicOffersFilter());
+
+    final loc = _locationController.text.trim();
+    final cp = _postalCodeController.text.trim();
+    final cat = _selectedCategory;
+    final regionCode = _selectedRegionCode;
+    final subcat = _selectedSubCategory;
+
+    final filterCat = _filterCategory;
+    final filterRegCode = _filterRegionCode;
+    final filterDeptCode = _filterDepartmentCode;
+    final filterCity = _filterCityName?.trim();
+
+    final String? categoryLabel =
+        (filterCat != null && filterCat.isNotEmpty) ? filterCat : cat;
+    final String? categoryId = _makeCategoryId(categoryLabel);
+
+    final String cityName =
+        (filterCity != null && filterCity.isNotEmpty) ? filterCity : loc;
+
+    final String cpForCity = (filterCity != null &&
+            filterCity.isNotEmpty &&
+            _filterPostalCodeController.text.trim().isNotEmpty)
+        ? _filterPostalCodeController.text.trim()
+        : cp;
+
+    final String? cityId =
+        _makeCityId(cityName: cityName, postalCode: cpForCity);
+
+    final String? cityCategoryKey =
+        _makeCityCategoryKey(cityId: cityId, categoryId: categoryId);
+
+    final bool hasSubcategory = (subcat != null && subcat.isNotEmpty);
+    final bool hasDept =
+        (filterDeptCode != null && filterDeptCode.isNotEmpty) ||
+            (filterRegCode != null && filterRegCode.isNotEmpty) ||
+            (regionCode != null && regionCode.isNotEmpty);
+
+    final min = _parseBudgetBound(_budgetMinCtrl.text);
+    final max = _parseBudgetBound(_budgetMaxCtrl.text);
+    final bool wantsBudgetRange = _advancedFilters &&
+        (min != null || max != null) &&
+        _budgetRangeWarning == null;
+
+    final hasClientFilters = categoryId != null ||
+        cityId != null ||
+        cityCategoryKey != null ||
+        hasSubcategory ||
+        hasDept ||
+        wantsBudgetRange ||
+        (_activeSearchQuery?.trim().isNotEmpty ?? false);
+
+    query = query.limit(hasClientFilters ? _maxLimit : _pageLimit);
+    return query;
+  }
+
+  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _watchCombinedOffers() {
+    return Stream.multi((controller) {
+      QuerySnapshot<Map<String, dynamic>>? listingsSnapshot;
+      List<QueryDocumentSnapshot<Map<String, dynamic>>> legacyOffersDocs =
+          const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      Object? listingsError;
+      StackTrace? listingsErrorStackTrace;
+      bool legacyBackfillLoaded = !kEnableLegacyPublicOffersBackfill;
+      bool controllerClosed = false;
+
+      void emitMergedOrError() {
+        if (controllerClosed) return;
+
+        final listingsDocs = listingsSnapshot?.docs ??
+            const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+
+        if (listingsError != null && listingsDocs.isEmpty && legacyBackfillLoaded) {
+          if (legacyOffersDocs.isNotEmpty) {
+            controller.add(legacyOffersDocs);
+            return;
+          }
+          controller.addError(
+            PublicOffersReadException(
+              diagnosePublicOffersReadIssueWithAppCheck(
+                listingsError!,
+                source: 'consult_listings_stream',
+              ),
+            ),
+            listingsErrorStackTrace ?? StackTrace.current,
+          );
+          return;
+        }
+
+        if (listingsSnapshot == null && !legacyBackfillLoaded) {
+          return;
+        }
+
+        controller.add(
+          mergeOfferDocsById(
+            listingsDocs,
+            legacyOffersDocs,
+          ),
+        );
+      }
+
+      final listingsSub = _buildOffersQuery().snapshots().listen(
+        (snapshot) {
+          listingsError = null;
+          listingsErrorStackTrace = null;
+          listingsSnapshot = snapshot;
+          emitMergedOrError();
+        },
+        onError: (error, stackTrace) {
+          listingsSnapshot = null;
+          listingsError = error;
+          listingsErrorStackTrace = stackTrace;
+          logPublicOffersReadErrorWithAppCheck(
+            'consult_listings_stream',
+            error,
+            stackTrace,
+          );
+          emitMergedOrError();
+        },
+      );
+
+      unawaited(
+        loadLegacyPublicOffersBackfill(
+          query: _buildLegacyOffersQuery(),
+          source: 'consult_legacy_backfill',
+        ).then((docs) {
+          if (controllerClosed) return;
+          legacyOffersDocs = docs;
+          legacyBackfillLoaded = true;
+          emitMergedOrError();
+        }),
+      );
+
+      controller.onCancel = () async {
+        controllerClosed = true;
+        await listingsSub.cancel();
+      };
+    });
+  }
+
+  bool _offerIsActive(Map<String, dynamic> data) {
+    return isOfferJobDoneOverlayVisible(data) || isPublishedOfferData(data);
+  }
+
+  void _scheduleJobDoneOverlayRefresh(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    DateTime? earliestExpiry;
+
+    for (final doc in docs) {
+      final expiry = offerJobDoneVisibleUntil(doc.data());
+      if (expiry == null || !expiry.isAfter(DateTime.now())) {
+        continue;
+      }
+      if (!isOfferJobDoneOverlayVisible(doc.data())) {
+        continue;
+      }
+      if (earliestExpiry == null || expiry.isBefore(earliestExpiry)) {
+        earliestExpiry = expiry;
+      }
+    }
+
+    if (earliestExpiry == null) {
+      _jobDoneOverlayTimer?.cancel();
+      _jobDoneOverlayTimer = null;
+      _nextJobDoneOverlayRefreshAt = null;
+      return;
+    }
+
+    if (_nextJobDoneOverlayRefreshAt == earliestExpiry &&
+        _jobDoneOverlayTimer != null) {
+      return;
+    }
+
+    _jobDoneOverlayTimer?.cancel();
+    _nextJobDoneOverlayRefreshAt = earliestExpiry;
+
+    final delay = earliestExpiry.difference(DateTime.now());
+    _jobDoneOverlayTimer = Timer(
+      delay.isNegative ? Duration.zero : delay + const Duration(seconds: 1),
+      () {
+        if (!mounted) return;
+        setState(() {
+          _nextJobDoneOverlayRefreshAt = null;
+        });
+        _refreshVisibleOffersCount();
+      },
+    );
+  }
+
+  String _offerCategoryLabel(Map<String, dynamic> data) {
+    final raw = (data['category'] ?? '').toString().trim();
+    return _matchKnownCategory(raw) ?? raw;
+  }
+
+  String _offerCityLabel(Map<String, dynamic> data) {
+    return ((data['city'] ?? data['location']) ?? '').toString().trim();
+  }
+
+  String _offerPostalCode(Map<String, dynamic> data) {
+    return ((data['postalCode'] ?? data['cp']) ?? '').toString().trim();
+  }
+
+  String? _offerDepartmentCode(Map<String, dynamic> data) {
+    final rawDept = (data['dept'] ?? '').toString().trim();
+    if (rawDept.isNotEmpty) return rawDept;
+    return departmentFromPostalCode(_offerPostalCode(data));
+  }
+
+  String? _offerRegionCode(Map<String, dynamic> data) {
+    final dept = _offerDepartmentCode(data);
+    if (dept == null || dept.isEmpty) return null;
+    return _deptToRegion[dept];
+  }
+
+  double? _offerBudgetValue(Map<String, dynamic> data) {
+    return budgetValueFromDynamic(
+      data['budgetValue'] ?? data['budget'] ?? data['price'],
+    );
+  }
+
+  bool _matchesOfferFilters(Map<String, dynamic> data) {
+    if (!_offerIsActive(data)) return false;
+
+    final selectedCategory =
+        (_filterCategory != null && _filterCategory!.isNotEmpty)
+            ? _filterCategory
+            : ((_selectedCategory != null &&
+                    _selectedCategory != 'Toutes catégories')
+                ? _selectedCategory
+                : null);
+    if (selectedCategory != null && selectedCategory.isNotEmpty) {
+      final offerCategory = _offerCategoryLabel(data);
+      if (_normalizeForCategoryMatch(offerCategory) !=
+          _normalizeForCategoryMatch(selectedCategory)) {
+        return false;
+      }
+    }
+
+    if (_selectedSubCategory != null && _selectedSubCategory!.isNotEmpty) {
+      final offerSubCategory =
+          ((data['subCategory'] ?? data['subcategory']) ?? '')
+              .toString()
+              .trim();
+      if (offerSubCategory != _selectedSubCategory) {
+        return false;
+      }
+    }
+
+    if (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) {
+      if (_offerDepartmentCode(data) != _filterDepartmentCode) {
+        return false;
+      }
+    }
+
+    final regionFilter =
+        (_filterRegionCode != null && _filterRegionCode!.isNotEmpty)
+            ? _filterRegionCode
+            : _selectedRegionCode;
+    if (regionFilter != null && regionFilter.isNotEmpty) {
+      if (_offerRegionCode(data) != regionFilter) {
+        return false;
+      }
+    }
+
+    final cityFilter = _filterCityName?.trim();
+    if (cityFilter != null && cityFilter.isNotEmpty) {
+      if (_normalizeText(_offerCityLabel(data)) != _normalizeText(cityFilter)) {
+        return false;
+      }
+      final filterPostalCode = _filterPostalCodeController.text.trim();
+      if (filterPostalCode.isNotEmpty &&
+          _offerPostalCode(data) != filterPostalCode) {
+        return false;
+      }
+    }
+
+    final min = _parseBudgetBound(_budgetMinCtrl.text);
+    final max = _parseBudgetBound(_budgetMaxCtrl.text);
+    if (_advancedFilters &&
+        (min != null || max != null) &&
+        _budgetRangeWarning == null) {
+      final offerBudget = _offerBudgetValue(data);
+      if (offerBudget == null) return false;
+      if (min != null && offerBudget < min) return false;
+      if (max != null && offerBudget > max) return false;
+    }
+
+    if (_activeSearchQuery != null && _activeSearchQuery!.trim().isNotEmpty) {
+      final q = _normalizeText(_activeSearchQuery!);
+      final queryTokens = q.split(' ').where((t) => t.isNotEmpty).toList();
+      final title = _normalizeText((data['title'] ?? '').toString());
+      final desc = _normalizeText((data['description'] ?? '').toString());
+      final combined = '$title $desc';
+      if (!queryTokens.every((token) => combined.contains(token))) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  Future<void> _refreshVisibleOffersCount() async {
+    final int requestId = ++_visibleOffersCountRequestId;
+
+    if (mounted) {
+      setState(() {
+        _resolvedVisibleOffersCount = null;
+      });
+    }
+
+    try {
+      int visibleCount;
+
+      if (!_hasActiveClientFilters) {
+        // ⚡ Aucun filtre client actif → count aggregation (0 lecture doc)
+        final listingsCount = await FirebaseFirestore.instance
+            .collection(kListingsCollection)
+            .where(publicListingsFilter())
+            .count()
+            .get();
+        var total = listingsCount.count ?? 0;
+        if (kEnableLegacyPublicOffersBackfill) {
+          final legacyCount = await FirebaseFirestore.instance
+              .collection(kOffersCollection)
+              .where(publicOffersFilter())
+              .count()
+              .get();
+          total += legacyCount.count ?? 0;
+        }
+        visibleCount = total;
+      } else {
+        // Filtres actifs → on doit charger les docs pour filtrer côté client
+        // Limiter à 500 docs maximum pour protéger le quota
+        final listings = await _buildOffersQuery().limit(500).get();
+        final legacy = await loadLegacyPublicOffersBackfill(
+          query: _buildLegacyOffersQuery().limit(500),
+          source: 'consult_visible_count_legacy_backfill',
+        );
+        final merged = mergeOfferDocsById(listings.docs, legacy);
+        visibleCount =
+            merged.where((doc) => _matchesOfferFilters(doc.data())).length;
+      }
+
+      if (!mounted || requestId != _visibleOffersCountRequestId) {
+        return;
+      }
+
+      setState(() {
+        _resolvedVisibleOffersCount = visibleCount;
+      });
+    } catch (e) {
+      if (!mounted || requestId != _visibleOffersCountRequestId) {
+        return;
+      }
+      setState(() {
+        _resolvedVisibleOffersCount = _lastResultCount;
+      });
+      debugPrint('[ConsultOffers] Erreur calcul compteur total: $e');
+    }
+  }
+
+  Future<void> _fetchOffers({bool resetPaging = false}) async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+
+    final sw = Stopwatch()..start();
+
+    if (resetPaging) {
+      _lastDoc = null;
+      // Si tu stockes une liste d'offres en mémoire : offers.clear();
+    }
+
+    try {
+      var query = _buildOffersQuery();
+
+      // Exemple de pagination si besoin
+      if (_lastDoc != null) {
+        query = query.startAfterDocument(_lastDoc!);
+      }
+
+      // Charge une première page (adapter la limite si besoin)
+      final snap = await query.limit(20).get();
+
+      sw.stop();
+      PrestoMonitoring.I.trackOffersFetchOnce(
+          ms: sw.elapsedMilliseconds, docsCount: snap.docs.length);
+
+      if (snap.docs.isNotEmpty) {
+        _lastDoc = snap.docs.last;
+      }
+
+      // Si tu conserves les résultats : setState(() => offers = ...);
+    } catch (e) {
+      PrestoMonitoring.I.trackError('offers.fetchOnce', e);
+      if (kDebugMode) {
+        debugPrint('Erreur lors du chargement des offres: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _applyFiltersOrSearch() {
+    // Annule le debounce en cours pour éviter les conflits
+    _filterDebounce._t?.cancel();
+
+    final min = _parseBudgetBound(_budgetMinCtrl.text);
+    final max = _parseBudgetBound(_budgetMaxCtrl.text);
+
+    // ✅ Log l'utilisation des filtres
+    if (_filterCategory != null && _filterCategory!.isNotEmpty) {
+      _logFilterUsage('category', _filterCategory!);
+    }
+    if (_filterRegionCode != null && _filterRegionCode!.isNotEmpty) {
+      _logFilterUsage('region', _filterRegionCode!);
+    }
+    if (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) {
+      _logFilterUsage('department', _filterDepartmentCode!);
+    }
+    if (_filterCityName != null && _filterCityName!.isNotEmpty) {
+      _logFilterUsage('city', _filterCityName!);
+    }
+
+    // Compter les filtres égalité actifs (pour éviter explosion d’index si range)
+    final bool eqCat =
+        (_filterCategory != null && _filterCategory!.isNotEmpty) ||
+            ((_selectedCategory ?? '').isNotEmpty &&
+                _selectedCategory != 'Toutes catégories');
+    final bool eqDept =
+        (_filterDepartmentCode != null && _filterDepartmentCode!.isNotEmpty) ||
+            ((_filterRegionCode ?? '').isNotEmpty) ||
+            ((_selectedRegionCode ?? '').isNotEmpty);
+    final bool eqLoc =
+        (_filterCityName != null && _filterCityName!.trim().isNotEmpty) ||
+            _locationController.text.trim().isNotEmpty;
+    final bool eqCp = _postalCodeController.text.trim().isNotEmpty;
+    final bool eqSub =
+        (_selectedSubCategory != null && _selectedSubCategory!.isNotEmpty);
+
+    final int eqCount =
+        <bool>[eqCat, eqDept, eqLoc, eqCp, eqSub].where((b) => b).length;
+
+    // ✅ Règle: range budget uniquement en “avancé” + idéalement peu de filtres == (sinon index explosion)
+    String? budgetWarning;
+    if (_advancedFilters && (min != null || max != null) && eqCount > 1) {
+      budgetWarning = "Budget (avancé) désactivé : trop de filtres combinés. "
+          "Garde 0–1 filtre (ex: seulement Ville OU seulement Catégorie) pour éviter l’explosion d’index.";
+    }
+
+    // ✅ Log les filtres appliqués
+    _logFiltersApplied(
+      category: _filterCategory,
+      region: _filterRegionCode,
+      department: _filterDepartmentCode,
+      city: _filterCityName,
+      searchQuery: _activeSearchQuery,
+      resultCount: 0, // sera mis à jour après le StreamBuilder
+    );
+
+    setState(() {
+      _budgetRangeWarning = budgetWarning;
+      _activeSearchQuery =
+          _keywordCtrl.text.trim().isEmpty ? null : _keywordCtrl.text.trim();
+      _lastDoc = null; // Reset pagination
+      _pageLimit = _initialLimit;
+      _lastPaginationRequestAt = null;
+      _showFilters = false;
+      _headerTitle = _resolveConsultOffersTitle();
+    });
+
+    _refreshVisibleOffersCount();
+  }
+
+  void _trackManualFilterCriterion(
+    String key, {
+    required bool isActive,
+  }) {
+    if (isActive) {
+      _manualAutoApplyCriteria.add(key);
+    } else {
+      _manualAutoApplyCriteria.remove(key);
+    }
+  }
+
+  void _pruneManualAutoApplyCriteria() {
+    if ((_filterCategory ?? '').trim().isEmpty) {
+      _manualAutoApplyCriteria.remove('category');
+    }
+    if ((_filterRegionCode ?? '').trim().isEmpty) {
+      _manualAutoApplyCriteria.remove('region');
+    }
+    if ((_filterDepartmentCode ?? '').trim().isEmpty) {
+      _manualAutoApplyCriteria.remove('department');
+    }
+    if ((_filterCityName ?? '').trim().isEmpty) {
+      _manualAutoApplyCriteria.remove('city');
+    }
+  }
+
+  void _onAnyFilterChanged() {
+    if (_manualAutoApplyCriteria.length < _autoApplyFiltersThreshold) {
+      return;
+    }
+
+    // ✅ Auto-apply avec debounce à partir de 3 critères sélectionnés
+    _filterDebounce.run(() {
+      _applyFiltersOrSearch();
+    });
+  }
+
+  String _deptFromPostal(String cp) {
+    final s = cp.trim();
+    if (s.length < 2) return s;
+    // DOM: 971/972/973/974/976 (postal commence par 97x) + 98x
+    if (s.startsWith('97') || s.startsWith('98')) {
+      return s.length >= 3 ? s.substring(0, 3) : s;
+    }
+    // Métropole
+    return s.substring(0, 2);
+  }
+
+  void _resetFilters() {
+    // 1) reset valeurs filtres
+    setState(() {
+      _selectedCategory = 'Toutes catégories';
+      _selectedRegionCode = null;
+      _selectedSubCategory = null;
+      _filterCategory = null;
+      _filterRegionCode = null;
+      _filterDepartmentCode = null;
+      _filterCityName = null;
+      _filterCitySuggestions = [];
+      _filterCityHighlightedIndex = -1;
+      _activeSearchQuery = null;
+      _budgetRangeWarning = null;
+      _manualAutoApplyCriteria.clear();
+      _filterPanelKey++; // Force la reconstruction du panneau
+      _pageLimit = _initialLimit;
+      _lastPaginationRequestAt = null;
+      _showFilters = false;
+      _headerTitle = _resolveConsultOffersTitle();
+    });
+
+    // 2) reset champs texte
+    _keywordCtrl.clear();
+    _cityCtrl.clear();
+    _locationController.clear();
+    _postalCodeController.clear();
+    _filterCityController.clear();
+    _filterPostalCodeController.clear();
+
+    // Assurer que le champ visible est remis à vide
+    _syncLocationFieldFromFilter();
+
+    // 3) ferme le clavier si besoin
+    FocusScope.of(context).unfocus();
+
+    _refreshVisibleOffersCount();
+
+    // 4) ✅ Pas de scroll forcé: on conserve la position courante
+  }
+
+  void _mutateActiveFilters(VoidCallback mutation) {
+    setState(() {
+      mutation();
+      _pruneManualAutoApplyCriteria();
+      _budgetRangeWarning = null;
+      _lastDoc = null;
+      _pageLimit = _initialLimit;
+      _lastPaginationRequestAt = null;
+      _headerTitle = _resolveConsultOffersTitle();
+    });
+
+    _refreshVisibleOffersCount();
+  }
+
+  Widget _buildRemovableFilterChip({
+    required String label,
+    required VoidCallback onDeleted,
+  }) {
+    return InputChip(
+      label: Text(label),
+      onDeleted: onDeleted,
+      deleteIcon: const Icon(
+        Icons.close_rounded,
+        size: 18,
+      ),
+      labelStyle: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF474D70),
+      ),
+      backgroundColor: Colors.white,
+      side: const BorderSide(color: Color(0xFFE4D8DA)),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+
+  List<Widget> _buildActiveFilterChipItems() {
+    final chips = <Widget>[];
+
+    final effectiveCategory = (_filterCategory?.trim().isNotEmpty ?? false)
+        ? _filterCategory!.trim()
+        : (((_selectedCategory?.trim().isNotEmpty ?? false) &&
+                _selectedCategory != 'Toutes catégories')
+            ? _selectedCategory!.trim()
+            : null);
+    if (effectiveCategory != null) {
+      chips.add(
+        _buildRemovableFilterChip(
+          label: 'Catégorie: $effectiveCategory',
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _filterCategory = null;
+              _selectedCategory = 'Toutes catégories';
+            });
+          },
+        ),
+      );
+    }
+
+    final effectiveRegionCode = (_filterRegionCode?.trim().isNotEmpty ?? false)
+        ? _filterRegionCode!.trim()
+        : ((_selectedRegionCode?.trim().isNotEmpty ?? false)
+            ? _selectedRegionCode!.trim()
+            : null);
+    if (effectiveRegionCode != null) {
+      final regionLabel = kRegions[effectiveRegionCode] ?? effectiveRegionCode;
+      chips.add(
+        _buildRemovableFilterChip(
+          label: 'Région: $regionLabel',
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _filterRegionCode = null;
+              _selectedRegionCode = null;
+            });
+          },
+        ),
+      );
+    }
+
+    if (_filterDepartmentCode?.trim().isNotEmpty ?? false) {
+      final departmentCode = _filterDepartmentCode!.trim();
+      final departmentLabel = kDepartments[departmentCode] ?? departmentCode;
+      chips.add(
+        _buildRemovableFilterChip(
+          label: 'Département: $departmentLabel',
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _filterDepartmentCode = null;
+            });
+          },
+        ),
+      );
+    }
+
+    if (_filterCityName?.trim().isNotEmpty ?? false) {
+      final cityName = _filterCityName!.trim();
+      chips.add(
+        _buildRemovableFilterChip(
+          label: 'Ville: $cityName',
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _filterCityController.clear();
+              _filterPostalCodeController.clear();
+              _locationController.clear();
+              _postalCodeController.clear();
+              _filterCityName = null;
+              _filterCitySuggestions = [];
+              _filterCityHighlightedIndex = -1;
+            });
+          },
+        ),
+      );
+    }
+
+    if (_selectedSubCategory?.trim().isNotEmpty ?? false) {
+      final subCategory = _selectedSubCategory!.trim();
+      chips.add(
+        _buildRemovableFilterChip(
+          label: 'Sous-catégorie: $subCategory',
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _selectedSubCategory = null;
+            });
+          },
+        ),
+      );
+    }
+
+    if (_activeSearchQuery?.trim().isNotEmpty ?? false) {
+      final searchQuery = _activeSearchQuery!.trim();
+      chips.add(
+        _buildRemovableFilterChip(
+          label: 'Recherche: $searchQuery',
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _activeSearchQuery = null;
+              _keywordCtrl.clear();
+            });
+          },
+        ),
+      );
+    }
+
+    final minBudget = _parseBudgetBound(_budgetMinCtrl.text);
+    final maxBudget = _parseBudgetBound(_budgetMaxCtrl.text);
+    if (_advancedFilters &&
+        _budgetRangeWarning == null &&
+        (minBudget != null || maxBudget != null)) {
+      final minLabel = _budgetMinCtrl.text.trim();
+      final maxLabel = _budgetMaxCtrl.text.trim();
+      final budgetLabel = minBudget != null && maxBudget != null
+          ? 'Budget: $minLabel - $maxLabel €'
+          : minBudget != null
+              ? 'Budget: dès $minLabel €'
+              : 'Budget: jusqu’à $maxLabel €';
+      chips.add(
+        _buildRemovableFilterChip(
+          label: budgetLabel,
+          onDeleted: () {
+            _mutateActiveFilters(() {
+              _budgetMinCtrl.clear();
+              _budgetMaxCtrl.clear();
+            });
+          },
+        ),
+      );
+    }
+
+    return chips;
+  }
+
+  String _resolveConsultOffersTitle() {
+    final activeCategory = (_filterCategory?.trim().isNotEmpty ?? false)
+        ? _filterCategory!.trim()
+        : (((_selectedCategory?.trim().isNotEmpty ?? false) &&
+                _selectedCategory != 'Toutes catégories')
+            ? _selectedCategory!.trim()
+            : null);
+
+    if (activeCategory == null) {
+      return 'Je consulte les offres';
+    }
+
+    return 'Offres : $activeCategory';
+  }
+
+  // Met à jour le champ "Ville" visible avec la valeur des filtres si présente
+  void _syncLocationFieldFromFilter() {
+    final val = _filterCityController.text.trim();
+    if (val.isNotEmpty && _locationController.text != val) {
+      _locationController.text = val;
+    }
+  }
+
+  void _syncRegionWithPostalCode() {
+    final cp = _postalCodeController.text.trim();
+    if (cp.length < 3) return;
+
+    final regionName = inferRegionFromPostalCode(cp);
+    if (regionName != null) {
+      // Chercher le code région correspondant
+      String? regionCode;
+      for (final entry in kRegions.entries) {
+        if (entry.value == regionName) {
+          regionCode = entry.key;
+          break;
+        }
+      }
+      if (regionCode != null && regionCode != _selectedRegionCode) {
+        setState(() {
+          _selectedRegionCode = regionCode;
+        });
+      }
+    }
+  }
+
+  /// ✅ Tuile unique cliquable pour afficher/masquer les filtres
+  Widget _buildActiveFilterChips() {
+    final activeFilterChips = _buildActiveFilterChipItems();
+    final activeFiltersCount = activeFilterChips.length;
+
+    final int displayedResultCount =
+        _resolvedVisibleOffersCount ?? _lastResultCount;
+    final String offersLabel = _resolvedVisibleOffersCount == null
+        ? 'Chargement du total...'
+        : '$displayedResultCount annonce${displayedResultCount > 1 ? 's' : ''}';
+
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 360;
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(999),
+                      onTap: () => setState(() => _showFilters = !_showFilters),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isNarrow ? 10 : 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: const Color(0xFFE4D8DA),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _showFilters ? Icons.tune : Icons.tune_rounded,
+                              size: 18,
+                              color: const Color(0xFF585D7C),
+                            ),
+                            const SizedBox(width: 7),
+                            const Text(
+                              'Filtres',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF474D70),
+                                letterSpacing: -0.1,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              _showFilters
+                                  ? Icons.keyboard_arrow_up_rounded
+                                  : Icons.keyboard_arrow_down_rounded,
+                              size: 18,
+                              color: const Color(0xFF777B97),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: isNarrow ? 10 : 14),
+                  Expanded(
+                    child: Text(
+                      offersLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: isNarrow ? 14 : 15,
+                        fontWeight: FontWeight.w700,
+                        color: _offersNavy,
+                        letterSpacing: -0.15,
+                      ),
+                    ),
+                  ),
+                  if (activeFiltersCount > 0)
+                    Container(
+                      height: 28,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: _offersOrange,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '$activeFiltersCount',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+          if (activeFiltersCount > 0) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                ...activeFilterChips,
+                OutlinedButton.icon(
+                  onPressed: _resetFilters,
+                  icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                  label: const Text('Réinitialiser'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _offersOrange,
+                    side: const BorderSide(color: Color(0xFFD9C5C8)),
+                    backgroundColor: Colors.white,
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final baseTitle = _headerTitle;
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: prestoOverlayStyleFor(kPrestoBlue),
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          resizeToAvoidBottomInset: true,
+          backgroundColor: _offersBg,
+          body: SafeArea(
+            child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: kToolbarHeight,
+                  color: kPrestoOrange,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(
+                    child: Text(
+                      baseTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: kPrestoAppBarTitleStyle.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                // ✅ Tuiles cliquables pour filtres actifs
+                _buildActiveFilterChips(),
+                _buildFilterPanel(),
+                Expanded(
+                  child: StreamBuilder<
+                      List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+                    stream: _watchCombinedOffers().map((docs) {
+                      PrestoMonitoring.I.trackOffersSnapshot(docs.length);
+                      return docs;
+                    }),
+                    builder: (context, snapshot) {
+                      // ✅ Ne plus afficher le loader si on a déjà des données
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot.hasData) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                          ),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        debugPrint('❌ [OFFERS] Error: ${snapshot.error}');
+                        debugPrint('❌ [OFFERS] Stack: ${snapshot.stackTrace}');
+
+                        final err = snapshot.error;
+                        if (err != null) {
+                          PrestoMonitoring.I
+                              .trackError('offers.snapshots', err);
+                        }
+
+                        final friendly = err == null
+                            ? 'Impossible de charger les annonces pour le moment.'
+                            : friendlyPublicOffersReadErrorWithAppCheck(err);
+
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  size: 64,
+                                  color: Colors.red.shade300,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  "Erreur lors du chargement des offres",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.red.shade700,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  friendly,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                                if (err != null)
+                                  buildPublicOffersDebugCardWithAppCheck(
+                                    err,
+                                    source: 'consult_combined_offers',
+                                  ),
+                                const SizedBox(height: 16),
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    setState(() {});
+                                  },
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Réessayer'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: kPrestoOrange,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
+                      final rawDocs = snapshot.data ?? const [];
+                      _lastSnapshotRawCount = rawDocs.length;
+
+                      List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
+                          rawDocs
+                              .where((d) => _matchesOfferFilters(d.data()))
+                              .toList();
+
+                      _scheduleJobDoneOverlayRefresh(rawDocs);
+
+                      docs.sort((a, b) {
+                        final aTs = a.data()['createdAt'];
+                        final bTs = b.data()['createdAt'];
+                        final aMs =
+                            aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
+                        final bMs =
+                            bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
+                        return bMs.compareTo(aMs);
+                      });
+
+                      // Nombre après filtrage
+                      final int resultCount = docs.length;
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted && _lastResultCount != resultCount) {
+                          setState(() => _lastResultCount = resultCount);
+                        }
+                      });
+
+                      if (docs.isEmpty) {
+                        return Column(
+                          children: [
+                            Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(24, 18, 24, 12),
+                              child: Row(
+                                children: const [
+                                  Icon(
+                                    Icons.grid_view_rounded,
+                                    size: 20,
+                                    color: _offersOrange,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    '0 annonce',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                      color: _offersNavy,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Expanded(child: _EmptyOffers()),
+                          ],
+                        );
+                      }
+
+                      const int _adsEvery =
+                          8; // Bandeau pub après chaque 8 annonces
+                      final int _adSlots = docs.length ~/ _adsEvery;
+                      final int _totalItems = docs.length + _adSlots;
+
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: ListView.builder(
+                              key: const PageStorageKey<String>(
+                                'consult-offers-list',
+                              ),
+                              controller: _scrollController,
+                              physics: const ClampingScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(6, 0, 6, 132),
+                              addAutomaticKeepAlives: true,
+                              addRepaintBoundaries: true,
+                              itemCount: _totalItems,
+                              itemBuilder: (context, index) {
+                                final bool isAd =
+                                    (index + 1) % (_adsEvery + 1) == 0;
+                                if (isAd) {
+                                  return AdBanner(
+                                    margin: EdgeInsets.zero,
+                                    placeholderHeight: kIsWeb ? 180.0 : 100.0,
+                                    placeholderFolderPrefix:
+                                        'assets/carousel_home/',
+                                    flat: true,
+                                    animatePlaceholder: false,
+                                  );
+                                }
+
+                                final int docIndex =
+                                    index - (index ~/ (_adsEvery + 1));
+                                final doc = docs[docIndex];
+                                final offerId = doc.id;
+                                final data = doc.data();
+
+                                final title =
+                                    (data['title'] ?? 'Sans titre') as String;
+
+                                final city =
+                                    ((data['city'] ?? data['location']) ??
+                                            'Lieu non précisé')
+                                        .toString();
+                                final postalCode =
+                                    ((data['postalCode'] ?? data['cp']) ?? '')
+                                        .toString()
+                                        .trim();
+                                final category = (data['category'] ??
+                                        'Catégorie non précisée')
+                                    .toString();
+                                final budgetRaw =
+                                    data['budget'] ?? data['price'];
+                                final int budget = budgetRaw is num
+                                    ? budgetRaw.round()
+                                    : int.tryParse(
+                                            budgetRaw?.toString() ?? '') ??
+                                        0;
+                                final publishedAge =
+                                    _ageLabelFromCreatedAt(data['createdAt']);
+                                final publishedText = publishedAge.isEmpty
+                                    ? 'Publication récente'
+                                    : 'Publié il y a $publishedAge';
+                                final isUrgent = data['urgent'] == true;
+                                final showJobDoneOverlay =
+                                    isOfferJobDoneOverlayVisible(data);
+                                final missionDelayLabel =
+                                    _extractMissionDelayLabel(data);
+                                final cleanTitle = _sanitizeOfferTitle(
+                                  rawTitle: title,
+                                  city: city,
+                                  postalCode: postalCode,
+                                );
+
+                                return RepaintBoundary(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 6),
+                                    child: _OfferBrowseTile(
+                                      onTap: showJobDoneOverlay
+                                          ? null
+                                          : () {
+                                              _logOfferClicked(offerId, title);
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      OfferDetailsPage(
+                                                    offer:
+                                                        buildOfferDetailsOffer(
+                                                      offerId: offerId,
+                                                      data: data,
+                                                    ),
+                                                    currentUserId: FirebaseAuth
+                                                            .instance
+                                                            .currentUser
+                                                            ?.uid ??
+                                                        '',
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                      data: _OfferBrowseTileData(
+                                        title: cleanTitle,
+                                        subtitle: [
+                                          city,
+                                          if (postalCode.isNotEmpty) postalCode,
+                                          category,
+                                        ].join(' / '),
+                                        publishedText: publishedText,
+                                        price: budget,
+                                        missionDelayLabel: missionDelayLabel,
+                                        isUrgent:
+                                            isUrgent && !showJobDoneOverlay,
+                                        icon: _categoryIcon(category),
+                                        showJobDoneOverlay: showJobDoneOverlay,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterPanel() {
+    return AnimatedCrossFade(
+      duration: const Duration(milliseconds: 220),
+      crossFadeState:
+          _showFilters ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+      firstChild: Form(
+        key: ValueKey(_filterPanelKey),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildCategoryDropdown(),
+              const SizedBox(height: 12),
+              _buildRegionDropdown(),
+              const SizedBox(height: 12),
+              _buildDepartmentDropdown(),
+              const SizedBox(height: 12),
+              _buildFilterCityField(),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _resetFilters,
+                      child: const Text('Réinitialiser'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _applyFiltersOrSearch,
+                      icon: const Icon(Icons.search),
+                      label: const Text('Rechercher'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kPrestoBlue,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      secondChild: const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildRegionDropdown() {
+    return Focus(
+      focusNode: _regionFocus,
+      child: DropdownButtonFormField<String?>(
+        value: _filterRegionCode,
+        isDense: true,
+        dropdownColor: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        decoration: const InputDecoration(
+          labelText: "Région",
+          isDense: true,
+        ),
+        items: <DropdownMenuItem<String?>>[
+          const DropdownMenuItem<String?>(
+            value: null,
+            child: Text("Toutes régions"),
+          ),
+          ...kRegionsOrdered.map((r) => DropdownMenuItem<String?>(
+                value: r.code,
+                child: Text(r.name),
+              )),
+        ],
+        onChanged: (code) {
+          setState(() {
+            _filterRegionCode = code;
+            _trackManualFilterCriterion(
+              'region',
+              isActive: (code ?? '').trim().isNotEmpty,
+            );
+            _trackManualFilterCriterion('department', isActive: false);
+            _trackManualFilterCriterion('city', isActive: false);
+
+            // ✅ Région change => on reset le dept + ville + CP
+            _filterDepartmentCode = null;
+            _filterCityController.clear();
+            _filterPostalCodeController.clear();
+            _filterCityName = null;
+            _filterCitySuggestions = [];
+            _filterCityHighlightedIndex = -1;
+          });
+
+          _onAnyFilterChanged(); // ✅ auto-apply
+
+          // Passe au champ département
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            FocusScope.of(context).requestFocus(_deptFocus);
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildDepartmentDropdown() {
+    // ✅ Utilise le getter pour obtenir les départements filtrés
+    final deptCodes = [..._filteredDepartmentCodes]..sort();
+
+    final allowedCodes = deptCodes.toSet();
+    final safeValue = (_filterDepartmentCode != null &&
+            allowedCodes.contains(_filterDepartmentCode))
+        ? _filterDepartmentCode
+        : null; // ✅ si la valeur n’existe pas, on repasse à "Tous"
+
+    // ✅ Si le filtre courant pointe vers un département non disponible,
+    // on remet aussi l'état interne à null (sinon on a un "ghost value").
+    if (_filterDepartmentCode != null && safeValue == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_filterDepartmentCode == null) return;
+
+        final stillInvalid = !allowedCodes.contains(_filterDepartmentCode);
+        if (!stillInvalid) return;
+
+        setState(() {
+          _filterDepartmentCode = null;
+
+          _filterCityController.clear();
+          _filterPostalCodeController.clear();
+          _filterCityName = null;
+          _filterCitySuggestions = [];
+          _filterCityHighlightedIndex = -1;
+        });
+
+        _onAnyFilterChanged();
+      });
+    }
+
+    return Focus(
+      focusNode: _deptFocus,
+      child: DropdownButtonFormField<String?>(
+        value: safeValue,
+        isDense: true,
+        dropdownColor: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        decoration: InputDecoration(
+          labelText: 'Département',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        ),
+        items: [
+          const DropdownMenuItem<String?>(
+            value: null,
+            child: Text('Tous départements'),
+          ),
+          ...deptCodes.map(
+            (code) => DropdownMenuItem<String?>(
+              value: code,
+              child: Text(kDepartments[code] ?? code),
+            ),
+          ),
+        ],
+        onChanged: (code) {
+          setState(() {
+            _filterDepartmentCode = code;
+            _trackManualFilterCriterion(
+              'department',
+              isActive: (code ?? '').trim().isNotEmpty,
+            );
+            _trackManualFilterCriterion('city', isActive: false);
+
+            // ✅ Si on choisit un dept, on synchronise la région automatiquement
+            if (code != null) {
+              final regionCode = _deptToRegion[code];
+              if (regionCode != null) _filterRegionCode = regionCode;
+
+              // ✅ Dept change => reset ville + CP (évite incohérences)
+              _filterCityController.clear();
+              _filterPostalCodeController.clear();
+              _filterCityName = null;
+              _filterCitySuggestions = [];
+              _filterCityHighlightedIndex = -1;
+            } else {
+              // ✅ Tous départements => reset ville + CP
+              _filterCityController.clear();
+              _filterPostalCodeController.clear();
+              _filterCityName = null;
+              _filterCitySuggestions = [];
+              _filterCityHighlightedIndex = -1;
+            }
+          });
+
+          _onAnyFilterChanged(); // ✅ auto-apply
+
+          // Passe au champ ville
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            FocusScope.of(context).requestFocus(_filterCityFocusNode);
+          });
+        },
+      ),
+    );
+  }
+
+  // Méthodes pour la gestion de l'autocomplétion de ville dans les filtres
+  List<CityRecord> _searchCities(String q) {
+    final allowed = _allowedDeptCodesForCity;
+    return CitySearch.instance.search(
+      q,
+      limit: 20,
+      allowedDeptCodes: allowed,
+    );
+  }
+
+  Widget _buildFilterCityField() {
+    return Autocomplete<CityRecord>(
+      displayStringForOption: (c) => '${c.name} (${c.cp})',
+      optionsBuilder: (TextEditingValue v) {
+        final q = v.text.trim();
+        if (q.length < 2) return const Iterable<CityRecord>.empty();
+        return _searchCities(q);
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        final surface = Theme.of(context).colorScheme.surface;
+
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            color: surface,
+            elevation: 4,
+            borderRadius: BorderRadius.circular(16),
+            clipBehavior: Clip.antiAlias,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  final option = options.elementAt(index);
+                  final highlightedIndex =
+                      AutocompleteHighlightedOption.of(context);
+                  final isHighlighted = index == highlightedIndex;
+
+                  return ListTile(
+                    dense: true,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    title: Text(
+                      '${option.name} (${option.cp})',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    tileColor:
+                        isHighlighted ? kPrestoBlue.withOpacity(0.08) : null,
+                    onTap: () => onSelected(option),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+      onSelected: (CityRecord c) {
+        final dept = (c.departmentCode.trim().isNotEmpty)
+            ? c.departmentCode.trim()
+            : _deptFromPostal(c.postalCode);
+
+        setState(() {
+          // ✅ Ville
+          _filterCityController.text = c.name;
+          _filterCityName = c.name;
+          _trackManualFilterCriterion('city', isActive: true);
+
+          // ✅ CP
+          _filterPostalCodeController.text = c.postalCode;
+
+          // ✅ Dept (ex: 971 au lieu de 97)
+          _filterDepartmentCode = dept;
+
+          // ✅ Région: prendre celle du record si dispo, sinon fallback via dept
+          final regionFromRecord = c.regionCode.trim();
+          if (regionFromRecord.isNotEmpty) {
+            _filterRegionCode = regionFromRecord;
+          } else {
+            for (final entry in kRegionDepartments.entries) {
+              if (entry.value.contains(dept)) {
+                _filterRegionCode = entry.key;
+                break;
+              }
+            }
+          }
+
+          _filterCitySuggestions = [];
+          _filterCityHighlightedIndex = -1;
+        });
+
+        _onAnyFilterChanged();
+      },
+      fieldViewBuilder: (context, textCtrl, focusNode, onFieldSubmitted) {
+        // Synchroniser avec notre controller
+        if (_filterCityController.text != textCtrl.text) {
+          textCtrl.text = _filterCityController.text;
+        }
+
+        return TextField(
+          controller: textCtrl,
+          focusNode: focusNode,
+          decoration: InputDecoration(
+            labelText: 'Ville',
+            hintText: 'Ex: Paris, Les Abymes...',
+            isDense: true,
+            suffixIcon: textCtrl.text.isEmpty
+                ? null
+                : IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      setState(() {
+                        _filterCityController.clear();
+                        _filterPostalCodeController.clear();
+                        _filterCityName = null;
+                        _filterCitySuggestions = [];
+                        _filterCityHighlightedIndex = -1;
+                        _trackManualFilterCriterion('city', isActive: false);
+                      });
+                      textCtrl.clear();
+                      _onAnyFilterChanged();
+                    },
+                  ),
+          ),
+          onChanged: (value) {
+            _filterCityController.text = value;
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCategoryDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _filterCategory,
+      isDense: true,
+      dropdownColor: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      decoration: const InputDecoration(
+        labelText: 'Catégorie',
+        isDense: true,
+      ),
+      items: [
+        const DropdownMenuItem(
+          value: null,
+          child: Text('Toutes les catégories'),
+        ),
+        ...kCategories.map(
+          (c) => DropdownMenuItem(
+            value: c,
+            child: Text(c),
+          ),
+        ),
+      ],
+      onChanged: (value) {
+        setState(() {
+          _filterCategory = value;
+          _trackManualFilterCriterion(
+            'category',
+            isActive: (value ?? '').trim().isNotEmpty,
+          );
+          _headerTitle = _resolveConsultOffersTitle();
+        });
+        _onAnyFilterChanged();
+      },
+    );
+  }
+
+  String _ageLabelFromCreatedAt(dynamic createdAt) {
+    if (createdAt == null) return '';
+
+    DateTime dt;
+    try {
+      // Firestore Timestamp
+      if (createdAt is Timestamp) {
+        dt = createdAt.toDate();
+      }
+      // Milliseconds since epoch
+      else if (createdAt is int) {
+        dt = DateTime.fromMillisecondsSinceEpoch(createdAt);
+      }
+      // ISO string
+      else if (createdAt is String) {
+        dt = DateTime.tryParse(createdAt) ?? DateTime.now();
+      } else {
+        return '';
+      }
+    } catch (_) {
+      return '';
+    }
+
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'à l\'instant';
+    if (diff.inHours < 24) return '${diff.inHours} h';
+    return '${diff.inDays} j';
+  }
+
+  String _sanitizeOfferTitle({
+    required String rawTitle,
+    required String city,
+    required String postalCode,
+  }) {
+    var title = rawTitle.trim();
+    if (title.isEmpty) return 'Sans titre';
+
+    final safeCity = city.trim();
+    final safePostalCode = postalCode.trim();
+
+    if (safeCity.isNotEmpty && safeCity != 'Lieu non précisé') {
+      final cityRegex = RegExp(
+        _escapeRegex(safeCity),
+        caseSensitive: false,
+      );
+      title = title.replaceAll(cityRegex, ' ');
+    }
+
+    if (safePostalCode.isNotEmpty) {
+      final postalRegex = RegExp(
+        '\\b${_escapeRegex(safePostalCode)}\\b',
+        caseSensitive: false,
+      );
+      title = title.replaceAll(postalRegex, ' ');
+    }
+
+    title = title
+        .replaceAll(RegExp(r'\s*[-–/|]\s*'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    return title.isEmpty ? rawTitle.trim() : title;
+  }
+
+  String _escapeRegex(String input) {
+    return input.replaceAllMapped(
+      RegExp(r'[\\^\$.|?*+(){}\[\]]'),
+      (m) => '\\${m[0]}',
+    );
+  }
+
+  String _extractMissionDelayLabel(Map<String, dynamic> data) {
+    final candidates = [
+      data['missionDelay'],
+      data['averageDelay'],
+      data['dateLabel'],
+      data['deadlineLabel'],
+      data['executionDelay'],
+      data['responseDelay'],
+    ];
+
+    for (final candidate in candidates) {
+      final value = (candidate ?? '').toString().trim();
+      if (value.isNotEmpty) return value;
+    }
+
+    return 'Délai non précisé';
+  }
+
+  IconData _categoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'plomberie':
+        return Icons.plumbing_outlined;
+      case 'bricolage':
+        return Icons.handyman_outlined;
+      case 'jardinage':
+        return Icons.yard_outlined;
+      case 'menage':
+      case 'ménage':
+        return Icons.cleaning_services_outlined;
+      case 'demenagement':
+      case 'déménagement':
+        return Icons.local_shipping_outlined;
+      default:
+        return Icons.work_outline_rounded;
+    }
+  }
+
+  bool _isQuickResponse(Map<String, dynamic> data) {
+    final dynamic direct = data['quickResponse'] ?? data['isQuickResponse'];
+    if (direct is bool) return direct;
+
+    final statusBadges = (data['statusBadges'] as List<dynamic>? ?? const [])
+        .map((e) => e.toString().toLowerCase())
+        .toList();
+    if (statusBadges.any((b) => b.contains('rapide'))) {
+      return true;
+    }
+
+    final availability = (data['availability'] ?? '').toString().toLowerCase();
+    if (availability.contains('rapide')) {
+      return true;
+    }
+
+    final averageDelay = (data['averageDelay'] ?? '').toString().toLowerCase();
+    if (averageDelay.contains('min')) {
+      return true;
+    }
+
+    return false;
+  }
+
+  Future<void> _showEditOfferDialog(
+    BuildContext context,
+    String offerId,
+    Map<String, dynamic> data,
+  ) async {
+    final titleCtrl =
+        TextEditingController(text: (data['title'] ?? '').toString());
+    final cityCtrl =
+        TextEditingController(text: (data['city'] ?? '').toString());
+    final descCtrl =
+        TextEditingController(text: (data['description'] ?? '').toString());
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text(
+          'Modifier l\'annonce',
+          style: kPrestoSectionTitleStyle,
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                  controller: titleCtrl,
+                  decoration: const InputDecoration(labelText: 'Titre')),
+              const SizedBox(height: 8),
+              TextField(
+                  controller: cityCtrl,
+                  decoration: const InputDecoration(labelText: 'Ville')),
+              const SizedBox(height: 8),
+              TextField(
+                controller: descCtrl,
+                decoration: const InputDecoration(labelText: 'Description'),
+                minLines: 3,
+                maxLines: 6,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annuler')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Enregistrer')),
+        ],
+      ),
+    );
+
+    if (ok != true) return;
+
+    try {
+      // Essayer d'abord dans listings (marketplace), puis fallback offers (legacy)
+      final listingsRef = FirebaseFirestore.instance
+          .collection(kListingsCollection)
+          .doc(offerId);
+      final listingsSnap = await listingsRef.get();
+      final targetRef = listingsSnap.exists
+          ? listingsRef
+          : FirebaseFirestore.instance
+              .collection(kOffersCollection)
+              .doc(offerId);
+      await targetRef.update({
+        'title': titleCtrl.text.trim(),
+        'city': cityCtrl.text.trim(),
+        'description': descCtrl.text.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Impossible de modifier l\'annonce : $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmDeleteOffer(
+    BuildContext context,
+    String offerId,
+    String title,
+  ) async {
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text(
+          'Supprimer l\'annonce ?',
+          style: kPrestoSectionTitleStyle,
+        ),
+        content: Text(
+          'Supprimer : "$title" ?',
+          style: kPrestoBodyTextStyle,
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annuler')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Supprimer')),
+        ],
+      ),
+    );
+
+    if (yes != true) return;
+
+    try {
+      final listingsRef = FirebaseFirestore.instance
+          .collection(kListingsCollection)
+          .doc(offerId);
+      final listingsSnap = await listingsRef.get();
+      if (listingsSnap.exists) {
+        final callable = prestoFirebaseFunctions.httpsCallable(
+          'deleteListing',
+          options: HttpsCallableOptions(
+            timeout: const Duration(seconds: 30),
+          ),
+        );
+        await callable.call<dynamic>({'listingId': offerId});
+      } else {
+        await FirebaseFirestore.instance
+            .collection(kOffersCollection)
+            .doc(offerId)
+            .delete();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Impossible de supprimer l\'annonce : $e')),
+        );
+      }
+    }
+  }
+}
+
+class _OfferBrowseTileData {
+  final String title;
+  final String subtitle;
+  final String publishedText;
+  final int price;
+  final String missionDelayLabel;
+  final bool isUrgent;
+  final IconData icon;
+  final bool showJobDoneOverlay;
+
+  const _OfferBrowseTileData({
+    required this.title,
+    required this.subtitle,
+    required this.publishedText,
+    required this.price,
+    required this.missionDelayLabel,
+    required this.isUrgent,
+    required this.icon,
+    required this.showJobDoneOverlay,
+  });
+}
+
+class _OfferBrowseTile extends StatefulWidget {
+  final _OfferBrowseTileData data;
+  final VoidCallback? onTap;
+
+  const _OfferBrowseTile({
+    required this.data,
+    this.onTap,
+  });
+
+  @override
+  State<_OfferBrowseTile> createState() => _OfferBrowseTileState();
+}
+
+class _OfferBrowseTileState extends State<_OfferBrowseTile>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 920),
+    );
+    _pulse = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.0, end: 1.0).chain(
+          CurveTween(curve: Curves.easeOutCubic),
+        ),
+        weight: 42,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 0.18).chain(
+          CurveTween(curve: Curves.easeInCubic),
+        ),
+        weight: 26,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.18, end: 0.78).chain(
+          CurveTween(curve: Curves.easeOutBack),
+        ),
+        weight: 32,
+      ),
+    ]).animate(_controller);
+    _syncUrgentAnimation();
+  }
+
+  @override
+  void didUpdateWidget(covariant _OfferBrowseTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.data.isUrgent != widget.data.isUrgent ||
+        oldWidget.data.showJobDoneOverlay != widget.data.showJobDoneOverlay) {
+      _syncUrgentAnimation();
+    }
+  }
+
+  void _syncUrgentAnimation() {
+    if (widget.data.isUrgent && !widget.data.showJobDoneOverlay) {
+      if (!_controller.isAnimating) {
+        _controller.repeat();
+      }
+      return;
+    }
+
+    _controller.stop();
+    _controller.value = 0;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.data.isUrgent || widget.data.showJobDoneOverlay) {
+      return _buildTileFrame(pulse: 0);
+    }
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) => _buildTileFrame(pulse: _pulse.value),
+    );
+  }
+
+  Widget _buildTileFrame({required double pulse}) {
+    const outerRadius = 24.0;
+    const innerUrgentInset = 3.0;
+    const innerUrgentWidth = 4.0;
+    const cornerAccentSize = 54.0;
+
+    final showUrgentContour = widget.data.isUrgent;
+    final blink = pulse.clamp(0.0, 1.0);
+    final urgentBorderColor = const Color(0xFF1A73E8).withValues(
+      alpha: 0.26 + (0.58 * blink),
+    );
+
+    return RepaintBoundary(
+      child: Stack(
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            child: IgnorePointer(
+              child: Container(
+                width: cornerAccentSize,
+                height: cornerAccentSize,
+                decoration: const BoxDecoration(
+                  color: kPrestoBlue,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(outerRadius),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(outerRadius),
+              onTap: widget.onTap,
+              child: Ink(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.98),
+                  borderRadius: BorderRadius.circular(outerRadius),
+                  border: Border.all(
+                    color: _ConsultOffersPageState._offersCardBorder,
+                    width: kMarketplaceOutlineWidth,
+                  ),
+                  boxShadow: [
+                    const BoxShadow(
+                      color: Color(0x0C000000),
+                      blurRadius: 18,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    if (showUrgentContour)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: Padding(
+                            padding: const EdgeInsets.all(innerUrgentInset),
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(
+                                  outerRadius - innerUrgentInset,
+                                ),
+                                border: Border.all(
+                                  color: urgentBorderColor,
+                                  width: innerUrgentWidth,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.data.title.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              height: 1.15,
+                              fontWeight: FontWeight.w700,
+                              color: _ConsultOffersPageState._offersNavy,
+                              letterSpacing: 0.15,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            widget.data.subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.0,
+                              fontWeight: FontWeight.w500,
+                              color: _ConsultOffersPageState._offersNavy
+                                  .withValues(alpha: 0.82),
+                              letterSpacing: -0.1,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  widget.data.publishedText,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    height: 1.0,
+                                    fontWeight: FontWeight.w500,
+                                    color:
+                                        _ConsultOffersPageState._offersSoftText,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 148),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      '${widget.data.price} €',
+                                      textAlign: TextAlign.right,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 26,
+                                        height: 1.0,
+                                        fontWeight: FontWeight.w700,
+                                        color: _ConsultOffersPageState
+                                            ._offersOrange,
+                                        letterSpacing: -0.9,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _OfferMissionDelayChip(
+                                      label: widget.data.missionDelayLabel,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (widget.data.showJobDoneOverlay)
+                      Positioned.fill(
+                        child: RepaintBoundary(
+                          child: IgnorePointer(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.78),
+                                borderRadius:
+                                    BorderRadius.circular(outerRadius),
+                              ),
+                              alignment: Alignment.center,
+                              child: Padding(
+                                padding: const EdgeInsets.all(18),
+                                child: Image.asset(
+                                  'assets/images/jobfait.webp',
+                                  height: 132,
+                                  fit: BoxFit.contain,
+                                  filterQuality: FilterQuality
+                                      .none, // Maximum performance sur le web
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OfferMissionDelayChip extends StatelessWidget {
+  final String label;
+
+  const _OfferMissionDelayChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final maxWidth = (MediaQuery.sizeOf(context).width * 0.34).clamp(
+      112.0,
+      148.0,
+    );
+
+    return Container(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Color(0xFFFFC04A),
+            Color(0xFFFF7A00),
+          ],
+        ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.65),
+          width: kMarketplaceOutlineWidth,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color:
+                _ConsultOffersPageState._offersOrange.withValues(alpha: 0.18),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          label,
+          maxLines: 1,
+          softWrap: false,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            height: 1,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StandardResponseBadge extends StatelessWidget {
+  const _StandardResponseBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3EEF4),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      alignment: Alignment.center,
+      child: const Text(
+        'Standard',
+        style: TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF666C87),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyOffers extends StatelessWidget {
+  const _EmptyOffers();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text(
+              "Les annonces peuvent arriver à tout moment.",
+              style: TextStyle(
+                fontSize: 17,
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+                height: 1.45,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16),
+            Text(
+              "Ajoutez cette catégorie en favori pour être alerté dès qu'une annonce est publiée.",
+              style: TextStyle(
+                fontSize: 17,
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
+                height: 1.45,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16),
+            Text(
+              "Créez un compte pour enregistrer vos favoris et activer les notifications.",
+              style: TextStyle(
+                fontSize: 17,
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
+                height: 1.45,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ✅ DEPRECATED: OfferDetailPage supprimee
+// Utilisez OfferDetailsPage (pages/offers/offer_details_page.dart) a la place
+
+class UserPublicProfilePage extends StatefulWidget {
+  final String userId;
+  final String? initialPseudo;
+
+  const UserPublicProfilePage({
+    super.key,
+    required this.userId,
+    this.initialPseudo,
+  });
+
+  @override
+  State<UserPublicProfilePage> createState() => _UserPublicProfilePageState();
+}
+
+class _UserPublicProfilePageState extends State<UserPublicProfilePage> {
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+      _loadActiveOffers() async {
+    // Charger depuis la collection listings (marketplace) et offers (legacy)
+    final listingsCol =
+        FirebaseFirestore.instance.collection(kListingsCollection);
+    final offersCol = FirebaseFirestore.instance.collection(kOffersCollection);
+
+    final results = await Future.wait([
+      listingsCol
+          .where('ownerId', isEqualTo: widget.userId)
+          .where(publicListingsFilter())
+          .get(),
+      offersCol
+          .where('uid', isEqualTo: widget.userId)
+          .where(publicOffersFilter())
+          .get(),
+      offersCol
+          .where('userId', isEqualTo: widget.userId)
+          .where(publicOffersFilter())
+          .get(),
+    ]);
+
+    final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+    for (final snap in results) {
+      for (final d in snap.docs) {
+        byId[d.id] = d;
+      }
+    }
+
+    final docs = byId.values.toList(growable: false);
+
+    // Toute annonce publiée doit être visible dans le profil public.
+    final filtered = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    for (final doc in docs) {
+      final data = doc.data();
+      if (!isPublishedOfferData(data)) continue;
+      filtered.add(doc);
+    }
+    return filtered;
+  }
+
+  String _extractUserPseudo(Map<String, dynamic>? data) {
+    final candidates = <String?>[
+      data?['pseudo']?.toString(),
+      data?['username']?.toString(),
+      data?['displayName']?.toString(),
+      data?['name']?.toString(),
+      widget.initialPseudo,
+    ];
+    for (final v in candidates) {
+      final s = (v ?? '').trim();
+      if (s.isNotEmpty) return s;
+    }
+    return 'Profil';
+  }
+
+  Future<void> _contactUser(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    final bool isLoggedIn = user != null;
+
+    if (!isLoggedIn) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const AccountPage(),
+        ),
+      );
+      return;
+    }
+
+    if (!context.mounted) return;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      backgroundColor: const Color(0xFFF6F7F9),
+      appBar: AppBar(
+        systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
+        leading: const BackButton(),
+        title: const Text(
+          'Profil',
+          style: kPrestoAppBarTitleStyle,
+        ),
+        centerTitle: true,
+        backgroundColor: kPrestoOrange,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
+          children: [
+            StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(widget.userId)
+                  .snapshots()
+                  .map((snap) {
+                PrestoMonitoring.I.trackOtherStream(
+                  key: 'userProfile.userDoc',
+                  docsCount: snap.exists ? 1 : 0,
+                );
+                return snap;
+              }),
+              builder: (context, snap) {
+                final pseudo = _extractUserPseudo(snap.data?.data());
+                return CardShell(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Colors.white,
+                            child: Padding(
+                              padding: const EdgeInsets.all(3),
+                              child: Image.asset(
+                                'assets/images/logowebp.webp',
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              pseudo,
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Contacter ce membre pour échanger sur ses annonces.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: kPrestoBlue,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          onPressed: () => _contactUser(context),
+                          icon: const Icon(Icons.chat_bubble_outline),
+                          label: const Text('Contacter par message'),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 14),
+            CardShell(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Annonces publiées en cours',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FutureBuilder<
+                      List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+                    future: _loadActiveOffers(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: CircularProgressIndicator(
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(kPrestoOrange),
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return Text(
+                          "Erreur de chargement des annonces.",
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        );
+                      }
+
+                      final docs = snapshot.data ?? const [];
+                      if (docs.isEmpty) {
+                        return Text(
+                          "Aucune annonce en cours.",
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        );
+                      }
+
+                      return Column(
+                        children: [
+                          for (final doc in docs) ...[
+                            _UserOfferMiniCard(
+                              offerId: doc.id,
+                              data: doc.data(),
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UserOfferMiniCard extends StatelessWidget {
+  final String offerId;
+  final Map<String, dynamic> data;
+  const _UserOfferMiniCard({required this.offerId, required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final title = (data['title'] ?? '').toString().trim();
+    final location = (data['location'] ?? data['city'] ?? '').toString().trim();
+    final category = (data['category'] ?? '').toString().trim();
+    final budget = data['budget'];
+    final priceText = (budget is num) ? "${budget.toStringAsFixed(0)} €" : '';
+
+    final annonceurId = (data['userId'] ?? data['uid'] ?? '').toString().trim();
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) {
+                final description = (data['description'] ?? '').toString();
+                final phone = data['phone']?.toString();
+
+                final List<String> imageUrls =
+                    (data['imageUrls'] as List<dynamic>? ?? [])
+                        .map((e) => e.toString())
+                        .toList();
+
+                return OfferDetailsPage(
+                  offer: buildOfferDetailsOffer(
+                    offerId: offerId,
+                    data: data,
+                  ),
+                  currentUserId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                );
+              },
+            ),
+          );
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.black.withOpacity(0.06)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title.isEmpty ? 'Annonce' : title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (location.isNotEmpty)
+                Text(
+                  location,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              if (category.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    category,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              if (priceText.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    priceText,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: kPrestoOrange,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+// (supprimé) `_OfferMetaRow` était non référencé et générait un avertissement.
+
+/// Utilitaire : format d'heure pour la liste de conversations
+String formatTimeLabel(Timestamp? ts) {
+  if (ts == null) return '';
+  final dt = ts.toDate();
+  final now = DateTime.now();
+
+  final sameDay =
+      dt.year == now.year && dt.month == now.month && dt.day == now.day;
+
+  if (sameDay) {
+    return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+  }
+
+  return "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}";
+}
+
+/// Utilitaire : format "il y a X h/j" depuis un Timestamp
+String formatAgeSince(Timestamp? ts) {
+  if (ts == null) {
+    return ""; // quand createdAt pas encore rempli (serverTimestamp)
+  }
+  final dt = ts.toDate();
+  final now = DateTime.now();
+
+  final diff = now.difference(dt);
+  if (diff.isNegative) return ""; // sécurité si horloge bizarre
+
+  if (diff.inHours < 24) {
+    final h = diff.inHours;
+    // si < 1h, on affiche en minutes (optionnel)
+    if (h <= 0) {
+      final m = diff.inMinutes.clamp(0, 59);
+      return "il y a $m min";
+    }
+    return "il y a $h h";
+  }
+
+  final d = diff.inDays;
+  return "il y a $d j";
+}
+
