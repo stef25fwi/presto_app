@@ -1,0 +1,4275 @@
+// ignore_for_file: unused_element, unused_field, unused_local_variable, unused_element_parameter
+
+import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:record/record.dart';
+
+import '../app/app_globals.dart';
+import '../main.dart' show prestoOverlayStyleFor;
+import 'home_page.dart' show HomePage;
+import 'account_page.dart';
+import '../app/presto_overlay_theme.dart';
+import '../app_core.dart';
+import '../constants.dart';
+import '../config/app_check_state.dart';
+import '../config/env/openai_config.dart';
+import '../features/ai_draft/ai_draft_service.dart';
+import '../features/micro_ia/micro_ia_service.dart';
+import '../features/micro_ia/web_audio_recorder.dart';
+import '../models/admin_access_state.dart';
+import '../pages/offers/offer_details_page.dart';
+import '../services/admin_access_resolver.dart';
+import '../services/ai/listing_audio_ai_service.dart';
+import '../services/city_search.dart';
+import '../services/firebase_functions_region.dart';
+import '../services/marketplace_publish_service.dart';
+import '../services/marketplace_remote_config_service.dart';
+import '../services/offer_indexing.dart';
+import '../services/admin_audio_runtime_store.dart';
+import '../utils/crashlytics_context.dart';
+import '../utils/friendly_snackbar.dart';
+import '../utils/runtime_action_logger.dart';
+import '../utils/recording_path_web.dart'
+    if (dart.library.io) '../utils/recording_path_io.dart';
+import '../widgets/premium_ai_button.dart';
+import '../widgets/phone_input_field.dart';
+import '../widgets/photo_selector_tile.dart';
+
+final AdminAudioRuntimeStore _adminAudioRuntimeStore =
+    AdminAudioRuntimeStore.instance;
+
+enum PublishAiTraceLevel { info, success, warning, error }
+
+class PublishAiTraceEntry {
+  const PublishAiTraceEntry({
+    required this.timestamp,
+    required this.level,
+    required this.stage,
+    required this.detail,
+  });
+
+  final DateTime timestamp;
+  final PublishAiTraceLevel level;
+  final String stage;
+  final String detail;
+}
+
+class PublishOfferPage extends StatefulWidget {
+  final Function(double)? onScroll;
+
+  const PublishOfferPage({
+    super.key,
+    this.onScroll,
+  });
+
+  @override
+  State<PublishOfferPage> createState() => _PublishOfferPageState();
+}
+
+class _PublishOfferPageState extends State<PublishOfferPage> {
+  static final MarketplacePublishService _marketplacePublishService =
+      MarketplacePublishService();
+  static const int _publishPhotoHardLimit = 2;
+  static const int _defaultMaxListingPhotos = _publishPhotoHardLimit;
+  static const int _minimumMaxListingPhotos = 1;
+
+  final MarketplaceRemoteConfigService _marketplaceRemoteConfigService =
+      MarketplaceRemoteConfigService();
+  int _maxListingPhotos = _defaultMaxListingPhotos;
+
+  String _formatMicroIaRuntimeError(Object error) {
+    if (error is MicroIaClientAuthException) {
+      return error.message;
+    }
+
+    if (error is FirebaseFunctionsException) {
+      final code = error.code.trim();
+      final message = (error.message ?? '').trim();
+      if (code == 'unauthenticated') {
+        return 'Connecte-toi pour utiliser la dictée.';
+      }
+      if (code == 'permission-denied') {
+        return 'Cette dictée ne correspond plus à ta session. Recharge la page puis réessaie.';
+      }
+      if (code == 'not-found') {
+        return 'Service vocal temporairement indisponible. Réessaie dans quelques instants.';
+      }
+      if (code == 'unavailable' || code == 'deadline-exceeded') {
+        return 'Serveur vocal occupé. Réessaie dans quelques secondes.';
+      }
+      if (message.isNotEmpty) {
+        return _translatePublishIssue(message);
+      }
+      return _translatePublishIssue(code);
+    }
+
+    if (error is FirebaseException) {
+      if (error.code == 'network-error' ||
+          error.code == 'retry-limit-exceeded' ||
+          error.code == 'unknown') {
+        return 'Erreur réseau lors de l’envoi de l’audio. Vérifie ta connexion puis réessaie.';
+      }
+      if (error.code == 'unauthorized' || error.code == 'permission-denied') {
+        return 'Accès au stockage refusé. Recharge la page puis réessaie.';
+      }
+      return 'Erreur de stockage (${error.code}). Réessaie.';
+    }
+
+    final message = error
+        .toString()
+        .replaceFirst('Exception: ', '')
+        .replaceFirst('StateError: ', '')
+        .trim();
+    final normalized = message.toLowerCase();
+    if (normalized.contains('bad state') ||
+        normalized.contains('recorder not started')) {
+      return 'Le micro a été interrompu. Réessaie.';
+    }
+    if (normalized.contains('unable to decode audio data') ||
+        normalized.contains('unknown content type') ||
+        normalized.contains('not supported')) {
+      return 'Le navigateur n’a pas pu lire l’audio. Réessaie ou recharge la page.';
+    }
+    if (normalized.contains('network') ||
+        normalized.contains('connection') ||
+        normalized.contains('fetch')) {
+      return 'Problème de connexion réseau. Vérifie ta connexion puis réessaie.';
+    }
+    return message;
+  }
+
+  Future<bool> _ensureAppCheckReady({
+    required String flow,
+    bool showBlockingMessage = true,
+  }) async {
+    if (!_useCloudStt) return true;
+
+    if (!appCheckActivationAttempted || appCheckActivationSucceeded) {
+      _appendPublishAiTrace(
+        'appcheck',
+        'App Check OK pour $flow',
+        level: PublishAiTraceLevel.success,
+      );
+      return true;
+    }
+
+    try {
+      if (kIsWeb) {
+        debugPrint('[AppCheck] retry activation for $flow');
+        await FirebaseAppCheck.instance.activate(
+          webProvider: ReCaptchaV3Provider(kAppCheckWebRecaptchaSiteKey),
+        );
+      } else {
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: kDebugMode
+              ? AndroidProvider.debug
+              : AndroidProvider.playIntegrity,
+          appleProvider:
+              kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+        );
+      }
+      appCheckActivationAttempted = true;
+      appCheckActivationSucceeded = true;
+      appCheckActivationError = null;
+      appCheckActivationStackTrace = null;
+      _appendPublishAiTrace(
+        'appcheck',
+        'App Check reactive avec succes pour $flow',
+        level: PublishAiTraceLevel.success,
+      );
+      return true;
+    } catch (e, st) {
+      appCheckActivationAttempted = true;
+      appCheckActivationSucceeded = false;
+      appCheckActivationError = e;
+      appCheckActivationStackTrace = st;
+    }
+
+    final activationError = appCheckActivationError;
+    final activationStackTrace = appCheckActivationStackTrace;
+    final exception = Exception(
+      'App Check activation unavailable: ${activationError ?? 'unknown error'}',
+    );
+
+    try {
+      await CrashlyticsContext.recordError(
+        exception,
+        activationStackTrace ?? StackTrace.current,
+        reason: 'App Check activation unavailable before micro IA flow',
+        fatal: false,
+        keys: {
+          'component': 'Main',
+          'flow': flow,
+          'step': 'appCheck',
+          'activationAttempted': appCheckActivationAttempted.toString(),
+          'activationSucceeded': appCheckActivationSucceeded.toString(),
+        },
+      );
+
+      debugPrint('[AppCheck] blocking $flow: $activationError');
+    } catch (_) {}
+
+    _appendPublishAiTrace(
+      'appcheck',
+      'Blocage sur $flow: ${activationError ?? 'activation indisponible'}',
+      level: PublishAiTraceLevel.error,
+    );
+
+    if (mounted && showBlockingMessage) {
+      showSuccessSnackBar(
+        context,
+        'App Check indisponible apres nouvelle tentative. Le bouton IA reste bloque tant que la verification de securite n\'est pas active. Recharge l\'application puis reessaie.',
+      );
+    }
+    return false;
+  }
+
+  Future<String> _transcribePublishAudio({
+    required String ownerUid,
+    required Uint8List audioBytes,
+    required String contentType,
+    required String extension,
+  }) async {
+    _appendPublishAiTrace(
+      'upload_audio',
+      'Préparation upload ${audioBytes.length} bytes, $contentType, .$extension',
+    );
+    _logMicroIaDebug(
+      'UPLOAD',
+      'chunk=final bytes=${audioBytes.length} contentType=$contentType extension=$extension',
+    );
+    final storagePath = await _listingAudioAiService.uploadAudioBytes(
+      ownerUid: ownerUid,
+      audioBytes: audioBytes,
+      contentType: contentType,
+      extension: extension,
+    );
+    _appendPublishAiTrace(
+      'upload_audio',
+      'Audio uploadé vers $storagePath',
+      level: PublishAiTraceLevel.success,
+    );
+
+    _appendPublishAiTrace(
+      'microia_callable',
+      'Appel microIaProcessAudio en cours',
+    );
+    final out = await MicroIaService.processAudio(
+      storagePath: storagePath,
+      languageCode: OpenAiConfig.defaultLanguageCode,
+      debugLabel: 'publish_final_audio',
+    ).timeout(const Duration(seconds: 90));
+
+    final transcript = (out['text'] ?? '').toString().trim();
+    if (transcript.isEmpty) {
+      _appendPublishAiTrace(
+        'microia_callable',
+        'Réponse reçue mais transcription vide',
+        level: PublishAiTraceLevel.error,
+      );
+      throw Exception('Aucun texte reconnu');
+    }
+
+    final modeUsed = (out['modeUsed'] ?? '').toString().trim();
+    if (modeUsed.isNotEmpty) {
+      _adminAudioRuntimeStore.confirmLatestBackendResult(
+        backendModeUsed: modeUsed,
+        detail:
+            'Réponse backend confirmée via $modeUsed (${transcript.length} caractères)',
+        transcriptLength: transcript.length,
+      );
+    }
+    _appendPublishAiTrace(
+      'microia_callable',
+      modeUsed.isEmpty
+          ? 'Transcription reçue (${transcript.length} caractères)'
+          : 'Transcription reçue via $modeUsed (${transcript.length} caractères)',
+      level: PublishAiTraceLevel.success,
+    );
+
+    return transcript;
+  }
+
+  Future<void> _applyPublishDraftFromTranscript(String transcript) async {
+    _latestRecognizedTranscript = transcript;
+    _appendPublishAiTrace(
+      'draft_local',
+      'Pré-remplissage local depuis la transcription (${transcript.length} caractères)',
+    );
+    _applyFastDraftFromTranscript(transcript);
+
+    _appendPublishAiTrace(
+      'draft_remote',
+      'Appel generateOfferDraft depuis la transcription',
+    );
+    final draft = await _aiService.generateOfferDraft(text: transcript);
+    _appendPublishAiTrace(
+      'draft_remote',
+      'Réponse generateOfferDraft reçue',
+      level: draft['success'] == true
+          ? PublishAiTraceLevel.success
+          : PublishAiTraceLevel.warning,
+    );
+
+    if (!mounted) return;
+
+    if (draft['success'] == true) {
+      _applyDraftToForm(draft);
+      _appendPublishAiTrace(
+        'draft_remote',
+        'Champs du formulaire remplis par le draft IA',
+        level: PublishAiTraceLevel.success,
+      );
+      showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
+      return;
+    }
+
+    final code = (draft['code'] ?? '').toString();
+    throw Exception(
+      code == 'deadline-exceeded'
+          ? 'Connexion lente, réessaie.'
+          : (draft['error'] ?? 'Erreur IA inconnue').toString(),
+    );
+  }
+
+  /// Bouton micro: utiliser le flux audio classique, qui traite l'audio au stop
+  /// et remplit les champs via le pipeline STT + draft.
+
+  final _formKey = GlobalKey<FormState>();
+  final ScrollController _scrollController = ScrollController();
+
+  bool _isUrgent = false;
+
+  // ✅ Analytics
+  // late final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
+  /// ✅ Enregistre la publication d'une offre
+  Future<void> _logOfferPublished({
+    required String offerId,
+    required String title,
+    required String category,
+    required String? budget,
+    required String budgetType,
+  }) async {
+    try {
+      /*
+      await _analytics.logEvent(
+        name: 'ecommerce_purchase',
+        parameters: {
+          'value': (budget != null && budget.isNotEmpty)
+              ? double.tryParse(budget) ?? 0.0
+              : 0.0,
+          'currency': 'EUR',
+          'transaction_id': offerId,
+          'items': [
+            {
+              'item_id': offerId,
+              'item_name': title,
+              'item_category': category,
+            },
+          ],
+        },
+      );
+
+      // ✅ Event personnalisé supplémentaire
+      await _analytics.logEvent(
+        name: 'offer_published',
+        parameters: {
+          'offer_id': offerId,
+          'title': title,
+          'category': category,
+          'budget_type': budgetType,
+          'has_photos': _selectedPhotos.isNotEmpty,
+          'photo_count': _selectedPhotos.length,
+          'is_urgent': _isUrgent,
+        },
+      );
+      */
+    } catch (e) {
+      debugPrint('[Analytics] logOfferPublished error: $e');
+    }
+  }
+
+  // Champs texte
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _postalCodeController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _budgetController = TextEditingController();
+
+  // Indicatif téléphonique sélectionné
+  String _selectedPhoneCountryCode = '+33';
+
+  // Catégories / sous-catégories
+  String? _category;
+  String? _selectedSubCategory;
+
+  List<String> get _categories =>
+      kCategorySubcategories.keys.toList(); // Map<String, List<String>>
+
+  // Budget: type (fixe / à négocier)
+  final List<String> _budgetTypes = const ['Fixe', 'À négocier'];
+  String _budgetType = 'Fixe';
+
+  // Délai pour effectuer la mission
+  final List<String> _missionDelayOptions = const [
+    'Urgent',
+    'Dans la journée',
+    'Demain',
+    'Sous 48h',
+    'Cette semaine',
+    'À convenir',
+  ];
+  String? _missionDelay;
+
+  // Photos marketplace
+  final List<XFile> _selectedPhotos = [];
+  final List<Uint8List?> _selectedPhotoBytes = [];
+  final List<String> _uploadedPhotoUrls = [];
+
+  final FirebaseFunctions _functions = prestoFirebaseFunctions;
+
+  // Autocomplétion villes
+  List<CityRecord> _citySuggestions = [];
+  int _highlightedIndex = -1;
+
+  // Région / département (optionnel à exploiter dans le futur)
+  String? _selectedRegionCode;
+  String? _selectedDeptCode;
+
+  bool _isSubmitting = false;
+  bool _isAnalyzing = false;
+  bool _isListening = false;
+
+  bool _attemptedSubmit = false; // affiche erreurs après tentative
+  bool _publishLocked = false; // lock après tentative invalide
+  bool _canPublish = false;
+  String _latestRecognizedTranscript = '';
+  bool _isApplyingProgrammaticPublishUpdate = false;
+  bool _titleEditedByUser = false;
+  bool _descriptionEditedByUser = false;
+  bool _locationEditedByUser = false;
+  bool _postalCodeEditedByUser = false;
+  bool _categoryEditedByUser = false;
+  bool _delayEditedByUser = false;
+  bool _budgetEditedByUser = false;
+  final List<PublishAiTraceEntry> _publishAiTraceEntries =
+      <PublishAiTraceEntry>[];
+  final ValueNotifier<int> _publishAiTraceVersion = ValueNotifier<int>(0);
+  bool _publishAiTraceDisposed = false;
+  int _publishAiTraceAttempt = 0;
+  String? _shakingPublishFieldId;
+  int _publishShakeTick = 0;
+
+  final GlobalKey _titleFieldKey = GlobalKey();
+  final GlobalKey _categoryFieldKey = GlobalKey();
+  final GlobalKey _descriptionFieldKey = GlobalKey();
+  final GlobalKey _cityFieldKey = GlobalKey();
+  final GlobalKey _phoneFieldKey = GlobalKey();
+  final GlobalKey _delayFieldKey = GlobalKey();
+  final GlobalKey _budgetFieldKey = GlobalKey();
+
+  // Service IA structuré pour le formulaire publier
+  final AiDraftService _aiService = AiDraftService();
+  final ListingAudioAiService _listingAudioAiService = ListingAudioAiService();
+  final AdminAccessResolver _publishAdminAccessResolver = AdminAccessResolver();
+  final AudioRecorder _recorder = AudioRecorder();
+  final WebAudioRecorder _webRec = WebAudioRecorder();
+  String? _recordingPath;
+  // Toujours actif (améliore la qualité via Google STT côté serveur)
+  final bool _useCloudStt = true;
+  int _adminAudioRuntimeAccessState = 0;
+  String _adminAudioRuntimeMode = 'HYBRID';
+  String _adminAudioRuntimeLabel = 'Mode serveur';
+  String _adminAudioRuntimeDetail = 'En attente de verification admin';
+
+  void _runWithoutMarkingUserEdits(VoidCallback action) {
+    final previous = _isApplyingProgrammaticPublishUpdate;
+    _isApplyingProgrammaticPublishUpdate = true;
+    try {
+      action();
+    } finally {
+      _isApplyingProgrammaticPublishUpdate = previous;
+    }
+  }
+
+  void _notifyPublishAiTraceChanged() {
+    if (_publishAiTraceDisposed) return;
+    _publishAiTraceVersion.value++;
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _resetPublishAiTrace(String flowLabel) {
+    _publishAiTraceAttempt += 1;
+    _publishAiTraceEntries
+      ..clear()
+      ..add(
+        PublishAiTraceEntry(
+          timestamp: DateTime.now(),
+          level: PublishAiTraceLevel.info,
+          stage: 'start',
+          detail: 'Essai #$_publishAiTraceAttempt lance via $flowLabel',
+        ),
+      );
+    _notifyPublishAiTraceChanged();
+  }
+
+  void _appendPublishAiTrace(
+    String stage,
+    String detail, {
+    PublishAiTraceLevel level = PublishAiTraceLevel.info,
+  }) {
+    if (_publishAiTraceEntries.length >= 120) {
+      _publishAiTraceEntries.removeAt(0);
+    }
+    _publishAiTraceEntries.add(
+      PublishAiTraceEntry(
+        timestamp: DateTime.now(),
+        level: level,
+        stage: stage,
+        detail: detail,
+      ),
+    );
+    _notifyPublishAiTraceChanged();
+  }
+
+  void _clearPublishAiTrace() {
+    _publishAiTraceEntries.clear();
+    _notifyPublishAiTraceChanged();
+  }
+
+  String _publishAiDebugValue(Object? value) {
+    if (value == null) return '-';
+    if (value is bool) return value ? 'yes' : 'no';
+    final text = value.toString().trim();
+    return text.isEmpty ? '-' : text;
+  }
+
+  void _appendAdminAccessDiagnosticTrace(
+    String stage,
+    Map<String, dynamic> payload, {
+    PublishAiTraceLevel level = PublishAiTraceLevel.info,
+  }) {
+    final debug = payload['debug'] is Map
+        ? Map<String, dynamic>.from(payload['debug'] as Map)
+        : const <String, dynamic>{};
+    final parts = <String>[
+      'uid=${_publishAiDebugValue(payload['uid'])}',
+      'isAdmin=${_publishAiDebugValue(payload['isAdmin'])}',
+      'source=${_publishAiDebugValue(payload['source'])}',
+    ];
+
+    if (debug.isNotEmpty) {
+      parts.addAll(<String>[
+        'tokenAdmin=${_publishAiDebugValue(debug['tokenHasAdmin'])}',
+        'userDoc=${_publishAiDebugValue(debug['userDocExists'])}',
+        'userAdmin=${_publishAiDebugValue(debug['userHasAdmin'])}',
+        'adminDoc=${_publishAiDebugValue(debug['adminDocExists'])}',
+        'adminEnabled=${_publishAiDebugValue(debug['adminDocEnabled'])}',
+      ]);
+    }
+
+    _appendPublishAiTrace(stage, parts.join(' | '), level: level);
+  }
+
+  void _appendAdminAccessStateTrace(
+    String stage,
+    AdminAccessState state, {
+    PublishAiTraceLevel level = PublishAiTraceLevel.info,
+  }) {
+    final parts = <String>[
+      'uid=${_publishAiDebugValue(state.uid)}',
+      'effectiveAdmin=${_publishAiDebugValue(state.effectiveIsAdmin)}',
+      'source=${_publishAiDebugValue(state.sourceOfTruth)}',
+      'tokenAdmin=${_publishAiDebugValue(state.tokenHasAdmin)}',
+      'profileAdmin=${_publishAiDebugValue(state.profileHasAdmin)}',
+      'serverOk=${_publishAiDebugValue(state.serverCheckSucceeded)}',
+      'serverAdmin=${_publishAiDebugValue(state.serverIsAdmin)}',
+    ];
+
+    if ((state.serverErrorCode ?? '').trim().isNotEmpty) {
+      parts.add('serverError=${_publishAiDebugValue(state.serverErrorCode)}');
+    }
+
+    _appendPublishAiTrace(stage, parts.join(' | '), level: level);
+  }
+
+  String _publishAdminRuntimeDetail(AdminAccessState state) {
+    if (state.serverCheckSucceeded && state.serverIsAdmin == true) {
+      return 'Accès admin confirmé';
+    }
+    if (state.effectiveIsAdmin) {
+      final source = state.sourceOfTruth.trim().isEmpty
+          ? 'token/profil'
+          : state.sourceOfTruth;
+      return 'Accès admin confirmé via $source';
+    }
+    if ((state.serverErrorMessage ?? '').trim().isNotEmpty) {
+      return state.serverErrorMessage!.trim();
+    }
+    if ((state.serverErrorCode ?? '').trim().isNotEmpty) {
+      return 'Vérification admin indisponible (${state.serverErrorCode})';
+    }
+    return 'Accès admin non confirmé';
+  }
+
+  String _formatPublishAiTraceTime(DateTime value) {
+    String two(int v) => v.toString().padLeft(2, '0');
+    String three(int v) => v.toString().padLeft(3, '0');
+    return '${two(value.hour)}:${two(value.minute)}:${two(value.second)}.${three(value.millisecond)}';
+  }
+
+  IconData _iconForPublishAiTraceLevel(PublishAiTraceLevel level) {
+    switch (level) {
+      case PublishAiTraceLevel.success:
+        return Icons.check_circle_rounded;
+      case PublishAiTraceLevel.warning:
+        return Icons.warning_amber_rounded;
+      case PublishAiTraceLevel.error:
+        return Icons.error_rounded;
+      case PublishAiTraceLevel.info:
+        return Icons.radio_button_checked_rounded;
+    }
+  }
+
+  Color _colorForPublishAiTraceLevel(PublishAiTraceLevel level) {
+    switch (level) {
+      case PublishAiTraceLevel.success:
+        return const Color(0xFF2E7D32);
+      case PublishAiTraceLevel.warning:
+        return const Color(0xFFF9A825);
+      case PublishAiTraceLevel.error:
+        return const Color(0xFFC62828);
+      case PublishAiTraceLevel.info:
+        return kPrestoBlue;
+    }
+  }
+
+  String _currentPublishAiRuntimeState() {
+    if (_isListening) return 'Ecoute micro';
+    if (_isAnalyzing) return 'Analyse en cours';
+    return 'En attente';
+  }
+
+  void _logMicroIaDebug(String stage, String message) {
+    debugPrint('[MICIA][$stage] $message');
+  }
+
+  Future<MicroIaSecureContext?> _requirePublishAiSecureContext({
+    required String stage,
+    bool forceRefreshToken = false,
+    bool showUserMessage = true,
+  }) async {
+    try {
+      final secureContext = await MicroIaService.prepareSecureCallableContext(
+        forceRefreshToken: forceRefreshToken,
+      );
+      _appendPublishAiTrace(
+        'auth',
+        'Session OK uid=${secureContext.uid} token=ok appcheck=${secureContext.hasAppCheckToken ? 'ok' : 'missing'}',
+        level: PublishAiTraceLevel.success,
+      );
+      _logMicroIaDebug(
+        'AUTH',
+        'uid=${secureContext.uid} email=${secureContext.email ?? ''} stage=$stage',
+      );
+      _logMicroIaDebug('TOKEN', 'fetched=yes stage=$stage');
+      _logMicroIaDebug(
+        'APPCHECK',
+        'token=${secureContext.hasAppCheckToken ? 'yes' : 'no'} stage=$stage',
+      );
+      return secureContext;
+    } on MicroIaClientAuthException catch (error) {
+      _appendPublishAiTrace(
+        'auth',
+        error.message,
+        level: PublishAiTraceLevel.error,
+      );
+      _logMicroIaDebug('AUTH', 'user=null code=${error.code} stage=$stage');
+      _logMicroIaDebug('TOKEN', 'fetched=no stage=$stage');
+      if (showUserMessage && mounted) {
+        showSuccessSnackBar(context, error.message);
+      }
+      return null;
+    } catch (error) {
+      final message = _formatMicroIaRuntimeError(error);
+      _appendPublishAiTrace(
+        'auth',
+        message,
+        level: PublishAiTraceLevel.error,
+      );
+      _logMicroIaDebug('AUTH', 'unexpected_error stage=$stage err=$message');
+      if (showUserMessage && mounted) {
+        showSuccessSnackBar(context, message);
+      }
+      return null;
+    }
+  }
+
+  String _adminAudioModeLabel(String mode) {
+    switch (mode.toUpperCase()) {
+      case 'GOOGLE_ONLY':
+        return 'Google STT';
+      case 'WHISPER_ONLY':
+        return 'Whisper';
+      case 'HYBRID':
+      default:
+        return 'Hybride';
+    }
+  }
+
+  String _classicAdminAudioRuntimeDetail() {
+    switch (_adminAudioRuntimeMode.toUpperCase()) {
+      case 'GOOGLE_ONLY':
+        return 'Micro classique -> transcription Google STT uniquement';
+      case 'WHISPER_ONLY':
+        return 'Micro classique -> transcription Whisper uniquement';
+      case 'HYBRID':
+      default:
+        return 'Micro classique -> Google STT puis nettoyage IA, avec fallback Whisper/Google';
+    }
+  }
+
+  Future<void> _refreshAdminAudioRuntimeAccess() async {
+    final user = await _resolveSignedInUser();
+    if (user == null) {
+      _appendPublishAiTrace(
+        'admin_check',
+        'Aucun utilisateur FirebaseAuth disponible pour la verification admin',
+        level: PublishAiTraceLevel.warning,
+      );
+      if (!mounted) return;
+      setState(() {
+        _adminAudioRuntimeAccessState = 0;
+      });
+      return;
+    }
+
+    try {
+      final accessState = await _publishAdminAccessResolver.resolveAdminAccess(
+        forceRefresh: true,
+      );
+      _appendAdminAccessStateTrace(
+        'admin_check',
+        accessState,
+        level: accessState.effectiveIsAdmin
+            ? PublishAiTraceLevel.success
+            : PublishAiTraceLevel.warning,
+      );
+
+      if (!accessState.effectiveIsAdmin) {
+        if (!mounted) return;
+        setState(() {
+          _adminAudioRuntimeAccessState = -1;
+          if (_adminAudioRuntimeLabel == 'Mode serveur') {
+            _adminAudioRuntimeDetail = _publishAdminRuntimeDetail(accessState);
+          }
+        });
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _adminAudioRuntimeAccessState = 1;
+        if (_adminAudioRuntimeLabel == 'Mode serveur') {
+          _adminAudioRuntimeDetail = _publishAdminRuntimeDetail(accessState);
+        }
+      });
+      unawaited(_adminAudioRuntimeStore.enableCloudSync());
+
+      try {
+        await FirebaseAuth.instance.currentUser?.getIdToken(true);
+        final configCallable = _functions.httpsCallable(
+          'adminGetMicroIaConfig',
+          options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+        );
+        final configRes = await configCallable.call<dynamic>({});
+        final data = Map<String, dynamic>.from(configRes.data as Map);
+        final mode = (data['mode'] ?? 'HYBRID').toString().toUpperCase();
+        _appendPublishAiTrace(
+          'admin_config',
+          'mode=${_publishAiDebugValue(mode)} source=${_publishAiDebugValue(data['source'])}',
+          level: PublishAiTraceLevel.success,
+        );
+
+        if (!mounted) return;
+        setState(() {
+          _adminAudioRuntimeMode = mode;
+          if (_adminAudioRuntimeLabel == 'Mode serveur') {
+            _adminAudioRuntimeDetail =
+                'Mode configure: ${_adminAudioModeLabel(mode)}';
+          }
+        });
+        unawaited(_adminAudioRuntimeStore.enableCloudSync());
+        _adminAudioRuntimeStore.updateConfiguredMode(mode);
+      } on FirebaseFunctionsException catch (e) {
+        _appendPublishAiTrace(
+          'admin_config',
+          'Erreur config code=${e.code} message=${_publishAiDebugValue(e.message)}',
+          level: PublishAiTraceLevel.warning,
+        );
+        if (!mounted) return;
+        setState(() {
+          _adminAudioRuntimeAccessState = 1;
+          if (_adminAudioRuntimeLabel == 'Mode serveur') {
+            _adminAudioRuntimeDetail =
+                '${_publishAdminRuntimeDetail(accessState)}. Config serveur indisponible';
+          }
+        });
+      } catch (error) {
+        _appendPublishAiTrace(
+          'admin_config',
+          'Erreur config inattendue: ${_publishAiDebugValue(error)}',
+          level: PublishAiTraceLevel.warning,
+        );
+      }
+    } on FirebaseFunctionsException catch (e) {
+      _appendPublishAiTrace(
+        'admin_check',
+        'Erreur callable code=${e.code} message=${_publishAiDebugValue(e.message)} uid=${user.uid}',
+        level: PublishAiTraceLevel.error,
+      );
+      if ((e.code == 'permission-denied' || e.code == 'unauthenticated') &&
+          user.uid.isNotEmpty) {
+        await _ensureProtectedSessionReady(forceRefreshToken: true);
+        if (!mounted) return;
+        try {
+          final retryCallable = _functions.httpsCallable(
+            'getMyAdminAccessStatus',
+            options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
+          );
+          final retryRes = await retryCallable.call<dynamic>({});
+          final retryData = Map<String, dynamic>.from(retryRes.data as Map);
+          _appendAdminAccessDiagnosticTrace(
+            'admin_retry',
+            retryData,
+            level: retryData['isAdmin'] == true
+                ? PublishAiTraceLevel.success
+                : PublishAiTraceLevel.warning,
+          );
+          if (retryData['isAdmin'] != true) {
+            throw FirebaseFunctionsException(
+              code: 'permission-denied',
+              message: 'Accès admin non confirmé après nouvelle tentative.',
+            );
+          }
+          if (!mounted) return;
+          setState(() {
+            _adminAudioRuntimeAccessState = 1;
+            if (_adminAudioRuntimeLabel == 'Mode serveur') {
+              _adminAudioRuntimeDetail = 'Accès admin confirmé';
+            }
+          });
+          return;
+        } on FirebaseFunctionsException {
+          // Laisse la gestion standard ci-dessous.
+        } catch (_) {
+          // Laisse la gestion standard ci-dessous.
+        }
+      }
+      if (!mounted) return;
+      if (e.code == 'permission-denied' || e.code == 'unauthenticated') {
+        setState(() {
+          _adminAudioRuntimeAccessState = -1;
+          if (_adminAudioRuntimeLabel == 'Mode serveur') {
+            _adminAudioRuntimeDetail =
+                'Vérification admin serveur indisponible. Recharge la session.';
+          }
+        });
+      }
+    } catch (_) {
+      _appendPublishAiTrace(
+        'admin_check',
+        'Erreur inattendue pendant la verification admin',
+        level: PublishAiTraceLevel.error,
+      );
+      if (!mounted) return;
+      setState(() {
+        _adminAudioRuntimeAccessState = -1;
+        if (_adminAudioRuntimeLabel == 'Mode serveur') {
+          _adminAudioRuntimeDetail =
+              'Vérification admin impossible pour cette session';
+        }
+      });
+    }
+  }
+
+  void _rememberAdminAudioRuntime({
+    required String flowKey,
+    required String label,
+    required String detail,
+    String status = 'pending',
+    String? backendModeUsed,
+  }) {
+    _adminAudioRuntimeLabel = label;
+    _adminAudioRuntimeDetail = detail;
+    _adminAudioRuntimeStore.recordRuntime(
+      flowKey: flowKey,
+      label: label,
+      detail: detail,
+      status: status,
+      backendModeUsed: backendModeUsed,
+    );
+  }
+
+  Widget _buildAdminAudioRuntimeIndicator() {
+    if (_adminAudioRuntimeAccessState != 1) {
+      return const SizedBox.shrink();
+    }
+
+    final accent = _isListening
+        ? kPrestoOrange
+        : (_isAnalyzing ? kPrestoBlue : const Color(0xFF455A64));
+    final stateLabel =
+        _isListening ? 'LIVE' : (_isAnalyzing ? 'ANALYSE' : 'ADMIN');
+
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 520),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: accent.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: accent.withOpacity(0.24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.tune_rounded, size: 16, color: accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _adminAudioRuntimeLabel,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: accent,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.75),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: accent.withOpacity(0.24)),
+                  ),
+                  child: Text(
+                    stateLabel,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: accent,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              _adminAudioRuntimeDetail,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: accent.withOpacity(0.2)),
+                  ),
+                  child: Text(
+                    'Mode serveur: ${_adminAudioModeLabel(_adminAudioRuntimeMode)}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: accent.withOpacity(0.2)),
+                  ),
+                  child: Text(
+                    'Etat: ${_currentPublishAiRuntimeState()}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showPublishAiTraceDialog() async {
+    if (!mounted) return;
+    final overlayTheme = context.prestoOverlayTheme;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return ValueListenableBuilder<int>(
+          valueListenable: _publishAiTraceVersion,
+          builder: (context, _, __) {
+            final entries = List<PublishAiTraceEntry>.unmodifiable(
+              _publishAiTraceEntries,
+            );
+
+            return Dialog(
+              backgroundColor: overlayTheme.surfaceColor,
+              surfaceTintColor: overlayTheme.surfaceTintColor,
+              insetPadding: const EdgeInsets.all(16),
+              shape: overlayTheme.dialogShape,
+              child: ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxWidth: 760, maxHeight: 680),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Diagnostic micro IA',
+                              style: kPrestoSectionTitleStyle,
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Fermer',
+                            onPressed: () => Navigator.of(dialogContext).pop(),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: kPrestoBlue.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: kPrestoBlue.withOpacity(0.18),
+                              ),
+                            ),
+                            child: Text(
+                              'Etat: ${_currentPublishAiRuntimeState()}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: kPrestoBlue,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.04),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              'Entrees: ${entries.length}',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (_latestRecognizedTranscript.trim().isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.035),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.black12),
+                          ),
+                          child: Text(
+                            'Dernière transcription: ${_latestRecognizedTranscript.trim()}',
+                            style: const TextStyle(fontSize: 12, height: 1.35),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          TextButton.icon(
+                            onPressed:
+                                entries.isEmpty ? null : _clearPublishAiTrace,
+                            icon: const Icon(Icons.delete_outline_rounded),
+                            label: const Text('Effacer'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: entries.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'Aucun diagnostic pour le moment.',
+                                  style: TextStyle(color: Colors.black54),
+                                ),
+                              )
+                            : ListView.separated(
+                                itemCount: entries.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 8),
+                                itemBuilder: (context, index) {
+                                  final entry = entries[index];
+                                  final color = _colorForPublishAiTraceLevel(
+                                    entry.level,
+                                  );
+                                  return Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: color.withOpacity(0.06),
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: color.withOpacity(0.18),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 2),
+                                          child: Icon(
+                                            _iconForPublishAiTraceLevel(
+                                                entry.level),
+                                            color: color,
+                                            size: 18,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                '${_formatPublishAiTraceTime(entry.timestamp)}  ${entry.stage}',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                  color: color,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                entry.detail,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  height: 1.35,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPublishAiTraceActions() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        TextButton.icon(
+          onPressed: _showPublishAiTraceDialog,
+          icon: const Icon(Icons.bug_report_outlined),
+          label: const Text('Diagnostic IA'),
+        ),
+        if (_publishAiTraceEntries.isNotEmpty)
+          TextButton(
+            onPressed: _clearPublishAiTrace,
+            child: const Text('Effacer'),
+          ),
+      ],
+    );
+  }
+
+  void _setControllerText(TextEditingController controller, String value) {
+    if (controller.text == value) return;
+    _runWithoutMarkingUserEdits(() {
+      controller.value = controller.value.copyWith(
+        text: value,
+        selection: TextSelection.collapsed(offset: value.length),
+        composing: TextRange.empty,
+      );
+    });
+  }
+
+  void _handlePublishTitleChanged() {
+    if (_isApplyingProgrammaticPublishUpdate) return;
+    _titleEditedByUser = true;
+  }
+
+  void _handlePublishDescriptionChanged() {
+    if (_isApplyingProgrammaticPublishUpdate) return;
+    _descriptionEditedByUser = true;
+  }
+
+  void _handlePublishLocationChanged() {
+    if (_isApplyingProgrammaticPublishUpdate) return;
+    _locationEditedByUser = true;
+  }
+
+  void _handlePublishPostalCodeChanged() {
+    if (_isApplyingProgrammaticPublishUpdate) return;
+    _postalCodeEditedByUser = true;
+  }
+
+  void _handlePublishBudgetChanged() {
+    if (_isApplyingProgrammaticPublishUpdate) return;
+    _budgetEditedByUser = true;
+  }
+
+  String? _normalizeDraftMissionDelay(String? rawUrgency) {
+    final urgency = (rawUrgency ?? '').trim().toLowerCase();
+    switch (urgency) {
+      case 'immediat':
+        return 'Urgent';
+      case '24h':
+        return 'Dans la journée';
+      case '7j':
+        return 'Cette semaine';
+      case 'flexible':
+        return 'À convenir';
+      default:
+        return null;
+    }
+  }
+
+  bool _transcriptMentionsBudget(String transcript) {
+    final lower = transcript.toLowerCase();
+    return RegExp(r'\b\d{2,5}(?:[.,]\d{1,2})?\s*(€|euros?)\b')
+            .hasMatch(lower) ||
+        lower.contains('budget') ||
+        lower.contains('tarif') ||
+        lower.contains('prix') ||
+        lower.contains('à négocier') ||
+        lower.contains('a negocier');
+  }
+
+  bool _transcriptMentionsUrgency(String transcript) {
+    final lower = transcript.toLowerCase();
+    return lower.contains('urgent') ||
+        lower.contains('urgence') ||
+        lower.contains("aujourd'hui") ||
+        lower.contains('aujourd hui') ||
+        lower.contains('demain') ||
+        lower.contains('ce soir') ||
+        lower.contains('48h') ||
+        lower.contains('cette semaine') ||
+        lower.contains('rapidement') ||
+        lower.contains('dès que possible') ||
+        lower.contains('des que possible') ||
+        lower.contains('immédiat') ||
+        lower.contains('immediat');
+  }
+
+  String? _extractMissionDelayFromTranscript(String transcript) {
+    final lower = transcript.toLowerCase();
+
+    if (lower.contains('urgent') ||
+        lower.contains('urgence') ||
+        lower.contains('immédiat') ||
+        lower.contains('immediat')) {
+      return 'Urgent';
+    }
+    if (lower.contains("aujourd'hui") ||
+        lower.contains('aujourd hui') ||
+        lower.contains('dans la journée') ||
+        lower.contains('dans la journee') ||
+        lower.contains('24h')) {
+      return 'Dans la journée';
+    }
+    if (lower.contains('demain')) {
+      return 'Demain';
+    }
+    if (lower.contains('48h') || lower.contains('sous 48h')) {
+      return 'Sous 48h';
+    }
+    if (lower.contains('cette semaine') ||
+        lower.contains('dans la semaine') ||
+        lower.contains('7 jours') ||
+        lower.contains('7j')) {
+      return 'Cette semaine';
+    }
+    if (lower.contains('à convenir') ||
+        lower.contains('a convenir') ||
+        lower.contains('quand vous pouvez') ||
+        lower.contains('quand tu peux') ||
+        lower.contains('flexible') ||
+        lower.contains('pas urgent')) {
+      return 'À convenir';
+    }
+
+    return null;
+  }
+
+  bool _transcriptRequestsNegotiatedBudget(String transcript) {
+    final lower = transcript.toLowerCase();
+    return lower.contains('à négocier') ||
+        lower.contains('a negocier') ||
+        lower.contains('à discuter') ||
+        lower.contains('a discuter') ||
+        lower.contains('prix flexible') ||
+        lower.contains('budget flexible');
+  }
+
+  double? _extractBudgetAmountFromTranscript(String transcript) {
+    final matches = RegExp(
+      r'\b(\d{2,5}(?:[.,]\d{1,2})?)\s*(€|euros?)\b',
+      caseSensitive: false,
+    ).allMatches(transcript);
+
+    for (final match in matches) {
+      final raw = (match.group(1) ?? '').replaceAll(',', '.');
+      final value = double.tryParse(raw);
+      if (value != null && value > 0) {
+        return value;
+      }
+    }
+
+    return null;
+  }
+
+  String _buildRichDraftDescription(Map<String, dynamic> draft) {
+    final shortDescription =
+        ((draft['description_courte'] ?? draft['description']) as String? ?? '')
+            .trim();
+    final details = (draft['details'] is List)
+        ? (draft['details'] as List)
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList()
+        : const <String>[];
+    final availabilities =
+        ((draft['disponibilites'] ?? '') as String?)?.trim() ?? '';
+
+    final lines = <String>[];
+    if (shortDescription.isNotEmpty) {
+      lines.add(shortDescription);
+    }
+    if (details.isNotEmpty) {
+      lines.addAll(details.map((detail) => '- $detail'));
+    }
+    if (availabilities.isNotEmpty) {
+      lines.add('Disponibilités : $availabilities');
+    }
+    return lines.join('\n').trim();
+  }
+
+  void _applyRichDraftToForm(Map<String, dynamic> draft) {
+    final title = (draft['title'] ?? draft['titre'] ?? '').toString().trim();
+    final description = _buildRichDraftDescription(draft);
+    final category = _resolvePublishCategoryLabel(
+      (draft['category'] ?? draft['categorie'] ?? '').toString(),
+    );
+    final missionDelay = _normalizeDraftMissionDelay(
+      (draft['urgence'] ?? '').toString(),
+    );
+    final budget = draft['budget'] is Map
+        ? Map<String, dynamic>.from(draft['budget'] as Map)
+        : const <String, dynamic>{};
+    final budgetMin = budget['min'];
+    final budgetMax = budget['max'];
+    final parsedMin = budgetMin is num ? budgetMin.toDouble() : null;
+    final parsedMax = budgetMax is num ? budgetMax.toDouble() : null;
+    final inferredBudget = parsedMin ?? parsedMax;
+    final rawBudgetType = (budget['type'] ?? draft['budgetType'] ?? '')
+        .toString()
+        .trim()
+        .toLowerCase();
+    final wantsNegotiation = rawBudgetType == 'a_negocier' ||
+        rawBudgetType == 'à négocier' ||
+        rawBudgetType == 'negotiable';
+
+    setState(() {
+      if (!_titleEditedByUser && title.isNotEmpty) {
+        _setControllerText(_titleController, title);
+      }
+      if (!_descriptionEditedByUser && description.isNotEmpty) {
+        _setControllerText(_descriptionController, description);
+      }
+      if (!_categoryEditedByUser && category != null && category.isNotEmpty) {
+        _category = category;
+        _selectedSubCategory = null;
+      }
+      if (!_delayEditedByUser && missionDelay != null) {
+        _missionDelay = missionDelay;
+        _isUrgent = missionDelay == 'Urgent';
+      }
+      if (!_budgetEditedByUser) {
+        if (inferredBudget != null) {
+          _budgetType = 'Fixe';
+          final formattedBudget = inferredBudget % 1 == 0
+              ? inferredBudget.toInt().toString()
+              : inferredBudget.toStringAsFixed(2);
+          _setControllerText(_budgetController, formattedBudget);
+        } else if (wantsNegotiation) {
+          _budgetType = 'À négocier';
+          _setControllerText(_budgetController, '');
+        }
+      }
+    });
+
+    _applyDetectedCityData(
+      city: (draft['city'] ?? draft['ville'] ?? '').toString(),
+      postalCode: (draft['postalCode'] ?? '').toString(),
+    );
+    _applyKeywordCategoryPairFromText('$title\n$description');
+  }
+
+  // ✅ Extraction rapide CP (FR + DROM) depuis la transcription
+  String? _extractPostalCodeFromTranscript(String transcript) {
+    final t = transcript;
+    // 5 chiffres métropole + 97x/98x (DROM/COM) acceptés aussi (souvent 5 chiffres au final)
+    final m = RegExp(r'\b(97[0-9]{3}|98[0-9]{3}|[0-9]{5})\b').firstMatch(t);
+    return m?.group(1);
+  }
+
+  // ✅ Extraction ville: soit via CP (fiable), soit via motif "à <ville>"
+  CityRecord? _extractCityRecordFromTranscript(String transcript,
+      {String? cp}) {
+    if (cp != null && cp.trim().isNotEmpty) {
+      return CitySearch.instance.pickBestForPostalCode(cp.trim());
+    }
+
+    // ✅ FIX: raw string + apostrophes => utiliser guillemets doubles
+    final m = RegExp(
+      r"\b(?:a|à|sur|vers|près de|proche de)\s+([A-Za-zÀ-ÖØ-öø-ÿ'’\-\s]{2,40})\b",
+      caseSensitive: false,
+    ).firstMatch(transcript);
+
+    final rawCity = m?.group(1)?.trim();
+    if (rawCity == null || rawCity.isEmpty) return null;
+
+    final candidates = CitySearch.instance.search(rawCity, limit: 1);
+    return candidates.isNotEmpty ? candidates.first : null;
+  }
+
+  String? _resolvePublishCategoryLabel(String? rawCategory) {
+    final canonical = canonicalizeOfferCategory(rawCategory);
+    if (canonical == null || canonical.trim().isEmpty) return null;
+
+    final normalizedCanonical = normalizeOfferText(canonical);
+    for (final category in _categories) {
+      if (normalizeOfferText(category) == normalizedCanonical) {
+        return category;
+      }
+    }
+    return null;
+  }
+
+  CityRecord? _resolveCanonicalCityRecord({
+    String? city,
+    String? postalCode,
+  }) {
+    final rawCity = (city ?? '').trim();
+    final rawPostalCode = (postalCode ?? '').trim();
+
+    if (rawPostalCode.isNotEmpty) {
+      final exactPostal =
+          CitySearch.instance.pickBestForPostalCode(rawPostalCode);
+      if (exactPostal != null) {
+        if (rawCity.isEmpty ||
+            normalizeOfferText(exactPostal.name) ==
+                normalizeOfferText(rawCity)) {
+          return exactPostal;
+        }
+
+        final cityMatches = CitySearch.instance.search(rawCity, limit: 10);
+        for (final candidate in cityMatches) {
+          if (candidate.cp == rawPostalCode) {
+            return candidate;
+          }
+        }
+      }
+    }
+
+    if (rawCity.isEmpty) return null;
+    final candidates = CitySearch.instance.search(rawCity, limit: 10);
+    if (candidates.isEmpty) return null;
+
+    if (rawPostalCode.isNotEmpty) {
+      for (final candidate in candidates) {
+        if (candidate.cp == rawPostalCode) {
+          return candidate;
+        }
+      }
+    }
+
+    return candidates.first;
+  }
+
+  void _canonicalizeLocationInputs() {
+    final best = _resolveCanonicalCityRecord(
+      city: _locationController.text,
+      postalCode: _postalCodeController.text,
+    );
+    if (best == null) return;
+
+    final sameCity = _locationController.text.trim() == best.name;
+    final samePostalCode = _postalCodeController.text.trim() == best.cp;
+    if (sameCity && samePostalCode) return;
+
+    _applyCity(best);
+  }
+
+  void _applyDetectedCityData({
+    String? city,
+    String? postalCode,
+  }) {
+    final rawCity = (city ?? '').trim();
+    final rawPostalCode = (postalCode ?? '').trim();
+
+    final best = _resolveCanonicalCityRecord(
+      city: rawCity,
+      postalCode: rawPostalCode,
+    );
+
+    if (best != null) {
+      _applyCity(best);
+      return;
+    }
+
+    setState(() {
+      if (!_locationEditedByUser && rawCity.isNotEmpty) {
+        _setControllerText(_locationController, rawCity);
+      }
+      if (!_postalCodeEditedByUser && rawPostalCode.isNotEmpty) {
+        _setControllerText(_postalCodeController, rawPostalCode);
+        final dept = departmentFromPostalCode(rawPostalCode);
+        if (dept != null && dept.isNotEmpty) {
+          _selectedDeptCode = dept;
+          _selectedPhoneCountryCode = _countryCodeForDept(dept);
+        }
+      }
+    });
+  }
+
+  void _applyKeywordCategoryPairFromText(String text) {
+    final match = resolvePublishCategoryPairFromText(text);
+    if (match == null) return;
+
+    final currentCategory = (_category ?? '').trim();
+    final currentSubCategory = (_selectedSubCategory ?? '').trim();
+    final sameCategory = currentCategory.isNotEmpty &&
+        normalizeOfferText(currentCategory) ==
+            normalizeOfferText(match.category);
+    final canSetCategory = !_categoryEditedByUser && currentCategory.isEmpty;
+    final canSetSubCategory = !_categoryEditedByUser &&
+        currentSubCategory.isEmpty &&
+        (canSetCategory || sameCategory);
+    final canSetTitle = !_titleEditedByUser &&
+        _titleController.text.trim().isEmpty &&
+        (match.suggestedTitle ?? '').trim().isNotEmpty;
+
+    if (!canSetCategory && !canSetSubCategory && !canSetTitle) {
+      return;
+    }
+
+    setState(() {
+      if (canSetTitle) {
+        _setControllerText(_titleController, match.suggestedTitle!.trim());
+      }
+
+      if (canSetCategory) {
+        _category = match.category;
+        _selectedSubCategory = null;
+      }
+
+      final effectiveCategory = (_category ?? '').trim();
+      final availableSubcategories =
+          kCategorySubcategories[match.category] ?? const <String>[];
+      if (currentSubCategory.isEmpty &&
+          normalizeOfferText(effectiveCategory) ==
+              normalizeOfferText(match.category) &&
+          availableSubcategories.contains(match.subCategory)) {
+        _selectedSubCategory = match.subCategory;
+      }
+    });
+  }
+
+  /// Remplissage immédiat (latence perçue ↓) dès que la transcription est prête.
+  /// L'IA pourra ensuite affiner et remplacer.
+  void _applyFastDraftFromTranscript(String transcript) {
+    final t = transcript.trim();
+    if (t.isEmpty) return;
+
+    if (!_descriptionEditedByUser) {
+      _setControllerText(_descriptionController, t);
+    }
+
+    if (!_titleEditedByUser) {
+      final firstLine = t.split('\n').first.trim();
+      final firstSentence = firstLine.split(RegExp(r'[.!?]')).first.trim();
+      final candidate = (firstSentence.isNotEmpty ? firstSentence : firstLine);
+
+      final title = candidate.length > 72
+          ? '${candidate.substring(0, 72).trim()}…'
+          : candidate;
+      if (title.isNotEmpty) {
+        _setControllerText(_titleController, title);
+      }
+    }
+
+    if (!_postalCodeEditedByUser) {
+      final cp = _extractPostalCodeFromTranscript(t);
+      if (cp != null && cp.isNotEmpty) {
+        _setControllerText(_postalCodeController, cp);
+      }
+    }
+
+    final effectiveCp = _postalCodeController.text.trim().isEmpty
+        ? null
+        : _postalCodeController.text.trim();
+
+    if (!_locationEditedByUser) {
+      final cityRec = _extractCityRecordFromTranscript(t, cp: effectiveCp);
+      if (cityRec != null) {
+        _setControllerText(_locationController, cityRec.name);
+
+        if (!_postalCodeEditedByUser &&
+            _postalCodeController.text.trim().isEmpty &&
+            cityRec.cp.isNotEmpty) {
+          _setControllerText(_postalCodeController, cityRec.cp);
+        }
+
+        // bonus cohérence UI: indicatif selon dept (déjà présent dans le code)
+        if (!mounted) return;
+        setState(() {
+          _selectedDeptCode = cityRec.dept;
+          _selectedRegionCode = cityRec.region;
+          _selectedPhoneCountryCode = _countryCodeForDept(cityRec.dept);
+        });
+      }
+    }
+
+    final inferredMissionDelay = _extractMissionDelayFromTranscript(t);
+    if (!_delayEditedByUser && inferredMissionDelay != null) {
+      setState(() {
+        _missionDelay = inferredMissionDelay;
+        _isUrgent = inferredMissionDelay == 'Urgent';
+      });
+    }
+
+    if (!_budgetEditedByUser) {
+      if (_transcriptRequestsNegotiatedBudget(t)) {
+        setState(() {
+          _budgetType = 'À négocier';
+          _setControllerText(_budgetController, '');
+        });
+      } else {
+        final inferredBudget = _extractBudgetAmountFromTranscript(t);
+        if (inferredBudget != null) {
+          final formattedBudget = inferredBudget % 1 == 0
+              ? inferredBudget.toInt().toString()
+              : inferredBudget.toStringAsFixed(2);
+          setState(() {
+            _budgetType = 'Fixe';
+            _setControllerText(_budgetController, formattedBudget);
+          });
+        }
+      }
+    }
+
+    _applyKeywordCategoryPairFromText(t);
+  }
+
+  /// Apply draft payload returned by the publish IA pipeline.
+  void _applyDraftToForm(Map<String, dynamic> draft) {
+    _applyRichDraftToForm(draft);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_adminAudioRuntimeStore.ensureInitialized());
+    unawaited(_loadMarketplacePhotoLimit());
+    unawaited(_prefillPublishPhoneFromProfileIfNeeded());
+    unawaited(_refreshAdminAudioRuntimeAccess());
+
+    _scrollController.addListener(() {
+      widget.onScroll?.call(_scrollController.offset);
+    });
+
+    _titleController.addListener(_recompute);
+    _titleController.addListener(_handlePublishTitleChanged);
+    _descriptionController.addListener(_recompute);
+    _descriptionController.addListener(_handlePublishDescriptionChanged);
+    _locationController.addListener(_recompute);
+    _locationController.addListener(_handlePublishLocationChanged);
+    _postalCodeController.addListener(_handlePublishPostalCodeChanged);
+    _phoneController.addListener(_recompute);
+    _budgetController.addListener(_recompute);
+    _budgetController.addListener(_handlePublishBudgetChanged);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
+  }
+
+  Future<void> _loadMarketplacePhotoLimit() async {
+    try {
+      await _marketplaceRemoteConfigService.initialize();
+      final configuredLimit = _marketplaceRemoteConfigService.listingMaxPhotos;
+      final normalizedLimit = configuredLimit < _minimumMaxListingPhotos
+          ? _minimumMaxListingPhotos
+          : configuredLimit > _publishPhotoHardLimit
+              ? _publishPhotoHardLimit
+              : configuredLimit;
+      if (!mounted || normalizedLimit == _maxListingPhotos) {
+        return;
+      }
+      setState(() {
+        _maxListingPhotos = normalizedLimit;
+      });
+    } catch (_) {
+      // Garde la valeur par défaut si la remote config n'est pas disponible.
+    }
+  }
+
+  int get _visiblePhotoTileCount {
+    if (_selectedPhotos.length >= _maxListingPhotos) {
+      return _maxListingPhotos;
+    }
+    return _selectedPhotos.length + 1;
+  }
+
+  bool _isValidPhoneFR(String raw) {
+    final sanitized = raw.replaceAll(RegExp(r'\s+'), '');
+    if (sanitized.isEmpty) return false;
+
+    if (sanitized.startsWith('+')) {
+      return RegExp(r'^\+[0-9]{8,15}$').hasMatch(sanitized);
+    }
+
+    return RegExp(r'^[0-9]{6,15}$').hasMatch(sanitized);
+  }
+
+  String _firstNonEmptyPublishPhone(
+    Map<String, dynamic>? data,
+    List<String> keys, {
+    List<String> fallbackValues = const <String>[],
+  }) {
+    if (data != null) {
+      for (final key in keys) {
+        final raw = data[key];
+        final value = raw?.toString().trim() ?? '';
+        if (value.isNotEmpty) {
+          return value;
+        }
+      }
+    }
+
+    for (final fallback in fallbackValues) {
+      final value = fallback.trim();
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+
+    return '';
+  }
+
+  void _applyPublishPhoneFromProfile(
+    String rawPhone, {
+    String? explicitCountryCode,
+  }) {
+    final trimmed = rawPhone.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+
+    final compact = trimmed.replaceAll(RegExp(r'\s+'), '');
+    final allDigits = compact.replaceAll(RegExp(r'\D'), '');
+
+    final normalizedExplicitCode = (explicitCountryCode ?? '').trim();
+    final knownCodes =
+        kPhoneCountryCodes.map((country) => country.code).toList();
+
+    String selectedCode = normalizedExplicitCode;
+    if (selectedCode.isEmpty || !knownCodes.contains(selectedCode)) {
+      for (final code in knownCodes) {
+        if (compact.startsWith(code)) {
+          selectedCode = code;
+          break;
+        }
+      }
+    }
+
+    if (selectedCode.isEmpty) {
+      selectedCode = _selectedPhoneCountryCode;
+    }
+    if (!knownCodes.contains(selectedCode)) {
+      selectedCode = '+33';
+    }
+
+    final codeDigits = selectedCode.replaceAll(RegExp(r'\D'), '');
+    var localDigits = allDigits;
+    if (codeDigits.isNotEmpty && allDigits.startsWith(codeDigits)) {
+      localDigits = allDigits.substring(codeDigits.length);
+    }
+
+    _selectedPhoneCountryCode = selectedCode;
+    _phoneController.text = localDigits.isNotEmpty ? localDigits : trimmed;
+  }
+
+  Future<void> _prefillPublishPhoneFromProfileIfNeeded() async {
+    if (_phoneController.text.trim().isNotEmpty) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final userRef =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+    try {
+      DocumentSnapshot<Map<String, dynamic>> doc;
+      try {
+        doc = await userRef
+            .get(const GetOptions(source: Source.server))
+            .timeout(const Duration(seconds: 5));
+      } catch (_) {
+        doc = await userRef
+            .get(const GetOptions(source: Source.cache))
+            .timeout(const Duration(seconds: 3));
+      }
+
+      final data = doc.data();
+      final rawPhone = _firstNonEmptyPublishPhone(
+        data,
+        const ['phone', 'phoneNumber', 'phone_number'],
+        fallbackValues: <String>[user.phoneNumber ?? ''],
+      );
+      final phoneCountryCode =
+          data == null ? null : data['phoneCountryCode']?.toString().trim();
+
+      if (rawPhone.isEmpty ||
+          !mounted ||
+          _phoneController.text.trim().isNotEmpty) {
+        return;
+      }
+
+      setState(() {
+        _applyPublishPhoneFromProfile(
+          rawPhone,
+          explicitCountryCode: phoneCountryCode,
+        );
+      });
+      _recompute();
+    } catch (error) {
+      debugPrint('[Publish] Préremplissage téléphone impossible: $error');
+    }
+  }
+
+  double? _parseBudget(String raw) {
+    final cleaned = raw.trim().replaceAll(' ', '').replaceAll(',', '.');
+    return double.tryParse(cleaned);
+  }
+
+  Widget _requiredLabel(String text) {
+    final theme = Theme.of(context);
+    final base = theme.inputDecorationTheme.labelStyle ??
+        theme.textTheme.bodyLarge ??
+        const TextStyle(fontSize: 16, color: Colors.black87);
+    final baseColor = base.color ?? Colors.black87;
+
+    return RichText(
+      text: TextSpan(
+        style: base.copyWith(color: baseColor),
+        children: [
+          TextSpan(text: text),
+          const TextSpan(
+            text: ' *',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _showAiPendingForController(TextEditingController controller) {
+    return _isAnalyzing && controller.text.trim().isEmpty;
+  }
+
+  bool get _showAiPendingForCategory {
+    return _isAnalyzing && (_category == null || _category!.trim().isEmpty);
+  }
+
+  Widget _withAiPendingOverlay({
+    required Widget child,
+    required bool showPending,
+    Alignment alignment = Alignment.centerRight,
+    EdgeInsets padding = const EdgeInsets.only(right: 42),
+  }) {
+    if (!showPending) return child;
+
+    return Stack(
+      children: [
+        child,
+        Positioned.fill(
+          child: IgnorePointer(
+            child: Align(
+              alignment: alignment,
+              child: Padding(
+                padding: padding,
+                child: const _FieldPendingDots(),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String? _validatePublishTitle(String? value) {
+    final trimmed = (value ?? '').trim();
+    if (trimmed.isEmpty) {
+      return 'Merci de saisir un titre';
+    }
+    if (trimmed.length < 10) {
+      return 'Le titre doit contenir au moins 10 caractères';
+    }
+    if (trimmed.length > 120) {
+      return 'Le titre doit contenir au maximum 120 caractères';
+    }
+    return null;
+  }
+
+  String? _validatePublishDescription(String? value) {
+    final trimmed = (value ?? '').trim();
+    if (trimmed.isEmpty) {
+      return 'Merci de décrire votre besoin';
+    }
+    if (trimmed.length < 30) {
+      return 'La description doit contenir au moins 30 caractères';
+    }
+    if (trimmed.length > 4000) {
+      return 'La description doit contenir au maximum 4000 caractères';
+    }
+    return null;
+  }
+
+  String? _validateCanonicalCity(String? value) {
+    final trimmed = (value ?? '').trim();
+    if (trimmed.isEmpty) {
+      return 'Merci de saisir une ville';
+    }
+
+    final best = _resolveCanonicalCityRecord(
+      city: trimmed,
+      postalCode: _postalCodeController.text,
+    );
+    if (best == null) {
+      return 'Choisissez une ville valide dans la liste';
+    }
+    return null;
+  }
+
+  String? _validatePostalCode(String? value) {
+    final trimmed = (value ?? '').trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    if (!RegExp(r'^(97\d{3}|98\d{3}|\d{5})$').hasMatch(trimmed)) {
+      return 'Code postal invalide';
+    }
+
+    final best = _resolveCanonicalCityRecord(
+      city: _locationController.text,
+      postalCode: trimmed,
+    );
+    if (best == null) {
+      return 'Le code postal ne correspond pas à la ville';
+    }
+    return null;
+  }
+
+  String _translatePublishIssue(String issue) {
+    final trimmed = issue.trim();
+    if (trimmed == 'Title must contain at least 10 characters') {
+      return 'Le titre doit contenir au moins 10 caractères.';
+    }
+    if (trimmed == 'Title must contain at most 120 characters') {
+      return 'Le titre doit contenir au maximum 120 caractères.';
+    }
+    if (trimmed == 'Description must contain at least 30 characters') {
+      return 'La description doit contenir au moins 30 caractères.';
+    }
+    if (trimmed == 'Description must contain at most 4000 characters') {
+      return 'La description doit contenir au maximum 4000 caractères.';
+    }
+    if (trimmed == 'Price must be a positive number') {
+      return 'Le budget doit être supérieur ou égal à 0.';
+    }
+    if (trimmed == 'categoryId is required') {
+      return 'Choisissez une catégorie valide.';
+    }
+    if (trimmed == 'Category is invalid or inactive' ||
+        trimmed == 'category is invalid or inactive') {
+      return 'La catégorie sélectionnée n’est plus disponible. Choisissez une autre catégorie.';
+    }
+    if (trimmed == 'cityId is required') {
+      return 'Choisissez une ville valide.';
+    }
+    if (trimmed == 'City is invalid or inactive' ||
+        trimmed == 'city is invalid or inactive') {
+      return 'La ville sélectionnée n’est plus disponible. Choisissez une ville valide dans la liste.';
+    }
+    if (trimmed == 'reCAPTCHA assessment rejected the listing submission') {
+      return 'La vérification anti-abus a échoué. Réessaie dans quelques secondes.';
+    }
+    if (trimmed == 'Authentication required.' || trimmed == 'unauthenticated') {
+      return 'Connecte-toi pour utiliser la dictée.';
+    }
+    if (trimmed == 'storagePath does not belong to authenticated user.' ||
+        trimmed == 'permission-denied') {
+      return 'Cette dictée ne correspond plus à ta session. Recharge la page puis réessaie.';
+    }
+    if (trimmed == 'Audio file is empty.') {
+      return 'Le micro n\'a capté aucun son exploitable. Réessaie en parlant plus près du micro.';
+    }
+    if (trimmed.startsWith('Audio trop court/faible')) {
+      return 'L\'audio est trop court pour être transcrit. Parle un peu plus longtemps puis réessaie.';
+    }
+    if (trimmed.startsWith('Type audio invalide')) {
+      return 'Le format audio envoyé au serveur est invalide. Recharge la page puis réessaie.';
+    }
+    if (trimmed == 'Too many listing submissions, please retry later') {
+      return 'Trop de tentatives de publication en peu de temps. Réessaie plus tard.';
+    }
+    if (trimmed == 'Draft not found') {
+      return 'Le brouillon de publication est introuvable. Relance la publication.';
+    }
+    if (trimmed == 'You do not own this draft') {
+      return 'Ce brouillon ne correspond pas à ton compte connecté.';
+    }
+    if (trimmed.startsWith('Photo #') &&
+        trimmed.endsWith('must be processed as WebP before submission')) {
+      final number = RegExp(r'Photo #(\d+)').firstMatch(trimmed)?.group(1);
+      return number == null
+          ? 'Une photo doit être retraitée avant publication. Réessayez.'
+          : 'La photo $number doit être retraitée avant publication. Réessayez.';
+    }
+    if (trimmed == 'Draft payload is invalid') {
+      return 'Le formulaire de publication est invalide.';
+    }
+    return trimmed;
+  }
+
+  String _formatPublishError(Object error) {
+    if (error is FirebaseFunctionsException) {
+      final details = error.details;
+      if (details is Map) {
+        final rawIssues = details['issues'];
+        if (rawIssues is List) {
+          final issues = rawIssues
+              .map((entry) => entry.toString().trim())
+              .where((entry) => entry.isNotEmpty)
+              .map(_translatePublishIssue)
+              .toList(growable: false);
+          if (issues.isNotEmpty) {
+            return issues.join(' ');
+          }
+        }
+      }
+
+      final message = (error.message ?? error.code).trim();
+      return _translatePublishIssue(message);
+    }
+
+    return error
+        .toString()
+        .replaceFirst('Exception: ', '')
+        .replaceFirst('StateError: ', '');
+  }
+
+  bool _requiredOk() {
+    final titleOk = _validatePublishTitle(_titleController.text) == null;
+    final descOk =
+        _validatePublishDescription(_descriptionController.text) == null;
+    final cityOk = _locationController.text.trim().isNotEmpty;
+    final catOk = (_category ?? '').trim().isNotEmpty;
+    const subOk = true;
+    final delayOk = (_missionDelay ?? '').trim().isNotEmpty;
+    final phoneOk = _isValidPhoneFR(_phoneController.text);
+    final budgetOk = _budgetType == 'À négocier'
+        ? true
+        : () {
+            final b = _parseBudget(_budgetController.text);
+            return b != null && b > 0;
+          }();
+
+    return titleOk &&
+        descOk &&
+        cityOk &&
+        catOk &&
+        subOk &&
+        delayOk &&
+        phoneOk &&
+        budgetOk;
+  }
+
+  Iterable<String> get _requiredPublishFieldOrder => const <String>[
+        'title',
+        'category',
+        'description',
+        'city',
+        'phone',
+        'delay',
+        'budget',
+      ];
+
+  GlobalKey _publishFieldKeyFor(String fieldId) {
+    switch (fieldId) {
+      case 'title':
+        return _titleFieldKey;
+      case 'category':
+        return _categoryFieldKey;
+      case 'description':
+        return _descriptionFieldKey;
+      case 'city':
+        return _cityFieldKey;
+      case 'phone':
+        return _phoneFieldKey;
+      case 'delay':
+        return _delayFieldKey;
+      case 'budget':
+        return _budgetFieldKey;
+      default:
+        return GlobalKey();
+    }
+  }
+
+  String _publishFieldLabel(String fieldId) {
+    switch (fieldId) {
+      case 'title':
+        return 'titre';
+      case 'category':
+        return 'catégorie';
+      case 'description':
+        return 'description';
+      case 'city':
+        return 'ville';
+      case 'phone':
+        return 'téléphone';
+      case 'delay':
+        return 'délai';
+      case 'budget':
+        return 'budget';
+      default:
+        return fieldId;
+    }
+  }
+
+  bool _isPublishFieldInvalid(String fieldId) {
+    switch (fieldId) {
+      case 'title':
+        return _validatePublishTitle(_titleController.text) != null;
+      case 'category':
+        return (_category ?? '').trim().isEmpty;
+      case 'description':
+        return _validatePublishDescription(_descriptionController.text) != null;
+      case 'city':
+        return _validateCanonicalCity(_locationController.text) != null;
+      case 'phone':
+        return !_isValidPhoneFR(_phoneController.text);
+      case 'delay':
+        return (_missionDelay ?? '').trim().isEmpty;
+      case 'budget':
+        if (_budgetType == 'À négocier') return false;
+        final budget = _parseBudget(_budgetController.text);
+        return budget == null || budget <= 0;
+      default:
+        return false;
+    }
+  }
+
+  List<String> _missingPublishFieldLabels() {
+    return _requiredPublishFieldOrder
+        .where(_isPublishFieldInvalid)
+        .map(_publishFieldLabel)
+        .toList(growable: false);
+  }
+
+  Future<void> _scrollToFirstInvalidPublishField() async {
+    for (final fieldId in _requiredPublishFieldOrder) {
+      if (!_isPublishFieldInvalid(fieldId)) continue;
+      _triggerPublishFieldShake(fieldId);
+      final targetContext = _publishFieldKeyFor(fieldId).currentContext;
+      if (targetContext != null) {
+        await Scrollable.ensureVisible(
+          targetContext,
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+          alignment: 0.18,
+        );
+      }
+      break;
+    }
+  }
+
+  void _triggerPublishFieldShake(String fieldId) {
+    final tick = _publishShakeTick + 1;
+    if (mounted) {
+      setState(() {
+        _publishShakeTick = tick;
+        _shakingPublishFieldId = fieldId;
+      });
+    }
+
+    Future<void>.delayed(const Duration(milliseconds: 520), () {
+      if (!mounted) return;
+      if (_publishShakeTick != tick) return;
+      setState(() {
+        _shakingPublishFieldId = null;
+      });
+    });
+  }
+
+  Widget _withPublishFieldHighlight({
+    required String fieldId,
+    required Widget child,
+  }) {
+    final invalid = _attemptedSubmit && _isPublishFieldInvalid(fieldId);
+    final isShaking = _shakingPublishFieldId == fieldId;
+
+    return TweenAnimationBuilder<double>(
+      key: ValueKey<String>('publish-field-$fieldId-$_publishShakeTick'),
+      tween: Tween<double>(begin: 0, end: isShaking ? 1 : 0),
+      duration: const Duration(milliseconds: 420),
+      builder: (context, value, animatedChild) {
+        final dx =
+            isShaking ? math.sin(value * math.pi * 6) * (1 - value) * 12 : 0.0;
+        return Transform.translate(
+          offset: Offset(dx, 0),
+          child: animatedChild,
+        );
+      },
+      child: AnimatedContainer(
+        key: _publishFieldKeyFor(fieldId),
+        duration: const Duration(milliseconds: 180),
+        padding: invalid ? const EdgeInsets.all(6) : EdgeInsets.zero,
+        decoration: invalid
+            ? BoxDecoration(
+                color: const Color(0xFFFFF1F2),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFDC2626), width: 1.4),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x1FDC2626),
+                    blurRadius: 12,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              )
+            : null,
+        child: child,
+      ),
+    );
+  }
+
+  Widget _buildPublishValidationBanner() {
+    final missing = _missingPublishFieldLabels();
+    if (!_attemptedSubmit || missing.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E6),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFFFC78F)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(
+              Icons.error_outline_rounded,
+              color: Color(0xFFB45309),
+              size: 18,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Complète les champs mis en évidence : ${missing.join(', ')}.',
+              style: const TextStyle(
+                fontSize: 12,
+                height: 1.35,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF92400E),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _recompute() {
+    final ok = _requiredOk();
+    if (!mounted) return;
+    if (_canPublish == ok && !(_publishLocked && ok)) return;
+    setState(() {
+      _canPublish = ok;
+      if (_publishLocked && ok) _publishLocked = false; // délock auto
+    });
+  }
+
+  Future<bool> _ensureLoggedInForPublish() async {
+    final user = await _resolveSignedInUser();
+    if (user != null) return true;
+    if (!mounted) return false;
+    final overlayTheme = context.prestoOverlayTheme;
+
+    final startInSignup = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
+      builder: (ctx) {
+        final bottom = MediaQuery.of(ctx).viewInsets.bottom;
+        return Padding(
+          padding: EdgeInsets.fromLTRB(20, 16, 20, bottom + 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                width: 48,
+                height: 5,
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const Text(
+                'Connecte-toi pour publier',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Ton formulaire reste rempli. Connecte-toi ou crée ton compte pour finaliser la publication.',
+                style: TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+              const SizedBox(height: 18),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kPrestoOrange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Je me connecte'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(color: Colors.grey.shade400),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text("Je crée mon compte"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(null),
+                child: const Text('Plus tard'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (startInSignup == null) return false;
+
+    if (!mounted) return false;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => AccountPage(startInSignup: startInSignup),
+      ),
+    );
+
+    if (!mounted) return false;
+
+    return (await _resolveSignedInUser()) != null;
+  }
+
+  Future<User?> _resolveSignedInUser() async {
+    final auth = FirebaseAuth.instance;
+    final currentUser = auth.currentUser;
+    if (currentUser != null) {
+      SessionState.userId = currentUser.uid;
+      return currentUser;
+    }
+
+    try {
+      final streamedUser = await auth
+          .authStateChanges()
+          .firstWhere((candidate) => candidate != null)
+          .timeout(const Duration(seconds: 5));
+      if (streamedUser != null) {
+        SessionState.userId = streamedUser.uid;
+      }
+      return streamedUser;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<User?> _ensureProtectedSessionReady({
+    bool forceRefreshToken = false,
+  }) async {
+    final user = await _resolveSignedInUser();
+    if (user == null) return null;
+
+    try {
+      await user.getIdToken(forceRefreshToken);
+    } catch (_) {}
+
+    SessionState.userId = user.uid;
+    return FirebaseAuth.instance.currentUser ?? user;
+  }
+
+  Future<void> _onPublishPressed() async {
+    logRuntimeAction(
+      area: 'publish',
+      action: 'tap-submit',
+      details: <String, Object?>{
+        'signedIn': FirebaseAuth.instance.currentUser != null,
+        'category': _category ?? '',
+      },
+    );
+
+    final loggedIn = await _ensureLoggedInForPublish();
+    if (!loggedIn) {
+      logRuntimeAction(
+        area: 'publish',
+        action: 'blocked-auth',
+      );
+      return;
+    }
+
+    await _prefillPublishPhoneFromProfileIfNeeded();
+
+    _canonicalizeLocationInputs();
+
+    setState(() {
+      _attemptedSubmit = true;
+      _publishLocked = true;
+    });
+
+    final valid = _formKey.currentState?.validate() ?? false;
+    if (!valid || !_requiredOk()) {
+      logRuntimeAction(
+        area: 'publish',
+        action: 'blocked-validation',
+        details: <String, Object?>{
+          'category': _category ?? '',
+        },
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToFirstInvalidPublishField();
+      });
+      return;
+    }
+
+    await _submitForm();
+  }
+
+  Future<void> _startMic() async {
+    if (_isListening) return;
+    if (_adminAudioRuntimeAccessState == 0) {
+      unawaited(_refreshAdminAudioRuntimeAccess());
+    }
+    _resetPublishAiTrace(
+        kIsWeb ? 'micro web classique' : 'micro mobile classique');
+    _appendPublishAiTrace(
+        'start_mic', 'Demande de démarrage du micro classique');
+
+    final appCheckReady = await _ensureAppCheckReady(
+      flow: kIsWeb ? 'webMic' : 'mobileMic',
+    );
+    if (!appCheckReady) return;
+
+    // ✅ Micro global: on ne fait PLUS speech_to_text (trop variable)
+    // On enregistre l'audio puis _stopMic() déclenche le pipeline IA unifié.
+    if (kIsWeb) {
+      try {
+        final secureContext = await _requirePublishAiSecureContext(
+          stage: 'webMic.start',
+          forceRefreshToken: true,
+        );
+        if (secureContext == null) return;
+        final uid = secureContext.uid;
+
+        await CrashlyticsContext.setUserId(uid);
+        await CrashlyticsContext.setKey('flow', 'webMic');
+
+        await _webRec.start();
+        _rememberAdminAudioRuntime(
+          flowKey: 'classic_web',
+          label: 'Micro classique web',
+          detail: _classicAdminAudioRuntimeDetail(),
+        );
+        if (!mounted) return;
+        setState(() => _isListening = true);
+        _appendPublishAiTrace(
+          'start_mic',
+          'Micro web démarré',
+          level: PublishAiTraceLevel.success,
+        );
+      } catch (e, st) {
+        await CrashlyticsContext.recordError(
+          e is Exception ? e : Exception(e.toString()),
+          st,
+          reason: 'Web mic start failed',
+          fatal: false,
+          keys: {
+            'component': 'Main',
+            'flow': 'webMic',
+            'step': 'start',
+          },
+        );
+        if (!mounted) return;
+        _appendPublishAiTrace(
+          'start_mic',
+          _formatMicroIaRuntimeError(e),
+          level: PublishAiTraceLevel.error,
+        );
+        showSuccessSnackBar(
+          context,
+          'Micro web indisponible: ${_formatMicroIaRuntimeError(e)}',
+        );
+      }
+      return;
+    }
+
+    // Préparer l'enregistreur haute qualité (WAV)
+    try {
+      final secureContext = await _requirePublishAiSecureContext(
+        stage: 'mobileMic.start',
+        forceRefreshToken: true,
+      );
+      if (secureContext == null) return;
+
+      if (await _recorder.hasPermission()) {
+        final filePath =
+            await createTempAudioPath(prefix: 'presto', extension: 'm4a');
+        await _recorder.start(
+          RecordConfig(
+            encoder: AudioEncoder.aacLc,
+            sampleRate: 44100,
+            numChannels: 1,
+          ),
+          path: filePath,
+        );
+        _recordingPath = filePath;
+      } else {
+        _appendPublishAiTrace(
+          'permission_micro',
+          'Permission micro refusée',
+          level: PublishAiTraceLevel.error,
+        );
+        if (!mounted) return;
+        showSuccessSnackBar(context, 'Permission micro requise');
+        return;
+      }
+    } catch (e) {
+      debugPrint('Recorder start error: $e');
+      _appendPublishAiTrace(
+        'start_mic',
+        _formatMicroIaRuntimeError(e),
+        level: PublishAiTraceLevel.error,
+      );
+    }
+
+    setState(() {
+      _rememberAdminAudioRuntime(
+        flowKey: 'classic_mobile',
+        label: 'Micro classique mobile',
+        detail: _classicAdminAudioRuntimeDetail(),
+      );
+      _isListening = true;
+    });
+    _appendPublishAiTrace(
+      'start_mic',
+      kIsWeb ? 'Micro en écoute' : 'Enregistrement mobile lancé en AAC/m4a',
+      level: PublishAiTraceLevel.success,
+    );
+  }
+
+  Future<void> _stopMic() async {
+    if (!_isListening) return;
+    if (_isAnalyzing) return;
+    _appendPublishAiTrace('stop_mic', 'Arrêt demandé pour le micro classique');
+
+    if (kIsWeb) {
+      if (!mounted) return;
+      setState(() {
+        _isListening = false;
+        _isAnalyzing = true;
+      });
+
+      try {
+        final secureContext = await _requirePublishAiSecureContext(
+          stage: 'webMic.stop',
+          forceRefreshToken: true,
+          showUserMessage: false,
+        );
+        final uid = secureContext?.uid;
+        if (uid == null)
+          throw const MicroIaClientAuthException(
+            code: 'auth-missing',
+            message: 'Connecte-toi pour utiliser la dictée IA.',
+          );
+
+        final blob = await _webRec.stopToBlob();
+        final audioUpload = await webBlobToMicroIaUpload(
+          blob,
+          preferRawBytes: true,
+        );
+        _appendPublishAiTrace(
+          'web_audio',
+          'Blob converti: ${audioUpload.bytes.length} bytes, ${audioUpload.contentType}, .${audioUpload.extension}',
+        );
+        if (audioUpload.bytes.isEmpty) {
+          throw Exception('Audio invalide (fichier vide).');
+        }
+        if (audioUpload.usedClientSideWavConversion &&
+            audioUpload.bytes.length < 30000) {
+          throw Exception(
+              'Audio invalide (WAV trop petit: ${audioUpload.bytes.length} bytes).');
+        }
+
+        final transcript = await _transcribePublishAudio(
+          ownerUid: uid,
+          audioBytes: audioUpload.bytes,
+          contentType: audioUpload.contentType,
+          extension: audioUpload.extension,
+        );
+
+        if (!mounted) return;
+
+        await _applyPublishDraftFromTranscript(transcript);
+      } catch (e, st) {
+        await CrashlyticsContext.recordError(
+          e is Exception ? e : Exception(e.toString()),
+          st,
+          reason: 'Web mic stop/process failed',
+          fatal: false,
+          keys: {
+            'component': 'Main',
+            'flow': 'webMic',
+            'step': 'stop',
+          },
+        );
+        if (!mounted) return;
+        _appendPublishAiTrace(
+          'stop_mic',
+          _formatMicroIaRuntimeError(e),
+          level: PublishAiTraceLevel.error,
+        );
+        if (isTimeoutError(e)) {
+          showTimeoutSnackBar(context);
+        } else {
+          showSuccessSnackBar(
+            context,
+            'Erreur transcription (web): ${_formatMicroIaRuntimeError(e)}',
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isAnalyzing = false);
+      }
+      return;
+    }
+
+    String? recordedPath;
+    try {
+      recordedPath = await _recorder.stop();
+      if (recordedPath == null) {
+        recordedPath = _recordingPath;
+      }
+      _appendPublishAiTrace(
+        'mobile_audio',
+        recordedPath == null
+            ? 'Aucun fichier audio retourné par le recorder'
+            : 'Fichier enregistré: $recordedPath',
+        level: recordedPath == null
+            ? PublishAiTraceLevel.warning
+            : PublishAiTraceLevel.success,
+      );
+    } catch (e) {
+      debugPrint('Recorder stop error: $e');
+      _appendPublishAiTrace(
+        'mobile_audio',
+        _formatMicroIaRuntimeError(e),
+        level: PublishAiTraceLevel.error,
+      );
+    }
+    setState(() {
+      _isListening = false;
+    });
+    // Si l'audio est disponible et cloud STT activé, on passe par la fonction distante
+    if (_useCloudStt && recordedPath != null) {
+      setState(() => _isAnalyzing = true);
+      try {
+        await _uploadAndTranscribe(recordedPath);
+      } catch (e) {
+        _appendPublishAiTrace(
+          'stop_mic',
+          _formatMicroIaRuntimeError(e),
+          level: PublishAiTraceLevel.error,
+        );
+        if (!mounted) return;
+        if (isTimeoutError(e)) {
+          showTimeoutSnackBar(context);
+        } else {
+          showSuccessSnackBar(
+            context,
+            'Erreur transcription: ${_formatMicroIaRuntimeError(e)}',
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isAnalyzing = false);
+      }
+      return;
+    }
+
+    if (!mounted) return;
+    _appendPublishAiTrace(
+      'stop_mic',
+      'Arrêt sans audio exploitable',
+      level: PublishAiTraceLevel.warning,
+    );
+    showSuccessSnackBar(context, 'Aucun audio disponible');
+  }
+
+  /// Construire le bouton d'enregistrement au micro avec indicateur visuel
+  Widget _buildMicRecordingButton() {
+    return PremiumAiButton(
+      onPressed: _stopMic,
+      label: 'Arrêter',
+      icon: Icons.stop_circle_rounded,
+      gradientColors: const [
+        Color(0xFFFF5A4F),
+        Color(0xFFE53935),
+      ],
+      shadowColor: const Color(0xFFE53935),
+    );
+  }
+
+  Widget _buildPublishAiStatusArea() {
+    final showCloudBadge = _useCloudStt && !kIsWeb;
+
+    if (_isListening) {
+      return Center(
+        key: const ValueKey('publish-ai-listening'),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE53935).withOpacity(0.08),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: const Color(0xFFE53935).withOpacity(0.24),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                showCloudBadge ? Icons.cloud_upload_rounded : Icons.mic_rounded,
+                size: 16,
+                color: const Color(0xFFE53935),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Enregistrement en cours',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFE53935),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_isAnalyzing) {
+      return Center(
+        key: const ValueKey('publish-ai-analyzing'),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: kPrestoBlue.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: kPrestoBlue.withOpacity(0.2)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              showCloudBadge
+                  ? const Icon(Icons.cloud_sync, size: 16, color: kPrestoBlue)
+                  : SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(kPrestoBlue),
+                      ),
+                    ),
+              const SizedBox(width: 8),
+              Text(
+                showCloudBadge
+                    ? 'Transcription et analyse (Cloud)…'
+                    : 'Analyse en cours…',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: kPrestoBlue,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox(
+      key: ValueKey('publish-ai-idle'),
+      width: double.infinity,
+    );
+  }
+
+  Future<void> _uploadAndTranscribe(String localPath) async {
+    // Upload vers Firebase Storage puis appel de la Cloud Function.
+    // Le traitement reste côté backend pour conserver les secrets serveur.
+    final secureContext = await _requirePublishAiSecureContext(
+      stage: 'uploadAndTranscribe',
+      forceRefreshToken: true,
+      showUserMessage: false,
+    );
+    final uid = secureContext?.uid;
+    if (uid == null) {
+      _appendPublishAiTrace(
+        'auth',
+        'Utilisateur non connecté au moment de l\'upload',
+        level: PublishAiTraceLevel.error,
+      );
+      throw 'Utilisateur non connecté';
+    }
+    final xfile = XFile(localPath);
+    final audioBytes = await xfile.readAsBytes();
+    if (audioBytes.isEmpty) {
+      _appendPublishAiTrace(
+        'mobile_audio',
+        'Fichier audio introuvable ou vide: $localPath',
+        level: PublishAiTraceLevel.error,
+      );
+      throw 'Fichier audio introuvable';
+    }
+    final lower = localPath.toLowerCase();
+    final isM4a = lower.endsWith('.m4a');
+    final isMp4 = lower.endsWith('.mp4');
+    final ext = isM4a ? 'm4a' : (isMp4 ? 'mp4' : 'wav');
+    final contentType = (isM4a || isMp4) ? 'audio/mp4' : 'audio/wav';
+    _appendPublishAiTrace(
+      'mobile_audio',
+      'Lecture locale OK: ${audioBytes.length} bytes, $contentType, .$ext',
+      level: PublishAiTraceLevel.success,
+    );
+    final transcript = await _transcribePublishAudio(
+      ownerUid: uid,
+      audioBytes: audioBytes,
+      contentType: contentType,
+      extension: ext,
+    );
+
+    if (!mounted) return;
+
+    await _applyPublishDraftFromTranscript(transcript);
+  }
+
+  /// Appelle la Cloud Function pour analyser la description avec OpenAI
+  Future<void> _onTapAiAnalyze() async {
+    final input = _descriptionController.text.trim();
+    if (input.isEmpty) {
+      showSuccessSnackBar(context, "Veuillez d'abord saisir une description");
+      return;
+    }
+
+    final appCheckReady = await _ensureAppCheckReady(flow: 'publishAiAnalyze');
+    if (!appCheckReady) return;
+
+    setState(() => _isAnalyzing = true);
+
+    try {
+      _appendPublishAiTrace(
+        'draft_remote',
+        'Appel generateOfferDraft depuis le bouton IA',
+      );
+      final draft = await _aiService.generateOfferDraft(text: input);
+
+      if (!mounted) return;
+
+      if (draft['success'] == true) {
+        _applyDraftToForm(draft);
+        _applyKeywordCategoryPairFromText(input);
+
+        showSuccessSnackBar(
+          context,
+          '✨ Analyse IA complétée\nChamps remplis automatiquement',
+        );
+        return;
+      }
+
+      final code = (draft['code'] ?? '').toString();
+      showSuccessSnackBar(
+        context,
+        code == 'deadline-exceeded'
+            ? 'Connexion lente, réessaie.'
+            : 'Erreur IA: ${(draft['error'] ?? 'inconnue').toString()}',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      showSuccessSnackBar(
+        context,
+        "Erreur lors de l'analyse : ${_formatMicroIaRuntimeError(e)}",
+      );
+    } finally {
+      if (mounted) setState(() => _isAnalyzing = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _publishAiTraceDisposed = true;
+    _publishAiTraceVersion.dispose();
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _locationController.dispose();
+    _postalCodeController.dispose();
+    _phoneController.dispose();
+    _budgetController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _resetAllFields() {
+    setState(() {
+      _titleController.clear();
+      _descriptionController.clear();
+      _locationController.clear();
+      _postalCodeController.clear();
+      _phoneController.clear();
+      _budgetController.clear();
+      _category = null;
+      _selectedSubCategory = null;
+      _missionDelay = null;
+      _budgetType = 'Fixe';
+      _selectedPhotos.clear();
+      _selectedPhotoBytes.clear();
+      _uploadedPhotoUrls.clear();
+      _latestRecognizedTranscript = '';
+      _titleEditedByUser = false;
+      _descriptionEditedByUser = false;
+      _locationEditedByUser = false;
+      _postalCodeEditedByUser = false;
+      _categoryEditedByUser = false;
+      _delayEditedByUser = false;
+      _budgetEditedByUser = false;
+      _isApplyingProgrammaticPublishUpdate = false;
+      _publishAiTraceEntries.clear();
+      _citySuggestions.clear();
+      _highlightedIndex = -1;
+      _selectedRegionCode = null;
+      _selectedDeptCode = null;
+      _selectedPhoneCountryCode = '+33';
+
+      _isUrgent = false;
+
+      _attemptedSubmit = false;
+      _publishLocked = false;
+      _canPublish = false;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _recompute());
+    unawaited(_prefillPublishPhoneFromProfileIfNeeded());
+    showSuccessSnackBar(context, 'Tous les champs ont été réinitialisés');
+  }
+
+  // --- LOGIQUE AUTOCOMPLÉTION VILLE ---
+
+  void _onCityChanged(String value) {
+    final query = value.trim();
+    if (query.length < 2) {
+      setState(() {
+        _citySuggestions = [];
+        _highlightedIndex = -1;
+      });
+      return;
+    }
+
+    final results = CitySearch.instance.search(query, limit: 10);
+    setState(() {
+      _citySuggestions = results;
+      _highlightedIndex = results.isNotEmpty ? 0 : -1;
+    });
+  }
+
+  void _onPostalCodeChanged(String value) {
+    final cp = value.trim();
+    if (cp.length < 2) {
+      // On ne spam pas si l'utilisateur tape juste "7"
+      return;
+    }
+
+    final results = CitySearch.instance.searchByPostalCode(cp, limit: 10);
+
+    if (!mounted) return;
+
+    if (results.isEmpty) {
+      setState(() {
+        _citySuggestions = [];
+        _highlightedIndex = -1;
+      });
+      return;
+    }
+
+    final best = CitySearch.instance.pickBestForPostalCode(cp);
+
+    setState(() {
+      _citySuggestions = results;
+      _highlightedIndex = 0;
+    });
+
+    if (best != null) {
+      _applyCity(best);
+    }
+  }
+
+  void _applyCity(CityRecord city, {bool markAsUserEdited = false}) {
+    setState(() {
+      if (markAsUserEdited || !_locationEditedByUser) {
+        _setControllerText(_locationController, city.name);
+      }
+      if (markAsUserEdited || !_postalCodeEditedByUser) {
+        _setControllerText(_postalCodeController, city.cp);
+      }
+
+      _selectedDeptCode = city.dept;
+      _selectedRegionCode = city.region;
+      _selectedPhoneCountryCode = _countryCodeForDept(city.dept);
+      if (markAsUserEdited) {
+        _locationEditedByUser = true;
+        _postalCodeEditedByUser = true;
+      }
+
+      _citySuggestions = [];
+      _highlightedIndex = -1;
+    });
+  }
+
+  String _countryCodeForDept(String dept) {
+    if (dept.startsWith('971')) return '+590'; // Guadeloupe
+    if (dept.startsWith('972')) return '+596'; // Martinique
+    if (dept.startsWith('973')) return '+594'; // Guyane
+    if (dept.startsWith('974')) return '+262'; // La Réunion
+    if (dept.startsWith('976')) return '+262'; // Mayotte
+    if (dept.startsWith('987')) return '+689'; // Polynésie
+    return '+33'; // Métropole par défaut
+  }
+
+  Widget _buildCitySuggestionsOverlay() {
+    if (_citySuggestions.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      constraints: const BoxConstraints(maxHeight: 220),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(
+            blurRadius: 10,
+            spreadRadius: 1,
+            color: Colors.black12,
+          ),
+        ],
+      ),
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: _citySuggestions.length,
+        itemBuilder: (context, index) {
+          final city = _citySuggestions[index];
+          final selected = index == _highlightedIndex;
+
+          return InkWell(
+            onTap: () => _applyCity(city, markAsUserEdited: true),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              color: selected ? kPrestoBlue.withOpacity(0.08) : null,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${city.name} (${city.cp})',
+                      style: TextStyle(
+                        fontWeight:
+                            selected ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Dept ${city.dept}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // --- GESTION DES PHOTOS ---
+
+  Future<void> _showPhotoPopup(
+      {required XFile file, required String label}) async {
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
+    final overlayTheme = context.prestoOverlayTheme;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: overlayTheme.surfaceColor,
+          surfaceTintColor: overlayTheme.surfaceTintColor,
+          shape: overlayTheme.dialogShape,
+          insetPadding: const EdgeInsets.all(16),
+          child: Stack(
+            children: [
+              ClipRRect(
+                borderRadius: overlayTheme.dialogRadius,
+                child: Container(
+                  color: overlayTheme.surfaceColor,
+                  child: InteractiveViewer(
+                    minScale: 1.0,
+                    maxScale: 4.0,
+                    child: Image.memory(
+                      bytes,
+                      fit: BoxFit.contain,
+                      gaplessPlayback: true,
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: Text(
+                          'Image indisponible',
+                          style: TextStyle(color: Colors.black87),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Material(
+                  color: Colors.white,
+                  shape: const CircleBorder(),
+                  child: IconButton(
+                    tooltip: 'Fermer',
+                    icon:
+                        const Icon(Icons.close_rounded, color: Colors.black87),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 12,
+                bottom: 12,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Colors.black12),
+                  ),
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onPhotoTileTap(int photoIndex) async {
+    if (photoIndex < _selectedPhotos.length) {
+      final file = _selectedPhotos[photoIndex];
+      final label = 'Photo ${photoIndex + 1}';
+      await _showPhotoPopup(file: file, label: label);
+      return;
+    }
+    await _pickImage(photoIndex);
+  }
+
+  Future<ImageSource?> _selectPhotoSource() async {
+    if (!mounted) return null;
+    final overlayTheme = context.prestoOverlayTheme;
+
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: overlayTheme.surfaceColor,
+      shape: overlayTheme.sheetShape,
+      builder: (ctx) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: Text(kIsWeb ? 'Fichiers / galerie' : 'Galerie'),
+                  onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
+                ),
+                ListTile(
+                  enabled: !kIsWeb,
+                  leading: const Icon(Icons.photo_camera_outlined),
+                  title: const Text('Appareil photo'),
+                  subtitle: kIsWeb
+                      ? const Text('Disponible sur mobile uniquement')
+                      : null,
+                  onTap: kIsWeb
+                      ? null
+                      : () => Navigator.of(ctx).pop(ImageSource.camera),
+                ),
+                const SizedBox(height: 6),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickImage(int photoIndex) async {
+    if (_selectedPhotos.length >= _maxListingPhotos &&
+        photoIndex >= _selectedPhotos.length) {
+      final photoLabel = _maxListingPhotos > 1 ? 'photos' : 'photo';
+      showSuccessSnackBar(
+        context,
+        'Maximum $_maxListingPhotos $photoLabel autorisées',
+      );
+      return;
+    }
+
+    try {
+      final source = await _selectPhotoSource();
+      if (source == null) return;
+
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: source);
+
+      if (image == null) return;
+
+      final bytes = await image.readAsBytes();
+
+      setState(() {
+        if (photoIndex < _selectedPhotos.length) {
+          _selectedPhotos[photoIndex] = image;
+          if (photoIndex < _selectedPhotoBytes.length) {
+            _selectedPhotoBytes[photoIndex] = bytes;
+          } else {
+            while (_selectedPhotoBytes.length < photoIndex) {
+              _selectedPhotoBytes.add(null);
+            }
+            _selectedPhotoBytes.add(bytes);
+          }
+        } else {
+          _selectedPhotos.add(image);
+          while (_selectedPhotoBytes.length < _selectedPhotos.length - 1) {
+            _selectedPhotoBytes.add(null);
+          }
+          _selectedPhotoBytes.add(bytes);
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, 'Erreur lors de la sélection : $e');
+    }
+  }
+
+  void _removePhotoAt(int photoIndex) {
+    if (photoIndex < 0 || photoIndex >= _selectedPhotos.length) {
+      return;
+    }
+
+    setState(() {
+      _selectedPhotos.removeAt(photoIndex);
+      if (photoIndex < _selectedPhotoBytes.length) {
+        _selectedPhotoBytes.removeAt(photoIndex);
+      }
+      if (photoIndex < _uploadedPhotoUrls.length) {
+        _uploadedPhotoUrls.removeAt(photoIndex);
+      }
+    });
+  }
+
+  String _storageExtFromPhoto(XFile photo) {
+    final mime = (photo.mimeType ?? '').toLowerCase().trim();
+    if (mime == 'image/webp') return 'webp';
+    if (mime == 'image/png') return 'png';
+    if (mime == 'image/heic' || mime == 'image/heif') return 'heic';
+    if (mime == 'image/gif') return 'gif';
+
+    final path = photo.path.toLowerCase();
+    if (path.endsWith('.webp')) return 'webp';
+    if (path.endsWith('.png')) return 'png';
+    if (path.endsWith('.heic') || path.endsWith('.heif')) return 'heic';
+    if (path.endsWith('.gif')) return 'gif';
+    return 'jpg';
+  }
+
+  String _storageContentTypeFromPhoto(XFile photo) {
+    final mime = (photo.mimeType ?? '').toLowerCase().trim();
+    if (mime.startsWith('image/')) return mime;
+
+    final ext = _storageExtFromPhoto(photo);
+    switch (ext) {
+      case 'webp':
+        return 'image/webp';
+      case 'png':
+        return 'image/png';
+      case 'heic':
+        return 'image/heic';
+      case 'gif':
+        return 'image/gif';
+      default:
+        return 'image/jpeg';
+    }
+  }
+
+  Future<void> _uploadPhotos({required String uid}) async {
+    if (_selectedPhotos.isEmpty) {
+      _uploadedPhotoUrls.clear();
+      return;
+    }
+
+    try {
+      _uploadedPhotoUrls.clear();
+
+      final callable = _functions.httpsCallable(
+        'processOfferPhoto',
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 60)),
+      );
+
+      for (int i = 0; i < _selectedPhotos.length; i++) {
+        final photo = _selectedPhotos[i];
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final sourceExt = _storageExtFromPhoto(photo);
+        final sourceContentType = _storageContentTypeFromPhoto(photo);
+        final rawPath = 'offers_raw/$uid/${ts}_$i.$sourceExt';
+
+        final ref = FirebaseStorage.instance.ref().child(rawPath);
+        final bytes = await photo.readAsBytes();
+        await ref.putData(
+          bytes,
+          SettableMetadata(contentType: sourceContentType),
+        );
+
+        final res = await callable.call<dynamic>({
+          'storagePath': rawPath,
+        });
+        final data = (res.data is Map)
+            ? Map<String, dynamic>.from(res.data as Map)
+            : <String, dynamic>{};
+        final url = (data['downloadUrl'] ?? '').toString().trim();
+        if (url.isEmpty) {
+          throw Exception('URL de photo manquante');
+        }
+        _uploadedPhotoUrls.add(url);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      showErrorSnackBar(context, "Erreur lors de l'upload : $e");
+      debugPrint('[Upload] Erreur: $e');
+    }
+  }
+
+  /// Crée des notifications pour les utilisateurs ayant cette catégorie en favori
+  Future<void> _createNotificationsForFavorites(
+    String offerId,
+    String category,
+    String? subCategory,
+    String offerTitle,
+    String publisherUserId,
+  ) async {
+    // 🔒 Sécurité: la création de notifications se fait côté serveur (Cloud Functions)
+    // afin d'éviter qu'un client puisse créer des notifications pour d'autres utilisateurs.
+    return;
+  }
+
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('Utilisateur non connecté');
+      }
+      logRuntimeAction(
+        area: 'publish',
+        action: 'submit-start',
+        details: <String, Object?>{
+          'userId': user.uid,
+          'category': _category ?? '',
+          'city': _locationController.text.trim(),
+          'hasPhotos': _selectedPhotos.isNotEmpty,
+        },
+      );
+      final budgetValue = _budgetType == 'À négocier'
+          ? 0.0
+          : (_parseBudget(_budgetController.text) ?? 0.0);
+      final publishResult = await _marketplacePublishService.publish(
+        ownerId: user.uid,
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        category:
+            _resolvePublishCategoryLabel(_category) ?? (_category ?? '').trim(),
+        city: _locationController.text.trim(),
+        postalCode: _postalCodeController.text.trim(),
+        phone:
+            '${_selectedPhoneCountryCode.trim()} ${_phoneController.text.trim()}'
+                .trim(),
+        subCategory: _selectedSubCategory,
+        missionDelay: _missionDelay,
+        isUrgent: _isUrgent,
+        price: budgetValue,
+        budgetType: _budgetType,
+        photos: List<XFile>.from(_selectedPhotos),
+      );
+
+      // ✅ Analytics: publication
+      await _logOfferPublished(
+        offerId: publishResult.listingId,
+        title: _titleController.text.trim(),
+        category: (_category ?? '').toString().trim(),
+        budget: _budgetController.text.trim(),
+        budgetType: _budgetType,
+      );
+
+      // Créer des notifications pour les utilisateurs ayant cette catégorie en favori
+      await _createNotificationsForFavorites(
+        publishResult.listingId,
+        _category ?? '',
+        _selectedSubCategory,
+        _titleController.text.trim(),
+        user.uid,
+      );
+
+      logRuntimeAction(
+        area: 'publish',
+        action: 'submit-success',
+        details: <String, Object?>{
+          'listingId': publishResult.listingId,
+          'category': _category ?? '',
+          'city': _locationController.text.trim(),
+        },
+      );
+
+      if (!mounted) return;
+
+      // ✅ Checkmark bleu au milieu de l'écran.
+      showDialog<void>(
+        context: context,
+        useRootNavigator: true,
+        barrierDismissible: false,
+        barrierColor: Colors.black.withValues(alpha: 0.10),
+        builder: (_) => const Center(
+          child: Icon(
+            Icons.check_circle,
+            color: kPrestoBlue,
+            size: 96,
+          ),
+        ),
+      );
+
+      await Future.delayed(const Duration(milliseconds: 700));
+      if (!mounted) return;
+
+      // Fermer le checkmark puis aller au détail.
+      Navigator.of(context, rootNavigator: true).pop();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => OfferDetailsPage(
+            offer: publishResult.detailData,
+            currentUserId: user.uid,
+            onBackToConsult: () {
+              appNavigatorKey.currentState?.pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => const HomePage(initialIndex: 1),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      logRuntimeAction(
+        area: 'publish',
+        action: 'submit-failure',
+        details: <String, Object?>{
+          'errorType': e.runtimeType,
+          'message': e,
+        },
+      );
+      if (!mounted) return;
+      final message = _formatPublishError(e);
+      showErrorSnackBar(context, 'Erreur lors de la publication : $message');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final publishVisuallyDisabled = !_canPublish || _isSubmitting;
+
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          systemOverlayStyle: prestoOverlayStyleFor(kPrestoBlue),
+          backgroundColor: kPrestoOrange,
+          foregroundColor: Colors.white,
+          iconTheme: const IconThemeData(color: Colors.white),
+          actionsIconTheme: const IconThemeData(color: Colors.white),
+          elevation: 0,
+          title: const Text(
+            'Je publie une offre',
+            style: kPrestoAppBarTitleStyle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_outlined),
+              tooltip: 'Réinitialiser tous les champs',
+              onPressed: () {
+                final overlayTheme = context.prestoOverlayTheme;
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    backgroundColor: overlayTheme.surfaceColor,
+                    surfaceTintColor: overlayTheme.surfaceTintColor,
+                    shape: overlayTheme.dialogShape,
+                    title: const Text(
+                      'Réinitialiser ?',
+                      style: kPrestoSectionTitleStyle,
+                    ),
+                    content: const Text(
+                      'Voulez-vous effacer tous les champs et recommencer ?',
+                      style: kPrestoBodyTextStyle,
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          foregroundColor: kPrestoBlue,
+                        ),
+                        child: const Text('Annuler'),
+                      ),
+                      FilledButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _resetAllFields();
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: kPrestoOrange,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Réinitialiser'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            autovalidateMode: _attemptedSubmit
+                ? AutovalidateMode.always
+                : AutovalidateMode.disabled,
+            child: ListView(
+              controller: _scrollController,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 150),
+              children: [
+                // Bouton Premium AI avec enregistrement audio
+                StreamBuilder<User?>(
+                  stream: FirebaseAuth.instance.authStateChanges(),
+                  initialData: FirebaseAuth.instance.currentUser,
+                  builder: (context, snapshot) {
+                    final signedInUser = snapshot.data;
+                    return Column(
+                      children: [
+                        Center(
+                          child: _isListening
+                              ? _buildMicRecordingButton()
+                              : PremiumAiButton(
+                                  onPressed:
+                                      _isAnalyzing || signedInUser == null
+                                          ? null
+                                          : () {
+                                              unawaited(_startMic());
+                                            },
+                                  label: 'Décrire mon besoin (IA)',
+                                ),
+                        ),
+                        if (!_isListening && signedInUser == null) ...[
+                          const SizedBox(height: 8),
+                          TextButton.icon(
+                            onPressed: () {
+                              unawaited(_ensureLoggedInForPublish());
+                            },
+                            icon: const Icon(Icons.login_rounded),
+                            label: const Text(
+                              'Connectez-vous pour utiliser la dictée IA',
+                            ),
+                          ),
+                        ],
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 56,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    child: _buildPublishAiStatusArea(),
+                  ),
+                ),
+                if (_adminAudioRuntimeAccessState == 1) ...[
+                  const SizedBox(height: 8),
+                  _buildAdminAudioRuntimeIndicator(),
+                ],
+                _buildPublishAiTraceActions(),
+                const SizedBox(height: 16),
+
+                // TITRE
+                _withPublishFieldHighlight(
+                  fieldId: 'title',
+                  child: _withAiPendingOverlay(
+                    showPending: _showAiPendingForController(_titleController),
+                    child: TextFormField(
+                      controller: _titleController,
+                      decoration: InputDecoration(
+                        label: _requiredLabel('Titre de l’offre'),
+                        border: const OutlineInputBorder(),
+                        hintText: 'Ex : Monter un meuble IKEA',
+                      ),
+                      validator: _validatePublishTitle,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // CATÉGORIE
+                _withPublishFieldHighlight(
+                  fieldId: 'category',
+                  child: _withAiPendingOverlay(
+                    showPending: _showAiPendingForCategory,
+                    child: DropdownButtonFormField<String>(
+                      value: _category,
+                      dropdownColor: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      decoration: InputDecoration(
+                        label: _requiredLabel('Catégorie'),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
+                      ),
+                      items: _categories
+                          .map(
+                            (cat) => DropdownMenuItem(
+                              value: cat,
+                              child: Text(cat),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _categoryEditedByUser = true;
+                          _category = value;
+                          _selectedSubCategory = null;
+                        });
+                        _recompute();
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Merci de choisir une catégorie';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // SOUS-CATÉGORIE (dropdown dynamique)
+                if (_category != null)
+                  DropdownButtonFormField<String>(
+                    value: _selectedSubCategory,
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    decoration: InputDecoration(
+                      labelText: 'Sous-catégorie',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
+                    ),
+                    items: (kCategorySubcategories[_category] ?? [])
+                        .map(
+                          (sub) => DropdownMenuItem(
+                            value: sub,
+                            child: Text(sub),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedSubCategory = value;
+                      });
+                      _recompute();
+                    },
+                    validator: (_) => null,
+                  ),
+                if (_category != null) const SizedBox(height: 16),
+
+                // DESCRIPTION
+                _withPublishFieldHighlight(
+                  fieldId: 'description',
+                  child: _withAiPendingOverlay(
+                    showPending:
+                        _showAiPendingForController(_descriptionController),
+                    alignment: Alignment.topRight,
+                    padding: const EdgeInsets.only(top: 14, right: 42),
+                    child: TextFormField(
+                      controller: _descriptionController,
+                      decoration: InputDecoration(
+                        label: _requiredLabel('Description détaillée'),
+                        alignLabelWithHint: true,
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
+                      ),
+                      minLines: 4,
+                      maxLines: 8,
+                      validator: _validatePublishDescription,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // PHOTOS
+                Row(
+                  children: [
+                    Text(
+                      'Photos de l\'offre',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      '(optionnel, 2 photos maximum)',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _visiblePhotoTileCount,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1,
+                  ),
+                  itemBuilder: (context, index) {
+                    final hasPhoto = index < _selectedPhotos.length;
+                    return PhotoSelectorTile(
+                      label: 'Photo ${index + 1}',
+                      file: hasPhoto ? _selectedPhotos[index] : null,
+                      bytes: hasPhoto && index < _selectedPhotoBytes.length
+                          ? _selectedPhotoBytes[index]
+                          : null,
+                      onTap: () => _onPhotoTileTap(index),
+                      onLongPress: () => _pickImage(index),
+                      onRemove: hasPhoto ? () => _removePhotoAt(index) : null,
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // VILLE + CP + AUTOCOMPLÉTION
+                const Text(
+                  'Localisation',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                _withPublishFieldHighlight(
+                  fieldId: 'city',
+                  child: _withAiPendingOverlay(
+                    showPending:
+                        _showAiPendingForController(_locationController),
+                    child: TextFormField(
+                      controller: _locationController,
+                      decoration: InputDecoration(
+                        label: _requiredLabel('Ville'),
+                        hintText: 'Ex : Les Abymes, Baie-Mahault, Paris...',
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
+                      ),
+                      onChanged: _onCityChanged,
+                      validator: _validateCanonicalCity,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _withAiPendingOverlay(
+                  showPending:
+                      _showAiPendingForController(_postalCodeController),
+                  child: TextFormField(
+                    controller: _postalCodeController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Code postal',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
+                    ),
+                    onChanged: _onPostalCodeChanged,
+                    validator: _validatePostalCode,
+                  ),
+                ),
+                _buildCitySuggestionsOverlay(),
+                const SizedBox(height: 16),
+
+                // TÉLÉPHONE avec sélection indicatif
+                _withPublishFieldHighlight(
+                  fieldId: 'phone',
+                  child: PhoneInputFieldCompact(
+                    controller: _phoneController,
+                    label: _requiredLabel('Téléphone (pour être rappelé)'),
+                    hintText:
+                        phoneHintForCountryCode(_selectedPhoneCountryCode),
+                    initialCountryCode: _selectedPhoneCountryCode,
+                    onCountryCodeChanged: (code) {
+                      setState(() {
+                        _selectedPhoneCountryCode = code;
+                      });
+                    },
+                    onPhoneChanged: (_) => _recompute(),
+                    validator: (value) {
+                      return _isValidPhoneFR(value ?? '')
+                          ? null
+                          : 'Téléphone invalide';
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // DÉLAI POUR EFFECTUER LA MISSION
+                _withPublishFieldHighlight(
+                  fieldId: 'delay',
+                  child: DropdownButtonFormField<String>(
+                    value: _missionDelay,
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    decoration: InputDecoration(
+                      label: _requiredLabel('Délai pour effectuer la mission'),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
+                    ),
+                    items: _missionDelayOptions
+                        .map(
+                          (delay) => DropdownMenuItem(
+                            value: delay,
+                            child: Text(delay),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _delayEditedByUser = true;
+                        _missionDelay = value;
+                        _isUrgent = value == 'Urgent';
+                      });
+                      _recompute();
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Merci de choisir un délai';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _withPublishFieldHighlight(
+                  fieldId: 'budget',
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: DropdownButtonFormField<String>(
+                          value: _budgetType,
+                          dropdownColor: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          decoration: InputDecoration(
+                            labelText: 'Type de budget',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 14),
+                          ),
+                          items: _budgetTypes
+                              .map(
+                                (type) => DropdownMenuItem(
+                                  value: type,
+                                  child: Text(type),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() {
+                              _budgetEditedByUser = true;
+                              _budgetType = value;
+                            });
+                            _recompute();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 3,
+                        child: TextFormField(
+                          controller: _budgetController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: InputDecoration(
+                            label: _budgetType == 'À négocier'
+                                ? const Text('Budget')
+                                : _requiredLabel('Budget (€)'),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 14),
+                          ),
+                          enabled: _budgetType == 'Fixe',
+                          validator: (value) {
+                            if (_budgetType == 'À négocier') return null;
+                            final b = _parseBudget(value ?? '');
+                            if (b == null) return 'Montant invalide';
+                            if (b <= 0) return 'Le montant doit être > 0';
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                const Text(
+                  '* Champs obligatoires',
+                  style: TextStyle(color: Colors.black54),
+                ),
+                const SizedBox(height: 10),
+                _buildPublishValidationBanner(),
+                if (_attemptedSubmit && _missingPublishFieldLabels().isNotEmpty)
+                  const SizedBox(height: 10),
+
+                // BOUTON PUBLIER
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _isSubmitting ? null : _onPublishPressed,
+                    icon: _isSubmitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send),
+                    label: Text(
+                      _isSubmitting
+                          ? 'Publication en cours...'
+                          : 'Publier mon offre',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: publishVisuallyDisabled
+                          ? Colors.grey.shade400
+                          : kPrestoOrange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+class _FieldPendingDots extends StatelessWidget {
+  const _FieldPendingDots();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.92),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _FieldPendingDot(delay: 0),
+            SizedBox(width: 4),
+            _FieldPendingDot(delay: 180),
+            SizedBox(width: 4),
+            _FieldPendingDot(delay: 360),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FieldPendingDot extends StatefulWidget {
+  final int delay;
+
+  const _FieldPendingDot({required this.delay});
+
+  @override
+  State<_FieldPendingDot> createState() => _FieldPendingDotState();
+}
+
+class _FieldPendingDotState extends State<_FieldPendingDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    );
+    _opacity = Tween<double>(begin: 0.25, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    Future<void>.delayed(Duration(milliseconds: widget.delay), () {
+      if (mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: Container(
+        width: 6,
+        height: 6,
+        decoration: const BoxDecoration(
+          color: kPrestoBlue,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}
