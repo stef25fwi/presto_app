@@ -4,6 +4,20 @@ import { COLLECTIONS } from "../../shared/constants";
 
 const CONVERSATION_PRIMARY_PARTICIPANT_FIELD = "participants";
 
+function safeNumber(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function readBoolMap(value: unknown): Record<string, boolean> {
+  if (!value || typeof value != "object") return {};
+  const out: Record<string, boolean> = {};
+  for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+    out[key] = item === true;
+  }
+  return out;
+}
+
 async function setInboxCounts(userId: string, unreadMessages: number, unreadNotifications: number): Promise<void> {
   await db.collection(COLLECTIONS.users).doc(userId).set({
     inboxCounts: {
@@ -23,13 +37,23 @@ export async function refreshUnreadMessageCount(userId: string): Promise<void> {
   let unreadMessages = 0;
 
   for (const doc of snapshot.docs) {
-    const unreadMap = ((doc.data().unreadCount || doc.data().unread_count || {}) as Record<string, unknown>);
-    unreadMessages += Number(unreadMap[userId] || 0);
+    const data = doc.data();
+    const archivedBy = readBoolMap(data.archivedBy);
+    const blockedBy = readBoolMap(data.blockedBy);
+    const status = String(data.status || "").trim().toLowerCase();
+
+    // Ignore conversations archived by this user or explicitly closed for this user.
+    if (archivedBy[userId] === true || blockedBy[userId] === true || status == "closed") {
+      continue;
+    }
+
+    const unreadMap = ((data.unreadCount || data.unread_count || {}) as Record<string, unknown>);
+    unreadMessages += safeNumber(unreadMap[userId]);
   }
 
   const userSnap = await db.collection(COLLECTIONS.users).doc(userId).get();
   const inboxCounts = (userSnap.data()?.inboxCounts || {}) as Record<string, unknown>;
-  const unreadNotifications = Number(inboxCounts.unreadNotifications || 0);
+  const unreadNotifications = safeNumber(inboxCounts.unreadNotifications);
 
   await setInboxCounts(userId, unreadMessages, unreadNotifications);
 }
@@ -44,7 +68,7 @@ export async function refreshUnreadNotificationCount(userId: string): Promise<vo
   const unreadNotifications = notificationsSnap.size;
   const userSnap = await db.collection(COLLECTIONS.users).doc(userId).get();
   const inboxCounts = (userSnap.data()?.inboxCounts || {}) as Record<string, unknown>;
-  const unreadMessages = Number(inboxCounts.unreadMessages || 0);
+  const unreadMessages = safeNumber(inboxCounts.unreadMessages);
 
   await setInboxCounts(userId, unreadMessages, unreadNotifications);
 }

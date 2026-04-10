@@ -7,6 +7,7 @@ exports.createInAppNotification = createInAppNotification;
 exports.sendPushToUser = sendPushToUser;
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const firestore_1 = require("../../core/firestore");
+const logger_1 = require("../../core/logger");
 const constants_1 = require("../../shared/constants");
 const FCM_MULTICAST_TOKEN_LIMIT = 500;
 function readBoolean(value, fallback = true) {
@@ -72,7 +73,9 @@ async function createInAppNotification({ notificationId, userId, title, message,
     }
     catch (error) {
         const code = error.code;
-        if (code !== 6) {
+        const codeText = String(code || "").toLowerCase();
+        const isAlreadyExists = code == 6 || codeText == "6" || codeText == "already-exists";
+        if (!isAlreadyExists) {
             throw error;
         }
     }
@@ -120,16 +123,26 @@ async function sendPushToUser({ userId, topic, title, body, routeName, channelId
                 },
             },
         };
-        const response = await firebase_admin_1.default.messaging().sendEachForMulticast(multicast);
-        response.responses.forEach((result, responseIndex) => {
-            if (result.success)
-                return;
-            const code = result.error?.code || "";
-            if (code === "messaging/registration-token-not-registered" ||
-                code === "messaging/invalid-registration-token") {
-                invalidDocIds.add(batchEntries[responseIndex].docId);
-            }
-        });
+        try {
+            const response = await firebase_admin_1.default.messaging().sendEachForMulticast(multicast);
+            response.responses.forEach((result, responseIndex) => {
+                if (result.success)
+                    return;
+                const code = result.error?.code || "";
+                if (code === "messaging/registration-token-not-registered" ||
+                    code === "messaging/invalid-registration-token") {
+                    invalidDocIds.add(batchEntries[responseIndex].docId);
+                }
+            });
+        }
+        catch (error) {
+            // Push should never break critical messaging workflows.
+            logger_1.logger.warn("push_send_batch_failed", {
+                userId,
+                topic,
+                error: String(error),
+            });
+        }
     }
     await cleanupInvalidTokens(userId, Array.from(invalidDocIds));
 }

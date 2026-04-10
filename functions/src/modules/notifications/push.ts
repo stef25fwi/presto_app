@@ -1,5 +1,6 @@
 import admin from "firebase-admin";
 import { db } from "../../core/firestore";
+import { logger } from "../../core/logger";
 import { COLLECTIONS } from "../../shared/constants";
 
 const FCM_MULTICAST_TOKEN_LIMIT = 500;
@@ -94,8 +95,10 @@ export async function createInAppNotification({
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
   } catch (error) {
-    const code = (error as { code?: number }).code;
-    if (code !== 6) {
+    const code = (error as { code?: number | string }).code;
+    const codeText = String(code || "").toLowerCase();
+    const isAlreadyExists = code == 6 || codeText == "6" || codeText == "already-exists";
+    if (!isAlreadyExists) {
       throw error;
     }
   }
@@ -163,18 +166,27 @@ export async function sendPushToUser({
       },
     };
 
-    const response = await admin.messaging().sendEachForMulticast(multicast);
-    response.responses.forEach((result, responseIndex) => {
-      if (result.success) return;
+    try {
+      const response = await admin.messaging().sendEachForMulticast(multicast);
+      response.responses.forEach((result, responseIndex) => {
+        if (result.success) return;
 
-      const code = result.error?.code || "";
-      if (
-        code === "messaging/registration-token-not-registered" ||
-        code === "messaging/invalid-registration-token"
-      ) {
-        invalidDocIds.add(batchEntries[responseIndex]!.docId);
-      }
-    });
+        const code = result.error?.code || "";
+        if (
+          code === "messaging/registration-token-not-registered" ||
+          code === "messaging/invalid-registration-token"
+        ) {
+          invalidDocIds.add(batchEntries[responseIndex]!.docId);
+        }
+      });
+    } catch (error) {
+      // Push should never break critical messaging workflows.
+      logger.warn("push_send_batch_failed", {
+        userId,
+        topic,
+        error: String(error),
+      });
+    }
   }
 
   await cleanupInvalidTokens(userId, Array.from(invalidDocIds));
