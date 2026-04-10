@@ -1,6 +1,6 @@
 import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { PROJECT_REGION } from "../../config/env";
+import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
 import { COLLECTIONS } from "../../shared/constants";
 
@@ -16,7 +16,7 @@ function sanitizeTokenDocId(token: string): string {
   return token.replaceAll("/", "_");
 }
 
-export const registerPushToken = onCall({ region: PROJECT_REGION }, async (request) => {
+export const registerPushToken = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const userId = requireAuthUid(request);
   const token = String(request.data?.token || "").trim();
   const platform = String(request.data?.platform || "unknown").trim().slice(0, 32);
@@ -42,7 +42,7 @@ export const registerPushToken = onCall({ region: PROJECT_REGION }, async (reque
   return { ok: true, tokenId: docId };
 });
 
-export const unregisterPushToken = onCall({ region: PROJECT_REGION }, async (request) => {
+export const unregisterPushToken = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const userId = requireAuthUid(request);
   const token = String(request.data?.token || "").trim();
 

@@ -1,5 +1,5 @@
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { APP_BASE_URL, PROJECT_REGION } from "../../config/env";
+import { APP_BASE_URL, ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
 import { COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
@@ -12,7 +12,7 @@ function extractFirstName(value: unknown): string {
   return String(value || "").trim().split(" ")[0] || "";
 }
 
-export const sendReferralInviteEmail = onCall({ region: PROJECT_REGION }, async (request) => {
+export const sendReferralInviteEmail = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const auth = request.auth;
   if (!auth?.uid) {
     throw new HttpsError("unauthenticated", "authentication required");

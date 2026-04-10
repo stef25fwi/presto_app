@@ -1,6 +1,6 @@
 import admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { PROJECT_REGION } from "../../../config/env";
+import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../../config/env";
 import { db } from "../../../core/firestore";
 import { logger } from "../../../core/logger";
 import { COLLECTIONS } from "../../../shared/constants";
@@ -19,7 +19,7 @@ function normalizeString(value: unknown): string {
   return String(value ?? "").trim();
 }
 
-export const toggleFavorite = onCall({ region: PROJECT_REGION }, async (request) => {
+export const toggleFavorite = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const userId = requireAuthUid(request);
   const listingId = normalizeString(request.data?.listingId);
   if (!listingId) {

@@ -22,7 +22,7 @@ function requireAuthUid(request) {
 function normalizeString(value) {
     return String(value ?? "").trim();
 }
-exports.toggleFavorite = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.toggleFavorite = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const userId = requireAuthUid(request);
     const listingId = normalizeString(request.data?.listingId);
     if (!listingId) {

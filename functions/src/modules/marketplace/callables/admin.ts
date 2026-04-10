@@ -1,5 +1,5 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { PROJECT_REGION } from "../../../config/env";
+import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../../config/env";
 import { writeAdminActionLog } from "../services/admin_audit";
 import { extractRolesFromAuthToken, requireAnyRole, syncMarketplaceClaims } from "../services/roles";
 import { toHttpsError } from "../services/errors";
@@ -19,7 +19,7 @@ function resolveActorRole(actorRoles: readonly UserRole[]): UserRole {
   return ordered.find((role) => actorRoles.includes(role)) ?? "user";
 }
 
-export const applyUserRoleClaims = onCall({ region: PROJECT_REGION }, async (request) => {
+export const applyUserRoleClaims = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const actorId = requireAuthUid(request);
   const actorRoles = extractRolesFromAuthToken(request.auth?.token as Record<string, unknown> | undefined);
   requireAnyRole(actorRoles, ["admin", "superadmin"], "Admin role required");
@@ -65,7 +65,7 @@ export const applyUserRoleClaims = onCall({ region: PROJECT_REGION }, async (req
   }
 });
 
-export const logAdminAction = onCall({ region: PROJECT_REGION }, async (request) => {
+export const logAdminAction = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const actorId = requireAuthUid(request);
   const actorRoles = extractRolesFromAuthToken(request.auth?.token as Record<string, unknown> | undefined);
   requireAnyRole(actorRoles, ["admin", "superadmin", "moderator"], "Moderator role required");

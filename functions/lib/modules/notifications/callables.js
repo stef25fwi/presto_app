@@ -19,7 +19,7 @@ function requireAuthUid(request) {
 function sanitizeTokenDocId(token) {
     return token.replaceAll("/", "_");
 }
-exports.registerPushToken = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.registerPushToken = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const userId = requireAuthUid(request);
     const token = String(request.data?.token || "").trim();
     const platform = String(request.data?.platform || "unknown").trim().slice(0, 32);
@@ -41,7 +41,7 @@ exports.registerPushToken = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }
     }, { merge: true });
     return { ok: true, tokenId: docId };
 });
-exports.unregisterPushToken = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.unregisterPushToken = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const userId = requireAuthUid(request);
     const token = String(request.data?.token || "").trim();
     if (!token) {

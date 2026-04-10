@@ -26,7 +26,7 @@ function requireAuthUid(request) {
 function normalizeString(value) {
     return String(value ?? "").trim();
 }
-exports.reportListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.reportListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const reporterId = requireAuthUid(request);
     const recaptchaToken = normalizeString(request.data?.recaptchaToken);
     const rateAllowed = await (0, rate_limit_1.canProceedRateLimited)("listing_report", reporterId, 15, 24 * 60 * 60 * 1000);

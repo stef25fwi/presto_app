@@ -232,7 +232,7 @@ async function loadOwnerPublicIdentity(ownerId) {
             userData.verified === true,
     };
 }
-exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const ownerId = requireAuthUid(request);
     const draftId = normalizeString(request.data?.draftId);
     const recaptchaToken = normalizeString(request.data?.recaptchaToken);
@@ -451,7 +451,7 @@ exports.submitListingDraft = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
         throw (0, errors_1.toHttpsError)(error, "Unable to submit listing draft");
     }
 });
-exports.incrementListingView = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.incrementListingView = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const listingId = normalizeString(request.data?.listingId);
     const viewerKey = normalizeString(request.data?.viewerKey);
     const viewerId = normalizeString(request.auth?.uid) || viewerKey;
@@ -504,7 +504,7 @@ function isJobDoneReason(reason) {
     return foundOnIliPresto || foundProvider;
 }
 const JOB_DONE_OVERLAY_HOURS = 10;
-exports.deleteListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.deleteListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const ownerId = requireAuthUid(request);
     const listingId = normalizeString(request.data?.listingId);
     const reason = typeof request.data?.reason === "string"

@@ -50,7 +50,7 @@ function buildActionCodeSettings() {
         handleCodeInApp: false,
     };
 }
-exports.requestPasswordResetEmail = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.requestPasswordResetEmail = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const rawEmail = String(request.data?.email || "").trim().toLowerCase();
     if (!rawEmail || !rawEmail.includes("@")) {
         return { ok: true };
@@ -87,7 +87,7 @@ exports.requestPasswordResetEmail = (0, https_1.onCall)({ region: env_1.PROJECT_
     }
     return { ok: true };
 });
-exports.requestLoginOtpEmail = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.requestLoginOtpEmail = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const rawEmail = String(request.data?.email || "").trim().toLowerCase();
     if (!rawEmail || !rawEmail.includes("@")) {
         return { ok: true };
@@ -144,7 +144,7 @@ exports.requestLoginOtpEmail = (0, https_1.onCall)({ region: env_1.PROJECT_REGIO
     }
     return { ok: true };
 });
-exports.requestEmailVerificationEmail = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.requestEmailVerificationEmail = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const auth = request.auth;
     if (!auth?.uid) {
         throw new https_1.HttpsError("unauthenticated", "authentication required");
@@ -179,7 +179,7 @@ exports.requestEmailVerificationEmail = (0, https_1.onCall)({ region: env_1.PROJ
     });
     return { ok: true };
 });
-exports.reportPasswordChanged = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.reportPasswordChanged = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const auth = request.auth;
     if (!auth?.uid) {
         throw new https_1.HttpsError("unauthenticated", "authentication required");
@@ -215,7 +215,7 @@ exports.reportPasswordChanged = (0, https_1.onCall)({ region: env_1.PROJECT_REGI
     }, { merge: true });
     return { ok: true };
 });
-exports.trackUserLogin = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.trackUserLogin = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const auth = request.auth;
     if (!auth?.uid) {
         throw new https_1.HttpsError("unauthenticated", "authentication required");

@@ -12,7 +12,7 @@ function normalizeEmail(value) {
 function extractFirstName(value) {
     return String(value || "").trim().split(" ")[0] || "";
 }
-exports.sendReferralInviteEmail = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.sendReferralInviteEmail = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const auth = request.auth;
     if (!auth?.uid) {
         throw new https_1.HttpsError("unauthenticated", "authentication required");
