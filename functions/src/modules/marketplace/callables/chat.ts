@@ -1,6 +1,6 @@
 import admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { PROJECT_REGION } from "../../../config/env";
+import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../../config/env";
 import { db } from "../../../core/firestore";
 import { canProceedRateLimited } from "../../../core/rate_limit";
 import { logger } from "../../../core/logger";
@@ -184,7 +184,7 @@ async function appendConversationMessage({
   };
 }
 
-export const createChatThreadFromListing = onCall({ region: PROJECT_REGION }, async (request) => {
+export const createChatThreadFromListing = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const senderId = requireAuthUid(request);
   const listingId = normalizeString(request.data?.listingId);
   const initialMessage = normalizeString(request.data?.message);
@@ -300,7 +300,7 @@ export const createChatThreadFromListing = onCall({ region: PROJECT_REGION }, as
   }
 });
 
-export const sendChatMessage = onCall({ region: PROJECT_REGION }, async (request) => {
+export const sendChatMessage = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const senderId = requireAuthUid(request);
   const threadId = normalizeString(request.data?.threadId);
   if (!threadId) {

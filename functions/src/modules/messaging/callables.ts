@@ -1,6 +1,6 @@
 import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
-import { PROJECT_REGION } from "../../config/env";
+import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { db } from "../../core/firestore";
 import { canProceedRateLimited } from "../../core/rate_limit";
 import { COLLECTIONS } from "../../shared/constants";
@@ -265,7 +265,7 @@ async function loadConversationForParticipant(conversationId: string, currentUse
   return { convRef, data, participants, conversation };
 }
 
-export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async (request) => {
+export const ensureOfferConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const currentUserId = requireAuthUid(request);
   const offerId = String(request.data?.offerId || "").trim();
   const otherUserId = String(request.data?.otherUserId || "").trim();
@@ -436,7 +436,7 @@ export const ensureOfferConversation = onCall({ region: PROJECT_REGION }, async 
   };
 });
 
-export const sendConversationMessage = onCall({ region: PROJECT_REGION }, async (request) => {
+export const sendConversationMessage = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
   const text = sanitizeMessageText(request.data?.text);
@@ -575,7 +575,7 @@ export const sendConversationMessage = onCall({ region: PROJECT_REGION }, async 
   };
 });
 
-export const markConversationRead = onCall({ region: PROJECT_REGION }, async (request) => {
+export const markConversationRead = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
@@ -604,7 +604,7 @@ export const markConversationRead = onCall({ region: PROJECT_REGION }, async (re
   return { ok: true };
 });
 
-export const archiveConversation = onCall({ region: PROJECT_REGION }, async (request) => {
+export const archiveConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
@@ -633,7 +633,7 @@ export const archiveConversation = onCall({ region: PROJECT_REGION }, async (req
   return { ok: true };
 });
 
-export const unarchiveConversation = onCall({ region: PROJECT_REGION }, async (request) => {
+export const unarchiveConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
@@ -662,7 +662,7 @@ export const unarchiveConversation = onCall({ region: PROJECT_REGION }, async (r
   return { ok: true };
 });
 
-export const blockConversation = onCall({ region: PROJECT_REGION }, async (request) => {
+export const blockConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
@@ -691,7 +691,7 @@ export const blockConversation = onCall({ region: PROJECT_REGION }, async (reque
   return { ok: true };
 });
 
-export const unblockConversation = onCall({ region: PROJECT_REGION }, async (request) => {
+export const unblockConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
@@ -724,7 +724,7 @@ export const unblockConversation = onCall({ region: PROJECT_REGION }, async (req
   return { ok: true };
 });
 
-export const deleteConversation = onCall({ region: PROJECT_REGION }, async (request) => {
+export const deleteConversation = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
 
@@ -781,7 +781,7 @@ export const deleteConversation = onCall({ region: PROJECT_REGION }, async (requ
   return { ok: true };
 });
 
-export const deleteConversationMessage = onCall({ region: PROJECT_REGION }, async (request) => {
+export const deleteConversationMessage = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const currentUserId = requireAuthUid(request);
   const conversationId = String(request.data?.conversationId || "").trim();
   const messageId = String(request.data?.messageId || "").trim();

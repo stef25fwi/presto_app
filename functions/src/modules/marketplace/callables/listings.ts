@@ -1,6 +1,6 @@
 import admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { PROJECT_REGION, MARKETPLACE_MAX_MEDIA_COUNT } from "../../../config/env";
+import { ENFORCE_APP_CHECK, PROJECT_REGION, MARKETPLACE_MAX_MEDIA_COUNT } from "../../../config/env";
 import { db } from "../../../core/firestore";
 import { canProceedRateLimited } from "../../../core/rate_limit";
 import { logger } from "../../../core/logger";
@@ -302,7 +302,7 @@ async function loadOwnerPublicIdentity(ownerId: string): Promise<{
   };
 }
 
-export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (request) => {
+export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const ownerId = requireAuthUid(request);
   const draftId = normalizeString(request.data?.draftId);
   const recaptchaToken = normalizeString(request.data?.recaptchaToken);
@@ -535,7 +535,7 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION }, async (requ
   }
 });
 
-export const incrementListingView = onCall({ region: PROJECT_REGION }, async (request) => {
+export const incrementListingView = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const listingId = normalizeString(request.data?.listingId);
   const viewerKey = normalizeString(request.data?.viewerKey);
   const viewerId = normalizeString(request.auth?.uid) || viewerKey;
@@ -604,7 +604,7 @@ function isJobDoneReason(reason: string | undefined): boolean {
 
 const JOB_DONE_OVERLAY_HOURS = 10;
 
-export const deleteListing = onCall({ region: PROJECT_REGION }, async (request) => {
+export const deleteListing = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const ownerId = requireAuthUid(request);
   const listingId = normalizeString(request.data?.listingId);
   const reason = typeof request.data?.reason === "string"

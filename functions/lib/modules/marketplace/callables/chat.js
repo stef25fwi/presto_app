@@ -145,7 +145,7 @@ async function appendConversationMessage({ conversationId, senderId, senderName,
         participants: participantsToRefresh,
     };
 }
-exports.createChatThreadFromListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.createChatThreadFromListing = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const senderId = requireAuthUid(request);
     const listingId = normalizeString(request.data?.listingId);
     const initialMessage = normalizeString(request.data?.message);
@@ -238,7 +238,7 @@ exports.createChatThreadFromListing = (0, https_1.onCall)({ region: env_1.PROJEC
         throw (0, errors_1.toHttpsError)(error, "Unable to create chat thread");
     }
 });
-exports.sendChatMessage = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.sendChatMessage = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const senderId = requireAuthUid(request);
     const threadId = normalizeString(request.data?.threadId);
     if (!threadId) {

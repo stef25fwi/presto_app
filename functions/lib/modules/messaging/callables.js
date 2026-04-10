@@ -181,7 +181,7 @@ async function loadConversationForParticipant(conversationId, currentUserId) {
     }
     return { convRef, data, participants, conversation };
 }
-exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const currentUserId = requireAuthUid(request);
     const offerId = String(request.data?.offerId || "").trim();
     const otherUserId = String(request.data?.otherUserId || "").trim();
@@ -310,7 +310,7 @@ exports.ensureOfferConversation = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         offerTitle,
     };
 });
-exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     const text = sanitizeMessageText(request.data?.text);
@@ -414,7 +414,7 @@ exports.sendConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_RE
         messageId: messageRef.id,
     };
 });
-exports.markConversationRead = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.markConversationRead = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     if (!conversationId) {
@@ -436,7 +436,7 @@ exports.markConversationRead = (0, https_1.onCall)({ region: env_1.PROJECT_REGIO
     await (0, counters_1.refreshUnreadMessageCount)(currentUserId);
     return { ok: true };
 });
-exports.archiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.archiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     if (!conversationId) {
@@ -458,7 +458,7 @@ exports.archiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION
     }));
     return { ok: true };
 });
-exports.unarchiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.unarchiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     if (!conversationId) {
@@ -480,7 +480,7 @@ exports.unarchiveConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGI
     }));
     return { ok: true };
 });
-exports.blockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.blockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     if (!conversationId) {
@@ -502,7 +502,7 @@ exports.blockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }
     }));
     return { ok: true };
 });
-exports.unblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.unblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     if (!conversationId) {
@@ -527,7 +527,7 @@ exports.unblockConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION
     }));
     return { ok: true };
 });
-exports.deleteConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.deleteConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     if (!conversationId) {
@@ -573,7 +573,7 @@ exports.deleteConversation = (0, https_1.onCall)({ region: env_1.PROJECT_REGION 
     await Promise.all(Array.from(notificationUserIds, (userId) => (0, counters_1.refreshUnreadNotificationCount)(userId)));
     return { ok: true };
 });
-exports.deleteConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.deleteConversationMessage = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const currentUserId = requireAuthUid(request);
     const conversationId = String(request.data?.conversationId || "").trim();
     const messageId = String(request.data?.messageId || "").trim();

@@ -18,7 +18,7 @@ function resolveActorRole(actorRoles) {
     const ordered = ["superadmin", "admin", "moderator", "pro", "user"];
     return ordered.find((role) => actorRoles.includes(role)) ?? "user";
 }
-exports.applyUserRoleClaims = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.applyUserRoleClaims = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const actorId = requireAuthUid(request);
     const actorRoles = (0, roles_1.extractRolesFromAuthToken)(request.auth?.token);
     (0, roles_1.requireAnyRole)(actorRoles, ["admin", "superadmin"], "Admin role required");
@@ -59,7 +59,7 @@ exports.applyUserRoleClaims = (0, https_1.onCall)({ region: env_1.PROJECT_REGION
         throw (0, errors_1.toHttpsError)(error, "Unable to apply user role claims");
     }
 });
-exports.logAdminAction = (0, https_1.onCall)({ region: env_1.PROJECT_REGION }, async (request) => {
+exports.logAdminAction = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const actorId = requireAuthUid(request);
     const actorRoles = (0, roles_1.extractRolesFromAuthToken)(request.auth?.token);
     (0, roles_1.requireAnyRole)(actorRoles, ["admin", "superadmin", "moderator"], "Moderator role required");

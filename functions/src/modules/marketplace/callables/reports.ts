@@ -1,6 +1,6 @@
 import admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { MARKETPLACE_REPORT_REVIEW_THRESHOLD, PROJECT_REGION } from "../../../config/env";
+import { ENFORCE_APP_CHECK, MARKETPLACE_REPORT_REVIEW_THRESHOLD, PROJECT_REGION } from "../../../config/env";
 import { db } from "../../../core/firestore";
 import { canProceedRateLimited } from "../../../core/rate_limit";
 import { logger } from "../../../core/logger";
@@ -23,7 +23,7 @@ function normalizeString(value: unknown): string {
   return String(value ?? "").trim();
 }
 
-export const reportListing = onCall({ region: PROJECT_REGION }, async (request) => {
+export const reportListing = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const reporterId = requireAuthUid(request);
   const recaptchaToken = normalizeString(request.data?.recaptchaToken);
 
