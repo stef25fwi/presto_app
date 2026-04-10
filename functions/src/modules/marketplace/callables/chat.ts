@@ -78,7 +78,10 @@ async function findExistingConversationIdForListing(
   }
 
   for (const doc of deduped.values()) {
-    const participants = readConversationParticipants((doc.data() ?? {}) as Record<string, unknown>);
+    const participants = readConversationParticipants(
+      (doc.data() ?? {}) as Record<string, unknown>,
+      { conversationId: doc.id },
+    );
     if (participants.includes(participantA) && participants.includes(participantB)) {
       return doc.id;
     }
@@ -110,7 +113,7 @@ async function appendConversationMessage({
     }
 
     const data = (convSnap.data() ?? {}) as Record<string, unknown>;
-    const participants = readConversationParticipants(data);
+    const participants = readConversationParticipants(data, { conversationId });
     if (!participants.includes(senderId)) {
       throw new HttpsError("permission-denied", "You are not a participant of this conversation");
     }
@@ -118,7 +121,7 @@ async function appendConversationMessage({
       throw new HttpsError("failed-precondition", "Conversation is blocked");
     }
 
-    const conversation = readConversationMirrorData(data);
+    const conversation = readConversationMirrorData(data, { conversationId });
     const isFirstMessage = Number(conversation.messageCount || 0) <= 0;
     listingId = normalizeString(conversation.offerId);
 

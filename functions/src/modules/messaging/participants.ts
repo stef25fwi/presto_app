@@ -21,12 +21,55 @@ export const CONVERSATION_PARTICIPANT_MAP_ALIASES = [
   "blockedBy",
 ] as const;
 
-export function readConversationParticipants(data: Record<string, unknown>): string[] {
+function normalizeString(value: unknown): string {
+  return String(value ?? "").trim();
+}
+
+export function readConversationParticipantIdsFromCanonicalId(
+  conversationId: string,
+): string[] {
+  const normalizedConversationId = normalizeString(conversationId);
+  if (!normalizedConversationId.startsWith("offer_")) {
+    return [];
+  }
+
+  const parts = normalizedConversationId
+    .slice("offer_".length)
+    .split("__")
+    .map((value) => normalizeString(value))
+    .filter(Boolean);
+
+  if (parts.length < 3) {
+    return [];
+  }
+
+  return parts
+    .slice(1)
+    .filter((value, index, all) => all.indexOf(value) === index)
+    .sort();
+}
+
+export function readConversationParticipants(
+  data: Record<string, unknown>,
+  options: {
+    conversationId?: string;
+  } = {},
+): string[] {
+  const canonicalParticipants = readConversationParticipantIdsFromCanonicalId(
+    options.conversationId ?? "",
+  );
+
+  // Les conversations 1:1 suivent l'ID canonique offer_<offerId>__<uidA>__<uidB>.
+  // Quand cet ID est présent, il est la source de vérité pour la visibilité.
+  if (canonicalParticipants.length >= 2) {
+    return canonicalParticipants;
+  }
+
   const result: string[] = [];
   const seen = new Set<string>();
 
   const appendParticipant = (value: unknown): void => {
-    const normalized = String(value ?? "").trim();
+    const normalized = normalizeString(value);
     if (!normalized || seen.has(normalized)) return;
     seen.add(normalized);
     result.push(normalized);

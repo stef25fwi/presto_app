@@ -24,6 +24,16 @@ function normalizeParticipants(values) {
         .filter((value, index, all) => all.indexOf(value) === index)
         .sort();
 }
+function normalizeBooleanMap(map) {
+    const result = {};
+    for (const [key, value] of Object.entries(map)) {
+        const normalizedKey = normalizeString(key);
+        if (!normalizedKey)
+            continue;
+        result[normalizedKey] = value === true;
+    }
+    return result;
+}
 function readStringMap(data, keys) {
     const raw = pickFirstValue(data, keys);
     if (!raw || typeof raw !== "object")
@@ -84,6 +94,67 @@ function buildParticipantUniverse(input) {
         ...Object.keys(input.blockedBy ?? {}),
     ]);
 }
+function resolveParticipantsForWrite(input) {
+    const explicitParticipants = normalizeParticipants(input.participants ?? []);
+    if (explicitParticipants.length > 0) {
+        return explicitParticipants;
+    }
+    return buildParticipantUniverse(input);
+}
+function scopeStringMapToParticipants(map, participants) {
+    if (participants.length === 0) {
+        return sanitizeMapKeys(map);
+    }
+    const normalizedMap = sanitizeMapKeys(map);
+    const result = {};
+    for (const participantId of participants) {
+        const value = normalizeString(normalizedMap[participantId]);
+        if (!value)
+            continue;
+        result[participantId] = value;
+    }
+    return result;
+}
+function scopeUnknownMapToParticipants(map, participants) {
+    if (participants.length === 0) {
+        return sanitizeMapKeys(map);
+    }
+    const normalizedMap = sanitizeMapKeys(map);
+    const result = {};
+    for (const participantId of participants) {
+        if (!Object.prototype.hasOwnProperty.call(normalizedMap, participantId)) {
+            continue;
+        }
+        result[participantId] = normalizedMap[participantId];
+    }
+    return result;
+}
+function buildUnreadCountMap(map, participants) {
+    if (participants.length === 0) {
+        return sanitizeMapKeys(map);
+    }
+    const normalizedMap = sanitizeMapKeys(map);
+    const result = {};
+    for (const participantId of participants) {
+        if (Object.prototype.hasOwnProperty.call(normalizedMap, participantId)) {
+            result[participantId] = normalizedMap[participantId];
+            continue;
+        }
+        result[participantId] = 0;
+    }
+    return result;
+}
+function buildBooleanMapForParticipants(map, participants) {
+    const normalizedMap = normalizeBooleanMap(map);
+    if (participants.length === 0) {
+        return normalizedMap;
+    }
+    const result = {};
+    for (const participantId of participants) {
+        result[participantId] = normalizedMap[participantId] === true;
+    }
+    return result;
+}
 function readConversationMessageCount(data) {
     const rawCount = pickFirstValue(data, ["messageCount", "message_count"]);
     if (typeof rawCount === "number" && Number.isFinite(rawCount) && rawCount >= 0) {
@@ -92,9 +163,11 @@ function readConversationMessageCount(data) {
     const lastMessage = normalizeString(pickFirstValue(data, ["lastMessage", "last_message"]));
     return lastMessage ? 1 : 0;
 }
-function readConversationMirrorData(data) {
+function readConversationMirrorData(data, options = {}) {
     return {
-        participants: (0, participants_1.readConversationParticipants)(data),
+        participants: (0, participants_1.readConversationParticipants)(data, {
+            conversationId: options.conversationId,
+        }),
         participantNames: readStringMap(data, ["participantNames", "participant_names"]),
         otherUserName: normalizeString(pickFirstValue(data, ["otherUserName", "other_user_name"])),
         offerId: normalizeString(pickFirstValue(data, ["offerId", "offer_id"])),
@@ -114,12 +187,12 @@ function readConversationMirrorData(data) {
     };
 }
 function buildConversationMirrorFields(input) {
-    const participants = buildParticipantUniverse(input);
-    const participantNames = sanitizeMapKeys(input.participantNames ?? {});
-    const unreadCount = sanitizeMapKeys(input.unreadCount ?? {});
-    const lastReadAt = sanitizeMapKeys(input.lastReadAt ?? {});
-    const archivedBy = sanitizeMapKeys(input.archivedBy ?? {});
-    const blockedBy = sanitizeMapKeys(input.blockedBy ?? {});
+    const participants = resolveParticipantsForWrite(input);
+    const participantNames = scopeStringMapToParticipants(input.participantNames ?? {}, participants);
+    const unreadCount = buildUnreadCountMap(input.unreadCount ?? {}, participants);
+    const lastReadAt = scopeUnknownMapToParticipants(input.lastReadAt ?? {}, participants);
+    const archivedBy = buildBooleanMapForParticipants(input.archivedBy ?? {}, participants);
+    const blockedBy = buildBooleanMapForParticipants(input.blockedBy ?? {}, participants);
     const fields = {
         participants,
         participant_ids: participants,

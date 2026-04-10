@@ -935,13 +935,107 @@ function hasAdminRoleData(data) {
   );
 }
 
-async function resolveAdminAccess(req) {
-  const uid = req.auth?.uid;
-  if (!uid) {
+function extractBearerTokenFromCallableRequest(req) {
+  const authHeader =
+    req?.rawRequest?.headers?.authorization ||
+    req?.rawRequest?.headers?.Authorization ||
+    null;
+
+  if (typeof authHeader !== 'string') {
+    return null;
+  }
+
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  if (!match) {
+    return null;
+  }
+
+  const token = String(match[1] || '').trim();
+  return token || null;
+}
+
+async function resolveCallableAuthContext(req) {
+  const requestUid = String(req?.auth?.uid || '').trim();
+  if (requestUid) {
+    return {
+      uid: requestUid,
+      token: req?.auth?.token || {},
+      source: 'request.auth',
+    };
+  }
+
+  const bearerToken = extractBearerTokenFromCallableRequest(req);
+  if (!bearerToken) {
     throw new HttpsError('unauthenticated', 'Authentication required.');
   }
 
-  const token = req.auth?.token || {};
+  try {
+    const decoded = await admin.auth().verifyIdToken(bearerToken);
+    const decodedUid = String(decoded?.uid || decoded?.sub || '').trim();
+    if (!decodedUid) {
+      throw new Error('Decoded token without uid');
+    }
+
+    return {
+      uid: decodedUid,
+      token: decoded || {},
+      source: 'authorization-bearer',
+    };
+  } catch (error) {
+    console.error('[admin-auth-probe]', {
+      label: 'resolveCallableAuthContext:verifyIdToken-failed',
+      code: error?.code || null,
+      message: error?.message || String(error),
+    });
+    throw new HttpsError('unauthenticated', 'Authentication required.');
+  }
+}
+
+function adminAuthProbe(label, req, extra = {}) {
+  const authHeader =
+    req?.rawRequest?.headers?.authorization ||
+    req?.rawRequest?.headers?.Authorization ||
+    null;
+  const token = req?.auth?.token || {};
+  const tokenRoles = normalizeRoleValues(token.roles);
+  const tokenPrimaryRole = String(token.primaryRole || '').trim().toLowerCase() || null;
+
+  console.log('[admin-auth-probe]', {
+    label,
+    project: process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || null,
+    region: PROJECT_REGION,
+    callType: 'callable',
+    authPresent: Boolean(req?.auth),
+    uid: req?.auth?.uid || null,
+    email: token.email || null,
+    tokenHasAdmin: hasAdminRoleData(token),
+    tokenRoles,
+    tokenPrimaryRole,
+    hasAuthorizationHeader: Boolean(authHeader),
+    authorizationPrefix:
+      typeof authHeader === 'string' ? authHeader.slice(0, 12) : null,
+    appCheckPresent: Boolean(req?.app),
+    appCheckAppId: req?.app?.appId || req?.app?.app_id || null,
+    ...extra,
+  });
+}
+
+async function resolveAdminAccess(req) {
+  adminAuthProbe('resolveAdminAccess:start', req);
+
+  let authContext;
+  try {
+    authContext = await resolveCallableAuthContext(req);
+  } catch (error) {
+    adminAuthProbe('resolveAdminAccess:unauthenticated', req, {
+      reason: 'missing_auth_uid',
+    });
+    throw error;
+  }
+
+  const uid = authContext.uid;
+  const token = authContext.token || {};
+
   const tokenRoles = normalizeRoleValues(token.roles);
   const tokenHasAdmin = hasAdminRoleData(token);
 
@@ -958,6 +1052,7 @@ async function resolveAdminAccess(req) {
   const adminDocEnabled = adminSnap.exists && adminData.enabled !== false;
 
   const debug = {
+    authSource: authContext.source,
     tokenHasAdmin,
     tokenRoles,
     userDocExists: userSnap.exists,
@@ -971,12 +1066,32 @@ async function resolveAdminAccess(req) {
   };
 
   if (tokenHasAdmin) {
+    adminAuthProbe('resolveAdminAccess:granted', req, {
+      authSource: authContext.source,
+      source: 'token',
+      userHasAdmin,
+      adminDocEnabled,
+    });
     return { uid, isAdmin: true, source: 'token', debug };
   }
 
   if (userHasAdmin) {
+    adminAuthProbe('resolveAdminAccess:granted', req, {
+      authSource: authContext.source,
+      source: 'users',
+      userHasAdmin,
+      adminDocEnabled,
+    });
     return { uid, isAdmin: true, source: 'users', debug };
   }
+
+  adminAuthProbe('resolveAdminAccess:resolved', req, {
+    authSource: authContext.source,
+    source: adminDocEnabled ? 'admins' : null,
+    isAdmin: adminDocEnabled,
+    userHasAdmin,
+    adminDocEnabled,
+  });
 
   return {
     uid,
@@ -989,6 +1104,9 @@ async function resolveAdminAccess(req) {
 async function assertIsAdmin(req) {
   const access = await resolveAdminAccess(req);
   if (!access.isAdmin) {
+    adminAuthProbe('assertIsAdmin:denied', req, {
+      source: access.source || null,
+    });
     throw new HttpsError('permission-denied', 'Admin only.');
   }
 
@@ -1205,15 +1323,35 @@ exports.getMyAdminAccessStatus = onCall(
     enforceAppCheck: ENFORCE_APP_CHECK,
   },
   async (req) => {
-    const access = await resolveAdminAccess(req);
-    return {
-      ok: true,
-      isAdmin: access.isAdmin,
-      uid: access.uid || null,
-      source: access.source,
-      debug: access.debug || null,
-      checkedAt: Date.now(),
-    };
+    adminAuthProbe('getMyAdminAccessStatus:call', req, {
+      callable: 'getMyAdminAccessStatus',
+    });
+    try {
+      const access = await resolveAdminAccess(req);
+      const payload = {
+        ok: true,
+        isAdmin: access.isAdmin,
+        uid: access.uid || null,
+        source: access.source,
+        debug: access.debug || null,
+        checkedAt: Date.now(),
+      };
+      adminAuthProbe('getMyAdminAccessStatus:success', req, {
+        responseIsAdmin: payload.isAdmin,
+        responseSource: payload.source || null,
+      });
+      return payload;
+    } catch (error) {
+      console.error('[admin-auth-probe]', {
+        label: 'getMyAdminAccessStatus:error',
+        project: process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || null,
+        region: PROJECT_REGION,
+        callable: 'getMyAdminAccessStatus',
+        code: error?.code || null,
+        message: error?.message || String(error),
+      });
+      throw error;
+    }
   }
 );
 

@@ -68,7 +68,7 @@ async function findExistingConversationIdForListing(listingId, participantA, par
         }
     }
     for (const doc of deduped.values()) {
-        const participants = (0, participants_1.readConversationParticipants)((doc.data() ?? {}));
+        const participants = (0, participants_1.readConversationParticipants)((doc.data() ?? {}), { conversationId: doc.id });
         if (participants.includes(participantA) && participants.includes(participantB)) {
             return doc.id;
         }
@@ -86,14 +86,14 @@ async function appendConversationMessage({ conversationId, senderId, senderName,
             throw new https_1.HttpsError("not-found", "Conversation not found");
         }
         const data = (convSnap.data() ?? {});
-        const participants = (0, participants_1.readConversationParticipants)(data);
+        const participants = (0, participants_1.readConversationParticipants)(data, { conversationId });
         if (!participants.includes(senderId)) {
             throw new https_1.HttpsError("permission-denied", "You are not a participant of this conversation");
         }
         if ((0, state_1.isConversationBlocked)(data)) {
             throw new https_1.HttpsError("failed-precondition", "Conversation is blocked");
         }
-        const conversation = (0, mirror_1.readConversationMirrorData)(data);
+        const conversation = (0, mirror_1.readConversationMirrorData)(data, { conversationId });
         const isFirstMessage = Number(conversation.messageCount || 0) <= 0;
         listingId = normalizeString(conversation.offerId);
         transaction.set(messageRef, {
