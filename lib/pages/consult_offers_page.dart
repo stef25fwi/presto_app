@@ -2630,78 +2630,16 @@ class _OfferBrowseTile extends StatefulWidget {
   State<_OfferBrowseTile> createState() => _OfferBrowseTileState();
 }
 
-class _OfferBrowseTileState extends State<_OfferBrowseTile>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _pulse;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 920),
-    );
-    _pulse = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 0.0, end: 1.0).chain(
-          CurveTween(curve: Curves.easeOutCubic),
-        ),
-        weight: 42,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 0.18).chain(
-          CurveTween(curve: Curves.easeInCubic),
-        ),
-        weight: 26,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 0.18, end: 0.78).chain(
-          CurveTween(curve: Curves.easeOutBack),
-        ),
-        weight: 32,
-      ),
-    ]).animate(_controller);
-    _syncUrgentAnimation();
-  }
-
-  @override
-  void didUpdateWidget(covariant _OfferBrowseTile oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.data.isUrgent != widget.data.isUrgent ||
-        oldWidget.data.showJobDoneOverlay != widget.data.showJobDoneOverlay) {
-      _syncUrgentAnimation();
-    }
-  }
-
-  void _syncUrgentAnimation() {
-    if (widget.data.isUrgent && !widget.data.showJobDoneOverlay) {
-      if (!_controller.isAnimating) {
-        _controller.repeat();
-      }
-      return;
-    }
-
-    _controller.stop();
-    _controller.value = 0;
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+class _OfferBrowseTileState extends State<_OfferBrowseTile> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.data.isUrgent || widget.data.showJobDoneOverlay) {
-      return _buildTileFrame(pulse: 0);
-    }
-
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) => _buildTileFrame(pulse: _pulse.value),
-    );
+    // Keep a visible urgent contour but disable continuous blink,
+    // which caused perceived flicker on the listings page.
+    final pulse = (widget.data.isUrgent && !widget.data.showJobDoneOverlay)
+        ? 0.42
+        : 0.0;
+    return _buildTileFrame(pulse: pulse);
   }
 
   Widget _buildTileFrame({required double pulse}) {
