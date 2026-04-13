@@ -94,17 +94,17 @@ service cloud.firestore {
         || (resource.data.isPublished == true);
     }
 
-    // ⛔️ Server-only: rate limits (Functions)
+    // ⛔ [REFUSÉ] Rate limits — server-only (Functions)
     match /_rate_limits/{docId} {
       allow read, write: if false;
     }
 
-    // ⛔️ Admins config (Functions)
+    // ⛔ [REFUSÉ] Configuration admins — server-only (Functions)
     match /admins/{adminId} {
       allow read, write: if false;
     }
 
-    // ✅ Users: chaque utilisateur gère son doc
+    // ✅ [AUTORISÉ] Users — chaque utilisateur gère son doc
     match /users/{userId} {
       allow read: if isSignedIn() && (userId == uid() || isMarketplaceModerator());
       allow create: if isSignedIn()
@@ -149,10 +149,10 @@ service cloud.firestore {
         allow read, create, update, delete: if false;
       }
 
-      // Sous-collection notifications (si jamais utilisée un jour)
+      // ℹ️ [INFO] Sous-collection notifications — réservée pour usage futur
       match /notifications/{notifId} {
         allow read, update, delete: if isSignedIn() && userId == uid();
-        allow create: if false; // server-only
+        allow create: if false; // ⛔ server-only
       }
 
       match /favoriteOffers/{offerId} {
@@ -160,9 +160,8 @@ service cloud.firestore {
       }
     }
 
+    // 🔒 [SÉCURITÉ] Profiles — lecture restreinte au propriétaire ou modérateur
     match /profiles/{profileId} {
-      // Lecture restreinte : le propriétaire ou un modérateur.
-      // (Collection non utilisée côté client — sécurisée par précaution.)
       allow read: if isSignedIn() && (profileId == uid() || isMarketplaceModerator());
       allow create: if isSignedIn()
         && profileId == uid()
@@ -180,6 +179,7 @@ service cloud.firestore {
       allow read: if isSignedIn() && resource.data.ownerId == uid();
       allow create: if isSignedIn()
         && request.resource.data.ownerId == uid()
+        && (!('media' in request.resource.data) || request.resource.data.media.size() <= 20)
         && !request.resource.data.keys().hasAny([
           'listingId',
           'submittedAt',
@@ -196,6 +196,7 @@ service cloud.firestore {
       allow update: if isSignedIn()
         && resource.data.ownerId == uid()
         && request.resource.data.ownerId == resource.data.ownerId
+        && (!('media' in request.resource.data) || request.resource.data.media.size() <= 20)
         && !changedKeys().hasAny([
           'listingId',
           'submittedAt',
@@ -254,7 +255,13 @@ service cloud.firestore {
     }
 
     match /admin_runtime_audio/{docId} {
-      allow read, create, update, delete: if isMarketplaceAdmin();
+      allow read: if isMarketplaceAdmin();
+      allow create, update: if isMarketplaceAdmin()
+        && request.resource.data.keys().hasOnly([
+          'audioUrl', 'transcription', 'createdAt', 'updatedAt',
+          'createdBy', 'status', 'metadata'
+        ]);
+      allow delete: if isMarketplaceAdmin();
     }
 
     match /categories/{categoryId} {
@@ -291,11 +298,21 @@ service cloud.firestore {
       allow read: if isSignedIn() && userId == uid();
       allow create: if isSignedIn()
         && userId == uid()
-        && request.resource.data.user_id == uid();
+        && request.resource.data.user_id == uid()
+        && request.resource.data.keys().hasOnly([
+          'user_id', 'locale', 'timezone', 'quiet_hours',
+          'email', 'push', 'in_app', 'sms',
+          'updatedAt', 'createdAt'
+        ]);
       allow update: if isSignedIn()
         && userId == uid()
         && request.resource.data.user_id == resource.data.user_id
-        && request.resource.data.user_id == uid();
+        && request.resource.data.user_id == uid()
+        && request.resource.data.keys().hasOnly([
+          'user_id', 'locale', 'timezone', 'quiet_hours',
+          'email', 'push', 'in_app', 'sms',
+          'updatedAt', 'createdAt'
+        ]);
       allow delete: if false;
     }
 
@@ -337,7 +354,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ✅ Pros: chaque pro gère son doc (profil + statut)
+    // ✅ [AUTORISÉ] Pros — chaque professionnel gère son doc
     match /pros/{proId} {
       allow read: if isSignedIn() && proId == uid();
       allow create: if isSignedIn() && proId == uid()
@@ -347,13 +364,12 @@ service cloud.firestore {
       allow delete: if isSignedIn() && proId == uid();
     }
 
-    // ✅ Notifications globales (utilisées par l'app)
+    // ✅ [AUTORISÉ] Notifications globales
     match /notifications/{notifId} {
-      // Lecture uniquement par le propriétaire
+      // ℹ️ [INFO] Lecture uniquement par le propriétaire
       allow read: if isSignedIn() && resource.data.userId == uid();
 
-      // Le client peut seulement marquer "read" à true/false sur ses notifs.
-      // On vérifie que les champs critiques ne changent pas (quand ils existent).
+      // 🔒 [SÉCURITÉ] Le client ne peut modifier que le champ 'read'
       allow update: if isSignedIn()
         && resource.data.userId == uid()
         && request.resource.data.userId == resource.data.userId
@@ -361,37 +377,43 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['read']);
 
-      allow create, delete: if false; // server-only
+      allow create, delete: if false; // ⛔ server-only
     }
 
-    // ✅ Offers
+    // ✅ [AUTORISÉ] Offers — annonces utilisateur
     match /offers/{offerId} {
-      // Lecture publique (annonces)
+      // ℹ️ [INFO] Lecture publique (annonces)
       allow read: if isPublicOffer() || isAdmin() || isOwnerByField(resource.data);
 
-      // Création par utilisateur connecté, ownership obligatoire
+      // 🔒 [SÉCURITÉ] Création — ownership obligatoire
       allow create: if isSignedIn()
         && isOwnerByField(request.resource.data)
-        // Empêche de créer une annonce "au nom" d'un autre
+        // 🔒 Empêche de créer une annonce au nom d'un autre
         && (!('userId' in request.resource.data) || request.resource.data.userId == uid())
         && (!('ownerId' in request.resource.data) || request.resource.data.ownerId == uid())
         && (!('uid' in request.resource.data) || request.resource.data.uid == uid())
         // Limite de taille (title, description)
         && (!('title' in request.resource.data) || request.resource.data.title.size() <= 200)
         && (!('description' in request.resource.data) || request.resource.data.description.size() <= 5000)
+        // 🔒 Timestamp dans une fenêtre raisonnable (±5 min)
+        && (!('createdAt' in request.resource.data)
+            || (request.resource.data.createdAt >= request.time - duration.value(5, 'm')
+                && request.resource.data.createdAt <= request.time + duration.value(5, 'm')))
         // Bloque les champs réservés aux Functions
         && !request.resource.data.keys().hasAny([
           'moderation', 'visibility', 'riskScore', 'reportCount',
-          'favoriteCount', 'viewCount', 'contactCount', 'reviewedBy', 'reviewedAt'
+          'favoriteCount', 'viewCount', 'contactCount', 'reviewedBy', 'reviewedAt',
+          'status'
         ]);
 
       // Update uniquement propriétaire (et champs server-only protégés)
       allow update: if isSignedIn()
         && isOwnerByField(resource.data)
-        // Interdit d'éditer des champs réservés aux Functions
+        // 🔒 Identité et champs serveur immuables au update
         && !changedKeys().hasAny([
           'moderation', 'visibility', 'riskScore', 'reportCount',
-          'favoriteCount', 'viewCount', 'contactCount', 'reviewedBy', 'reviewedAt'
+          'favoriteCount', 'viewCount', 'contactCount', 'reviewedBy', 'reviewedAt',
+          'status', 'ownerId', 'userId', 'uid'
         ])
         // Limite de taille
         && (!('title' in request.resource.data) || request.resource.data.title.size() <= 200)
@@ -402,7 +424,7 @@ service cloud.firestore {
         && isOwnerByField(resource.data);
     }
 
-    // ✅ Conversations & messages
+    // ✅ [AUTORISÉ] Conversations et messages
     match /conversations/{conversationId} {
       function isParticipantInConversationData(data) {
         return isSignedIn()
@@ -445,7 +467,7 @@ service cloud.firestore {
       }
     }
 
-    // Debug MicroIA: écriture uniquement par l'utilisateur, pas de lecture client
+    // ℹ️ [INFO] Debug MicroIA — écriture utilisateur, lecture refusée
     match /debug_microia/{docId} {
       allow read: if false;
       allow create: if isSignedIn()
@@ -453,28 +475,28 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // ⛔️ Server-only: email events
+    // ⛔ [REFUSÉ] Email events — server-only
     match /email_events/{eventId} {
       allow read, write: if false;
     }
 
-    // ⛔️ Server-only: email suppressions
+    // ⛔ [REFUSÉ] Email suppressions — server-only
     match /email_suppressions/{docId} {
       allow read, write: if false;
     }
 
-    // ⛔️ Deleted listings archive (modération, RGPD)
+    // ⛔ [REFUSÉ] Archive listings supprimés — modération, RGPD
     match /deletedListings/{listingId} {
       allow read: if isMarketplaceAdmin();
       allow write: if false;
     }
 
-    // ⛔️ Server-only: push tokens
+    // ⛔ [REFUSÉ] Push tokens — server-only
     match /push_tokens/{tokenId} {
       allow read, write: if false;
     }
 
-    // ⛔️ Par défaut : rien
+    // ⛔ [REFUSÉ] Catch-all — tout accès non déclaré est refusé
     match /{document=**} {
       allow read, write: if false;
     }

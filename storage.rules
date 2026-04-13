@@ -51,8 +51,10 @@ service firebase.storage {
     }
 
     function isPublicListingMedia(listingId) {
-      let listing = firestore.get(/databases/(default)/documents/listings/$(listingId)).data;
-      return listing.status == 'active' && listing.visibility == 'public';
+      let listingPath = /databases/(default)/documents/listings/$(listingId);
+      return firestore.exists(listingPath)
+        && firestore.get(listingPath).data.status == 'active'
+        && firestore.get(listingPath).data.visibility == 'public';
     }
 
     match /listingDrafts/{uid}/{draftId}/{fileName} {
@@ -62,46 +64,47 @@ service firebase.storage {
 
     match /listings/{uid}/{listingId}/{fileName} {
       allow write: if false;
-      allow read: if isPublicListingMedia(listingId)
-        || (isSignedIn() && uid == request.auth.uid)
+      allow read: if (isSignedIn() && uid == request.auth.uid)
+        || isPublicListingMedia(listingId)
         || isMarketplaceModerator();
     }
 
-    // Upload photos d'offres (brutes) : traitement serveur (resize + filigrane)
+    // ✅ [AUTORISÉ] Upload photos d'offres brutes — traitement serveur (resize + filigrane)
     match /offers_raw/{uid}/{file} {
       allow write: if request.auth != null
         && request.auth.uid == uid
+        && file.matches('[a-zA-Z0-9_\\-\\.]{1,128}')
         && request.resource != null
         && request.resource.contentType.matches('image/.*')
         && request.resource.size < 15 * 1024 * 1024;
       allow read: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Photos d'offres finales (optimisées + filigrane)
+    // ⛔ [REFUSÉ] Photos d'offres finales — écriture server-only via Admin SDK
     match /offers/{uid}/{file} {
-      allow write: if false; // server-only via Admin SDK
+      allow write: if false; // ⛔ server-only
       allow read: if request.auth != null;
     }
 
-    // Upload photos d'offres (utilisé par l'app)
+    // ⛔ [REFUSÉ] Photos d'offres (chemin legacy) — écriture server-only
     match /offers/{file} {
       allow write: if false;
       allow read: if request.auth != null;
     }
 
-    // Uploads MicroIA: stt/${uid}_${timestamp}.(wav|webm|m4a|mp4|aac)
+    // ✅ [AUTORISÉ] MicroIA STT — upload audio par l'utilisateur
     match /stt/{file} {
       allow write: if request.auth != null
         && file.matches("^" + request.auth.uid + "_.*\\.(wav|webm|m4a|mp4|aac)$")
         && request.resource != null
         && request.resource.size < 25 * 1024 * 1024;
 
-      // Optionnel: restreins davantage si besoin.
+      // ℹ️ [INFO] Lecture restreinte au propriétaire
       allow read: if request.auth != null
         && file.matches("^" + request.auth.uid + "_.*\\.(wav|webm|m4a|mp4|aac)$");
     }
 
-    // Streaming MicroIA: stt_streaming/${uid}/${timestamp}_chunk.(wav|webm|mp4|aac|m4a)
+    // ✅ [AUTORISÉ] MicroIA Streaming — chunks audio par l'utilisateur
     match /stt_streaming/{uid}/{file} {
       allow write: if request.auth != null
         && request.auth.uid == uid
