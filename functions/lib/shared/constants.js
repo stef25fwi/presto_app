@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EMAIL_RETRY_MINUTES = exports.COLLECTIONS = void 0;
+exports.LISTING_VALIDATION = exports.EMAIL_RETRY_MINUTES = exports.COLLECTIONS = void 0;
 exports.COLLECTIONS = {
     users: "users",
     profiles: "profiles",
@@ -42,4 +42,11 @@ exports.COLLECTIONS = {
     systemSettings: "system_settings",
 };
 exports.EMAIL_RETRY_MINUTES = [1, 5, 20, 120, 480];
+exports.LISTING_VALIDATION = {
+    titleMinLength: 10,
+    titleMaxLength: 120,
+    descriptionMinLength: 30,
+    descriptionMaxLength: 4000,
+    maxMediaCount: 10,
+};
 //# sourceMappingURL=constants.js.map

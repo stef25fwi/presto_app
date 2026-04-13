@@ -577,11 +577,7 @@ Offer buildOfferDetailsOffer({
   final isMarketplaceValue = data['isMarketplace'];
   final isMarketplace = isMarketplaceValue is bool
       ? isMarketplaceValue
-      : isMarketplaceValue.toString().trim().toLowerCase() == 'true' ||
-          categoryId.isNotEmpty ||
-          cityId.isNotEmpty ||
-          listingStatus.isNotEmpty ||
-          visibility.isNotEmpty;
+      : isMarketplaceValue.toString().trim().toLowerCase() == 'true';
 
   return Offer(
     id: offerId,
@@ -634,7 +630,7 @@ Offer buildOfferDetailsOffer({
       name: advertiserName.isEmpty ? 'Annonceur Presto' : advertiserName,
       verified: (data['verified'] as bool?) ?? false,
       rating:
-          (data['rating'] is num) ? (data['rating'] as num).toDouble() : 4.7,
+          (data['rating'] is num) ? (data['rating'] as num).toDouble() : null,
       offersCount: (data['offersCount'] is num)
           ? (data['offersCount'] as num).toInt()
           : 1,
@@ -741,32 +737,34 @@ Future<void> main() async {
     await ensureFirebaseInitialized(source: 'main');
 
     // 📋 Diagnostics
-    debugPrint('=== Firebase Initialization ===');
-    debugPrint('[FirebaseInit] ready platform=${firebaseInitPlatformLabel()}');
-    debugPrint('✓ Auth instance: ${FirebaseAuth.instance.runtimeType}');
-    debugPrint(
-        '✓ Firestore instance: ${FirebaseFirestore.instance.runtimeType}');
-    debugPrint('[Firestore] initialization ready');
-    if (kIsWeb) {
-      debugPrint('✓ Platform: Web');
-      debugPrint('  - Google Sign-In: Popup + Redirect fallback');
-    } else {
+    if (kDebugMode) {
+      debugPrint('=== Firebase Initialization ===');
+      debugPrint('[FirebaseInit] ready platform=${firebaseInitPlatformLabel()}');
+      debugPrint('✓ Auth instance: ${FirebaseAuth.instance.runtimeType}');
       debugPrint(
-          '✓ Platform: ${defaultTargetPlatform.toString().split('.').last}');
+          '✓ Firestore instance: ${FirebaseFirestore.instance.runtimeType}');
+      debugPrint('[Firestore] initialization ready');
+      if (kIsWeb) {
+        debugPrint('✓ Platform: Web');
+        debugPrint('  - Google Sign-In: Popup + Redirect fallback');
+      } else {
+        debugPrint(
+            '✓ Platform: ${defaultTargetPlatform.toString().split('.').last}');
+      }
+      debugPrint('');
     }
-    debugPrint('');
 
     // ✅ Activer la persistance Firestore (cache + offline)
     if (!kIsWeb) {
       try {
         await FirebaseFirestore.instance.enableNetwork();
-        debugPrint('✓ Firestore persistence: Enabled');
+        if (kDebugMode) debugPrint('✓ Firestore persistence: Enabled');
       } catch (e) {
-        debugPrint('⚠️ Firestore persistence error: $e');
+        if (kDebugMode) debugPrint('⚠️ Firestore persistence error: $e');
       }
     } else {
       // Web: persistance auto si IndexedDB disponible
-      debugPrint('✓ Firestore Web: Persistence (IndexedDB if available)');
+      if (kDebugMode) debugPrint('✓ Firestore Web: Persistence (IndexedDB if available)');
     }
 
     // ✅ Initialiser le service Firebase centralisé avec optimisations
@@ -774,7 +772,7 @@ Future<void> main() async {
 
     // ✅ Remote Config: charger le pipeline audio
     await PrestoRemoteConfig.init();
-    debugPrint('[RC] audio_pipeline=${PrestoRemoteConfig.audioPipeline}');
+    if (kDebugMode) debugPrint('[RC] audio_pipeline=${PrestoRemoteConfig.audioPipeline}');
 
     // 🔒 App Check
     // - Debug: provider debug (ajouter le debug token dans Firebase Console → App Check)
@@ -787,21 +785,21 @@ Future<void> main() async {
     appCheckActivationSucceeded = false;
     appCheckActivationError = null;
     appCheckActivationStackTrace = null;
-    debugPrint(
+    if (kDebugMode) debugPrint(
         '[AppCheck] initializing platform=${firebaseInitPlatformLabel()}');
     try {
       if (kIsWeb) {
         final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
         if (siteKey.isEmpty) {
-          debugPrint('[AppCheck] Web skipped: reCAPTCHA site key absente');
+          if (kDebugMode) debugPrint('[AppCheck] Web skipped: reCAPTCHA site key absente');
         } else {
           final preview =
               siteKey.length > 10 ? siteKey.substring(0, 10) : siteKey;
-          debugPrint('[APPCHECK] siteKey=${preview}...');
+          if (kDebugMode) debugPrint('[APPCHECK] siteKey=${preview}...');
           await FirebaseAppCheck.instance.activate(
             webProvider: ReCaptchaEnterpriseProvider(siteKey),
           );
-          debugPrint('[AppCheck] Web activated (reCAPTCHA Enterprise)');
+          if (kDebugMode) debugPrint('[AppCheck] Web activated (reCAPTCHA Enterprise)');
         }
       } else {
         await FirebaseAppCheck.instance.activate(
@@ -813,11 +811,11 @@ Future<void> main() async {
         );
       }
       appCheckActivationSucceeded = true;
-      debugPrint('[AppCheck] ready');
+      if (kDebugMode) debugPrint('[AppCheck] ready');
     } catch (e, st) {
       appCheckActivationError = e;
       appCheckActivationStackTrace = st;
-      debugPrint('[AppCheck] activation failed: $e');
+      if (kDebugMode) debugPrint('[AppCheck] activation failed: $e');
     }
 
     // 🔒 Auth minimale requise pour les Cloud Functions (même en anonyme)
@@ -831,10 +829,10 @@ Future<void> main() async {
       }
       // Ne force plus signInAnonymously() au démarrage
       if (auth.currentUser != null) {
-        debugPrint('[Auth] User already signed in: ${auth.currentUser!.uid}');
+        if (kDebugMode) debugPrint('[Auth] User already signed in: ${auth.currentUser!.uid}');
         SessionState.userId = auth.currentUser!.uid;
       } else {
-        debugPrint('[Auth] No user signed in at startup (OK)');
+        if (kDebugMode) debugPrint('[Auth] No user signed in at startup (OK)');
         SessionState.userId = null;
       }
 
@@ -846,7 +844,7 @@ Future<void> main() async {
       });
       */
     } catch (e) {
-      debugPrint('[Auth] check failed: $e');
+      if (kDebugMode) debugPrint('[Auth] check failed: $e');
     }
 
     // Configuration globale : barre système bleue Prestō sur toute l'app.
@@ -878,7 +876,7 @@ Future<void> main() async {
         navigatorKey: appNavigatorKey,
       );
     } catch (e) {
-      debugPrint('[Notifications] init error: $e');
+      if (kDebugMode) debugPrint('[Notifications] init error: $e');
     }
 
     runApp(const PrestoApp());
@@ -1224,24 +1222,28 @@ class _SplashScreenState extends State<SplashScreen>
     try {
       final result = await FirebaseAuth.instance.getRedirectResult();
       if (result.user != null) {
-        debugPrint('✅ [SPLASH] User authenticated via redirect!');
-        debugPrint('✅ [SPLASH] Email: ${result.user?.email}');
-        debugPrint('✅ [SPLASH] UID: ${result.user?.uid}');
+        if (kDebugMode) {
+          debugPrint('✅ [SPLASH] User authenticated via redirect!');
+          debugPrint('✅ [SPLASH] Email: ${result.user?.email}');
+          debugPrint('✅ [SPLASH] UID: ${result.user?.uid}');
+        }
         // Attendre un peu pour montrer le splash, puis naviguer vers HomePage
         _scheduleNavigation(const Duration(milliseconds: 1500));
       } else {
-        debugPrint('ℹ️ [SPLASH] No redirect result, normal app start');
+        if (kDebugMode) debugPrint('ℹ️ [SPLASH] No redirect result, normal app start');
         // Pas de redirect, navigation normale après splash
         _scheduleNavigation(const Duration(milliseconds: 3500));
       }
     } on FirebaseAuthException catch (e) {
-      debugPrint('❌ [SPLASH] FirebaseAuthException during redirect check');
-      debugPrint('❌ [SPLASH] Code: ${e.code}');
-      debugPrint('❌ [SPLASH] Message: ${e.message}');
+      if (kDebugMode) {
+        debugPrint('❌ [SPLASH] FirebaseAuthException during redirect check');
+        debugPrint('❌ [SPLASH] Code: ${e.code}');
+        debugPrint('❌ [SPLASH] Message: ${e.message}');
+      }
       // Erreur d'auth, mais on continue quand même vers HomePage
       _scheduleNavigation(const Duration(milliseconds: 3500));
     } catch (e) {
-      debugPrint('❌ [SPLASH] Unexpected error: $e');
+      if (kDebugMode) debugPrint('❌ [SPLASH] Unexpected error: $e');
       // Erreur inattendue, navigation normale
       _scheduleNavigation(const Duration(milliseconds: 3500));
     }

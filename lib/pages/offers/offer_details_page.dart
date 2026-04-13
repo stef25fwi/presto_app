@@ -108,7 +108,7 @@ class Advertiser {
   final String id;
   final String name;
   final bool verified;
-  final double rating;
+  final double? rating;
   final int offersCount;
   final int reviewsCount;
   final String seniorityLabel;
@@ -1567,7 +1567,7 @@ class _OfferUiData {
     final advertiserRating = _asDouble(
       readNestedValue(advertiser, 'rating', () => advertiser.rating) ??
           readValue('rating'),
-      fallback: 4.9,
+      fallback: 0.0,
     );
     final advertiserReviewCount = _asInt(
       readNestedValue(
@@ -2914,32 +2914,44 @@ class _AdvertiserMetaLine extends StatelessWidget {
                 ),
                 SizedBox(width: compact ? 4 : 5),
               ],
-              Icon(
-                Icons.star_rounded,
-                size: compact ? 15 : 17,
-                color: orange,
-              ),
-              SizedBox(width: compact ? 4 : 5),
-              Text(
-                advertiserRating.toStringAsFixed(1),
-                style: TextStyle(
+              if (advertiserRating > 0) ...[
+                Icon(
+                  Icons.star_rounded,
+                  size: compact ? 15 : 17,
                   color: orange,
-                  fontSize: compact ? 14 : 16,
-                  fontWeight: FontWeight.w800,
                 ),
-              ),
-              SizedBox(width: compact ? 6 : 8),
-              Text(
-                advertiserReviewCount > 0
-                    ? '($advertiserReviewCount avis)'
-                    : '(0 avis)',
-                style: TextStyle(
-                  color: navy,
-                  fontSize: compact ? 14 : 15,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.1,
+                SizedBox(width: compact ? 4 : 5),
+                Text(
+                  advertiserRating.toStringAsFixed(1),
+                  style: TextStyle(
+                    color: orange,
+                    fontSize: compact ? 14 : 16,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
+                SizedBox(width: compact ? 6 : 8),
+                Text(
+                  advertiserReviewCount > 0
+                      ? '($advertiserReviewCount avis)'
+                      : '(0 avis)',
+                  style: TextStyle(
+                    color: navy,
+                    fontSize: compact ? 14 : 15,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+              ] else ...[
+                Text(
+                  'Nouveau',
+                  style: TextStyle(
+                    color: navy,
+                    fontSize: compact ? 14 : 15,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

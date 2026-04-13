@@ -58,4 +58,8 @@ page_screenshots/
 *.zip
 *.tar.gz
 zicAlExN
+
+# Données Firestore exportées
+firestore_data.json
+*.firestore_backup.json
 /android/build/reports/

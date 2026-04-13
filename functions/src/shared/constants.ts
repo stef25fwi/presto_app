@@ -40,3 +40,11 @@ export const COLLECTIONS = {
 } as const;
 
 export const EMAIL_RETRY_MINUTES = [1, 5, 20, 120, 480];
+
+export const LISTING_VALIDATION = {
+  titleMinLength: 10,
+  titleMaxLength: 120,
+  descriptionMinLength: 30,
+  descriptionMaxLength: 4000,
+  maxMediaCount: 10,
+} as const;

@@ -23,3 +23,19 @@ export const logger = {
   warn: (message: string, context?: LogContext) => log("WARN", message, context),
   error: (message: string, context?: LogContext) => log("ERROR", message, context),
 };
+
+const PII_FIELDS = ["email", "phone", "displayName", "name", "avatarUrl", "photoURL"];
+
+/**
+ * Log structured data with PII fields automatically stripped.
+ */
+export function logSanitized(
+  level: "info" | "warn" | "error",
+  message: string,
+  data: Record<string, unknown>,
+): void {
+  const sanitized = Object.fromEntries(
+    Object.entries(data).filter(([key]) => !PII_FIELDS.includes(key)),
+  );
+  logger[level](message, sanitized);
+}
