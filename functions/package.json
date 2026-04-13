@@ -2,7 +2,7 @@
   "name": "presto-functions",
   "version": "1.0.0",
   "description": "Cloud Functions pour Presto App",
-  "main": "index.js",
+  "main": "lib/index.js",
   "engines": {
     "node": "22"
   },

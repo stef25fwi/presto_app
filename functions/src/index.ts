@@ -7,6 +7,7 @@ setGlobalOptions({
 });
 
 export { onUserCreated, onUserUpdated } from "./modules/auth/triggers";
+export { onAuthUserCreated } from "./modules/auth/on_auth_user_created";
 export {
   placesAutocomplete,
   placesDetails,
@@ -84,6 +85,7 @@ export { onNotificationCreated, onNotificationUpdated } from "./modules/notifica
 
 export { onSupportTicketCreated, onSupportTicketReplied } from "./modules/support/triggers";
 export { onReportCreated, onReportUpdated } from "./modules/moderation/triggers";
+export { moderateNewOffer } from "./modules/moderation/moderate_new_offer";
 export { onSubscriptionUpdated, onBillingInvoiceUpdated } from "./modules/billing/triggers";
 
 export {
