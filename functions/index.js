@@ -2470,10 +2470,7 @@ exports.processOfferPhoto = onCall(
   }
 );
 
-// ─── Email functions (compiled TypeScript) ────────────────────────────────────
-try {
-  const emailFunctions = require('./lib/index');
-  Object.assign(exports, emailFunctions);
-} catch (e) {
-  console.warn('[index.js] Email TS functions not loaded (run npm run build):', e.message);
-}
+// Les fonctions TypeScript compilées sont maintenant servies directement via
+// lib/index.js (point d'entrée "main" dans package.json).
+// Ce fichier ne contient plus que les callables legacy JS, importées par
+// le bridge src/legacy/callables_compat.ts.

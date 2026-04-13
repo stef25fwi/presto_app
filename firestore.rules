@@ -154,7 +154,9 @@ service cloud.firestore {
     }
 
     match /profiles/{profileId} {
-      allow read: if true;
+      // Lecture restreinte : le propriétaire ou un modérateur.
+      // (Collection non utilisée côté client — sécurisée par précaution.)
+      allow read: if isSignedIn() && (profileId == uid() || isMarketplaceModerator());
       allow create: if isSignedIn()
         && profileId == uid()
         && request.resource.data.userId == uid()
