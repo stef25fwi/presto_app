@@ -67,8 +67,6 @@ service cloud.firestore {
         (data.status == 'active' && data.visibility == 'public')
         || data.status == 'published'
         || data.isPublished == true
-        || data.isActive == true
-        || ((data.visibility is map) && data.visibility.isPublic == true)
       );
     }
 
@@ -90,13 +88,10 @@ service cloud.firestore {
     }
 
     function isPublicOffer() {
-      // Toute annonce publiée est visible publiquement, quel que soit le modèle
-      // utilisé par la version du client qui l'a écrite.
-      return (resource.data.visibility.isPublic == true)
-        || (resource.data.isPublished == true)
-        || (resource.data.isActive == true)
-        || (resource.data.status == 'active')
-        || (resource.data.status == 'published');
+      // Toute annonce publiée est visible publiquement
+      return (resource.data.status == 'active' && resource.data.visibility == 'public')
+        || (resource.data.status == 'published')
+        || (resource.data.isPublished == true);
     }
 
     // ⛔️ Server-only: rate limits (Functions)
@@ -122,7 +117,13 @@ service cloud.firestore {
           'spamScore',
           'trustedSeller',
           'lastRoleSyncAt',
-          'lastRecaptchaScore'
+          'lastRecaptchaScore',
+          'admin',
+          'superadmin',
+          'moderator',
+          'isAdmin',
+          'isModerator',
+          'isSuperadmin'
         ]);
       allow update: if isSignedIn()
         && userId == uid()
@@ -134,7 +135,13 @@ service cloud.firestore {
           'spamScore',
           'trustedSeller',
           'lastRoleSyncAt',
-          'lastRecaptchaScore'
+          'lastRecaptchaScore',
+          'admin',
+          'superadmin',
+          'moderator',
+          'isAdmin',
+          'isModerator',
+          'isSuperadmin'
         ]);
       allow delete: if isSignedIn() && userId == uid();
 
@@ -411,8 +418,6 @@ service cloud.firestore {
             || ((data.unread_count is map) && data.unread_count.keys().hasAny([uid()]))
             || ((data.lastReadAt is map) && data.lastReadAt.keys().hasAny([uid()]))
             || ((data.last_read_at is map) && data.last_read_at.keys().hasAny([uid()]))
-            || ((data.archivedBy is map) && data.archivedBy.keys().hasAny([uid()]))
-            || ((data.blockedBy is map) && data.blockedBy.keys().hasAny([uid()]))
           );
       }
 
@@ -446,6 +451,27 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.uid == uid();
       allow update, delete: if false;
+    }
+
+    // ⛔️ Server-only: email events
+    match /email_events/{eventId} {
+      allow read, write: if false;
+    }
+
+    // ⛔️ Server-only: email suppressions
+    match /email_suppressions/{docId} {
+      allow read, write: if false;
+    }
+
+    // ⛔️ Deleted listings archive (modération, RGPD)
+    match /deletedListings/{listingId} {
+      allow read: if isMarketplaceAdmin();
+      allow write: if false;
+    }
+
+    // ⛔️ Server-only: push tokens
+    match /push_tokens/{tokenId} {
+      allow read, write: if false;
     }
 
     // ⛔️ Par défaut : rien

@@ -89,7 +89,7 @@ exports.onUserCreated = (0, firestore_1.onDocumentCreated)(`${constants_1.COLLEC
         await prefsRef.set({
             user_id: userId,
             locale: "fr",
-            timezone: "America/Guadeloupe",
+            timezone: null, // sera résolu depuis le device lors du premier appel
             quiet_hours: { enabled: true, start_local: "22:00", end_local: "08:00" },
             email: {
                 account: { enabled: true },

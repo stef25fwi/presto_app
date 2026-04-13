@@ -53,6 +53,16 @@ class ListingRepository {
     }, SetOptions(merge: true));
   }
 
+  Future<void> updateDraftMedia({
+    required String draftId,
+    required List<ListingMediaInput> media,
+  }) async {
+    await _drafts.doc(draftId).update(<String, dynamic>{
+      'media': media.map((e) => e.toMap()).toList(growable: false),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<ListingSubmissionResult> submitDraft({
     required String draftId,
     required String recaptchaToken,

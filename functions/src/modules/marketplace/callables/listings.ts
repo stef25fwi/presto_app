@@ -273,33 +273,31 @@ async function loadOwnerPublicIdentity(ownerId: string): Promise<{
   avatarUrl: string;
   verified: boolean;
 }> {
-  const [userSnap, authRecord] = await Promise.all([
-    db.collection(COLLECTIONS.users).doc(ownerId).get(),
-    admin.auth().getUser(ownerId).catch(() => null),
-  ]);
-
+  const userSnap = await db.collection(COLLECTIONS.users).doc(ownerId).get();
   const userData = (userSnap.data() ?? {}) as Record<string, unknown>;
-  const emailPrefix = normalizeString(authRecord?.email).split("@").shift() ?? "";
 
-  return {
-    displayName: normalizeDisplayName(
-      userData.pseudo,
-      userData.displayName,
-      userData.userName,
-      userData.user_name,
-      userData.name,
-      authRecord?.displayName,
-      emailPrefix,
-    ),
-    avatarUrl: normalizeString(
-      userData.avatarUrl ||
-      userData.photoURL ||
-      authRecord?.photoURL,
-    ),
-    verified: userData.isProfileVerified === true ||
-      userData.isVerified === true ||
-      userData.verified === true,
-  };
+  // Tente d'abord les champs Firestore
+  const displayName = normalizeDisplayName(
+    userData.pseudo, userData.displayName, userData.userName,
+    userData.user_name, userData.name,
+  );
+  const avatarUrl = normalizeString(userData.avatarUrl || userData.photoURL);
+  const verified = userData.isProfileVerified === true ||
+    userData.isVerified === true ||
+    userData.verified === true;
+
+  // Fallback Auth uniquement si displayName manquant
+  if (displayName === "Annonceur iliprestō") {
+    const authRecord = await admin.auth().getUser(ownerId).catch(() => null);
+    const emailPrefix = normalizeString(authRecord?.email).split("@").shift() ?? "";
+    return {
+      displayName: normalizeDisplayName(authRecord?.displayName, emailPrefix),
+      avatarUrl: avatarUrl || normalizeString(authRecord?.photoURL),
+      verified,
+    };
+  }
+
+  return { displayName, avatarUrl, verified };
 }
 
 export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
@@ -344,6 +342,14 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
     const expiresAt = admin.firestore.Timestamp.fromDate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000));
     const cityData = refsData.city as Record<string, unknown>;
 
+    // 1. Traiter les médias AVANT tout write Firestore (évite la race condition)
+    const normalizedMedia = validated.media.length > 0
+      ? await normalizeListingMediaForSubmission({ ownerId, media: validated.media })
+      : validated.media;
+    const thumbnailUrl = normalizedMedia[0]?.thumbnailUrl || normalizedMedia[0]?.downloadUrl || "";
+    const imageUrls = collectListingImageUrls(normalizedMedia);
+
+    // 2. UN SEUL write avec toutes les données complètes
     await listingRef.set({
       id: listingId,
       ownerId,
@@ -361,9 +367,9 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
       dept: validated.dept || normalizeString(cityData.departmentCode) || null,
       region: validated.region || normalizeString(cityData.regionCode) || null,
       cityCategoryKey: validated.cityCategoryKey || null,
-      media: validated.media,
-      imageUrls: collectListingImageUrls(validated.media),
-      thumbnailUrl: validated.thumbnailUrl,
+      media: normalizedMedia,
+      imageUrls,
+      thumbnailUrl,
       ownerName: ownerIdentity.displayName,
       displayName: ownerIdentity.displayName,
       userName: ownerIdentity.displayName,
@@ -384,7 +390,7 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
       status: "pending",
       moderationStatus: "pending",
       visibility: "private",
-      mediaProcessingStatus: validated.media.length > 0 ? "processing" : "completed",
+      mediaProcessingStatus: "completed",
       reportCount: 0,
       favoriteCount: 0,
       viewCount: 0,
@@ -402,23 +408,6 @@ export const submitListingDraft = onCall({ region: PROJECT_REGION, enforceAppChe
       sourceDraftId: draftId,
       riskScore: 0,
     }, { merge: true });
-
-    const normalizedMedia = await normalizeListingMediaForSubmission({
-      ownerId,
-      media: validated.media,
-    });
-    const thumbnailUrl = normalizedMedia[0]?.thumbnailUrl || normalizedMedia[0]?.downloadUrl || "";
-
-    if (normalizedMedia.length > 0) {
-      const imageUrls = collectListingImageUrls(normalizedMedia);
-      await listingRef.set({
-        media: normalizedMedia,
-        imageUrls,
-        thumbnailUrl,
-        mediaProcessingStatus: "completed",
-        updatedAt: now,
-      }, { merge: true });
-    }
 
     const evaluation = await evaluateListingRisk({
       ownerId,
@@ -583,11 +572,21 @@ export const incrementListingView = onCall({ region: PROJECT_REGION, enforceAppC
 });
 
 /**
+ * Valid structured reasons indicating "job done".
+ */
+const VALID_JOB_DONE_REASONS = ['found_on_ilipresto', 'found_provider_elsewhere'] as const;
+
+/**
  * Checks if the deletion reason corresponds to a "job done" scenario
  * where the listing should be kept visible with an overlay instead of hard-deleted.
+ * Accepts a structured enum value OR falls back to textual detection for backward compatibility.
  */
-function isJobDoneReason(reason: string | undefined): boolean {
+function isJobDoneReason(reason: string | undefined, jobDone?: boolean): boolean {
+  if (jobDone === true) return true;
   if (!reason) return false;
+  // Structured enum check
+  if ((VALID_JOB_DONE_REASONS as readonly string[]).includes(reason)) return true;
+  // Legacy textual detection (backward compat)
   const normalized = reason
     .trim()
     .toLowerCase()
@@ -632,7 +631,7 @@ export const deleteListing = onCall({ region: PROJECT_REGION, enforceAppCheck: E
     const previousStatus = normalizeString(listingData.status) || "unknown";
     const mediaStoragePaths = collectListingMediaStoragePaths(listingData);
 
-    if (isJobDoneReason(reason)) {
+    if (isJobDoneReason(reason, request.data?.jobDone === true)) {
       // Keep the listing public for 10h so browse queries can still fetch it
       // and render the job-done overlay before it disappears client-side.
       const visibleUntil = admin.firestore.Timestamp.fromDate(
@@ -673,6 +672,15 @@ export const deleteListing = onCall({ region: PROJECT_REGION, enforceAppCheck: E
 
     // Hard-delete the listing and related documents.
     const batch = db.batch();
+    // Archive avant hard-delete (traçabilité modération, RGPD, analytics)
+    const archiveRef = db.collection('deletedListings').doc(listingId);
+    batch.set(archiveRef, {
+      ...listingData,
+      deletedAt: admin.firestore.FieldValue.serverTimestamp(),
+      deletedBy: ownerId,
+      deletedReason: reason || 'user_request',
+      originalListingId: listingId,
+    });
     batch.delete(listingRef);
     batch.delete(db.collection(COLLECTIONS.listingModeration).doc(listingId));
     batch.delete(db.collection(COLLECTIONS.listingDraftsV2).doc(listingId));

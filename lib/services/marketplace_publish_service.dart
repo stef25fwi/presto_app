@@ -3,6 +3,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../constants/validation_constants.dart';
 import '../data/marketplace/listing_repository.dart';
 import '../models/marketplace_enums.dart';
 import '../models/marketplace_listing_draft.dart';
@@ -33,8 +34,8 @@ class MarketplacePublishService {
   final FirebaseStorage _storage;
   final MarketplaceHumanVerification _verification;
 
-  String _resolveOwnerDisplayName(String ownerId) {
-    final user = FirebaseAuth.instance.currentUser;
+  String _resolveOwnerDisplayName(String ownerId, {User? currentUser}) {
+    final user = currentUser ?? FirebaseAuth.instance.currentUser;
     if (user?.uid.trim() == ownerId.trim()) {
       final displayName = user?.displayName?.trim() ?? '';
       if (displayName.isNotEmpty) {
@@ -57,18 +58,18 @@ class MarketplacePublishService {
     final trimmedTitle = title.trim();
     final trimmedDescription = description.trim();
 
-    if (trimmedTitle.length < 10) {
-      throw StateError('Le titre doit contenir au moins 10 caractères.');
+    if (trimmedTitle.length < ListingValidation.titleMinLength) {
+      throw StateError('Le titre doit contenir au moins ${ListingValidation.titleMinLength} caractères.');
     }
-    if (trimmedTitle.length > 120) {
-      throw StateError('Le titre doit contenir au maximum 120 caractères.');
+    if (trimmedTitle.length > ListingValidation.titleMaxLength) {
+      throw StateError('Le titre doit contenir au maximum ${ListingValidation.titleMaxLength} caractères.');
     }
-    if (trimmedDescription.length < 30) {
-      throw StateError('La description doit contenir au moins 30 caractères.');
+    if (trimmedDescription.length < ListingValidation.descriptionMinLength) {
+      throw StateError('La description doit contenir au moins ${ListingValidation.descriptionMinLength} caractères.');
     }
-    if (trimmedDescription.length > 4000) {
+    if (trimmedDescription.length > ListingValidation.descriptionMaxLength) {
       throw StateError(
-          'La description doit contenir au maximum 4000 caractères.');
+          'La description doit contenir au maximum ${ListingValidation.descriptionMaxLength} caractères.');
     }
   }
 
@@ -250,9 +251,7 @@ class MarketplacePublishService {
           'Impossible de résoudre la catégorie ou la ville pour Marketplace.');
     }
 
-    final media = photos.isEmpty
-        ? const <ListingMediaInput>[]
-        : await _uploadPhotos(uid: ownerId, photos: photos);
+    // 1. Créer le draft SANS media d'abord (évite les orphelins Storage si le draft échoue)
     final draftId = await _runWithChannelRetry<String>(
       stepLabel: 'brouillon Firestore',
       action: () => _listingRepository.createDraft(
@@ -263,7 +262,7 @@ class MarketplacePublishService {
           price: price,
           categoryId: categoryId,
           cityId: cityId,
-          media: media,
+          media: const [], // vide pour l'instant
           phone: phone,
           budgetType: budgetType,
           missionDelay: missionDelay,
@@ -282,6 +281,23 @@ class MarketplacePublishService {
       ),
     );
 
+    // 2. Upload les photos en référençant le draftId
+    final media = photos.isEmpty
+        ? const <ListingMediaInput>[]
+        : await _uploadPhotos(uid: ownerId, photos: photos);
+
+    // 3. Mettre à jour le draft avec les media si nécessaire
+    if (media.isNotEmpty) {
+      await _runWithChannelRetry<void>(
+        stepLabel: 'mise à jour media draft',
+        action: () => _listingRepository.updateDraftMedia(
+          draftId: draftId,
+          media: media,
+        ),
+      );
+    }
+
+    final currentUser = FirebaseAuth.instance.currentUser;
     final recaptchaToken = await _runWithChannelRetry<String>(
       stepLabel: 'vérification humaine',
       fallbackValue: '',
@@ -298,7 +314,7 @@ class MarketplacePublishService {
         );
         final isPublishingSoon = result.status.value != 'active' &&
             result.moderationStatus.value == 'approved';
-        final ownerDisplayName = _resolveOwnerDisplayName(ownerId);
+        final ownerDisplayName = _resolveOwnerDisplayName(ownerId, currentUser: currentUser);
         final displayMedia = result.media.isNotEmpty
             ? result.media
                 .map(
@@ -404,7 +420,10 @@ class MarketplacePublishService {
       },
     );
 
-    return submission!;
+    if (submission == null) {
+      throw StateError('La publication a échoué sans retourner de résultat. Réessayez.');
+    }
+    return submission;
   }
 
   String _storageExtension(XFile photo) {
