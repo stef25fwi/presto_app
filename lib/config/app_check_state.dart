@@ -8,5 +8,5 @@ StackTrace? appCheckActivationStackTrace;
 
 const String kAppCheckWebRecaptchaSiteKey = String.fromEnvironment(
   'APPCHECK_RECAPTCHA_SITE_KEY',
-  defaultValue: '6LehQ0IsAAAAAIVtHXyi-obNQFOZEnBKXAW_P2de',
+  defaultValue: '6LcrwLUsAAAAAAqJ0undV5NcndC-jLP2qxaNWnR_',
 );
