@@ -799,9 +799,9 @@ Future<void> main() async {
               siteKey.length > 10 ? siteKey.substring(0, 10) : siteKey;
           debugPrint('[APPCHECK] siteKey=${preview}...');
           await FirebaseAppCheck.instance.activate(
-            webProvider: ReCaptchaV3Provider(siteKey),
+            webProvider: ReCaptchaEnterpriseProvider(siteKey),
           );
-          debugPrint('[AppCheck] Web activated (reCAPTCHA v3)');
+          debugPrint('[AppCheck] Web activated (reCAPTCHA Enterprise)');
         }
       } else {
         await FirebaseAppCheck.instance.activate(
