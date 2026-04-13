@@ -503,6 +503,7 @@ class _HomePageState extends State<HomePage>
   Query<Map<String, dynamic>> _recentOffersQuery({int limit = 200}) {
     return FirebaseFirestore.instance
         .collection(kListingsCollection)
+        .where(publicListingsFilter())
         .orderBy('createdAt', descending: true)
         .limit(limit);
   }
@@ -510,6 +511,7 @@ class _HomePageState extends State<HomePage>
   Query<Map<String, dynamic>> _legacyRecentOffersQuery({int limit = 200}) {
     return FirebaseFirestore.instance
         .collection(kOffersCollection)
+        .where(publicOffersFilter())
         .orderBy('createdAt', descending: true)
         .limit(limit);
   }
@@ -548,8 +550,8 @@ class _HomePageState extends State<HomePage>
       }
       return merged;
     } catch (error, stackTrace) {
-      // Si l'index n'est pas encore prêt, fallback sur la query générique
-      // avec filtre côté client.
+      // Si l'index n'est pas encore prêt, fallback sur la query publique
+      // avec filtre côté client additionnel.
       logPublicOffersReadErrorWithAppCheck(
         'home_latest_offers_primary',
         error,

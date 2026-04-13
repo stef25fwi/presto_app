@@ -745,7 +745,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   }
 
   Future<void> _refreshAdminAudioRuntimeAccess() async {
-    final user = await _resolveSignedInUser();
+    final user = await _ensureProtectedSessionReady(forceRefreshToken: true);
     if (user == null) {
       _appendPublishAiTrace(
         'admin_check',
@@ -792,7 +792,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       unawaited(_adminAudioRuntimeStore.enableCloudSync());
 
       try {
-        await FirebaseAuth.instance.currentUser?.getIdToken(true);
+        await user.getIdToken(true);
         final configCallable = _functions.httpsCallable(
           'adminGetMicroIaConfig',
           options: HttpsCallableOptions(timeout: const Duration(seconds: 15)),
@@ -3526,7 +3526,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     });
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      final user = await _ensureProtectedSessionReady(forceRefreshToken: true);
       if (user == null) {
         throw Exception('Utilisateur non connecté');
       }

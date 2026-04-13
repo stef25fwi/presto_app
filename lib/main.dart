@@ -791,12 +791,18 @@ Future<void> main() async {
         '[AppCheck] initializing platform=${firebaseInitPlatformLabel()}');
     try {
       if (kIsWeb) {
-        debugPrint(
-            '[APPCHECK] siteKey=${kAppCheckWebRecaptchaSiteKey.substring(0, 10)}...');
-        await FirebaseAppCheck.instance.activate(
-          webProvider: ReCaptchaV3Provider(kAppCheckWebRecaptchaSiteKey),
-        );
-        debugPrint('[AppCheck] Web activated (reCAPTCHA v3)');
+        final siteKey = kAppCheckWebRecaptchaSiteKey.trim();
+        if (siteKey.isEmpty) {
+          debugPrint('[AppCheck] Web skipped: reCAPTCHA site key absente');
+        } else {
+          final preview =
+              siteKey.length > 10 ? siteKey.substring(0, 10) : siteKey;
+          debugPrint('[APPCHECK] siteKey=${preview}...');
+          await FirebaseAppCheck.instance.activate(
+            webProvider: ReCaptchaV3Provider(siteKey),
+          );
+          debugPrint('[AppCheck] Web activated (reCAPTCHA v3)');
+        }
       } else {
         await FirebaseAppCheck.instance.activate(
           androidProvider: kDebugMode
