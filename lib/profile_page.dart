@@ -601,10 +601,36 @@ class _ProfilePageState extends State<ProfilePage> {
           if (!mounted) return;
           showSuccessSnackBar(context, 'Connecté avec Google');
         } catch (popupError) {
-          debugPrint("POPUP BLOCKED -> Fallback to redirect: $popupError");
-          // Fallback redirect (ex: popup bloquée)
-          await _auth.signInWithRedirect(provider);
-          // Le navigateur va rediriger, on ne continue pas l'exécution
+          // Si l'utilisateur a simplement fermé la popup, on ne fait rien.
+          final isCancellation = popupError is FirebaseAuthException &&
+              (popupError.code == 'popup-closed-by-user' ||
+                  popupError.code == 'cancelled-popup-request' ||
+                  popupError.code == 'cancelled');
+          if (isCancellation) {
+            return;
+          }
+
+          // Fallback redirect uniquement sur popup bloquée ou erreur interne OAuth.
+          final isPopupBlockedOrInternalOAuth =
+              popupError is FirebaseAuthException &&
+                  (popupError.code == 'popup-blocked' ||
+                      popupError.code == 'internal-error');
+          if (isPopupBlockedOrInternalOAuth) {
+            debugPrint("POPUP BLOCKED -> Fallback to redirect: $popupError");
+            await _auth.signInWithRedirect(provider);
+            // Le navigateur va rediriger, on ne continue pas l'exécution.
+            return;
+          }
+
+          // Autre erreur : afficher le message et ne pas rediriger.
+          debugPrint("GOOGLE POPUP ERROR: $popupError");
+          if (!mounted) return;
+          if (popupError is FirebaseAuthException) {
+            final msg = popupError.message ?? popupError.code;
+            showErrorSnackBar(context, 'Connexion Google échouée : $msg');
+          } else {
+            showErrorSnackBar(context, 'Connexion Google échouée. Réessaye.');
+          }
           return;
         }
       } else {
