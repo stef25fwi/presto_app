@@ -41,8 +41,8 @@ async function sendFlagEmail(opts: { to: string; subject: string; text: string }
   const pass = process.env.SMTP_PASS;
   const from = process.env.SMTP_FROM;
   if (!host || !user || !pass || !from) {
-    console.warn("[moderation] SMTP non configuré, email ignoré");
-    return;
+    console.error("[moderation] SMTP credentials manquants (SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM) — email admin non envoyé");
+    throw new Error("SMTP not configured");
   }
   const transporter = nodemailer.createTransport({
     host,
@@ -198,7 +198,11 @@ export const moderateNewOffer = onDocumentCreated(
           "Votre annonce n'est pas conforme aux CGU. Merci de reformuler et de renvoyer.",
       });
 
-      const to = process.env.FLAGGED_OFFERS_MAILBOX || "annonces-signalees@tondomaine.com";
+      const to = process.env.FLAGGED_OFFERS_MAILBOX;
+      if (!to) {
+        console.error("[moderation] FLAGGED_OFFERS_MAILBOX env var not set — skipping admin alert email", { offerId, uid });
+        return;
+      }
       try {
         await sendFlagEmail({
           to,

@@ -171,7 +171,7 @@ export const onBillingInvoiceUpdated = onDocumentUpdated(`${COLLECTIONS.billingI
         currency: String(after.currency || "EUR"),
         paymentMethod: String(after.payment_method_label || after.payment_method || after.method || ""),
         nextRetryAt: Number(after.next_retry_at || after.retry_at || 0) || undefined,
-        retryUrl: "https://presto.app/facturation",
+        retryUrl: `${APP_BASE_URL}/facturation`,
       },
       status: "created",
     });
@@ -195,7 +195,7 @@ export const onBillingInvoiceUpdated = onDocumentUpdated(`${COLLECTIONS.billingI
         amount: Number(after.amount_paid || after.amount_due || after.amount || 0),
         currency: String(after.currency || "EUR"),
         paymentMethod: String(after.payment_method_label || after.payment_method || after.method || ""),
-        invoiceUrl: "https://presto.app/facturation",
+        invoiceUrl: `${APP_BASE_URL}/facturation`,
       },
       status: "created",
     });
