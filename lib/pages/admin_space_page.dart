@@ -1924,7 +1924,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
 
     try {
       await user.getIdToken(forceRefreshToken);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[AdminSpace] getIdToken failed: $e');
+    }
 
     return FirebaseAuth.instance.currentUser ?? user;
   }
@@ -1989,7 +1991,9 @@ class _AdminSpacePageState extends State<AdminSpacePage> {
         setState(() {
           _adminMode = (configData['mode'] ?? _adminMode).toString();
         });
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[AdminSpace] adminGetMicroIaConfig failed: $e');
+      }
     } catch (error) {
       if (!mounted) return;
       setState(() {

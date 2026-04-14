@@ -11,6 +11,7 @@ const firestore_1 = require("../../core/firestore");
 const env_1 = require("../../config/env");
 const constants_1 = require("../../shared/constants");
 const hash_1 = require("../../utils/hash");
+const rate_limit_1 = require("../../core/rate_limit");
 const ACCOUNT_CONTINUE_URL = "https://presto.app/mon-compte";
 function extractFirstName(...values) {
     for (const value of values) {
@@ -55,6 +56,13 @@ exports.requestPasswordResetEmail = (0, https_1.onCall)({ region: env_1.PROJECT_
     if (!rawEmail || !rawEmail.includes("@")) {
         return { ok: true };
     }
+    // Rate limit: 3 requests per hour per email address
+    const rateLimitKey = (0, hash_1.sha256)(rawEmail);
+    const allowed = await (0, rate_limit_1.canProceedRateLimited)("pw_reset", rateLimitKey, 3, 60 * 60 * 1000);
+    if (!allowed) {
+        // Return ok:true to avoid leaking account existence
+        return { ok: true };
+    }
     try {
         const userRecord = await firebase_admin_1.default.auth().getUserByEmail(rawEmail);
         const verificationLink = await firebase_admin_1.default.auth().generatePasswordResetLink(rawEmail, buildActionCodeSettings());
@@ -90,6 +98,13 @@ exports.requestPasswordResetEmail = (0, https_1.onCall)({ region: env_1.PROJECT_
 exports.requestLoginOtpEmail = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enforceAppCheck: env_1.ENFORCE_APP_CHECK }, async (request) => {
     const rawEmail = String(request.data?.email || "").trim().toLowerCase();
     if (!rawEmail || !rawEmail.includes("@")) {
+        return { ok: true };
+    }
+    // Rate limit: 3 requests per hour per email address
+    const rateLimitKey = (0, hash_1.sha256)(rawEmail);
+    const allowed = await (0, rate_limit_1.canProceedRateLimited)("otp_request", rateLimitKey, 3, 60 * 60 * 1000);
+    if (!allowed) {
+        // Return ok:true to avoid leaking account existence
         return { ok: true };
     }
     try {

@@ -804,7 +804,9 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
       String conversationId, String currentUserId) async {
     try {
       await ConversationService.markAsRead(conversationId: conversationId);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[ConversationsList] markAsRead failed: $e');
+    }
   }
 
   Future<void> _handleConversationAction({

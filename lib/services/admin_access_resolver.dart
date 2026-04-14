@@ -61,7 +61,9 @@ class AdminAccessResolver {
               _authRestoreTimeout,
               onTimeout: () => null,
             );
-      } catch (_) {}
+      } catch (e) {
+        _diag('authStateChanges error: $e');
+      }
     }
 
     if (user == null) {
