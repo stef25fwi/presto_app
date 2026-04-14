@@ -5,6 +5,7 @@ import { db } from "../../core/firestore";
 import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
+import { canProceedRateLimited } from "../../core/rate_limit";
 
 const ACCOUNT_CONTINUE_URL = "https://presto.app/mon-compte";
 
@@ -57,6 +58,14 @@ export const requestPasswordResetEmail = onCall({ region: PROJECT_REGION, enforc
     return { ok: true };
   }
 
+  // Rate limit: 3 requests per hour per email address
+  const rateLimitKey = sha256(rawEmail);
+  const allowed = await canProceedRateLimited("pw_reset", rateLimitKey, 3, 60 * 60 * 1000);
+  if (!allowed) {
+    // Return ok:true to avoid leaking account existence
+    return { ok: true };
+  }
+
   try {
     const userRecord = await admin.auth().getUserByEmail(rawEmail);
     const verificationLink = await admin.auth().generatePasswordResetLink(
@@ -98,6 +107,14 @@ export const requestPasswordResetEmail = onCall({ region: PROJECT_REGION, enforc
 export const requestLoginOtpEmail = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const rawEmail = String(request.data?.email || "").trim().toLowerCase();
   if (!rawEmail || !rawEmail.includes("@")) {
+    return { ok: true };
+  }
+
+  // Rate limit: 3 requests per hour per email address
+  const rateLimitKey = sha256(rawEmail);
+  const allowed = await canProceedRateLimited("otp_request", rateLimitKey, 3, 60 * 60 * 1000);
+  if (!allowed) {
+    // Return ok:true to avoid leaking account existence
     return { ok: true };
   }
 

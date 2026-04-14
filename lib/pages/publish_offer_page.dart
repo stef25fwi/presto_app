@@ -2504,7 +2504,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     try {
       await user.getIdToken(forceRefreshToken);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[PublishOffer] getIdToken failed: $e');
+    }
 
     SessionState.userId = user.uid;
     return FirebaseAuth.instance.currentUser ?? user;
