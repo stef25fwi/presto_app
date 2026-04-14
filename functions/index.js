@@ -417,7 +417,7 @@ Retourne uniquement le JSON demandé.`;
       { role: 'user', content: userPrompt }
     ],
     temperature: 0.2,
-    max_tokens: 500
+    max_tokens: 900
   });
 
   const aiResponse = completion.choices?.[0]?.message?.content?.trim();

@@ -235,7 +235,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return false;
   }
 
-  Future<String> _transcribePublishAudio({
+  /// Upload l'audio et appelle microIaProcessAudio avec generateDraft=true
+  /// pour obtenir transcription + draft IA en un seul aller-retour réseau.
+  /// Retourne le Map complet issu de la Cloud Function (clés: text, draft, modeUsed, quality).
+  Future<Map<String, dynamic>> _transcribePublishAudio({
     required String ownerUid,
     required Uint8List audioBytes,
     required String contentType,
@@ -261,13 +264,24 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       level: PublishAiTraceLevel.success,
     );
 
+    // Hints contextuels pour le draft (améliore la qualité du remplissage).
+    final hintCity =
+        _locationController.text.trim().isEmpty ? null : _locationController.text.trim();
+    final hintCategory =
+        (_category ?? '').trim().isEmpty ? null : _category!.trim();
+
     _appendPublishAiTrace(
       'microia_callable',
-      'Appel microIaProcessAudio en cours',
+      'Appel microIaProcessAudio (generateDraft=true, city=${hintCity ?? '-'}, cat=${hintCategory ?? '-'})',
     );
+
+    // Un seul aller-retour : STT + draft IA en parallèle côté serveur.
     final out = await MicroIaService.processAudio(
       storagePath: storagePath,
       languageCode: OpenAiConfig.defaultLanguageCode,
+      generateDraft: true,
+      draftCity: hintCity,
+      draftCategory: hintCategory,
       debugLabel: 'publish_final_audio',
     ).timeout(const Duration(seconds: 90));
 
@@ -290,18 +304,23 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         transcriptLength: transcript.length,
       );
     }
+    final hasDraft = out['draft'] is Map;
     _appendPublishAiTrace(
       'microia_callable',
-      modeUsed.isEmpty
-          ? 'Transcription reçue (${transcript.length} caractères)'
-          : 'Transcription reçue via $modeUsed (${transcript.length} caractères)',
+      [
+        if (modeUsed.isNotEmpty) 'mode=$modeUsed',
+        '${transcript.length} caractères',
+        'draft=${hasDraft ? 'inclus' : 'absent'}',
+      ].join(' | '),
       level: PublishAiTraceLevel.success,
     );
 
-    return transcript;
+    return out;
   }
 
-  Future<void> _applyPublishDraftFromTranscript(String transcript) async {
+  Future<void> _applyPublishDraftFromTranscript(
+      Map<String, dynamic> sttResult) async {
+    final transcript = (sttResult['text'] ?? '').toString();
     _latestRecognizedTranscript = transcript;
     _appendPublishAiTrace(
       'draft_local',
@@ -309,14 +328,44 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
     _applyFastDraftFromTranscript(transcript);
 
+    // Use the draft embedded in the STT response when available (single round-trip).
+    final embeddedDraft = sttResult['draft'];
+    if (embeddedDraft is Map<String, dynamic> &&
+        embeddedDraft['success'] == true) {
+      _appendPublishAiTrace(
+        'draft_remote',
+        'Draft intégré au résultat STT — aucun appel supplémentaire nécessaire',
+        level: PublishAiTraceLevel.success,
+      );
+      if (!mounted) return;
+      _applyDraftToForm(embeddedDraft);
+      _appendPublishAiTrace(
+        'draft_remote',
+        'Champs du formulaire remplis par le draft IA (pipeline unifié)',
+        level: PublishAiTraceLevel.success,
+      );
+      showSuccessSnackBar(context, 'Transcription réussie et champs remplis');
+      return;
+    }
+
+    // Fallback: make a separate V2 draft call (richer fields than V1).
     _appendPublishAiTrace(
       'draft_remote',
-      'Appel generateOfferDraft depuis la transcription',
+      'Appel generateOfferDraftV2 depuis la transcription (fallback)',
     );
-    final draft = await _aiService.generateOfferDraft(text: transcript);
+    final hintCity = _locationController.text.trim().isEmpty
+        ? null
+        : _locationController.text.trim();
+    final hintCategory =
+        (_category ?? '').trim().isEmpty ? null : _category!.trim();
+    final draft = await _aiService.generateOfferDraftV2(
+      text: transcript,
+      city: hintCity,
+      category: hintCategory,
+    );
     _appendPublishAiTrace(
       'draft_remote',
-      'Réponse generateOfferDraft reçue',
+      'Réponse generateOfferDraftV2 reçue',
       level: draft['success'] == true
           ? PublishAiTraceLevel.success
           : PublishAiTraceLevel.warning,
@@ -2640,7 +2689,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         await _recorder.start(
           RecordConfig(
             encoder: AudioEncoder.aacLc,
-            sampleRate: 44100,
+            sampleRate: 16000,
             numChannels: 1,
           ),
           path: filePath,
@@ -2706,10 +2755,9 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
           );
 
         final blob = await _webRec.stopToBlob();
-        final audioUpload = await webBlobToMicroIaUpload(
-          blob,
-          preferRawBytes: true,
-        );
+        // Conversion WAV 16kHz mono côté client : élimine le FFmpeg
+        // server-side et réduit la latence de ~500ms.
+        final audioUpload = await webBlobToMicroIaUpload(blob);
         _appendPublishAiTrace(
           'web_audio',
           'Blob converti: ${audioUpload.bytes.length} bytes, ${audioUpload.contentType}, .${audioUpload.extension}',
@@ -2723,7 +2771,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               'Audio invalide (WAV trop petit: ${audioUpload.bytes.length} bytes).');
         }
 
-        final transcript = await _transcribePublishAudio(
+        final sttResult = await _transcribePublishAudio(
           ownerUid: uid,
           audioBytes: audioUpload.bytes,
           contentType: audioUpload.contentType,
@@ -2732,7 +2780,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         if (!mounted) return;
 
-        await _applyPublishDraftFromTranscript(transcript);
+        await _applyPublishDraftFromTranscript(sttResult);
       } catch (e, st) {
         await CrashlyticsContext.recordError(
           e is Exception ? e : Exception(e.toString()),
@@ -2961,7 +3009,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       'Lecture locale OK: ${audioBytes.length} bytes, $contentType, .$ext',
       level: PublishAiTraceLevel.success,
     );
-    final transcript = await _transcribePublishAudio(
+    final sttResult = await _transcribePublishAudio(
       ownerUid: uid,
       audioBytes: audioBytes,
       contentType: contentType,
@@ -2970,7 +3018,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     if (!mounted) return;
 
-    await _applyPublishDraftFromTranscript(transcript);
+    await _applyPublishDraftFromTranscript(sttResult);
   }
 
   /// Appelle la Cloud Function pour analyser la description avec OpenAI
@@ -2989,9 +3037,18 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     try {
       _appendPublishAiTrace(
         'draft_remote',
-        'Appel generateOfferDraft depuis le bouton IA',
+        'Appel generateOfferDraftV2 depuis le bouton IA',
       );
-      final draft = await _aiService.generateOfferDraft(text: input);
+      final hintCity = _locationController.text.trim().isEmpty
+          ? null
+          : _locationController.text.trim();
+      final hintCategory =
+          (_category ?? '').trim().isEmpty ? null : _category!.trim();
+      final draft = await _aiService.generateOfferDraftV2(
+        text: input,
+        city: hintCity,
+        category: hintCategory,
+      );
 
       if (!mounted) return;
 
