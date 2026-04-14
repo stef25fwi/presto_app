@@ -22,11 +22,8 @@ Future<void> prestoFirebaseMessagingBackgroundHandler(
 /// Service pour gérer Firebase Cloud Messaging (notifications push)
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
-  static const String _webVapidKey = String.fromEnvironment(
-    'FCM_WEB_VAPID_KEY',
-    defaultValue:
-        'BMVwXhhckC038dAe0sdu-Q34tjeJBVofwehlfEeF1X9KtHVe16sF46E6S4UmbsNiVi5kmfYaRxLdL3CZB49MxgY',
-  );
+  // Must be injected at build time via --dart-define=FCM_WEB_VAPID_KEY=<key>
+  static const String _webVapidKey = String.fromEnvironment('FCM_WEB_VAPID_KEY');
   static const AndroidNotificationChannel _messagesChannel =
       AndroidNotificationChannel(
     'ilipresto_messages',

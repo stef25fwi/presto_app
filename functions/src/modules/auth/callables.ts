@@ -2,11 +2,10 @@ import { randomInt } from "node:crypto";
 import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { db } from "../../core/firestore";
-import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
+import { APP_BASE_URL, ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
-
-const ACCOUNT_CONTINUE_URL = "https://presto.app/mon-compte";
+import { canProceedRateLimited } from "../../core/rate_limit";
 
 function extractFirstName(...values: unknown[]): string {
   for (const value of values) {
@@ -46,7 +45,7 @@ function buildDeviceLabel(platform: string, deviceType: string, authMethod: stri
 
 function buildActionCodeSettings() {
   return {
-    url: ACCOUNT_CONTINUE_URL,
+    url: `${APP_BASE_URL}/mon-compte`,
     handleCodeInApp: false,
   };
 }
@@ -54,6 +53,14 @@ function buildActionCodeSettings() {
 export const requestPasswordResetEmail = onCall({ region: PROJECT_REGION, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   const rawEmail = String(request.data?.email || "").trim().toLowerCase();
   if (!rawEmail || !rawEmail.includes("@")) {
+    return { ok: true };
+  }
+
+  // Rate limit: 3 requests per hour per email address
+  const rateLimitKey = sha256(rawEmail);
+  const allowed = await canProceedRateLimited("pw_reset", rateLimitKey, 3, 60 * 60 * 1000);
+  if (!allowed) {
+    // Return ok:true to avoid leaking account existence
     return { ok: true };
   }
 
@@ -101,6 +108,14 @@ export const requestLoginOtpEmail = onCall({ region: PROJECT_REGION, enforceAppC
     return { ok: true };
   }
 
+  // Rate limit: 3 requests per hour per email address
+  const rateLimitKey = sha256(rawEmail);
+  const allowed = await canProceedRateLimited("otp_request", rateLimitKey, 3, 60 * 60 * 1000);
+  if (!allowed) {
+    // Return ok:true to avoid leaking account existence
+    return { ok: true };
+  }
+
   try {
     const userRecord = await admin.auth().getUserByEmail(rawEmail);
     const userSnap = await db.collection(COLLECTIONS.users).doc(userRecord.uid).get();
@@ -145,7 +160,7 @@ export const requestLoginOtpEmail = onCall({ region: PROJECT_REGION, enforceAppC
           String(request.data?.authMethod || "email_otp"),
         ),
         ip: getRequestIp(request),
-        helpUrl: `${ACCOUNT_CONTINUE_URL}/support`,
+        helpUrl: `${APP_BASE_URL}/mon-compte/support`,
       },
       status: "created",
     }, { merge: true });
@@ -311,7 +326,7 @@ export const trackUserLogin = onCall({ region: PROJECT_REGION, enforceAppCheck: 
         firstName: extractFirstName(userData.displayName, userData.display_name, auth.token.name),
         ip,
         device,
-        secureUrl: ACCOUNT_CONTINUE_URL,
+        secureUrl: `${APP_BASE_URL}/mon-compte`,
       },
       status: "created",
     }, { merge: true });

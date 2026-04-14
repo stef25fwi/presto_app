@@ -265,7 +265,9 @@ class AdminAudioRuntimeStore extends ChangeNotifier {
         'history': _history.map((entry) => entry.toMap()).toList(),
       };
       await prefs.setString(_storageKey, jsonEncode(payload));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[AdminAudioRuntimeStore] _persistToLocal failed: $e');
+    }
   }
 
   Future<void> _persistToCloud() async {
