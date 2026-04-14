@@ -858,6 +858,17 @@ class _AccountPageState extends State<AccountPage> {
       final result = await _auth.getRedirectResult();
       if (result.user != null) {
         final isNew = result.additionalUserInfo?.isNewUser ?? false;
+        // Créer/mettre à jour le document Firestore de l'utilisateur
+        // (manquant avant : les nouveaux utilisateurs via redirect n'avaient pas de document).
+        try {
+          await UserProfileBootstrapService.ensureUserDocument(
+            user: result.user!,
+            authMethod: 'google',
+            isNewUserHint: isNew,
+          );
+        } catch (bootstrapError) {
+          debugPrint('[Google Redirect] Bootstrap error: $bootstrapError');
+        }
         await _trackLogin(authMethod: 'google', isNewUser: isNew);
         if (!mounted) return;
         showSuccessSnackBar(context, "Connecté avec Google");

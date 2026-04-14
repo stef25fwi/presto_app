@@ -220,6 +220,10 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
   String? _lastOffersQuerySignature;
 
+  // Cache du stream pour éviter de le recréer à chaque setState non pertinent.
+  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>? _cachedOffersStream;
+  String? _cachedOffersStreamKey;
+
   String _buildOffersQuerySignature({
     required bool hasCategory,
     required bool hasDept,
@@ -762,6 +766,35 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
 
     query = query.limit(hasClientFilters ? _maxLimit : _pageLimit);
     return query;
+  }
+
+  /// Clé unique qui représente l'état courant de la requête.
+  /// Le stream n'est recréé que quand cette clé change.
+  String _buildOffersStreamKey() {
+    return [
+      _filterCategory ?? '',
+      _selectedCategory ?? '',
+      _filterRegionCode ?? '',
+      _selectedRegionCode ?? '',
+      _filterDepartmentCode ?? '',
+      _filterCityName ?? '',
+      _filterPostalCodeController.text,
+      _selectedSubCategory ?? '',
+      _activeSearchQuery ?? '',
+      _pageLimit.toString(),
+      if (_advancedFilters) ...[ _budgetMinCtrl.text, _budgetMaxCtrl.text ],
+    ].join('|');
+  }
+
+  /// Retourne le stream mis en cache ou en crée un nouveau si les paramètres
+  /// de la requête ont changé depuis le dernier build.
+  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _getOffersStream() {
+    final key = _buildOffersStreamKey();
+    if (_cachedOffersStream == null || _cachedOffersStreamKey != key) {
+      _cachedOffersStream = _watchCombinedOffers();
+      _cachedOffersStreamKey = key;
+    }
+    return _cachedOffersStream!;
   }
 
   Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>>
@@ -1668,7 +1701,7 @@ class _ConsultOffersPageState extends State<ConsultOffersPage> {
                 Expanded(
                   child: StreamBuilder<
                       List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
-                    stream: _watchCombinedOffers().map((docs) {
+                    stream: _getOffersStream().map((docs) {
                       PrestoMonitoring.I.trackOffersSnapshot(docs.length);
                       return docs;
                     }),
