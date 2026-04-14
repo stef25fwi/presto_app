@@ -224,7 +224,9 @@ class _RandomAssetTickerState extends State<RandomAssetTicker> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      // Afficher un fond neutre pendant le chargement des assets
+      // (évite le spinner qui cause un saut visuel dans les bandeaux pub).
+      return const ColoredBox(color: Color(0xFFF0F0F0));
     }
 
     if (_assets.isEmpty || _current == null) {
