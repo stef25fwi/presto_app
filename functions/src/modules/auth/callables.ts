@@ -2,12 +2,10 @@ import { randomInt } from "node:crypto";
 import admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { db } from "../../core/firestore";
-import { ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
+import { APP_BASE_URL, ENFORCE_APP_CHECK, PROJECT_REGION } from "../../config/env";
 import { COLLECTIONS } from "../../shared/constants";
 import { sha256 } from "../../utils/hash";
 import { canProceedRateLimited } from "../../core/rate_limit";
-
-const ACCOUNT_CONTINUE_URL = "https://presto.app/mon-compte";
 
 function extractFirstName(...values: unknown[]): string {
   for (const value of values) {
@@ -47,7 +45,7 @@ function buildDeviceLabel(platform: string, deviceType: string, authMethod: stri
 
 function buildActionCodeSettings() {
   return {
-    url: ACCOUNT_CONTINUE_URL,
+    url: `${APP_BASE_URL}/mon-compte`,
     handleCodeInApp: false,
   };
 }
@@ -162,7 +160,7 @@ export const requestLoginOtpEmail = onCall({ region: PROJECT_REGION, enforceAppC
           String(request.data?.authMethod || "email_otp"),
         ),
         ip: getRequestIp(request),
-        helpUrl: `${ACCOUNT_CONTINUE_URL}/support`,
+        helpUrl: `${APP_BASE_URL}/mon-compte/support`,
       },
       status: "created",
     }, { merge: true });
@@ -328,7 +326,7 @@ export const trackUserLogin = onCall({ region: PROJECT_REGION, enforceAppCheck: 
         firstName: extractFirstName(userData.displayName, userData.display_name, auth.token.name),
         ip,
         device,
-        secureUrl: ACCOUNT_CONTINUE_URL,
+        secureUrl: `${APP_BASE_URL}/mon-compte`,
       },
       status: "created",
     }, { merge: true });
