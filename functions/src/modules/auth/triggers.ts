@@ -142,7 +142,7 @@ export const onUserCreated = onDocumentCreated(`${COLLECTIONS.users}/{userId}`, 
       payload: {
         recipient_email: email,
         firstName: String(data.displayName || data.display_name || "").split(" ")[0] ?? "",
-        dashboardUrl: "https://presto.app/mon-compte",
+        dashboardUrl: `${APP_BASE_URL}/mon-compte`,
       },
       status: "created",
     });
