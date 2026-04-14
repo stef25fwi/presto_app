@@ -31,7 +31,6 @@ class AccountSocialAuthActions {
         final googleProvider = GoogleAuthProvider();
         googleProvider.setCustomParameters({
           'prompt': 'select_account',
-          'login_hint': '',
         });
         googleProvider.addScope('email');
         googleProvider.addScope('profile');
