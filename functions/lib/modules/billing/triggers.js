@@ -146,7 +146,7 @@ exports.onBillingInvoiceUpdated = (0, firestore_1.onDocumentUpdated)(`${constant
                 currency: String(after.currency || "EUR"),
                 paymentMethod: String(after.payment_method_label || after.payment_method || after.method || ""),
                 nextRetryAt: Number(after.next_retry_at || after.retry_at || 0) || undefined,
-                retryUrl: "https://presto.app/facturation",
+                retryUrl: `${env_1.APP_BASE_URL}/facturation`,
             },
             status: "created",
         });
@@ -168,7 +168,7 @@ exports.onBillingInvoiceUpdated = (0, firestore_1.onDocumentUpdated)(`${constant
                 amount: Number(after.amount_paid || after.amount_due || after.amount || 0),
                 currency: String(after.currency || "EUR"),
                 paymentMethod: String(after.payment_method_label || after.payment_method || after.method || ""),
-                invoiceUrl: "https://presto.app/facturation",
+                invoiceUrl: `${env_1.APP_BASE_URL}/facturation`,
             },
             status: "created",
         });

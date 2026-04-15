@@ -12,7 +12,6 @@ const env_1 = require("../../config/env");
 const constants_1 = require("../../shared/constants");
 const hash_1 = require("../../utils/hash");
 const rate_limit_1 = require("../../core/rate_limit");
-const ACCOUNT_CONTINUE_URL = "https://presto.app/mon-compte";
 function extractFirstName(...values) {
     for (const value of values) {
         const firstName = String(value || "").trim().split(" ")[0] || "";
@@ -47,7 +46,7 @@ function buildDeviceLabel(platform, deviceType, authMethod) {
 }
 function buildActionCodeSettings() {
     return {
-        url: ACCOUNT_CONTINUE_URL,
+        url: `${env_1.APP_BASE_URL}/mon-compte`,
         handleCodeInApp: false,
     };
 }
@@ -145,7 +144,7 @@ exports.requestLoginOtpEmail = (0, https_1.onCall)({ region: env_1.PROJECT_REGIO
                 expiresInMinutes,
                 device: buildDeviceLabel(String(request.data?.platform || "unknown"), String(request.data?.deviceType || request.data?.platform || "unknown"), String(request.data?.authMethod || "email_otp")),
                 ip: getRequestIp(request),
-                helpUrl: `${ACCOUNT_CONTINUE_URL}/support`,
+                helpUrl: `${env_1.APP_BASE_URL}/mon-compte/support`,
             },
             status: "created",
         }, { merge: true });
@@ -290,7 +289,7 @@ exports.trackUserLogin = (0, https_1.onCall)({ region: env_1.PROJECT_REGION, enf
                 firstName: extractFirstName(userData.displayName, userData.display_name, auth.token.name),
                 ip,
                 device,
-                secureUrl: ACCOUNT_CONTINUE_URL,
+                secureUrl: `${env_1.APP_BASE_URL}/mon-compte`,
             },
             status: "created",
         }, { merge: true });

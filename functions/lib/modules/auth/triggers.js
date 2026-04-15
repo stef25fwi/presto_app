@@ -127,7 +127,7 @@ exports.onUserCreated = (0, firestore_1.onDocumentCreated)(`${constants_1.COLLEC
             payload: {
                 recipient_email: email,
                 firstName: String(data.displayName || data.display_name || "").split(" ")[0] ?? "",
-                dashboardUrl: "https://presto.app/mon-compte",
+                dashboardUrl: `${env_1.APP_BASE_URL}/mon-compte`,
             },
             status: "created",
         });
