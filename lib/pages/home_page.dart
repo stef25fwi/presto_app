@@ -1970,12 +1970,13 @@ class UnreadInboxBell extends StatelessWidget {
   final Widget Function(BuildContext context, int badgeCount) builder;
 
   const UnreadInboxBell({
+    Key? key,
     required this.userId,
     required this.builder,
     this.monitoringKeyPrefix,
     this.countType = InboxCountType.totalUnread,
     this.useVisibleUnreadMessages = false,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

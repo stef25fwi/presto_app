@@ -704,9 +704,10 @@ class AudioPipelineBadge extends StatelessWidget {
   }
 }
 
+
 class CardShell extends StatelessWidget {
   final Widget child;
-  const CardShell({required this.child});
+  const CardShell({Key? key, required this.child}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -795,7 +796,7 @@ Future<void> main() async {
         } else {
           final preview =
               siteKey.length > 10 ? siteKey.substring(0, 10) : siteKey;
-          if (kDebugMode) debugPrint('[APPCHECK] siteKey=${preview}...');
+          if (kDebugMode) debugPrint('[APPCHECK] siteKey=$preview...');
           await FirebaseAppCheck.instance.activate(
             webProvider: ReCaptchaEnterpriseProvider(siteKey),
           );
@@ -806,8 +807,9 @@ Future<void> main() async {
           androidProvider: kDebugMode
               ? AndroidProvider.debug
               : AndroidProvider.playIntegrity,
-          appleProvider:
-              kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+          appleProvider: kDebugMode
+              ? AppleProvider.debug
+              : AppleProvider.appAttest,
         );
       }
       appCheckActivationSucceeded = true;
