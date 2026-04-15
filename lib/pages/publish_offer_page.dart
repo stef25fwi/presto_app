@@ -164,6 +164,12 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     }
 
     debugPrint('[AppCheck] non prêt pour $flow');
+    if (showBlockingMessage && mounted) {
+      showSuccessSnackBar(
+        context,
+        'Securite non prete. Reessayez dans quelques secondes.',
+      );
+    }
     return false;
   }
 
@@ -2627,6 +2633,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _formatMicroIaRuntimeError(e),
         level: PublishAiTraceLevel.error,
       );
+      return;
     }
 
     setState(() {
@@ -3721,6 +3728,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                       _isAnalyzing || signedInUser == null
                                           ? null
                                           : _startMic,
+                                isLoading: _isAnalyzing,
                                   label: 'Décrire mon besoin (IA)',
                                 ),
                         ),
