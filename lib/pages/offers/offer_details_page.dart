@@ -14,6 +14,7 @@ import 'package:presto_app/models/marketplace_report.dart';
 import 'package:presto_app/services/app_route_parser.dart';
 import 'package:presto_app/services/conversation_service.dart';
 import 'package:presto_app/services/marketplace_human_verification.dart';
+import 'package:presto_app/utils/friendly_snackbar.dart';
 import 'package:presto_app/utils/runtime_action_logger.dart';
 import 'package:presto_app/widgets/offer_network_image.dart';
 
@@ -352,10 +353,9 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           'offerId': data.offerId,
         },
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Connectez-vous pour envoyer un message.")),
-      );
+      if (context.mounted) {
+        showErrorSnackBar(context, 'Connectez-vous pour envoyer un message.');
+      }
       return;
     }
 
@@ -367,9 +367,7 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           'offerId': data.offerId,
         },
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Annonceur introuvable.")),
-      );
+      if (context.mounted) showErrorSnackBar(context, 'Annonceur introuvable.');
       return;
     }
 
@@ -381,10 +379,10 @@ class PrestoOfferDetailsPage extends StatelessWidget {
           'offerId': data.offerId,
         },
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Vous ne pouvez pas vous envoyer un message.")),
-      );
+      if (context.mounted) {
+        showErrorSnackBar(
+            context, 'Vous ne pouvez pas vous envoyer un message.');
+      }
       return;
     }
 
@@ -394,14 +392,23 @@ class PrestoOfferDetailsPage extends StatelessWidget {
     final initialDraftText =
         'Bonjour ${data.advertiserName}, je vous contacte au sujet de votre annonce "${data.title}".';
 
-    final resolvedConversationId = await ConversationService.ensureConversation(
-      offerId: data.offerId,
-      offerTitle: data.title,
-      currentUserId: me,
-      otherUserId: data.advertiserId,
-      currentUserName: currentUserName,
-      otherUserName: data.advertiserName,
-    );
+    final String resolvedConversationId;
+    try {
+      resolvedConversationId = await ConversationService.ensureConversation(
+        offerId: data.offerId,
+        offerTitle: data.title,
+        currentUserId: me,
+        otherUserId: data.advertiserId,
+        currentUserName: currentUserName,
+        otherUserName: data.advertiserName,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        showErrorSnackBar(
+            context, 'Impossible d\'ouvrir la messagerie. Réessayez.');
+      }
+      return;
+    }
 
     if (!context.mounted) return;
     final targetRoute = buildMessagesRoute(
@@ -653,61 +660,166 @@ class PrestoOfferDetailsPage extends StatelessWidget {
       backgroundColor: overlayTheme.surfaceColor,
       shape: overlayTheme.sheetShape,
       builder: (sheetContext) {
-        return SafeArea(
-          top: false,
-          child: Container(
-            color: overlayTheme.surfaceColor,
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Proposer mes services',
-                  textAlign: TextAlign.center,
-                  style: kPrestoSectionTitleStyle,
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 50,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(sheetContext).pop();
-                      _openInternalMessaging(context, data);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6A00),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+        bool isLoadingMessage = false;
+        return StatefulBuilder(
+          builder: (_, setSheetState) {
+            return SafeArea(
+              top: false,
+              child: Container(
+                color: overlayTheme.surfaceColor,
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Proposer mes services',
+                      textAlign: TextAlign.center,
+                      style: kPrestoSectionTitleStyle,
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: isLoadingMessage
+                            ? null
+                            : () async {
+                                // Validate auth & data before showing spinner
+                                final authUser =
+                                    FirebaseAuth.instance.currentUser;
+                                final me =
+                                    authUser?.uid.isNotEmpty == true
+                                        ? authUser!.uid
+                                        : '';
+                                if (me.isEmpty || me == 'buyer_demo_001') {
+                                  if (sheetContext.mounted) {
+                                    Navigator.of(sheetContext).pop();
+                                  }
+                                  if (context.mounted) {
+                                    showErrorSnackBar(context,
+                                        'Connectez-vous pour envoyer un message.');
+                                  }
+                                  return;
+                                }
+                                if (data.advertiserId.isEmpty) {
+                                  if (sheetContext.mounted) {
+                                    Navigator.of(sheetContext).pop();
+                                  }
+                                  if (context.mounted) {
+                                    showErrorSnackBar(
+                                        context, 'Annonceur introuvable.');
+                                  }
+                                  return;
+                                }
+                                if (data.advertiserId == me) {
+                                  if (sheetContext.mounted) {
+                                    Navigator.of(sheetContext).pop();
+                                  }
+                                  if (context.mounted) {
+                                    showErrorSnackBar(context,
+                                        'Vous ne pouvez pas vous envoyer un message.');
+                                  }
+                                  return;
+                                }
+
+                                setSheetState(() => isLoadingMessage = true);
+
+                                final currentUserName =
+                                    authUser?.displayName?.trim().isNotEmpty ==
+                                            true
+                                        ? authUser!.displayName!.trim()
+                                        : (authUser?.email ?? 'Utilisateur');
+
+                                final String conversationId;
+                                try {
+                                  conversationId =
+                                      await ConversationService.ensureConversation(
+                                    offerId: data.offerId,
+                                    offerTitle: data.title,
+                                    currentUserId: me,
+                                    otherUserId: data.advertiserId,
+                                    currentUserName: currentUserName,
+                                    otherUserName: data.advertiserName,
+                                  );
+                                } catch (_) {
+                                  if (sheetContext.mounted) {
+                                    setSheetState(
+                                        () => isLoadingMessage = false);
+                                  }
+                                  if (context.mounted) {
+                                    showErrorSnackBar(context,
+                                        'Impossible d\'ouvrir la messagerie. Réessayez.');
+                                  }
+                                  return;
+                                }
+
+                                if (!sheetContext.mounted ||
+                                    !context.mounted) return;
+                                // Pop sheet BEFORE pushing so the stack stays clean
+                                Navigator.of(sheetContext).pop();
+                                final initialDraftText =
+                                    'Bonjour ${data.advertiserName}, je vous contacte au sujet de votre annonce "${data.title}".';
+                                final targetRoute = buildMessagesRoute(
+                                  conversationId: conversationId,
+                                  initialDraftText: initialDraftText,
+                                );
+                                logRuntimeAction(
+                                  area: 'messaging',
+                                  action: 'open-route',
+                                  details: <String, Object?>{
+                                    'route': targetRoute,
+                                    'conversationId': conversationId,
+                                    'offerId': data.offerId,
+                                  },
+                                );
+                                Navigator.of(context).pushNamed(targetRoute);
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF6A00),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        icon: isLoadingMessage
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.chat_bubble_outline),
+                        label: Text(isLoadingMessage
+                            ? 'Préparation...'
+                            : 'Envoyer un message'),
                       ),
                     ),
-                    icon: const Icon(Icons.chat_bubble_outline),
-                    label: const Text('Envoyer un message'),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 50,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(sheetContext).pop();
-                      _callPhone(context, data.phone);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0459D9),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(sheetContext).pop();
+                          _callPhone(context, data.phone);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0459D9),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                        ),
+                        icon: const Icon(Icons.call_outlined),
+                        label: const Text('Appeler'),
                       ),
                     ),
-                    icon: const Icon(Icons.call_outlined),
-                    label: const Text('Appeler'),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

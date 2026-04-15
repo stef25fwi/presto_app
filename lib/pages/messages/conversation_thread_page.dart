@@ -135,9 +135,23 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
   }
 
   Widget _buildThreadDateChip(DateTime? date) {
-    final label = date != null
-        ? '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}'
-        : '--/--/----';
+    final String label;
+    if (date == null) {
+      label = '--/--/----';
+    } else {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final msgDay = DateTime(date.year, date.month, date.day);
+      final diff = today.difference(msgDay).inDays;
+      if (diff == 0) {
+        label = 'Aujourd\'hui';
+      } else if (diff == 1) {
+        label = 'Hier';
+      } else {
+        label =
+            '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+      }
+    }
     return Padding(
       padding: const EdgeInsets.only(top: 10, bottom: 8),
       child: Center(
@@ -338,19 +352,33 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
     Navigator.of(context).maybePop();
   }
 
-  String? _readReceiptLabel(DateTime? sentAt) {
-    if (sentAt == null) return null;
+  /// Retourne une icône de statut WhatsApp-style pour les messages envoyés :
+  /// ✓ gris = envoyé, ✓✓ gris = livré (non lu), ✓✓ bleu = lu.
+  Widget? _buildReadReceiptWidget(DateTime? sentAt, bool isMine) {
+    if (!isMine || sentAt == null) return null;
 
     final otherParticipantId = _participants.firstWhere(
-      (participantId) => participantId != widget.currentUserId,
+      (id) => id != widget.currentUserId,
       orElse: () => '',
     );
-    if (otherParticipantId.isEmpty) return null;
+
+    if (otherParticipantId.isEmpty || !_metaLoaded) {
+      return const Icon(
+        Icons.done_rounded,
+        size: 14,
+        color: Color(0xFF9CA3AF),
+      );
+    }
 
     final raw = _lastReadAt[otherParticipantId];
     final readAt = parseFirestoreDateTime(raw);
-    if (readAt == null || readAt.isBefore(sentAt)) return null;
-    return 'Vu';
+    final isRead = readAt != null && !readAt.isBefore(sentAt);
+
+    return Icon(
+      Icons.done_all_rounded,
+      size: 14,
+      color: isRead ? const Color(0xFF2563EB) : const Color(0xFF9CA3AF),
+    );
   }
 
   Future<void> _markAsRead() async {
@@ -913,15 +941,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                             (olderMessageDate == null ||
                                 !_isSameCalendarDay(sentAt, olderMessageDate));
                         final isMine = senderId == widget.currentUserId;
-                        final readReceipt =
-                            isMine ? _readReceiptLabel(sentAt) : null;
+                        final readReceiptWidget =
+                            _buildReadReceiptWidget(sentAt, isMine);
                         final messageDocId = docs[index].id;
 
                         final messageBubble = GestureDetector(
                           onLongPress: isMine
                               ? () async {
-                                  final scaffoldMessenger =
-                                      ScaffoldMessenger.of(context);
                                   final confirmed = await showDialog<bool>(
                                     context: context,
                                     builder: (ctx) {
@@ -936,7 +962,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                         title:
                                             const Text('Supprimer ce message'),
                                         content: const Text(
-                                          'Ce message sera definitivement supprime.',
+                                          'Ce message sera définitivement supprimé.',
                                         ),
                                         actions: [
                                           TextButton(
@@ -963,18 +989,12 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                       messageId: messageDocId,
                                     );
                                     if (!mounted) return;
-                                    scaffoldMessenger.showSnackBar(
-                                      const SnackBar(
-                                          content: Text('Message supprime.')),
-                                    );
+                                    showSuccessSnackBar(
+                                        context, 'Message supprimé.');
                                   } catch (error) {
                                     if (!mounted) return;
-                                    scaffoldMessenger.showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                            'Impossible de supprimer ce message : $error'),
-                                      ),
-                                    );
+                                    showErrorSnackBar(context,
+                                        'Impossible de supprimer ce message.');
                                   }
                                 }
                               : null,
@@ -1034,15 +1054,22 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                                       ),
                                     ),
                                     const SizedBox(height: 4),
-                                    Text(
-                                      [
-                                        _formatMessageTimestamp(sentAt),
-                                        if (readReceipt != null) readReceipt,
-                                      ].join(' · '),
-                                      style: kPrestoMetaTextStyle.copyWith(
-                                        fontSize: 11,
-                                        color: const Color(0xFF6B7280),
-                                      ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          _formatMessageTimestamp(sentAt),
+                                          style:
+                                              kPrestoMetaTextStyle.copyWith(
+                                            fontSize: 11,
+                                            color: const Color(0xFF6B7280),
+                                          ),
+                                        ),
+                                        if (readReceiptWidget != null) ...[
+                                          const SizedBox(width: 4),
+                                          readReceiptWidget,
+                                        ],
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -1192,6 +1219,12 @@ class _ConversationBanner extends StatelessWidget {
 
 String _formatMessageTimestamp(DateTime? date) {
   if (date == null) return 'Envoi...';
-  return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')} '
+  final now = DateTime.now();
+  final isToday = date.year == now.year &&
+      date.month == now.month &&
+      date.day == now.day;
+  final hhmm =
       '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  if (isToday) return hhmm;
+  return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')} $hhmm';
 }
