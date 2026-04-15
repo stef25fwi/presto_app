@@ -235,7 +235,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     return false;
   }
 
-  Future<String> _transcribePublishAudio({
+  /// Uploade l'audio, appelle microIaProcessAudio avec generateDraft:true pour
+  /// obtenir transcription + brouillon en un seul round-trip, et retourne les
+  /// deux dans une Map {text, draft?}.
+  Future<Map<String, dynamic>> _transcribePublishAudio({
     required String ownerUid,
     required Uint8List audioBytes,
     required String contentType,
@@ -263,11 +266,17 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     _appendPublishAiTrace(
       'microia_callable',
-      'Appel microIaProcessAudio en cours',
+      'Appel microIaProcessAudio (mode combiné STT+draft) en cours',
     );
+
+    // Mode combiné : transcription + brouillon en un seul appel (~1-2 s gagnés)
+    final currentCity = _locationController.text.trim();
     final out = await MicroIaService.processAudio(
       storagePath: storagePath,
       languageCode: OpenAiConfig.defaultLanguageCode,
+      generateDraft: true,
+      draftCity: currentCity.isNotEmpty ? currentCity : null,
+      draftCategory: _category,
       debugLabel: 'publish_final_audio',
     ).timeout(const Duration(seconds: 90));
 
@@ -290,18 +299,29 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         transcriptLength: transcript.length,
       );
     }
+
+    final hasCombinedDraft = out['draft'] is Map;
     _appendPublishAiTrace(
       'microia_callable',
       modeUsed.isEmpty
-          ? 'Transcription reçue (${transcript.length} caractères)'
-          : 'Transcription reçue via $modeUsed (${transcript.length} caractères)',
+          ? 'Transcription reçue (${transcript.length} car.) — draft=${hasCombinedDraft ? 'ok' : 'absent'}'
+          : 'Transcription reçue via $modeUsed (${transcript.length} car.) — draft=${hasCombinedDraft ? 'ok' : 'absent'}',
       level: PublishAiTraceLevel.success,
     );
 
-    return transcript;
+    return {
+      'text': transcript,
+      'draft': hasCombinedDraft ? Map<String, dynamic>.from(out['draft'] as Map) : null,
+    };
   }
 
-  Future<void> _applyPublishDraftFromTranscript(String transcript) async {
+  /// Applique la transcription au formulaire.
+  /// Si [combinedDraft] est fourni (mode combiné), l'utilise directement sans
+  /// appel réseau supplémentaire. Sinon, appelle generateOfferDraftV2 en fallback.
+  Future<void> _applyPublishDraftFromTranscript(
+    String transcript, {
+    Map<String, dynamic>? combinedDraft,
+  }) async {
     _latestRecognizedTranscript = transcript;
     _appendPublishAiTrace(
       'draft_local',
@@ -309,18 +329,30 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     );
     _applyFastDraftFromTranscript(transcript);
 
-    _appendPublishAiTrace(
-      'draft_remote',
-      'Appel generateOfferDraft depuis la transcription',
-    );
-    final draft = await _aiService.generateOfferDraft(text: transcript);
-    _appendPublishAiTrace(
-      'draft_remote',
-      'Réponse generateOfferDraft reçue',
-      level: draft['success'] == true
-          ? PublishAiTraceLevel.success
-          : PublishAiTraceLevel.warning,
-    );
+    final Map<String, dynamic> draft;
+    if (combinedDraft != null) {
+      // Draft déjà généré par microIaProcessAudio — aucun appel réseau supplémentaire
+      _appendPublishAiTrace(
+        'draft_remote',
+        'Brouillon combiné disponible — utilisation directe (0 appel supplémentaire)',
+        level: PublishAiTraceLevel.success,
+      );
+      draft = {...combinedDraft, 'success': true};
+    } else {
+      // Fallback : appel séparé avec format riche (tous les champs)
+      _appendPublishAiTrace(
+        'draft_remote',
+        'Appel generateOfferDraftV2 depuis la transcription (fallback)',
+      );
+      draft = await _aiService.generateOfferDraftV2(text: transcript);
+      _appendPublishAiTrace(
+        'draft_remote',
+        'Réponse generateOfferDraftV2 reçue',
+        level: draft['success'] == true
+            ? PublishAiTraceLevel.success
+            : PublishAiTraceLevel.warning,
+      );
+    }
 
     if (!mounted) return;
 
@@ -2723,7 +2755,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
               'Audio invalide (WAV trop petit: ${audioUpload.bytes.length} bytes).');
         }
 
-        final transcript = await _transcribePublishAudio(
+        final audioResult = await _transcribePublishAudio(
           ownerUid: uid,
           audioBytes: audioUpload.bytes,
           contentType: audioUpload.contentType,
@@ -2732,7 +2764,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
         if (!mounted) return;
 
-        await _applyPublishDraftFromTranscript(transcript);
+        await _applyPublishDraftFromTranscript(
+          audioResult['text'] as String,
+          combinedDraft: audioResult['draft'] as Map<String, dynamic>?,
+        );
       } catch (e, st) {
         await CrashlyticsContext.recordError(
           e is Exception ? e : Exception(e.toString()),
@@ -2961,7 +2996,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       'Lecture locale OK: ${audioBytes.length} bytes, $contentType, .$ext',
       level: PublishAiTraceLevel.success,
     );
-    final transcript = await _transcribePublishAudio(
+    final audioResult = await _transcribePublishAudio(
       ownerUid: uid,
       audioBytes: audioBytes,
       contentType: contentType,
@@ -2970,7 +3005,10 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
     if (!mounted) return;
 
-    await _applyPublishDraftFromTranscript(transcript);
+    await _applyPublishDraftFromTranscript(
+      audioResult['text'] as String,
+      combinedDraft: audioResult['draft'] as Map<String, dynamic>?,
+    );
   }
 
   /// Appelle la Cloud Function pour analyser la description avec OpenAI
@@ -2989,9 +3027,15 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
     try {
       _appendPublishAiTrace(
         'draft_remote',
-        'Appel generateOfferDraft depuis le bouton IA',
+        'Appel generateOfferDraftV2 depuis le bouton IA (format riche)',
       );
-      final draft = await _aiService.generateOfferDraft(text: input);
+      final draft = await _aiService.generateOfferDraftV2(
+        text: input,
+        city: _locationController.text.trim().isNotEmpty
+            ? _locationController.text.trim()
+            : null,
+        category: _category,
+      );
 
       if (!mounted) return;
 
@@ -3744,9 +3788,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                   onPressed:
                                       _isAnalyzing || signedInUser == null
                                           ? null
-                                          : () {
-                                              unawaited(_startMic());
-                                            },
+                                          : _startMic,
                                   label: 'Décrire mon besoin (IA)',
                                 ),
                         ),
@@ -3882,29 +3924,51 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                 if (_category != null) const SizedBox(height: 16),
 
                 // DESCRIPTION
-                _withPublishFieldHighlight(
-                  fieldId: 'description',
-                  child: _withAiPendingOverlay(
-                    showPending:
-                        _showAiPendingForController(_descriptionController),
-                    alignment: Alignment.topRight,
-                    padding: const EdgeInsets.only(top: 14, right: 42),
-                    child: TextFormField(
-                      controller: _descriptionController,
-                      decoration: InputDecoration(
-                        label: _requiredLabel('Description détaillée'),
-                        alignLabelWithHint: true,
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                // ListenableBuilder permet de rafraîchir le suffixIcon IA
+                // dynamiquement à chaque frappe, sans reconstruire la page entière.
+                ListenableBuilder(
+                  listenable: _descriptionController,
+                  builder: (context, _) => _withPublishFieldHighlight(
+                    fieldId: 'description',
+                    child: _withAiPendingOverlay(
+                      showPending:
+                          _showAiPendingForController(_descriptionController),
+                      alignment: Alignment.topRight,
+                      padding: const EdgeInsets.only(top: 14, right: 42),
+                      child: TextFormField(
+                        controller: _descriptionController,
+                        decoration: InputDecoration(
+                          label: _requiredLabel('Description détaillée'),
+                          alignLabelWithHint: true,
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 14),
+                          // Bouton IA textuel (✨) : visible dès que l'utilisateur
+                          // a saisi du texte. Déclenche l'analyse IA sans micro.
+                          suffixIcon:
+                              (_descriptionController.text.trim().isNotEmpty &&
+                                      !_isAnalyzing &&
+                                      !_isListening)
+                                  ? Tooltip(
+                                      message: 'Remplir les champs avec l\'IA',
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.auto_awesome,
+                                          color: Color(0xFF2D84F6),
+                                        ),
+                                        onPressed: _onTapAiAnalyze,
+                                      ),
+                                    )
+                                  : null,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 14),
+                        minLines: 4,
+                        maxLines: 8,
+                        validator: _validatePublishDescription,
                       ),
-                      minLines: 4,
-                      maxLines: 8,
-                      validator: _validatePublishDescription,
                     ),
                   ),
                 ),

@@ -696,7 +696,7 @@ async function _internalExtractListingFieldsWithOpenAi({ openai, input, city, ca
  * Entrée : { hint, city, category, lang }
  * Sortie : { title, description, category, city, postalCode }
  */
-exports.generateOfferDraft = onCall({ region: PROJECT_REGION, secrets: [OPENAI_API_KEY], enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
+exports.generateOfferDraft = onCall({ region: PROJECT_REGION, timeoutSeconds: 60, secrets: [OPENAI_API_KEY], enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   // 🔒 Auth requise (y compris auth anonyme côté app)
   const uid = assertAuthenticated(request);
 
