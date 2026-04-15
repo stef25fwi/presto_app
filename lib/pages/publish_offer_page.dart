@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -163,11 +164,72 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return true;
     }
 
-    debugPrint('[AppCheck] non prêt pour $flow');
-    if (showBlockingMessage && mounted) {
+    try {
+      if (kIsWeb) {
+        debugPrint('[AppCheck] retry activation for $flow');
+        await FirebaseAppCheck.instance.activate(
+          webProvider: ReCaptchaV3Provider(kAppCheckWebRecaptchaSiteKey),
+        );
+      } else {
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: kDebugMode
+              ? AndroidProvider.debug
+              : AndroidProvider.playIntegrity,
+          appleProvider:
+              kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+        );
+      }
+      appCheckActivationAttempted = true;
+      appCheckActivationSucceeded = true;
+      appCheckActivationError = null;
+      appCheckActivationStackTrace = null;
+      _appendPublishAiTrace(
+        'appcheck',
+        'App Check reactive avec succes pour $flow',
+        level: PublishAiTraceLevel.success,
+      );
+      return true;
+    } catch (e, st) {
+      appCheckActivationAttempted = true;
+      appCheckActivationSucceeded = false;
+      appCheckActivationError = e;
+      appCheckActivationStackTrace = st;
+    }
+
+    final activationError = appCheckActivationError;
+    final activationStackTrace = appCheckActivationStackTrace;
+    final exception = Exception(
+      'App Check activation unavailable: ${activationError ?? 'unknown error'}',
+    );
+
+    try {
+      await CrashlyticsContext.recordError(
+        exception,
+        activationStackTrace ?? StackTrace.current,
+        reason: 'App Check activation unavailable before micro IA flow',
+        fatal: false,
+        keys: {
+          'component': 'Main',
+          'flow': flow,
+          'step': 'appCheck',
+          'activationAttempted': appCheckActivationAttempted.toString(),
+          'activationSucceeded': appCheckActivationSucceeded.toString(),
+        },
+      );
+
+      debugPrint('[AppCheck] blocking $flow: $activationError');
+    } catch (_) {}
+
+    _appendPublishAiTrace(
+      'appcheck',
+      'Blocage sur $flow: ${activationError ?? 'activation indisponible'}',
+      level: PublishAiTraceLevel.error,
+    );
+
+    if (mounted && showBlockingMessage) {
       showSuccessSnackBar(
         context,
-        'Securite non prete. Reessayez dans quelques secondes.',
+        'App Check indisponible apres nouvelle tentative. Le bouton IA reste bloque tant que la verification de securite n\'est pas active. Recharge l\'application puis reessaie.',
       );
     }
     return false;
@@ -458,8 +520,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final AudioRecorder _recorder = AudioRecorder();
   final WebAudioRecorder _webRec = WebAudioRecorder();
   String? _recordingPath;
-  DateTime? _recordingStartedAt;
-  Timer? _maxRecordingTimer;
   // Toujours actif (améliore la qualité via Google STT côté serveur)
   final bool _useCloudStt = true;
   int _adminAudioRuntimeAccessState = 0;
@@ -2567,14 +2627,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         );
         if (!mounted) return;
         setState(() => _isListening = true);
-        _recordingStartedAt = DateTime.now();
-        _maxRecordingTimer?.cancel();
-        _maxRecordingTimer = Timer(const Duration(seconds: 120), () {
-          if (_isListening && mounted) {
-            showSuccessSnackBar(context, 'Durée maximale atteinte (2 min)');
-            _stopMic();
-          }
-        });
         _appendPublishAiTrace(
           'start_mic',
           'Micro web démarré',
@@ -2643,7 +2695,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         _formatMicroIaRuntimeError(e),
         level: PublishAiTraceLevel.error,
       );
-      return;
     }
 
     setState(() {
@@ -2653,14 +2704,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         detail: _classicAdminAudioRuntimeDetail(),
       );
       _isListening = true;
-    });
-    _recordingStartedAt = DateTime.now();
-    _maxRecordingTimer?.cancel();
-    _maxRecordingTimer = Timer(const Duration(seconds: 120), () {
-      if (_isListening && mounted) {
-        showSuccessSnackBar(context, 'Durée maximale atteinte (2 min)');
-        _stopMic();
-      }
     });
     _appendPublishAiTrace(
       'start_mic',
@@ -2672,20 +2715,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _stopMic() async {
     if (!_isListening) return;
     if (_isAnalyzing) return;
-
-    // M1: durée minimale 1 seconde
-    final startedAt = _recordingStartedAt;
-    if (startedAt != null &&
-        DateTime.now().difference(startedAt) < const Duration(seconds: 1)) {
-      if (mounted) {
-        showSuccessSnackBar(
-            context, 'Enregistrement trop court (minimum 1 seconde)');
-      }
-      return;
-    }
-
-    _maxRecordingTimer?.cancel();
-    _recordingStartedAt = null;
     _appendPublishAiTrace('stop_mic', 'Arrêt demandé pour le micro classique');
 
     if (kIsWeb) {
@@ -3041,8 +3070,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   void dispose() {
-    _maxRecordingTimer?.cancel();
-    _recorder.dispose();
     _publishAiTraceDisposed = true;
     _publishAiTraceVersion.dispose();
     _titleController.dispose();
@@ -3762,7 +3789,6 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
                                       _isAnalyzing || signedInUser == null
                                           ? null
                                           : _startMic,
-                                isLoading: _isAnalyzing,
                                   label: 'Décrire mon besoin (IA)',
                                 ),
                         ),
