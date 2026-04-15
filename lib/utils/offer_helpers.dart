@@ -74,19 +74,24 @@ bool isPublishedOfferData(Map<String, dynamic> data) {
   final status = (data['status'] ?? '').toString().trim().toLowerCase();
   final visibility = data['visibility'];
 
-  if (status == 'active' && visibility is String && visibility == 'public') {
-    return true;
-  }
+  // status == 'active' est suffisant (les offres legacy n'ont pas de visibility)
+  if (status == 'active') return true;
+
+  if (status == 'published') return true;
 
   final isPublished = data['isPublished'];
   if (isPublished is bool && isPublished) return true;
 
-  if (status == 'published') return true;
+  // Flag legacy
+  final isActive = data['isActive'];
+  if (isActive is bool && isActive) return true;
 
+  // visibility.isPublic map sans status explicite
   if (visibility is Map) {
     final isPublic = visibility['isPublic'];
-    if (status == 'active' && isPublic is bool && isPublic) return true;
+    if (isPublic is bool && isPublic) return true;
   }
+
   return false;
 }
 
