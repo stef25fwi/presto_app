@@ -49,13 +49,25 @@ class WebAudioRecorder {
     final constraints = web.MediaStreamConstraints(audio: true.toJS);
     _stream = await mediaDevices.getUserMedia(constraints).toDart;
 
-    final preferredMimeType = _pickSupportedMimeType();
-    _rec = preferredMimeType == null
-        ? web.MediaRecorder(_stream!)
-        : web.MediaRecorder(
-            _stream!,
-            web.MediaRecorderOptions(mimeType: preferredMimeType),
-          );
+    try {
+      final preferredMimeType = _pickSupportedMimeType();
+      _rec = preferredMimeType == null
+          ? web.MediaRecorder(_stream!)
+          : web.MediaRecorder(
+              _stream!,
+              web.MediaRecorderOptions(mimeType: preferredMimeType),
+            );
+    } catch (e) {
+      // Cleanup stream if MediaRecorder constructor fails
+      final tracks = _stream?.getTracks();
+      if (tracks != null) {
+        for (int i = 0; i < tracks.length; i++) {
+          tracks[i].stop();
+        }
+      }
+      _stream = null;
+      rethrow;
+    }
     _recordedMimeType = _normalizeMicroIaContentType(_rec!.mimeType);
 
     _onData = ((web.Event e) {
