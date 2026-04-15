@@ -458,6 +458,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   final AudioRecorder _recorder = AudioRecorder();
   final WebAudioRecorder _webRec = WebAudioRecorder();
   String? _recordingPath;
+  DateTime? _recordingStartedAt;
+  Timer? _maxRecordingTimer;
   // Toujours actif (améliore la qualité via Google STT côté serveur)
   final bool _useCloudStt = true;
   int _adminAudioRuntimeAccessState = 0;
@@ -2565,6 +2567,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
         );
         if (!mounted) return;
         setState(() => _isListening = true);
+        _recordingStartedAt = DateTime.now();
+        _maxRecordingTimer?.cancel();
+        _maxRecordingTimer = Timer(const Duration(seconds: 120), () {
+          if (_isListening && mounted) {
+            showSuccessSnackBar(context, 'Durée maximale atteinte (2 min)');
+            _stopMic();
+          }
+        });
         _appendPublishAiTrace(
           'start_mic',
           'Micro web démarré',
@@ -2644,6 +2654,14 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       );
       _isListening = true;
     });
+    _recordingStartedAt = DateTime.now();
+    _maxRecordingTimer?.cancel();
+    _maxRecordingTimer = Timer(const Duration(seconds: 120), () {
+      if (_isListening && mounted) {
+        showSuccessSnackBar(context, 'Durée maximale atteinte (2 min)');
+        _stopMic();
+      }
+    });
     _appendPublishAiTrace(
       'start_mic',
       kIsWeb ? 'Micro en écoute' : 'Enregistrement mobile lancé en AAC/m4a',
@@ -2654,6 +2672,20 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
   Future<void> _stopMic() async {
     if (!_isListening) return;
     if (_isAnalyzing) return;
+
+    // M1: durée minimale 1 seconde
+    final startedAt = _recordingStartedAt;
+    if (startedAt != null &&
+        DateTime.now().difference(startedAt) < const Duration(seconds: 1)) {
+      if (mounted) {
+        showSuccessSnackBar(
+            context, 'Enregistrement trop court (minimum 1 seconde)');
+      }
+      return;
+    }
+
+    _maxRecordingTimer?.cancel();
+    _recordingStartedAt = null;
     _appendPublishAiTrace('stop_mic', 'Arrêt demandé pour le micro classique');
 
     if (kIsWeb) {
@@ -3009,6 +3041,8 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
 
   @override
   void dispose() {
+    _maxRecordingTimer?.cancel();
+    _recorder.dispose();
     _publishAiTraceDisposed = true;
     _publishAiTraceVersion.dispose();
     _titleController.dispose();
