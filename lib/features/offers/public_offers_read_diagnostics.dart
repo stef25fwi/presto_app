@@ -196,7 +196,7 @@ PublicOffersReadIssue diagnosePublicOffersReadIssue(
       kind: 'rules',
       code: code,
       releaseMessage:
-          'Accès refusé aux annonces publiques. Vérifie les règles Firestore ou App Check.',
+          'Accès refusé aux annonces publiques. Vérifie les règles Firestore.',
       rawMessage: rawMessage,
       hasAuthenticatedUser: effectiveHasAuthenticatedUser,
       appCheckState: appCheckState,

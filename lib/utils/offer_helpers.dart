@@ -81,15 +81,12 @@ bool isPublishedOfferData(Map<String, dynamic> data) {
   final isPublished = data['isPublished'];
   if (isPublished is bool && isPublished) return true;
 
-  if (status == 'published' || status == 'active') return true;
+  if (status == 'published') return true;
 
   if (visibility is Map) {
     final isPublic = visibility['isPublic'];
-    if (isPublic is bool && isPublic) return true;
+    if (status == 'active' && isPublic is bool && isPublic) return true;
   }
-
-  final isActive = data['isActive'];
-  if (isActive is bool && isActive) return true;
   return false;
 }
 

@@ -21,20 +21,28 @@ Filter publicListingsFilter() {
       Filter('status', isEqualTo: 'active'),
       Filter('visibility', isEqualTo: 'public'),
     ),
+    // Compat legacy: visibility map { isPublic: true }
+    Filter.and(
+      Filter('status', isEqualTo: 'active'),
+      Filter('visibility.isPublic', isEqualTo: true),
+    ),
     // Variantes historiques / legacy publication
     Filter('status', isEqualTo: 'published'),
     Filter('isPublished', isEqualTo: true),
-    Filter('isActive', isEqualTo: true),
-    Filter('visibility.isPublic', isEqualTo: true),
   );
 }
 
 Filter publicOffersFilter() {
   return Filter.or(
-    Filter('visibility.isPublic', isEqualTo: true),
-    Filter('status', isEqualTo: 'active'),
+    Filter.and(
+      Filter('status', isEqualTo: 'active'),
+      Filter('visibility', isEqualTo: 'public'),
+    ),
+    Filter.and(
+      Filter('status', isEqualTo: 'active'),
+      Filter('visibility.isPublic', isEqualTo: true),
+    ),
     Filter('status', isEqualTo: 'published'),
-    Filter('isActive', isEqualTo: true),
     Filter('isPublished', isEqualTo: true),
   );
 }
