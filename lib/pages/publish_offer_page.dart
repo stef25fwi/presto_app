@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -164,74 +163,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       return true;
     }
 
-    try {
-      if (kIsWeb) {
-        debugPrint('[AppCheck] retry activation for $flow');
-        await FirebaseAppCheck.instance.activate(
-          webProvider: ReCaptchaEnterpriseProvider(kAppCheckWebRecaptchaSiteKey),
-        );
-      } else {
-        await FirebaseAppCheck.instance.activate(
-          androidProvider: kDebugMode
-              ? AndroidProvider.debug
-              : AndroidProvider.playIntegrity,
-          appleProvider:
-              kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
-        );
-      }
-      appCheckActivationAttempted = true;
-      appCheckActivationSucceeded = true;
-      appCheckActivationError = null;
-      appCheckActivationStackTrace = null;
-      _appendPublishAiTrace(
-        'appcheck',
-        'App Check reactive avec succes pour $flow',
-        level: PublishAiTraceLevel.success,
-      );
-      return true;
-    } catch (e, st) {
-      appCheckActivationAttempted = true;
-      appCheckActivationSucceeded = false;
-      appCheckActivationError = e;
-      appCheckActivationStackTrace = st;
-    }
-
-    final activationError = appCheckActivationError;
-    final activationStackTrace = appCheckActivationStackTrace;
-    final exception = Exception(
-      'App Check activation unavailable: ${activationError ?? 'unknown error'}',
-    );
-
-    try {
-      await CrashlyticsContext.recordError(
-        exception,
-        activationStackTrace ?? StackTrace.current,
-        reason: 'App Check activation unavailable before micro IA flow',
-        fatal: false,
-        keys: {
-          'component': 'Main',
-          'flow': flow,
-          'step': 'appCheck',
-          'activationAttempted': appCheckActivationAttempted.toString(),
-          'activationSucceeded': appCheckActivationSucceeded.toString(),
-        },
-      );
-
-      debugPrint('[AppCheck] blocking $flow: $activationError');
-    } catch (_) {}
-
-    _appendPublishAiTrace(
-      'appcheck',
-      'Blocage sur $flow: ${activationError ?? 'activation indisponible'}',
-      level: PublishAiTraceLevel.error,
-    );
-
-    if (mounted && showBlockingMessage) {
-      showSuccessSnackBar(
-        context,
-        'App Check indisponible apres nouvelle tentative. Le bouton IA reste bloque tant que la verification de securite n\'est pas active. Recharge l\'application puis reessaie.',
-      );
-    }
+    debugPrint('[AppCheck] non prêt pour $flow');
     return false;
   }
 
