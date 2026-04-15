@@ -732,6 +732,12 @@ class _AccountPageState extends State<AccountPage> {
       );
     } catch (error) {
       debugPrint('[AuthBootstrap] account session restore failed: $error');
+      if (mounted) {
+        showErrorSnackBar(
+          context,
+          'Impossible de synchroniser le profil. Vérifie ta connexion.',
+        );
+      }
     }
 
     if (_activeProfileUid == user.uid &&

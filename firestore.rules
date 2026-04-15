@@ -69,9 +69,10 @@ service cloud.firestore {
 
     function isPublicListingData(data) {
       return (
-        (data.status == 'active' && isPublicVisibility(data))
+        data.status == 'active'
         || data.status == 'published'
         || data.isPublished == true
+        || data.isActive == true
       );
     }
 
@@ -94,9 +95,10 @@ service cloud.firestore {
 
     function isPublicOffer() {
       // Toute annonce publiée est visible publiquement
-      return (resource.data.status == 'active' && isPublicVisibility(resource.data))
-        || (resource.data.status == 'published')
-        || (resource.data.isPublished == true);
+      return resource.data.status == 'active'
+        || resource.data.status == 'published'
+        || resource.data.isPublished == true
+        || resource.data.isActive == true;
     }
 
     // ⛔ [REFUSÉ] Rate limits — server-only (Functions)
