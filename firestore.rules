@@ -62,27 +62,18 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
 
-    function isPublicVisibility(data) {
-      return data.visibility == 'public'
-        || ((data.visibility is map) && data.visibility.isPublic == true);
-    }
-
     function isPublicListingData(data) {
       return (
-        data.status == 'active'
+        (data.status == 'active' && data.visibility == 'public')
         || data.status == 'published'
         || data.isPublished == true
         || data.isActive == true
+        || (data.visibility is map && data.visibility.get('isPublic', false) == true)
       );
     }
 
     function isListingOwner(data) {
       return isSignedIn() && data.ownerId == uid();
-    }
-
-    function isChatParticipant(data) {
-      return isSignedIn()
-        && ((data.participants is list) && data.participants.hasAny([uid()]));
     }
 
     function isOwnerByField(data) {
@@ -95,10 +86,11 @@ service cloud.firestore {
 
     function isPublicOffer() {
       // Toute annonce publiée est visible publiquement
-      return resource.data.status == 'active'
-        || resource.data.status == 'published'
-        || resource.data.isPublished == true
-        || resource.data.isActive == true;
+      return (resource.data.status == 'active' && resource.data.visibility == 'public')
+        || (resource.data.status == 'published')
+        || (resource.data.isPublished == true)
+        || (resource.data.isActive == true)
+        || (resource.data.visibility is map && resource.data.visibility.get('isPublic', false) == true);
     }
 
     // ⛔ [REFUSÉ] Rate limits — server-only (Functions)
@@ -242,18 +234,6 @@ service cloud.firestore {
     match /favorites/{favoriteId} {
       allow read: if isSignedIn() && resource.data.userId == uid();
       allow write: if false;
-    }
-
-    match /chatThreads/{threadId} {
-      allow read: if isChatParticipant(resource.data) || isMarketplaceModerator();
-      allow create, update, delete: if false;
-
-      match /messages/{messageId} {
-        allow read: if isSignedIn()
-          && exists(/databases/$(database)/documents/chatThreads/$(threadId))
-          && isChatParticipant(get(/databases/$(database)/documents/chatThreads/$(threadId)).data);
-        allow create, update, delete: if false;
-      }
     }
 
     match /adminActions/{actionId} {

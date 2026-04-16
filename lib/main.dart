@@ -778,10 +778,10 @@ Future<void> main() async {
     // 🔒 App Check
     // - Debug: provider debug (ajouter le debug token dans Firebase Console → App Check)
     // - Release: Play Integrity (Android) + App Attest (iOS)
-    // - Web: reCAPTCHA v3 si une siteKey est fournie.
+    // - Web: reCAPTCHA Enterprise si une siteKey est fournie.
     //   Exemple:
     //   `flutter run -d chrome --dart-define=APPCHECK_RECAPTCHA_SITE_KEY=xxxxx`
-    // Clé site reCAPTCHA v3 (override possible via --dart-define=APPCHECK_RECAPTCHA_SITE_KEY)
+    // Clé site reCAPTCHA Enterprise (override possible via --dart-define=APPCHECK_RECAPTCHA_SITE_KEY)
     appCheckActivationAttempted = true;
     appCheckActivationSucceeded = false;
     appCheckActivationError = null;

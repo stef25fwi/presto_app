@@ -504,7 +504,6 @@ class _HomePageState extends State<HomePage>
     return FirebaseFirestore.instance
         .collection(kListingsCollection)
         .where(publicListingsFilter())
-        .orderBy('createdAt', descending: true)
         .limit(limit);
   }
 
@@ -524,7 +523,8 @@ class _HomePageState extends State<HomePage>
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection(kListingsCollection)
-          .where(publicListingsFilter())
+          .where('status', isEqualTo: 'active')
+          .where('visibility', isEqualTo: 'public')
           .orderBy('createdAt', descending: true)
           .limit(8)
           .get();
