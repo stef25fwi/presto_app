@@ -511,7 +511,8 @@ class _HomePageState extends State<HomePage>
     return FirebaseFirestore.instance
         .collection(kOffersCollection)
         .where(publicOffersFilter())
-        .orderBy('createdAt', descending: true)
+        // Pas d'orderBy : Filter.or(5 branches) nécessiterait 5 index composites
+        // pour offers dont certains sont manquants → erreur silencieuse. Tri côté client.
         .limit(limit);
   }
 
@@ -531,13 +532,14 @@ class _HomePageState extends State<HomePage>
 
       if (snapshot.docs.length >= 8) return snapshot.docs;
 
-      // Compléter avec les annonces legacy (collection offers)
+      // Compléter avec les annonces legacy (collection offers).
+      // Pas d'orderBy sur la query offers : Filter.or(5 branches) sans index
+      // composites complets → erreur silencieuse. Tri client-side après merge.
       final fallback = await loadLegacyPublicOffersBackfill(
         query: FirebaseFirestore.instance
             .collection(kOffersCollection)
             .where(publicOffersFilter())
-            .orderBy('createdAt', descending: true)
-            .limit(16),
+            .limit(24),
         source: 'home_latest_offers_legacy_backfill',
       );
 
@@ -546,9 +548,16 @@ class _HomePageState extends State<HomePage>
       for (final doc in fallback) {
         if (seen.contains(doc.id)) continue;
         merged.add(doc);
-        if (merged.length >= 8) break;
       }
-      return merged;
+      // Tri côté client par createdAt décroissant, prendre les 8 plus récents
+      merged.sort((a, b) {
+        final aTs = a.data()['createdAt'];
+        final bTs = b.data()['createdAt'];
+        final aMs = aTs is Timestamp ? aTs.millisecondsSinceEpoch : 0;
+        final bMs = bTs is Timestamp ? bTs.millisecondsSinceEpoch : 0;
+        return bMs.compareTo(aMs);
+      });
+      return merged.take(8).toList();
     } catch (error, stackTrace) {
       // Si l'index n'est pas encore prêt, fallback sur la query publique
       // avec filtre côté client additionnel.
