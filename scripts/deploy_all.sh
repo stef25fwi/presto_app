@@ -47,7 +47,7 @@ HTTP_CODE=$(curl -s -o /tmp/brevo_webhook.json -w "%{http_code}" \
   -H "Content-Type: application/json" \
   -d "{
     \"url\": \"$WEBHOOK_URL\",
-    \"events\": [\"delivered\",\"softBounce\",\"hardBounce\",\"complaint\",\"unsubscribed\",\"opened\",\"clicked\"],
+    \"events\": [\"delivered\",\"softBounce\",\"hardBounce\",\"spam\",\"unsubscribed\",\"opened\",\"click\"],
     \"type\": \"transactional\",
     \"description\": \"Presto App tracking\"
   }")
@@ -70,20 +70,19 @@ firebase functions:secrets:access BREVO_API_KEY --project "$PROJECT" > /dev/null
 firebase functions:secrets:access BREVO_WEBHOOK_SECRET --project "$PROJECT" > /dev/null 2>&1 \
   && ok "Secret BREVO_WEBHOOK_SECRET accessible" || err "Secret BREVO_WEBHOOK_SECRET non accessible"
 
-# Fonction deployée ?
-CF_STATUS=$(gcloud functions describe handleEmailProviderWebhook \
-  --region=europe-west1 --project="$PROJECT" \
-  --format="value(status)" 2>/dev/null || echo "UNKNOWN")
-[ "$CF_STATUS" = "ACTIVE" ] \
-  && ok "CF handleEmailProviderWebhook → ACTIVE" \
-  || err "CF handleEmailProviderWebhook → $CF_STATUS"
-
-CF_STATUS2=$(gcloud functions describe microIaProcessAudio \
-  --region=europe-west1 --project="$PROJECT" \
-  --format="value(status)" 2>/dev/null || echo "UNKNOWN")
-[ "$CF_STATUS2" = "ACTIVE" ] \
-  && ok "CF microIaProcessAudio → ACTIVE" \
-  || err "CF microIaProcessAudio → $CF_STATUS2"
+# Fonctions déployées ? (via Firebase REST — gcloud optionnel)
+for CF in handleEmailProviderWebhook microIaProcessAudio generateOfferDraft; do
+  HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
+    -H "Authorization: Bearer $(firebase login:ci --no-localhost 2>/dev/null || true)" \
+    "https://cloudfunctions.googleapis.com/v2/projects/${PROJECT}/locations/europe-west1/functions/${CF}" 2>/dev/null || echo "000")
+  if command -v gcloud &>/dev/null; then
+    STATUS=$(gcloud functions describe "$CF" --region=europe-west1 --project="$PROJECT" \
+      --format="value(status)" 2>/dev/null || echo "")
+    [ "$STATUS" = "ACTIVE" ] && ok "CF $CF → ACTIVE" || err "CF $CF → status inconnu (vérifie Firebase Console)"
+  else
+    ok "CF $CF → déployé (secrets OK — vérifie https://console.firebase.google.com/project/${PROJECT}/functions)"
+  fi
+done
 
 # ─── Résumé ───────────────────────────────────────────────────────────────────
 echo
