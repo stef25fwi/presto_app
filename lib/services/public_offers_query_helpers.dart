@@ -21,11 +21,13 @@ Filter publicListingsFilter() {
       Filter('status', isEqualTo: 'active'),
       Filter('visibility', isEqualTo: 'public'),
     ),
-    // Variantes historiques / legacy publication
+    // Variantes legacy couvertes par isPublicListingData() dans firestore.rules
     Filter('status', isEqualTo: 'published'),
     Filter('isPublished', isEqualTo: true),
-    Filter('isActive', isEqualTo: true),
-    Filter('visibility.isPublic', isEqualTo: true),
+    // Note: isActive==true et visibility.isPublic==true sont des formats
+    // propres à la collection `offers` (legacy). Ils ne sont pas utilisés
+    // dans `listings` et causaient des refus de query pour les anonymes
+    // car non couverts par isPublicListingData() dans les règles Firestore.
   );
 }
 
