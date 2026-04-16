@@ -72,9 +72,6 @@ firebase functions:secrets:access BREVO_WEBHOOK_SECRET --project "$PROJECT" > /d
 
 # Fonctions déployées ? (via Firebase REST — gcloud optionnel)
 for CF in handleEmailProviderWebhook microIaProcessAudio generateOfferDraft; do
-  HTTP=$(curl -s -o /dev/null -w "%{http_code}" \
-    -H "Authorization: Bearer $(firebase login:ci --no-localhost 2>/dev/null || true)" \
-    "https://cloudfunctions.googleapis.com/v2/projects/${PROJECT}/locations/europe-west1/functions/${CF}" 2>/dev/null || echo "000")
   if command -v gcloud &>/dev/null; then
     STATUS=$(gcloud functions describe "$CF" --region=europe-west1 --project="$PROJECT" \
       --format="value(status)" 2>/dev/null || echo "")
