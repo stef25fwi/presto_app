@@ -168,7 +168,7 @@ class _PublishOfferPageState extends State<PublishOfferPage> {
       if (kIsWeb) {
         debugPrint('[AppCheck] retry activation for $flow');
         await FirebaseAppCheck.instance.activate(
-          webProvider: ReCaptchaV3Provider(kAppCheckWebRecaptchaSiteKey),
+          webProvider: ReCaptchaEnterpriseProvider(kAppCheckWebRecaptchaSiteKey),
         );
       } else {
         await FirebaseAppCheck.instance.activate(
